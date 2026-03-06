@@ -155,6 +155,21 @@ export function DadosPessoaisSection({
           />
         </div>
 
+        {/* Indicado por */}
+        <div className="md:col-span-3">
+          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+            Indicado por
+          </label>
+          <input
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            value={formData.indicado_por || ''}
+            onChange={e => setFormData({ ...formData, indicado_por: e.target.value })}
+            placeholder="Nome de quem indicou (opcional)"
+            disabled={isViewMode}
+            readOnly={isViewMode}
+          />
+        </div>
+
         {/* E-mail Pessoal e LinkedIn */}
         <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -208,7 +223,7 @@ export function DadosPessoaisSection({
           <div className="md:col-span-2">
             <SearchableSelect
               label="Filhos"
-              value={formData.has_children ? 'Sim' : 'Não'}
+              value={formData.has_children === true ? 'Sim' : formData.has_children === false ? 'Não' : ''}
               onChange={v => {
                 const hasChildren = v === 'Sim';
                 const count = hasChildren ? Math.max(formData.children_count || 1, 1) : 0;
@@ -221,6 +236,7 @@ export function DadosPessoaisSection({
                 setFormData({ ...formData, has_children: hasChildren, children_count: count, children_data: newChildrenData });
               }}
               options={[{ name: 'Sim' }, { name: 'Não' }]}
+              placeholder="Selecione..."
               disabled={isViewMode}
             />
           </div>

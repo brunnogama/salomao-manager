@@ -18,7 +18,7 @@ export function CandidatoHistoricoSection({
 }: CandidatoHistoricoSectionProps) {
     const [historicoList, setHistoricoList] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
-    const [tipo, setTipo] = useState('Entrevista')
+    const [tipo, setTipo] = useState('Observação')
     const [descricao, setDescricao] = useState('')
     const [entrevistaData, setEntrevistaData] = useState('')
     const [entrevistaHora, setEntrevistaHora] = useState('')
@@ -250,7 +250,6 @@ export function CandidatoHistoricoSection({
                                     onChange={setTipo}
                                     disabled={isViewMode}
                                     options={[
-                                        { id: 'Entrevista', name: 'Entrevista' },
                                         { id: 'Observação', name: 'Observação' },
                                         { id: 'Teste Prático', name: 'Teste Prático' },
                                         { id: 'Dinâmica', name: 'Dinâmica' },

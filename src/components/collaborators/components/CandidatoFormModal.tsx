@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useCloseOnEscape } from '../../../hooks/useCloseOnEscape'
 import { supabase } from '../../../lib/supabase'
 import { CollaboratorModalLayout } from './CollaboratorLayouts'
@@ -7,8 +8,9 @@ import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
 import { DadosEscolaridadeSection } from './DadosEscolaridadeSection'
 import { CandidatoExperienciasSection } from './CandidatoExperienciasSection'
-import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files } from 'lucide-react'
+import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart } from 'lucide-react'
 import { GEDSection } from './GEDSection'
+import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
 import { EnderecoSection } from './EnderecoSection'
 import {
     maskCPF,
@@ -29,6 +31,7 @@ interface CandidatoFormModalProps {
 }
 
 export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile }: CandidatoFormModalProps) {
+    const navigate = useNavigate()
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
     const downloadLinkRef = React.useRef<HTMLAnchorElement>(null)
 
@@ -59,6 +62,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         { id: 'Currículo', name: 'Currículo' },
         { id: 'Portfólio', name: 'Portfólio' },
         { id: 'Certificado', name: 'Certificado' },
+        { id: 'Prova', name: 'Prova' },
         { id: 'Outros', name: 'Outros' }
     ])
     const [selectedGedCategory, setSelectedGedCategory] = useState('')
@@ -104,7 +108,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     linkedin_url: initialData.linkedin || '',
                     perfil: (initialData.perfilTags || []).join('\n'),
                     idiomas: initialData.idiomas || '',
-                    atividades_academicas: initialData.atividades_academicas || ''
+                    atividades_academicas: initialData.atividades_academicas || '',
+                    status_selecao: initialData.status_selecao || 'Aberto',
+                    motivo_reprovacao: initialData.motivo_reprovacao || '',
+                    entrevista_dados: initialData.entrevista_dados || {}
                 };
                 setFormData(mappedData);
 
@@ -367,7 +374,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 'has_children', 'children_count', 'children_data', 'atividades_academicas', 'idiomas',
                 'zip_code', 'address', 'address_number', 'address_complement', 'neighborhood', 'city', 'state',
                 'forma_pagamento', 'banco_nome', 'banco_tipo_conta', 'banco_agencia', 'banco_conta', 'pix_tipo', 'pix_chave',
-                'emergency_contacts', 'education_history'
+                'emergency_contacts', 'education_history', 'status_selecao', 'motivo_reprovacao', 'entrevista_dados', 'indicado_por'
             ];
 
             const cleanPayload: any = {};
@@ -478,6 +485,22 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             }
 
             onSave()
+            if (formData.status_selecao === 'Aprovado') {
+                if (window.confirm("Candidato salvo como Aprovado!\nDeseja ir para a tela de pré-cadastro de Colaborador agora?")) {
+                    navigate('/rh/colaboradores', {
+                        state: {
+                            cadastrarCandidato: {
+                                ...formData,
+                                name: formData.nome,
+                                hire_date: new Date().toISOString().split('T')[0],
+                                candidato_id: finalCandidatoId,
+                                status_selecao: undefined,
+                                motivo_reprovacao: undefined
+                            }
+                        }
+                    });
+                }
+            }
             onClose()
         } catch (error) {
             console.error('Error saving:', error)
@@ -534,10 +557,26 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         { id: 1, label: 'Dados Pessoais e Bancários', icon: User },
         { id: 4, label: 'Dados Corporativos', icon: Briefcase },
         { id: 3, label: 'Dados de Escolaridade', icon: BookOpen },
+        { id: 10, label: 'Entrevista', icon: CalendarHeart },
         { id: 9, label: 'Perfil e Tags', icon: TagIcon },
         { id: 6, label: 'Histórico', icon: Clock },
         { id: 7, label: 'GED', icon: Files },
     ]
+
+    const handleStatusSelecaoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        setFormData(prev => ({ ...prev, status_selecao: value }));
+        if (value === 'Reprovado' && !formData.motivo_reprovacao) {
+            // Se precisar abrir modal de motivo específico, podemos definir alertConfig ou similar
+            // Porém usando o proprio alert pra facilitar a UI
+            let motivo = window.prompt("Por favor, digite o motivo da reprovação:");
+            if (motivo) {
+                setFormData(prev => ({ ...prev, motivo_reprovacao: motivo, status_selecao: 'Reprovado' }));
+            } else {
+                setFormData(prev => ({ ...prev, status_selecao: 'Aberto' }));
+            }
+        }
+    };
 
     if (!isOpen) return null
 
@@ -550,13 +589,32 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             isEditMode={true}
             currentSteps={steps}
             footer={
-                <button
-                    onClick={handleSave}
-                    disabled={loading}
-                    className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl shadow-lg hover:shadow-xl font-bold transition-all flex items-center gap-2 text-[10px] uppercase tracking-wider"
-                >
-                    {loading ? 'Salvando...' : 'Salvar Cadastro'}
-                </button>
+                <div className="flex items-center gap-4">
+                    <div className="flex flex-col border-r border-[#1e3a8a]/20 pr-4">
+                        <label className="text-[9px] font-black text-blue-900 uppercase tracking-widest mb-1 text-right">Status do Processo</label>
+                        <select
+                            value={formData.status_selecao || 'Aberto'}
+                            onChange={handleStatusSelecaoChange}
+                            className={`text-xs font-bold uppercase tracking-wider py-1.5 px-3 rounded-lg border-2 outline-none cursor-pointer ${formData.status_selecao === 'Aprovado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                formData.status_selecao === 'Reprovado' ? 'bg-red-50 text-red-700 border-red-200' :
+                                    formData.status_selecao === 'Reaproveitamento' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                        'bg-blue-50 text-[#1e3a8a] border-blue-200 hover:bg-blue-100 transition-colors'
+                                }`}
+                        >
+                            <option value="Aberto">Aberto</option>
+                            <option value="Aprovado">Aprovado</option>
+                            <option value="Reprovado">Reprovado</option>
+                            <option value="Reaproveitamento">Reaproveitamento</option>
+                        </select>
+                    </div>
+                    <button
+                        onClick={handleSave}
+                        disabled={loading}
+                        className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl shadow-lg hover:shadow-xl font-bold transition-all flex items-center gap-2 text-[10px] uppercase tracking-wider h-fit"
+                    >
+                        {loading ? 'Salvando...' : 'Salvar Cadastro'}
+                    </button>
+                </div>
             }
         >
             {activeTab === 1 && (
@@ -629,6 +687,16 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         setFormData={setFormData}
                         isViewMode={false}
                         maskDate={maskDate}
+                    />
+                </div>
+            )}
+
+            {activeTab === 10 && (
+                <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
+                    <CandidatoEntrevistaSection
+                        formData={formData}
+                        setFormData={setFormData}
+                        isViewMode={false}
                     />
                 </div>
             )}

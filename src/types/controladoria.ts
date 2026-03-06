@@ -135,6 +135,7 @@ export interface Collaborator {
   atividades_academicas?: string;
   idiomas?: string;
   oab_emissao?: string;
+  indicado_por?: string;
 
   // Dados Bancários
   forma_pagamento?: string;

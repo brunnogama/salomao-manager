@@ -36,21 +36,20 @@ export function DadosProfissionaisCandidato({
 
                     <div className="relative z-[119]">
                         <ManagedSelect
-                            label="Cargo Pretendido"
-                            value={formData.role || ''}
-                            onChange={v => setFormData({ ...formData, role: v })}
-                            tableName="roles"
+                            label="Atuação"
+                            value={formData.atuacao || ''}
+                            onChange={v => setFormData({ ...formData, atuacao: v })}
+                            tableName="atuacoes"
                             disabled={isViewMode}
                         />
                     </div>
 
                     <div className="relative z-[118]">
-                        <SearchableSelect
-                            label="Tipo da Contratação"
-                            value={formData.contract_type || ''}
-                            onChange={v => setFormData({ ...formData, contract_type: v })}
-                            options={[{ id: 'ADVOGADO', name: 'ADVOGADO' }, { id: 'CLT', name: 'CLT' }, { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' }, { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' }, { id: 'PJ', name: 'PJ' }]}
-                            uppercase={false}
+                        <ManagedSelect
+                            label="Cargo Pretendido"
+                            value={formData.role || ''}
+                            onChange={v => setFormData({ ...formData, role: v })}
+                            tableName="roles"
                             disabled={isViewMode}
                         />
                     </div>

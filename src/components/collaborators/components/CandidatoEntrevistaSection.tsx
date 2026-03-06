@@ -1,0 +1,347 @@
+import React from 'react'
+import { Printer } from 'lucide-react'
+import { SearchableSelect } from '../../crm/SearchableSelect'
+
+interface CandidatoEntrevistaSectionProps {
+    formData: any
+    setFormData: (data: any) => void
+    isViewMode?: boolean
+}
+
+export function CandidatoEntrevistaSection({
+    formData,
+    setFormData,
+    isViewMode = false
+}: CandidatoEntrevistaSectionProps) {
+    const area = formData.area || ''
+
+    // Dados da entrevista ficam salvos dentro de formData.entrevista_dados (jsonb)
+    const entrevista = formData.entrevista_dados || {}
+
+    const handleEntrevistaChange = (field: string, value: any) => {
+        setFormData({
+            ...formData,
+            entrevista_dados: {
+                ...entrevista,
+                [field]: value
+            }
+        })
+    }
+
+    const handlePrint = () => {
+        window.print()
+    }
+
+    if (!area) {
+        return (
+            <div className="bg-amber-50 border border-amber-200 p-6 rounded-2xl flex flex-col items-center justify-center text-center">
+                <p className="text-amber-800 font-bold mb-2">Área não definida</p>
+                <p className="text-amber-700 text-sm">Por favor, selecione a Área (Administrativa ou Jurídica) na aba de Dados Corporativos para exibir os campos corretos da entrevista.</p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="space-y-6 print:space-y-4 print:text-black">
+            <style>{`
+                @media print {
+                    body * {
+                        visibility: hidden;
+                    }
+                    .print-section, .print-section * {
+                        visibility: visible;
+                    }
+                    .print-section {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        padding: 2cm;
+                    }
+                    .no-print {
+                        display: none !important;
+                    }
+                    input, textarea, select {
+                        border: none !important;
+                        background: transparent !important;
+                        box-shadow: none !important;
+                        resize: none !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        -webkit-appearance: none;
+                    }
+                }
+            `}</style>
+
+            <div className="flex justify-between items-center no-print bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <div>
+                    <h3 className="text-lg font-black text-[#0a192f] uppercase tracking-wide">Registro de Entrevista</h3>
+                    <p className="text-sm text-gray-500 font-medium">Área {area}</p>
+                </div>
+                <button
+                    onClick={handlePrint}
+                    className="flex flex-col sm:flex-row items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-bold uppercase tracking-wider"
+                >
+                    <Printer className="w-4 h-4" />
+                    <span>Imprimir</span>
+                </button>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6 print-section">
+                <div className="text-center hidden print:block mb-8 pb-4 border-b-2 border-gray-800">
+                    <h1 className="text-2xl font-black uppercase tracking-widest text-black">Relatório de Entrevista - {area}</h1>
+                    <p className="text-lg font-bold mt-2">{formData.nome || formData.name || 'Candidato(a)'}</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Entrevista realizada em</label>
+                        <input
+                            type="date"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                            value={entrevista.data_entrevista || ''}
+                            onChange={(e) => handleEntrevistaChange('data_entrevista', e.target.value)}
+                            disabled={isViewMode}
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block print:text-gray-800 print:text-xs">
+                        Resumo do Currículo <span className="text-[9px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 lowercase tracking-normal font-bold">Gerado por IA</span>
+                    </label>
+                    <textarea
+                        className="w-full bg-purple-50/30 border border-purple-100 rounded-xl p-4 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all shadow-sm disabled:opacity-70 min-h-[100px] resize-y font-medium text-gray-700"
+                        value={formData.resumo_cv || ''}
+                        disabled={true}
+                        placeholder="Utilize o botão da IA na aba de Perfil para gerar este resumo."
+                    />
+                </div>
+
+                {area === 'Administrativa' && (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <SearchableSelect
+                                label="Entrevistadoras"
+                                placeholder="Selecione..."
+                                value={entrevista.entrevistadoras || ''}
+                                onChange={(val) => handleEntrevistaChange('entrevistadoras', val)}
+                                disabled={isViewMode}
+                                options={[
+                                    { id: 'Karina Reis Dos Prazeres', name: 'Karina Reis Dos Prazeres' },
+                                    { id: 'Tatiana Gonçalves Gomes', name: 'Tatiana Gonçalves Gomes' },
+                                    { id: 'Karina e Tatiana', name: 'Karina e Tatiana' }
+                                ]}
+                            />
+
+                            <SearchableSelect
+                                label="Cargo"
+                                placeholder="..."
+                                value={entrevista.cargo || formData.role || ''}
+                                onChange={(val) => handleEntrevistaChange('cargo', val)}
+                                disabled={isViewMode}
+                                options={[]} // O ideal seria passar as roles via props, mas deixaremos com texto aberto se falhar, ou usar formData.role
+                                allowCustom={true} // Permitir texto customizado ou assumir o Cargo pretendido
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6">
+                            <SearchableSelect
+                                label="Vaga"
+                                placeholder="Nome da vaga em aberto..."
+                                value={entrevista.vaga || ''}
+                                onChange={(val) => handleEntrevistaChange('vaga', val)}
+                                disabled={isViewMode}
+                                options={[]}
+                                allowCustom={true}
+                            />
+                        </div>
+
+                        {[
+                            { key: 'abertura_apresentacao', label: 'Abertura e Apresentação' },
+                            { key: 'experiencia_tecnica', label: 'Experiência Técnica e Áreas de Atuação' },
+                            { key: 'aderencia_atividades', label: 'Aderência às atividades administrativa e de mensageiro' },
+                            { key: 'conclusao', label: 'Conclusão' },
+                            { key: 'disponibilidade', label: 'Disponibilidade' }
+                        ].map(field => (
+                            <div key={field.key} className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block print:text-gray-800 print:text-xs">{field.label}</label>
+                                <textarea
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm min-h-[100px] resize-y font-medium text-gray-700 disabled:opacity-70"
+                                    value={entrevista[field.key] || ''}
+                                    onChange={(e) => handleEntrevistaChange(field.key, e.target.value)}
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                        ))}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Pretensão Salarial</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={entrevista.pretensao_salarial || ''}
+                                    onChange={(e) => handleEntrevistaChange('pretensao_salarial', e.target.value)}
+                                    placeholder="R$ 0,00"
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {area === 'Jurídica' && (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Indicação</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={formData.indicado_por || ''}
+                                    onChange={(e) => setFormData({ ...formData, indicado_por: e.target.value })}
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Disponibilidade para início</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={entrevista.disponibilidade_inicio || ''}
+                                    onChange={(e) => handleEntrevistaChange('disponibilidade_inicio', e.target.value)}
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Reside</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={entrevista.reside || ''}
+                                    onChange={(e) => handleEntrevistaChange('reside', e.target.value)}
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">MS Office</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={entrevista.ms_office || ''}
+                                    onChange={(e) => handleEntrevistaChange('ms_office', e.target.value)}
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Formação Acadêmica</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={entrevista.formacao_academica || ''}
+                                    onChange={(e) => handleEntrevistaChange('formacao_academica', e.target.value)}
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Horário de Estudo</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={entrevista.horario_estudo || ''}
+                                    onChange={(e) => handleEntrevistaChange('horario_estudo', e.target.value)}
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Melhor horário de estágio</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={entrevista.melhor_horario_estagio || ''}
+                                    onChange={(e) => handleEntrevistaChange('melhor_horario_estagio', e.target.value)}
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Inglês</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={entrevista.ingles || ''}
+                                    onChange={(e) => handleEntrevistaChange('ingles', e.target.value)}
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block print:text-gray-800 print:text-xs">Experiência profissional e pessoal</label>
+                            <textarea
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm min-h-[100px] resize-y font-medium text-gray-700 disabled:opacity-70"
+                                value={entrevista.experiencia_prof_pessoal || ''}
+                                onChange={(e) => handleEntrevistaChange('experiencia_prof_pessoal', e.target.value)}
+                                disabled={isViewMode}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Pretensão Salarial</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={entrevista.pretensao_salarial || ''}
+                                    onChange={(e) => handleEntrevistaChange('pretensao_salarial', e.target.value)}
+                                    placeholder="R$ 0,00"
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Campos em Comum (Pontos, Rec. Final) */}
+                <div className="pt-6 border-t border-gray-100 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block print:text-gray-800 print:text-xs text-green-600">Pontos Fortes</label>
+                            <textarea
+                                className="w-full bg-green-50/30 border border-green-100 rounded-xl p-4 text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all shadow-sm min-h-[100px] resize-y font-medium text-gray-700 disabled:opacity-70"
+                                value={entrevista.pontos_fortes || ''}
+                                onChange={(e) => handleEntrevistaChange('pontos_fortes', e.target.value)}
+                                disabled={isViewMode}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block print:text-gray-800 print:text-xs text-amber-600">Pontos a Desenvolver</label>
+                            <textarea
+                                className="w-full bg-amber-50/30 border border-amber-100 rounded-xl p-4 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-sm min-h-[100px] resize-y font-medium text-gray-700 disabled:opacity-70"
+                                value={entrevista.pontos_a_desenvolver || ''}
+                                onChange={(e) => handleEntrevistaChange('pontos_a_desenvolver', e.target.value)}
+                                disabled={isViewMode}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
+                        <SearchableSelect
+                            label="Recomendação Final"
+                            placeholder="Selecione..."
+                            value={entrevista.recomendacao_final || ''}
+                            onChange={(val) => handleEntrevistaChange('recomendacao_final', val)}
+                            disabled={isViewMode}
+                            options={[
+                                { id: 'Recomendado para próxima etapa', name: 'Recomendado para próxima etapa' },
+                                { id: 'Recomendado com ressalvas', name: 'Recomendado com ressalvas' },
+                                { id: 'Não recomendado', name: 'Não recomendado' }
+                            ]}
+                        />
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    )
+}

@@ -342,6 +342,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     { id: 'Documento de Identificação (RG/CNH)', name: 'Documento de Identificação (RG/CNH)' },
     { id: 'Outros', name: 'Outros' },
     { id: 'PIS/PASEP', name: 'PIS/PASEP' },
+    { id: 'Prova', name: 'Prova' },
     { id: 'Título de Eleitor', name: 'Título de Eleitor' }
   ]
 

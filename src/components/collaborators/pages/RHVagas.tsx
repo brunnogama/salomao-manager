@@ -15,7 +15,8 @@ import {
   User,
   Building2,
   Trash2,
-  Sparkles
+  Sparkles,
+  UserX
 } from 'lucide-react'
 import { isValid, addDays, getDay, isSameDay } from 'date-fns'
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
@@ -31,13 +32,14 @@ export function RHVagas() {
   const [candidatos, setCandidatos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'filtros' | 'ats'>('abertas')
+  const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'reprovados' | 'ats'>('abertas')
 
   // Filtros
   const [filterLider, setFilterLider] = useState('')
   const [filterPartner, setFilterPartner] = useState('')
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
+  const [filterArea, setFilterArea] = useState('')
 
   // Opções de Filtro
   const [liderOptions, setLiderOptions] = useState<{ value: string; label: string }[]>([])
@@ -300,8 +302,9 @@ export function RHVagas() {
     const matchPartner = filterPartner ? String(v.partner_id) === filterPartner : true
     const matchLocal = filterLocal ? String(v.location_id) === filterLocal : true
     const matchCargo = filterCargo ? String(v.role_id) === filterCargo : true
+    const matchArea = filterArea ? String(v.area) === filterArea : true
 
-    return matchSearch && matchLider && matchPartner && matchLocal && matchCargo
+    return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchArea
   })
 
   const filteredCandidatos = candidatos.filter(c => {
@@ -312,8 +315,9 @@ export function RHVagas() {
     // Usually 'role' and 'local' on candidato are string IDs in the form, but let's compare as strings.
     const matchLocal = filterLocal ? String(c.local) === filterLocal : true
     const matchCargo = filterCargo ? String(c.role) === filterCargo : true
+    const matchArea = filterArea ? String(c.area) === filterArea : true
 
-    return matchSearch && matchLocal && matchCargo
+    return matchSearch && matchLocal && matchCargo && matchArea
   })
 
   const getFeriados = (year: number): Date[] => {
@@ -480,10 +484,10 @@ export function RHVagas() {
               <CheckCircle2 className="h-4 w-4" /> Vagas Fechadas
             </button>
             <button
-              onClick={() => setActiveTab('filtros')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'filtros' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('reprovados')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'reprovados' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-red-700'}`}
             >
-              <Filter className="h-4 w-4" /> Filtros
+              <UserX className="h-4 w-4" /> Reprovados
             </button>
             <button
               onClick={() => setActiveTab('ats')}
@@ -505,7 +509,7 @@ export function RHVagas() {
         </div>
       </div>
 
-      {activeTab !== 'filtros' && activeTab !== 'ats' && (
+      {activeTab !== 'reprovados' && activeTab !== 'ats' && (
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-none">
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
 
@@ -595,25 +599,22 @@ export function RHVagas() {
                 options={roleOptions}
                 placeholder="Cargo"
               />
+              <FilterSelect
+                icon={Briefcase}
+                value={filterArea}
+                onChange={setFilterArea}
+                options={[
+                  { value: 'Administrativa', label: 'Administrativa' },
+                  { value: 'Jurídica', label: 'Jurídica' }
+                ]}
+                placeholder="Área"
+              />
             </div>
           </div>
         </div>
       )}
 
-      {activeTab === 'filtros' && (
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-gray-100 pb-4 mb-6 gap-4 shrink-0">
-            <div>
-              <h2 className="text-xl font-black text-[#1e3a8a] tracking-tight">Filtros Avançados</h2>
-              <p className="text-xs font-semibold text-gray-500 mt-1">Ajuste os filtros para refinar sua busca</p>
-            </div>
-          </div>
-          {/* Conteúdo dos filtros avançados aqui, se houver */}
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-            <p className="text-gray-500 italic">Em desenvolvimento...</p>
-          </div>
-        </div>
-      )}
+
 
       {/* ATS MATCH TAB */}
       {activeTab === 'ats' && (
@@ -893,21 +894,21 @@ export function RHVagas() {
             </p>
           </div>
         </div>
-      ) : activeTab === 'talentos' && filteredCandidatos.length === 0 ? (
+      ) : (activeTab === 'talentos' || activeTab === 'reprovados') && (activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado')).length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-16 flex flex-col items-center justify-center text-center">
             <div className="p-4 rounded-full bg-blue-50 mb-4">
               <Users className="h-12 w-12 text-[#1e3a8a] opacity-20" />
             </div>
-            <h2 className="text-xl font-black text-[#0a192f]">Nenhum candidato encontrado</h2>
+            <h2 className="text-xl font-black text-[#0a192f]">Nenhum candidato {activeTab === 'reprovados' ? 'reprovado ' : ''}encontrado</h2>
             <p className="text-gray-500 max-w-sm mt-2">
-              {searchTerm ? 'Tente ajustar os termos da sua busca.' : 'Clique no botão acima para adicionar novo candidato.'}
+              {searchTerm ? 'Tente ajustar os termos da sua busca.' : 'Nenhum registro para exibir nesta aba.'}
             </p>
           </div>
         </div>
-      ) : activeTab === 'ats' || activeTab === 'filtros' ? null : (
+      ) : activeTab === 'ats' ? null : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-y-auto overflow-x-auto min-h-[400px]">
-          {activeTab === 'talentos' ? (
+          {activeTab === 'talentos' || activeTab === 'reprovados' ? (
             <table className="w-full min-w-max text-left border-collapse">
               <thead className="bg-[#1e3a8a]">
                 <tr>
@@ -921,7 +922,7 @@ export function RHVagas() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredCandidatos.map((c: any) => {
+                {(activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado')).map((c: any) => {
                   const hasInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
                   const interviewDates = c.candidato_historico
                     ?.filter((h: any) => h.tipo === 'Entrevista')
@@ -943,7 +944,7 @@ export function RHVagas() {
                   const localName = locationOptions.find(l => String(l.value) === String(c.local))?.label || c.local || '-';
 
                   return (
-                    <tr key={c.id} onClick={() => { setSelectedCandidatoId(c.id); setIsCandidatoModalOpen(true); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
+                    <tr key={c.id} onClick={() => { setSelectedCandidatoId(c.id); setIsCandidatoModalOpen(true); }} className={`hover:bg-blue-50/50 cursor-pointer transition-colors group ${activeTab === 'reprovados' ? 'bg-red-50/30' : ''}`}>
                       <td className="px-5 py-4 whitespace-nowrap text-left">
                         <span className="inline-flex items-center justify-center px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px] font-black tracking-widest uppercase">{c.candidato_id_text || 'Sem ID'}</span>
                       </td>
@@ -951,6 +952,9 @@ export function RHVagas() {
                         <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
                         {(c.email || c.telefone) && (
                           <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
+                        )}
+                        {activeTab === 'reprovados' && c.motivo_reprovacao && (
+                          <p className="text-[10px] text-red-600 font-bold mt-1 bg-red-100 p-1 rounded inline-block">Motivo: {c.motivo_reprovacao}</p>
                         )}
                         {c.perfil && (
                           <div className="flex flex-wrap gap-1 mt-1.5">

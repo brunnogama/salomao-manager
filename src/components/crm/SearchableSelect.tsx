@@ -28,6 +28,7 @@ interface SearchableSelectProps {
   dropdownWidth?: string | number; // Largura personalizada do dropdown
   align?: 'left' | 'right'; // Alinhamento do dropdown
   icon?: React.ReactNode; // Ícone opcional no trigger
+  allowCustom?: boolean; // Permite digitação livre caso a opção não exista
 }
 
 export function SearchableSelect({
@@ -45,7 +46,8 @@ export function SearchableSelect({
   disableFormatting = false,
   dropdownWidth,
   align = 'left',
-  icon
+  icon,
+  allowCustom = false
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -166,6 +168,13 @@ export function SearchableSelect({
             className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:border-[#1e3a8a] outline-none transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (allowCustom && e.key === 'Enter' && searchTerm.trim() !== '') {
+                onChange(searchTerm.trim());
+                setIsOpen(false);
+                setSearchTerm('');
+              }
+            }}
             onClick={(e) => e.stopPropagation()}
             autoFocus
           />
@@ -205,7 +214,22 @@ export function SearchableSelect({
           </div>
         ) : (
           <div className="py-8 text-center">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nenhum resultado</p>
+            {allowCustom && searchTerm.trim() ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(searchTerm.trim());
+                  setIsOpen(false);
+                  setSearchTerm('');
+                }}
+                className="w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all text-[#1e3a8a] bg-blue-50 hover:bg-blue-100"
+              >
+                Usar "{searchTerm}"
+              </button>
+            ) : (
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nenhum resultado</p>
+            )}
           </div>
         )}
       </div>

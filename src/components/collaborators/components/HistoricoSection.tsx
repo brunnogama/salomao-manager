@@ -3,6 +3,7 @@ import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcas
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { Collaborator } from '../../../types/controladoria'
 import { supabase } from '../../../lib/supabase'
+import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
 
 interface HistoricoSectionProps {
     formData: Partial<Collaborator>
@@ -44,6 +45,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
     // --- RECRUTAMENTO STATE ---
     const [recruitingHistory, setRecruitingHistory] = useState<any[]>([])
+    const [entrevistaCandidato, setEntrevistaCandidato] = useState<any>(null)
     const [loadingRecruiting, setLoadingRecruiting] = useState(false)
 
     // Atualiza obsText se formData mudar
@@ -79,7 +81,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
         setLoadingRecruiting(true)
         try {
             // First, find the candidato by email or name
-            let query = supabase.from('candidatos').select('id, nome, email')
+            let query = supabase.from('candidatos').select('id, nome, email, entrevista_dados, area, indicado_por, role')
 
             if (formData.candidato_id) {
                 query = query.eq('id', formData.candidato_id)
@@ -97,6 +99,15 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
             if (candidatoData && candidatoData.length > 0) {
                 const candidatoId = candidatoData[0].id
+                const candidatoRecord = candidatoData[0]
+
+                setEntrevistaCandidato({
+                    nome: candidatoRecord.nome,
+                    area: candidatoRecord.area,
+                    indicado_por: candidatoRecord.indicado_por,
+                    role: candidatoRecord.role,
+                    entrevista_dados: candidatoRecord.entrevista_dados || {}
+                })
 
                 // Now fetch events (interviews) related to this candidato
                 // Buscar anotações e histórico do tipo 'Observação' ou antigos sem data de evento
@@ -458,69 +469,89 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                             <div className="flex justify-center items-center py-12">
                                 <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
                             </div>
-                        ) : recruitingHistory.length > 0 ? (
-                            <div className="space-y-4">
-                                {recruitingHistory.map((evento) => {
-                                    // Format data string
-                                    let dateText = evento.created_at;
-                                    if (evento.created_at && evento.created_at.includes('T')) {
-                                        const dateObj = new Date(evento.created_at);
-                                        const day = String(dateObj.getDate()).padStart(2, '0');
-                                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                                        const year = dateObj.getFullYear();
-                                        const hours = String(dateObj.getHours()).padStart(2, '0');
-                                        const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-                                        dateText = `${day}/${month}/${year} às ${hours}:${minutes}`;
-                                    }
-
-                                    const isEntrevista = evento.tipo === 'Entrevista';
-
-                                    return (
-                                        <div key={evento.id} className="p-5 border border-emerald-100 rounded-xl bg-emerald-50/30 space-y-3 relative overlow-hidden">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <span className="inline-block px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase rounded mb-2">
-                                                        {evento.tipo}
-                                                    </span>
-                                                    <h5 className="text-[#0a192f] font-bold text-sm">Registro de {evento.tipo}</h5>
-                                                </div>
-                                                <p className="text-xs text-gray-500 font-medium">
-                                                    Registrado em <span className="font-bold text-emerald-600">{dateText}</span>
-                                                </p>
-                                            </div>
-
-                                            {isEntrevista && (
-                                                <div className="grid grid-cols-2 gap-4 text-xs mt-3 bg-white p-3 rounded border border-emerald-50">
-                                                    <div>
-                                                        <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Data Agendada</p>
-                                                        <p className="font-medium text-gray-700">
-                                                            {evento.entrevista_data ? evento.entrevista_data.split('-').reverse().join('/') : 'Não informada'}
-                                                            {evento.entrevista_hora ? ` às ${evento.entrevista_hora}` : ''}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Status / Presença</p>
-                                                        <p className={`font-bold ${evento.compareceu === true ? 'text-green-600' : evento.compareceu === false ? 'text-red-600' : 'text-amber-500'}`}>
-                                                            {evento.compareceu === true ? 'Compareceu' : evento.compareceu === false ? 'Faltou' : 'Pendente / Agendada'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <div className="mt-4 p-4 bg-white rounded-lg border border-emerald-100">
-                                                <h6 className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider mb-2">Detalhes / Observações</h6>
-                                                <p className="text-sm text-gray-600 whitespace-pre-wrap">{evento.descricao || 'Nenhuma observação registrada.'}</p>
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
                         ) : (
-                            <div className="text-center py-12">
-                                <Users className="w-12 h-12 text-gray-300 mx-auto mb-3 opacity-50" />
-                                <p className="text-sm font-medium text-gray-500">Nenhum registro de entrevista encontrado para este colaborador.</p>
-                                <p className="text-xs text-gray-400 mt-1">Isso ocorre quando o e-mail não corresponde ao cadastro do candidato.</p>
-                            </div>
+                            <>
+                                {entrevistaCandidato && entrevistaCandidato.area && (
+                                    <div className="mb-8 border-b-2 border-emerald-100 pb-8">
+                                        <h5 className="font-black text-[#0a192f] mb-4 uppercase tracking-widest text-xs">Ficha de Entrevista do Candidato</h5>
+                                        <div className="bg-gray-50/50 rounded-2xl border border-gray-100">
+                                            <CandidatoEntrevistaSection
+                                                formData={entrevistaCandidato}
+                                                setFormData={() => { }}
+                                                isViewMode={true}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {recruitingHistory.length > 0 ? (
+                                    <div>
+                                        <h5 className="font-black text-[#0a192f] mb-4 uppercase tracking-widest text-xs">Linha do Tempo de Processos Seletivos</h5>
+                                        <div className="space-y-4">
+                                            {recruitingHistory.map((evento) => {
+                                                // Format data string
+                                                let dateText = evento.created_at;
+                                                if (evento.created_at && evento.created_at.includes('T')) {
+                                                    const dateObj = new Date(evento.created_at);
+                                                    const day = String(dateObj.getDate()).padStart(2, '0');
+                                                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                                    const year = dateObj.getFullYear();
+                                                    const hours = String(dateObj.getHours()).padStart(2, '0');
+                                                    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                                                    dateText = `${day}/${month}/${year} às ${hours}:${minutes}`;
+                                                }
+
+                                                const isEntrevista = evento.tipo === 'Entrevista';
+
+                                                return (
+                                                    <div key={evento.id} className="p-5 border border-emerald-100 rounded-xl bg-emerald-50/30 space-y-3 relative overlow-hidden">
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <span className="inline-block px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase rounded mb-2">
+                                                                    {evento.tipo}
+                                                                </span>
+                                                                <h5 className="text-[#0a192f] font-bold text-sm">Registro de {evento.tipo}</h5>
+                                                            </div>
+                                                            <p className="text-xs text-gray-500 font-medium">
+                                                                Registrado em <span className="font-bold text-emerald-600">{dateText}</span>
+                                                            </p>
+                                                        </div>
+
+                                                        {isEntrevista && (
+                                                            <div className="grid grid-cols-2 gap-4 text-xs mt-3 bg-white p-3 rounded border border-emerald-50">
+                                                                <div>
+                                                                    <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Data Agendada</p>
+                                                                    <p className="font-medium text-gray-700">
+                                                                        {evento.entrevista_data ? evento.entrevista_data.split('-').reverse().join('/') : 'Não informada'}
+                                                                        {evento.entrevista_hora ? ` às ${evento.entrevista_hora}` : ''}
+                                                                    </p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Status / Presença</p>
+                                                                    <p className={`font-bold ${evento.compareceu === true ? 'text-green-600' : evento.compareceu === false ? 'text-red-600' : 'text-amber-500'}`}>
+                                                                        {evento.compareceu === true ? 'Compareceu' : evento.compareceu === false ? 'Faltou' : 'Pendente / Agendada'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="mt-4 p-4 bg-white rounded-lg border border-emerald-100">
+                                                            <h6 className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider mb-2">Detalhes / Observações</h6>
+                                                            <p className="text-sm text-gray-600 whitespace-pre-wrap">{evento.descricao || 'Nenhuma observação registrada.'}</p>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <Users className="w-12 h-12 text-gray-300 mx-auto mb-3 opacity-50" />
+                                        <p className="text-sm font-medium text-gray-500">Nenhum evento de recrutamento encontrado para este colaborador.</p>
+                                        <p className="text-xs text-gray-400 mt-1">Isso ocorre quando o e-mail não corresponde ao cadastro do candidato.</p>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 )}
