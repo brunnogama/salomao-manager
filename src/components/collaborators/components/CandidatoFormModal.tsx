@@ -821,3 +821,4 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         </CollaboratorModalLayout>
     )
 }
+
