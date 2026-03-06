@@ -12,6 +12,7 @@ import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagI
 import { GEDSection } from './GEDSection'
 import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
 import { EnderecoSection } from './EnderecoSection'
+import { SearchableSelect } from '../../crm/SearchableSelect'
 import {
     maskCPF,
     maskDate,
@@ -563,8 +564,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         { id: 7, label: 'GED', icon: Files },
     ]
 
-    const handleStatusSelecaoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value;
+    const handleStatusSelecaoChange = (value: string) => {
         setFormData(prev => ({ ...prev, status_selecao: value }));
         if (value === 'Reprovado' && !formData.motivo_reprovacao) {
             // Se precisar abrir modal de motivo específico, podemos definir alertConfig ou similar
@@ -590,22 +590,24 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             currentSteps={steps}
             footer={
                 <div className="flex items-center gap-4">
-                    <div className="flex flex-col border-r border-[#1e3a8a]/20 pr-4">
+                    <div className="flex flex-col border-r border-[#1e3a8a]/20 pr-4 sm:w-[220px]">
                         <label className="text-[9px] font-black text-blue-900 uppercase tracking-widest mb-1 text-right">Status do Processo</label>
-                        <select
+                        <SearchableSelect
                             value={formData.status_selecao || 'Aberto'}
                             onChange={handleStatusSelecaoChange}
-                            className={`text-xs font-bold uppercase tracking-wider py-1.5 px-3 rounded-lg border-2 outline-none cursor-pointer ${formData.status_selecao === 'Aprovado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                formData.status_selecao === 'Reprovado' ? 'bg-red-50 text-red-700 border-red-200' :
-                                    formData.status_selecao === 'Reaproveitamento' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                        'bg-blue-50 text-[#1e3a8a] border-blue-200 hover:bg-blue-100 transition-colors'
+                            options={[
+                                { id: 'Aberto', name: 'Aberto' },
+                                { id: 'Aprovado', name: 'Aprovado' },
+                                { id: 'Reprovado', name: 'Reprovado' },
+                                { id: 'Reaproveitamento', name: 'Reaproveitamento' }
+                            ]}
+                            className={`text-[10px] font-bold uppercase tracking-wider !py-1.5 !px-3 rounded-xl border-2 ${formData.status_selecao === 'Aprovado' ? '!bg-emerald-50 !text-emerald-700 !border-emerald-200' :
+                                formData.status_selecao === 'Reprovado' ? '!bg-red-50 !text-red-700 !border-red-200' :
+                                    formData.status_selecao === 'Reaproveitamento' ? '!bg-amber-50 !text-amber-700 !border-amber-200' :
+                                        '!bg-blue-50 !text-[#1e3a8a] !border-blue-200 hover:!bg-blue-100 transition-colors'
                                 }`}
-                        >
-                            <option value="Aberto">Aberto</option>
-                            <option value="Aprovado">Aprovado</option>
-                            <option value="Reprovado">Reprovado</option>
-                            <option value="Reaproveitamento">Reaproveitamento</option>
-                        </select>
+                            uppercase={true}
+                        />
                     </div>
                     <button
                         onClick={handleSave}

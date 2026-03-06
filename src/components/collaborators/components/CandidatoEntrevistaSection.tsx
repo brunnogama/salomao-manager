@@ -1,6 +1,8 @@
-import React from 'react'
+import { useState, useEffect } from 'react'
 import { Printer } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
+import { ManagedSelect } from '../../crm/ManagedSelect'
+import { supabase } from '../../../lib/supabase'
 
 interface CandidatoEntrevistaSectionProps {
     formData: any
@@ -13,6 +15,25 @@ export function CandidatoEntrevistaSection({
     setFormData,
     isViewMode = false
 }: CandidatoEntrevistaSectionProps) {
+    const [vagasAbertas, setVagasAbertas] = useState<any[]>([])
+
+    useEffect(() => {
+        async function fetchVagas() {
+            const { data } = await supabase
+                .from('vagas')
+                .select('id, vaga_id_text, role:roles(name)')
+                .in('status', ['Aberta'])
+
+            if (data) {
+                setVagasAbertas(data.map(v => ({
+                    id: v.id,
+                    name: `${v.vaga_id_text} (${v.role ? (v.role as any).name : 'Sem Cargo'})`
+                })))
+            }
+        }
+        fetchVagas()
+    }, [])
+
     const area = formData.area || ''
 
     // Dados da entrevista ficam salvos dentro de formData.entrevista_dados (jsonb)
@@ -134,14 +155,13 @@ export function CandidatoEntrevistaSection({
                                 ]}
                             />
 
-                            <SearchableSelect
+                            <ManagedSelect
                                 label="Cargo"
                                 placeholder="..."
                                 value={entrevista.cargo || formData.role || ''}
                                 onChange={(val) => handleEntrevistaChange('cargo', val)}
                                 disabled={isViewMode}
-                                options={[]} // O ideal seria passar as roles via props, mas deixaremos com texto aberto se falhar, ou usar formData.role
-                                allowCustom={true} // Permitir texto customizado ou assumir o Cargo pretendido
+                                tableName="roles"
                             />
                         </div>
 
@@ -152,7 +172,7 @@ export function CandidatoEntrevistaSection({
                                 value={entrevista.vaga || ''}
                                 onChange={(val) => handleEntrevistaChange('vaga', val)}
                                 disabled={isViewMode}
-                                options={[]}
+                                options={vagasAbertas}
                                 allowCustom={true}
                             />
                         </div>
