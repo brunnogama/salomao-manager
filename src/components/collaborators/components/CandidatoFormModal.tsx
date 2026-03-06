@@ -228,7 +228,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             }
 
             if (data?.data) {
-                const { resumoProfissional, perfilTags, sugestaoCargo, atividades_academicas, idiomas } = data.data;
+                const { resumoProfissional, perfilTags, sugestaoCargo, atividades_academicas, idiomas, email, telefone } = data.data;
 
                 // Merge no formData
                 setFormData((prev: any) => {
@@ -237,6 +237,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
                     return {
                         ...prev,
+                        email_pessoal: email || prev.email_pessoal,
+                        phone: telefone || prev.phone,
                         resumo_cv: resumoProfissional || prev.resumo_cv,
                         atividades_academicas: atividades_academicas || prev.atividades_academicas,
                         idiomas: idiomas || prev.idiomas,
@@ -245,7 +247,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     };
                 });
 
-                showAlert('Sucesso', 'Currículo analisado! O resumo e as tags foram preenchidos (veja a aba "Dados Profissionais" para sugestão de cargo se ele estava vazio).', 'success');
+                showAlert('Sucesso', 'Currículo analisado! O resumo e as tags foram preenchidos (veja a aba "Dados Pessoais" e "Escolaridade" para informações complementares).', 'success');
             } else {
                 throw new Error("Resposta inválida da Inteligência Artificial.");
             }
