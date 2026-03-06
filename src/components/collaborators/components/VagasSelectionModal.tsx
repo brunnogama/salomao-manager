@@ -14,6 +14,7 @@ interface VagasSelectionModalProps {
 export function VagasSelectionModal({ isOpen, onClose, onSelect }: VagasSelectionModalProps) {
     const [step, setStep] = useState<'tipo' | 'metodo' | 'upload'>('tipo')
     const [loading, setLoading] = useState(false)
+    const [progress, setProgress] = useState(0)
     const [alertMsg, setAlertMsg] = useState('')
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -46,6 +47,15 @@ export function VagasSelectionModal({ isOpen, onClose, onSelect }: VagasSelectio
 
         setAlertMsg('')
         setLoading(true)
+        setProgress(0)
+
+        // Simulate progress bar while API call runs
+        const progressInterval = setInterval(() => {
+            setProgress(prev => {
+                if (prev >= 90) return prev;
+                return prev + Math.floor(Math.random() * 15) + 5;
+            })
+        }, 800)
 
         try {
             const fileExt = file.name.split('.').pop()
@@ -63,15 +73,21 @@ export function VagasSelectionModal({ isOpen, onClose, onSelect }: VagasSelectio
             if (data?.error) throw new Error(data.error)
 
             if (data?.data) {
-                onSelect({ type: 'candidato_ia', data: data.data, file })
-                setStep('tipo')
+                clearInterval(progressInterval);
+                setProgress(100);
+                setTimeout(() => {
+                    onSelect({ type: 'candidato_ia', data: data.data, file })
+                    setStep('tipo')
+                    setLoading(false)
+                }, 500);
             } else {
                 throw new Error('Resposta inválida da Inteligência Artificial.')
             }
         } catch (err: any) {
+            clearInterval(progressInterval);
             setAlertMsg(err.message)
-        } finally {
             setLoading(false)
+        } finally {
             if (fileInputRef.current) fileInputRef.current.value = ''
         }
     }
@@ -166,7 +182,7 @@ export function VagasSelectionModal({ isOpen, onClose, onSelect }: VagasSelectio
                     {step === 'upload' && (
                         <div className="flex flex-col items-center justify-center animate-in slide-in-from-right-4 duration-300 text-center">
                             {loading ? (
-                                <div className="py-8 flex flex-col items-center focus:outline-none">
+                                <div className="py-8 w-full flex flex-col items-center focus:outline-none">
                                     <div className="relative mb-6">
                                         <div className="absolute inset-0 bg-indigo-500 rounded-full animate-ping opacity-20"></div>
                                         <div className="h-16 w-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-indigo-200 animate-bounce">
@@ -174,9 +190,19 @@ export function VagasSelectionModal({ isOpen, onClose, onSelect }: VagasSelectio
                                         </div>
                                     </div>
                                     <h4 className="text-lg font-black text-indigo-900 uppercase tracking-wide mb-1 flex items-center gap-2">
-                                        Lendo Documento <Loader2 className="w-4 h-4 animate-spin" />
+                                        Lendo Documento <Loader2 className="w-4 h-4 animate-spin outline-none" />
                                     </h4>
-                                    <p className="text-xs text-indigo-600/70 font-medium max-w-[250px]">Aguarde enquanto nossa inteligência artificial extrai o perfil do candidato...</p>
+                                    <p className="text-[10px] text-indigo-600/70 font-medium mb-4 max-w-[250px]">Aguarde enquanto nossa inteligência artificial processa o currículo...</p>
+
+                                    <div className="w-full max-w-[250px] bg-indigo-100 rounded-full h-2.5 overflow-hidden shadow-inner">
+                                        <div
+                                            className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-out flex items-center justify-end"
+                                            style={{ width: `${progress}%` }}
+                                        >
+                                            <div className="w-2 h-2 bg-white/40 rounded-full mr-0.5 shadow-[0_0_4px_rgba(255,255,255,0.8)]"></div>
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] font-black text-indigo-900 mt-2">{Math.min(progress, 100)}%</span>
                                 </div>
                             ) : (
                                 <div className="w-full">

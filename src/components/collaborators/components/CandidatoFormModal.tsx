@@ -129,11 +129,17 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     }]);
                 }
                 setGedDocs([]);
+
+                // Show AI review warning
+                setTimeout(() => {
+                    showAlert('Atenção', 'Os dados foram preenchidos pela Inteligência Artificial.\n\nPor favor, revise atentamente as informações em todas as abas antes de salvar o cadastro definitivo.', 'warning');
+                }, 500);
             } else {
                 setFormData({})
                 setGedDocs([])
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, candidatoId, initialData, initialFile])
 
     const fetchTags = async () => {
