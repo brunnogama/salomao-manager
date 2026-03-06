@@ -225,16 +225,18 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             }
 
             if (data?.data) {
-                const { resumoProfissional, perfilTags, sugestaoCargo } = data.data;
+                const { resumoProfissional, perfilTags, sugestaoCargo, atividades_academicas, idiomas } = data.data;
 
                 // Merge no formData
-                setFormData(prev => {
+                setFormData((prev: any) => {
                     const currentTags = (prev.perfil || '').split('\n').filter(Boolean);
                     const newTagsArray = [...new Set([...currentTags, ...(perfilTags || [])])];
 
                     return {
                         ...prev,
                         resumo_cv: resumoProfissional || prev.resumo_cv,
+                        atividades_academicas: atividades_academicas || prev.atividades_academicas,
+                        idiomas: idiomas || prev.idiomas,
                         perfil: newTagsArray.join('\n'),
                         role: prev.role || sugestaoCargo // Só sugere cargo se estiver sem
                     };
@@ -328,7 +330,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             const allowedFields = [
                 'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'resumo_cv', 'role', 'local', 'area', 'contract_type',
                 'gender', 'rg', 'cpf', 'birthday', 'civil_status', 'email_pessoal', 'linkedin_url',
-                'has_children', 'children_count', 'children_data'
+                'has_children', 'children_count', 'children_data', 'atividades_academicas', 'idiomas'
             ];
 
             const cleanPayload: any = {};

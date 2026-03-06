@@ -1,5 +1,5 @@
 import React from 'react'
-import { Briefcase, Plus, Trash2, Loader2, Edit2, Check } from 'lucide-react'
+import { Briefcase, Plus, Trash2, Loader2, Edit2, Check, BookOpen } from 'lucide-react'
 import { ManagedSelect } from '../../crm/ManagedSelect'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { supabase } from '../../../lib/supabase'
@@ -270,6 +270,39 @@ export function DadosProfissionaisCandidato({
                             value={formData.local || ''}
                             onChange={v => setFormData({ ...formData, local: v })}
                             tableName="locations"
+                            disabled={isViewMode}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* QUALIFICAÇÕES E IDIOMAS */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative group">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 rounded-l-2xl"></div>
+
+                <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6 flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-emerald-500" />
+                    Qualificações e Idiomas
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Idiomas *</label>
+                        <textarea
+                            className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 block p-4 outline-none transition-all resize-y shadow-sm font-medium min-h-[100px]"
+                            value={formData.idiomas || ''}
+                            onChange={(e) => setFormData({ ...formData, idiomas: e.target.value })}
+                            placeholder="Ex: Inglês Avançado, Espanhol Intermediário..."
+                            disabled={isViewMode}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Atividades Acadêmicas *</label>
+                        <textarea
+                            className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 block p-4 outline-none transition-all resize-y shadow-sm font-medium min-h-[100px]"
+                            value={formData.atividades_academicas || ''}
+                            onChange={(e) => setFormData({ ...formData, atividades_academicas: e.target.value })}
+                            placeholder="Ex: CA de Direito, Empresa Júnior, Grupo de Pesquisa..."
                             disabled={isViewMode}
                         />
                     </div>

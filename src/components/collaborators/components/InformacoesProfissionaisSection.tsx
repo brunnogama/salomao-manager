@@ -137,6 +137,23 @@ export function InformacoesProfissionaisSection({
           </div>
         )}
       </div>
+
+      {/* Idiomas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+        <div>
+          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+            Idiomas
+          </label>
+          <textarea
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none transition-all resize-y min-h-[80px] font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            value={formData.idiomas || ''}
+            onChange={e => setFormData({ ...formData, idiomas: e.target.value })}
+            placeholder="Ex: Inglês (Fluente), Espanhol (Intermediário)..."
+            disabled={isViewMode}
+            readOnly={isViewMode}
+          />
+        </div>
+      </div>
     </section>
   )
 }

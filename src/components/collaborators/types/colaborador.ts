@@ -44,6 +44,9 @@ export interface Colaborador {
     validade?: string;
   }[];
 
+  atividades_academicas?: string;
+  idiomas?: string;
+
   // Outros
   photo_url?: string
   created_at?: string

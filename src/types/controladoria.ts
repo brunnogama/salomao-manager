@@ -132,6 +132,8 @@ export interface Collaborator {
   motivo_desligamento?: string;
   matricula_esocial?: string;
   observacoes?: string;
+  atividades_academicas?: string;
+  idiomas?: string;
   oab_emissao?: string;
 
   // Dados Bancários
@@ -464,6 +466,8 @@ export interface Candidato {
   telefone?: string;
   linkedin?: string;
   curriculo_url?: string;
+  atividades_academicas?: string;
+  idiomas?: string;
   created_at?: string;
 }
 

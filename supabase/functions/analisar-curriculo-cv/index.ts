@@ -110,6 +110,8 @@ Por favor, analise o currículo anexo e retorne EXATAMENTE UM JSON válido segui
   "resumoProfissional": "Resumo em 1 ou no máximo 2 parágrafos potentes relatando o quem é o profissional, histórico, qualificações e seniority.",
   "sugestaoCargo": "Um nome curto de um cargo focado na experiência detectada.",
   "perfilTags": ["Habilidade 1", "Habilidade 2", "Tecnologia", "Ferramenta", "Soft Skill 1"],
+  "atividades_academicas": "Extraia informações sobre atividades acadêmicas relevantes, publicações, monitorias, extensões universitárias, ligas, etc. Se não houver, null.",
+  "idiomas": "Extraia os idiomas listados e seus respectivos níveis de proficiência (ex: Inglês Fluente, Espanhol Intermediário). Se não houver, null.",
   "experiencias": [
     {
        "empresa": "Nome da empresa onde trabalhou",
