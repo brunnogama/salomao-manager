@@ -716,8 +716,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
       // Robust cleaning of the payload
       const payload: any = {};
       Object.entries(dataToSave).forEach(([key, value]) => {
-        // Skip metadata, joined objects, and photo fields (handled separately)
-        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs', 'oab_numero', 'oab_uf', 'oab_tipo', 'oab_emissao', 'original_role', 'role_change_date'].includes(key)) return;
+        // Skip metadata, joined objects, photo fields, and independent sections (Perfil manages its own data)
+        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs', 'oab_numero', 'oab_uf', 'oab_tipo', 'oab_emissao', 'original_role', 'role_change_date', 'perfil', 'competencias', 'resumo_cv'].includes(key)) return;
         if (value !== null && typeof value === 'object' && !Array.isArray(value)) return;
 
         // Map empty strings to null for better DB consistency
