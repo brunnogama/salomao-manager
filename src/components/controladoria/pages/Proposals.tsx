@@ -67,6 +67,7 @@ export function Proposals() {
   // Modal State (for after generation)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [caseSaved, setCaseSaved] = useState(false);
+  const caseSavedRef = useRef(false);
   const [contractFormData, setContractFormData] = useState<Contract>({} as Contract);
   const [processes, setProcesses] = useState<ContractProcess[]>([]);
   const [currentProcess, setCurrentProcess] = useState<ContractProcess>({ process_number: '' });
@@ -675,6 +676,7 @@ export function Proposals() {
       setProcesses([]);
       setTimelineData([]);
       setCaseSaved(false);
+      caseSavedRef.current = false;
       setIsModalOpen(true);
 
     } catch (error: any) {
@@ -960,7 +962,7 @@ export function Proposals() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const handleCloseModalAttempt = () => {
-    if (!caseSaved) {
+    if (!caseSavedRef.current) {
       setShowCancelConfirm(true);
     } else {
       setIsModalOpen(false);
@@ -969,6 +971,7 @@ export function Proposals() {
 
   const handleOnSave = () => {
     setCaseSaved(true);
+    caseSavedRef.current = true;
     setIsModalOpen(false);
     setShowCancelConfirm(false);
   };
