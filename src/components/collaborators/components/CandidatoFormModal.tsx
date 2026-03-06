@@ -27,7 +27,18 @@ interface CandidatoFormModalProps {
 }
 
 export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile }: CandidatoFormModalProps) {
-    useCloseOnEscape(isOpen, onClose)
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
+    const handleRequestClose = () => {
+        setShowCancelConfirm(true)
+    }
+
+    const confirmClose = () => {
+        setShowCancelConfirm(false)
+        onClose()
+    }
+
+    useCloseOnEscape(isOpen, handleRequestClose)
 
     const [activeTab, setActiveTab] = useState(1)
     const [loading, setLoading] = useState(false)
@@ -96,9 +107,9 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         temp_id: Math.random().toString(36).substring(7),
                         empresa: e.empresa || '',
                         cargo: e.cargo || '',
-                        periodo_inicio: e.inicio || '',
-                        periodo_fim: e.fim || '',
-                        descricao: e.descricao || ''
+                        data_inicio: e.inicio || '',
+                        data_fim: e.fim || '',
+                        perfil: e.descricao || ''
                     }));
                     setPendingExperiencias(mappedExp);
                 }
@@ -496,7 +507,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     return (
         <CollaboratorModalLayout
             title={formData.nome || 'Novo Candidato'}
-            onClose={onClose}
+            onClose={handleRequestClose}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isEditMode={true}
@@ -512,7 +523,32 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             }
         >
             {activeTab === 1 && (
-                <div className="space-y-6">
+                <div className={`space-y-6 ${initialData && !candidatoId ? 'ai-highlight' : ''}`}>
+                    {initialData && !candidatoId && (
+                        <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl mb-2 flex items-start gap-4 shadow-sm relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 blur-sm scale-150 pointer-events-none group-hover:rotate-12 transition-transform duration-700">
+                                <Sparkles className="w-32 h-32 text-indigo-500" />
+                            </div>
+                            <div className="bg-white p-2.5 rounded-xl shadow-sm relative z-10 shrink-0">
+                                <Bot className="w-6 h-6 text-indigo-600" />
+                            </div>
+                            <div className="relative z-10 w-full">
+                                <strong className="block text-sm font-black text-indigo-900 uppercase tracking-widest mb-1">Preenchimento Automático por IA</strong>
+                                <p className="text-xs font-medium text-indigo-700/80 leading-relaxed">
+                                    Os dados abaixo foram extraídos do currículo. <strong className="text-indigo-900">Revise os campos</strong> preenchidos e altere o que for necessário.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <style>{`
+                        .ai-highlight input:not([value=""]), 
+                        .ai-highlight input[value]:not([value=""]) {
+                            border-color: #c7d2fe !important;
+                            background-color: #f8fafc !important;
+                            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
+                        }
+                    `}</style>
                     <DadosPessoaisSection
                         formData={formData}
                         setFormData={setFormData}
@@ -695,6 +731,35 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         >
                             Entendi
                         </button>
+                    </div>
+                </div>
+            )}
+            {showCancelConfirm && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <X className="w-8 h-8" />
+                            </div>
+                            <h3 className="text-xl font-black text-[#0a192f] mb-2">Descartar Cadastro?</h3>
+                            <p className="text-sm text-gray-500 font-medium mb-6">
+                                Tem certeza que deseja fechar? Todas as informações não salvas serão perdidas.
+                            </p>
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => setShowCancelConfirm(false)}
+                                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-gray-200 transition-colors"
+                                >
+                                    Voltar
+                                </button>
+                                <button
+                                    onClick={confirmClose}
+                                    className="flex-1 px-4 py-3 bg-red-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-red-700 shadow-lg hover:shadow-red-500/30 transition-all"
+                                >
+                                    Descartar
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

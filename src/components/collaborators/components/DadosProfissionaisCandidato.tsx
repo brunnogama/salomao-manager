@@ -1,5 +1,5 @@
 import React from 'react'
-import { Briefcase, Plus, Trash2, Loader2 } from 'lucide-react'
+import { Briefcase, Plus, Trash2, Loader2, Edit2, Check } from 'lucide-react'
 import { ManagedSelect } from '../../crm/ManagedSelect'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { supabase } from '../../../lib/supabase'
@@ -30,6 +30,8 @@ export function DadosProfissionaisCandidato({
     const [experienciasList, setExperienciasList] = React.useState<any[]>([])
     const [loadingExp, setLoadingExp] = React.useState(false)
     const [availableTags, setAvailableTags] = React.useState<string[]>([])
+    const [editingId, setEditingId] = React.useState<string | null>(null)
+    const [editingTempId, setEditingTempId] = React.useState<string | null>(null)
 
     React.useEffect(() => {
         if (candidatoId) {
@@ -82,6 +84,30 @@ export function DadosProfissionaisCandidato({
         }
     }
 
+    const handleEditExperiencia = (item: any) => {
+        setEmpresa(item.empresa || '')
+        setCargo(item.cargo || '')
+        setDataInicio(item.data_inicio || '')
+        setDataFim(item.data_fim || '')
+        setPerfilExp(item.perfil || '')
+        setEditingId(item.id || null)
+        setEditingTempId(item.temp_id || null)
+
+        // Scroll smoothly to form area via smooth scroll hack or just rely on user scrolling up
+        window.scrollTo({ top: 300, behavior: 'smooth' })
+    }
+
+    const clearFormExp = () => {
+        setEmpresa('')
+        setCargo('')
+        setDataInicio('')
+        setDataFim('')
+        setPerfilExp('')
+        setTagSearchExp('')
+        setEditingId(null)
+        setEditingTempId(null)
+    }
+
     const handleSaveExperiencia = async () => {
         if (!empresa || !cargo || !dataInicio) return
 
@@ -93,22 +119,31 @@ export function DadosProfissionaisCandidato({
             perfil: perfilExp
         }
 
+        if (editingTempId && !editingId) {
+            setPendingExperiencias(prev => prev.map(item => item.temp_id === editingTempId ? { ...item, ...payload } : item));
+            showAlert('Sucesso', 'Experiência atualizada!', 'success');
+            clearFormExp();
+            return;
+        }
+
         if (!candidatoId) {
             setPendingExperiencias(prev => [{ ...payload, temp_id: Math.random().toString(36).substring(2, 9) }, ...prev]);
             showAlert('Atenção', 'Experiência adicionada temporariamente. Salve o candidato para concluir.', 'warning');
-            setEmpresa('')
-            setCargo('')
-            setDataInicio('')
-            setDataFim('')
-            setTagSearchExp('')
-            setPerfilExp('')
+            clearFormExp();
             return;
         }
 
         setLoadingExp(true)
         try {
-            const { error } = await supabase.from('candidato_experiencias').insert({ ...payload, candidato_id: candidatoId })
-            if (error) throw error
+            if (editingId) {
+                const { error } = await supabase.from('candidato_experiencias').update(payload).eq('id', editingId)
+                if (error) throw error
+                showAlert('Sucesso', 'Experiência atualizada!', 'success');
+            } else {
+                const { error } = await supabase.from('candidato_experiencias').insert({ ...payload, candidato_id: candidatoId })
+                if (error) throw error
+                showAlert('Sucesso', 'Experiência salva com sucesso!', 'success');
+            }
 
             if (perfilExp) {
                 const lines = perfilExp.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
@@ -119,12 +154,7 @@ export function DadosProfissionaisCandidato({
                 }
             }
 
-            showAlert('Sucesso', 'Experiência salva com sucesso!', 'success');
-            setEmpresa('')
-            setCargo('')
-            setDataInicio('')
-            setDataFim('')
-            setPerfilExp('')
+            clearFormExp()
             fetchExperiencias(candidatoId)
         } catch (e: any) {
             showAlert('Erro', 'Erro ao salvar: ' + e.message, 'error');
@@ -164,10 +194,23 @@ export function DadosProfissionaisCandidato({
 
     const allExperiencias = [...pendingExperiencias, ...experienciasList]
 
+    // Função auxiliar para exibir datas formatadas ou tratar erros do JS
+    const parseDateForDisplay = (dateString?: string, isEnd?: boolean) => {
+        if (!dateString) return isEnd ? 'Atual' : '';
+        // Date strings in JS like 2023-10-01 might render a day behind depending on UTC context.
+        // We can safely extract the parts manually:
+        const parts = dateString.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateString;
+    }
+
     const calcTempo = (inicio: string, fim?: string) => {
         if (!inicio) return '';
         const dataFimVal = fim ? new Date(fim) : new Date();
         const dataInicioVal = new Date(inicio);
+        if (isNaN(dataInicioVal.getTime())) return ''; // prevent invalid date nan issue
         const diffMeses = (dataFimVal.getFullYear() - dataInicioVal.getFullYear()) * 12 + (dataFimVal.getMonth() - dataInicioVal.getMonth());
         if (diffMeses <= 0) return 'Menos de 1 mês';
         const anos = Math.floor(diffMeses / 12);
@@ -316,14 +359,22 @@ export function DadosProfissionaisCandidato({
                             </div>
                         </div>
 
-                        <div className="flex justify-end">
+                        <div className="flex justify-between items-center">
+                            {editingId || editingTempId ? (
+                                <button
+                                    onClick={clearFormExp}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-gray-200 transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                            ) : <div></div>}
                             <button
                                 onClick={handleSaveExperiencia}
                                 disabled={loadingExp || !empresa || !cargo || !dataInicio}
                                 className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-purple-700 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loadingExp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                                Adicionar Experiência
+                                {loadingExp ? <Loader2 className="h-4 w-4 animate-spin" /> : (editingId || editingTempId) ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                                {(editingId || editingTempId) ? 'Salvar Alteração' : 'Adicionar Experiência'}
                             </button>
                         </div>
                     </div>
@@ -342,18 +393,27 @@ export function DadosProfissionaisCandidato({
                                     <div className="flex items-center gap-3">
                                         <div className="text-right">
                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                                {new Date(item.data_inicio).toLocaleDateString('pt-BR')} - {item.data_fim ? new Date(item.data_fim).toLocaleDateString('pt-BR') : 'Atual'}
+                                                {parseDateForDisplay(item.data_inicio, false)} - {parseDateForDisplay(item.data_fim, true)}
                                             </p>
                                             <p className="text-[9px] font-black text-purple-400 uppercase tracking-wider">{calcTempo(item.data_inicio, item.data_fim)}</p>
                                         </div>
                                         {!isViewMode && (
-                                            <button
-                                                onClick={() => handleDeleteExperiencia(item.id, item.temp_id)}
-                                                className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
-                                                title="Excluir"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => handleEditExperiencia(item)}
+                                                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"
+                                                    title="Editar"
+                                                >
+                                                    <Edit2 className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteExperiencia(item.id, item.temp_id)}
+                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                 </div>

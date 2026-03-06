@@ -97,8 +97,8 @@ Por favor, analise o currículo anexo e retorne EXATAMENTE UM JSON válido segui
 
 {
   "nome": "Nome completo real",
-  "email": "Email de contato",
-  "telefone": "Telefone de contato no formato brasileiro se possivel",
+  "email": "Email de contato (Procure com MUITA atenção no cabeçalho, rodapé ou início do documento. Ex: nome@email.com)",
+  "telefone": "Telefone de contato no formato brasileiro se possivel (Procure bem por números como 11999999999)",
   "data_nascimento": "YYYY-MM-DD (se existir, caso contrário null)",
   "endereco": {
     "cep": "CEP se houver",
@@ -114,16 +114,17 @@ Por favor, analise o currículo anexo e retorne EXATAMENTE UM JSON válido segui
     {
        "empresa": "Nome da empresa onde trabalhou",
        "cargo": "Cargo ocupado",
-       "inicio": "YYYY-MM (ou 'N/A')",
-       "fim": "YYYY-MM (ou 'Atual' ou 'N/A')",
+       "inicio": "YYYY-MM-DD (Se houver apenas mês e ano, adote o dia 01. Ex: 'outubro de 2023' -> '2023-10-01'. Se for N/A use null)",
+       "fim": "YYYY-MM-DD (Mesma regra acima. Se for atual ou N/A, use null)",
        "descricao": "Resumo das responsabilidades"
     }
   ],
-  "linkedin": "URL do linkedin caso encontre"
+  "linkedin": "URL do linkedin caso encontre (Procure no cabeçalho, como linkedin.com/in/usuario)"
 }
 
 Para as listagens de 'experiencias' preencha o máximo que o currículo permitir.
 Para 'perfilTags', concentre-se em extrair no mínimo 5 e no máximo 15 tags reais relativas à experiência técnica e soft skills.
+ATENÇÃO REDOBRADA: A maioria dos currículos possui email e telefone no topo (cabeçalho) ou na lateral. Não deixe de extrair esses dados de contato.
 Retorne null para propriedades do tipo primitivo que não achar (como string ou número).`;
 
     const requestBody = {
