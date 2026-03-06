@@ -338,6 +338,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     { id: 'Certificado de Reservista', name: 'Certificado de Reservista' },
     { id: 'Comprovante de Residência', name: 'Comprovante de Residência' },
     { id: 'CPF', name: 'CPF' },
+    { id: 'Currículo', name: 'Currículo' },
     { id: 'Documento de Identificação (RG/CNH)', name: 'Documento de Identificação (RG/CNH)' },
     { id: 'Outros', name: 'Outros' },
     { id: 'PIS/PASEP', name: 'PIS/PASEP' },
