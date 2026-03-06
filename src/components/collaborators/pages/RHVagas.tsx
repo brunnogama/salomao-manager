@@ -11,7 +11,6 @@ import {
   Edit2,
   AlertCircle,
   X,
-  Filter,
   User,
   Building2,
   Trash2,
@@ -59,6 +58,8 @@ export function RHVagas() {
   const [matchMode, setMatchMode] = useState<'vaga' | 'candidato'>('vaga')
   const [selectedMatchVagaId, setSelectedMatchVagaId] = useState<string | null>(null)
   const [selectedMatchCandidatoId, setSelectedMatchCandidatoId] = useState<string | null>(null)
+  const [isAiMatching, setIsAiMatching] = useState(false)
+  const [aiMatchResults, setAiMatchResults] = useState<Record<string, { score: number, justificativa?: string, matchesTags?: string[], gaps?: string[] }>>({})
 
   useEffect(() => {
     fetchData()
@@ -159,6 +160,52 @@ export function RHVagas() {
       matches: matched.length,
       matchedTags: matched
     };
+  };
+
+  const handleRunAiMatch = async (vagaId: string, candidatoId: string) => {
+    setIsAiMatching(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const response = await fetch(
+        `https://iewevhdtwlviudetxgax.supabase.co/functions/v1/match-ats-ia`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`
+          },
+          body: JSON.stringify({
+            vagaId,
+            candidatoId
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro desconhecido na IA');
+      }
+
+      if (result.success && result.data) {
+        // Armazena no state usando uma key mista para cachear na sessão
+        const matchKey = `${vagaId}_${candidatoId}`;
+        setAiMatchResults(prev => ({
+          ...prev,
+          [matchKey]: {
+            score: result.data.score || 0,
+            justificativa: result.data.justificativa,
+            matchesTags: result.data.matchesTags || [],
+            gaps: result.data.gaps || []
+          }
+        }));
+      }
+    } catch (e: any) {
+      alert("Erro ao processar Match via IA: " + e.message);
+    } finally {
+      setIsAiMatching(false);
+    }
   };
 
   // State derivado: Vaga Ativa no Match e lista de Candidatos Ordenada
@@ -689,66 +736,107 @@ export function RHVagas() {
                     <h3 className="text-sm font-bold text-[#0a192f] mb-3 flex items-center gap-2">
                       <Users className="w-4 h-4 text-blue-600" /> Talentos Compatíveis Ordenados
                     </h3>
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                      <table className="w-full min-w-max text-left border-collapse">
-                        <thead className="bg-[#1e3a8a]">
-                          <tr>
-                            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-48">Aderência (Match)</th>
-                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px]">Candidato</th>
-                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px]">Cargo Atual/Pretendido</th>
-                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Tags do Candidato (Highlight do Match)</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {matchedCandidatos.map((m) => (
-                            <tr key={m.candidato.id} onClick={() => { setSelectedCandidatoId(m.candidato.id); setIsCandidatoModalOpen(true); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors">
-                              <td className="px-4 py-4 whitespace-nowrap">
-                                <div className="flex flex-col gap-1.5">
-                                  <div className="flex items-center justify-between">
-                                    <span className={`text-sm font-black ${m.score >= 80 ? 'text-green-600' : m.score >= 50 ? 'text-amber-500' : 'text-gray-400'}`}>
-                                      {m.score}%
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {matchedCandidatos.map((m) => {
+                        const aiData = aiMatchResults[`${selectedMatchVagaId}_${m.candidato.id}`];
+                        const isLoading = isAiMatching; // Simplified for MVP
+
+                        // Mix fallback (local tags) com inteligência artificial se existir
+                        const displayScore = aiData ? aiData.score : m.score;
+                        const scoreColor = displayScore >= 80 ? 'text-green-600 bg-green-50 border-green-200' :
+                          displayScore >= 50 ? 'text-amber-600 bg-amber-50 border-amber-200' : 'text-rose-600 bg-rose-50 border-rose-200';
+                        const barColor = displayScore >= 80 ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                          displayScore >= 50 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-rose-400 to-rose-500';
+
+                        return (
+                          <div key={m.candidato.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                            <div className="flex items-start gap-4">
+                              {/* Avatar Block */}
+                              <div className="flex-shrink-0 h-14 w-14 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-white shadow flex items-center justify-center">
+                                <span className="text-xl font-black text-blue-700">{m.candidato.nome.charAt(0)}</span>
+                              </div>
+
+                              {/* Info Block */}
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-bold text-[#0a192f] truncate cursor-pointer hover:text-blue-600" onClick={() => { setSelectedCandidatoId(m.candidato.id); setIsCandidatoModalOpen(true); }}>
+                                  {m.candidato.nome}
+                                </h4>
+                                <p className="text-[10px] text-gray-500 truncate mb-1">{m.candidato.email}</p>
+                                <p className="text-xs font-semibold text-gray-700 bg-gray-50 inline-flex px-2 py-0.5 rounded border border-gray-100">
+                                  {roleOptions.find(r => String(r.value) === String(m.candidato.role))?.label || m.candidato.role || 'Sem cargo atual'}
+                                </p>
+                              </div>
+
+                              {/* Action Block - Run AI */}
+                              {!aiData && (
+                                <button
+                                  onClick={() => handleRunAiMatch(selectedMatchVagaId!, m.candidato.id)}
+                                  disabled={isLoading}
+                                  className="flex-shrink-0 p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors group relative"
+                                  title="Analisar profundamente com IA"
+                                >
+                                  <Sparkles className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Score Bar */}
+                            <div className="mt-4 pt-4 border-t border-gray-50">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Aderência Global</span>
+                                <span className={`px-2 py-0.5 rounded-lg text-xs font-black border ${scoreColor}`}>
+                                  {displayScore}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden shadow-inner">
+                                <div className={`h-full rounded-full ${barColor} shadow-sm transition-all duration-1000`} style={{ width: `${displayScore}%` }}></div>
+                              </div>
+                            </div>
+
+                            {/* AI / Tags Block */}
+                            {aiData ? (
+                              <div className="mt-4 bg-gray-50/50 p-3 rounded-xl border border-blue-100/50">
+                                <p className="text-xs text-gray-700 font-medium italic leading-relaxed mb-3">
+                                  "{aiData.justificativa}"
+                                </p>
+                                {aiData.gaps && aiData.gaps.length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="text-[9px] font-black tracking-widest uppercase text-rose-500 mb-1">⚠️ Gaps Encontrados</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {aiData.gaps.map((gap, i) => <span key={`gap-${i}`} className="text-[9px] px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded border border-rose-100">{gap}</span>)}
+                                    </div>
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="text-[9px] font-black tracking-widest uppercase text-green-600 mb-1">✓ Pontos Fortes</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {aiData.matchesTags?.map((tag, i) => <span key={`tag-${i}`} className="text-[9px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded border border-green-100">{tag}</span>)}
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-4 flex flex-wrap gap-1.5">
+                                {m.candidatoTags.slice(0, 6).map((tag, i) => {
+                                  const isMatch = m.matchedTags.includes(tag.toLowerCase());
+                                  return (
+                                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-tight border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                                      {tag}
                                     </span>
-                                    <span className="text-[10px] font-bold text-gray-500">{m.matches} de {m.totalTags}</span>
-                                  </div>
-                                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                    <div
-                                      className={`h-full rounded-full ${m.score >= 80 ? 'bg-green-500' : m.score >= 50 ? 'bg-amber-400' : 'bg-gray-300'}`}
-                                      style={{ width: `${m.score}%` }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-3 py-4">
-                                <p className="font-bold text-sm text-[#0a192f]">{m.candidato.nome}</p>
-                                <p className="text-[10px] text-gray-500 mt-0.5">{m.candidato.email}</p>
-                              </td>
-                              <td className="px-3 py-4 text-xs font-semibold text-gray-700">
-                                {roleOptions.find(r => String(r.value) === String(m.candidato.role))?.label || m.candidato.role || '-'}
-                              </td>
-                              <td className="px-3 py-4">
-                                <div className="flex flex-wrap gap-1.5">
-                                  {m.candidatoTags.map((tag, i) => {
-                                    const isMatch = m.matchedTags.includes(tag.toLowerCase());
-                                    return (
-                                      <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-                                        {tag}
-                                      </span>
-                                    );
-                                  })}
-                                  {m.candidatoTags.length === 0 && <span className="text-xs text-gray-400 italic">Sem tags</span>}
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                          {matchedCandidatos.length === 0 && (
-                            <tr>
-                              <td colSpan={4} className="px-4 py-8 text-center text-sm font-semibold text-gray-500">
-                                Nenhum candidato avaliado ou lista vazia.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
+                                  );
+                                })}
+                                {m.candidatoTags.length > 6 && <span className="text-[10px] text-gray-400 font-medium py-0.5">+{m.candidatoTags.length - 6} tags</span>}
+                                {m.candidatoTags.length === 0 && <span className="text-[10px] text-gray-400 italic">Preencha o perfil para calcular localmente.</span>}
+                              </div>
+                            )}
+
+                          </div>
+                        );
+                      })}
+                      {matchedCandidatos.length === 0 && (
+                        <div className="col-span-1 lg:col-span-2 p-8 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
+                          <p className="text-sm font-semibold text-gray-500">Nenhum candidato na base.</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
