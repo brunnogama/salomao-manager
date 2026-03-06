@@ -36,7 +36,7 @@ serve(async (req) => {
     // 1. Buscar dados do Candidato
     const { data: candidato, error: candError } = await supabase
       .from('candidatos')
-      .select('nome, role, area, perfil, resumo_cv, atividades_academicas, experiencias_raw:candidato_experiencias(empresa, cargo, descricao)')
+      .select('nome, role, area, perfil, resumo_cv, atividades_academicas, experiencias_raw:candidato_experiencias(empresa, cargo, perfil)')
       .eq('id', candidatoId)
       .single();
 
@@ -62,7 +62,7 @@ Resumo: ${candidato.resumo_cv || 'Sem resumo'}
 Tags (Skills): ${candidato.perfil?.replace(/\n/g, ', ') || 'Nenhuma tag'}
 
 Experiências Profissionais:
-${(candidato.experiencias_raw as any[])?.slice(0, 3).map((e: any) => `- ${e.cargo} na ${e.empresa}\n  Descricao: ${e.descricao}`).join('\n\n') || '- Nenhuma experiência cadastrada ou detalhada'}
+${(candidato.experiencias_raw as any[])?.slice(0, 3).map((e: any) => `- ${e.cargo} na ${e.empresa}\n  Descricao: ${e.perfil}`).join('\n\n') || '- Nenhuma experiência cadastrada ou detalhada'}
 `.trim().substring(0, 3000); // Corte de safety preventivo para API
 
     const vagaProfile = `
