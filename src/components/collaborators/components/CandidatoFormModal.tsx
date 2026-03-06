@@ -450,14 +450,21 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 if (histError) console.error("Error saving pending historico", histError);
             }
 
-            // Save pending Experiencias
             if (finalCandidatoId && pendingExperiencias.length > 0) {
                 const expPayload = pendingExperiencias.map(e => {
                     const { temp_id, ...rest } = e;
-                    return { ...rest, candidato_id: finalCandidatoId };
+                    return {
+                        ...rest,
+                        candidato_id: finalCandidatoId,
+                        data_inicio: rest.data_inicio || null,
+                        data_fim: rest.data_fim || null
+                    };
                 });
                 const { error: expError } = await supabase.from('candidato_experiencias').insert(expPayload);
-                if (expError) console.error("Error saving pending experiencias", expError);
+                if (expError) {
+                    console.error("Error saving pending experiencias", expError);
+                    alert("Erro ao salvar experiências: " + JSON.stringify(expError));
+                }
 
                 for (const exp of pendingExperiencias) {
                     if (exp.perfil) {
