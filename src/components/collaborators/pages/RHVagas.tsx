@@ -899,78 +899,79 @@ export function RHVagas() {
                     )}
                   </div>
                 )}
-              </div>
 
                 {selectedMatchCandidatoId && (
-              <div>
-                <h3 className="text-sm font-bold text-[#0a192f] mb-3 flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-emerald-600" /> Vagas Abertas Compatíveis
-                </h3>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                  <table className="w-full min-w-max text-left border-collapse">
-                    <thead className="bg-[#059669]">
-                      <tr>
-                        <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-48">Aderência (Match)</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px]">Vaga</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px]">Líder / Sócio</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Tags da Vaga (Highlight do Match)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {matchedVagas.map((m) => (
-                        <tr key={m.vaga.id} onClick={() => handleOpenViewModal(m.vaga.id)} className="hover:bg-emerald-50/40 cursor-pointer transition-colors">
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <div className="flex flex-col gap-1.5">
-                              <div className="flex items-center justify-between">
-                                <span className={`text-sm font-black ${m.score >= 80 ? 'text-green-600' : m.score >= 50 ? 'text-amber-500' : 'text-gray-400'}`}>
-                                  {m.score}%
-                                </span>
-                                <span className="text-[10px] font-bold text-gray-500">{m.matches} de {m.totalTags}</span>
-                              </div>
-                              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full ${m.score >= 80 ? 'bg-green-500' : m.score >= 50 ? 'bg-amber-400' : 'bg-gray-300'}`}
-                                  style={{ width: `${m.score}%` }}
-                                ></div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-3 py-4">
-                            <div className="flex items-center gap-2">
-                              <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[9px] font-black tracking-widest uppercase">{m.vaga.vaga_id_text}</span>
-                              <p className="font-bold text-sm text-[#0a192f] truncate">{m.vaga.role?.name || 'Sem cargo'}</p>
-                            </div>
-                            <p className="text-[10px] text-gray-500 mt-1">{m.vaga.location?.name || 'Local não informado'}</p>
-                          </td>
-                          <td className="px-3 py-4 text-xs font-semibold text-gray-700">
-                            <p>{m.vaga.leader?.name || '-'}</p>
-                            <p className="text-[10px] text-gray-500">{m.vaga.partner?.name || '-'}</p>
-                          </td>
-                          <td className="px-3 py-4">
-                            <div className="flex flex-wrap gap-1.5">
-                              {m.vagaTags.map((tag, i) => {
-                                const isMatch = m.matchedTags.includes(tag.toLowerCase());
-                                return (
-                                  <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-                                    {tag}
-                                  </span>
-                                );
-                              })}
-                              {m.vagaTags.length === 0 && <span className="text-xs text-gray-400 italic">Sem tags registradas</span>}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                      {matchedVagas.length === 0 && (
-                        <tr>
-                          <td colSpan={4} className="px-4 py-8 text-center text-sm font-semibold text-gray-500">
-                            Nenhuma vaga avaliada ou lista vazia.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#0a192f] mb-3 flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-emerald-600" /> Vagas Abertas Compatíveis
+                    </h3>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                      <table className="w-full min-w-max text-left border-collapse">
+                        <thead className="bg-[#059669]">
+                          <tr>
+                            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-48">Aderência (Match)</th>
+                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px]">Vaga</th>
+                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px]">Líder / Sócio</th>
+                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Tags da Vaga (Highlight do Match)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {matchedVagas.map((m) => (
+                            <tr key={m.vaga.id} onClick={() => handleOpenViewModal(m.vaga.id)} className="hover:bg-emerald-50/40 cursor-pointer transition-colors">
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <div className="flex flex-col gap-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className={`text-sm font-black ${m.score >= 80 ? 'text-green-600' : m.score >= 50 ? 'text-amber-500' : 'text-gray-400'}`}>
+                                      {m.score}%
+                                    </span>
+                                    <span className="text-[10px] font-bold text-gray-500">{m.matches} de {m.totalTags}</span>
+                                  </div>
+                                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${m.score >= 80 ? 'bg-green-500' : m.score >= 50 ? 'bg-amber-400' : 'bg-gray-300'}`}
+                                      style={{ width: `${m.score}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-3 py-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[9px] font-black tracking-widest uppercase">{m.vaga.vaga_id_text}</span>
+                                  <p className="font-bold text-sm text-[#0a192f] truncate">{m.vaga.role?.name || 'Sem cargo'}</p>
+                                </div>
+                                <p className="text-[10px] text-gray-500 mt-1">{m.vaga.location?.name || 'Local não informado'}</p>
+                              </td>
+                              <td className="px-3 py-4 text-xs font-semibold text-gray-700">
+                                <p>{m.vaga.leader?.name || '-'}</p>
+                                <p className="text-[10px] text-gray-500">{m.vaga.partner?.name || '-'}</p>
+                              </td>
+                              <td className="px-3 py-4">
+                                <div className="flex flex-wrap gap-1.5">
+                                  {m.vagaTags.map((tag, i) => {
+                                    const isMatch = m.matchedTags.includes(tag.toLowerCase());
+                                    return (
+                                      <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                                        {tag}
+                                      </span>
+                                    );
+                                  })}
+                                  {m.vagaTags.length === 0 && <span className="text-xs text-gray-400 italic">Sem tags registradas</span>}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {matchedVagas.length === 0 && (
+                            <tr>
+                              <td colSpan={4} className="px-4 py-8 text-center text-sm font-semibold text-gray-500">
+                                Nenhuma vaga avaliada ou lista vazia.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1013,7 +1014,7 @@ export function RHVagas() {
                 </p>
               </div>
             </div>
-          ) : activeTab === 'ats' ? null : (
+          ) : (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-y-auto overflow-x-auto min-h-[400px]">
               {activeTab === 'talentos' || activeTab === 'reprovados' ? (
                 <table className="w-full min-w-max text-left border-collapse">
