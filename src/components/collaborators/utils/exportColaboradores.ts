@@ -107,7 +107,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Tipo Contrato': c.contract_type,
         'Email Corporativo': c.email,
         'Email Pessoal': c.email_pessoal,
-        'Telefone': c.phone,
+        'Telefone': c.telefone,
         'Área': c.area,
         'Sócio Responsável': (c as any).partner?.name || getLookupName(partners as any[], c.partner_id),
         'Líder Direto': (c as any).leader?.name || getLookupName(colaboradores as any[], c.leader_id),

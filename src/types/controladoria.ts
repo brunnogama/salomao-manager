@@ -46,7 +46,7 @@ export interface Collaborator {
   leader?: { id: string; name: string }; // Joined field
   email?: string; // E-mail Corporativo
   email_pessoal?: string; // E-mail Pessoal
-  phone?: string;
+  telefone?: string;
   linkedin_url?: string;
   status: 'active' | 'inactive' | 'Pré-Cadastro';
   cpf?: string;
