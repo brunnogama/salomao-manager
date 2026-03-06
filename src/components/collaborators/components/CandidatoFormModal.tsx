@@ -353,7 +353,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             const allowedFields = [
                 'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'resumo_cv', 'role', 'local', 'area', 'contract_type',
                 'gender', 'rg', 'cpf', 'birthday', 'civil_status', 'email_pessoal', 'linkedin_url',
-                'has_children', 'children_count', 'children_data', 'atividades_academicas', 'idiomas'
+                'has_children', 'children_count', 'children_data', 'atividades_academicas', 'idiomas',
+                'zip_code', 'address', 'address_number', 'address_complement', 'neighborhood', 'city', 'state',
+                'forma_pagamento', 'banco_nome', 'banco_tipo_conta', 'banco_agencia', 'banco_conta', 'pix_tipo', 'pix_chave',
+                'emergency_contacts', 'education_history'
             ];
 
             const cleanPayload: any = {};
@@ -462,20 +465,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         }
     }
 
-    // Tagging Logic
-    const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const text = e.target.value;
-        setTagInputValue(text);
 
-        const lastAtSymbol = text.lastIndexOf('@');
-        if (lastAtSymbol !== -1) {
-            setIsTagging(true);
-            setTagSearch(text.substring(lastAtSymbol + 1));
-        } else {
-            setIsTagging(false);
-            setTagSearch('');
-        }
-    };
 
     const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) => {
         if (e.key === 'Enter' || e.key === ',') {

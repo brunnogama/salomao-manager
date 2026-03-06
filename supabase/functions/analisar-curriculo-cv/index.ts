@@ -196,6 +196,16 @@ Retorne null para propriedades do tipo primitivo que não achar (como string ou 
       throw new Error(`A IA não retornou um JSON válido. Erro do parse: ${jsonErrorMsg}. Texto puro retornado: ${rawText.substring(0, 500)}...`);
     }
 
+    // Fix uppercase names (Camel Case / Title Case)
+    if (parsedData.nome && typeof parsedData.nome === 'string') {
+      if (parsedData.nome === parsedData.nome.toUpperCase()) {
+        parsedData.nome = parsedData.nome.replace(
+          /\w\S*/g,
+          (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
+        );
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       data: parsedData,

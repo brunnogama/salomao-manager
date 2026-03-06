@@ -25,6 +25,11 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
     }, [collaboratorId]);
 
     const fetchPerfil = async () => {
+        if (!collaboratorId || collaboratorId === 'novo') {
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             const { data, error } = await supabase
