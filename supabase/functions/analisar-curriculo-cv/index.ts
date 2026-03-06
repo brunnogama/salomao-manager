@@ -111,7 +111,7 @@ Concentre-se em extrair no mínimo 5 e no máximo 15 tags reais relativas à exp
     };
 
     // 5. Chamar a Gemini REST API diretamente (Usando Gemini 1.5 Flash - rápido, barato e processa Docs/PDF nativamente)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
