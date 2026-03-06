@@ -755,7 +755,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
             {/* Modal Dialog for alerts matching the system design */}
             {alertConfig.isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-500/20 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-gray-500/20 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200">
                         <div className={`p-3 rounded-xl w-fit mb-4 ${alertConfig.type === 'success' ? 'bg-green-50' :
                             alertConfig.type === 'warning' ? 'bg-amber-50' : 'bg-red-50'
@@ -777,7 +777,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             )}
 
             {showCancelConfirm && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-6 text-center">
                             <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
