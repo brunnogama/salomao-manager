@@ -91,6 +91,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     nome: initialData.nome || '',
                     name: initialData.nome || '',
                     email: initialData.email || '',
+                    email_pessoal: initialData.email || '',
                     phone: initialData.telefone || '',
                     birth_date: initialData.data_nascimento || '',
                     zip_code: initialData.endereco?.cep || '',
