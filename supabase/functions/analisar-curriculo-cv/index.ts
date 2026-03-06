@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { candidatoId } = await req.json();
+    const { candidatoId, context = 'candidato' } = await req.json();
     if (!candidatoId) {
       throw new Error("Missing candidatoId parameter");
     }
@@ -31,25 +31,30 @@ serve(async (req) => {
       global: { headers: { Authorization: req.headers.get('Authorization')! } }
     });
 
-    console.log("📝 Iniciando processamento para Candidato ID:", candidatoId);
+    console.log(`📝 Iniciando processamento para ID: ${candidatoId} | Contexto: ${context}`);
 
-    const { data: candidato, error: candError } = await supabase
-      .from('candidatos')
+    const isColaborador = context === 'colaborador';
+    const mainTable = isColaborador ? 'collaborators' : 'candidatos';
+    const gedTable = isColaborador ? 'ged_colaboradores' : 'candidato_ged';
+    const gedJoinColumn = isColaborador ? 'colaborador_id' : 'candidato_id';
+
+    const { data: entityData, error: entityError } = await supabase
+      .from(mainTable)
       .select('*')
       .eq('id', candidatoId)
       .single();
 
-    if (candError || !candidato) throw new Error("Candidato não encontrado. Erro: " + candError?.message);
+    if (entityError || !entityData) throw new Error(`${isColaborador ? 'Colaborador' : 'Candidato'} não encontrado. Erro: ${entityError?.message}`);
 
     // 2. Buscar Arquivos GED (categoria = Currículo)
     const { data: geds, error: gedError } = await supabase
-      .from('candidato_ged')
+      .from(gedTable)
       .select('url, nome_arquivo')
-      .eq('candidato_id', candidatoId)
+      .eq(gedJoinColumn, candidatoId)
       .eq('categoria', 'Currículo');
 
     if (gedError || !geds || geds.length === 0) {
-      throw new Error("O candidato não possui um arquivo classificado como 'Currículo' no banco de dados GED.");
+      throw new Error(`O ${isColaborador ? 'colaborador' : 'candidato'} não possui um arquivo classificado como 'Currículo' no banco de dados GED.`);
     }
 
     // Pegar o último/mais recente cv

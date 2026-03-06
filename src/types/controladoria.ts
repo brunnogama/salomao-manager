@@ -72,6 +72,8 @@ export interface Collaborator {
   hire_date?: string;
   termination_date?: string;
   oab_vencimento?: string;
+  perfil?: string; // Tags de habilidades
+  resumo_cv?: string; // Resumo gerado pela IA
   oabs?: {
     id?: string;
     numero: string;

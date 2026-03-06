@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Tag, Save, AlertCircle, Loader2 } from 'lucide-react';
+import { Tag, Save, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PerfilSectionProps {
@@ -9,9 +9,11 @@ interface PerfilSectionProps {
 
 const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
     const [perfil, setPerfil] = useState<string>('');
+    const [resumoCv, setResumoCv] = useState<string>('');
     const [competencias, setCompetencias] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [extractingAI, setExtractingAI] = useState(false);
     const [isTagging, setIsTagging] = useState(false);
     const [tagSearch, setTagSearch] = useState('');
     const [availableTags, setAvailableTags] = useState<string[]>([]);
@@ -28,7 +30,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
             console.log('Buscando perfil para:', collaboratorId);
             const { data, error } = await supabase
                 .from('collaborators')
-                .select('perfil, competencias')
+                .select('perfil, competencias, resumo_cv')
                 .eq('id', collaboratorId)
                 .single();
 
@@ -36,6 +38,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
 
             if (error) throw error;
             setPerfil(data?.perfil || '');
+            setResumoCv(data?.resumo_cv || '');
             setCompetencias(data?.competencias || '');
         } catch (error) {
             console.error('Erro ao buscar perfil:', error);
@@ -88,7 +91,8 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
                 .from('collaborators')
                 .update({
                     perfil: perfil,
-                    competencias: competencias
+                    competencias: competencias,
+                    resumo_cv: resumoCv
                 })
                 .eq('id', collaboratorId)
                 .select();
@@ -117,6 +121,48 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
         }
     };
 
+    const handleExtractResumeAI = async () => {
+        try {
+            setExtractingAI(true);
+            toast.info('Iniciando análise com Inteligência Artificial...');
+
+            const { data: { session } } = await supabase.auth.getSession();
+
+            const response = await fetch(
+                `https://iewevhdtwlviudetxgax.supabase.co/functions/v1/analisar-curriculo-cv`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`
+                    },
+                    body: JSON.stringify({
+                        candidatoId: collaboratorId,
+                        context: 'colaborador'
+                    })
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Erro desconhecido ao chamar IA');
+            }
+
+            if (result.success && result.data) {
+                setResumoCv(result.data.resumoProfissional || '');
+                setPerfil((result.data.perfilTags || []).join('\n'));
+                toast.success(`Resumo extraído com sucesso do currículo: ${result.cvProcessado}`);
+            }
+
+        } catch (error: any) {
+            console.error('Erro na IA:', error);
+            toast.error('Erro ao extrair com IA: ' + error.message);
+        } finally {
+            setExtractingAI(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center py-20">
@@ -140,14 +186,36 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
                             </p>
                         </div>
                     </div>
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#112240] transition-all disabled:opacity-50"
-                    >
-                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        Salvar
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleExtractResumeAI}
+                            disabled={extractingAI || loading}
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:from-purple-700 hover:to-indigo-700 transition-all disabled:opacity-50 shadow-lg"
+                        >
+                            {extractingAI ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                            Extrair com IA
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#112240] transition-all disabled:opacity-50"
+                        >
+                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                            Salvar
+                        </button>
+                    </div>
+                </div>
+
+                <div className="mt-6">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                        Resumo Profissional (IA)
+                    </label>
+                    <textarea
+                        value={resumoCv}
+                        onChange={(e) => setResumoCv(e.target.value)}
+                        placeholder="Um resumo super potente sobre a carreira e perfil em 1 parágrafo..."
+                        className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none font-medium transition-all shadow-sm h-28 resize-none"
+                    />
                 </div>
 
                 <div className="relative">
