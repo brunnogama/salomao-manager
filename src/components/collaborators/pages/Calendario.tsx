@@ -23,7 +23,7 @@ import { getFeriadosDoAno } from '../utils/holidays'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { SocioSelector } from '../../crm/SocioSelector'
 import { EventSelectionModal, EventCreationType } from '../components/EventSelectionModal'
-import { toast } from 'sonner'
+import { AlertModal } from '../../../components/ui/AlertModal';
 
 interface Colaborador {
   id: string | number;
@@ -91,6 +91,23 @@ export function Calendario() {
   const [eventos, setEventos] = useState<Evento[]>([])
   const [vagas, setVagas] = useState<any[]>([])
   const [candidatos, setCandidatos] = useState<any[]>([])
+
+  // Alert Modal State
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    variant: 'success' | 'error' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    variant: 'info'
+  });
+
+  const showAlert = (title: string, description: string, variant: 'success' | 'error' | 'info' = 'info') => {
+    setAlertConfig({ isOpen: true, title, description, variant });
+  };
 
   const collaborators = useMemo(() => {
     return colaboradores
@@ -428,10 +445,10 @@ export function Calendario() {
       setCurrentExtName('')
       setCurrentExtEmail('')
       setCurrentSocio('')
-      toast.success(editingEvento ? 'Evento atualizado!' : 'Evento criado!')
+      showAlert('Sucesso', editingEvento ? 'Evento atualizado com sucesso!' : 'Evento criado com sucesso!', 'success')
     } catch (error) {
       console.error('Erro ao salvar evento:', error)
-      toast.error('Erro ao salvar evento.')
+      showAlert('Erro', 'Erro ao salvar evento.', 'error')
     } finally {
       setSavingEvento(false)
     }
@@ -444,7 +461,7 @@ export function Calendario() {
       if (error) throw error
       await fetchData()
     } catch (error) {
-      toast.error('Erro ao excluir evento')
+      showAlert('Erro', 'Erro ao excluir evento.', 'error')
     }
   }
 
@@ -1200,8 +1217,7 @@ export function Calendario() {
                                 const randomId = Math.random().toString(36).substring(2, 12);
                                 const mockLink = `https://teams.microsoft.com/l/meetup-join/19:meeting_${randomId}@thread.v2/0?context={"Tid":"mock"}`;
                                 setNovoEvento({ ...novoEvento, local_endereco_url: mockLink });
-                                toast.success("Link gerado e preenchido!");
-                                toast.info("Nota: Integração corporativa com Microsoft Graph necessária para links reais.");
+                                showAlert('Módulos de Reuniões', 'Link Microsoft Teams gerado! (Nota: Integração corporativa com Graph necessária para gerar links reais)', 'success');
                               }}
                               className="text-[9px] font-black text-[#1e3a8a] bg-[#1e3a8a]/10 hover:bg-[#1e3a8a]/20 px-2 py-1 rounded transition-colors uppercase tracking-[0.1em]"
                             >
@@ -1687,6 +1703,15 @@ export function Calendario() {
         isOpen={isEventSelectionModalOpen}
         onClose={() => setIsEventSelectionModalOpen(false)}
         onSelect={handleOpenNewEvent}
+      />
+
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        title={alertConfig.title}
+        description={alertConfig.description}
+        variant={alertConfig.variant}
+        confirmText="OK"
       />
     </div>
   )

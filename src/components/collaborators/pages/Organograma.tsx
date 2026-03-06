@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2, ArrowUp } from 'lucide-react';
-import { toast } from 'sonner';
+import { AlertModal } from '../../../components/ui/AlertModal';
 
 // Define the exact hierarchy order for Jurídico
 const JURIDICO_HIERARCHY = [
@@ -412,6 +412,23 @@ export function Organograma() {
     const [showBackToTop, setShowBackToTop] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
+    // Alert Modal State
+    const [alertConfig, setAlertConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        description: string;
+        variant: 'success' | 'error' | 'info';
+    }>({
+        isOpen: false,
+        title: '',
+        description: '',
+        variant: 'info'
+    });
+
+    const showAlert = (title: string, description: string, variant: 'success' | 'error' | 'info' = 'info') => {
+        setAlertConfig({ isOpen: true, title, description, variant });
+    };
+
     // Sync data on mount and tab change
     useEffect(() => {
         fetchColaboradores();
@@ -504,10 +521,10 @@ export function Organograma() {
                 .eq('id', id);
 
             if (error) throw error;
-            toast.success('Competências atualizadas com sucesso!');
+            showAlert('Sucesso', 'Competências atualizadas com sucesso!', 'success');
         } catch (error) {
             console.error('Error saving competencias:', error);
-            toast.error('Erro ao salvar competências');
+            showAlert('Erro', 'Erro ao salvar competências', 'error');
         } finally {
             setSavingCompetenciasId(null);
         }
@@ -602,19 +619,11 @@ export function Organograma() {
                 ? data.find(c => c.id === leaderToUpdate)?.name || 'novo líder'
                 : 'nenhum';
 
-            toast(
-                <div className="flex flex-col gap-1">
-                    <span className="font-bold text-[#0a192f]">Hierarquia Atualizada!</span>
-                    <span className="text-sm text-gray-600">
-                        {draggedColab.name} agora responde para <strong className="text-[#1e3a8a]">{leaderToUpdateName}</strong>.
-                    </span>
-                </div>,
-                { duration: 4000 }
-            );
+            showAlert('Sucesso', `${draggedColab.name} agora responde para ${leaderToUpdateName}.`, 'success');
 
         } catch (error) {
             console.error('Erro ao atualizar leader_id:', error);
-            toast.error('Erro ao alterar hierarquia.');
+            showAlert('Erro', 'Erro ao alterar hierarquia.', 'error');
         } finally {
             setPendingDragResult(null);
         }
@@ -628,9 +637,8 @@ export function Organograma() {
 
         const destId = destination.droppableId;
         const resolvedDestId = destId.startsWith('root:') ? destId.split(':')[1] : destId;
-
         if (draggableId === resolvedDestId) {
-            toast.error('Um colaborador não pode ser líder dele mesmo.');
+            showAlert('Ação Inválida', 'Um colaborador não pode ser líder dele mesmo.', 'error');
             return;
         }
 
@@ -1140,6 +1148,15 @@ export function Organograma() {
                     </button>
                 </div>
             </div>
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                description={alertConfig.description}
+                variant={alertConfig.variant}
+                confirmText="OK"
+            />
         </div>
     );
 }

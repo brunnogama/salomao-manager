@@ -1226,6 +1226,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         <div className="animate-in slide-in-from-right-4 duration-300">
           <PerfilSection
             collaboratorId={currentData.id || ''}
+            showAlert={showAlert}
           />
         </div>
       )

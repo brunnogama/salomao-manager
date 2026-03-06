@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Tag, Save, AlertCircle, Loader2, Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface PerfilSectionProps {
     collaboratorId: string;
+    showAlert?: (title: string, description: string, variant?: 'success' | 'error' | 'info') => void;
 }
 
-const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
+const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert }) => {
     const [perfil, setPerfil] = useState<string>('');
     const [resumoCv, setResumoCv] = useState<string>('');
     const [competencias, setCompetencias] = useState<string>('');
@@ -27,14 +27,11 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
     const fetchPerfil = async () => {
         try {
             setLoading(true);
-            console.log('Buscando perfil para:', collaboratorId);
             const { data, error } = await supabase
                 .from('collaborators')
                 .select('perfil, competencias, resumo_cv')
                 .eq('id', collaboratorId)
                 .single();
-
-            console.log('Dados do perfil recebidos:', data);
 
             if (error) throw error;
             setPerfil(data?.perfil || '');
@@ -42,7 +39,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
             setCompetencias(data?.competencias || '');
         } catch (error) {
             console.error('Erro ao buscar perfil:', error);
-            toast.error('Erro ao carregar os dados de perfil.');
+            if (showAlert) showAlert('Erro', 'Erro ao carregar os dados de perfil.', 'error');
         } finally {
             setLoading(false);
         }
@@ -85,9 +82,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
     const handleSave = async () => {
         try {
             setSaving(true);
-            console.log('Iniciando salvamento de perfil...', { id: collaboratorId, perfilValue: perfil, competenciasValue: competencias });
-
-            const { data: updateData, error } = await supabase
+            const { error } = await supabase
                 .rpc('update_collaborator_perfil', {
                     p_id: collaboratorId,
                     p_perfil: perfil,
@@ -95,11 +90,8 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
                     p_resumo_cv: resumoCv
                 });
 
-            console.log('Resultado da atualização do perfil:', { updateData, error });
             if (error) {
-                // If RPC doesn't exist yet, fallback to normal update as a safety measure
                 if (error.code === 'PGRST202') {
-                    console.log('RPC update_collaborator_perfil not found, falling back to standard update.');
                     const fallback = await supabase
                         .from('collaborators')
                         .update({
@@ -115,17 +107,16 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
                 }
             }
 
-            // Upsert tags na nuvem para futuras buscas
             const lines = perfil.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             if (lines.length > 0) {
                 const tagsToInsert = lines.map(t => ({ tag: t }));
                 await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
             }
 
-            toast.success('Perfil e Competências atualizados com sucesso!');
+            if (showAlert) showAlert('Sucesso', 'Perfil e Competências atualizados com sucesso!', 'success');
         } catch (error: any) {
             console.error('Falha crítica ao salvar perfil:', error);
-            toast.error(`Erro ao salvar: ${error.message || 'Houve um erro no servidor'}`);
+            if (showAlert) showAlert('Erro', `Erro ao salvar: ${error.message || 'Houve um erro no servidor'}`, 'error');
         } finally {
             setSaving(false);
         }
@@ -134,7 +125,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
     const handleExtractResumeAI = async () => {
         try {
             setExtractingAI(true);
-            toast.info('Iniciando análise com Inteligência Artificial...');
+            if (showAlert) showAlert('IA Analisando...', 'A IA está lendo o currículo do colaborador (Isso pode levar alguns segundos).', 'info');
 
             const { data: { session } } = await supabase.auth.getSession();
 
@@ -162,12 +153,12 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
             if (result.success && result.data) {
                 setResumoCv(result.data.resumoProfissional || '');
                 setPerfil((result.data.perfilTags || []).join('\n'));
-                toast.success(`Resumo extraído com sucesso do currículo: ${result.cvProcessado}`);
+                if (showAlert) showAlert('Extraído com Sucesso', `Os dados foram inferidos do documento: ${result.cvProcessado}`, 'success');
             }
 
         } catch (error: any) {
             console.error('Erro na IA:', error);
-            toast.error('Erro ao extrair com IA: ' + error.message);
+            if (showAlert) showAlert('Falha na IA', `Erro ao ler currículo: ${error.message}`, 'error');
         } finally {
             setExtractingAI(false);
         }
