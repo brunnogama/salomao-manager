@@ -97,8 +97,8 @@ Por favor, analise o currículo anexo e retorne EXATAMENTE UM JSON válido segui
 
 {
   "nome": "Nome completo real",
-  "email": "Email de contato (Procure com MUITA atenção no cabeçalho, rodapé ou início do documento. Ex: nome@email.com)",
-  "telefone": "Telefone de contato no formato brasileiro se possivel (Procure bem por números como 11999999999)",
+  "email": "Email de contato (OBRIGATÓRIO BUSCAR. Varra o documento inteiro procurando QUALQUER texto que contenha '@'. Ex: usuario@gmail.com, nome@empresa.com.br. Não retorne null se existir um email em qualquer lugar!)",
+  "telefone": "Telefone/Celular (OBRIGATÓRIO BUSCAR. Procure padrões como 21993937070, (11) 99999-9999, texto com 'Mobile' ou 'Contato'. Extraia apenas os números ou no formato amigável.)",
   "data_nascimento": "YYYY-MM-DD (se existir, caso contrário null)",
   "endereco": {
     "cep": "CEP se houver",
@@ -145,8 +145,8 @@ Retorne null para propriedades do tipo primitivo que não achar (como string ou 
       }
     };
 
-    // 5. Chamar a Gemini REST API diretamente (Usando Gemini 1.5 Flash - rápido, barato e processa Docs/PDF nativamente)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    // 5. Chamar a Gemini REST API diretamente (Usando Gemini 2.0 Flash - rápido, barato e processa Docs/PDF nativamente)
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

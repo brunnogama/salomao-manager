@@ -543,10 +543,15 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
                     <style>{`
                         .ai-highlight input:not([value=""]), 
-                        .ai-highlight input[value]:not([value=""]) {
+                        .ai-highlight input[value]:not([value=""]),
+                        .ai-highlight textarea:not(:empty) {
                             border-color: #c7d2fe !important;
                             background-color: #f8fafc !important;
                             box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
+                            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z'/%3E%3C/svg%3E") !important;
+                            background-repeat: no-repeat !important;
+                            background-position: right 12px center !important;
+                            padding-right: 36px !important;
                         }
                     `}</style>
                     <DadosPessoaisSection

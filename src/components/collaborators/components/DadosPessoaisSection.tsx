@@ -106,20 +106,36 @@ export function DadosPessoaisSection({
           </div>
         </div>
 
-        {/* Data de Nascimento */}
-        <div className="md:col-span-1">
-          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-            Data Nascimento
-          </label>
-          <input
-            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-            value={formData.birthday || ''}
-            onChange={e => setFormData({ ...formData, birthday: maskDate(e.target.value) })}
-            maxLength={10}
-            placeholder="DD/MM/AAAA"
-            disabled={isViewMode}
-            readOnly={isViewMode}
-          />
+        {/* Data de Nascimento e Telefone */}
+        <div className="md:col-span-2 grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+              Data Nascimento
+            </label>
+            <input
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+              value={formData.birthday || ''}
+              onChange={e => setFormData({ ...formData, birthday: maskDate(e.target.value) })}
+              maxLength={10}
+              placeholder="DD/MM/AAAA"
+              disabled={isViewMode}
+              readOnly={isViewMode}
+            />
+          </div>
+          <div>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+              Telefone / Celular
+            </label>
+            <input
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+              value={formData.phone || ''}
+              onChange={e => setFormData({ ...formData, phone: maskPhone(e.target.value) })}
+              maxLength={15}
+              placeholder="(00) 00000-0000"
+              disabled={isViewMode}
+              readOnly={isViewMode}
+            />
+          </div>
         </div>
 
         {/* Estado Civil */}
