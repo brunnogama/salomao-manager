@@ -221,7 +221,16 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             });
 
             if (error) {
-                throw new Error(error.message || "Erro desconhecido na Edge Function");
+                let errorMessage = error.message;
+                try {
+                    if (error.context && typeof error.context.json === 'function') {
+                        const errData = await error.context.json();
+                        if (errData?.error) errorMessage = errData.error;
+                    }
+                } catch (e) {
+                    // Ignore json parsing errors
+                }
+                throw new Error(errorMessage || "Erro desconhecido na Edge Function");
             }
             if (data?.error) {
                 throw new Error(data.error);
