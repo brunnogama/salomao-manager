@@ -65,12 +65,22 @@ export function VagasSelectionModal({ isOpen, onClose, onSelect }: VagasSelectio
             const { error: uploadError } = await supabase.storage.from('ged-colaboradores').upload(filePath, file)
             if (uploadError) throw new Error('Falha ao fazer upload do currículo: ' + uploadError.message)
 
-            const { data, error } = await supabase.functions.invoke('analisar-curriculo-cv', {
-                body: { tempObjectPath: filePath }
-            });
+            const { data: { session } } = await supabase.auth.getSession();
+            const response = await fetch(
+                `https://iewevhdtwlviudetxgax.supabase.co/functions/v1/analisar-curriculo-cv`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`
+                    },
+                    body: JSON.stringify({ tempObjectPath: filePath })
+                }
+            );
 
-            if (error) throw new Error(error.message || 'Erro na extração via IA')
-            if (data?.error) throw new Error(data.error)
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Erro na extração via IA');
+            const data = result;
 
             if (data?.data) {
                 clearInterval(progressInterval);
