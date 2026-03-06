@@ -349,6 +349,14 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             delete payload.candidato_experiencias;
             delete payload.candidato_ged;
 
+            // Date formatting
+            if (payload.birthday && payload.birthday.includes('/')) {
+                const parts = payload.birthday.split('/');
+                if (parts.length === 3) {
+                    payload.birthday = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+            }
+
             // Allowed fields based on the actual Candidato schema via OpenAPI
             const allowedFields = [
                 'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'resumo_cv', 'role', 'local', 'area', 'contract_type',
