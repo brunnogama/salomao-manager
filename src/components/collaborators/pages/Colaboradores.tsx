@@ -2517,7 +2517,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const sz = size === 'lg' ? 'w-20 h-20 text-xl' : 'w-10 h-10 text-sm'
     const clickableClass = onImageClick && src ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
 
-    if (src) return <img src={src} onClick={onImageClick} className={`${sz} rounded-full object-cover border-2 border-white shadow-sm ${clickableClass}`} alt={name} />
+    if (src) return <img src={src} loading="lazy" onClick={onImageClick} className={`${sz} rounded-full object-cover border-2 border-white shadow-sm ${clickableClass}`} alt={name} />
     return (
       <div className={`${sz} rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center font-black text-white shadow-md`}>
         {name?.charAt(0).toUpperCase()}

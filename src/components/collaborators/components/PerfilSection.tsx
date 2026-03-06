@@ -88,21 +88,31 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
             console.log('Iniciando salvamento de perfil...', { id: collaboratorId, perfilValue: perfil, competenciasValue: competencias });
 
             const { data: updateData, error } = await supabase
-                .from('collaborators')
-                .update({
-                    perfil: perfil,
-                    competencias: competencias,
-                    resumo_cv: resumoCv
-                })
-                .eq('id', collaboratorId)
-                .select();
+                .rpc('update_collaborator_perfil', {
+                    p_id: collaboratorId,
+                    p_perfil: perfil,
+                    p_competencias: competencias,
+                    p_resumo_cv: resumoCv
+                });
 
             console.log('Resultado da atualização do perfil:', { updateData, error });
-            if (error) throw error;
-
-            if (!updateData || updateData.length === 0) {
-                console.warn('Alerta: Nenhuma linha foi atualizada no perfil. O ID existe?');
-                throw new Error('Não foi possível encontrar o registro do colaborador para salvar.');
+            if (error) {
+                // If RPC doesn't exist yet, fallback to normal update as a safety measure
+                if (error.code === 'PGRST202') {
+                    console.log('RPC update_collaborator_perfil not found, falling back to standard update.');
+                    const fallback = await supabase
+                        .from('collaborators')
+                        .update({
+                            perfil: perfil,
+                            competencias: competencias,
+                            resumo_cv: resumoCv
+                        })
+                        .eq('id', collaboratorId)
+                        .select();
+                    if (fallback.error) throw fallback.error;
+                } else {
+                    throw error;
+                }
             }
 
             // Upsert tags na nuvem para futuras buscas
