@@ -111,7 +111,10 @@ export function CandidatoExperienciasSection({
     }
 
     const handleSaveExperiencia = async () => {
-        if (!empresa || !cargo || !dataInicio) return;
+        if (!empresa || !cargo || !dataInicio) {
+            showAlert('Atenção', 'Preencha a Empresa, Cargo e Data de Início para adicionar a experiência.', 'warning');
+            return;
+        }
 
         const payload: any = {
             empresa,
@@ -312,7 +315,7 @@ export function CandidatoExperienciasSection({
                         ) : <div></div>}
                         <button
                             onClick={handleSaveExperiencia}
-                            disabled={loadingExp || !empresa || !cargo || !dataInicio}
+                            disabled={loadingExp}
                             className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-purple-700 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loadingExp ? <Loader2 className="h-4 w-4 animate-spin" /> : (editingId || editingTempId) ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}

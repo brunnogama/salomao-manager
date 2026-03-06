@@ -133,7 +133,10 @@ export function CandidatoHistoricoSection({
 
     // --- SAVE HANDLERS ---
     const handleSaveHistorico = async () => {
-        if (!descricao) return
+        if (!descricao) {
+            showAlert('Atenção', 'Preencha a descrição para salvar o registro.', 'warning');
+            return;
+        }
 
         const payload: any = {
             tipo: tipo,
@@ -296,7 +299,7 @@ export function CandidatoHistoricoSection({
                             <div className="flex justify-end">
                                 <button
                                     onClick={handleSaveHistorico}
-                                    disabled={loading || !descricao}
+                                    disabled={loading}
                                     className="flex items-center gap-2 px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-blue-800 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
