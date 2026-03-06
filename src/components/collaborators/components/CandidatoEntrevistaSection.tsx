@@ -174,6 +174,7 @@ export function CandidatoEntrevistaSection({
                                 disabled={isViewMode}
                                 options={vagasAbertas}
                                 allowCustom={true}
+                                disableFormatting={true}
                             />
                         </div>
 

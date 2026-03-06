@@ -8,11 +8,11 @@ import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
 import { DadosEscolaridadeSection } from './DadosEscolaridadeSection'
 import { CandidatoExperienciasSection } from './CandidatoExperienciasSection'
-import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart } from 'lucide-react'
+import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, ChevronDown } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
 import { EnderecoSection } from './EnderecoSection'
-import { SearchableSelect } from '../../crm/SearchableSelect'
+
 import {
     maskCPF,
     maskDate,
@@ -57,6 +57,19 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const [tagSearch, setTagSearch] = useState('')
     const [tagInputValue, setTagInputValue] = useState('')
     const [availableTags, setAvailableTags] = useState<string[]>([])
+
+    const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false)
+    const statusMenuRef = React.useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (statusMenuRef.current && !statusMenuRef.current.contains(event.target as Node)) {
+                setIsStatusMenuOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     // GED State
     const [gedCategories] = useState([
@@ -566,6 +579,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
     const handleStatusSelecaoChange = (value: string) => {
         setFormData(prev => ({ ...prev, status_selecao: value }));
+        setIsStatusMenuOpen(false);
         if (value === 'Reprovado' && !formData.motivo_reprovacao) {
             // Se precisar abrir modal de motivo específico, podemos definir alertConfig ou similar
             // Porém usando o proprio alert pra facilitar a UI
@@ -590,24 +604,35 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             currentSteps={steps}
             footer={
                 <div className="flex items-center gap-4">
-                    <div className="flex flex-col border-r border-[#1e3a8a]/20 pr-4 sm:w-[220px]">
-                        <label className="text-[9px] font-black text-blue-900 uppercase tracking-widest mb-1 text-right">Status do Processo</label>
-                        <SearchableSelect
-                            value={formData.status_selecao || 'Aberto'}
-                            onChange={handleStatusSelecaoChange}
-                            options={[
-                                { id: 'Aberto', name: 'Aberto' },
-                                { id: 'Aprovado', name: 'Aprovado' },
-                                { id: 'Reprovado', name: 'Reprovado' },
-                                { id: 'Reaproveitamento', name: 'Reaproveitamento' }
-                            ]}
-                            className={`text-[10px] font-bold uppercase tracking-wider !py-1.5 !px-3 rounded-xl border-2 ${formData.status_selecao === 'Aprovado' ? '!bg-emerald-50 !text-emerald-700 !border-emerald-200' :
-                                formData.status_selecao === 'Reprovado' ? '!bg-red-50 !text-red-700 !border-red-200' :
-                                    formData.status_selecao === 'Reaproveitamento' ? '!bg-amber-50 !text-amber-700 !border-amber-200' :
-                                        '!bg-blue-50 !text-[#1e3a8a] !border-blue-200 hover:!bg-blue-100 transition-colors'
+                    <div className="flex flex-col pr-4 sm:w-[220px] relative" ref={statusMenuRef}>
+                        <div className="mb-1 text-right border-b border-gray-100 pb-1"></div>
+                        <button
+                            type="button"
+                            onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+                            className={`flex items-center justify-between w-full text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl border transition-all ${formData.status_selecao === 'Aprovado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
+                                formData.status_selecao === 'Reprovado' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
+                                    formData.status_selecao === 'Reaproveitamento' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
+                                        'bg-blue-50 text-[#1e3a8a] border-blue-200 hover:bg-blue-100'
                                 }`}
-                            uppercase={true}
-                        />
+                        >
+                            <span>{formData.status_selecao || 'Aberto'}</span>
+                            <ChevronDown className={`w-4 h-4 transition-transform ${isStatusMenuOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isStatusMenuOpen && (
+                            <div className="absolute bottom-full left-0 mb-2 w-48 bg-[#33353A] rounded-xl shadow-xl border border-gray-700 overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50">
+                                {['Aberto', 'Aprovado', 'Reprovado', 'Reaproveitamento'].map(status => (
+                                    <button
+                                        key={status}
+                                        type="button"
+                                        onClick={() => handleStatusSelecaoChange(status)}
+                                        className="w-full text-left px-5 py-3 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
+                                    >
+                                        {status}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                     <button
                         onClick={handleSave}
