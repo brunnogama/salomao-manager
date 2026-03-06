@@ -31,16 +31,17 @@ serve(async (req) => {
       global: { headers: { Authorization: req.headers.get('Authorization')! } }
     });
 
-    // 1. Buscar dados basicos do candidato para orientar a IA se necessário
+    console.log("📝 Iniciando processamento para Candidato ID:", candidatoId);
+
     const { data: candidato, error: candError } = await supabase
       .from('candidatos')
       .select('*')
       .eq('id', candidatoId)
       .single();
 
-    if (candError || !candidato) throw new Error("Candidato não encontrado");
+    if (candError || !candidato) throw new Error("Candidato não encontrado. Erro: " + candError?.message);
 
-    // 2. Buscar Arquivos GED (Categoria = Currículo)
+    // 2. Buscar Arquivos GED (categoria = Currículo)
     const { data: geds, error: gedError } = await supabase
       .from('candidato_ged')
       .select('url, nome_arquivo')
@@ -48,21 +49,35 @@ serve(async (req) => {
       .eq('categoria', 'Currículo');
 
     if (gedError || !geds || geds.length === 0) {
-      throw new Error("O candidato não possui um arquivo classificado como 'Currículo' no GED.");
+      throw new Error("O candidato não possui um arquivo classificado como 'Currículo' no banco de dados GED.");
     }
 
     // Pegar o último/mais recente cv
     const cv = geds[geds.length - 1];
+    if (!cv.url) throw new Error("O registro de currículo não contém uma URL válida.");
 
-    // 3. Fazer download do Arquivo 
-    // CV URL is a full public URL from Supabase storage, fetch it to pass buffer to Gemini
-    const fileRes = await fetch(cv.url);
-    const pdfBlob = await fileRes.blob();
+    console.log("📂 Encontrado Currículo:", cv.nome_arquivo);
+
+    // 3. Fazer download do Arquivo do Storage
+    // Extraindo o caminho do storage da public URL: '.../storage/v1/object/public/ged-colaboradores/candidatos/ID/ged/blabla.pdf'
+    // Como a URL vem do Supabase Storage public, garantimos o download via SDK para bypass CORS/Auth limitations.
+    const file_path_matches = cv.url.match(/ged-colaboradores\/(.+)$/);
+    const objectPath = file_path_matches ? file_path_matches[1] : null;
+
+    if (!objectPath) throw new Error("Não foi possível extrair o caminho do bucket pela URL fornecida: " + cv.url);
+
+    console.log("📥 Baixando arquivo do Bucket no caminho:", objectPath);
+    const { data: fileData, error: downloadError } = await supabase.storage.from('ged-colaboradores').download(objectPath);
+
+    if (downloadError) {
+      console.error("ERRO DOWNLOAD:", downloadError.message);
+      throw new Error("Erro ao baixar PDF do bucket interno: " + downloadError.message);
+    }
 
     // Converter blob para Uint8Array
-    const buffer = await pdfBlob.arrayBuffer();
-    // Converter array buffer para base64 para uso via GenAI APIREST Direct usando standard memory-safe encodeBase64
+    const buffer = await fileData.arrayBuffer();
     const base64Data = encodeBase64(new Uint8Array(buffer));
+    console.log("✅ PDF convertido para Base64 com sucesso. Tamanho:", base64Data.length);
 
     // 4. Prompt para a IA
     const systemInstruction = `Você é um Assistente de RH altamente especializado em Recrutamento e Seleção ATS (Applicant Tracking System).
@@ -107,6 +122,7 @@ Concentre-se em extrair no mínimo 5 e no máximo 15 tags reais relativas à exp
     const geminiData = await response.json();
 
     if (!response.ok) {
+      console.error("GEMINI API ERROR PAYLOAD:", geminiData);
       throw new Error(`Gemini API Error: ${geminiData.error?.message || 'Unknown'}`);
     }
 
@@ -131,6 +147,7 @@ Concentre-se em extrair no mínimo 5 e no máximo 15 tags reais relativas à exp
     })
 
   } catch (error: any) {
+    console.error("❌ ERRO FATAL NA EDGE FUNCTION:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
