@@ -163,15 +163,37 @@ Retorne null para propriedades do tipo primitivo que não achar (como string ou 
       throw new Error(`Gemini API Error: ${geminiData.error?.message || 'Unknown'}`);
     }
 
-    const rawText = geminiData.candidates[0].content.parts[0].text;
+    let rawText = "";
+
+    if (geminiData.candidates && geminiData.candidates.length > 0) {
+      const candidate = geminiData.candidates[0];
+      if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+        rawText = candidate.content.parts[0].text;
+      } else if (candidate.finishReason) {
+        throw new Error(`Gemini não retornou conteúdo. Motivo: ${candidate.finishReason}`);
+      }
+    } else if (geminiData.promptFeedback) {
+      throw new Error(`Prompt bloqueado por filtros de segurança: ${JSON.stringify(geminiData.promptFeedback)}`);
+    }
+
+    if (!rawText) {
+      throw new Error("Resposta vazia da IA Gemini. " + JSON.stringify(geminiData));
+    }
 
     // 6. Limpeza caso ainda devolva markdown "```json\n...\n```" (Fallback)
     let parsedData;
+    let jsonErrorMsg = "";
     try {
       const cleanedText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
       parsedData = JSON.parse(cleanedText);
-    } catch (e) {
-      throw new Error("Falha ao fazer parse do resultado do Gemini: " + rawText);
+    } catch (e: any) {
+      console.error("JSON PARSE ERROR:", e.message);
+      console.error("RAW TEXT:", rawText);
+      jsonErrorMsg = e.message;
+    }
+
+    if (!parsedData) {
+      throw new Error(`A IA não retornou um JSON válido. Erro do parse: ${jsonErrorMsg}. Texto puro retornado: ${rawText.substring(0, 500)}...`);
     }
 
     return new Response(JSON.stringify({
@@ -184,7 +206,7 @@ Retorne null para propriedades do tipo primitivo que não achar (como string ou 
     })
 
   } catch (error: any) {
-    console.error("❌ ERRO FATAL NA EDGE FUNCTION:", error.message);
+    console.error("❌ ERRO FATAL NA EDGE FUNCTION:", undefined, error.stack || error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
