@@ -381,6 +381,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             console.log('Payload limpo:', cleanPayload);
             console.log('ID do Candidato:', candidatoId);
 
+            let finalCandidatoId = candidatoId;
+
             if (candidatoId) {
                 const { error } = await supabase.from('candidatos').update(cleanPayload).eq('id', candidatoId)
                 if (error) {
@@ -388,11 +390,12 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     throw error;
                 }
             } else {
-                const { error: insertError } = await supabase.from('candidatos').insert([cleanPayload])
+                const { data: insertedData, error: insertError } = await supabase.from('candidatos').insert([cleanPayload]).select('id').single()
                 if (insertError) {
                     console.error('Erro no insert do candidato:', insertError);
                     throw insertError;
                 }
+                finalCandidatoId = insertedData?.id || null;
             }
 
             console.log('Candidato salvo com sucesso!');
@@ -408,7 +411,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             }
 
             // Upload pending GED docs
-            const finalCandidatoId = candidatoId || (await supabase.from('candidatos').select('id').eq('nome', payload.nome).order('created_at', { ascending: false }).limit(1).single()).data?.id;
+            // finalCandidatoId is already captured during insert/update
 
             if (finalCandidatoId && pendingGedDocs.length > 0) {
                 for (const doc of pendingGedDocs) {
