@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, Settings, ChevronDown, X, Plus, Pencil, Trash2, Save, Loader2, AlertTriangle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -285,9 +286,9 @@ export function ManagedSelect({
             </div>
 
             {/* MODAL GERENCIAMENTO */}
-            {isManaging && (
+            {isManaging && createPortal(
                 <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100000] flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999999] flex items-center justify-center p-4 animate-in fade-in duration-200"
                     onClick={() => !loading && setIsManaging(false)}
                 >
                     <div
@@ -390,7 +391,8 @@ export function ManagedSelect({
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     )
