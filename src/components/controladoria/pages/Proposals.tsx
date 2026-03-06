@@ -66,6 +66,7 @@ export function Proposals() {
 
   // Modal State (for after generation)
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [caseSaved, setCaseSaved] = useState(false);
   const [contractFormData, setContractFormData] = useState<Contract>({} as Contract);
   const [processes, setProcesses] = useState<ContractProcess[]>([]);
   const [currentProcess, setCurrentProcess] = useState<ContractProcess>({ process_number: '' });
@@ -73,6 +74,22 @@ export function Proposals() {
   const [newIntermediateFee, setNewIntermediateFee] = useState('');
   const [timelineData, setTimelineData] = useState<TimelineEvent[]>([]);
   const [analysts, setAnalysts] = useState<Analyst[]>([]);
+
+  const addIntermediateFee = () => {
+    if (!newIntermediateFee) return;
+    setContractFormData((prev: Contract) => ({
+      ...prev,
+      intermediate_fees: [...(prev.intermediate_fees || []), newIntermediateFee]
+    }));
+    setNewIntermediateFee('');
+  };
+
+  const removeIntermediateFee = (idx: number) => {
+    setContractFormData((prev: Contract) => ({
+      ...prev,
+      intermediate_fees: prev.intermediate_fees?.filter((_, i) => i !== idx)
+    }));
+  };
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(0);
@@ -486,20 +503,25 @@ export function Proposals() {
 
     let clauseIndex = 2;
     proposalData.pro_labore_clauses.forEach((c) => {
-      text += `2.${clauseIndex}. Honorários pró-labore de ${c.value || '[valor]'}, ${c.description || 'para engajamento no caso'}\n\n`;
-      clauseIndex++;
+      if (c.value) {
+        text += `2.${clauseIndex}. Honorários pró-labore de ${c.value}, ${c.description || 'para engajamento no caso'}\n\n`;
+        clauseIndex++;
+      }
     });
 
     proposalData.intermediate_fee_clauses.forEach((c) => {
-      const valText = c.value || '[valor]';
-      text += `2.${clauseIndex}. Êxito intermediário: ${valText}, ${c.description || '[descrição]'}\n\n`;
-      clauseIndex++;
+      if (c.value) {
+        text += `2.${clauseIndex}. Êxito intermediário: ${c.value}, ${c.description || '[descrição]'}\n\n`;
+        clauseIndex++;
+      }
     });
 
     proposalData.final_success_fee_clauses.forEach((c) => {
-      const valText = c.value ? (c.type === 'currency' ? c.value : `${c.value}%`) : '[valor/%]';
-      text += `2.${clauseIndex}. Honorários finais de êxito de ${valText}, ${c.description || '[descrição]'}\n\n`;
-      clauseIndex++;
+      if (c.value) {
+        const valText = c.type === 'currency' ? c.value : `${c.value}%`;
+        text += `2.${clauseIndex}. Honorários finais de êxito de ${valText}, ${c.description || '[descrição]'}\n\n`;
+        clauseIndex++;
+      }
     });
 
     text += `2.${clauseIndex}. Os honorários de êxito serão integralmente devidos pelo Cliente em caso de transação ou rescisão imotivada do presente contrato.\n\n`;
@@ -652,6 +674,7 @@ export function Proposals() {
       });
       setProcesses([]);
       setTimelineData([]);
+      setCaseSaved(false);
       setIsModalOpen(true);
 
     } catch (error: any) {
@@ -937,7 +960,17 @@ export function Proposals() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const handleCloseModalAttempt = () => {
-    setShowCancelConfirm(true);
+    if (!caseSaved) {
+      setShowCancelConfirm(true);
+    } else {
+      setIsModalOpen(false);
+    }
+  };
+
+  const handleOnSave = () => {
+    setCaseSaved(true);
+    setIsModalOpen(false);
+    setShowCancelConfirm(false);
   };
 
   const handleConfirmCancel = async () => {
@@ -1319,7 +1352,7 @@ export function Proposals() {
             onClose={handleCloseModalAttempt}
             formData={contractFormData}
             setFormData={setContractFormData}
-            onSave={() => { }}
+            onSave={handleOnSave}
             loading={false}
             isEditing={true} // So it allows editing immediately
             partners={partners}
@@ -1336,8 +1369,8 @@ export function Proposals() {
             removeProcess={() => { }}
             newIntermediateFee={newIntermediateFee}
             setNewIntermediateFee={setNewIntermediateFee}
-            addIntermediateFee={() => { }}
-            removeIntermediateFee={() => { }}
+            addIntermediateFee={addIntermediateFee}
+            removeIntermediateFee={removeIntermediateFee}
             timelineData={timelineData}
             getStatusColor={() => ''}
             getStatusLabel={() => ''}
