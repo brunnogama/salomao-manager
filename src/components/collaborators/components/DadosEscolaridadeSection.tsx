@@ -406,16 +406,36 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
 
             <div className="pt-6 border-t border-gray-100 mt-6">
                 <h4 className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <BookOpen className="h-4 w-4" /> Atividades Acadêmicas e Extracurriculares
+                    <BookOpen className="h-4 w-4" /> Qualificações e Idiomas
                 </h4>
-                <textarea
-                    className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none transition-all resize-y shadow-sm font-medium min-h-[100px] ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    value={formData.atividades_academicas || ''}
-                    onChange={(e) => setFormData({ ...formData, atividades_academicas: e.target.value })}
-                    placeholder="Ex: Monitoria, Empresa Júnior, Grupo de Pesquisa, Ligas Acadêmicas..."
-                    disabled={isViewMode}
-                    readOnly={isViewMode}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                            Idiomas
+                        </label>
+                        <textarea
+                            className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none transition-all resize-y shadow-sm font-medium min-h-[100px] ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            value={formData.idiomas || ''}
+                            onChange={(e) => setFormData({ ...formData, idiomas: e.target.value })}
+                            placeholder="Ex: Inglês Avançado, Espanhol Intermediário..."
+                            disabled={isViewMode}
+                            readOnly={isViewMode}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                            Atividades Acadêmicas e Extracurriculares
+                        </label>
+                        <textarea
+                            className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none transition-all resize-y shadow-sm font-medium min-h-[100px] ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            value={formData.atividades_academicas || ''}
+                            onChange={(e) => setFormData({ ...formData, atividades_academicas: e.target.value })}
+                            placeholder="Ex: Monitoria, Empresa Júnior, Grupo de Pesquisa, Ligas Acadêmicas..."
+                            disabled={isViewMode}
+                            readOnly={isViewMode}
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     )

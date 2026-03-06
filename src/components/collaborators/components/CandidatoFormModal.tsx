@@ -5,7 +5,9 @@ import { CollaboratorModalLayout } from './CollaboratorLayouts'
 import { DadosPessoaisSection } from './DadosPessoaisSection'
 import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
-import { User, BookOpen, FileText, Briefcase, Hash, X, Sparkles, Bot, Loader2 } from 'lucide-react'
+import { DadosEscolaridadeSection } from './DadosEscolaridadeSection'
+import { CandidatoExperienciasSection } from './CandidatoExperienciasSection'
+import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { EnderecoSection } from './EnderecoSection'
 import {
@@ -28,6 +30,7 @@ interface CandidatoFormModalProps {
 
 export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile }: CandidatoFormModalProps) {
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+    const downloadLinkRef = React.useRef<HTMLAnchorElement>(null)
 
     const handleRequestClose = () => {
         setShowCancelConfirm(true)
@@ -454,7 +457,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         }
     };
 
-    const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) => {
         if (e.key === 'Enter' || e.key === ',') {
             e.preventDefault();
             if (isTagging) return; // deixa o usuario escolher do menu
@@ -497,11 +500,12 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     };
 
     const steps = [
-        { id: 1, label: 'Dados Pessoais', icon: User },
-        { id: 2, label: 'Dados Profissionais', icon: Briefcase },
-        { id: 3, label: 'Perfil e Tags', icon: Hash },
-        { id: 4, label: 'Histórico', icon: BookOpen },
-        { id: 5, label: 'GED / Arquivos', icon: FileText },
+        { id: 1, label: 'Dados Pessoais e Bancários', icon: User },
+        { id: 4, label: 'Dados Corporativos', icon: Briefcase },
+        { id: 3, label: 'Dados de Escolaridade', icon: BookOpen },
+        { id: 9, label: 'Perfil e Tags', icon: TagIcon },
+        { id: 6, label: 'Histórico', icon: Clock },
+        { id: 7, label: 'GED', icon: Files },
     ]
 
     if (!isOpen) return null
@@ -576,20 +580,29 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     />
                 </div>
             )}
-            {activeTab === 2 && (
+
+            {activeTab === 4 && (
                 <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
                     <DadosProfissionaisCandidato
                         formData={formData}
                         setFormData={setFormData}
                         isViewMode={false}
-                        candidatoId={candidatoId || null}
-                        pendingExperiencias={pendingExperiencias}
-                        setPendingExperiencias={setPendingExperiencias}
-                        showAlert={showAlert}
                     />
                 </div>
             )}
+
             {activeTab === 3 && (
+                <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
+                    <DadosEscolaridadeSection
+                        formData={formData as any}
+                        setFormData={setFormData}
+                        isViewMode={false}
+                        maskDate={maskDate}
+                    />
+                </div>
+            )}
+
+            {activeTab === 9 && (
                 <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
                     {/* IA Resume Generation Header Box */}
                     <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 p-5 rounded-xl shadow-sm relative overflow-hidden group/ai">
@@ -636,6 +649,21 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         </label>
                         <div className="relative flex-1 flex flex-col">
                             <div className="w-full bg-gray-50 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] p-3 transition-all min-h-[300px] flex-1 flex flex-col items-start relative cursor-text group">
+                                <textarea
+                                    className="w-full min-h-[50px] bg-transparent text-[#0a192f] text-sm focus:outline-none resize-none font-medium z-10 sticky top-0"
+                                    placeholder="Comece a digitar uma habilidade ou competência... Cada linha formará uma tag."
+                                    onKeyDown={handleTagInputKeyDown}
+                                    value={tagInputValue}
+                                    onChange={(e) => {
+                                        setTagInputValue(e.target.value)
+                                        if (e.target.value.startsWith('@')) {
+                                            setIsTagging(true)
+                                            setTagSearch(e.target.value.substring(1))
+                                        } else {
+                                            setIsTagging(false)
+                                        }
+                                    }}
+                                />
 
                                 {isTagging && availableTags.length > 0 && (
                                     <div className="absolute top-12 left-3 w-[80%] max-w-sm bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-48 overflow-y-auto ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -666,43 +694,45 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                                     </div>
                                 )}
 
-                                <div className="flex flex-wrap gap-2 w-full">
+                                <div className="flex flex-wrap gap-2 w-full mt-2">
                                     {(formData.perfil || '').split('\n').filter(Boolean).map((tag: string, index: number) => (
                                         <div key={index} className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-[#1e3a8a] px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm animate-in zoom-in-50 duration-200 group/tag">
-                                            <Hash className="h-3.5 w-3.5 text-blue-400" />
+                                            <Hash className="h-3 w-3 text-blue-400" />
                                             {tag}
                                             <button
                                                 onClick={() => removeTagFromFormData(index)}
-                                                className="ml-1 hover:bg-white rounded-full p-0.5 text-blue-400 hover:text-red-500 transition-colors opacity-60 group-hover/tag:opacity-100"
+                                                className="ml-1 hover:bg-blue-200 p-0.5 rounded-full transition-colors text-blue-500 hover:text-blue-700 opacity-50 group-hover/tag:opacity-100"
                                             >
-                                                <X className="h-3.5 w-3.5" />
+                                                <X className="h-3 w-3" />
                                             </button>
                                         </div>
                                     ))}
-
-                                    <input
-                                        type="text"
-                                        value={tagInputValue}
-                                        onChange={handleTagInputChange}
-                                        onKeyDown={handleTagInputKeyDown}
-                                        placeholder={(formData.perfil || '').split('\n').filter(Boolean).length === 0 ? "Digite a tag e aperte Enter ou vírgula. Ou digite @ para buscar." : "Nova tag..."}
-                                        className="bg-transparent text-[#0a192f] text-sm outline-none font-medium flex-1 min-w-[200px] py-1.5 placeholder:text-gray-400"
-                                    />
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
-            {activeTab === 4 && (
-                <CandidatoHistoricoSection
-                    candidatoId={candidatoId || null}
-                    isViewMode={false}
-                    pendingHistorico={pendingHistorico}
-                    setPendingHistorico={setPendingHistorico}
-                />
+
+            {activeTab === 6 && (
+                <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
+                    <CandidatoExperienciasSection
+                        candidatoId={candidatoId || null}
+                        isViewMode={false}
+                        pendingExperiencias={pendingExperiencias}
+                        setPendingExperiencias={setPendingExperiencias}
+                        showAlert={showAlert}
+                    />
+                    <CandidatoHistoricoSection
+                        candidatoId={candidatoId || null}
+                        isViewMode={false}
+                        pendingHistorico={pendingHistorico}
+                        setPendingHistorico={setPendingHistorico}
+                    />
+                </div>
             )}
-            {activeTab === 5 && (
+
+            {activeTab === 7 && (
                 <div className="animate-in slide-in-from-right-4 duration-300">
                     <GEDSection
                         gedCategories={gedCategories}
@@ -719,6 +749,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     />
                 </div>
             )}
+
+            {/* INVISIBLE LINK FOR ATTACHMENT */}
+            <a ref={downloadLinkRef} style={{ display: 'none' }} href="#" />
+
             {/* Modal Dialog for alerts matching the system design */}
             {alertConfig.isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-500/20 backdrop-blur-sm animate-in fade-in duration-200">
@@ -741,6 +775,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     </div>
                 </div>
             )}
+
             {showCancelConfirm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
