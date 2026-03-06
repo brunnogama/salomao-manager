@@ -42,10 +42,9 @@ serve(async (req) => {
 
     if (candError || !candidato) throw new Error(`Candidato não encontrado. Erro: ${candError?.message}`);
 
-    // 2. Buscar dados da Vaga e Role relacionado
     const { data: vaga, error: vagaError } = await supabase
       .from('vagas')
-      .select('vaga_id_text, descricao, requisitos, qualificacoes, role:roles(name)')
+      .select('vaga_id_text, perfil, observacoes, role:roles(name)')
       .eq('id', vagaId)
       .single();
 
@@ -67,10 +66,10 @@ ${(candidato.experiencias_raw as any[])?.slice(0, 3).map((e: any) => `- ${e.carg
 
     const vagaProfile = `
 Código/Cargo da Vaga: ${vaga.vaga_id_text} - ${roleVaga}
-Requisitos / Qualificações Base:
-${vaga.requisitos || 'Sem requistos especificados'}
-${vaga.qualificacoes || ''}
-${vaga.descricao || ''}
+Perfil Desejado (Habilidades):
+${vaga.perfil || 'Sem perfil especificado'}
+Observações/Descrição:
+${vaga.observacoes || ''}
 `.trim().substring(0, 3000); // Corte de safety preventivo para API
 
     const systemInstruction = `Você é o sistema "Match Inteligente", um analisador ATS avançado de Recursos Humanos.
