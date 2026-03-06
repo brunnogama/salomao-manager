@@ -101,7 +101,9 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     resumo_cv: initialData.resumoProfissional || '',
                     role: initialData.sugestaoCargo || '',
                     linkedin_url: initialData.linkedin || '',
-                    perfil: (initialData.perfilTags || []).join('\n')
+                    perfil: (initialData.perfilTags || []).join('\n'),
+                    idiomas: initialData.idiomas || '',
+                    atividades_academicas: initialData.atividades_academicas || ''
                 };
                 setFormData(mappedData);
 
