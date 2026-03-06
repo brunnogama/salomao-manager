@@ -225,28 +225,31 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
         try {
             setAiLoading(true);
-            const { data, error } = await supabase.functions.invoke('analisar-curriculo-cv', {
-                body: { candidatoId }
-            });
+            const { data: { session } } = await supabase.auth.getSession();
 
-            if (error) {
-                let errorMessage = error.message;
-                try {
-                    if (error.context && typeof error.context.json === 'function') {
-                        const errData = await error.context.json();
-                        if (errData?.error) errorMessage = errData.error;
-                    }
-                } catch (e) {
-                    // Ignore json parsing errors
+            const response = await fetch(
+                `https://iewevhdtwlviudetxgax.supabase.co/functions/v1/analisar-curriculo-cv`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`
+                    },
+                    body: JSON.stringify({
+                        candidatoId,
+                        context: 'candidato'
+                    })
                 }
-                throw new Error(errorMessage || "Erro desconhecido na Edge Function");
-            }
-            if (data?.error) {
-                throw new Error(data.error);
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Erro desconhecido na Edge Function');
             }
 
-            if (data?.data) {
-                const { resumoProfissional, perfilTags, sugestaoCargo, atividades_academicas, idiomas, email, telefone } = data.data;
+            if (result.success && result.data) {
+                const { resumoProfissional, perfilTags, sugestaoCargo, atividades_academicas, idiomas, email, telefone } = result.data;
 
                 // Merge no formData
                 setFormData((prev: any) => {
