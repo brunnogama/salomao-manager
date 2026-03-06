@@ -22,9 +22,11 @@ interface CandidatoFormModalProps {
     onClose: () => void
     candidatoId?: string | null
     onSave: () => void
+    initialData?: any
+    initialFile?: File | null
 }
 
-export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: CandidatoFormModalProps) {
+export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile }: CandidatoFormModalProps) {
     useCloseOnEscape(isOpen, onClose)
 
     const [activeTab, setActiveTab] = useState(1)
@@ -66,15 +68,56 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             setPendingHistorico([])
             setPendingExperiencias([])
             setSelectedGedCategory('')
+            setAiLoading(false)
             if (candidatoId) {
                 fetchCandidato(candidatoId)
                 fetchGedDocs(candidatoId)
+            } else if (initialData) {
+                const mappedData: any = {
+                    nome: initialData.nome || '',
+                    name: initialData.nome || '',
+                    email: initialData.email || '',
+                    phone: initialData.telefone || '',
+                    birth_date: initialData.data_nascimento || '',
+                    zip_code: initialData.endereco?.cep || '',
+                    address: initialData.endereco?.logradouro || '',
+                    neighborhood: initialData.endereco?.bairro || '',
+                    city: initialData.endereco?.cidade || '',
+                    state: initialData.endereco?.estado || '',
+                    resumo_cv: initialData.resumoProfissional || '',
+                    role: initialData.sugestaoCargo || '',
+                    linkedin_url: initialData.linkedin || '',
+                    perfil: (initialData.perfilTags || []).join('\n')
+                };
+                setFormData(mappedData);
+
+                if (initialData.experiencias && Array.isArray(initialData.experiencias)) {
+                    const mappedExp = initialData.experiencias.map((e: any) => ({
+                        temp_id: Math.random().toString(36).substring(7),
+                        empresa: e.empresa || '',
+                        cargo: e.cargo || '',
+                        periodo_inicio: e.inicio || '',
+                        periodo_fim: e.fim || '',
+                        descricao: e.descricao || ''
+                    }));
+                    setPendingExperiencias(mappedExp);
+                }
+
+                if (initialFile) {
+                    setPendingGedDocs([{
+                        file: initialFile,
+                        category: 'Currículo',
+                        label: initialFile.name,
+                        tempId: Math.random().toString(36).substring(7)
+                    }]);
+                }
+                setGedDocs([]);
             } else {
                 setFormData({})
                 setGedDocs([])
             }
         }
-    }, [isOpen, candidatoId])
+    }, [isOpen, candidatoId, initialData, initialFile])
 
     const fetchTags = async () => {
         try {

@@ -206,12 +206,22 @@ export function RHVagas() {
     setIsSelectionModalOpen(true)
   }
 
+  const [candidatoInitialData, setCandidatoInitialData] = useState<any>(null)
+  const [candidatoInitialFile, setCandidatoInitialFile] = useState<File | null>(null)
+
   const handleSelection = (tipo: VagasCreationType) => {
     setIsSelectionModalOpen(false)
     if (tipo === 'vaga') {
       handleOpenModal()
-    } else {
+    } else if (tipo === 'candidato') {
       setSelectedCandidatoId(null)
+      setCandidatoInitialData(null)
+      setCandidatoInitialFile(null)
+      setIsCandidatoModalOpen(true)
+    } else if (typeof tipo === 'object' && tipo.type === 'candidato_ia') {
+      setSelectedCandidatoId(null)
+      setCandidatoInitialData(tipo.data)
+      setCandidatoInitialFile(tipo.file)
       setIsCandidatoModalOpen(true)
     }
   }
@@ -236,6 +246,13 @@ export function RHVagas() {
   const handleCloseViewModal = () => {
     setIsViewModalOpen(false)
     setSelectedVagaId(null)
+  }
+
+  const handleCloseCandidatoModal = () => {
+    setIsCandidatoModalOpen(false)
+    setSelectedCandidatoId(null)
+    setCandidatoInitialData(null)
+    setCandidatoInitialFile(null)
   }
 
   const handleDeleteVaga = async (id: string, e: React.MouseEvent) => {
@@ -266,10 +283,7 @@ export function RHVagas() {
     }
   }
 
-  const handleCloseCandidatoModal = () => {
-    setIsCandidatoModalOpen(false)
-    setSelectedCandidatoId(null)
-  }
+
 
   const filteredVagas = vagas.filter(v => {
     const term = searchTerm.toLowerCase()
@@ -1084,6 +1098,8 @@ export function RHVagas() {
         isOpen={isCandidatoModalOpen}
         onClose={handleCloseCandidatoModal}
         candidatoId={selectedCandidatoId}
+        initialData={candidatoInitialData}
+        initialFile={candidatoInitialFile}
         onSave={() => {
           fetchVagas();
           fetchCandidatos();
