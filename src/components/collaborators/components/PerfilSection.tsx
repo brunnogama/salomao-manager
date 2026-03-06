@@ -128,6 +128,11 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
     };
 
     const handleExtractResumeAI = async () => {
+        if (!collaboratorId || collaboratorId === 'novo') {
+            if (showAlert) showAlert('Atenção', 'Você precisa salvar o colaborador antes de usar a IA.', 'info');
+            return;
+        }
+
         try {
             setExtractingAI(true);
             if (showAlert) showAlert('IA Analisando...', 'A IA está lendo o currículo do colaborador (Isso pode levar alguns segundos).', 'info');
