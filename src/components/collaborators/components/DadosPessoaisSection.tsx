@@ -71,6 +71,7 @@ export function DadosPessoaisSection({
             onChange={v => setFormData({ ...formData, gender: v })}
             options={[{ name: 'Masculino' }, { name: 'Feminino' }, { name: 'Outro' }]}
             disabled={isViewMode}
+            className="searchable-select-container"
           />
         </div>
 

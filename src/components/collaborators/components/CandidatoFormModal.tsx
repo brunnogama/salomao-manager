@@ -721,6 +721,13 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             background-position: right 12px center !important;
                             padding-right: 36px !important;
                         }
+                        
+                        /* Support for SearchableSelect inside ai-highlight */
+                        .ai-highlight .searchable-select-container > div:last-child {
+                            border-color: #c7d2fe !important;
+                            background-color: #f8fafc !important;
+                            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
+                        }
                     `}</style>
                         <DadosPessoaisSection
                             formData={formData}
