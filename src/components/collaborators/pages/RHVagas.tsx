@@ -553,7 +553,7 @@ export function RHVagas() {
   }).length
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24">
+    <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24">
 
       {/* PAGE HEADER COMPLETO - Título + Actions */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
@@ -736,7 +736,7 @@ export function RHVagas() {
 
       {/* ATS MATCH TAB */}
       {activeTab === 'ats' && (
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col min-h-0">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-gray-100 pb-4 mb-6 gap-4 shrink-0">
             <div>
               <h2 className="text-xl font-black text-[#1e3a8a] tracking-tight">Match Inteligente (ATS)</h2>
@@ -791,7 +791,7 @@ export function RHVagas() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="flex-1 pr-2">
             {matchMode === 'vaga' ? (
               // VISÃO POR VAGA
               <div className="space-y-6">
@@ -1103,7 +1103,7 @@ export function RHVagas() {
       {/* LISTA DE VAGAS / CANDIDATOS */}
       {
         activeTab !== 'ats' && (
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0">
             {loading ? (
               <div className="flex justify-center items-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1e3a8a]"></div>
@@ -1138,7 +1138,7 @@ export function RHVagas() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-y-auto overflow-x-auto min-h-[400px]">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-x-auto min-h-[400px]">
                 {activeTab === 'talentos' || activeTab === 'reprovados' ? (
                   <table className="w-full min-w-max text-left border-collapse">
                     <thead className="bg-[#1e3a8a]">
