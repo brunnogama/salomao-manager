@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, GraduationCap, Loader2, BookOpen, Building, Trash2 } from 'lucide-react'
+import { Plus, GraduationCap, Loader2, BookOpen, Building, Trash2, Edit2, Check } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { supabase } from '../../../lib/supabase'
@@ -32,6 +32,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
     const [courses, setCourses] = useState<{ id: string, name: string }[]>([])
     const [postCourses, setPostCourses] = useState<{ id: string, name: string }[]>([])
     const [loadingData, setLoadingData] = useState(false)
+    const [editingIds, setEditingIds] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         const fetchData = async () => {
@@ -75,6 +76,18 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
         }
         const currentData = formData.education_history || []
         setFormData({ ...formData, education_history: [...currentData, newEntry] })
+        setEditingIds(prev => new Set(prev).add(newEntry.id))
+    }
+
+    const toggleEdit = (id: string, forceState?: boolean) => {
+        setEditingIds(prev => {
+            const next = new Set(prev)
+            if (forceState === true) next.add(id)
+            else if (forceState === false) next.delete(id)
+            else if (next.has(id)) next.delete(id)
+            else next.add(id)
+            return next
+        })
     }
 
     const handleRemoveEducation = (id: string) => {
@@ -188,13 +201,53 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                         return d; // Fallback to raw value
                     };
 
+                    const isEditing = editingIds.has(item.id) || !item.instituicao;
+
+                    if (!isEditing && item.instituicao) {
+                        return (
+                            <div key={item.id} className="relative bg-white border border-gray-200 rounded-xl p-4 shadow-sm group hover:border-blue-200 transition-all animate-in zoom-in-95">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1 pr-12">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h4 className="font-bold text-[#0a192f] text-sm">{item.curso && item.curso.trim() ? item.curso : nivel}</h4>
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${item.status === 'Formado(a)' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                {item.status}
+                                            </span>
+                                            {item.subnivel && <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700">{item.subnivel}</span>}
+                                        </div>
+                                        <p className="text-xs text-gray-600 flex items-center gap-1.5 font-medium mb-3">
+                                            <Building className="h-3.5 w-3.5 text-gray-400" />
+                                            {item.instituicao} {item.instituicao_uf ? `- ${item.instituicao_uf}` : ''}
+                                        </p>
+                                        <div className="flex flex-wrap gap-4 text-[10px] text-gray-500 font-bold uppercase tracking-wider bg-gray-50 w-fit px-3 py-2 rounded-lg border border-gray-100">
+                                            {item.matricula && <span className="flex items-center gap-1"><span className="text-gray-400">Matrícula:</span> <span className="text-[#1e3a8a]">{item.matricula}</span></span>}
+                                            {item.semestre && <span className="flex items-center gap-1"><span className="text-gray-400">{['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? 'Série:' : 'Período:'}</span> <span className="text-[#1e3a8a]">{item.semestre}</span></span>}
+                                            {item.previsao_conclusao && <span className="flex items-center gap-1"><span className="text-gray-400">Previsão:</span> <span className="text-amber-600">{formatDisplayDate(item.previsao_conclusao)}</span></span>}
+                                            {item.ano_conclusao && <span className="flex items-center gap-1"><span className="text-gray-400">Conclusão:</span> <span className="text-emerald-600">{item.ano_conclusao}</span></span>}
+                                        </div>
+                                    </div>
+                                    {!isViewMode && (
+                                        <div className="absolute top-4 right-4 flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button type="button" onClick={() => toggleEdit(item.id, true)} className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 bg-white border border-gray-200 shadow-sm rounded-lg transition-colors" title="Editar">
+                                                <Edit2 className="h-4 w-4" />
+                                            </button>
+                                            <button type="button" onClick={() => handleRemoveEducation(item.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 bg-white border border-gray-200 shadow-sm rounded-lg transition-colors" title="Remover">
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    }
+
                     return (
-                        <div key={item.id} className="relative bg-gray-50/50 border border-gray-200 rounded-xl p-5 space-y-4 animate-in slide-in-from-top-2">
+                        <div key={item.id} className="relative bg-[#f8fafc] border border-blue-100 shadow-sm rounded-xl p-5 space-y-4 animate-in slide-in-from-top-2">
                             {!isViewMode && (
                                 <button
                                     type="button"
                                     onClick={() => handleRemoveEducation(item.id)}
-                                    className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors"
+                                    className="absolute top-5 right-5 text-gray-400 hover:text-red-500 transition-colors bg-white p-1.5 rounded-lg border border-gray-200 shadow-sm"
                                     title="Remover Formação"
                                     disabled={isViewMode}
                                 >
@@ -254,43 +307,10 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                             )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 items-end">
-                                {/* UF da Instituição e Instituição (Mesma linha) */}
-                                <div className="space-y-1.5 col-span-1 md:col-span-1">
-                                    <SearchableSelect
-                                        label="UF da Instituição"
-                                        value={ESTADOS_BRASIL.find(e => e.sigla === currentUF)?.nome || currentUF}
-                                        onChange={(v) => {
-                                            const sigla = ESTADOS_BRASIL.find(e => e.nome === v)?.sigla || v;
-                                            updateEducation(item.id, 'instituicao_uf', sigla)
-                                        }}
-                                        options={ESTADOS_BRASIL.map(e => ({ name: e.nome, label: `${e.nome} - ${e.sigla}` }))}
-                                        disabled={isViewMode}
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5 col-span-1 md:col-span-1">
-                                    <SearchableSelect
-                                        label={
-                                            <span className="flex flex-col w-full gap-0.5">
-                                                <span className="flex items-center justify-between w-full">
-                                                    Instituição
-                                                    {loadingData && <Loader2 className="h-3 w-3 animate-spin text-[#1e3a8a] ml-1" />}
-                                                </span>
-                                                <span className="text-[8px] text-amber-500 font-bold normal-case tracking-normal">
-                                                    (Selecione "Outra" caso não encontre na lista)
-                                                </span>
-                                            </span> as any
-                                        }
-                                        value={displayInstValue}
-                                        onChange={(v) => updateEducation(item.id, 'instituicao', v)}
-                                        options={ufInstitutions}
-                                        disabled={isViewMode || !currentUF}
-                                        disableFormatting={true}
-                                    />
-
-                                    {/* Campo Outro (Texto Livre) */}
-                                    {isCustomInstitution && (
-                                        <div className="relative mt-2 animate-in fade-in zoom-in duration-200">
+                                {['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? (
+                                    <div className="space-y-1.5 col-span-1 md:col-span-2">
+                                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Instituição</label>
+                                        <div className="relative">
                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                 <Building className="h-4 w-4 text-gray-400" />
                                             </div>
@@ -298,97 +318,167 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                                 type="text"
                                                 value={item.instituicao === ' ' ? '' : item.instituicao}
                                                 onChange={(e) => updateEducation(item.id, 'instituicao', e.target.value)}
-                                                className={`w-full pl-10 pr-3 py-2.5 bg-blue-50/50 border border-blue-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-blue-300 focus:bg-white focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                placeholder="Digite o nome da instituição..."
-                                                disabled={isViewMode}
-                                                autoFocus
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Curso */}
-                                <div className="space-y-1.5 col-span-1 md:col-span-2">
-                                    <SearchableSelect
-                                        label={['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? "Formação / Habilitação (Opcional)" : "Curso"}
-                                        value={displayCourseValue}
-                                        onChange={(v) => updateEducation(item.id, 'curso', v)}
-                                        options={courseOptions}
-                                        disabled={isViewMode}
-                                        disableFormatting={true}
-                                    />
-
-                                    {/* Campo Outro (Texto Livre) */}
-                                    {isCustomCourse && (
-                                        <div className="relative mt-2 animate-in fade-in zoom-in duration-200">
-                                            <input
-                                                type="text"
-                                                value={item.curso === ' ' ? '' : item.curso}
-                                                onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
-                                                className={`w-full px-3 py-2.5 bg-blue-50/50 border border-blue-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-blue-300 focus:bg-white focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                placeholder={['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? "Ex: Formação Geral, Técnico em Informática..." : "Digite o nome do curso..."}
-                                                disabled={isViewMode}
-                                                autoFocus
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Fields varying by status */}
-                                {item.status === 'Cursando' ? (
-                                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Matrícula</label>
-                                            <input
-                                                type="text"
-                                                value={item.matricula || ''}
-                                                onChange={(e) => updateEducation(item.id, 'matricula', e.target.value)}
-                                                className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                placeholder="Nº da matrícula"
-                                                disabled={isViewMode}
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? 'Série / Ano Atual' : 'Semestre Atual'}</label>
-                                            <SearchableSelect
-                                                value={item.semestre || ''}
-                                                onChange={(v) => updateEducation(item.id, 'semestre', v)}
-                                                options={getPeriodOptions(nivel).map(sem => ({ name: sem }))}
-                                                disabled={isViewMode}
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Previsão de Conclusão</label>
-                                            <input
-                                                type="text"
-                                                value={item.previsao_conclusao ? formatDisplayDate(item.previsao_conclusao) : ''}
-                                                onChange={(e) => updateEducation(item.id, 'previsao_conclusao', maskDate(e.target.value))}
-                                                maxLength={10}
-                                                className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                placeholder="DD/MM/AAAA"
+                                                className={`w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-400 focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                placeholder={`Nome da Escola (${nivel})`}
                                                 disabled={isViewMode}
                                             />
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-1.5 col-span-1 md:col-span-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ano de Conclusão</label>
+                                    <>
+                                        {/* UF da Instituição e Instituição (Mesma linha) */}
+                                        <div className="space-y-1.5 col-span-1 md:col-span-1">
+                                            <SearchableSelect
+                                                label="UF da Instituição"
+                                                value={ESTADOS_BRASIL.find(e => e.sigla === currentUF)?.nome || currentUF}
+                                                onChange={(v) => {
+                                                    const sigla = ESTADOS_BRASIL.find(e => e.nome === v)?.sigla || v;
+                                                    updateEducation(item.id, 'instituicao_uf', sigla)
+                                                }}
+                                                options={ESTADOS_BRASIL.map(e => ({ name: e.nome, label: `${e.nome} - ${e.sigla}` }))}
+                                                disabled={isViewMode}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5 col-span-1 md:col-span-1">
+                                            <SearchableSelect
+                                                label={
+                                                    <span className="flex flex-col w-full gap-0.5">
+                                                        <span className="flex items-center justify-between w-full">
+                                                            Instituição
+                                                            {loadingData && <Loader2 className="h-3 w-3 animate-spin text-[#1e3a8a] ml-1" />}
+                                                        </span>
+                                                        <span className="text-[8px] text-amber-500 font-bold normal-case tracking-normal">
+                                                            (Selecione "Outra" caso não encontre na lista)
+                                                        </span>
+                                                    </span> as any
+                                                }
+                                                value={displayInstValue}
+                                                onChange={(v) => updateEducation(item.id, 'instituicao', v)}
+                                                options={ufInstitutions}
+                                                disabled={isViewMode || !currentUF}
+                                                disableFormatting={true}
+                                            />
+
+                                            {/* Campo Outro (Texto Livre) */}
+                                            {isCustomInstitution && (
+                                                <div className="relative mt-2 animate-in fade-in zoom-in duration-200">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <Building className="h-4 w-4 text-gray-400" />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        value={item.instituicao === ' ' ? '' : item.instituicao}
+                                                        onChange={(e) => updateEducation(item.id, 'instituicao', e.target.value)}
+                                                        className={`w-full pl-10 pr-3 py-2.5 bg-blue-50/50 border border-blue-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-blue-300 focus:bg-white focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                        placeholder="Digite o nome da instituição..."
+                                                        disabled={isViewMode}
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Curso */}
+                            <div className="space-y-1.5 col-span-1 md:col-span-2">
+                                <SearchableSelect
+                                    label={['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? "Formação / Habilitação (Opcional)" : "Curso"}
+                                    value={displayCourseValue}
+                                    onChange={(v) => updateEducation(item.id, 'curso', v)}
+                                    options={courseOptions}
+                                    disabled={isViewMode}
+                                    disableFormatting={true}
+                                />
+
+                                {/* Campo Outro (Texto Livre) */}
+                                {isCustomCourse && (
+                                    <div className="relative mt-2 animate-in fade-in zoom-in duration-200">
                                         <input
                                             type="text"
-                                            value={item.ano_conclusao || ''}
-                                            onChange={(e) => updateEducation(item.id, 'ano_conclusao', e.target.value.replace(/\D/g, '').slice(0, 4))}
-                                            maxLength={4}
-                                            className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                            placeholder="AAAA"
+                                            value={item.curso === ' ' ? '' : item.curso}
+                                            onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
+                                            className={`w-full px-3 py-2.5 bg-blue-50/50 border border-blue-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-blue-300 focus:bg-white focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                            placeholder={['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? "Ex: Formação Geral, Técnico em Informática..." : "Digite o nome do curso..."}
                                             disabled={isViewMode}
+                                            autoFocus
                                         />
                                     </div>
                                 )}
                             </div>
+
+                            {/* Fields varying by status */}
+                            {item.status === 'Cursando' ? (
+                                <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Matrícula</label>
+                                        <input
+                                            type="text"
+                                            value={item.matricula || ''}
+                                            onChange={(e) => updateEducation(item.id, 'matricula', e.target.value)}
+                                            className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                            placeholder="Nº da matrícula"
+                                            disabled={isViewMode}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? 'Série / Ano Atual' : 'Semestre Atual'}</label>
+                                        <SearchableSelect
+                                            value={item.semestre || ''}
+                                            onChange={(v) => updateEducation(item.id, 'semestre', v)}
+                                            options={getPeriodOptions(nivel).map(sem => ({ name: sem }))}
+                                            disabled={isViewMode}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Previsão de Conclusão</label>
+                                        <input
+                                            type="text"
+                                            value={item.previsao_conclusao ? formatDisplayDate(item.previsao_conclusao) : ''}
+                                            onChange={(e) => updateEducation(item.id, 'previsao_conclusao', maskDate(e.target.value))}
+                                            maxLength={10}
+                                            className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                            placeholder="DD/MM/AAAA"
+                                            disabled={isViewMode}
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-1.5 col-span-1 md:col-span-2">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ano de Conclusão</label>
+                                    <input
+                                        type="text"
+                                        value={item.ano_conclusao || ''}
+                                        onChange={(e) => updateEducation(item.id, 'ano_conclusao', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                        maxLength={4}
+                                        className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                        placeholder="AAAA"
+                                        disabled={isViewMode}
+                                    />
+                                </div>
+                            )}
+
+                            {
+                                !isViewMode && (
+                                    <div className="flex justify-end pt-4 border-t border-blue-100/50 mt-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleEdit(item.id, false)}
+                                            className="flex items-center gap-2 px-5 py-2 bg-[#1e3a8a] hover:bg-blue-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all shadow-sm disabled:opacity-50"
+                                            disabled={!item.instituicao || (!['Ensino Fundamental', 'Ensino Médio'].includes(nivel) && !item.instituicao_uf)}
+                                        >
+                                            <Check className="h-4 w-4" /> Salvar {nivel.split(' ')[0]}
+                                        </button>
+                                    </div>
+                                )
+                            }
                         </div>
                     )
-                })}
-            </div>
+                })
+                }
+            </div >
         )
     }
 
