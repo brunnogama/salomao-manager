@@ -408,7 +408,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                 <h4 className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest mb-3 flex items-center gap-2">
                     <BookOpen className="h-4 w-4" /> Qualificações e Idiomas
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-6">
                     <div className="space-y-2">
                         <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
                             Idiomas

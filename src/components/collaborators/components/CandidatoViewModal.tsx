@@ -220,7 +220,7 @@ export function CandidatoViewModal({ isOpen, onClose, candidatoId, onEdit, roleO
                                 {(candidato.atividades_academicas || candidato.idiomas) && (
                                     <section>
                                         <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2 mb-4">Formação e Idiomas</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="flex flex-col gap-6">
                                             {candidato.atividades_academicas && (
                                                 <div>
                                                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5" /> Formação Acadêmica</span>
