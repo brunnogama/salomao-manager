@@ -470,6 +470,7 @@ export interface Candidato {
   curriculo_url?: string;
   atividades_academicas?: string;
   idiomas?: string;
+  photo_url?: string;
   created_at?: string;
 }
 
