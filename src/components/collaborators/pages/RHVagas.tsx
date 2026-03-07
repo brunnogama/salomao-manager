@@ -225,8 +225,8 @@ export function RHVagas() {
         // Lógica de Relevância Inteligente (Boosts)
         let relevanceScore = match.score;
 
-        // Se o perfil do candidato não tem tags, não aplicamos boosts e a aderência é zero.
-        if (candidatoTags.length > 0) {
+        // Se o perfil do candidato não tem tags que coincidem com a vaga, a aderência é zero.
+        if (match.matches > 0 && candidatoTags.length > 0) {
           // 1. Boost por Área (Ex: Jurídico com Jurídico)
           const sameArea = String(c.area) === String(activeMatchVaga.area);
           if (sameArea && c.area) relevanceScore += 50;
@@ -276,9 +276,23 @@ export function RHVagas() {
       .map(v => {
         const vagaTags = extractTags(v.perfil);
         const match = calculateMatchScore(candidatoTags, vagaTags); // Queremos saber o quanto a vaga atende aos requisitos/skills do candidato (invertido)
+
+        // Aplica boosters parecidos
+        let score = match.score;
+        if (match.matches > 0 && vagaTags.length > 0) {
+          if (v.area && String(v.area) === String(activeMatchCandidato?.area)) {
+            score += 50;
+          }
+        } else {
+          score = 0;
+        }
+
+        // Cap relevance score at 100%
+        score = Math.min(score, 100);
+
         return {
           vaga: v,
-          score: Math.min(match.score, 100), // Score baseado em quantas skills do candidato a vaga "exige" ou tem match
+          score: score, // Use the newly calculated score
           matches: match.matches,
           totalTags: candidatoTags.length > 0 ? candidatoTags.length : vagaTags.length, // Tratamento para não quebrar a UI
           matchedTags: match.matchedTags,
