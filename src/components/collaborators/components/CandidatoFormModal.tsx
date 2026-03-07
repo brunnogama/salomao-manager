@@ -501,16 +501,78 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             }
 
             onSave()
-            if (formData.status_selecao === 'Aprovado') {
-                setSavedCandidatoData({
-                    ...formData,
-                    name: formData.nome || formData.name,
-                    hire_date: new Date().toISOString().split('T')[0],
-                    candidato_id: finalCandidatoId,
-                    status: 'Pré-Cadastro',
-                    status_selecao: undefined,
-                    motivo_reprovacao: undefined
-                });
+            if (formData.status_selecao === 'Aprovado em Vaga') {
+                // Auto-register candidate into collaborators with "Pré-Cadastro" status
+                try {
+                    const commonFields = {
+                        status: 'Pré-Cadastro',
+                        role: formData.role ? formData.role.toString() : null,
+                        atuacao: formData.atuacao_id ? formData.atuacao_id.toString() : null,
+                        local: formData.local ? formData.local.toString() : null,
+                        area: formData.area || null,
+                        hire_date: new Date().toISOString().split('T')[0],
+                        perfil: formData.perfil || null,
+                        candidato_id: finalCandidatoId
+                    };
+                    
+                    let query = supabase.from('collaborators').select('id');
+                    if (formData.email) {
+                        query = query.or(`email.eq.${formData.email},name.ilike.${formData.nome || formData.name}`);
+                    } else {
+                        query = query.ilike('name', formData.nome || formData.name);
+                    }
+                    const { data: existingColab } = await query.maybeSingle();
+                    
+                    if (!existingColab) {
+                        const newColab = {
+                            ...commonFields,
+                            name: formData.nome || formData.name,
+                            email: formData.email || null,
+                            telefone: formData.telefone || null,
+                            foto_url: formData.photo_url || formData.foto_url || null,
+                        };
+                        const { data: insertedColab, error: colabErr } = await supabase.from('collaborators').insert([newColab]).select('id').single();
+                        if (colabErr) {
+                            console.error("Error inserting auto colab", colabErr);
+                        } else if (insertedColab) {
+                            setSavedCandidatoData({
+                                ...formData,
+                                id: insertedColab.id,
+                                name: formData.nome || formData.name,
+                                ...commonFields,
+                                status_selecao: undefined,
+                                motivo_reprovacao: undefined
+                            });
+                        }
+                    } else {
+                        const { error: updateColabErr } = await supabase.from('collaborators').update(commonFields).eq('id', existingColab.id);
+                        if (updateColabErr) console.error("Error updating existing colab", updateColabErr);
+                        
+                        setSavedCandidatoData({
+                            ...formData,
+                            id: existingColab.id,
+                            name: formData.nome || formData.name,
+                            ...commonFields,
+                            status_selecao: undefined,
+                            motivo_reprovacao: undefined
+                        });
+                    }
+                    
+                    // If setSavedCandidatoData wasn't updated because of errors, set a fallback
+                    setSavedCandidatoData((prev: any) => prev || {
+                        ...formData,
+                        name: formData.nome || formData.name,
+                        hire_date: new Date().toISOString().split('T')[0],
+                        candidato_id: finalCandidatoId,
+                        status: 'Pré-Cadastro',
+                        status_selecao: undefined,
+                        motivo_reprovacao: undefined
+                    });
+                    
+                } catch (e) {
+                    console.error("Error auto-registering candidate as collaborator:", e);
+                }
+
                 setShowAprovadoConfirm(true);
             } else {
                 onClose()
