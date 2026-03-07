@@ -100,7 +100,7 @@ Por favor, analise o currículo anexo e retorne EXATAMENTE UM JSON válido segui
   "email": "Email de contato (IMPRESCINDÍVEL. Você DEVE extrair qualquer string que contenha o caractere '@' no documento, seja no cabeçalho, no texto, ou isolado. Procure ativamente pelos domínios mais comuns como @gmail.com, @hotmail.com e @outlook.com. Exemplo: brunnogama@gmail.com. Não deixe isso em branco sob nenhuma hipótese se houver um email no PDF!)",
   "telefone": "Telefone/Celular (OBRIGATÓRIO BUSCAR. Pode estar formatado de diversas maneiras normais ou mascaradas, como '(**) *****-****', '** *****.***', '(**) *********', com espaços, traços ou pontos. Extraia o valor exatamente como encontrar no documento. Procure no cabeçalho ou seções de contato.)",
   "genero": "Somente preencha com 'Masculino', 'Feminino' ou 'Outro'. Use o nome do candidato e os pronomes no currículo para deduzir o gênero.",
-  "data_nascimento": "YYYY-MM-DD (se existir, caso contrário null)",
+  "data_nascimento": "YYYY-MM-DD (Seje inteligente na busca. Exemplos: 'Nascimento: 08/04/2004' -> '2004-04-08', 'Data de Nascimento: 10 de maio de 1990' -> '1990-05-10'. Se não houver, retorne null)",
   "endereco": {
     "cep": "CEP se houver",
     "logradouro": "Rua/Avenida",
@@ -112,7 +112,7 @@ Por favor, analise o currículo anexo e retorne EXATAMENTE UM JSON válido segui
   "sugestaoCargo": "Um nome curto de um cargo focado na experiência detectada.",
   "perfilTags": ["Habilidade 1", "Habilidade 2", "Tecnologia", "Ferramenta", "Soft Skill 1"],
   "atividades_academicas": "Extraia informações sobre atividades acadêmicas relevantes, publicações, monitorias, extensões universitárias, ligas, etc. Se não houver, null. Importante: Separe CADA atividade com uma quebra de linha ('\\n') e NENHUM ponto-e-vírgula.",
-  "idiomas": "Extraia SOMENTE o Idioma e o Nível, omitindo explicações extensas sobre certificados. Exemplo: 'Inglês Fluente', 'Espanhol Intermediário'. Formate como uma lista separada por vírgula se houver mais de um. Se não houver, null.",
+  "idiomas": "Extraia SOMENTE o Idioma e o Nível, omitindo explicações extensas sobre certificados. Exemplo: 'Inglês Fluente\\nEspanhol Intermediário'. Formate como uma lista separada EXCLUSIVAMENTE por uma quebra de linha ('\\n') se houver mais de um. NENHUMA vírgula. Se não houver, null.",
   "experiencias": [
     {
        "empresa": "Nome da empresa onde trabalhou",

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, GraduationCap, Loader2, BookOpen, Building, Trash2, Edit2, Check } from 'lucide-react'
+import { Plus, GraduationCap, Loader2, BookOpen, Building, Trash2, Edit2, Check, X, Languages } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { supabase } from '../../../lib/supabase'
@@ -12,7 +12,7 @@ interface DadosEscolaridadeSectionProps {
     isViewMode?: boolean
 }
 
-const semestres = ['1º Semestre', '2º Semestre', '3º Semestre', '4º Semestre', '5º Semestre', '6º Semestre', '7º Semestre', '8º Semestre', '9º Semestre', '10º Semestre']
+const semestres = ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período', '6º Período', '7º Período', '8º Período', '9º Período', '10º Período']
 const postGradOptions = ['Especialização', 'MBA', 'Mestrado', 'Doutorado', 'Pós-Doutorado']
 
 const ESTADOS_BRASIL = [
@@ -89,6 +89,29 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
             return next
         })
     }
+
+    const [novoIdioma, setNovoIdioma] = useState('');
+    const idiomasList = formData.idiomas ? formData.idiomas.split(/[\n,]/).map(i => i.trim()).filter(Boolean) : [];
+
+    const handleAddIdioma = () => {
+        if (!novoIdioma.trim()) return;
+        const current = [...idiomasList, novoIdioma.trim()];
+        setFormData({ ...formData, idiomas: current.join('\n') });
+        setNovoIdioma('');
+    };
+
+    const handleRemoveIdioma = (index: number) => {
+        const current = [...idiomasList];
+        current.splice(index, 1);
+        setFormData({ ...formData, idiomas: current.join('\n') });
+    };
+
+    const handleKeyDownIdioma = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddIdioma();
+        }
+    };
 
     const handleRemoveEducation = (id: string) => {
         const currentData = formData.education_history || []
@@ -500,17 +523,55 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                 </h4>
                 <div className="flex flex-col gap-6">
                     <div className="space-y-2">
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                            Idiomas
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                            <Languages className="w-3.5 h-3.5" /> Idiomas
                         </label>
-                        <textarea
-                            className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none transition-all resize-y shadow-sm font-medium min-h-[100px] ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                            value={formData.idiomas || ''}
-                            onChange={(e) => setFormData({ ...formData, idiomas: e.target.value })}
-                            placeholder="Ex: Inglês Avançado, Espanhol Intermediário..."
-                            disabled={isViewMode}
-                            readOnly={isViewMode}
-                        />
+
+                        <div className="flex flex-col gap-3">
+                            {idiomasList.length > 0 && (
+                                <div className="flex flex-col gap-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100 min-h-[60px]">
+                                    {idiomasList.map((idioma, idx) => (
+                                        <div key={idx} className="flex items-center justify-between bg-white border border-gray-200 px-3 py-2.5 rounded-lg shadow-sm group transition-all hover:border-blue-200">
+                                            <span className="text-sm font-semibold text-gray-700">{idioma}</span>
+                                            {!isViewMode && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveIdioma(idx)}
+                                                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                                                    title="Remover idioma"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {!isViewMode && (
+                                <div className="flex gap-2 relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Plus className="h-4 w-4 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all shadow-sm font-medium"
+                                        value={novoIdioma}
+                                        onChange={(e) => setNovoIdioma(e.target.value)}
+                                        onKeyDown={handleKeyDownIdioma}
+                                        placeholder="Digite um idioma (Ex: Inglês Avançado) e aperte Enter..."
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddIdioma}
+                                        disabled={!novoIdioma.trim()}
+                                        className="px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors disabled:opacity-50"
+                                    >
+                                        Adicionar
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">

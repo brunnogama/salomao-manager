@@ -232,8 +232,12 @@ export function CandidatoViewModal({ isOpen, onClose, candidatoId, onEdit, roleO
                                             {candidato.idiomas && (
                                                 <div>
                                                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-1.5"><Languages className="w-3.5 h-3.5" /> Idiomas</span>
-                                                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                                                        {candidato.idiomas}
+                                                    <div className="flex flex-col gap-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                                                        {candidato.idiomas.split(/[\n,]/).map((idioma: string) => idioma.trim()).filter(Boolean).map((idioma: string, idx: number) => (
+                                                            <div key={idx} className="flex items-center bg-white border border-gray-200 px-3 py-2.5 rounded-lg shadow-sm">
+                                                                <span className="text-sm font-semibold text-gray-700">{idioma}</span>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 </div>
                                             )}
