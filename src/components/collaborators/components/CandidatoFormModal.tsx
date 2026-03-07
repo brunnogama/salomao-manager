@@ -389,7 +389,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
             // Allowed fields based on the actual Candidato schema via OpenAPI
             const allowedFields = [
-                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'resumo_cv', 'role', 'local', 'area', 'contract_type',
+                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'resumo_cv', 'role', 'local', 'area', 'atuacao', 'contract_type',
                 'gender', 'rg', 'cpf', 'birthday', 'civil_status', 'email_pessoal', 'linkedin_url',
                 'has_children', 'children_count', 'children_data', 'atividades_academicas', 'idiomas',
                 'zip_code', 'address', 'address_number', 'address_complement', 'neighborhood', 'city', 'state',
@@ -634,8 +634,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     </div>
                 ) : (
                     <div className="flex items-center gap-4">
-                        <div className="flex flex-col pr-4 sm:w-[220px] relative" ref={statusMenuRef}>
-                            <div className="mb-1 text-right border-b border-gray-100 pb-1"></div>
+                        <div className="flex flex-col sm:w-[220px] relative" ref={statusMenuRef}>
                             <button
                                 type="button"
                                 onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}

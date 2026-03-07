@@ -1154,13 +1154,21 @@ export function RHVagas() {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {(activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado')).map((c: any) => {
-                        const hasInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
+                        const hasHistoricInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
+                        const hasInterview = hasHistoricInterview || !!c.entrevista_dados?.data_entrevista;
+
                         const interviewDates = c.candidato_historico
                           ?.filter((h: any) => h.tipo === 'Entrevista')
                           .map((h: any) => h.entrevista_data || h.data_registro || null)
                           .filter(Boolean)
-                          .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime());
-                        const lastInterviewDateRaw = interviewDates && interviewDates.length > 0 ? interviewDates[0] : null;
+                          .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime()) || [];
+
+                        if (c.entrevista_dados?.data_entrevista) {
+                          interviewDates.push(c.entrevista_dados.data_entrevista);
+                          interviewDates.sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime());
+                        }
+
+                        const lastInterviewDateRaw = interviewDates.length > 0 ? interviewDates[0] : null;
 
 
                         // Ocultar se já for colaborador (estamos em uma página de recrutamento/vagas ativos)
