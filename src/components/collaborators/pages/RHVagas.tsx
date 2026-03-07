@@ -22,7 +22,6 @@ import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 import { VagaFormModal } from '../components/VagaFormModal'
 import { VagaViewModal } from '../components/VagaViewModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
-import { CandidatoViewModal } from '../components/CandidatoViewModal'
 import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelectionModal'
 import { formatDateToDisplay } from '../utils/colaboradoresUtils'
 
@@ -1261,13 +1260,16 @@ export function RHVagas() {
         }}
       />
 
-      <CandidatoViewModal
+      <CandidatoFormModal
         isOpen={isCandidatoViewModalOpen}
         onClose={handleCloseCandidatoViewModal}
         candidatoId={selectedCandidatoId}
+        viewMode={true}
         onEdit={(id) => handleOpenCandidatoModal(id)}
-        roleOptions={roleOptions}
-        locationOptions={locationOptions}
+        onSave={() => {
+          fetchVagas();
+          fetchCandidatos();
+        }}
       />
 
       <VagasSelectionModal

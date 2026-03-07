@@ -8,7 +8,7 @@ import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
 import { DadosEscolaridadeSection } from './DadosEscolaridadeSection'
 import { CandidatoExperienciasSection } from './CandidatoExperienciasSection'
-import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, ChevronDown } from 'lucide-react'
+import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, ChevronDown, Edit2 } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
 import { EnderecoSection } from './EnderecoSection'
@@ -23,15 +23,17 @@ import {
 } from '../utils/colaboradoresUtils'
 
 interface CandidatoFormModalProps {
-    isOpen: boolean
-    onClose: () => void
-    candidatoId?: string | null
-    onSave: () => void
-    initialData?: any
-    initialFile?: File | null
+    isOpen: boolean;
+    onClose: () => void;
+    candidatoId?: string | null;
+    onSave: () => void;
+    initialData?: any;
+    initialFile?: File | null;
+    viewMode?: boolean;
+    onEdit?: (id: string) => void;
 }
 
-export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile }: CandidatoFormModalProps) {
+export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile, viewMode = false, onEdit }: CandidatoFormModalProps) {
     const navigate = useNavigate()
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
     const downloadLinkRef = React.useRef<HTMLAnchorElement>(null)
@@ -45,7 +47,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         onClose()
     }
 
-    useCloseOnEscape(isOpen, handleRequestClose)
+    useCloseOnEscape(isOpen, viewMode ? onClose : handleRequestClose)
 
     const [activeTab, setActiveTab] = useState(1)
     const [loading, setLoading] = useState(false)
@@ -600,70 +602,96 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             onClose={handleRequestClose}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            isEditMode={true}
+            isEditMode={!viewMode}
             currentSteps={steps}
             footer={
-                <div className="flex items-center gap-4">
-                    <div className="flex flex-col pr-4 sm:w-[220px] relative" ref={statusMenuRef}>
-                        <div className="mb-1 text-right border-b border-gray-100 pb-1"></div>
+                viewMode ? (
+                    <div className="flex items-center justify-between w-full">
                         <button
                             type="button"
-                            onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
-                            className={`flex items-center justify-between w-full text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl border transition-all ${formData.status_selecao === 'Aprovado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
-                                formData.status_selecao === 'Reprovado' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
-                                    formData.status_selecao === 'Reaproveitamento' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
-                                        'bg-blue-50 text-[#1e3a8a] border-blue-200 hover:bg-blue-100'
-                                }`}
+                            onClick={onClose}
+                            className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200"
                         >
-                            <span>{formData.status_selecao || 'Aberto'}</span>
-                            <ChevronDown className={`w-4 h-4 transition-transform ${isStatusMenuOpen ? 'rotate-180' : ''}`} />
+                            Fechar
                         </button>
-
-                        {isStatusMenuOpen && (
-                            <div className="absolute bottom-full left-0 mb-2 w-48 bg-[#33353A] rounded-xl shadow-xl border border-gray-700 overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50">
-                                {['Aberto', 'Aprovado', 'Reprovado', 'Reaproveitamento'].map(status => (
-                                    <button
-                                        key={status}
-                                        type="button"
-                                        onClick={() => handleStatusSelecaoChange(status)}
-                                        className="w-full text-left px-5 py-3 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
-                                    >
-                                        {status}
-                                    </button>
-                                ))}
-                            </div>
+                        {candidatoId && onEdit && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    onClose()
+                                    onEdit(candidatoId)
+                                }}
+                                className="bg-[#1e3a8a] text-white px-8 py-2.5 rounded-xl font-bold text-sm hover:bg-[#1e3a8a]/90 transition-all flex items-center gap-2 shadow-lg shadow-[#1e3a8a]/20 active:scale-95 hover:-translate-y-0.5"
+                            >
+                                <Edit2 className="w-4 h-4" />
+                                Editar Candidato
+                            </button>
                         )}
                     </div>
-                    <button
-                        onClick={handleSave}
-                        disabled={loading}
-                        className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl shadow-lg hover:shadow-xl font-bold transition-all flex items-center gap-2 text-[10px] uppercase tracking-wider h-fit"
-                    >
-                        {loading ? 'Salvando...' : 'Salvar Cadastro'}
-                    </button>
-                </div>
+                ) : (
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col pr-4 sm:w-[220px] relative" ref={statusMenuRef}>
+                            <div className="mb-1 text-right border-b border-gray-100 pb-1"></div>
+                            <button
+                                type="button"
+                                onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+                                className={`flex items-center justify-between w-full text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl border transition-all ${formData.status_selecao === 'Aprovado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
+                                    formData.status_selecao === 'Reprovado' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
+                                        formData.status_selecao === 'Reaproveitamento' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
+                                            'bg-blue-50 text-[#1e3a8a] border-blue-200 hover:bg-blue-100'
+                                    }`}
+                            >
+                                <span>{formData.status_selecao || 'Aberto'}</span>
+                                <ChevronDown className={`w-4 h-4 transition-transform ${isStatusMenuOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isStatusMenuOpen && (
+                                <div className="absolute bottom-full left-0 mb-2 w-48 bg-[#33353A] rounded-xl shadow-xl border border-gray-700 overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50">
+                                    {['Aberto', 'Aprovado', 'Reprovado', 'Reaproveitamento'].map(status => (
+                                        <button
+                                            key={status}
+                                            type="button"
+                                            onClick={() => handleStatusSelecaoChange(status)}
+                                            className="w-full text-left px-5 py-3 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
+                                        >
+                                            {status}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <button
+                            onClick={handleSave}
+                            disabled={loading}
+                            className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl shadow-lg hover:shadow-xl font-bold transition-all flex items-center gap-2 text-[10px] uppercase tracking-wider h-fit"
+                        >
+                            {loading ? 'Salvando...' : 'Salvar Cadastro'}
+                        </button>
+                    </div>
+                )
             }
         >
-            {activeTab === 1 && (
-                <div className={`space-y-6 ${initialData && !candidatoId ? 'ai-highlight' : ''}`}>
-                    {initialData && !candidatoId && (
-                        <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl mb-2 flex items-start gap-4 shadow-sm relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 blur-sm scale-150 pointer-events-none group-hover:rotate-12 transition-transform duration-700">
-                                <Sparkles className="w-32 h-32 text-indigo-500" />
+            <fieldset disabled={viewMode} className="contents">
+                {activeTab === 1 && (
+                    <div className={`space-y-6 ${initialData && !candidatoId ? 'ai-highlight' : ''}`}>
+                        {initialData && !candidatoId && (
+                            <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl mb-2 flex items-start gap-4 shadow-sm relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 blur-sm scale-150 pointer-events-none group-hover:rotate-12 transition-transform duration-700">
+                                    <Sparkles className="w-32 h-32 text-indigo-500" />
+                                </div>
+                                <div className="bg-white p-2.5 rounded-xl shadow-sm relative z-10 shrink-0">
+                                    <Bot className="w-6 h-6 text-indigo-600" />
+                                </div>
+                                <div className="relative z-10 w-full">
+                                    <strong className="block text-sm font-black text-indigo-900 uppercase tracking-widest mb-1">Preenchimento Automático por IA</strong>
+                                    <p className="text-xs font-medium text-indigo-700/80 leading-relaxed">
+                                        Os dados abaixo foram extraídos do currículo. <strong className="text-indigo-900">Revise os campos</strong> preenchidos e altere o que for necessário.
+                                    </p>
+                                </div>
                             </div>
-                            <div className="bg-white p-2.5 rounded-xl shadow-sm relative z-10 shrink-0">
-                                <Bot className="w-6 h-6 text-indigo-600" />
-                            </div>
-                            <div className="relative z-10 w-full">
-                                <strong className="block text-sm font-black text-indigo-900 uppercase tracking-widest mb-1">Preenchimento Automático por IA</strong>
-                                <p className="text-xs font-medium text-indigo-700/80 leading-relaxed">
-                                    Os dados abaixo foram extraídos do currículo. <strong className="text-indigo-900">Revise os campos</strong> preenchidos e altere o que for necessário.
-                                </p>
-                            </div>
-                        </div>
-                    )}
+                        )}
 
-                    <style>{`
+                        <style>{`
                         .ai-highlight input:not([value=""]), 
                         .ai-highlight input[value]:not([value=""]),
                         .ai-highlight textarea:not(:empty) {
@@ -676,205 +704,207 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             padding-right: 36px !important;
                         }
                     `}</style>
-                    <DadosPessoaisSection
-                        formData={formData}
-                        setFormData={setFormData}
-                        maskCPF={maskCPF}
-                        maskDate={maskDate}
-                        maskRG={maskRG}
-                        maskPhone={maskPhone}
-                        maskCNPJ={maskCNPJ}
-                        isViewMode={false}
-                        hideBankingAndEmergency={true}
-                    />
-                    <EnderecoSection
-                        formData={formData}
-                        setFormData={setFormData}
-                        maskCEP={maskCEP}
-                        handleCepBlur={handleCepBlur}
-                        isViewMode={false}
-                    />
-                </div>
-            )}
-
-            {activeTab === 4 && (
-                <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
-                    <DadosProfissionaisCandidato
-                        formData={formData}
-                        setFormData={setFormData}
-                        isViewMode={false}
-                    />
-                </div>
-            )}
-
-            {activeTab === 3 && (
-                <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
-                    <DadosEscolaridadeSection
-                        formData={formData as any}
-                        setFormData={setFormData}
-                        isViewMode={false}
-                        maskDate={maskDate}
-                    />
-                </div>
-            )}
-
-            {activeTab === 10 && (
-                <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
-                    <CandidatoEntrevistaSection
-                        formData={formData}
-                        setFormData={setFormData}
-                        isViewMode={false}
-                    />
-                </div>
-            )}
-
-            {activeTab === 9 && (
-                <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
-                    {/* IA Resume Generation Header Box */}
-                    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 p-5 rounded-xl shadow-sm relative overflow-hidden group/ai">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 blur-sm scale-150 group-hover/ai:rotate-12 transition-transform duration-700 pointer-events-none">
-                            <Sparkles className="w-24 h-24 text-indigo-500" />
-                        </div>
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-                            <div>
-                                <h4 className="text-sm font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2 mb-1">
-                                    <Bot className="w-5 h-5 text-indigo-600" />
-                                    Analisador IA de Currículos
-                                </h4>
-                                <p className="text-xs text-indigo-700/80 font-medium">Extraia resumo e habilidades automaticamente lendo o PDF anexado do currículo do talento.</p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={handleExtractResumeAI}
-                                disabled={aiLoading}
-                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-bold text-[11px] uppercase tracking-wider rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                            >
-                                {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-indigo-200" />}
-                                {aiLoading ? 'Lendo PDF...' : 'Extrair com IA'}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Resumo Textarea */}
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                            Resumo Profissional / CV
-                        </label>
-                        <textarea
-                            className="w-full bg-gray-50 border border-gray-200 text-[#0a192f] text-sm rounded-xl p-4 min-h-[140px] focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all resize-y shadow-sm font-medium"
-                            placeholder="Descreva brevemente o profissional, principais qualificações, anos de experiência ou use o botão da IA 🪄 acima para preencher via currículo."
-                            value={formData.resumo_cv || ''}
-                            onChange={(e) => setFormData({ ...formData, resumo_cv: e.target.value })}
+                        <DadosPessoaisSection
+                            formData={formData}
+                            setFormData={setFormData}
+                            maskCPF={maskCPF}
+                            maskDate={maskDate}
+                            maskRG={maskRG}
+                            maskPhone={maskPhone}
+                            maskCNPJ={maskCNPJ}
+                            isViewMode={false}
+                            hideBankingAndEmergency={true}
+                        />
+                        <EnderecoSection
+                            formData={formData}
+                            setFormData={setFormData}
+                            maskCEP={maskCEP}
+                            handleCepBlur={handleCepBlur}
+                            isViewMode={false}
                         />
                     </div>
+                )}
 
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex justify-between items-center">
-                            Perfil e Tags
-                            <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Use @ para pesquisar tags</span>
-                        </label>
-                        <div className="relative flex-1 flex flex-col">
-                            <div className="w-full bg-gray-50 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] p-3 transition-all min-h-[300px] flex-1 flex flex-col items-start relative cursor-text group">
-                                <textarea
-                                    className="w-full min-h-[50px] bg-transparent text-[#0a192f] text-sm focus:outline-none resize-none font-medium z-10 sticky top-0"
-                                    placeholder="Comece a digitar uma habilidade ou competência... Cada linha formará uma tag."
-                                    onKeyDown={handleTagInputKeyDown}
-                                    value={tagInputValue}
-                                    onChange={(e) => {
-                                        setTagInputValue(e.target.value)
-                                        if (e.target.value.startsWith('@')) {
-                                            setIsTagging(true)
-                                            setTagSearch(e.target.value.substring(1))
-                                        } else {
-                                            setIsTagging(false)
-                                        }
-                                    }}
-                                />
+                {activeTab === 4 && (
+                    <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
+                        <DadosProfissionaisCandidato
+                            formData={formData}
+                            setFormData={setFormData}
+                            isViewMode={false}
+                        />
+                    </div>
+                )}
 
-                                {isTagging && availableTags.length > 0 && (
-                                    <div className="absolute top-12 left-3 w-[80%] max-w-sm bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-48 overflow-y-auto ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
-                                        <div className="px-3 py-2 text-[10px] font-black text-blue-800 bg-blue-50/50 border-b border-blue-100 uppercase tracking-widest sticky top-0 backdrop-blur-sm">
-                                            Sugestões da Nuvem
-                                        </div>
-                                        <div className="p-1">
+                {activeTab === 3 && (
+                    <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
+                        <DadosEscolaridadeSection
+                            formData={formData as any}
+                            setFormData={setFormData}
+                            isViewMode={false}
+                            maskDate={maskDate}
+                        />
+                    </div>
+                )}
+
+                {activeTab === 10 && (
+                    <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
+                        <CandidatoEntrevistaSection
+                            formData={formData}
+                            setFormData={setFormData}
+                            isViewMode={false}
+                        />
+                    </div>
+                )}
+
+                {activeTab === 9 && (
+                    <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
+                        {/* IA Resume Generation Header Box */}
+                        <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 p-5 rounded-xl shadow-sm relative overflow-hidden group/ai">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 blur-sm scale-150 group-hover/ai:rotate-12 transition-transform duration-700 pointer-events-none">
+                                <Sparkles className="w-24 h-24 text-indigo-500" />
+                            </div>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+                                <div>
+                                    <h4 className="text-sm font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2 mb-1">
+                                        <Bot className="w-5 h-5 text-indigo-600" />
+                                        Analisador IA de Currículos
+                                    </h4>
+                                    <p className="text-xs text-indigo-700/80 font-medium">Extraia resumo e habilidades automaticamente lendo o PDF anexado do currículo do talento.</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleExtractResumeAI}
+                                    disabled={aiLoading}
+                                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-bold text-[11px] uppercase tracking-wider rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                >
+                                    {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-indigo-200" />}
+                                    {aiLoading ? 'Lendo PDF...' : 'Extrair com IA'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Resumo Textarea */}
+                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                Resumo Profissional / CV
+                            </label>
+                            <textarea
+                                className="w-full bg-gray-50 border border-gray-200 text-[#0a192f] text-sm rounded-xl p-4 min-h-[140px] focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all resize-y shadow-sm font-medium"
+                                placeholder="Descreva brevemente o profissional, principais qualificações, anos de experiência ou use o botão da IA 🪄 acima para preencher via currículo."
+                                value={formData.resumo_cv || ''}
+                                onChange={(e) => setFormData({ ...formData, resumo_cv: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex justify-between items-center">
+                                Perfil e Tags
+                                <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Use @ para pesquisar tags</span>
+                            </label>
+                            <div className="relative flex-1 flex flex-col">
+                                <div className="w-full bg-gray-50 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] p-3 transition-all min-h-[300px] flex-1 flex flex-col items-start relative cursor-text group">
+                                    <textarea
+                                        className="w-full min-h-[50px] bg-transparent text-[#0a192f] text-sm focus:outline-none resize-none font-medium z-10 sticky top-0"
+                                        placeholder="Comece a digitar uma habilidade ou competência... Cada linha formará uma tag."
+                                        onKeyDown={handleTagInputKeyDown}
+                                        value={tagInputValue}
+                                        onChange={(e) => {
+                                            setTagInputValue(e.target.value)
+                                            if (e.target.value.startsWith('@')) {
+                                                setIsTagging(true)
+                                                setTagSearch(e.target.value.substring(1))
+                                            } else {
+                                                setIsTagging(false)
+                                            }
+                                        }}
+                                    />
+
+                                    {isTagging && availableTags.length > 0 && (
+                                        <div className="absolute top-12 left-3 w-[80%] max-w-sm bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-48 overflow-y-auto ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <div className="px-3 py-2 text-[10px] font-black text-blue-800 bg-blue-50/50 border-b border-blue-100 uppercase tracking-widest sticky top-0 backdrop-blur-sm">
+                                                Sugestões da Nuvem
+                                            </div>
+                                            <div className="p-1">
+                                                {availableTags
+                                                    .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
+                                                    .filter(t => !(formData.perfil || '').split('\n').filter(Boolean).includes(t))
+                                                    .map(t => (
+                                                        <button
+                                                            key={t}
+                                                            onClick={() => insertTag(t)}
+                                                            className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-[#1e3a8a] transition-all rounded-lg flex items-center gap-2 group/btn"
+                                                        >
+                                                            <Hash className="h-3 w-3 text-gray-400 group-hover/btn:text-[#1e3a8a] transition-colors" />
+                                                            {t}
+                                                        </button>
+                                                    ))}
+                                            </div>
                                             {availableTags
                                                 .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
                                                 .filter(t => !(formData.perfil || '').split('\n').filter(Boolean).includes(t))
-                                                .map(t => (
-                                                    <button
-                                                        key={t}
-                                                        onClick={() => insertTag(t)}
-                                                        className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-[#1e3a8a] transition-all rounded-lg flex items-center gap-2 group/btn"
-                                                    >
-                                                        <Hash className="h-3 w-3 text-gray-400 group-hover/btn:text-[#1e3a8a] transition-colors" />
-                                                        {t}
-                                                    </button>
-                                                ))}
+                                                .length === 0 && (
+                                                    <div className="px-4 py-3 text-xs text-gray-400 text-center font-medium">Nenhuma tag encontrada para "{tagSearch}"</div>
+                                                )}
                                         </div>
-                                        {availableTags
-                                            .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
-                                            .filter(t => !(formData.perfil || '').split('\n').filter(Boolean).includes(t))
-                                            .length === 0 && (
-                                                <div className="px-4 py-3 text-xs text-gray-400 text-center font-medium">Nenhuma tag encontrada para "{tagSearch}"</div>
-                                            )}
-                                    </div>
-                                )}
+                                    )}
 
-                                <div className="flex flex-wrap gap-2 w-full mt-2">
-                                    {(formData.perfil || '').split('\n').filter(Boolean).map((tag: string, index: number) => (
-                                        <div key={index} className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-[#1e3a8a] px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm animate-in zoom-in-50 duration-200 group/tag">
-                                            <Hash className="h-3 w-3 text-blue-400" />
-                                            {tag}
-                                            <button
-                                                onClick={() => removeTagFromFormData(index)}
-                                                className="ml-1 hover:bg-blue-200 p-0.5 rounded-full transition-colors text-blue-500 hover:text-blue-700 opacity-50 group-hover/tag:opacity-100"
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </div>
-                                    ))}
+                                    <div className="flex flex-wrap gap-2 w-full mt-2">
+                                        {(formData.perfil || '').split('\n').filter(Boolean).map((tag: string, index: number) => (
+                                            <div key={index} className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-[#1e3a8a] px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm animate-in zoom-in-50 duration-200 group/tag">
+                                                <Hash className="h-3 w-3 text-blue-400" />
+                                                {tag}
+                                                <button
+                                                    onClick={() => removeTagFromFormData(index)}
+                                                    className="ml-1 hover:bg-blue-200 p-0.5 rounded-full transition-colors text-blue-500 hover:text-blue-700 opacity-50 group-hover/tag:opacity-100"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {activeTab === 6 && (
-                <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
-                    <CandidatoExperienciasSection
-                        candidatoId={candidatoId || null}
-                        isViewMode={false}
-                        pendingExperiencias={pendingExperiencias}
-                        setPendingExperiencias={setPendingExperiencias}
-                        showAlert={showAlert}
-                    />
-                    <CandidatoHistoricoSection
-                        candidatoId={candidatoId || null}
-                        isViewMode={false}
-                        pendingHistorico={pendingHistorico}
-                        setPendingHistorico={setPendingHistorico}
-                    />
-                </div>
-            )}
+                {activeTab === 6 && (
+                    <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
+                        <CandidatoExperienciasSection
+                            candidatoId={candidatoId || null}
+                            isViewMode={false}
+                            pendingExperiencias={pendingExperiencias}
+                            setPendingExperiencias={setPendingExperiencias}
+                            showAlert={showAlert}
+                        />
+                        <CandidatoHistoricoSection
+                            candidatoId={candidatoId || null}
+                            isViewMode={false}
+                            pendingHistorico={pendingHistorico}
+                            setPendingHistorico={setPendingHistorico}
+                        />
+                    </div>
+                )}
 
-            {activeTab === 7 && (
-                <div className="animate-in slide-in-from-right-4 duration-300">
-                    <GEDSection
-                        gedCategories={gedCategories}
-                        selectedGedCategory={selectedGedCategory}
-                        setSelectedGedCategory={setSelectedGedCategory}
-                        atestadoDatas={atestadoDatas}
-                        setAtestadoDatas={setAtestadoDatas}
-                        gedInputRef={gedInputRef}
-                        handleGedUpload={handleGedUpload}
-                        gedDocs={gedDocs}
-                        pendingGedDocs={pendingGedDocs}
-                        setPendingGedDocs={setPendingGedDocs}
-                        handleDeleteGed={handleDeleteGed}
-                    />
-                </div>
-            )}
+                {activeTab === 7 && (
+                    <div className="animate-in slide-in-from-right-4 duration-300">
+                        <GEDSection
+                            gedCategories={gedCategories}
+                            selectedGedCategory={selectedGedCategory}
+                            setSelectedGedCategory={setSelectedGedCategory}
+                            atestadoDatas={atestadoDatas}
+                            setAtestadoDatas={setAtestadoDatas}
+                            gedInputRef={gedInputRef}
+                            handleGedUpload={handleGedUpload}
+                            gedDocs={gedDocs}
+                            pendingGedDocs={pendingGedDocs}
+                            setPendingGedDocs={setPendingGedDocs}
+                            handleDeleteGed={handleDeleteGed}
+                        />
+                    </div>
+                )}
+
+            </fieldset>
 
             {/* INVISIBLE LINK FOR ATTACHMENT */}
             <a ref={downloadLinkRef} style={{ display: 'none' }} href="#" />
