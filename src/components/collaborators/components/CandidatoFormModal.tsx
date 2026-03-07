@@ -39,7 +39,11 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const downloadLinkRef = React.useRef<HTMLAnchorElement>(null)
 
     const handleRequestClose = () => {
-        setShowCancelConfirm(true)
+        if (viewMode) {
+            onClose();
+        } else {
+            setShowCancelConfirm(true);
+        }
     }
 
     const confirmClose = () => {

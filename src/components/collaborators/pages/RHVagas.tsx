@@ -847,12 +847,23 @@ export function RHVagas() {
                               </div>
 
                               {/* Info Block */}
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-bold text-[#0a192f] truncate group-hover/card:text-blue-600 transition-colors">
-                                  {m.candidato.nome}
-                                </h4>
+                              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <div className="flex items-center gap-3">
+                                  <h4 className="text-sm font-bold text-[#0a192f] truncate group-hover/card:text-blue-600 transition-colors">
+                                    {m.candidato.nome}
+                                  </h4>
+                                  {m.matchedTags.length > 0 && (
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm border
+                                      ${m.candidato.area === 'Administrativa' ? 'bg-orange-50 text-orange-600 border-orange-200' :
+                                        m.candidato.area === 'Jurídica' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                          'bg-blue-50 text-blue-600 border-blue-200'}`
+                                    }>
+                                      🔥 {m.matchedTags.length} Match{m.matchedTags.length > 1 ? 'es' : ''}
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-[10px] text-gray-500 truncate mb-1">{m.candidato.email}</p>
-                                <p className="text-xs font-semibold text-gray-700 bg-gray-50 inline-flex px-2 py-0.5 rounded border border-gray-100">
+                                <p className="text-xs font-semibold text-gray-700 bg-gray-50 inline-flex px-2 py-0.5 rounded border border-gray-100 w-max">
                                   {roleOptions.find(r => String(r.value) === String(m.candidato.role))?.label || m.candidato.role || 'Sem cargo atual'}
                                 </p>
                               </div>
@@ -906,15 +917,14 @@ export function RHVagas() {
                               </div>
                             ) : (
                               <div className="mt-4 flex flex-wrap gap-1.5">
-                                {m.candidatoTags.slice(0, 6).map((tag, i) => {
+                                {m.candidatoTags.map((tag, i) => {
                                   const isMatch = m.matchedTags.includes(tag.toLowerCase());
                                   return (
-                                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-tight border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-tight border ${isMatch ? 'bg-green-50 text-green-700 border-green-200 shadow-sm shadow-green-100' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
                                       {tag}
                                     </span>
                                   );
                                 })}
-                                {m.candidatoTags.length > 6 && <span className="text-[10px] text-gray-400 font-medium py-0.5">+{m.candidatoTags.length - 6} tags</span>}
                                 {m.candidatoTags.length === 0 && <span className="text-[10px] text-gray-400 italic">Preencha o perfil para calcular localmente.</span>}
                               </div>
                             )}
@@ -1027,7 +1037,18 @@ export function RHVagas() {
                                     <p className="text-[10px] text-gray-500 mt-1">{m.vaga.location?.name || 'Local não informado'}</p>
                                   </td>
                                   <td className="px-3 py-4 text-xs font-semibold text-gray-700">
-                                    <p>{m.vaga.leader?.name || '-'}</p>
+                                    <p className="flex items-center gap-2">
+                                      {m.vaga.leader?.name || '-'}
+                                      {m.matchedTags.length > 0 && (
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm border
+                                          ${m.vaga.area === 'Administrativa' ? 'bg-orange-50 text-orange-600 border-orange-200' :
+                                            m.vaga.area === 'Jurídica' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                              'bg-blue-50 text-blue-600 border-blue-200'}`
+                                        }>
+                                          🔥 {m.matchedTags.length} Match{m.matchedTags.length > 1 ? 'es' : ''}
+                                        </span>
+                                      )}
+                                    </p>
                                     <p className="text-[10px] text-gray-500">{m.vaga.partner?.name || '-'}</p>
                                   </td>
                                   <td className="px-3 py-4">
@@ -1035,7 +1056,7 @@ export function RHVagas() {
                                       {m.vagaTags.map((tag, i) => {
                                         const isMatch = m.matchedTags.includes(tag.toLowerCase());
                                         return (
-                                          <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                                          <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isMatch ? 'bg-green-50 text-green-700 border-green-200 shadow-sm shadow-green-100' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
                                             {tag}
                                           </span>
                                         );
