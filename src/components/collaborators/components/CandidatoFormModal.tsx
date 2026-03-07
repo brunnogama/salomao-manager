@@ -725,6 +725,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             formData={formData}
                             setFormData={setFormData}
                             isViewMode={false}
+                            onShowReprovadoModal={() => setShowReprovadoModal(true)}
                         />
                     </div>
                 )}

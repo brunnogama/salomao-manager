@@ -8,12 +8,14 @@ interface CandidatoEntrevistaSectionProps {
     formData: any
     setFormData: (data: any) => void
     isViewMode?: boolean
+    onShowReprovadoModal?: () => void
 }
 
 export function CandidatoEntrevistaSection({
     formData,
     setFormData,
-    isViewMode = false
+    isViewMode = false,
+    onShowReprovadoModal
 }: CandidatoEntrevistaSectionProps) {
     const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false)
     const statusMenuRef = useRef<HTMLDivElement>(null)
@@ -30,9 +32,11 @@ export function CandidatoEntrevistaSection({
 
     const handleStatusSelecaoChange = (value: string) => {
         setIsStatusMenuOpen(false);
-        setFormData({ ...formData, status_selecao: value })
-        // Note: The reproved popup logic remains in the parent modal, 
-        // we just update the status here. The parent will detect it.
+        if (value === 'Reprovado' && onShowReprovadoModal) {
+            onShowReprovadoModal();
+        } else {
+            setFormData({ ...formData, status_selecao: value })
+        }
     };
     const [vagasAbertas, setVagasAbertas] = useState<any[]>([])
 
