@@ -119,7 +119,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     name: initialData.nome || '',
                     email: initialData.email || '',
                     email_pessoal: initialData.email || '',
-                    phone: initialData.telefone || '',
+                    telefone: initialData.telefone || '',
+                    gender: initialData.genero || '',
                     birth_date: initialData.data_nascimento || '',
                     zip_code: initialData.endereco?.cep || '',
                     address: initialData.endereco?.logradouro || '',
@@ -279,7 +280,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             }
 
             if (result.success && result.data) {
-                const { resumoProfissional, perfilTags, sugestaoCargo, atividades_academicas, idiomas, email, telefone } = result.data;
+                const { resumoProfissional, perfilTags, sugestaoCargo, atividades_academicas, idiomas, email, telefone, genero } = result.data;
 
                 // Merge no formData
                 setFormData((prev: any) => {
@@ -289,7 +290,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     return {
                         ...prev,
                         email_pessoal: email || prev.email_pessoal,
-                        phone: telefone || prev.phone,
+                        telefone: telefone || prev.telefone,
+                        gender: genero || prev.gender,
                         resumo_cv: resumoProfissional || prev.resumo_cv,
                         atividades_academicas: atividades_academicas || prev.atividades_academicas,
                         idiomas: idiomas || prev.idiomas,
