@@ -98,7 +98,7 @@ Por favor, analise o currículo anexo e retorne EXATAMENTE UM JSON válido segui
 {
   "nome": "Nome completo real",
   "email": "Email de contato (IMPRESCINDÍVEL. Você DEVE extrair qualquer string que contenha o caractere '@' no documento, seja no cabeçalho, no texto, ou isolado. Procure ativamente pelos domínios mais comuns como @gmail.com, @hotmail.com e @outlook.com. Exemplo: brunnogama@gmail.com. Não deixe isso em branco sob nenhuma hipótese se houver um email no PDF!)",
-  "telefone": "Telefone/Celular (OBRIGATÓRIO BUSCAR. Procure padrões como 21993937070, (11) 99999-9999, texto com 'Mobile' ou 'Contato'. Extraia apenas os números ou no formato amigável.)",
+  "telefone": "Telefone/Celular (OBRIGATÓRIO BUSCAR. Pode estar formatado de diversas maneiras normais ou mascaradas, como '(**) *****-****', '** *****.***', '(**) *********', com espaços, traços ou pontos. Extraia o valor exatamente como encontrar no documento. Procure no cabeçalho ou seções de contato.)",
   "data_nascimento": "YYYY-MM-DD (se existir, caso contrário null)",
   "endereco": {
     "cep": "CEP se houver",
