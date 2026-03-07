@@ -224,29 +224,37 @@ export function RHVagas() {
         // Lógica de Relevância Inteligente (Boosts)
         let relevanceScore = match.score;
 
-        // 1. Boost por Área (Ex: Jurídico com Jurídico)
-        const sameArea = String(c.area) === String(activeMatchVaga.area);
-        if (sameArea && c.area) relevanceScore += 50;
+        // Se o perfil do candidato não tem tags, não aplicamos boosts e a aderência é zero.
+        if (candidatoTags.length > 0) {
+          // 1. Boost por Área (Ex: Jurídico com Jurídico)
+          const sameArea = String(c.area) === String(activeMatchVaga.area);
+          if (sameArea && c.area) relevanceScore += 50;
 
-        // 2. Boost por Cargo
-        // ID idêntico
-        const sameRoleId = String(c.role) === String(activeMatchVaga.role_id);
-        if (sameRoleId) relevanceScore += 30;
-        else {
-          // Similaridade de nome (ex: Paralegal vs Advogado)
-          const candRoleName = (roleOptions.find(r => String(r.value) === String(c.role))?.label || '').toLowerCase();
-          const vagaRoleName = (activeMatchVaga.role?.name || '').toLowerCase();
+          // 2. Boost por Cargo
+          // ID idêntico
+          const sameRoleId = String(c.role) === String(activeMatchVaga.role_id);
+          if (sameRoleId) relevanceScore += 30;
+          else {
+            // Similaridade de nome (ex: Paralegal vs Advogado)
+            const candRoleName = (roleOptions.find(r => String(r.value) === String(c.role))?.label || '').toLowerCase();
+            const vagaRoleName = (activeMatchVaga.role?.name || '').toLowerCase();
 
-          if (candRoleName && vagaRoleName) {
-            const commonKeywords = ['advogado', 'paralegal', 'estagiario', 'juridico', 'administrativo', 'recepcionista', 'auxiliar'];
-            const hasCommonKeyword = commonKeywords.some(key => candRoleName.includes(key) && vagaRoleName.includes(key));
-            if (hasCommonKeyword) relevanceScore += 15;
+            if (candRoleName && vagaRoleName) {
+              const commonKeywords = ['advogado', 'paralegal', 'estagiario', 'juridico', 'administrativo', 'recepcionista', 'auxiliar'];
+              const hasCommonKeyword = commonKeywords.some(key => candRoleName.includes(key) && vagaRoleName.includes(key));
+              if (hasCommonKeyword) relevanceScore += 15;
+            }
           }
+        } else {
+          relevanceScore = 0;
         }
+
+        // Cap relevance score at 100%
+        relevanceScore = Math.min(relevanceScore, 100);
 
         return {
           candidato: c,
-          score: relevanceScore, // Score turbinado
+          score: relevanceScore, // Score turbinado (capped a 100%)
           baseScore: match.score, // Mantemos o original para referência se necessário
           matches: match.matches,
           totalTags: vagaTags.length,
@@ -269,7 +277,7 @@ export function RHVagas() {
         const match = calculateMatchScore(candidatoTags, vagaTags); // Queremos saber o quanto a vaga atende aos requisitos/skills do candidato (invertido)
         return {
           vaga: v,
-          score: match.score, // Score baseado em quantas skills do candidato a vaga "exige" ou tem match
+          score: Math.min(match.score, 100), // Score baseado em quantas skills do candidato a vaga "exige" ou tem match
           matches: match.matches,
           totalTags: candidatoTags.length > 0 ? candidatoTags.length : vagaTags.length, // Tratamento para não quebrar a UI
           matchedTags: match.matchedTags,
