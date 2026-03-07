@@ -664,13 +664,13 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             </button>
 
                             {isStatusMenuOpen && (
-                                <div className="absolute bottom-full left-0 mb-2 w-48 bg-[#33353A] rounded-xl shadow-xl border border-gray-700 overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50">
+                                <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50 relative">
                                     {['Aberto', 'Aprovado', 'Reprovado', 'Reaproveitamento'].map(status => (
                                         <button
                                             key={status}
                                             type="button"
                                             onClick={() => handleStatusSelecaoChange(status)}
-                                            className="w-full text-left px-5 py-3 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
+                                            className="w-full text-left px-5 py-3 text-xs font-bold text-[#0a192f] hover:bg-blue-50 hover:text-[#1e3a8a] transition-colors border-b border-gray-50 last:border-0"
                                         >
                                             {status}
                                         </button>

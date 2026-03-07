@@ -123,11 +123,12 @@ export function GEDSection({
                 {pendingGedDocs.map(doc => (
                     <div key={doc.tempId} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-100 rounded-lg">
                         <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="p-1.5 bg-yellow-100 text-yellow-600 rounded"><FileText className="h-4 w-4" /></div>
-                            <div className="overflow-hidden">
-                                <p className="text-xs font-bold text-[#0a192f] truncate">{doc.label || doc.category}</p>
-                                <div className="flex gap-2">
-                                    <span className="text-[9px] text-yellow-600 italic px-1 py-0.5">Pendente</span>
+                            <div className="p-1.5 bg-yellow-100 text-yellow-600 rounded shrink-0"><FileText className="h-4 w-4" /></div>
+                            <div className="overflow-hidden flex flex-col justify-center w-full">
+                                <p className="text-xs font-bold text-[#0a192f] truncate">{doc.category || 'Documento Pendente'}</p>
+                                <div className="flex items-center gap-2 mt-0.5 w-full">
+                                    <span className="text-[9px] text-yellow-600 font-bold bg-yellow-100 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">Pendente</span>
+                                    <span className="text-[10px] text-gray-500 font-medium truncate block">{doc.label}</span>
                                 </div>
                             </div>
                         </div>

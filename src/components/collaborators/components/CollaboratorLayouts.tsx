@@ -29,7 +29,7 @@ export const CollaboratorModalLayout = ({
 
     useEffect(() => {
         if (scrollRef.current) {
-            scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+            scrollRef.current.scrollTo({ top: 0, behavior: 'auto' })
         }
     }, [activeTab])
 
@@ -105,7 +105,7 @@ export const CollaboratorPageLayout = ({
 
     useEffect(() => {
         if (scrollRef.current) {
-            scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+            scrollRef.current.scrollTo({ top: 0, behavior: 'auto' })
         }
     }, [activeTab])
 
