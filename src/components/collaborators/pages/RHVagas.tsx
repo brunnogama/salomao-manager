@@ -433,6 +433,13 @@ export function RHVagas() {
     const matchLocal = filterLocal ? String(c.local) === filterLocal : true
     const matchCargo = filterCargo ? String(c.role) === filterCargo : true
     const matchArea = filterArea ? String(c.area) === filterArea : true
+    // For Reprovados, we might want to also filter by Partner/Leader if those applied to the Vaga they were rejected from, 
+    // but the Candidato record doesn't store this. The user specifically asked to hide Lider/Socio from Talentos previously, 
+    // and requested "os mesmos campos de buscas e filtros que tem em vagas fechadas". Let's hide Lider/Socio in Reprovados 
+    // to keep it consistent with what can actually be filtered on a Candidate.
+
+    // We already hid Lider and Socio for Talentos, and we hid them for Reprovados in the UI earlier. 
+    // The filter variables used here are Local, Cargo, and Area.
 
     return matchSearch && matchLocal && matchCargo && matchArea
   }).sort((a, b) => {
@@ -554,9 +561,16 @@ export function RHVagas() {
 
   const currentMonth = new Date().getMonth()
   const currentYear = new Date().getFullYear()
+
   const vagasFechadasNoMes = vagas.filter(v => {
     if (v.status !== 'Fechada' || !v.data_fechamento) return false
     const d = new Date(v.data_fechamento)
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
+  }).length
+
+  const reprovadosNoMes = candidatos.filter(c => {
+    if (c.status_selecao !== 'Reprovado' || !c.data_reprovacao) return false
+    const d = new Date(c.data_reprovacao)
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear
   }).length
 
@@ -635,7 +649,7 @@ export function RHVagas() {
       </div>
 
       {
-        activeTab !== 'reprovados' && activeTab !== 'ats' && (
+        activeTab !== 'ats' && (
           <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-none">
             <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
 
@@ -673,6 +687,17 @@ export function RHVagas() {
                   </div>
                 </div>
               )}
+              {activeTab === 'reprovados' && (
+                <div className="flex items-center gap-3 bg-red-50/50 border border-red-100 rounded-xl px-4 py-2.5 shrink-0">
+                  <div className="p-1.5 bg-red-100 rounded-lg text-red-700">
+                    <UserX className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-red-900/40 uppercase tracking-widest leading-none mb-1">Reprovados no Mês</p>
+                    <p className="text-sm font-bold text-red-700 leading-none">{reprovadosNoMes}</p>
+                  </div>
+                </div>
+              )}
 
               {/* Search Bar - Expanded */}
               <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
@@ -697,7 +722,7 @@ export function RHVagas() {
 
               {/* Filters Row - Auto-sizing */}
               <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
-                {activeTab !== 'talentos' && (
+                {activeTab !== 'talentos' && activeTab !== 'reprovados' && (
                   <>
                     <FilterSelect
                       icon={User}
@@ -715,6 +740,7 @@ export function RHVagas() {
                     />
                   </>
                 )}
+                {/* Area filter */}
                 <FilterSelect
                   icon={Briefcase}
                   value={filterArea}

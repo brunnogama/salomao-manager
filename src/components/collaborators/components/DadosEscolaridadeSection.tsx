@@ -113,6 +113,29 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
         }
     };
 
+    const [novaAtividade, setNovaAtividade] = useState('');
+    const atividadesList = formData.atividades_academicas ? formData.atividades_academicas.split(/[\n]/).map(i => i.trim()).filter(Boolean) : [];
+
+    const handleAddAtividade = () => {
+        if (!novaAtividade.trim()) return;
+        const current = [...atividadesList, novaAtividade.trim()];
+        setFormData({ ...formData, atividades_academicas: current.join('\n') });
+        setNovaAtividade('');
+    };
+
+    const handleRemoveAtividade = (index: number) => {
+        const current = [...atividadesList];
+        current.splice(index, 1);
+        setFormData({ ...formData, atividades_academicas: current.join('\n') });
+    };
+
+    const handleKeyDownAtividade = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddAtividade();
+        }
+    };
+
     const handleRemoveEducation = (id: string) => {
         const currentData = formData.education_history || []
         setFormData({ ...formData, education_history: currentData.filter(e => e.id !== id) })
@@ -447,7 +470,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? 'Série / Ano Atual' : 'Semestre Atual'}</label>
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? 'Série / Ano Atual' : 'Período Atual'}</label>
                                         <SearchableSelect
                                             value={item.semestre || ''}
                                             onChange={(v) => updateEducation(item.id, 'semestre', v)}
@@ -574,17 +597,55 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                            Atividades Acadêmicas e Extracurriculares
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                            <GraduationCap className="w-3.5 h-3.5" /> Atividades Acadêmicas e Extracurriculares
                         </label>
-                        <textarea
-                            className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none transition-all resize-y shadow-sm font-medium min-h-[100px] ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                            value={formData.atividades_academicas || ''}
-                            onChange={(e) => setFormData({ ...formData, atividades_academicas: e.target.value })}
-                            placeholder="Ex: Monitoria, Empresa Júnior, Grupo de Pesquisa, Ligas Acadêmicas..."
-                            disabled={isViewMode}
-                            readOnly={isViewMode}
-                        />
+
+                        <div className="flex flex-col gap-3">
+                            {atividadesList.length > 0 && (
+                                <div className="flex flex-col gap-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100 min-h-[60px]">
+                                    {atividadesList.map((atividade, idx) => (
+                                        <div key={idx} className="flex items-center justify-between bg-white border border-gray-200 px-3 py-2.5 rounded-lg shadow-sm group transition-all hover:border-blue-200">
+                                            <span className="text-sm font-semibold text-gray-700">{atividade}</span>
+                                            {!isViewMode && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveAtividade(idx)}
+                                                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                                                    title="Remover atividade"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {!isViewMode && (
+                                <div className="flex gap-2 relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Plus className="h-4 w-4 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all shadow-sm font-medium"
+                                        value={novaAtividade}
+                                        onChange={(e) => setNovaAtividade(e.target.value)}
+                                        onKeyDown={handleKeyDownAtividade}
+                                        placeholder="Ex: Monitoria, Empresa Júnior, Grupo de Pesquisa..."
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddAtividade}
+                                        disabled={!novaAtividade.trim()}
+                                        className="px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors disabled:opacity-50"
+                                    >
+                                        Adicionar
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

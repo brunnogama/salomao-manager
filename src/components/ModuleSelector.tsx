@@ -239,6 +239,11 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
     )
   }
 
+  const handleOpenUpdateModal = () => {
+    localStorage.setItem('last_seen_update', latestUpdateVersion);
+    setShowUpdateModal(true);
+  }
+
   return (
     <div className="h-screen w-screen bg-[#0a192f] flex flex-col relative overflow-hidden">
 
@@ -307,11 +312,21 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
                 className="p-2.5 text-amber-300 hover:text-amber-200 transition-all rounded-full hover:bg-white/10 active:scale-95 animate-pulse hover:animate-none flex items-center justify-center relative"
                 title="Novidades do Sistema"
               >
-                <Sparkles className="h-5 w-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span>
+                <Gift className="h-5 w-5" />
+                <span className="absolute top-1.5 right-1.5 w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] border border-white animate-ping"></span>
+                <span className="absolute top-1.5 right-1.5 w-3 h-3 rounded-full bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)] border border-white"></span>
               </button>
             </div>
+          )}
+
+          {!hasNewUpdate && (
+            <button
+              onClick={handleOpenUpdateModal}
+              className="p-2.5 text-white/50 hover:text-[#d4af37] transition-all rounded-full hover:bg-white/10 active:scale-95"
+              title="Novidades do Sistema"
+            >
+              <Gift className="h-5 w-5" />
+            </button>
           )}
 
           {isAdmin && (
