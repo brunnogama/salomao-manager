@@ -31,7 +31,7 @@ export function RHVagas() {
   const [candidatos, setCandidatos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'reprovados' | 'ats'>('ats')
+  const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'reprovados' | 'ats'>('abertas')
 
   // Filtros
   const [filterLider, setFilterLider] = useState('')
@@ -584,8 +584,8 @@ export function RHVagas() {
               onClick={() => setActiveTab('ats')}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap shadow-sm
                 ${activeTab === 'ats'
-                  ? 'bg-gradient-to-r from-blue-600 to-[#1e3a8a] text-white shadow-blue-500/30'
-                  : 'bg-white text-[#1e3a8a] border border-[#1e3a8a]/20 hover:bg-blue-50'}
+                  ? 'bg-gradient-to-r from-blue-700 to-[#112240] text-white shadow-blue-500/40 ring-2 ring-blue-500/50 ring-offset-1'
+                  : 'bg-gradient-to-r from-blue-600 to-[#1e3a8a] text-white shadow-blue-500/30 hover:from-blue-700 hover:to-[#112240]'}
               `}
               title="Match Inteligente (ATS)"
             >
