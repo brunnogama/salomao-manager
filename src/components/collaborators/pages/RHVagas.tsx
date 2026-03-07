@@ -215,46 +215,47 @@ export function RHVagas() {
     if (!activeMatchVaga || matchMode !== 'vaga') return [];
     const vagaTags = extractTags(activeMatchVaga.perfil);
 
-    return candidatos.map(c => {
-      const candidatoTags = extractTags(c.perfil);
-      const match = calculateMatchScore(vagaTags, candidatoTags);
+    return candidatos
+      .filter(c => !activeMatchVaga.area || String(c.area) === String(activeMatchVaga.area)) // STRICT AREA MATCH
+      .map(c => {
+        const candidatoTags = extractTags(c.perfil);
+        const match = calculateMatchScore(vagaTags, candidatoTags);
 
-      // Lógica de Relevância Inteligente (Boosts)
-      let relevanceScore = match.score;
+        // Lógica de Relevância Inteligente (Boosts)
+        let relevanceScore = match.score;
 
-      // 1. Boost por Área (Ex: Jurídico com Jurídico)
-      const sameArea = c.area === activeMatchVaga.area;
-      if (sameArea && c.area) relevanceScore += 50;
+        // 1. Boost por Área (Ex: Jurídico com Jurídico)
+        const sameArea = String(c.area) === String(activeMatchVaga.area);
+        if (sameArea && c.area) relevanceScore += 50;
 
-      // 2. Boost por Cargo
-      // ID idêntico
-      const sameRoleId = String(c.role) === String(activeMatchVaga.role_id);
-      if (sameRoleId) relevanceScore += 30;
-      else {
-        // Similaridade de nome (ex: Paralegal vs Advogado)
-        const candRoleName = (roleOptions.find(r => String(r.value) === String(c.role))?.label || '').toLowerCase();
-        const vagaRoleName = (activeMatchVaga.role?.name || '').toLowerCase();
+        // 2. Boost por Cargo
+        // ID idêntico
+        const sameRoleId = String(c.role) === String(activeMatchVaga.role_id);
+        if (sameRoleId) relevanceScore += 30;
+        else {
+          // Similaridade de nome (ex: Paralegal vs Advogado)
+          const candRoleName = (roleOptions.find(r => String(r.value) === String(c.role))?.label || '').toLowerCase();
+          const vagaRoleName = (activeMatchVaga.role?.name || '').toLowerCase();
 
-        if (candRoleName && vagaRoleName) {
-          const commonKeywords = ['advogado', 'paralegal', 'estagiario', 'juridico', 'administrativo', 'recepcionista', 'auxiliar'];
-          const hasCommonKeyword = commonKeywords.some(key => candRoleName.includes(key) && vagaRoleName.includes(key));
-          if (hasCommonKeyword) relevanceScore += 15;
+          if (candRoleName && vagaRoleName) {
+            const commonKeywords = ['advogado', 'paralegal', 'estagiario', 'juridico', 'administrativo', 'recepcionista', 'auxiliar'];
+            const hasCommonKeyword = commonKeywords.some(key => candRoleName.includes(key) && vagaRoleName.includes(key));
+            if (hasCommonKeyword) relevanceScore += 15;
+          }
         }
-      }
 
-      return {
-        candidato: c,
-        score: relevanceScore, // Score turbinado
-        baseScore: match.score, // Mantemos o original para referência se necessário
-        matches: match.matches,
-        totalTags: vagaTags.length,
-        matchedTags: match.matchedTags,
-        candidatoTags
-      };
-    }).sort((a, b) => b.score - a.score);
+        return {
+          candidato: c,
+          score: relevanceScore, // Score turbinado
+          baseScore: match.score, // Mantemos o original para referência se necessário
+          matches: match.matches,
+          totalTags: vagaTags.length,
+          matchedTags: match.matchedTags,
+          candidatoTags
+        };
+      }).sort((a, b) => b.score - a.score);
   })();
 
-  // State derivado: Candidato Ativo no Match e lista de Vagas Ordenada
   const activeMatchCandidato = candidatos.find(c => c.id === selectedMatchCandidatoId);
   const matchedVagas = (() => {
     if (!activeMatchCandidato || matchMode !== 'candidato') return [];
@@ -262,6 +263,7 @@ export function RHVagas() {
 
     return vagas
       .filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização') // Apenas ativas
+      .filter(v => !activeMatchCandidato.area || String(v.area) === String(activeMatchCandidato.area)) // STRICT AREA MATCH
       .map(v => {
         const vagaTags = extractTags(v.perfil);
         const match = calculateMatchScore(candidatoTags, vagaTags); // Queremos saber o quanto a vaga atende aos requisitos/skills do candidato (invertido)
