@@ -61,6 +61,7 @@ export function RHVagas() {
   const [selectedMatchCandidatoId, setSelectedMatchCandidatoId] = useState<string | null>(null)
   const [isAiMatching, setIsAiMatching] = useState(false)
   const [aiMatchResults, setAiMatchResults] = useState<Record<string, { score: number, justificativa?: string, matchesTags?: string[], gaps?: string[] }>>({})
+  const [atsMatchArea, setAtsMatchArea] = useState<'Administrativa' | 'Jurídica' | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -728,19 +729,51 @@ export function RHVagas() {
               <p className="text-xs font-semibold text-gray-500 mt-1">Encontre a aderência perfeita cruzando perfis e vagas</p>
             </div>
 
-            <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto">
-              <button
-                onClick={() => setMatchMode('vaga')}
-                className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap ${matchMode === 'vaga' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                <Briefcase className="h-4 w-4" /> Por Vaga
-              </button>
-              <button
-                onClick={() => setMatchMode('candidato')}
-                className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap ${matchMode === 'candidato' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                <User className="h-4 w-4" /> Por Candidato
-              </button>
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+              {/* Filtros de Área (Pré-Match) */}
+              <div className="flex bg-gray-50 p-1 rounded-xl w-full sm:w-auto border border-gray-100">
+                <button
+                  onClick={() => {
+                    setAtsMatchArea(atsMatchArea === 'Administrativa' ? null : 'Administrativa')
+                    // Clear selected vacancy/candidate when switching areas to avoid bugs
+                    setSelectedMatchVagaId(null)
+                    setSelectedMatchCandidatoId(null)
+                  }}
+                  className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${atsMatchArea === 'Administrativa' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+                  title="Filtrar por Administrativa"
+                >
+                  <Building2 className="h-3.5 w-3.5" /> Admin
+                </button>
+                <div className="w-px bg-gray-200 mx-1"></div>
+                <button
+                  onClick={() => {
+                    setAtsMatchArea(atsMatchArea === 'Jurídica' ? null : 'Jurídica')
+                    // Clear selected vacancy/candidate when switching areas to avoid bugs
+                    setSelectedMatchVagaId(null)
+                    setSelectedMatchCandidatoId(null)
+                  }}
+                  className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${atsMatchArea === 'Jurídica' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-[#1e3a8a] hover:bg-blue-50'}`}
+                  title="Filtrar por Jurídica"
+                >
+                  <Briefcase className="h-3.5 w-3.5" /> Jurídico
+                </button>
+              </div>
+
+              {/* Modo de Match */}
+              <div className="flex bg-gray-100 p-1 rounded-xl w-full sm:w-auto">
+                <button
+                  onClick={() => setMatchMode('vaga')}
+                  className={`flex-1 sm:flex-none px-6 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap ${matchMode === 'vaga' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <Briefcase className="h-4 w-4" /> Por Vaga
+                </button>
+                <button
+                  onClick={() => setMatchMode('candidato')}
+                  className={`flex-1 sm:flex-none px-6 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap ${matchMode === 'candidato' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <User className="h-4 w-4" /> Por Candidato
+                </button>
+              </div>
             </div>
           </div>
 
@@ -759,6 +792,7 @@ export function RHVagas() {
                         { value: '', label: 'Selecione uma vaga em aberto...' },
                         ...vagas
                           .filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização')
+                          .filter(v => atsMatchArea ? String(v.area) === atsMatchArea : true)
                           .sort((a, b) => (a.vaga_id_text || '').localeCompare(b.vaga_id_text || ''))
                           .map(v => ({
                             value: String(v.id),
@@ -910,6 +944,7 @@ export function RHVagas() {
                       options={[
                         { value: '', label: 'Selecione um candidato...' },
                         ...candidatos
+                          .filter(c => atsMatchArea ? String(c.area) === atsMatchArea : true)
                           .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
                           .map(c => ({
                             value: String(c.id),
