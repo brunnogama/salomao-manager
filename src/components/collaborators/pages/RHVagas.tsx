@@ -1255,7 +1255,6 @@ export function RHVagas() {
         onSelect={handleSelection}
       />
     </div>
-    </div>
   )
 }
 
