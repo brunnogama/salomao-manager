@@ -312,6 +312,11 @@ export function RHVagas() {
     setIsModalOpen(false)
   }
 
+  const handleOpenCandidatoModal = (id: string) => {
+    setSelectedCandidatoId(id)
+    setIsCandidatoModalOpen(true)
+  }
+
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedVagaId(null)
@@ -774,7 +779,7 @@ export function RHVagas() {
                           displayScore >= 50 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-rose-400 to-rose-500';
 
                         return (
-                          <div key={m.candidato.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                          <div key={m.candidato.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between cursor-pointer group/card" onClick={() => handleOpenCandidatoModal(m.candidato.id)}>
                             <div className="flex items-start gap-4">
                               {/* Avatar Block */}
                               <div className="flex-shrink-0 h-14 w-14 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-white shadow flex items-center justify-center">
@@ -783,7 +788,7 @@ export function RHVagas() {
 
                               {/* Info Block */}
                               <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-bold text-[#0a192f] truncate cursor-pointer hover:text-blue-600 transition-colors" onClick={() => { setSelectedCandidatoId(m.candidato.id); setIsCandidatoModalOpen(true); }}>
+                                <h4 className="text-sm font-bold text-[#0a192f] truncate group-hover/card:text-blue-600 transition-colors">
                                   {m.candidato.nome}
                                 </h4>
                                 <p className="text-[10px] text-gray-500 truncate mb-1">{m.candidato.email}</p>
@@ -795,7 +800,7 @@ export function RHVagas() {
                               {/* Action Block - Run AI */}
                               {!aiData && (
                                 <button
-                                  onClick={() => handleRunAiMatch(selectedMatchVagaId!, m.candidato.id)}
+                                  onClick={(e) => { e.stopPropagation(); handleRunAiMatch(selectedMatchVagaId!, m.candidato.id); }}
                                   disabled={isLoading}
                                   className="flex-shrink-0 p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors group relative"
                                   title="Analisar profundamente com IA"
@@ -855,7 +860,7 @@ export function RHVagas() {
                             )}
 
                           </div>
-                        );
+                        )
                       })}
                       {matchedCandidatos.length === 0 && (
                         <div className="col-span-1 lg:col-span-2 p-8 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
@@ -869,109 +874,130 @@ export function RHVagas() {
             ) : (
               // VISÃO POR CANDIDATO
               <div className="space-y-6">
-                <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl border border-emerald-100 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-shrink-0 h-14 w-14 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-200 border-2 border-white shadow flex items-center justify-center">
-                      <span className="text-xl font-black text-emerald-700">{activeMatchCandidato?.nome?.charAt(0)}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold text-[#0a192f] truncate cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { setSelectedCandidatoId(selectedMatchCandidatoId); setIsCandidatoModalOpen(true); }}>
-                        {activeMatchCandidato?.nome}
-                      </h4>
-                      <p className="text-[10px] text-gray-500 truncate mb-1">{activeMatchCandidato?.email}</p>
-                    </div>
+                <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl border border-emerald-100">
+                  <h3 className="text-sm font-bold text-[#0a192f] mb-3">1. Selecione o Talento</h3>
+                  <div className="w-full sm:max-w-md">
+                    <FilterSelect
+                      placeholder="Buscar candidato"
+                      value={selectedMatchCandidatoId || ''}
+                      onChange={setSelectedMatchCandidatoId}
+                      options={[
+                        { value: '', label: 'Selecione um candidato...' },
+                        ...candidatos
+                          .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
+                          .map(c => ({
+                            value: String(c.id),
+                            label: `${c.nome} (${roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || 'Sem cargo'})`
+                          }))
+                      ]}
+                      icon={Users}
+                    />
                   </div>
-                </div>
 
-                {selectedMatchCandidatoId && (
-                  <div className="mt-4 animate-in slide-in-from-top-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60 mb-2">Habilidades (Tags) do Candidato</p>
-                    {activeMatchCandidato && extractTags(activeMatchCandidato.perfil).length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {extractTags(activeMatchCandidato.perfil).map((tag, i) => (
-                          <span key={i} className="px-2.5 py-1 bg-white text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold shadow-sm">
-                            {tag}
-                          </span>
-                        ))}
+                  {selectedMatchCandidatoId && (
+                    <>
+                      <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl border border-emerald-100 flex items-center justify-between gap-4 cursor-pointer hover:bg-emerald-100/50 transition-colors mt-6" onClick={() => handleOpenCandidatoModal(selectedMatchCandidatoId!)}>
+                        <div className="flex items-center gap-4">
+                          <div className="flex-shrink-0 h-14 w-14 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-200 border-2 border-white shadow flex items-center justify-center">
+                            <span className="text-xl font-black text-emerald-700">{activeMatchCandidato?.nome?.charAt(0)}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-bold text-[#0a192f] truncate group-hover/card:text-emerald-600 transition-colors">
+                              {activeMatchCandidato?.nome}
+                            </h4>
+                            <p className="text-[10px] text-gray-500 truncate mb-1">{activeMatchCandidato?.email}</p>
+                          </div>
+                        </div>
                       </div>
-                    ) : (
-                      <p className="text-xs text-emerald-600/60 font-medium italic">Este candidato não possui tags de perfil registradas. Preencha no cadastro para utilizar o match.</p>
-                    )}
-                  </div>
-                )}
 
-                {selectedMatchCandidatoId && (
-                  <div>
-                    <h3 className="text-sm font-bold text-[#0a192f] mb-3 flex items-center gap-2">
-                      <Briefcase className="w-4 h-4 text-emerald-600" /> Vagas Abertas Compatíveis
-                    </h3>
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                      <table className="w-full min-w-max text-left border-collapse">
-                        <thead className="bg-[#059669]">
-                          <tr>
-                            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-48">Aderência (Match)</th>
-                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px]">Vaga</th>
-                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px]">Líder / Sócio</th>
-                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Tags da Vaga (Highlight do Match)</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {matchedVagas.map((m) => (
-                            <tr key={m.vaga.id} onClick={() => handleOpenViewModal(m.vaga.id)} className="hover:bg-emerald-50/40 cursor-pointer transition-colors">
-                              <td className="px-4 py-4 whitespace-nowrap">
-                                <div className="flex flex-col gap-1.5">
-                                  <div className="flex items-center justify-between">
-                                    <span className={`text-sm font-black ${m.score >= 80 ? 'text-green-600' : m.score >= 50 ? 'text-amber-500' : 'text-gray-400'}`}>
-                                      {m.score}%
-                                    </span>
-                                    <span className="text-[10px] font-bold text-gray-500">{m.matches} de {m.totalTags}</span>
-                                  </div>
-                                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                    <div
-                                      className={`h-full rounded-full ${m.score >= 80 ? 'bg-green-500' : m.score >= 50 ? 'bg-amber-400' : 'bg-gray-300'}`}
-                                      style={{ width: `${m.score}%` }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-3 py-4">
-                                <div className="flex items-center gap-2">
-                                  <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[9px] font-black tracking-widest uppercase">{m.vaga.vaga_id_text}</span>
-                                  <p className="font-bold text-sm text-[#0a192f] truncate">{m.vaga.role?.name || 'Sem cargo'}</p>
-                                </div>
-                                <p className="text-[10px] text-gray-500 mt-1">{m.vaga.location?.name || 'Local não informado'}</p>
-                              </td>
-                              <td className="px-3 py-4 text-xs font-semibold text-gray-700">
-                                <p>{m.vaga.leader?.name || '-'}</p>
-                                <p className="text-[10px] text-gray-500">{m.vaga.partner?.name || '-'}</p>
-                              </td>
-                              <td className="px-3 py-4">
-                                <div className="flex flex-wrap gap-1.5">
-                                  {m.vagaTags.map((tag, i) => {
-                                    const isMatch = m.matchedTags.includes(tag.toLowerCase());
-                                    return (
-                                      <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-                                        {tag}
-                                      </span>
-                                    );
-                                  })}
-                                  {m.vagaTags.length === 0 && <span className="text-xs text-gray-400 italic">Sem tags registradas</span>}
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                          {matchedVagas.length === 0 && (
-                            <tr>
-                              <td colSpan={4} className="px-4 py-8 text-center text-sm font-semibold text-gray-500">
-                                Nenhuma vaga avaliada ou lista vazia.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+                      <div className="mt-4 animate-in slide-in-from-top-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60 mb-2">Habilidades (Tags) do Candidato</p>
+                        {activeMatchCandidato && extractTags(activeMatchCandidato.perfil).length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {extractTags(activeMatchCandidato.perfil).map((tag, i) => (
+                              <span key={i} className="px-2.5 py-1 bg-white text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold shadow-sm">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-emerald-600/60 font-medium italic">Este candidato não possui tags de perfil registradas. Preencha no cadastro para utilizar o match.</p>
+                        )}
+                      </div>
+
+                      <div className="mt-8">
+                        <h3 className="text-sm font-bold text-[#0a192f] mb-3 flex items-center gap-2">
+                          <Briefcase className="w-4 h-4 text-emerald-600" /> Vagas Abertas Compatíveis
+                        </h3>
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                          <table className="w-full min-w-max text-left border-collapse">
+                            <thead className="bg-[#059669]">
+                              <tr>
+                                <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-48">Aderência (Match)</th>
+                                <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px]">Vaga</th>
+                                <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px]">Líder / Sócio</th>
+                                <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Tags da Vaga (Highlight do Match)</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {matchedVagas.map((m) => (
+                                <tr key={m.vaga.id} onClick={() => handleOpenViewModal(m.vaga.id)} className="hover:bg-emerald-50/40 cursor-pointer transition-colors">
+                                  <td className="px-4 py-4 whitespace-nowrap">
+                                    <div className="flex flex-col gap-1.5">
+                                      <div className="flex items-center justify-between">
+                                        <span className={`text-sm font-black ${m.score >= 80 ? 'text-green-600' : m.score >= 50 ? 'text-amber-500' : 'text-gray-400'}`}>
+                                          {m.score}%
+                                        </span>
+                                        <span className="text-[10px] font-bold text-gray-500">{m.matches} de {m.totalTags}</span>
+                                      </div>
+                                      <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-full ${m.score >= 80 ? 'bg-green-500' : m.score >= 50 ? 'bg-amber-400' : 'bg-gray-300'}`}
+                                          style={{ width: `${m.score}%` }}
+                                        ></div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-4">
+                                    <div className="flex items-center gap-2">
+                                      <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[9px] font-black tracking-widest uppercase">{m.vaga.vaga_id_text}</span>
+                                      <p className="font-bold text-sm text-[#0a192f] truncate">{m.vaga.role?.name || 'Sem cargo'}</p>
+                                    </div>
+                                    <p className="text-[10px] text-gray-500 mt-1">{m.vaga.location?.name || 'Local não informado'}</p>
+                                  </td>
+                                  <td className="px-3 py-4 text-xs font-semibold text-gray-700">
+                                    <p>{m.vaga.leader?.name || '-'}</p>
+                                    <p className="text-[10px] text-gray-500">{m.vaga.partner?.name || '-'}</p>
+                                  </td>
+                                  <td className="px-3 py-4">
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {m.vagaTags.map((tag, i) => {
+                                        const isMatch = m.matchedTags.includes(tag.toLowerCase());
+                                        return (
+                                          <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                                            {tag}
+                                          </span>
+                                        );
+                                      })}
+                                      {m.vagaTags.length === 0 && <span className="text-xs text-gray-400 italic">Sem tags registradas</span>}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                              {matchedVagas.length === 0 && (
+                                <tr>
+                                  <td colSpan={4} className="px-4 py-8 text-center text-sm font-semibold text-gray-500">
+                                    Nenhuma vaga avaliada ou lista vazia.
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -979,252 +1005,256 @@ export function RHVagas() {
       )}
 
       {/* LISTA DE VAGAS / CANDIDATOS */}
-      {activeTab !== 'ats' && (
-        <div className="flex-1 overflow-hidden">
-          {loading ? (
-            <div className="flex justify-center items-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1e3a8a]"></div>
-            </div>
-          ) : error ? (
-            <div className="bg-red-50 p-6 rounded-2xl flex flex-col items-center justify-center text-center border border-red-100 shadow-sm">
-              <AlertCircle className="h-8 w-8 text-red-500 mb-3" />
-              <p className="text-sm font-medium text-red-700">{error}</p>
-            </div>
-          ) : (activeTab === 'abertas' || activeTab === 'fechadas') && filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-16 flex flex-col items-center justify-center text-center">
-                <div className="p-4 rounded-full bg-blue-50 mb-4">
-                  <Briefcase className="h-12 w-12 text-[#1e3a8a] opacity-20" />
-                </div>
-                <h2 className="text-xl font-black text-[#0a192f]">Nenhuma vaga {activeTab === 'fechadas' ? 'fechada' : 'aberta'} encontrada</h2>
-                <p className="text-gray-500 max-w-sm mt-2">
-                  {searchTerm ? 'Tente ajustar os termos da sua busca.' : activeTab === 'abertas' ? 'Clique no botão acima para abrir nova vaga.' : ''}
-                </p>
+      {
+        activeTab !== 'ats' && (
+          <div className="flex-1 overflow-hidden">
+            {loading ? (
+              <div className="flex justify-center items-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1e3a8a]"></div>
               </div>
-            </div>
-          ) : (activeTab === 'talentos' || activeTab === 'reprovados') && (activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado')).length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-16 flex flex-col items-center justify-center text-center">
-                <div className="p-4 rounded-full bg-blue-50 mb-4">
-                  <Users className="h-12 w-12 text-[#1e3a8a] opacity-20" />
-                </div>
-                <h2 className="text-xl font-black text-[#0a192f]">Nenhum candidato {activeTab === 'reprovados' ? 'reprovado ' : ''}encontrado</h2>
-                <p className="text-gray-500 max-w-sm mt-2">
-                  {searchTerm ? 'Tente ajustar os termos da sua busca.' : 'Nenhum registro para exibir nesta aba.'}
-                </p>
+            ) : error ? (
+              <div className="bg-red-50 p-6 rounded-2xl flex flex-col items-center justify-center text-center border border-red-100 shadow-sm">
+                <AlertCircle className="h-8 w-8 text-red-500 mb-3" />
+                <p className="text-sm font-medium text-red-700">{error}</p>
               </div>
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-y-auto overflow-x-auto min-h-[400px]">
-              {activeTab === 'talentos' || activeTab === 'reprovados' ? (
-                <table className="w-full min-w-max text-left border-collapse">
-                  <thead className="bg-[#1e3a8a]">
-                    <tr>
-                      <th className="px-5 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-32 whitespace-nowrap text-left">ID</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap text-left">Nome</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap text-left">Cargo Pretendido</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap text-left">Local</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap text-center">Entrevistado?</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap text-center">Data da entrevista</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl w-16 whitespace-nowrap">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {(activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado')).map((c: any) => {
-                      const hasInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
-                      const interviewDates = c.candidato_historico
-                        ?.filter((h: any) => h.tipo === 'Entrevista')
-                        .map((h: any) => h.entrevista_data || h.data_registro || null)
-                        .filter(Boolean)
-                        .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime());
-                      const lastInterviewDateRaw = interviewDates && interviewDates.length > 0 ? interviewDates[0] : null;
+            ) : (activeTab === 'abertas' || activeTab === 'fechadas') && filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-16 flex flex-col items-center justify-center text-center">
+                  <div className="p-4 rounded-full bg-blue-50 mb-4">
+                    <Briefcase className="h-12 w-12 text-[#1e3a8a] opacity-20" />
+                  </div>
+                  <h2 className="text-xl font-black text-[#0a192f]">Nenhuma vaga {activeTab === 'fechadas' ? 'fechada' : 'aberta'} encontrada</h2>
+                  <p className="text-gray-500 max-w-sm mt-2">
+                    {searchTerm ? 'Tente ajustar os termos da sua busca.' : activeTab === 'abertas' ? 'Clique no botão acima para abrir nova vaga.' : ''}
+                  </p>
+                </div>
+              </div>
+            ) : (activeTab === 'talentos' || activeTab === 'reprovados') && (activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado')).length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-16 flex flex-col items-center justify-center text-center">
+                  <div className="p-4 rounded-full bg-blue-50 mb-4">
+                    <Users className="h-12 w-12 text-[#1e3a8a] opacity-20" />
+                  </div>
+                  <h2 className="text-xl font-black text-[#0a192f]">Nenhum candidato {activeTab === 'reprovados' ? 'reprovado ' : ''}encontrado</h2>
+                  <p className="text-gray-500 max-w-sm mt-2">
+                    {searchTerm ? 'Tente ajustar os termos da sua busca.' : 'Nenhum registro para exibir nesta aba.'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-y-auto overflow-x-auto min-h-[400px]">
+                {activeTab === 'talentos' || activeTab === 'reprovados' ? (
+                  <table className="w-full min-w-max text-left border-collapse">
+                    <thead className="bg-[#1e3a8a]">
+                      <tr>
+                        <th className="px-5 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-32 whitespace-nowrap text-left">ID</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap text-left">Nome</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap text-left">Cargo Pretendido</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap text-left">Local</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap text-center">Entrevistado?</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap text-center">Data da entrevista</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl w-16 whitespace-nowrap">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {(activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado')).map((c: any) => {
+                        const hasInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
+                        const interviewDates = c.candidato_historico
+                          ?.filter((h: any) => h.tipo === 'Entrevista')
+                          .map((h: any) => h.entrevista_data || h.data_registro || null)
+                          .filter(Boolean)
+                          .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime());
+                        const lastInterviewDateRaw = interviewDates && interviewDates.length > 0 ? interviewDates[0] : null;
 
 
-                      // Ocultar se já for colaborador (estamos em uma página de recrutamento/vagas ativos)
-                      // Nota: Precisamos carregar a lista de IDs de candidatos que já são colaboradores se quisermos ser precisos,
-                      // ou checar se existe um colaborador vinculado via query mais robusta. 
-                      // Para o MVP solicitado: "Quando o candidato é aprovado, pode retirar da lista de talentos"
-                      // Vou assumir que se ele está marcado como "Aprovado" ou vinculado a uma vaga fechada, ou se já existe na tabela de collaborators.
-                      // Vou precisar atualizar a query inicial de fetchCandidatos para trazer essa info.
+                        // Ocultar se já for colaborador (estamos em uma página de recrutamento/vagas ativos)
+                        // Nota: Precisamos carregar a lista de IDs de candidatos que já são colaboradores se quisermos ser precisos,
+                        // ou checar se existe um colaborador vinculado via query mais robusta. 
+                        // Para o MVP solicitado: "Quando o candidato é aprovado, pode retirar da lista de talentos"
+                        // Vou assumir que se ele está marcado como "Aprovado" ou vinculado a uma vaga fechada, ou se já existe na tabela de collaborators.
+                        // Vou precisar atualizar a query inicial de fetchCandidatos para trazer essa info.
 
-                      // Find names for role and local from options if they are just IDs
-                      const roleName = roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-';
-                      const localName = locationOptions.find(l => String(l.value) === String(c.local))?.label || c.local || '-';
+                        // Find names for role and local from options if they are just IDs
+                        const roleName = roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-';
+                        const localName = locationOptions.find(l => String(l.value) === String(c.local))?.label || c.local || '-';
 
-                      return (
-                        <tr key={c.id} onClick={() => { setSelectedCandidatoId(c.id); setIsCandidatoModalOpen(true); }} className={`hover:bg-blue-50/50 cursor-pointer transition-colors group ${activeTab === 'reprovados' ? 'bg-red-50/30' : ''}`}>
-                          <td className="px-5 py-4 whitespace-nowrap text-left">
-                            <span className="inline-flex items-center justify-center px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px] font-black tracking-widest uppercase">{c.candidato_id_text || 'Sem ID'}</span>
-                          </td>
-                          <td className="px-3 py-4">
-                            <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
-                            {(c.email || c.telefone) && (
-                              <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
-                            )}
-                            {activeTab === 'reprovados' && c.motivo_reprovacao && (
-                              <p className="text-[10px] text-red-600 font-bold mt-1 bg-red-100 p-1 rounded inline-block">Motivo: {c.motivo_reprovacao}</p>
-                            )}
-                            {c.perfil && (
-                              <div className="flex flex-wrap gap-1 mt-1.5">
-                                {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                  <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                    {tag.trim()}
-                                  </span>
-                                ))}
-                                {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                  <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
-                                )}
+                        return (
+                          <tr key={c.id} onClick={() => handleOpenCandidatoModal(c.id)} className={`hover:bg-blue-50/50 cursor-pointer transition-colors group ${activeTab === 'reprovados' ? 'bg-red-50/30' : ''}`}>
+                            <td className="px-5 py-4 whitespace-nowrap text-left">
+                              <span className="inline-flex items-center justify-center px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px] font-black tracking-widest uppercase">{c.candidato_id_text || 'Sem ID'}</span>
+                            </td>
+                            <td className="px-3 py-4">
+                              <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
+                              {(c.email || c.telefone) && (
+                                <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
+                              )}
+                              {activeTab === 'reprovados' && c.motivo_reprovacao && (
+                                <p className="text-[10px] text-red-600 font-bold mt-1 bg-red-100 p-1 rounded inline-block">Motivo: {c.motivo_reprovacao}</p>
+                              )}
+                              {c.perfil && (
+                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                  {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
+                                    <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                      {tag.trim()}
+                                    </span>
+                                  ))}
+                                  {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
+                                    <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
+                              {roleName}
+                            </td>
+                            <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
+                              {localName}
+                            </td>
+                            <td className="px-3 py-3 whitespace-nowrap">
+                              {hasInterview ? (
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-green-50 text-green-700 border-green-200">
+                                  <CheckCircle2 className="w-3 h-3" /> Sim
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-gray-50 text-gray-600 border-gray-200">
+                                  Não
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap text-center">
+                              {lastInterviewDateRaw ? formatDateToDisplay(lastInterviewDateRaw) : '-'}
+                            </td>
+                            <td className="px-3 py-3 text-right whitespace-nowrap">
+                              <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={(e) => { e.stopPropagation(); handleOpenCandidatoModal(c.id); }} className="p-1.5 text-[#1e3a8a] text-xs hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
+                                <button onClick={(e) => handleDeleteCandidato(c.id, e)} className="p-1.5 text-red-600 text-xs hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
                               </div>
-                            )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <table className="w-full min-w-max text-left border-collapse">
+                    <thead className="bg-[#1e3a8a]">
+                      <tr>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-20 whitespace-nowrap">ID</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">Abertura</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-28 whitespace-nowrap">SLA / Aberto</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">{activeTab === 'fechadas' ? 'Fechamento' : 'Prazo'}</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap">Vaga (Cargo)</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap">Atuação</th>
+                        {activeTab === 'fechadas' && <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap">Candidato Aprovado</th>}
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[100px] whitespace-nowrap">Local</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[140px] whitespace-nowrap">Líder Direto</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-28 whitespace-nowrap">Status</th>
+                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl w-16 whitespace-nowrap">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).map(vaga => (
+                        <tr key={vaga.id} onClick={() => handleOpenViewModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <span className="inline-block px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-black tracking-widest uppercase">{vaga.vaga_id_text || 'Sem ID'}</span>
                           </td>
                           <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
-                            {roleName}
+                            {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
+                          </td>
+                          <td className="px-3 py-3 text-xs font-semibold text-[#1e3a8a] whitespace-nowrap">
+                            <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 w-max shrink-0">
+                              <Clock className="w-3.5 h-3.5 text-blue-500" />
+                              {calculateTempoAberto(vaga.data_abertura, vaga.status === 'Fechada' ? vaga.data_fechamento : undefined)}
+                            </div>
                           </td>
                           <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
-                            {localName}
+                            {activeTab === 'fechadas'
+                              ? (vaga.data_fechamento ? new Date(vaga.data_fechamento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-')
+                              : (vaga.data_prazo ? new Date(vaga.data_prazo).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-')
+                            }
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-2 max-w-[200px] truncate">
+                              <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
+                              {vaga.sigilosa && (
+                                <span className="text-[8px] shrink-0 bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
+                            {vaga.atuacao?.name || '-'}
+                          </td>
+                          {activeTab === 'fechadas' && (
+                            <td className="px-3 py-3 text-xs font-bold text-[#1e3a8a] whitespace-nowrap">
+                              {(vaga as any).candidato_aprovado?.nome || '-'}
+                            </td>
+                          )}
+                          <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
+                            {vaga.location?.name || '-'}
+                          </td>
+                          <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
+                            <div className="max-w-[140px] truncate">
+                              {vaga.leader?.name || '-'}
+                            </div>
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
-                            {hasInterview ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-green-50 text-green-700 border-green-200">
-                                <CheckCircle2 className="w-3 h-3" /> Sim
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-gray-50 text-gray-600 border-gray-200">
-                                Não
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap text-center">
-                            {lastInterviewDateRaw ? formatDateToDisplay(lastInterviewDateRaw) : '-'}
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${vaga.status === 'Aberta' ? 'bg-green-50 text-green-700 border-green-200' : vaga.status === 'Congelada' ? 'bg-amber-50 text-amber-700 border-amber-200' : vaga.status === 'Aguardando Autorização' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                              {vaga.status}
+                            </span>
                           </td>
                           <td className="px-3 py-3 text-right whitespace-nowrap">
                             <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={(e) => { e.stopPropagation(); setSelectedCandidatoId(c.id); setIsCandidatoModalOpen(true); }} className="p-1.5 text-[#1e3a8a] text-xs hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
-                              <button onClick={(e) => handleDeleteCandidato(c.id, e)} className="p-1.5 text-red-600 text-xs hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                              <button onClick={(e) => { e.stopPropagation(); handleOpenModal(vaga.id) }} className="p-1.5 text-[#1e3a8a] text-xs hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
+                              <button onClick={(e) => handleDeleteVaga(vaga.id, e)} className="p-1.5 text-red-600 text-xs hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
                             </div>
                           </td>
                         </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              ) : (
-                <table className="w-full min-w-max text-left border-collapse">
-                  <thead className="bg-[#1e3a8a]">
-                    <tr>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-20 whitespace-nowrap">ID</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">Abertura</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-28 whitespace-nowrap">SLA / Aberto</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">{activeTab === 'fechadas' ? 'Fechamento' : 'Prazo'}</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap">Vaga (Cargo)</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap">Atuação</th>
-                      {activeTab === 'fechadas' && <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap">Candidato Aprovado</th>}
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[100px] whitespace-nowrap">Local</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[140px] whitespace-nowrap">Líder Direto</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-28 whitespace-nowrap">Status</th>
-                      <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl w-16 whitespace-nowrap">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).map(vaga => (
-                      <tr key={vaga.id} onClick={() => handleOpenViewModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
-                        <td className="px-3 py-3 whitespace-nowrap">
-                          <span className="inline-block px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-black tracking-widest uppercase">{vaga.vaga_id_text || 'Sem ID'}</span>
-                        </td>
-                        <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
-                          {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
-                        </td>
-                        <td className="px-3 py-3 text-xs font-semibold text-[#1e3a8a] whitespace-nowrap">
-                          <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 w-max shrink-0">
-                            <Clock className="w-3.5 h-3.5 text-blue-500" />
-                            {calculateTempoAberto(vaga.data_abertura, vaga.status === 'Fechada' ? vaga.data_fechamento : undefined)}
-                          </div>
-                        </td>
-                        <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
-                          {activeTab === 'fechadas'
-                            ? (vaga.data_fechamento ? new Date(vaga.data_fechamento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-')
-                            : (vaga.data_prazo ? new Date(vaga.data_prazo).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-')
-                          }
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center gap-2 max-w-[200px] truncate">
-                            <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
-                            {vaga.sigilosa && (
-                              <span className="text-[8px] shrink-0 bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
-                          {vaga.atuacao?.name || '-'}
-                        </td>
-                        {activeTab === 'fechadas' && (
-                          <td className="px-3 py-3 text-xs font-bold text-[#1e3a8a] whitespace-nowrap">
-                            {(vaga as any).candidato_aprovado?.nome || '-'}
-                          </td>
-                        )}
-                        <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
-                          {vaga.location?.name || '-'}
-                        </td>
-                        <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
-                          <div className="max-w-[140px] truncate">
-                            {vaga.leader?.name || '-'}
-                          </div>
-                        </td>
-                        <td className="px-3 py-3 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${vaga.status === 'Aberta' ? 'bg-green-50 text-green-700 border-green-200' : vaga.status === 'Congelada' ? 'bg-amber-50 text-amber-700 border-amber-200' : vaga.status === 'Aguardando Autorização' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-                            {vaga.status}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-right whitespace-nowrap">
-                          <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={(e) => { e.stopPropagation(); handleOpenModal(vaga.id) }} className="p-1.5 text-[#1e3a8a] text-xs hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
-                            <button onClick={(e) => handleDeleteVaga(vaga.id, e)} className="p-1.5 text-red-600 text-xs hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )
-          }
-          <VagaFormModal
-            isOpen={isModalOpen}
-            onClose={handleCloseModal}
-            vagaId={selectedVagaId}
-            onSuccess={() => {
-              fetchVagas();
-              fetchCandidatos();
-            }}
-          />
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )
+            }
+          </div>
+        )
+      }
 
-          <VagaViewModal
-            isOpen={isViewModalOpen}
-            onClose={handleCloseViewModal}
-            vagaId={selectedVagaId}
-            onEdit={(id) => handleOpenModal(id)}
-          />
+      <VagaFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        vagaId={selectedVagaId}
+        onSuccess={() => {
+          fetchVagas();
+          fetchCandidatos();
+        }}
+      />
 
-          <CandidatoFormModal
-            isOpen={isCandidatoModalOpen}
-            onClose={handleCloseCandidatoModal}
-            candidatoId={selectedCandidatoId}
-            initialData={candidatoInitialData}
-            initialFile={candidatoInitialFile}
-            onSave={() => {
-              fetchVagas();
-              fetchCandidatos();
-            }}
-          />
+      <VagaViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleCloseViewModal}
+        vagaId={selectedVagaId}
+        onEdit={(id) => handleOpenModal(id)}
+      />
 
-          <VagasSelectionModal
-            isOpen={isSelectionModalOpen}
-            onClose={() => setIsSelectionModalOpen(false)}
-            onSelect={handleSelection}
-          />
-        </div>
-      )}
+      <CandidatoFormModal
+        isOpen={isCandidatoModalOpen}
+        onClose={handleCloseCandidatoModal}
+        candidatoId={selectedCandidatoId}
+        initialData={candidatoInitialData}
+        initialFile={candidatoInitialFile}
+        onSave={() => {
+          fetchVagas();
+          fetchCandidatos();
+        }}
+      />
+
+      <VagasSelectionModal
+        isOpen={isSelectionModalOpen}
+        onClose={() => setIsSelectionModalOpen(false)}
+        onSelect={handleSelection}
+      />
+    </div>
     </div>
   )
 }
