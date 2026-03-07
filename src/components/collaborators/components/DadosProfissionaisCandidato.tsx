@@ -38,7 +38,7 @@ export function DadosProfissionaisCandidato({
                         <ManagedSelect
                             label="Atuação"
                             value={formData.atuacao_id?.toString() || ''}
-                            onChange={v => setFormData({ ...formData, atuacao_id: v ? parseInt(v) : null })}
+                            onChange={v => setFormData({ ...formData, atuacao_id: v || null })}
                             tableName="atuacoes"
                             disabled={isViewMode}
                         />
