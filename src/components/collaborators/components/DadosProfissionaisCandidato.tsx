@@ -37,8 +37,8 @@ export function DadosProfissionaisCandidato({
                     <div className="relative z-[119]">
                         <ManagedSelect
                             label="Atuação"
-                            value={formData.atuacao || ''}
-                            onChange={v => setFormData({ ...formData, atuacao: v })}
+                            value={formData.atuacao_id?.toString() || ''}
+                            onChange={v => setFormData({ ...formData, atuacao_id: v ? parseInt(v) : null })}
                             tableName="atuacoes"
                             disabled={isViewMode}
                         />
@@ -65,6 +65,6 @@ export function DadosProfissionaisCandidato({
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     )
 }

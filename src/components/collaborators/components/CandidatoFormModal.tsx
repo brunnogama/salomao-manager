@@ -389,7 +389,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
             // Allowed fields based on the actual Candidato schema via OpenAPI
             const allowedFields = [
-                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'resumo_cv', 'role', 'local', 'area', 'atuacao', 'contract_type',
+                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'resumo_cv', 'role', 'local', 'area', 'atuacao_id', 'contract_type',
                 'gender', 'rg', 'cpf', 'birthday', 'civil_status', 'email_pessoal', 'linkedin_url',
                 'has_children', 'children_count', 'children_data', 'atividades_academicas', 'idiomas',
                 'zip_code', 'address', 'address_number', 'address_complement', 'neighborhood', 'city', 'state',
