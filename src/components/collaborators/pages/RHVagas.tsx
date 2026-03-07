@@ -22,6 +22,7 @@ import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 import { VagaFormModal } from '../components/VagaFormModal'
 import { VagaViewModal } from '../components/VagaViewModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
+import { CandidatoViewModal } from '../components/CandidatoViewModal'
 import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelectionModal'
 import { formatDateToDisplay } from '../utils/colaboradoresUtils'
 
@@ -51,6 +52,7 @@ export function RHVagas() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false)
   const [isCandidatoModalOpen, setIsCandidatoModalOpen] = useState(false)
+  const [isCandidatoViewModalOpen, setIsCandidatoViewModalOpen] = useState(false)
   const [selectedVagaId, setSelectedVagaId] = useState<string | null>(null)
   const [selectedCandidatoId, setSelectedCandidatoId] = useState<string | null>(null)
 
@@ -315,6 +317,16 @@ export function RHVagas() {
   const handleOpenCandidatoModal = (id: string) => {
     setSelectedCandidatoId(id)
     setIsCandidatoModalOpen(true)
+  }
+
+  const handleOpenCandidatoViewModal = (id: string) => {
+    setSelectedCandidatoId(id)
+    setIsCandidatoViewModalOpen(true)
+  }
+
+  const handleCloseCandidatoViewModal = () => {
+    setIsCandidatoViewModalOpen(false)
+    setSelectedCandidatoId(null)
   }
 
   const handleCloseModal = () => {
@@ -779,7 +791,7 @@ export function RHVagas() {
                           displayScore >= 50 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-rose-400 to-rose-500';
 
                         return (
-                          <div key={m.candidato.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between cursor-pointer group/card" onClick={() => handleOpenCandidatoModal(m.candidato.id)}>
+                          <div key={m.candidato.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between cursor-pointer group/card" onClick={() => handleOpenCandidatoViewModal(m.candidato.id)}>
                             <div className="flex items-start gap-4">
                               {/* Avatar Block */}
                               <div className="flex-shrink-0 h-14 w-14 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-white shadow flex items-center justify-center">
@@ -896,7 +908,7 @@ export function RHVagas() {
 
                   {selectedMatchCandidatoId && (
                     <>
-                      <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl border border-emerald-100 flex items-center justify-between gap-4 cursor-pointer hover:bg-emerald-100/50 transition-colors mt-6" onClick={() => handleOpenCandidatoModal(selectedMatchCandidatoId!)}>
+                      <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl border border-emerald-100 flex items-center justify-between gap-4 cursor-pointer hover:bg-emerald-100/50 transition-colors mt-6" onClick={() => handleOpenCandidatoViewModal(selectedMatchCandidatoId!)}>
                         <div className="flex items-center gap-4">
                           <div className="flex-shrink-0 h-14 w-14 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-200 border-2 border-white shadow flex items-center justify-center">
                             <span className="text-xl font-black text-emerald-700">{activeMatchCandidato?.nome?.charAt(0)}</span>
@@ -1079,7 +1091,7 @@ export function RHVagas() {
                         const localName = locationOptions.find(l => String(l.value) === String(c.local))?.label || c.local || '-';
 
                         return (
-                          <tr key={c.id} onClick={() => handleOpenCandidatoModal(c.id)} className={`hover:bg-blue-50/50 cursor-pointer transition-colors group ${activeTab === 'reprovados' ? 'bg-red-50/30' : ''}`}>
+                          <tr key={c.id} onClick={() => handleOpenCandidatoViewModal(c.id)} className={`hover:bg-blue-50/50 cursor-pointer transition-colors group ${activeTab === 'reprovados' ? 'bg-red-50/30' : ''}`}>
                             <td className="px-5 py-4 whitespace-nowrap text-left">
                               <span className="inline-flex items-center justify-center px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px] font-black tracking-widest uppercase">{c.candidato_id_text || 'Sem ID'}</span>
                             </td>
@@ -1247,6 +1259,15 @@ export function RHVagas() {
           fetchVagas();
           fetchCandidatos();
         }}
+      />
+
+      <CandidatoViewModal
+        isOpen={isCandidatoViewModalOpen}
+        onClose={handleCloseCandidatoViewModal}
+        candidatoId={selectedCandidatoId}
+        onEdit={(id) => handleOpenCandidatoModal(id)}
+        roleOptions={roleOptions}
+        locationOptions={locationOptions}
       />
 
       <VagasSelectionModal
