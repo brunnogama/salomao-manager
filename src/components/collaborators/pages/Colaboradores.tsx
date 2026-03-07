@@ -139,6 +139,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
       setAdvFilterRole(location.state.roleFilter)
       setActiveMainTab('Colaboradores')
     }
+    if (location.state?.cadastrarCandidato) {
+      setFormData(location.state.cadastrarCandidato);
+      setShowFormModal(true);
+      setActiveMainTab('Colaboradores');
+      // Clear the state so it doesn't reopen on refresh
+      window.history.replaceState({}, document.title)
+    }
   }, [location.state])
 
   const handleClearAdvancedFilters = () => {

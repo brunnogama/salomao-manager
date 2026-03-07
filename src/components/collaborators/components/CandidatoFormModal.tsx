@@ -67,6 +67,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const [showReprovadoModal, setShowReprovadoModal] = useState(false)
     const [tempReprovadoMotivo, setTempReprovadoMotivo] = useState('')
 
+    // Aprovado Confirm State
+    const [showAprovadoConfirm, setShowAprovadoConfirm] = useState(false)
+    const [savedCandidatoData, setSavedCandidatoData] = useState<any>(null)
+
     // GED State
     const [gedCategories] = useState([
         { id: 'Currículo', name: 'Currículo' },
@@ -498,28 +502,39 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
             onSave()
             if (formData.status_selecao === 'Aprovado') {
-                if (window.confirm("Candidato salvo como Aprovado!\nDeseja ir para a tela de pré-cadastro de Colaborador agora?")) {
-                    navigate('/rh/colaboradores', {
-                        state: {
-                            cadastrarCandidato: {
-                                ...formData,
-                                name: formData.nome,
-                                hire_date: new Date().toISOString().split('T')[0],
-                                candidato_id: finalCandidatoId,
-                                status_selecao: undefined,
-                                motivo_reprovacao: undefined
-                            }
-                        }
-                    });
-                }
+                setSavedCandidatoData({
+                    ...formData,
+                    name: formData.nome || formData.name,
+                    hire_date: new Date().toISOString().split('T')[0],
+                    candidato_id: finalCandidatoId,
+                    status_selecao: undefined,
+                    motivo_reprovacao: undefined
+                });
+                setShowAprovadoConfirm(true);
+            } else {
+                onClose()
             }
-            onClose()
         } catch (error) {
             console.error('Error saving:', error)
         } finally {
             setLoading(false)
         }
     }
+
+    const handleConfirmAprovadoRedirect = () => {
+        setShowAprovadoConfirm(false);
+        navigate('/rh/colaboradores', {
+            state: {
+                cadastrarCandidato: savedCandidatoData
+            }
+        });
+        onClose();
+    };
+
+    const handleCancelAprovadoRedirect = () => {
+        setShowAprovadoConfirm(false);
+        onClose();
+    };
 
 
 
@@ -976,6 +991,38 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                                 className="px-6 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-md hover:bg-[#1e3a8a]/90 transition-all active:scale-95"
                             >
                                 Confirmar Reprovação
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Aprovado Confirmação Modal */}
+            {showAprovadoConfirm && (
+                <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-8 text-center space-y-4">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 scale-110">
+                                <Sparkles className="w-8 h-8 text-emerald-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900">
+                                Candidato Aprovado!
+                            </h3>
+                            <p className="text-sm text-gray-500 font-medium pb-2">
+                                Deseja ir para a tela de pré-cadastro de <span className="text-[#1e3a8a] font-bold">Colaborador</span> agora?
+                            </p>
+                        </div>
+                        <div className="px-6 py-5 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
+                            <button
+                                onClick={handleCancelAprovadoRedirect}
+                                className="flex-1 px-4 py-2.5 rounded-xl font-bold text-sm text-gray-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all border-gray-300"
+                            >
+                                Depois
+                            </button>
+                            <button
+                                onClick={handleConfirmAprovadoRedirect}
+                                className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:shadow-xl font-bold text-sm hover:bg-emerald-700 transition-all shadow-emerald-600/20 active:scale-95 hover:-translate-y-0.5"
+                            >
+                                Sim, ir agora
                             </button>
                         </div>
                     </div>
