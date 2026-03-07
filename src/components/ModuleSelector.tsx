@@ -284,15 +284,34 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
           {/* What's New Button */}
           {hasNewUpdate && (
-            <button
-              onClick={handleOpenUpdateModal}
-              className="p-2.5 text-amber-300 hover:text-amber-200 transition-all rounded-full hover:bg-white/10 active:scale-95 animate-pulse hover:animate-none flex items-center justify-center relative"
-              title="Novidades do Sistema"
-            >
-              <Sparkles className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span>
-            </button>
+            <div className="relative group/novidades flex items-center">
+              {/* Tooltip Animado */}
+              <div className="absolute top-14 right-0 w-max max-w-[200px] z-50 animate-in fade-in slide-in-from-top-2 duration-500 ease-out">
+                {/* Arrow up */}
+                <div className="absolute -top-2 right-4 w-4 h-4 bg-amber-50 border-t border-l border-amber-200/50 transform rotate-45 rounded-tl-sm"></div>
+                {/* Content */}
+                <div className="bg-amber-50 border border-amber-200/50 shadow-xl shadow-amber-900/10 rounded-xl p-3 relative flex items-start gap-3">
+                  <div className="p-1.5 bg-amber-100/80 rounded-lg text-amber-600 shrink-0">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-800 mb-0.5">Novidades!</span>
+                    <span className="text-xs font-bold text-amber-900/70 leading-tight">Veja o que acabou de mudar no sistema.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Icon Button */}
+              <button
+                onClick={handleOpenUpdateModal}
+                className="p-2.5 text-amber-300 hover:text-amber-200 transition-all rounded-full hover:bg-white/10 active:scale-95 animate-pulse hover:animate-none flex items-center justify-center relative"
+                title="Novidades do Sistema"
+              >
+                <Sparkles className="h-5 w-5" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span>
+              </button>
+            </div>
           )}
 
           {isAdmin && (

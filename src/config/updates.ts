@@ -9,6 +9,22 @@ export interface AppUpdate {
 
 export const APP_UPDATES: AppUpdate[] = [
     {
+        version: '1.4.0',
+        date: '07/03/2026',
+        title: 'Inteligência Artificial Recrutadora e UX de Vagas',
+        description: 'Trouxemos grandes aprimoramentos focados na automação do módulo de Recrutamento (ATS) e melhorias na experiência de uso geral.',
+        features: [
+            'IA Leitora de Currículos Aprimorada: Agora a IA é capaz de varrer números de telefone em formatos variados e deduzir o gênero do candidato (Masculino/Feminino) automaticamente pelo currículo!',
+            'Indicador Visual de Preenchimento Automático (IA): O campo Gênero também recebeu o efeito de "brilho roxo" para mostrar que a IA preencheu o dado para você.',
+            'Padronização Visual nas Abas de Vagas: As Visualizações de "Vagas Abertas" e "Vagas Fechadas" ganharam as tags de perfil abaixo do Cargo, se igualando ao grid de Talentos.'
+        ],
+        fixes: [
+            'O salvamento de Telefones dos candidatos recém-ingestados pela IA voltou a funcionar corretamente.',
+            'Solucionamos o travamento do "Scroll Vertical" em todas as telas de Recursos Humanos e Recrutamento. A rolagem nativa agora funciona sem "engolir" a tabela.',
+            'O Tooltip de Novidades foi implementado na barra lateral para garantir que você não perca nenhuma atualização do sistema!'
+        ]
+    },
+    {
         version: '1.3.0',
         date: '02/03/2026',
         title: 'Melhorias de Interface no Link Mágico e Cadastro de Colaboradores',
