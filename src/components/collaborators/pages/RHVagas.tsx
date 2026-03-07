@@ -418,6 +418,10 @@ export function RHVagas() {
     const matchArea = filterArea ? String(v.area) === filterArea : true
 
     return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchArea
+  }).sort((a, b) => {
+    const nameA = a.role?.name || ''
+    const nameB = b.role?.name || ''
+    return nameA.localeCompare(nameB)
   })
 
   const filteredCandidatos = candidatos.filter(c => {
@@ -431,6 +435,10 @@ export function RHVagas() {
     const matchArea = filterArea ? String(c.area) === filterArea : true
 
     return matchSearch && matchLocal && matchCargo && matchArea
+  }).sort((a, b) => {
+    const nameA = a.nome || ''
+    const nameB = b.nome || ''
+    return nameA.localeCompare(nameB)
   })
 
   const getFeriados = (year: number): Date[] => {
@@ -578,10 +586,10 @@ export function RHVagas() {
         <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto justify-end mt-2 md:mt-0 custom-scrollbar">
           <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
             <button
-              onClick={() => setActiveTab('reprovados')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'reprovados' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-red-700'}`}
+              onClick={() => setActiveTab('abertas')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'abertas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <UserX className="h-4 w-4" /> Reprovados
+              <Briefcase className="h-4 w-4" /> Vagas Abertas
             </button>
             <button
               onClick={() => setActiveTab('talentos')}
@@ -590,16 +598,16 @@ export function RHVagas() {
               <Users className="h-4 w-4" /> Talentos
             </button>
             <button
-              onClick={() => setActiveTab('abertas')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'abertas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <Briefcase className="h-4 w-4" /> Vagas Abertas
-            </button>
-            <button
               onClick={() => setActiveTab('fechadas')}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'fechadas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <CheckCircle2 className="h-4 w-4" /> Vagas Fechadas
+            </button>
+            <button
+              onClick={() => setActiveTab('reprovados')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'reprovados' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-red-700'}`}
+            >
+              <UserX className="h-4 w-4" /> Reprovados
             </button>
           </div>
 

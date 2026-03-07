@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useCloseOnEscape } from '../../../hooks/useCloseOnEscape'
 import { supabase } from '../../../lib/supabase'
@@ -663,19 +664,30 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                                 <ChevronDown className={`w-4 h-4 transition-transform ${isStatusMenuOpen ? 'rotate-180' : ''}`} />
                             </button>
 
-                            {isStatusMenuOpen && (
-                                <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50 relative">
+                            {isStatusMenuOpen && statusMenuRef.current && createPortal(
+                                <div
+                                    className="fixed bg-white rounded-xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[9999]"
+                                    style={{
+                                        width: statusMenuRef.current.offsetWidth,
+                                        top: statusMenuRef.current.getBoundingClientRect().bottom + 8,
+                                        left: statusMenuRef.current.getBoundingClientRect().left
+                                    }}
+                                >
                                     {['Aberto', 'Aprovado', 'Reprovado', 'Reaproveitamento'].map(status => (
                                         <button
                                             key={status}
                                             type="button"
-                                            onClick={() => handleStatusSelecaoChange(status)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleStatusSelecaoChange(status);
+                                            }}
                                             className="w-full text-left px-5 py-3 text-xs font-bold text-[#0a192f] hover:bg-blue-50 hover:text-[#1e3a8a] transition-colors border-b border-gray-50 last:border-0"
                                         >
                                             {status}
                                         </button>
                                     ))}
-                                </div>
+                                </div>,
+                                document.body
                             )}
                         </div>
                         <button
