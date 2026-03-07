@@ -1278,10 +1278,24 @@ export function RHVagas() {
                             }
                           </td>
                           <td className="px-3 py-3">
-                            <div className="flex items-center gap-2 max-w-[200px] truncate">
-                              <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
-                              {vaga.sigilosa && (
-                                <span className="text-[8px] shrink-0 bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
+                            <div className="flex flex-col gap-1.5 max-w-[250px]">
+                              <div className="flex items-center gap-2 truncate">
+                                <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
+                                {vaga.sigilosa && (
+                                  <span className="text-[8px] shrink-0 bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
+                                )}
+                              </div>
+                              {vaga.perfil && (
+                                <div className="flex flex-wrap gap-1">
+                                  {vaga.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
+                                    <span key={i} className="px-1.5 py-0.5 bg-green-50/50 text-green-700 border border-green-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                      {tag.trim()}
+                                    </span>
+                                  ))}
+                                  {vaga.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
+                                    <span className="text-[8px] font-bold text-green-500 ml-0.5">...</span>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </td>
