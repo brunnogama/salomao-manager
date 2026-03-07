@@ -115,6 +115,7 @@ export interface Collaborator {
     semestre?: string;
     previsao_conclusao?: string;
     ano_conclusao?: string;
+    cr?: string;
   }[];
 
   // Novos Campos (Solicitados)

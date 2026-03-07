@@ -72,7 +72,8 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
             instituicao: '',
             instituicao_uf: '', // Novo campo adicionado localmente para o formulário
             curso: '',
-            subnivel: nivel === 'Pós-Graduação' ? 'Especialização' : undefined
+            subnivel: nivel === 'Pós-Graduação' ? 'Especialização' : undefined,
+            cr: ''
         }
         const currentData = formData.education_history || []
         setFormData({ ...formData, education_history: [...currentData, newEntry] })
@@ -270,6 +271,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                             {item.semestre && <span className="flex items-center gap-1"><span className="text-gray-400">{['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? 'Série:' : 'Período:'}</span> <span className="text-[#1e3a8a]">{item.semestre}</span></span>}
                                             {item.previsao_conclusao && <span className="flex items-center gap-1"><span className="text-gray-400">Previsão:</span> <span className="text-amber-600">{formatDisplayDate(item.previsao_conclusao)}</span></span>}
                                             {item.ano_conclusao && <span className="flex items-center gap-1"><span className="text-gray-400">Conclusão:</span> <span className="text-emerald-600">{item.ano_conclusao}</span></span>}
+                                            {item.cr && <span className="flex items-center gap-1"><span className="text-gray-400">CR:</span> <span className="text-[#1e3a8a]">{item.cr}</span></span>}
                                         </div>
                                     </div>
                                     {!isViewMode && (
@@ -457,7 +459,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
 
                             {/* Fields varying by status */}
                             {item.status === 'Cursando' ? (
-                                <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className={`col-span-1 md:col-span-2 grid grid-cols-1 ${nivel === 'Graduação' ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Matrícula</label>
                                         <input
@@ -480,29 +482,103 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Previsão de Conclusão</label>
+                                        {nivel === 'Graduação' ? (
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={(item.previsao_conclusao || '').split('/')[0] || ''}
+                                                    onChange={(e) => {
+                                                        const currentParts = (item.previsao_conclusao || '/').split('/');
+                                                        const sem = e.target.value;
+                                                        const ano = currentParts.length > 1 ? currentParts[1] : '';
+                                                        updateEducation(item.id, 'previsao_conclusao', `${sem}${sem || ano ? '/' : ''}${ano}`);
+                                                    }}
+                                                    className={`w-1/3 px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                    placeholder="1º"
+                                                    disabled={isViewMode}
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={(item.previsao_conclusao || '').includes('/') ? (item.previsao_conclusao || '').split('/')[1] : ''}
+                                                    onChange={(e) => {
+                                                        const currentParts = (item.previsao_conclusao || '/').split('/');
+                                                        const sem = currentParts[0] || '';
+                                                        const ano = e.target.value.replace(/\D/g, '').slice(0, 4);
+                                                        updateEducation(item.id, 'previsao_conclusao', `${sem}${sem || ano ? '/' : ''}${ano}`);
+                                                    }}
+                                                    maxLength={4}
+                                                    className={`w-2/3 px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                    placeholder="2028"
+                                                    disabled={isViewMode}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={item.previsao_conclusao ? formatDisplayDate(item.previsao_conclusao) : ''}
+                                                onChange={(e) => updateEducation(item.id, 'previsao_conclusao', maskDate(e.target.value))}
+                                                maxLength={10}
+                                                className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                placeholder="DD/MM/AAAA"
+                                                disabled={isViewMode}
+                                            />
+                                        )}
+                                    </div>
+                                    {nivel === 'Graduação' && (
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">CR</label>
+                                            <input
+                                                type="text"
+                                                value={item.cr || ''}
+                                                onChange={(e) => {
+                                                    let val = e.target.value.replace(/\D/g, '');
+                                                    if (val.length > 4) val = val.slice(0, 4);
+                                                    if (val.length > 2) {
+                                                        val = val.slice(0, 2) + '.' + val.slice(2);
+                                                    }
+                                                    updateEducation(item.id, 'cr', val);
+                                                }}
+                                                className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                placeholder="00.00"
+                                                disabled={isViewMode}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className={`col-span-1 md:col-span-2 grid grid-cols-1 ${nivel === 'Graduação' ? 'md:grid-cols-2' : ''} gap-4`}>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ano de Conclusão</label>
                                         <input
                                             type="text"
-                                            value={item.previsao_conclusao ? formatDisplayDate(item.previsao_conclusao) : ''}
-                                            onChange={(e) => updateEducation(item.id, 'previsao_conclusao', maskDate(e.target.value))}
-                                            maxLength={10}
+                                            value={item.ano_conclusao || ''}
+                                            onChange={(e) => updateEducation(item.id, 'ano_conclusao', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                            maxLength={4}
                                             className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                            placeholder="DD/MM/AAAA"
+                                            placeholder="AAAA"
                                             disabled={isViewMode}
                                         />
                                     </div>
-                                </div>
-                            ) : (
-                                <div className="space-y-1.5 col-span-1 md:col-span-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ano de Conclusão</label>
-                                    <input
-                                        type="text"
-                                        value={item.ano_conclusao || ''}
-                                        onChange={(e) => updateEducation(item.id, 'ano_conclusao', e.target.value.replace(/\D/g, '').slice(0, 4))}
-                                        maxLength={4}
-                                        className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                        placeholder="AAAA"
-                                        disabled={isViewMode}
-                                    />
+                                    {nivel === 'Graduação' && (
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">CR</label>
+                                            <input
+                                                type="text"
+                                                value={item.cr || ''}
+                                                onChange={(e) => {
+                                                    let val = e.target.value.replace(/\D/g, '');
+                                                    if (val.length > 4) val = val.slice(0, 4);
+                                                    if (val.length > 2) {
+                                                        val = val.slice(0, 2) + '.' + val.slice(2);
+                                                    }
+                                                    updateEducation(item.id, 'cr', val);
+                                                }}
+                                                className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                placeholder="00.00"
+                                                disabled={isViewMode}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
