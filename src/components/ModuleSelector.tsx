@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay, Sparkles } from 'lucide-react'
+import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay, Sparkles, Gift } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { logAction } from '../lib/logger'
 import { APP_UPDATES } from '../config/updates'
@@ -239,10 +239,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
     )
   }
 
-  const handleOpenUpdateModal = () => {
-    localStorage.setItem('last_seen_update', latestUpdateVersion);
-    setShowUpdateModal(true);
-  }
 
   return (
     <div className="h-screen w-screen bg-[#0a192f] flex flex-col relative overflow-hidden">
