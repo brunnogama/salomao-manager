@@ -507,6 +507,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     name: formData.nome || formData.name,
                     hire_date: new Date().toISOString().split('T')[0],
                     candidato_id: finalCandidatoId,
+                    status: 'Pré-Cadastro',
                     status_selecao: undefined,
                     motivo_reprovacao: undefined
                 });
