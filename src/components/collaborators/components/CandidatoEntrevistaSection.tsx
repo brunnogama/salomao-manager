@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Printer } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Printer, ChevronDown } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
 import { supabase } from '../../../lib/supabase'
@@ -15,6 +15,25 @@ export function CandidatoEntrevistaSection({
     setFormData,
     isViewMode = false
 }: CandidatoEntrevistaSectionProps) {
+    const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false)
+    const statusMenuRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (statusMenuRef.current && !statusMenuRef.current.contains(event.target as Node)) {
+                setIsStatusMenuOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const handleStatusSelecaoChange = (value: string) => {
+        setIsStatusMenuOpen(false);
+        setFormData({ ...formData, status_selecao: value })
+        // Note: The reproved popup logic remains in the parent modal, 
+        // we just update the status here. The parent will detect it.
+    };
     const [vagasAbertas, setVagasAbertas] = useState<any[]>([])
 
     useEffect(() => {
@@ -359,6 +378,44 @@ export function CandidatoEntrevistaSection({
                                 { id: 'Não recomendado', name: 'Não recomendado' }
                             ]}
                         />
+
+                        {/* Status Select */}
+                        <div className="space-y-1.5" ref={statusMenuRef}>
+                            <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Status do Candidato</label>
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+                                    className={`flex items-center justify-between w-full text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl border transition-all ${formData.status_selecao === 'Aprovado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
+                                        formData.status_selecao === 'Reprovado' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
+                                            formData.status_selecao === 'Reaproveitamento' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
+                                                'bg-blue-50 text-[#1e3a8a] border-blue-200 hover:bg-blue-100'
+                                        }`}
+                                    disabled={isViewMode}
+                                >
+                                    <span>{formData.status_selecao || 'Aberto'}</span>
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${isStatusMenuOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {isStatusMenuOpen && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[60]">
+                                        {['Aberto', 'Aprovado', 'Reprovado', 'Reaproveitamento'].map(status => (
+                                            <button
+                                                key={status}
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusSelecaoChange(status);
+                                                }}
+                                                className="w-full text-left px-5 py-3 text-xs font-bold text-[#0a192f] hover:bg-blue-50 hover:text-[#1e3a8a] transition-colors border-b border-gray-50 last:border-0"
+                                            >
+                                                {status}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 

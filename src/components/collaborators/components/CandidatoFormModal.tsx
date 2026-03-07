@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useCloseOnEscape } from '../../../hooks/useCloseOnEscape'
 import { supabase } from '../../../lib/supabase'
@@ -9,7 +8,7 @@ import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
 import { DadosEscolaridadeSection } from './DadosEscolaridadeSection'
 import { CandidatoExperienciasSection } from './CandidatoExperienciasSection'
-import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, ChevronDown, Edit2 } from 'lucide-react'
+import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, Edit2 } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
 import { EnderecoSection } from './EnderecoSection'
@@ -65,21 +64,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const [tagInputValue, setTagInputValue] = useState('')
     const [availableTags, setAvailableTags] = useState<string[]>([])
 
-    const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false)
-    const statusMenuRef = React.useRef<HTMLDivElement>(null)
-
     const [showReprovadoModal, setShowReprovadoModal] = useState(false)
     const [tempReprovadoMotivo, setTempReprovadoMotivo] = useState('')
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (statusMenuRef.current && !statusMenuRef.current.contains(event.target as Node)) {
-                setIsStatusMenuOpen(false)
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
 
     // GED State
     const [gedCategories] = useState([
@@ -589,16 +575,6 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         { id: 7, label: 'GED', icon: Files },
     ]
 
-    const handleStatusSelecaoChange = (value: string) => {
-        setIsStatusMenuOpen(false);
-        if (value === 'Reprovado' && !formData.motivo_reprovacao) {
-            setTempReprovadoMotivo('');
-            setShowReprovadoModal(true);
-        } else {
-            setFormData(prev => ({ ...prev, status_selecao: value }));
-        }
-    };
-
     const handleConfirmReprovado = () => {
         if (!tempReprovadoMotivo.trim()) {
             showAlert('Atenção', 'Por favor, informe o motivo da reprovação.', 'warning');
@@ -650,46 +626,6 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     </div>
                 ) : (
                     <div className="flex items-center gap-4">
-                        <div className="flex flex-col sm:w-[220px] relative" ref={statusMenuRef}>
-                            <button
-                                type="button"
-                                onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
-                                className={`flex items-center justify-between w-full text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl border transition-all ${formData.status_selecao === 'Aprovado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
-                                    formData.status_selecao === 'Reprovado' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
-                                        formData.status_selecao === 'Reaproveitamento' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
-                                            'bg-blue-50 text-[#1e3a8a] border-blue-200 hover:bg-blue-100'
-                                    }`}
-                            >
-                                <span>{formData.status_selecao || 'Aberto'}</span>
-                                <ChevronDown className={`w-4 h-4 transition-transform ${isStatusMenuOpen ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {isStatusMenuOpen && statusMenuRef.current && createPortal(
-                                <div
-                                    className="fixed bg-white rounded-xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[9999]"
-                                    style={{
-                                        width: statusMenuRef.current.offsetWidth,
-                                        top: statusMenuRef.current.getBoundingClientRect().bottom + 8,
-                                        left: statusMenuRef.current.getBoundingClientRect().left
-                                    }}
-                                >
-                                    {['Aberto', 'Aprovado', 'Reprovado', 'Reaproveitamento'].map(status => (
-                                        <button
-                                            key={status}
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleStatusSelecaoChange(status);
-                                            }}
-                                            className="w-full text-left px-5 py-3 text-xs font-bold text-[#0a192f] hover:bg-blue-50 hover:text-[#1e3a8a] transition-colors border-b border-gray-50 last:border-0"
-                                        >
-                                            {status}
-                                        </button>
-                                    ))}
-                                </div>,
-                                document.body
-                            )}
-                        </div>
                         <button
                             onClick={handleSave}
                             disabled={loading}
