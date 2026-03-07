@@ -67,6 +67,9 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false)
     const statusMenuRef = React.useRef<HTMLDivElement>(null)
 
+    const [showReprovadoModal, setShowReprovadoModal] = useState(false)
+    const [tempReprovadoMotivo, setTempReprovadoMotivo] = useState('')
+
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (statusMenuRef.current && !statusMenuRef.current.contains(event.target as Node)) {
@@ -584,18 +587,28 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     ]
 
     const handleStatusSelecaoChange = (value: string) => {
-        setFormData(prev => ({ ...prev, status_selecao: value }));
         setIsStatusMenuOpen(false);
         if (value === 'Reprovado' && !formData.motivo_reprovacao) {
-            // Se precisar abrir modal de motivo específico, podemos definir alertConfig ou similar
-            // Porém usando o proprio alert pra facilitar a UI
-            let motivo = window.prompt("Por favor, digite o motivo da reprovação:");
-            if (motivo) {
-                setFormData(prev => ({ ...prev, motivo_reprovacao: motivo, status_selecao: 'Reprovado' }));
-            } else {
-                setFormData(prev => ({ ...prev, status_selecao: 'Aberto' }));
-            }
+            setTempReprovadoMotivo('');
+            setShowReprovadoModal(true);
+        } else {
+            setFormData(prev => ({ ...prev, status_selecao: value }));
         }
+    };
+
+    const handleConfirmReprovado = () => {
+        if (!tempReprovadoMotivo.trim()) {
+            showAlert('Atenção', 'Por favor, informe o motivo da reprovação.', 'warning');
+            return;
+        }
+        setFormData(prev => ({ ...prev, motivo_reprovacao: tempReprovadoMotivo, status_selecao: 'Reprovado' }));
+        setShowReprovadoModal(false);
+    };
+
+    const handleCancelReprovado = () => {
+        // Revert to Aberto if cancelling
+        setFormData(prev => ({ ...prev, status_selecao: 'Aberto' }));
+        setShowReprovadoModal(false);
     };
 
     if (!isOpen) return null
@@ -960,6 +973,52 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                                     Descartar
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Reprovação */}
+            {showReprovadoModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#0a192f]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100 flex flex-col">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                            <h3 className="font-bold text-[#0a192f]">Motivo da Reprovação</h3>
+                            <button
+                                type="button"
+                                onClick={handleCancelReprovado}
+                                className="p-2 -mr-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">
+                                Por favor, digite o motivo da reprovação:
+                            </label>
+                            <textarea
+                                autoFocus
+                                value={tempReprovadoMotivo}
+                                onChange={(e) => setTempReprovadoMotivo(e.target.value)}
+                                className="w-full bg-gray-50 border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none min-h-[120px] resize-y"
+                                placeholder="Motivo pelo qual o candidato foi reprovado..."
+                            />
+                        </div>
+                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={handleCancelReprovado}
+                                className="px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmReprovado}
+                                className="px-6 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-md hover:bg-[#1e3a8a]/90 transition-all active:scale-95"
+                            >
+                                Confirmar Reprovação
+                            </button>
                         </div>
                     </div>
                 </div>
