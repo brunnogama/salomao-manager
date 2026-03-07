@@ -554,12 +554,6 @@ export function RHVagas() {
           {/* TABS MOVED HERE - OUTSIDE TERNARY */}
           <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
             <button
-              onClick={() => setActiveTab('ats')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'ats' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <Sparkles className="h-4 w-4" /> Match Inteligente (ATS)
-            </button>
-            <button
               onClick={() => setActiveTab('abertas')}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'abertas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
@@ -585,7 +579,18 @@ export function RHVagas() {
             </button>
           </div>
 
-          <div className="flex items-center gap-4 border-l border-gray-100 pl-4 ml-2">
+          <div className="flex items-center gap-3 border-l border-gray-100 pl-4 ml-2">
+            <button
+              onClick={() => setActiveTab('ats')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap shadow-sm
+                ${activeTab === 'ats'
+                  ? 'bg-gradient-to-r from-blue-600 to-[#1e3a8a] text-white shadow-blue-500/30'
+                  : 'bg-white text-[#1e3a8a] border border-[#1e3a8a]/20 hover:bg-blue-50'}
+              `}
+              title="Match Inteligente (ATS)"
+            >
+              <Sparkles className="h-4 w-4" /> Match Inteligente (ATS)
+            </button>
             <button
               onClick={handleOpenSelectionModal}
               className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
