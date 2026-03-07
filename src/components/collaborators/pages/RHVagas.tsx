@@ -739,7 +739,7 @@ export function RHVagas() {
                     setSelectedMatchVagaId(null)
                     setSelectedMatchCandidatoId(null)
                   }}
-                  className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${atsMatchArea === 'Administrativa' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+                  className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${atsMatchArea === 'Administrativa' ? 'bg-orange-500 text-white shadow-md' : 'text-gray-500 hover:text-orange-500 hover:bg-orange-50'}`}
                   title="Filtrar por Administrativa"
                 >
                   <Building2 className="h-3.5 w-3.5" /> Admin
@@ -752,7 +752,7 @@ export function RHVagas() {
                     setSelectedMatchVagaId(null)
                     setSelectedMatchCandidatoId(null)
                   }}
-                  className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${atsMatchArea === 'Jurídica' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-[#1e3a8a] hover:bg-blue-50'}`}
+                  className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${atsMatchArea === 'Jurídica' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
                   title="Filtrar por Jurídica"
                 >
                   <Briefcase className="h-3.5 w-3.5" /> Jurídico
