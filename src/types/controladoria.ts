@@ -91,6 +91,11 @@ export interface Collaborator {
   pis_pasep?: string;
   dispensa_militar?: string;
 
+  // Benefícios / Estágio
+  bolsa_valor?: string;
+  vr_valor?: string;
+  previsao_formatura?: string;
+
   // Notificações de RH
   mochila_entregue?: boolean;
   ultimo_aniversario_parabenizado?: number;

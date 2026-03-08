@@ -51,6 +51,10 @@ export function DadosCorporativosSection({
     return roleName.toLowerCase().includes('sócio') || roleName.toLowerCase().includes('socio')
   }, [roleName])
 
+  const isEstagiario = useMemo(() => {
+    return roleName.toLowerCase().includes('estagiário') || roleName.toLowerCase().includes('estagiario') || formData.contract_type?.toUpperCase() === 'ESTAGIÁRIO'
+  }, [roleName, formData.contract_type])
+
   // Calculate duration if dates are available
   const duration = useMemo(() => {
     if (!formData.hire_date || !formData.termination_date) return null
@@ -357,6 +361,79 @@ export function DadosCorporativosSection({
                 </div>
               </div>
             </div>
+
+            {isEstagiario && (
+              <div className="bg-emerald-50/30 p-6 rounded-xl border border-emerald-100/50 mt-6 space-y-6">
+                <h4 className="text-[10px] font-black text-emerald-800 uppercase tracking-widest flex items-center gap-2 border-b border-emerald-100 pb-2">
+                  <Briefcase className="h-4 w-4" /> Informações do Estágio
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Previsão de Formatura</label>
+                    <input
+                      className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      value={formData.previsao_formatura || ''}
+                      onChange={e => {
+                        let val = e.target.value.replace(/\D/g, '');
+                        if (val.length > 6) val = val.slice(0, 6);
+                        if (val.length > 2) val = val.slice(0, 2) + '/' + val.slice(2);
+                        setFormData({ ...formData, previsao_formatura: val });
+                      }}
+                      maxLength={7}
+                      placeholder="MM/AAAA"
+                      disabled={isViewMode}
+                      readOnly={isViewMode}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Bolsa</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">R$</span>
+                      <input
+                        className={`w-full pl-9 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        value={formData.bolsa_valor || ''}
+                        onChange={e => {
+                          let val = e.target.value.replace(/\D/g, '');
+                          if (!val) {
+                            setFormData({ ...formData, bolsa_valor: '' });
+                            return;
+                          }
+                          const num = Number(val) / 100;
+                          const formatted = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+                          setFormData({ ...formData, bolsa_valor: formatted });
+                        }}
+                        placeholder="0,00"
+                        disabled={isViewMode}
+                        readOnly={isViewMode}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">VR</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">R$</span>
+                      <input
+                        className={`w-full pl-9 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        value={formData.vr_valor || ''}
+                        onChange={e => {
+                          let val = e.target.value.replace(/\D/g, '');
+                          if (!val) {
+                            setFormData({ ...formData, vr_valor: '' });
+                            return;
+                          }
+                          const num = Number(val) / 100;
+                          const formatted = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+                          setFormData({ ...formData, vr_valor: formatted });
+                        }}
+                        placeholder="0,00"
+                        disabled={isViewMode}
+                        readOnly={isViewMode}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <TransporteSection
               transportes={formData.transportes || []}

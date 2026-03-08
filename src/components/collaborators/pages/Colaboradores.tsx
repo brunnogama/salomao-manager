@@ -43,7 +43,11 @@ import {
   maskPhone,
   maskCNPJ,
   formatDateToDisplay,
-  formatDateToISO
+  formatDateToISO,
+  formatMonthYearDateToDisplay,
+  formatMonthYearDateToISO,
+  formatDbMoneyToDisplay,
+  parseCurrency
 } from '../utils/colaboradoresUtils'
 // ... existing imports
 
@@ -717,6 +721,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
         hire_date: formatDateToISO(formData.hire_date) || null,
         termination_date: formatDateToISO(formData.termination_date) || null,
         escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null,
+        previsao_formatura: formatMonthYearDateToISO(formData.previsao_formatura) || null,
+        bolsa_valor: formData.bolsa_valor ? parseCurrency(formData.bolsa_valor) : null,
+        vr_valor: formData.vr_valor ? parseCurrency(formData.vr_valor) : null,
         children_data: formData.children_data?.map(c => ({
           ...c,
           birth_date: formatDateToISO(c.birth_date) || null
@@ -877,6 +884,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
         validade: formatDateToDisplay(o.validade)
       })) || [],
       escolaridade_previsao_conclusao: formatDateToDisplay(colaborador.escolaridade_previsao_conclusao),
+      previsao_formatura: formatMonthYearDateToDisplay(colaborador.previsao_formatura),
+      bolsa_valor: formatDbMoneyToDisplay(colaborador.bolsa_valor),
+      vr_valor: formatDbMoneyToDisplay(colaborador.vr_valor),
       children_data: colaborador.children_data?.map((child: any) => ({
         ...child,
         birth_date: formatDateToDisplay(child.birth_date)
@@ -1320,6 +1330,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
       termination_date: formatDateToDisplay(c.termination_date),
       oab_emissao: formatDateToDisplay(c.oab_emissao),
       escolaridade_previsao_conclusao: formatDateToDisplay(c.escolaridade_previsao_conclusao),
+      previsao_formatura: formatMonthYearDateToDisplay(c.previsao_formatura),
+      bolsa_valor: formatDbMoneyToDisplay(c.bolsa_valor),
+      vr_valor: formatDbMoneyToDisplay(c.vr_valor),
       children_data: c.children_data?.map((child: any) => ({
         ...child,
         birth_date: formatDateToDisplay(child.birth_date)
