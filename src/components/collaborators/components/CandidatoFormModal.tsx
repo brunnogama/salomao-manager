@@ -84,6 +84,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         { id: 'Portfólio', name: 'Portfólio' },
         { id: 'Certificado', name: 'Certificado' },
         { id: 'Prova', name: 'Prova' },
+        { id: 'Redação', name: 'Redação' },
+        { id: 'Entrevista', name: 'Entrevista' },
         { id: 'Outros', name: 'Outros' }
     ])
     const [selectedGedCategory, setSelectedGedCategory] = useState('')

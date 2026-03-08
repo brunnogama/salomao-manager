@@ -3,6 +3,7 @@ import { Printer, ChevronDown } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
 import { supabase } from '../../../lib/supabase'
+import { maskCurrencyInput } from '../utils/colaboradoresUtils'
 
 interface CandidatoEntrevistaSectionProps {
     formData: any
@@ -226,7 +227,7 @@ export function CandidatoEntrevistaSection({
                                     type="text"
                                     className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
                                     value={entrevista.pretensao_salarial || ''}
-                                    onChange={(e) => handleEntrevistaChange('pretensao_salarial', e.target.value)}
+                                    onChange={(e) => handleEntrevistaChange('pretensao_salarial', maskCurrencyInput(e.target.value))}
                                     placeholder="R$ 0,00"
                                     disabled={isViewMode}
                                 />
@@ -349,7 +350,7 @@ export function CandidatoEntrevistaSection({
                                     type="text"
                                     className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
                                     value={entrevista.pretensao_salarial || ''}
-                                    onChange={(e) => handleEntrevistaChange('pretensao_salarial', e.target.value)}
+                                    onChange={(e) => handleEntrevistaChange('pretensao_salarial', maskCurrencyInput(e.target.value))}
                                     placeholder="R$ 0,00"
                                     disabled={isViewMode}
                                 />

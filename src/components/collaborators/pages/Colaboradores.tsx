@@ -347,10 +347,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
     { id: 'CPF', name: 'CPF' },
     { id: 'Currículo', name: 'Currículo' },
     { id: 'Documento de Identificação (RG/CNH)', name: 'Documento de Identificação (RG/CNH)' },
-    { id: 'Outros', name: 'Outros' },
     { id: 'PIS/PASEP', name: 'PIS/PASEP' },
     { id: 'Prova', name: 'Prova' },
-    { id: 'Título de Eleitor', name: 'Título de Eleitor' }
+    { id: 'Redação', name: 'Redação' },
+    { id: 'Entrevista', name: 'Entrevista' },
+    { id: 'Título de Eleitor', name: 'Título de Eleitor' },
+    { id: 'Outros', name: 'Outros' }
   ]
 
   const photoInputRef = useRef<HTMLInputElement>(null)

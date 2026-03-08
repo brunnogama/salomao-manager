@@ -75,6 +75,15 @@ export const formatCurrency = (value: number | string | undefined): string => {
   return `R$ ${formatted.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 };
 
+export const maskCurrencyInput = (value: string): string => {
+  if (!value) return '';
+  const onlyDigits = value.replace(/\D/g, '');
+  if (!onlyDigits) return '';
+  const numericValue = Number(onlyDigits) / 100;
+  const formatted = numericValue.toFixed(2).replace('.', ',');
+  return `R$ ${formatted.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+};
+
 export const parseCurrency = (value: string): number => {
   if (!value) return 0;
   const numericString = value.replace(/\D/g, '');

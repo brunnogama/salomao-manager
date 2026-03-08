@@ -13,6 +13,21 @@ interface AuthContextType {
     userRole: string | null;
 }
 
+const SESSION_COOKIE_NAME = 'app_session_active';
+
+const setSessionCookie = () => {
+    // Set a session cookie (no expires/max-age means it gets deleted when browser closes)
+    document.cookie = `${SESSION_COOKIE_NAME}=true;path=/`;
+};
+
+const hasSessionCookie = () => {
+    return document.cookie.includes(`${SESSION_COOKIE_NAME}=true`);
+};
+
+const clearSessionCookie = () => {
+    document.cookie = `${SESSION_COOKIE_NAME}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -101,6 +116,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                // If there's a session but NO session cookie, it means the browser was just reopened
+                // after being closed, because session cookies don't persist across browser restarts.
+                // We must log the user out to enforce the "logout on browser close" rule.
+                if (!hasSessionCookie()) {
+                    console.log('🚪 Browser restart detected (no session cookie). Logging out automatically.');
+                    // Don't set state, just force a sign out and let the onAuthStateChange handle the rest
+                    supabase.auth.signOut().then(() => {
+                        window.location.href = '/login';
+                    });
+                    return;
+                }
+                
+                // Otherwise this is a normal reload or tab open with an active session cookie
+                setSessionCookie();
+            }
+            
             setSession(session);
             checkAuthorization(session);
         });
@@ -111,12 +143,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = supabase.auth.onAuthStateChange((event, session) => {
             console.log('🔄 Auth state changed:', event);
             setSession(session);
+            
             if (event === 'PASSWORD_RECOVERY') {
                 setIsResettingPassword(true);
             }
-            if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+            if (event === 'SIGNED_IN') {
+                setSessionCookie(); // Set cookie right when they log in
                 checkAuthorization(session);
+            } else if (event === 'INITIAL_SESSION') {
+                // Ignore here as getSession already handles the initial session check
+                // checkAuthorization is called from getSession above
             } else if (event === 'SIGNED_OUT') {
+                clearSessionCookie();
                 setIsAuthorized(false);
                 setLoading(false);
             }
@@ -153,14 +191,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 await Promise.all(registrations.map(reg => reg.unregister()));
             }
 
-            // 5. Clear all cookies
+            // 5. Clear all cookies (including our auto-logout session cookie)
             const cookies = document.cookie.split(";");
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i];
                 const eqPos = cookie.indexOf("=");
                 const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
+                // Preserve the Supabase internal auth token if it exists just in case, but clear ours
                 document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
             }
+            clearSessionCookie();
 
             // 6. Supabase SignOut
             await supabase.auth.signOut();
