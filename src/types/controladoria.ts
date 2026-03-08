@@ -110,11 +110,14 @@ export interface Collaborator {
     instituicao: string;
     instituicao_uf?: string; // Novo campo
     curso: string;
-    status: 'Cursando' | 'Formado(a)';
+    status: 'Cursando' | 'Formado(a)' | 'Trancado';
     matricula?: string;
     semestre?: string;
     previsao_conclusao?: string;
     ano_conclusao?: string;
+    periodo_trancamento?: string;
+    ano_trancamento?: string;
+    pretende_retornar?: string;
     cr?: string;
   }[];
 

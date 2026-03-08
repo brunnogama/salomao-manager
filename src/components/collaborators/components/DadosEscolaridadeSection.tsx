@@ -272,7 +272,11 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                     <div className="flex-1 pr-12">
                                         <div className="flex items-center gap-2 mb-1">
                                             <h4 className="font-bold text-[#0a192f] text-sm">{item.curso && item.curso.trim() ? item.curso : nivel}</h4>
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${item.status === 'Formado(a)' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                                item.status === 'Formado(a)' ? 'bg-emerald-100 text-emerald-700' :
+                                                item.status === 'Trancado' ? 'bg-orange-100 text-orange-700' :
+                                                'bg-blue-100 text-blue-700'
+                                            }`}>
                                                 {item.status}
                                             </span>
                                             {item.subnivel && <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700">{item.subnivel}</span>}
@@ -284,6 +288,9 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                         <div className="flex flex-wrap gap-4 text-[10px] text-gray-500 font-bold uppercase tracking-wider bg-gray-50 w-fit px-3 py-2 rounded-lg border border-gray-100">
                                             {item.matricula && <span className="flex items-center gap-1"><span className="text-gray-400">Matrícula:</span> <span className="text-[#1e3a8a]">{item.matricula}</span></span>}
                                             {item.semestre && <span className="flex items-center gap-1"><span className="text-gray-400">{['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? 'Série:' : 'Período:'}</span> <span className="text-[#1e3a8a]">{item.semestre}</span></span>}
+                                            {item.periodo_trancamento && item.status === 'Trancado' && <span className="flex items-center gap-1"><span className="text-gray-400">Trancado no Período:</span> <span className="text-orange-600">{item.periodo_trancamento}</span></span>}
+                                            {item.ano_trancamento && item.status === 'Trancado' && <span className="flex items-center gap-1"><span className="text-gray-400">Ano Trancam.:</span> <span className="text-orange-600">{item.ano_trancamento}</span></span>}
+                                            {item.pretende_retornar && item.status === 'Trancado' && <span className="flex items-center gap-1"><span className="text-gray-400">Retorna?:</span> <span className="text-orange-600">{item.pretende_retornar}</span></span>}
                                             {item.previsao_conclusao && <span className="flex items-center gap-1"><span className="text-gray-400">Previsão:</span> <span className="text-amber-600">{formatDisplayDate(item.previsao_conclusao)}</span></span>}
                                             {item.ano_conclusao && <span className="flex items-center gap-1"><span className="text-gray-400">Conclusão:</span> <span className="text-emerald-600">{item.ano_conclusao}</span></span>}
                                             {item.cr && <span className="flex items-center gap-1"><span className="text-gray-400">CR:</span> <span className="text-[#1e3a8a]">{item.cr}</span></span>}
@@ -323,23 +330,31 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
 
                                 {/* Toggle Status */}
                                 <div className="flex bg-white rounded-lg border border-gray-200 p-1 w-fit mt-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => updateEducation(item.id, 'status', 'Cursando')}
-                                        disabled={isViewMode}
-                                        className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${item.status === 'Cursando' ? 'bg-[#1e3a8a] text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
-                                    >
-                                        Cursando
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => updateEducation(item.id, 'status', 'Formado(a)')}
-                                        disabled={isViewMode}
-                                        className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${item.status === 'Formado(a)' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
-                                    >
-                                        Formado(a)
-                                    </button>
-                                </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateEducation(item.id, 'status', 'Cursando')}
+                                            disabled={isViewMode}
+                                            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${item.status === 'Cursando' ? 'bg-[#1e3a8a] text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                                        >
+                                            Cursando
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateEducation(item.id, 'status', 'Formado(a)')}
+                                            disabled={isViewMode}
+                                            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${item.status === 'Formado(a)' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                                        >
+                                            Formado(a)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateEducation(item.id, 'status', 'Trancado')}
+                                            disabled={isViewMode}
+                                            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${item.status === 'Trancado' ? 'bg-orange-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                                        >
+                                            Trancado
+                                        </button>
+                                    </div>
                             </div>
 
                             {nivel === 'Pós-Graduação' && (
@@ -560,7 +575,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                         </div>
                                     )}
                                 </div>
-                            ) : (
+                            ) : item.status === 'Formado(a)' ? (
                                 <div className={`col-span-1 md:col-span-2 grid grid-cols-1 ${nivel === 'Graduação' ? 'md:grid-cols-2' : ''} gap-4`}>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ano de Conclusão</label>
@@ -595,7 +610,40 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                         </div>
                                     )}
                                 </div>
-                            )}
+                            ) : item.status === 'Trancado' ? (
+                                <div className={`col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4`}>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Trancado no {['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? 'Ano/Série' : 'Período'}</label>
+                                        <SearchableSelect
+                                            value={item.periodo_trancamento || ''}
+                                            onChange={(v) => updateEducation(item.id, 'periodo_trancamento', v)}
+                                            options={getPeriodOptions(nivel).map(sem => ({ name: sem }))}
+                                            disabled={isViewMode}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ano de Trancamento</label>
+                                        <input
+                                            type="text"
+                                            value={item.ano_trancamento || ''}
+                                            onChange={(e) => updateEducation(item.id, 'ano_trancamento', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                            maxLength={4}
+                                            className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                            placeholder="AAAA"
+                                            disabled={isViewMode}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Pretende retornar?</label>
+                                        <SearchableSelect
+                                            value={item.pretende_retornar || ''}
+                                            onChange={(v) => updateEducation(item.id, 'pretende_retornar', v)}
+                                            options={[{ name: 'Sim' }, { name: 'Não' }]}
+                                            disabled={isViewMode}
+                                        />
+                                    </div>
+                                </div>
+                            ) : null}
 
                             {
                                 !isViewMode && (
