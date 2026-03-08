@@ -217,7 +217,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
       <div className="h-screen w-screen bg-[#f8fafc] flex flex-col items-center justify-center overflow-hidden">
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
-            <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
             <img
               src="/logo-salomao.png"
               alt="Carregando..."
@@ -245,7 +244,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         {/* Logo */}
         <div className="flex items-center gap-4 group cursor-default">
           <div className="relative">
-            <div className="absolute inset-0 bg-white/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             <img
               src="/logo-salomao.png"
               alt="Salomão Advogados"

@@ -66,7 +66,6 @@ export default function Login() {
           {/* Logo & Welcome */}
           <div className="flex flex-col items-center mb-10">
             <div className="relative group cursor-default">
-              <div className="absolute inset-0 bg-[#1e3a8a]/5 blur-2xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
               <img
                 src="/logo-salomao.png"
                 alt="Salomão Advogados"
