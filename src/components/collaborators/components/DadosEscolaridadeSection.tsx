@@ -168,7 +168,22 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
 
     const renderEducations = (nivel: 'Ensino Fundamental' | 'Ensino Médio' | 'Graduação' | 'Pós-Graduação') => {
         const history = formData.education_history || []
-        const filtered = history.filter(h => h.nivel === nivel)
+        const filtered = history.filter(h => h.nivel === nivel).sort((a, b) => {
+            // Priority:
+            // 1. Cursando vs Formado
+            // 2. Previsão de Conclusão (Mais recente primeiro)
+            // 3. Ano de Conclusão (Mais recente primeiro)
+
+            const aDate = a.previsao_conclusao || a.ano_conclusao || '';
+            const bDate = b.previsao_conclusao || b.ano_conclusao || '';
+
+            if (a.status === 'Cursando' && b.status !== 'Cursando') return -1;
+            if (a.status !== 'Cursando' && b.status === 'Cursando') return 1;
+
+            if (aDate > bDate) return -1;
+            if (aDate < bDate) return 1;
+            return 0;
+        });
 
         const activeCoursesList = nivel === 'Graduação' ? courses : (nivel === 'Pós-Graduação' ? postCourses : []);
         const courseOptions = [...activeCoursesList.map(c => ({ name: c.name })), { name: 'Outro' }]

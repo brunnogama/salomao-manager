@@ -3,6 +3,7 @@ import { Briefcase, Calendar, Clock, Crown } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
+import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { differenceInMonths, differenceInYears } from 'date-fns'
 import { TransporteSection } from './TransporteSection'
 import { supabase } from '../../../lib/supabase'
@@ -223,12 +224,13 @@ export function DadosCorporativosSection({
                 disabled={isViewMode}
               />
 
-              <ManagedSelect
+              <SearchableMultiSelect
                 label="Atuação"
                 value={formData.atuacao || ''}
                 onChange={v => setFormData({ ...formData, atuacao: v })}
-                tableName="atuacoes"
+                table="atuacoes"
                 disabled={isViewMode}
+                allowCustom={true}
               />
 
               <ManagedSelect
