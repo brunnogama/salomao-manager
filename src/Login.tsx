@@ -263,18 +263,16 @@ export default function Login() {
       {/* LADO DIREITO - BRANDING SALOMÃO MANAGER */}
       <div className="hidden lg:flex w-1/2 relative bg-[#0a0a0a] items-center justify-center overflow-hidden">
 
-        {/* Imagem de Fundo (Abstract Dark) */}
+        {/* Imagem de Fundo */}
         <div
           className="absolute inset-0 z-0 bg-cover bg-center opacity-30 mix-blend-luminosity"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1557683311-eac922347aa1?q=80&w=2029&auto=format&fit=crop')"
+            backgroundImage: "url('/foto-fundo.jpg')"
           }}
         ></div>
 
         {/* Gradientes e Overlay */}
         <div className="absolute inset-0 z-1 bg-gradient-to-br from-[#0a192f]/90 via-[#0a0a0a]/95 to-[#1a2c4e]/90"></div>
-        <div className="absolute -top-[30%] -right-[20%] w-[70%] h-[70%] rounded-full bg-[#1e3a8a]/20 blur-[120px] z-2"></div>
-        <div className="absolute -bottom-[20%] -left-[20%] w-[60%] h-[60%] rounded-full bg-[#d4af37]/10 blur-[100px] z-2"></div>
 
         {/* Pattern decorativo sutil */}
         <div className="absolute inset-0 z-5 opacity-[0.03]" style={{
