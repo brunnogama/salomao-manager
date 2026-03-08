@@ -99,7 +99,6 @@ export function RHVagas() {
         *,
         role:role_id (id, name),
         location:location_id (id, name),
-        atuacao:atuacao_id (id, name),
         partner:partner_id (id, name),
         leader:leader_id (id, name),
         candidato_aprovado:candidato_aprovado_id (nome)

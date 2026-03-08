@@ -99,7 +99,7 @@ export function Magistrados() {
           Bloquear
         </button>
       </div>
-      <Clients tableName="magistrados" />
+      <Clients />
     </div>
   )
 }
