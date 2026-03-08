@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Briefcase, Calendar, Clock, Crown } from 'lucide-react'
+import { Briefcase, Calendar, Clock, Crown, GraduationCap } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
@@ -86,7 +86,7 @@ export function DadosCorporativosSection({
       </h3>
 
       {/* STATUS MENU */}
-      <div className="md:w-1/3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:w-2/3">
         <SearchableSelect
           label="Status"
           value={formData.status || 'active'}
@@ -101,6 +101,16 @@ export function DadosCorporativosSection({
             { name: 'Inativo', id: 'inactive' }
           ]}
           uppercase={false}
+          disabled={isViewMode}
+        />
+
+        <ManagedSelect
+          label="Candidato Vinculado (ID / Histórico)"
+          value={formData.candidato_id || ''}
+          onChange={v => setFormData({ ...formData, candidato_id: v })}
+          tableName="candidatos"
+          orderBy="nome"
+          nameColumn="nome"
           disabled={isViewMode}
         />
       </div>
@@ -196,16 +206,6 @@ export function DadosCorporativosSection({
                 value={formData.leader_id || ''}
                 onChange={v => setFormData({ ...formData, leader_id: v })}
                 tableName="collaborators"
-                disabled={isViewMode}
-              />
-
-              <ManagedSelect
-                label="Candidato Vinculado (ID / Histórico)"
-                value={formData.candidato_id || ''}
-                onChange={v => setFormData({ ...formData, candidato_id: v })}
-                tableName="candidatos"
-                orderBy="nome"
-                nameColumn="nome"
                 disabled={isViewMode}
               />
 
@@ -328,71 +328,91 @@ export function DadosCorporativosSection({
               />
 
               {isEstagiario && (
-                <>
-                  <div>
-                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Previsão de Formatura</label>
-                    <input
-                      className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                      value={formData.previsao_formatura || ''}
-                      onChange={e => {
-                        let val = e.target.value.replace(/\D/g, '');
-                        if (val.length > 6) val = val.slice(0, 6);
-                        if (val.length > 2) val = val.slice(0, 2) + '/' + val.slice(2);
-                        setFormData({ ...formData, previsao_formatura: val });
-                      }}
-                      maxLength={7}
-                      placeholder="MM/AAAA"
-                      disabled={isViewMode}
-                      readOnly={isViewMode}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Bolsa</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">R$</span>
+                <div className="md:col-span-3 bg-[#1e3a8a]/5 border border-[#1e3a8a]/20 p-5 rounded-xl mt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <h4 className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4" /> Dados do Estágio
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">Término do contrato</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1e3a8a]" />
+                        <input
+                          className={`w-full pl-9 bg-white border border-blue-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                          value={formData.termino_contrato_estagio || ''}
+                          onChange={e => setFormData({ ...formData, termino_contrato_estagio: maskDate(e.target.value) })}
+                          maxLength={10}
+                          placeholder="DD/MM/AAAA"
+                          disabled={isViewMode}
+                          readOnly={isViewMode}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">Previsão de Formatura</label>
                       <input
-                        className={`w-full pl-9 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                        value={formData.bolsa_valor || ''}
+                        className={`w-full bg-white border border-blue-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        value={formData.previsao_formatura || ''}
                         onChange={e => {
                           let val = e.target.value.replace(/\D/g, '');
-                          if (!val) {
-                            setFormData({ ...formData, bolsa_valor: '' });
-                            return;
-                          }
-                          const num = Number(val) / 100;
-                          const formatted = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
-                          setFormData({ ...formData, bolsa_valor: formatted });
+                          if (val.length > 6) val = val.slice(0, 6);
+                          if (val.length > 2) val = val.slice(0, 2) + '/' + val.slice(2);
+                          setFormData({ ...formData, previsao_formatura: val });
                         }}
-                        placeholder="0,00"
+                        maxLength={7}
+                        placeholder="MM/AAAA"
                         disabled={isViewMode}
                         readOnly={isViewMode}
                       />
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">VR</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">R$</span>
-                      <input
-                        className={`w-full pl-9 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                        value={formData.vr_valor || ''}
-                        onChange={e => {
-                          let val = e.target.value.replace(/\D/g, '');
-                          if (!val) {
-                            setFormData({ ...formData, vr_valor: '' });
-                            return;
-                          }
-                          const num = Number(val) / 100;
-                          const formatted = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
-                          setFormData({ ...formData, vr_valor: formatted });
-                        }}
-                        placeholder="0,00"
-                        disabled={isViewMode}
-                        readOnly={isViewMode}
-                      />
+                    <div>
+                      <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">Bolsa</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">R$</span>
+                        <input
+                          className={`w-full pl-9 bg-white border border-blue-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                          value={formData.bolsa_valor || ''}
+                          onChange={e => {
+                            let val = e.target.value.replace(/\D/g, '');
+                            if (!val) {
+                              setFormData({ ...formData, bolsa_valor: '' });
+                              return;
+                            }
+                            const num = Number(val) / 100;
+                            const formatted = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+                            setFormData({ ...formData, bolsa_valor: formatted });
+                          }}
+                          placeholder="0,00"
+                          disabled={isViewMode}
+                          readOnly={isViewMode}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">VR</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">R$</span>
+                        <input
+                          className={`w-full pl-9 bg-white border border-blue-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                          value={formData.vr_valor || ''}
+                          onChange={e => {
+                            let val = e.target.value.replace(/\D/g, '');
+                            if (!val) {
+                              setFormData({ ...formData, vr_valor: '' });
+                              return;
+                            }
+                            const num = Number(val) / 100;
+                            const formatted = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+                            setFormData({ ...formData, vr_valor: formatted });
+                          }}
+                          placeholder="0,00"
+                          disabled={isViewMode}
+                          readOnly={isViewMode}
+                        />
+                      </div>
                     </div>
                   </div>
-                </>
+                </div>
               )}
             </div>
 

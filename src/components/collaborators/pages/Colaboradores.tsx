@@ -3,7 +3,7 @@ import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, Loader2, UserPlus,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Bus, Clock,
-  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, Filter, FilterX, BellRing, Tag as TagIcon
+  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon
 } from 'lucide-react'
 
 import { exportColaboradoresXLSX } from '../utils/exportColaboradores'
@@ -722,6 +722,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         termination_date: formatDateToISO(formData.termination_date) || null,
         escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null,
         previsao_formatura: formatMonthYearDateToISO(formData.previsao_formatura) || null,
+        termino_contrato_estagio: formatDateToISO(formData.termino_contrato_estagio) || null,
         bolsa_valor: formData.bolsa_valor ? parseCurrency(formData.bolsa_valor) : null,
         vr_valor: formData.vr_valor ? parseCurrency(formData.vr_valor) : null,
         children_data: formData.children_data?.map(c => ({
@@ -885,6 +886,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       })) || [],
       escolaridade_previsao_conclusao: formatDateToDisplay(colaborador.escolaridade_previsao_conclusao),
       previsao_formatura: formatMonthYearDateToDisplay(colaborador.previsao_formatura),
+      termino_contrato_estagio: formatDateToDisplay(colaborador.termino_contrato_estagio),
       bolsa_valor: formatDbMoneyToDisplay(colaborador.bolsa_valor),
       vr_valor: formatDbMoneyToDisplay(colaborador.vr_valor),
       children_data: colaborador.children_data?.map((child: any) => ({
@@ -921,7 +923,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const filtered = colaboradores.filter(c => {
     const normalizer = (str: string) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '';
     const term = normalizer(searchTerm);
-    const matchSearch = normalizer(c.name).includes(term) || normalizer(c.email).includes(term);
+    const matchSearch = normalizer(c.name).includes(term) || normalizer(c.email || '').includes(term);
     const matchLider = filterLider ? String(c.leader_id) === filterLider : true
     const matchPartner = filterPartner ? String(c.partner_id) === filterPartner : true
     const matchLocal = filterLocal ? String(c.local) === filterLocal : true

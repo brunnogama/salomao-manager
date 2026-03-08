@@ -95,6 +95,7 @@ export interface Collaborator {
   bolsa_valor?: string;
   vr_valor?: string;
   previsao_formatura?: string;
+  termino_contrato_estagio?: string;
 
   // Notificações de RH
   mochila_entregue?: boolean;
