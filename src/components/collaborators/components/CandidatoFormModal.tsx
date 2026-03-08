@@ -78,14 +78,13 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const [uploadingPhoto, setUploadingPhoto] = useState(false)
     const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(initialFile || null)
 
-    // GED State
     const [gedCategories] = useState([
-        { id: 'Currículo', name: 'Currículo' },
-        { id: 'Portfólio', name: 'Portfólio' },
         { id: 'Certificado', name: 'Certificado' },
+        { id: 'Currículo', name: 'Currículo' },
+        { id: 'Entrevista', name: 'Entrevista' },
+        { id: 'Portfólio', name: 'Portfólio' },
         { id: 'Prova', name: 'Prova' },
         { id: 'Redação', name: 'Redação' },
-        { id: 'Entrevista', name: 'Entrevista' },
         { id: 'Outros', name: 'Outros' }
     ])
     const [selectedGedCategory, setSelectedGedCategory] = useState('')
