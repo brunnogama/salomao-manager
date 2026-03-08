@@ -1,4 +1,3 @@
-```
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCloseOnEscape } from '../../../hooks/useCloseOnEscape'
@@ -38,7 +37,7 @@ interface CandidatoFormModalProps {
 export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile, viewMode = false, onEdit }: CandidatoFormModalProps) {
     const navigate = useNavigate()
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
-    const downloadLinkRef = React.useRef<HTMLAnchorElement>(null)
+    const downloadLinkRef = useRef<HTMLAnchorElement>(null)
 
     const handleRequestClose = () => {
         if (viewMode) {
@@ -89,7 +88,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     ])
     const [selectedGedCategory, setSelectedGedCategory] = useState('')
     const [atestadoDatas, setAtestadoDatas] = useState<{ inicio: string, fim: string }>({ inicio: '', fim: '' })
-    const gedInputRef = React.useRef<HTMLInputElement>(null)
+    const gedInputRef = useRef<HTMLInputElement>(null)
     const [gedDocs, setGedDocs] = useState<any[]>([])
     const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, label?: string, tempId: string, atestadoDatas?: { inicio: string, fim: string } }[]>([])
     const [pendingHistorico, setPendingHistorico] = useState<any[]>([])
@@ -229,7 +228,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const handleCepBlur = async () => {
         if (formData.zip_code?.length === 9) {
             try {
-                const response = await fetch(`https://viacep.com.br/ws/${formData.zip_code.replace('-', '')}/json/`)
+                const response = await fetch('https://viacep.com.br/ws/' + formData.zip_code.replace('-', '') + '/json/')
                 const data = await response.json()
                 if (!data.erro) {
                     setFormData(prev => ({
