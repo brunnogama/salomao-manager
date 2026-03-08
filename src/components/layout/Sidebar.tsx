@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import {
+import { useAuth } from '../../contexts/AuthContext'
   LayoutDashboard,
   FileText,
   FileSignature,
@@ -21,6 +22,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const { signOut } = useAuth()
   const navigate = useNavigate();
   const [userName, setUserName] = useState('Carregando...');
   const location = useLocation();
@@ -41,8 +43,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    navigate('/login')
+    await signOut()
   }
 
   useEffect(() => {

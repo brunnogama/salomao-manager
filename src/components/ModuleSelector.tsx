@@ -6,6 +6,7 @@ import { APP_UPDATES } from '../config/updates'
 import { UpdateNotificationModal } from './UpdateNotificationModal'
 
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 interface ModuleSelectorProps {
   onSelect: (module: 'crm' | 'collaborators' | 'operational' | 'financial' | 'settings' | 'executive' | 'controladoria') => void;
@@ -13,6 +14,7 @@ interface ModuleSelectorProps {
 }
 
 export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
+  const { signOut } = useAuth()
   const navigate = useNavigate()
   const [allowedModules, setAllowedModules] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -96,15 +98,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   }, [])
 
   const handleLogout = async () => {
-
-    const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal')
-    localStorage.clear()
-    sessionStorage.clear()
-    if (hasSeenWelcome) {
-      localStorage.setItem('hasSeenWelcomeModal', hasSeenWelcome)
-    }
-    await supabase.auth.signOut()
-    window.location.reload()
+    await signOut()
   }
 
   const isModuleAllowed = (moduleKey: string) => {
