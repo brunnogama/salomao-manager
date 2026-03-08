@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+```
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCloseOnEscape } from '../../../hooks/useCloseOnEscape'
 import { supabase } from '../../../lib/supabase'
@@ -8,10 +9,11 @@ import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
 import { DadosEscolaridadeSection } from './DadosEscolaridadeSection'
 import { CandidatoExperienciasSection } from './CandidatoExperienciasSection'
-import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, Edit2 } from 'lucide-react'
+import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, Edit2, Camera } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
 import { EnderecoSection } from './EnderecoSection'
+import { CandidatoPhotoModal } from './CandidatoPhotoModal'
 
 import {
     maskCPF,
@@ -70,6 +72,12 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     // Aprovado Confirm State
     const [showAprovadoConfirm, setShowAprovadoConfirm] = useState(false)
     const [savedCandidatoData, setSavedCandidatoData] = useState<any>(null)
+
+    // Photo Modal state
+    const [showPhotoModal, setShowPhotoModal] = useState(false)
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+    const [uploadingPhoto, setUploadingPhoto] = useState(false)
+    const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(initialFile || null)
 
     // GED State
     const [gedCategories] = useState([
@@ -159,10 +167,22 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             } else {
                 setFormData({})
                 setGedDocs([])
+                setPhotoPreview(null)
+                setSelectedPhotoFile(null)
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, candidatoId, initialData, initialFile])
+
+    useEffect(() => {
+        if (selectedPhotoFile) {
+            const r = new FileReader()
+            r.onload = (e) => setPhotoPreview(e.target?.result as string)
+            r.readAsDataURL(selectedPhotoFile)
+        } else {
+            setPhotoPreview(null)
+        }
+    }, [selectedPhotoFile])
 
     const fetchTags = async () => {
         try {
@@ -677,6 +697,25 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             setActiveTab={setActiveTab}
             isEditMode={!viewMode}
             currentSteps={steps}
+            sidebarContent={
+                <div className="flex flex-col items-center w-full px-2 group">
+                    <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-[4px] border-white shadow-xl bg-gray-50 flex items-center justify-center shrink-0">
+                        {photoPreview || formData.photo_url || formData.foto_url ? (
+                            <img src={photoPreview || formData.photo_url || formData.foto_url} alt="Foto Candidato" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center">
+                                <span className="text-4xl font-black text-white opacity-50">{formData.nome?.charAt(0).toUpperCase() || <User className="w-10 h-10 text-white/50" />}</span>
+                            </div>
+                        )}
+                        {!viewMode && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm"
+                             onClick={() => setShowPhotoModal(true)}>
+                            <Camera className="w-8 h-8 text-white" />
+                        </div>
+                        )}
+                    </div>
+                </div>
+            }
             footer={
                 viewMode ? (
                     <div className="flex items-center justify-between w-full">
@@ -1090,7 +1129,21 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     </div>
                 </div>
             )}
+            <CandidatoPhotoModal
+                isOpen={showPhotoModal}
+                onClose={() => setShowPhotoModal(false)}
+                uploadingPhoto={uploadingPhoto}
+                currentPhotoUrl={photoPreview || formData.photo_url || formData.foto_url || ''}
+                onPhotoSelected={(file) => {
+                    setSelectedPhotoFile(file);
+                    // Clear the URL format since we're using a file
+                    if (file) setFormData(prev => ({ ...prev, photo_url: '', foto_url: '' }));
+                }}
+                onUrlUpdated={(url) => {
+                    setFormData(prev => ({ ...prev, photo_url: url, foto_url: url }));
+                    setSelectedPhotoFile(null); // Clear the file selection since we're using URL
+                }}
+            />
         </CollaboratorModalLayout>
     )
-}
-
+} 

@@ -1229,25 +1229,36 @@ export function RHVagas() {
                               <span className="inline-flex items-center justify-center px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px] font-black tracking-widest uppercase">{c.candidato_id_text || 'Sem ID'}</span>
                             </td>
                             <td className="px-3 py-4">
-                              <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
-                              {(c.email || c.telefone) && (
-                                <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
-                              )}
-                              {activeTab === 'reprovados' && c.motivo_reprovacao && (
-                                <p className="text-[10px] text-red-600 font-bold mt-1 bg-red-100 p-1 rounded inline-block">Motivo: {c.motivo_reprovacao}</p>
-                              )}
-                              {c.perfil && (
-                                <div className="flex flex-wrap gap-1 mt-1.5">
-                                  {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                    <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                      {tag.trim()}
-                                    </span>
-                                  ))}
-                                  {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                    <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
+                              <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center border-2 border-white shadow-sm">
+                                  {c.photo_url || c.foto_url ? (
+                                    <img src={c.photo_url || c.foto_url} alt={c.nome} className="h-full w-full object-cover" />
+                                  ) : (
+                                    <span className="text-sm font-black text-white">{c.nome?.charAt(0).toUpperCase()}</span>
                                   )}
                                 </div>
-                              )}
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
+                                  {(c.email || c.telefone) && (
+                                    <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
+                                  )}
+                                  {activeTab === 'reprovados' && c.motivo_reprovacao && (
+                                    <p className="text-[10px] text-red-600 font-bold mt-1 bg-red-100 p-1 rounded inline-block">Motivo: {c.motivo_reprovacao}</p>
+                                  )}
+                                  {c.perfil && (
+                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                      {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
+                                        <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                          {tag.trim()}
+                                        </span>
+                                      ))}
+                                      {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
+                                        <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </td>
                             <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
                               {roleName}

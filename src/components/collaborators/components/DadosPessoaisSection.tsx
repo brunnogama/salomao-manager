@@ -49,31 +49,6 @@ export function DadosPessoaisSection({
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Foto de Perfil */}
-        <div className="md:col-span-4 flex items-center gap-6 p-4 bg-gray-50/50 rounded-xl border border-gray-100 mb-2">
-          <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-md overflow-hidden flex items-center justify-center shrink-0">
-            {formData.photo_url || formData.foto_url ? (
-                <img src={formData.photo_url || formData.foto_url} alt="Foto Candidato" className="w-full h-full object-cover" />
-            ) : (
-                <User className="w-10 h-10 text-gray-300" />
-            )}
-          </div>
-          <div className="flex-1 space-y-2">
-            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">
-              URL da Foto (LinkedIn ou outro link)
-            </label>
-            <input
-              className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-              value={formData.photo_url || formData.foto_url || ''}
-              onChange={e => setFormData({ ...formData, photo_url: e.target.value, foto_url: e.target.value })}
-              placeholder="Cole o link da foto aqui..."
-              disabled={isViewMode}
-              readOnly={isViewMode}
-            />
-            <p className="text-[10px] text-gray-500">Cole a URL de uma imagem pública para exibi-la como foto de perfil.</p>
-          </div>
-        </div>
-
         {/* Nome Completo - Mapeado para 'name' */}
         <div className="md:col-span-3">
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
