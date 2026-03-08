@@ -238,6 +238,18 @@ export function CandidatoEntrevistaSection({
                 {area === 'Jurídica' && (
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <SearchableSelect
+                                label="Entrevistadoras"
+                                placeholder="Selecione..."
+                                value={entrevista.entrevistadoras || ''}
+                                onChange={(val) => handleEntrevistaChange('entrevistadoras', val)}
+                                disabled={isViewMode}
+                                options={[
+                                    { id: 'Karina Reis Dos Prazeres', name: 'Karina Reis Dos Prazeres' },
+                                    { id: 'Tatiana Gonçalves Gomes', name: 'Tatiana Gonçalves Gomes' },
+                                    { id: 'Karina e Tatiana', name: 'Karina e Tatiana' }
+                                ]}
+                            />
                             <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Indicação</label>
                                 <input
