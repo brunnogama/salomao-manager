@@ -18,13 +18,19 @@ interface BolsaEstagioRule {
 interface Role {
     id: string;
     name: string;
-    default_tags?: string; // New field added
+    default_tags?: string;
     created_at?: string;
     active?: boolean;
 }
 
+interface TagData {
+    tag: string;
+    area?: 'Jurídica' | 'Administrativa';
+    created_at?: string;
+}
+
 export function TabelasTab() {
-    type ViewState = 'menu' | 'bolsas' | 'cargos';
+    type ViewState = 'menu' | 'bolsas' | 'cargos' | 'tags';
     const [activeView, setActiveView] = useState<ViewState>('menu');
 
     const [rules, setRules] = useState<BolsaEstagioRule[]>([]);
@@ -43,11 +49,18 @@ export function TabelasTab() {
     const [isTagging, setIsTagging] = useState(false);
     const [tagSearch, setTagSearch] = useState('');
     const [cursorPosition, setCursorPosition] = useState(0);
-    const [availableTags, setAvailableTags] = useState<string[]>([]);
+    const [availableTags, setAvailableTags] = useState<{ tag: string, area?: string }[]>([]);
 
     // Derived state for Roles
     const [rolesJuridico, setRolesJuridico] = useState<Role[]>([]);
     const [rolesAdmin, setRolesAdmin] = useState<Role[]>([]);
+
+    // Tags Management State
+    const [tagDataList, setTagDataList] = useState<TagData[]>([]);
+    const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+    const [editingTag, setEditingTag] = useState<{ oldTag: string, newTag: string, area?: 'Jurídica' | 'Administrativa' } | null>(null);
+    const [tagToDelete, setTagToDelete] = useState<string | null>(null);
+    const [isDeleteTagModalOpen, setIsDeleteTagModalOpen] = useState(false);
 
     useEffect(() => {
         if (activeView === 'bolsas') {
@@ -55,8 +68,10 @@ export function TabelasTab() {
         } else if (activeView === 'cargos') {
             fetchRoles();
             fetchTags();
+        } else if (activeView === 'tags') {
+            fetchTagSet();
         }
-    }, [activeView]);
+    }, [activeView, tagDataList]);
 
     const fetchRules = async () => {
         setLoading(true);
@@ -122,12 +137,26 @@ export function TabelasTab() {
 
     const fetchTags = async () => {
         try {
-            const { data, error } = await supabase.from('perfil_tags').select('tag').order('tag');
+            const { data, error } = await supabase.from('perfil_tags').select('tag, area').order('tag');
             if (!error && data) {
-                setAvailableTags(data.map(d => d.tag));
+                setAvailableTags(data);
             }
         } catch (e) {
             console.error('Error fetching tags:', e);
+        }
+    };
+
+    const fetchTagSet = async () => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase.from('perfil_tags').select('*').order('tag', { ascending: true });
+            if (!error && data) {
+                setTagDataList(data);
+            }
+        } catch (e) {
+            console.error('Error fetching tag data:', e);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -274,9 +303,13 @@ export function TabelasTab() {
 
             // Save tags to perfil_tags dictionary if they are new
             if (editingRole.default_tags) {
+                // Determine the area of this role
+                const isJuridico = rolesJuridico.some(r => r.id === editingRole.id);
+                const area = isJuridico ? 'Jurídica' : 'Administrativa';
+
                 const lines = editingRole.default_tags.split('\n').map(l => l.trim()).filter(l => l.length > 0);
                 if (lines.length > 0) {
-                    const tagsToInsert = lines.map(t => ({ tag: t }));
+                    const tagsToInsert = lines.map(t => ({ tag: t, area: area }));
                     const { error: tagError } = await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
                     if (tagError) console.error("Error upserting tags", tagError);
                 }
@@ -292,11 +325,86 @@ export function TabelasTab() {
         }
     };
 
+    // --- Tags Management Handlers ---
+
+    const handleOpenTagModal = (tagItem?: TagData) => {
+        if (tagItem) {
+            setEditingTag({ oldTag: tagItem.tag, newTag: tagItem.tag, area: tagItem.area });
+        } else {
+            setEditingTag({ oldTag: '', newTag: '', area: 'Jurídica' });
+        }
+        setIsTagModalOpen(true);
+    };
+
+    const handleCloseTagModal = () => {
+        setIsTagModalOpen(false);
+        setEditingTag(null);
+    };
+
+    const handleSaveTag = async () => {
+        if (!editingTag || !editingTag.newTag.trim() || !editingTag.area) return;
+
+        setSaving(true);
+        try {
+            const newTagName = editingTag.newTag.trim();
+            if (editingTag.oldTag) {
+                // Update
+                const { error } = await supabase
+                    .from('perfil_tags')
+                    .update({ tag: newTagName, area: editingTag.area })
+                    .eq('tag', editingTag.oldTag);
+                if (error) throw error;
+            } else {
+                // Insert
+                const { error } = await supabase
+                    .from('perfil_tags')
+                    .insert([{ tag: newTagName, area: editingTag.area }]);
+                if (error) throw error;
+            }
+
+            await fetchTagSet();
+            handleCloseTagModal();
+        } catch (error: any) {
+            console.error('Erro ao salvar tag:', error);
+            if (error.code === '23505') {
+                alert('Esta tag já existe na base de dados.');
+            } else {
+                alert('Erro ao salvar a tag. Tente novamente.');
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleConfirmDeleteTag = (tag: string) => {
+        setTagToDelete(tag);
+        setIsDeleteTagModalOpen(true);
+    };
+
+    const executeDeleteTag = async () => {
+        if (!tagToDelete) return;
+
+        try {
+            const { error } = await supabase
+                .from('perfil_tags')
+                .delete()
+                .eq('tag', tagToDelete);
+
+            if (error) throw error;
+            await fetchTagSet();
+            setTagToDelete(null);
+            setIsDeleteTagModalOpen(false);
+        } catch (error) {
+            console.error('Erro ao excluir tag:', error);
+            alert('Erro ao excluir a tag. Tente novamente.');
+        }
+    };
+
 
     return (
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col min-h-0 animate-in slide-in-from-top-4 duration-500 overflow-auto custom-scrollbar">
             {activeView === 'menu' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-fit">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-fit">
                     <button
                         onClick={() => setActiveView('bolsas')}
                         className="group relative flex flex-col p-8 bg-white rounded-2xl border border-gray-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-300 text-left overflow-hidden h-full"
@@ -326,6 +434,22 @@ export function TabelasTab() {
 
                         <div className="relative z-10 mt-8 flex items-center gap-2 text-blue-600 font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity">
                             Acessar Cargos <ArrowRight className="h-4 w-4" />
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveView('tags')}
+                        className="group relative flex flex-col p-8 bg-white rounded-2xl border border-gray-200 hover:border-purple-400 hover:shadow-2xl transition-all duration-300 text-left overflow-hidden h-full"
+                    >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50/50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                        <div className="relative z-10 w-14 h-14 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-6 shadow-inner group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
+                            <Tag className="h-7 w-7" />
+                        </div>
+                        <h3 className="relative z-10 text-xl font-black text-[#1e3a8a] mb-2 group-hover:text-[#112240]">Tags de Perfil - Gestão</h3>
+                        <p className="relative z-10 text-sm text-gray-500 font-medium flex-1">Visualize, edite ou exclua tags cadastradas no banco de talentos (perfil_tags).</p>
+
+                        <div className="relative z-10 mt-8 flex items-center gap-2 text-purple-600 font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                            Acessar Nuvem de Tags <ArrowRight className="h-4 w-4" />
                         </div>
                     </button>
                 </div>
@@ -522,6 +646,94 @@ export function TabelasTab() {
 
                         </div>
                     )}
+
+                    {!loading && activeView === 'tags' && (
+                        <div className="flex-1 overflow-auto mt-6">
+                            <div className="mb-8">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-[#0a192f]">Tags de Perfil - Nuvem de Talentos</h3>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Estas tags são usadas nos formulários de Perfil (Vagas, Cargos, Colaboradores). Edite ou exclua opções indesejadas.
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => handleOpenTagModal()}
+                                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm"
+                                    >
+                                        <Plus className="h-4 w-4" /> Nova Tag
+                                    </button>
+                                </div>
+
+                                <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-50 border-b border-gray-200">
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">Nome da Tag</th>
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">Área</th>
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider text-right w-24">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {tagDataList.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={3} className="px-6 py-8 text-center text-gray-400">
+                                                        Nenhuma tag cadastrada.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                tagDataList.map((tagItem) => (
+                                                    <tr key={tagItem.tag} className="hover:bg-purple-50/30 transition-colors">
+                                                        <td className="px-6 py-4 text-sm font-bold text-[#0a192f]">
+                                                            <div className="flex items-center gap-2">
+                                                                <Tag className="h-4 w-4 text-purple-500" />
+                                                                {tagItem.tag}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            {tagItem.area === 'Jurídica' && (
+                                                                <span className="px-2 py-1 bg-blue-50 text-blue-600 border border-blue-100 text-[10px] font-bold uppercase tracking-wider rounded-lg">
+                                                                    Jurídica
+                                                                </span>
+                                                            )}
+                                                            {tagItem.area === 'Administrativa' && (
+                                                                <span className="px-2 py-1 bg-gray-100 text-gray-600 border border-gray-200 text-[10px] font-bold uppercase tracking-wider rounded-lg">
+                                                                    Administrativa
+                                                                </span>
+                                                            )}
+                                                            {!tagItem.area && (
+                                                                <span className="px-2 py-1 bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-bold uppercase tracking-wider rounded-lg">
+                                                                    Geral
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <button
+                                                                    onClick={() => handleOpenTagModal(tagItem)}
+                                                                    className="p-1.5 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors"
+                                                                    title="Editar Tag"
+                                                                >
+                                                                    <Edit2 className="h-4 w-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleConfirmDeleteTag(tagItem.tag)}
+                                                                    className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                                                    title="Excluir Tag"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -660,19 +872,29 @@ export function TabelasTab() {
                                 {isTagging && (
                                     <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-48 overflow-y-auto">
                                         {availableTags
-                                            .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
-                                            .map(tag => (
+                                            .filter(t => {
+                                                // Filter by text match
+                                                if (!t.tag.toLowerCase().includes(tagSearch.toLowerCase())) return false;
+                                                // Filter by area match
+                                                if (editingRole) {
+                                                    const isJuridico = rolesJuridico.some(r => r.id === editingRole.id);
+                                                    const roleArea = isJuridico ? 'Jurídica' : 'Administrativa';
+                                                    if (t.area && t.area !== roleArea) return false;
+                                                }
+                                                return true;
+                                            })
+                                            .map(tagItem => (
                                                 <button
-                                                    key={tag}
-                                                    onClick={() => insertRoleTag(tag)}
+                                                    key={tagItem.tag}
+                                                    onClick={() => insertRoleTag(tagItem.tag)}
                                                     className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-[#0a192f] font-medium border-b border-gray-50 last:border-0"
                                                 >
                                                     <Tag className="h-4 w-4 text-blue-500" />
-                                                    {tag}
+                                                    {tagItem.tag}
                                                 </button>
                                             ))
                                         }
-                                        {availableTags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
+                                        {availableTags.filter(t => t.tag.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
                                             <div className="px-4 py-3 text-sm text-gray-500 italic">
                                                 Nenhuma tag cadastrada com "{tagSearch}"... Quando você salvar, ela será criada!
                                             </div>
@@ -706,12 +928,109 @@ export function TabelasTab() {
                 </div>
             )}
 
+            {/* Modal - Tag Gestao */}
+            {isTagModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                            <h3 className="text-lg font-bold text-[#1e3a8a]">
+                                {editingTag?.oldTag ? 'Editar Tag' : 'Nova Tag'}
+                            </h3>
+                            <button
+                                onClick={handleCloseTagModal}
+                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-[10px] uppercase font-black tracking-widest text-purple-600">Nome da Tag</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2.5 mt-1.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-[#0a192f] focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
+                                        value={editingTag?.newTag || ''}
+                                        onChange={(e) => setEditingTag({ ...editingTag!, newTag: e.target.value })}
+                                        placeholder="Ex: Experiência em Contencioso"
+                                        autoFocus
+                                    />
+                                    {editingTag?.oldTag && (
+                                        <p className="text-[10px] font-medium text-amber-600 mt-2">
+                                            * Alterar o nome desta tag só mudará como ela aparece nas futuras buscas (@). Perfis antigos salvos continuam com o texto anterior.
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] uppercase font-black tracking-widest text-purple-600">Área de Atuação</label>
+                                    <div className="mt-2 flex gap-3">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="tagArea"
+                                                value="Jurídica"
+                                                checked={editingTag?.area === 'Jurídica'}
+                                                onChange={() => setEditingTag({ ...editingTag!, area: 'Jurídica' })}
+                                                className="text-purple-600 focus:ring-purple-500 w-4 h-4"
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">Jurídica</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="tagArea"
+                                                value="Administrativa"
+                                                checked={editingTag?.area === 'Administrativa'}
+                                                onChange={() => setEditingTag({ ...editingTag!, area: 'Administrativa' })}
+                                                className="text-purple-600 focus:ring-purple-500 w-4 h-4"
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">Administrativa</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2 bg-gray-50/50">
+                            <button
+                                onClick={handleCloseTagModal}
+                                className="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-200 rounded-xl transition-colors"
+                                disabled={saving}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSaveTag}
+                                disabled={saving || !editingTag?.newTag.trim()}
+                                className="flex items-center gap-2 px-5 py-2 bg-purple-600 text-white text-sm font-bold rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
+                            >
+                                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                Salvar Tag
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <ConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={executeDeleteRule}
                 title="Excluir Regra"
                 description="Tem certeza que deseja excluir esta regra? Esta ação não pode ser desfeita."
+                confirmText="Excluir"
+                cancelText="Cancelar"
+                variant="danger"
+            />
+
+            <ConfirmationModal
+                isOpen={isDeleteTagModalOpen}
+                onClose={() => setIsDeleteTagModalOpen(false)}
+                onConfirm={executeDeleteTag}
+                title="Excluir Tag"
+                description={`Tem certeza que deseja excluir a tag "${tagToDelete}"? Ela não aparecerá mais como sugestão, mas perfis antigos não serão alterados.`}
                 confirmText="Excluir"
                 cancelText="Cancelar"
                 variant="danger"

@@ -35,7 +35,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
     const [isTagging, setIsTagging] = useState(false)
     const [tagSearch, setTagSearch] = useState('')
     const [cursorPosition, setCursorPosition] = useState(0)
-    const [availableTags, setAvailableTags] = useState<string[]>([])
+    const [availableTags, setAvailableTags] = useState<{ tag: string, area?: string }[]>([])
 
     // Recrutadoras options
     const recrutadorasOptions = [
@@ -79,9 +79,9 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
 
     const fetchTags = async () => {
         try {
-            const { data, error } = await supabase.from('perfil_tags').select('tag').order('tag')
+            const { data, error } = await supabase.from('perfil_tags').select('tag, area').order('tag')
             if (!error && data) {
-                setAvailableTags(data.map(d => d.tag))
+                setAvailableTags(data)
             }
         } catch (e) {
             console.error('Error fetching tags:', e)
@@ -245,7 +245,8 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
             if (payload.perfil) {
                 const lines = payload.perfil.split('\n').map(l => l.trim()).filter(l => l.length > 0);
                 if (lines.length > 0) {
-                    const tagsToInsert = lines.map(t => ({ tag: t }));
+                    const areaForTags = payload.area || null;
+                    const tagsToInsert = lines.map(t => ({ tag: t, area: areaForTags }));
                     const { error: tagError } = await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
                     if (tagError) console.error("Error upserting tags", tagError);
                 }
@@ -568,19 +569,23 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         {isTagging && (
                                             <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-48 overflow-y-auto">
                                                 {availableTags
-                                                    .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
-                                                    .map(tag => (
+                                                    .filter(t => {
+                                                        if (!t.tag.toLowerCase().includes(tagSearch.toLowerCase())) return false;
+                                                        if (formData.area && t.area && t.area !== formData.area) return false;
+                                                        return true;
+                                                    })
+                                                    .map(tagItem => (
                                                         <button
-                                                            key={tag}
-                                                            onClick={() => insertTag(tag)}
+                                                            key={tagItem.tag}
+                                                            onClick={() => insertTag(tagItem.tag)}
                                                             className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-[#0a192f] font-medium border-b border-gray-50 last:border-0"
                                                         >
                                                             <Tag className="h-4 w-4 text-blue-500" />
-                                                            {tag}
+                                                            {tagItem.tag}
                                                         </button>
                                                     ))
                                                 }
-                                                {availableTags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
+                                                {availableTags.filter(t => t.tag.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
                                                     <div className="px-4 py-3 text-sm text-gray-500 italic">
                                                         Nenhuma tag cadastrada com "{tagSearch}"... Quando você salvar, ela será criada!
                                                     </div>
