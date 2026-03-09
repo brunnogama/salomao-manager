@@ -2276,7 +2276,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
               const activeColabs = colaboradores.filter(c => c.status === 'active');
 
               const vtColaboradores = activeColabs
-                .filter(c => c.contract_type === groupConfig.type)
+                .filter(c => {
+                  if (groupConfig.type === 'Estágio') {
+                    const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
+                    return c.contract_type === 'Estágio' || roleName.includes('estagiário') || roleName.includes('estagiario') || roleName.includes('estagio') || roleName.includes('estágio');
+                  }
+                  return c.contract_type === groupConfig.type;
+                })
                 .map(c => {
                   let colabVtDaily = 0;
                   if (c.transportes && Array.isArray(c.transportes)) {
