@@ -3,7 +3,7 @@ import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, Loader2, UserPlus,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Bus, Clock,
-  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon, ChevronDown, ChevronRight
+  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon, ChevronDown, ChevronRight, TableIcon
 } from 'lucide-react'
 
 import { exportColaboradoresXLSX, exportVTXLSX } from '../utils/exportColaboradores'
@@ -29,6 +29,7 @@ import { PhotoUploadSection } from '../components/PhotoUploadSection'
 import { HistoricoSection } from '../components/HistoricoSection'
 import { PeriodoAusenciasSection } from '../components/PeriodoAusenciasSection'
 import PerfilSection from '../components/PerfilSection'
+import { TabelasTab } from '../components/TabelasTab'
 import { CollaboratorModalLayout } from '../components/CollaboratorLayouts'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useLocation } from 'react-router-dom'
@@ -117,7 +118,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [filterCargo, setFilterCargo] = useState('')
 
   // New Tabs State
-  const [activeMainTab, setActiveMainTab] = useState<'Colaboradores' | 'Relatórios'>('Colaboradores');
+  const [activeMainTab, setActiveMainTab] = useState<'Colaboradores' | 'Relatórios' | 'Tabelas'>('Colaboradores');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showExportVTMenu, setShowExportVTMenu] = useState(false);
 
@@ -1543,12 +1544,20 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <Users className="h-4 w-4" /> Equipe
             </button>
             {!isReadOnly && (
-              <button
-                onClick={() => setActiveMainTab('Relatórios')}
-                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Relatórios' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                <FileSpreadsheet className="h-4 w-4" /> Relatórios
-              </button>
+              <>
+                <button
+                  onClick={() => setActiveMainTab('Relatórios')}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Relatórios' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <FileSpreadsheet className="h-4 w-4" /> Relatórios
+                </button>
+                <button
+                  onClick={() => setActiveMainTab('Tabelas')}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Tabelas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <TableIcon className="h-4 w-4" /> Tabelas
+                </button>
+              </>
             )}
           </div>
 
@@ -2856,8 +2865,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
             )}
           </div>
         </div>
-      )
-      }
+      )}
+
+      {activeMainTab === 'Tabelas' && !isReadOnly && (
+        <TabelasTab />
+      )}
 
       {/* VIEW MODAL (Original Window) */}
       {
