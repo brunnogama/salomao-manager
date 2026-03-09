@@ -71,7 +71,7 @@ export function TabelasTab() {
         } else if (activeView === 'tags') {
             fetchTagSet();
         }
-    }, [activeView, tagDataList]);
+    }, [activeView]);
 
     const fetchRules = async () => {
         setLoading(true);
