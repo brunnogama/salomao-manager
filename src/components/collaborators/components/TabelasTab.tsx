@@ -25,7 +25,7 @@ interface Role {
 
 interface TagData {
     tag: string;
-    area?: 'Jurídica' | 'Administrativa';
+    area?: 'Jurídica' | 'Administrativa' | 'Ambas';
     created_at?: string;
 }
 
@@ -58,7 +58,7 @@ export function TabelasTab() {
     // Tags Management State
     const [tagDataList, setTagDataList] = useState<TagData[]>([]);
     const [isTagModalOpen, setIsTagModalOpen] = useState(false);
-    const [editingTag, setEditingTag] = useState<{ oldTag: string, newTag: string, area?: 'Jurídica' | 'Administrativa' } | null>(null);
+    const [editingTag, setEditingTag] = useState<{ oldTag: string, newTag: string, area?: 'Jurídica' | 'Administrativa' | 'Ambas' } | null>(null);
     const [tagToDelete, setTagToDelete] = useState<string | null>(null);
     const [isDeleteTagModalOpen, setIsDeleteTagModalOpen] = useState(false);
 
@@ -363,7 +363,16 @@ export function TabelasTab() {
             }
 
             await fetchTagSet();
-            handleCloseTagModal();
+            // User requested not to close the modal and not to jump the screen.
+            // We just reset the tag name so they can keep adding more rapidly,
+            // while preserving the area they just selected to speed up their flow!
+            if (!editingTag.oldTag) {
+                // If it was an insert, clear name, keep area.
+                setEditingTag({ oldTag: '', newTag: '', area: editingTag.area });
+            } else {
+                // If it was an edit, close the modal because they edited a specific item.
+                handleCloseTagModal();
+            }
         } catch (error: any) {
             console.error('Erro ao salvar tag:', error);
             if (error.code === '23505') {
@@ -701,6 +710,11 @@ export function TabelasTab() {
                                                                     Administrativa
                                                                 </span>
                                                             )}
+                                                            {tagItem.area === 'Ambas' && (
+                                                                <span className="px-2 py-1 bg-purple-50 text-purple-600 border border-purple-200 text-[10px] font-bold uppercase tracking-wider rounded-lg">
+                                                                    Ambas
+                                                                </span>
+                                                            )}
                                                             {!tagItem.area && (
                                                                 <span className="px-2 py-1 bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-bold uppercase tracking-wider rounded-lg">
                                                                     Geral
@@ -879,7 +893,7 @@ export function TabelasTab() {
                                                 if (editingRole) {
                                                     const isJuridico = rolesJuridico.some(r => r.id === editingRole.id);
                                                     const roleArea = isJuridico ? 'Jurídica' : 'Administrativa';
-                                                    if (t.area && t.area !== roleArea) return false;
+                                                    if (t.area && t.area !== 'Ambas' && t.area !== roleArea) return false;
                                                 }
                                                 return true;
                                             })
@@ -987,6 +1001,17 @@ export function TabelasTab() {
                                                 className="text-purple-600 focus:ring-purple-500 w-4 h-4"
                                             />
                                             <span className="text-sm font-medium text-gray-700">Administrativa</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="tagArea"
+                                                value="Ambas"
+                                                checked={editingTag?.area === 'Ambas'}
+                                                onChange={() => setEditingTag({ ...editingTag!, area: 'Ambas' })}
+                                                className="text-purple-600 focus:ring-purple-500 w-4 h-4"
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">Ambas</span>
                                         </label>
                                     </div>
                                 </div>

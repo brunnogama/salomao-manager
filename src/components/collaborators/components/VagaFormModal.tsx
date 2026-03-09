@@ -571,7 +571,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                 {availableTags
                                                     .filter(t => {
                                                         if (!t.tag.toLowerCase().includes(tagSearch.toLowerCase())) return false;
-                                                        if (formData.area && t.area && t.area !== formData.area) return false;
+                                                        if (formData.area && t.area && t.area !== 'Ambas' && t.area !== formData.area) return false;
                                                         return true;
                                                     })
                                                     .map(tagItem => (
