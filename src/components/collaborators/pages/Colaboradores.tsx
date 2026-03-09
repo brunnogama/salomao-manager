@@ -107,6 +107,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   // New Tabs State
   const [activeMainTab, setActiveMainTab] = useState<'Colaboradores' | 'Relatórios'>('Colaboradores');
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showExportVTMenu, setShowExportVTMenu] = useState(false);
 
   // Advanced Filters State
   // Pessoais
@@ -1029,7 +1030,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
     })
   };
 
-  const handleExportVT = () => {
+  const handleExportVT = (group: 'Estagiários' | 'CLTs' | 'Todos') => {
+    setShowExportVTMenu(false);
     const activeColabs = colaboradores.filter(c => c.status === 'active');
 
     const vtColabs = activeColabs
@@ -1037,6 +1039,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
         const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
         const isEstagio = c.contract_type === 'Estágio' || roleName.includes('estagiário') || roleName.includes('estagiario') || roleName.includes('estagio') || roleName.includes('estágio');
         const isCLT = c.contract_type === 'CLT';
+
+        if (group === 'Estagiários') return isEstagio;
+        if (group === 'CLTs') return isCLT;
         return isEstagio || isCLT;
       })
       .map(c => {
@@ -1068,6 +1073,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       locations,
       teams,
       atuacoes,
+      fileName: `Custo_Vale_Transporte_${group}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}`
     });
   };
 
@@ -2285,12 +2291,43 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <h3 className="text-lg font-black text-[#1e3a8a] flex items-center gap-2">
                 <Bus className="h-5 w-5 text-amber-500" /> Custo de Vale Transporte (CLT e Estagiários)
               </h3>
-              <button
-                onClick={handleExportVT}
-                className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-xl active:scale-95 text-xs"
-              >
-                <FileSpreadsheet className="h-4 w-4" /> Exportar Relação (XLSX)
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportVTMenu(!showExportVTMenu)}
+                  className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-xl active:scale-95 text-xs"
+                >
+                  <FileSpreadsheet className="h-4 w-4" /> Exportar Relação (XLSX) <ChevronDown className="h-4 w-4 ml-1" />
+                </button>
+
+                {showExportVTMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowExportVTMenu(false)}></div>
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                      <button
+                        onClick={() => handleExportVT('Estagiários')}
+                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
+                      >
+                        <GraduationCap className="h-4 w-4 text-emerald-600" />
+                        Estagiários
+                      </button>
+                      <button
+                        onClick={() => handleExportVT('CLTs')}
+                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
+                      >
+                        <Briefcase className="h-4 w-4 text-emerald-600" />
+                        CLTs
+                      </button>
+                      <button
+                        onClick={() => handleExportVT('Todos')}
+                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
+                      >
+                        <Users className="h-4 w-4 text-emerald-600" />
+                        Todos (CLT e Estágio)
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {[
