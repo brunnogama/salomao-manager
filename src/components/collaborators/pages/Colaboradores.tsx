@@ -1508,6 +1508,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   onClick={() => {
                     setFormData({ status: 'active', state: '' })
                     setPhotoPreview(null)
+                    setSelectedPhotoFile(null)
                     setActiveFormTab(1)
                     setShowFormModal(true)
                   }}
@@ -2557,6 +2558,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
           photoInputRef={photoInputRef}
           setPhotoPreview={setPhotoPreview}
           onPhotoSelected={setSelectedPhotoFile}
+          onRemovePhoto={() => {
+            setPhotoPreview(null)
+            setSelectedPhotoFile(null)
+            setFormData(prev => ({ ...prev, photo_url: undefined, foto_url: undefined }))
+          }}
         />,
         true, // isEditMode = true for the form modal
         formData
