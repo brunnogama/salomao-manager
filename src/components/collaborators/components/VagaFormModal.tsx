@@ -374,7 +374,34 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                     <ManagedSelect
                                         label="Cargo"
                                         value={formData.role_id?.toString() || ''}
-                                        onChange={v => setFormData({ ...formData, role_id: v })}
+                                        onChange={async (v) => {
+                                            if (!v) {
+                                                setFormData({ ...formData, role_id: v });
+                                                return;
+                                            }
+
+                                            // Fetch default tags for the selected role
+                                            if (!formData.perfil || formData.perfil.trim() === '') {
+                                                try {
+                                                    const { data, error } = await supabase
+                                                        .from('roles')
+                                                        .select('default_tags')
+                                                        .eq('id', v)
+                                                        .single();
+
+                                                    if (!error && data && data.default_tags) {
+                                                        setFormData({ ...formData, role_id: v, perfil: data.default_tags });
+                                                    } else {
+                                                        setFormData({ ...formData, role_id: v });
+                                                    }
+                                                } catch (err) {
+                                                    console.error("Error fetching role default tags:", err);
+                                                    setFormData({ ...formData, role_id: v });
+                                                }
+                                            } else {
+                                                setFormData({ ...formData, role_id: v });
+                                            }
+                                        }}
                                         tableName="roles"
                                     />
 

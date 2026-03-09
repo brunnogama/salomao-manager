@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Plus, Loader2, Save, Trash2, Edit2, X, Table as TableIcon, ArrowRight, ArrowLeft, Tag, Briefcase, GraduationCap } from 'lucide-react';
+import { Plus, Loader2, Save, Trash2, Edit2, X, ArrowRight, ArrowLeft, Tag, Briefcase, GraduationCap } from 'lucide-react';
 import { formatDbMoneyToDisplay } from '../utils/colaboradoresUtils';
 import { ConfirmationModal } from '../../ui/ConfirmationModal';
 
@@ -28,7 +28,6 @@ export function TabelasTab() {
     const [activeView, setActiveView] = useState<ViewState>('menu');
 
     const [rules, setRules] = useState<BolsaEstagioRule[]>([]);
-    const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -89,7 +88,6 @@ export function TabelasTab() {
             if (error) throw error;
 
             const rolesData = data || [];
-            setRoles(rolesData);
 
             // Separação entre Jurídico e Administrativo
             // Baseado na lógica já existente (VagaFormModal/DadosCorporativos):
