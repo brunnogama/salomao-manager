@@ -28,7 +28,8 @@ BEGIN
     escolaridade_nivel, escolaridade_subnivel, escolaridade_instituicao,
     escolaridade_matricula, escolaridade_semestre, escolaridade_previsao_conclusao, escolaridade_curso,
     education_history, transportes,
-    idiomas, atividades_academicas, pis_pasep, oabs
+    idiomas, atividades_academicas, pis_pasep,
+    telefone, indicado_por, linkedin_url
   INTO v_old
   FROM collaborators
   WHERE update_token = p_token
@@ -77,7 +78,9 @@ BEGIN
     'idiomas', v_old.idiomas,
     'atividades_academicas', v_old.atividades_academicas,
     'pis_pasep', v_old.pis_pasep,
-    'oabs', v_old.oabs
+    'telefone', v_old.telefone,
+    'indicado_por', v_old.indicado_por,
+    'linkedin_url', v_old.linkedin_url
   );
 
   -- Detectar campos alterados comparando valores antigos com novos
@@ -112,7 +115,9 @@ BEGIN
   IF COALESCE(v_old.idiomas, '') IS DISTINCT FROM COALESCE(p_data->>'idiomas', '') THEN v_changed_fields := v_changed_fields || '"idiomas"'::jsonb; END IF;
   IF COALESCE(v_old.atividades_academicas, '') IS DISTINCT FROM COALESCE(p_data->>'atividades_academicas', '') THEN v_changed_fields := v_changed_fields || '"atividades_academicas"'::jsonb; END IF;
   IF COALESCE(v_old.pis_pasep, '') IS DISTINCT FROM COALESCE(p_data->>'pis_pasep', '') THEN v_changed_fields := v_changed_fields || '"pis_pasep"'::jsonb; END IF;
-  IF COALESCE(v_old.oabs::text, '[]') IS DISTINCT FROM COALESCE((p_data->'oabs')::text, '[]') THEN v_changed_fields := v_changed_fields || '"oabs"'::jsonb; END IF;
+  IF COALESCE(v_old.telefone, '') IS DISTINCT FROM COALESCE(p_data->>'telefone', '') THEN v_changed_fields := v_changed_fields || '"telefone"'::jsonb; END IF;
+  IF COALESCE(v_old.indicado_por, '') IS DISTINCT FROM COALESCE(p_data->>'indicado_por', '') THEN v_changed_fields := v_changed_fields || '"indicado_por"'::jsonb; END IF;
+  IF COALESCE(v_old.linkedin_url, '') IS DISTINCT FROM COALESCE(p_data->>'linkedin_url', '') THEN v_changed_fields := v_changed_fields || '"linkedin_url"'::jsonb; END IF;
 
   UPDATE collaborators
   SET 
@@ -174,7 +179,9 @@ BEGIN
     idiomas = p_data->>'idiomas',
     atividades_academicas = p_data->>'atividades_academicas',
     pis_pasep = p_data->>'pis_pasep',
-    oabs = (p_data->'oabs')::JSONB,
+    telefone = p_data->>'telefone',
+    indicado_por = p_data->>'indicado_por',
+    linkedin_url = p_data->>'linkedin_url',
 
     -- Rastreamento de alterações
     magic_link_snapshot = v_snapshot,
