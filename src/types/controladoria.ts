@@ -214,6 +214,9 @@ export interface Collaborator {
   rateios?: { id: string; name: string };
 
   cadastro_atualizado?: boolean;
+  magic_link_snapshot?: Record<string, any>;
+  magic_link_updated_at?: string;
+  magic_link_changed_fields?: string[];
   competencias?: string;
 
   created_at?: string;

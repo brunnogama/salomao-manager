@@ -13,14 +13,18 @@ interface OABSectionProps {
     setFormData: (data: Partial<Collaborator>) => void
     maskDate: (value: string) => string
     isViewMode?: boolean
+    changedFields?: string[]
 }
 
 export function OABSection({
     formData,
     setFormData,
     maskDate,
-    isViewMode = false
+    isViewMode = false,
+    changedFields = []
 }: OABSectionProps) {
+    const isChanged = (field: string) => changedFields.includes(field)
+    const highlightClass = 'ring-2 ring-amber-400 border-amber-300 bg-amber-50/30'
     return (
         <section className="space-y-4">
             <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
@@ -34,7 +38,7 @@ export function OABSection({
                             PIS/PASEP
                         </label>
                         <input
-                            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''} ${isChanged('pis_pasep') ? highlightClass : ''}`}
                             value={formData.pis_pasep || ''}
                             onChange={e => setFormData({ ...formData, pis_pasep: e.target.value.replace(/\D/g, '').slice(0, 11) })}
                             maxLength={11}
@@ -68,7 +72,7 @@ export function OABSection({
                 </div>
 
                 {(formData.oabs?.length ? formData.oabs : [{ numero: '', uf: '', tipo: 'Principal', validade: '' }]).map((oab, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100 relative group">
+                    <div key={index} className={`grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100 relative group ${isChanged('oabs') ? highlightClass : ''}`}>
                         {oab.tipo === 'Principal' ? (
                             <div className="absolute -top-2 -left-2 bg-[#1e3a8a] text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-sm z-10">
                                 Principal

@@ -356,6 +356,8 @@ export default function AtualizacaoCadastral() {
                     instituicao_uf: edu.instituicao_uf || null,
                     previsao_conclusao: formatDateToISO(edu.previsao_conclusao) || null
                 })),
+                idiomas: formData.idiomas || null,
+                atividades_academicas: formData.atividades_academicas || null,
                 transportes: formData.transportes || []
             };
 

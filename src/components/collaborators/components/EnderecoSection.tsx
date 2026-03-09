@@ -21,6 +21,7 @@ interface EnderecoSectionProps {
   maskCEP: (value: string) => string
   handleCepBlur: () => void
   isViewMode?: boolean
+  changedFields?: string[]
 }
 
 export function EnderecoSection({
@@ -28,10 +29,14 @@ export function EnderecoSection({
   setFormData,
   maskCEP,
   handleCepBlur,
-  isViewMode = false
+  isViewMode = false,
+  changedFields = []
 }: EnderecoSectionProps) {
+  const isChanged = (field: string) => changedFields.includes(field)
+  const highlightClass = 'ring-2 ring-amber-400 border-amber-300 bg-amber-50/30'
+  const addressChanged = isChanged('zip_code') || isChanged('address') || isChanged('address_number') || isChanged('address_complement') || isChanged('neighborhood') || isChanged('city') || isChanged('state')
   return (
-    <section className="space-y-4">
+    <section className={`space-y-4 ${addressChanged ? 'ring-2 ring-amber-400/50 rounded-xl p-4 bg-amber-50/10' : ''}`}>
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
         <MapPin className="h-4 w-4" /> Endereço
       </h3>

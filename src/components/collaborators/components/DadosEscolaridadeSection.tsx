@@ -10,6 +10,7 @@ interface DadosEscolaridadeSectionProps {
     maskDate: (v: string) => string
     handleRefresh?: () => void
     isViewMode?: boolean
+    changedFields?: string[]
 }
 
 const semestres = ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período', '6º Período', '7º Período', '8º Período', '9º Período', '10º Período']
@@ -27,7 +28,9 @@ const ESTADOS_BRASIL = [
     { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }
 ]
 
-export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isViewMode = false }: DadosEscolaridadeSectionProps) {
+export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isViewMode = false, changedFields = [] }: DadosEscolaridadeSectionProps) {
+    const isChanged = (field: string) => changedFields.includes(field)
+    const highlightClass = 'ring-2 ring-amber-400 border-amber-300 bg-amber-50/30'
     const [institutions, setInstitutions] = useState<{ id: string, uf: string, name: string }[]>([])
     const [courses, setCourses] = useState<{ id: string, name: string }[]>([])
     const [postCourses, setPostCourses] = useState<{ id: string, name: string }[]>([])
@@ -691,7 +694,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
 
                         <div className="flex flex-col gap-3">
                             {idiomasList.length > 0 && (
-                                <div className="flex flex-col gap-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100 min-h-[60px]">
+                                <div className={`flex flex-col gap-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100 min-h-[60px] ${isChanged('idiomas') ? highlightClass : ''}`}>
                                     {idiomasList.map((idioma, idx) => (
                                         <div key={idx} className="flex items-center justify-between bg-white border border-gray-200 px-3 py-2.5 rounded-lg shadow-sm group transition-all hover:border-blue-200">
                                             <span className="text-sm font-semibold text-gray-700">{idioma}</span>
@@ -742,7 +745,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
 
                         <div className="flex flex-col gap-3">
                             {atividadesList.length > 0 && (
-                                <div className="flex flex-col gap-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100 min-h-[60px]">
+                                <div className={`flex flex-col gap-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100 min-h-[60px] ${isChanged('atividades_academicas') ? highlightClass : ''}`}>
                                     {atividadesList.map((atividade, idx) => (
                                         <div key={idx} className="flex items-center justify-between bg-white border border-gray-200 px-3 py-2.5 rounded-lg shadow-sm group transition-all hover:border-blue-200">
                                             <span className="text-sm font-semibold text-gray-700">{atividade}</span>

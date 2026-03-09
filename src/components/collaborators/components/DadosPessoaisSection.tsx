@@ -15,6 +15,7 @@ interface DadosPessoaisSectionProps {
   maskCNPJ: (value: string) => string
   isViewMode?: boolean
   hideBankingAndEmergency?: boolean
+  changedFields?: string[]
 }
 
 export function DadosPessoaisSection({
@@ -26,9 +27,12 @@ export function DadosPessoaisSection({
   maskPhone,
   maskCNPJ,
   isViewMode = false,
-  hideBankingAndEmergency = false
+  hideBankingAndEmergency = false,
+  changedFields = []
 }: DadosPessoaisSectionProps) {
   const [bancos, setBancos] = useState<{ name: string }[]>([])
+  const isChanged = (field: string) => changedFields.includes(field)
+  const highlightClass = 'ring-2 ring-amber-400 border-amber-300 bg-amber-50/30'
 
   useEffect(() => {
     fetch('https://brasilapi.com.br/api/banks/v1')
@@ -55,7 +59,7 @@ export function DadosPessoaisSection({
             Nome Completo
           </label>
           <input
-            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''} ${isChanged('name') ? highlightClass : ''}`}
             value={formData.name || ''}
             onChange={e => setFormData({ ...formData, name: e.target.value })}
             disabled={isViewMode}
@@ -82,7 +86,7 @@ export function DadosPessoaisSection({
               Identidade (RG)
             </label>
             <input
-              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''} ${isChanged('rg') ? highlightClass : ''}`}
               value={formData.rg || ''}
               onChange={e => setFormData({ ...formData, rg: maskRG(e.target.value) })}
               maxLength={10}
@@ -96,7 +100,7 @@ export function DadosPessoaisSection({
               CPF
             </label>
             <input
-              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''} ${isChanged('cpf') ? highlightClass : ''}`}
               value={formData.cpf || ''}
               onChange={e => setFormData({ ...formData, cpf: maskCPF(e.target.value) })}
               maxLength={14}
@@ -114,7 +118,7 @@ export function DadosPessoaisSection({
               Data Nascimento
             </label>
             <input
-              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''} ${isChanged('birthday') ? highlightClass : ''}`}
               value={formData.birthday || ''}
               onChange={e => setFormData({ ...formData, birthday: maskDate(e.target.value) })}
               maxLength={10}
@@ -179,7 +183,7 @@ export function DadosPessoaisSection({
             </label>
             <input
               type="email"
-              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''} ${isChanged('email_pessoal') ? highlightClass : ''}`}
               value={formData.email_pessoal || ''}
               onChange={e => setFormData({ ...formData, email_pessoal: e.target.value })}
               placeholder="Digite o e-mail pessoal"

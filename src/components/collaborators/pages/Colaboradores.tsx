@@ -1102,11 +1102,25 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const renderModalContent = (activeTab: number, isViewMode: boolean, data: Partial<Collaborator>) => {
     const currentData = isViewMode ? data : formData;
     const currentSetData = isViewMode ? () => { } : setFormData;
+    const changedFields = isViewMode && data.cadastro_atualizado ? (data.magic_link_changed_fields || []) : [];
+
+    const magicLinkBanner = isViewMode && data.cadastro_atualizado && changedFields.length > 0 ? (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-3 mb-4 animate-in slide-in-from-top-2">
+        <div className="bg-amber-100 p-1.5 rounded-full text-amber-600 shrink-0">
+          <RefreshCcw className="w-4 h-4" />
+        </div>
+        <div>
+          <p className="text-amber-800 text-xs font-bold">Atualizado via Link Mágico{data.magic_link_updated_at ? ` em ${new Date(data.magic_link_updated_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}</p>
+          <p className="text-amber-600 text-[10px] mt-0.5">Os campos com <span className="inline-block w-2 h-2 bg-amber-400 rounded-full mx-0.5 align-middle"></span> borda dourada foram alterados pelo colaborador.</p>
+        </div>
+      </div>
+    ) : null;
 
     // 1. DADOS PESSOAIS
     if (activeTab === 1) {
       return (
         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          {magicLinkBanner}
           <DadosPessoaisSection
             formData={currentData}
             setFormData={currentSetData}
@@ -1116,6 +1130,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
             maskPhone={maskPhone}
             maskCNPJ={maskCNPJ}
             isViewMode={isViewMode}
+            changedFields={changedFields}
           />
           <EnderecoSection
             formData={currentData}
@@ -1123,6 +1138,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
             maskCEP={maskCEP}
             handleCepBlur={isViewMode ? () => { } : handleCepBlur}
             isViewMode={isViewMode}
+            changedFields={changedFields}
           />
           {/* Observações - Movido para o final da aba 1 */}
           <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
@@ -1159,11 +1175,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
     if (activeTab === 8) {
       return (
         <div className="animate-in slide-in-from-right-4 duration-300">
+          {magicLinkBanner}
           <OABSection
             formData={currentData}
             setFormData={currentSetData}
             maskDate={maskDate}
             isViewMode={isViewMode}
+            changedFields={changedFields}
           />
         </div>
       )
@@ -1173,12 +1191,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
     if (activeTab === 3) {
       return (
         <div className="animate-in slide-in-from-right-4 duration-300">
+          {magicLinkBanner}
           <DadosEscolaridadeSection
             formData={currentData}
             setFormData={currentSetData}
             maskDate={maskDate}
             handleRefresh={handleRefresh}
             isViewMode={isViewMode}
+            changedFields={changedFields}
           />
         </div>
       )
