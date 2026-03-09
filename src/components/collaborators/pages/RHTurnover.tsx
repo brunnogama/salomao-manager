@@ -165,6 +165,7 @@ export function RHTurnover() {
   const volInvolData = useMemo(() => {
     let vol = 0
     let invol = 0
+    let naoInformado = 0
     filteredTerminations.forEach(c => {
       // Assuming termination_initiative_id or reason indicates this
       // For now, let's distribute roughly if data is missing, or use actual field if available
@@ -174,13 +175,13 @@ export function RHTurnover() {
       } else if (initiative.includes('empregador') || initiative.includes('sem justa') || initiative.includes('justa')) {
         invol++
       } else {
-        // Fallback for demo/placeholder if no initiative
-        Math.random() > 0.4 ? vol++ : invol++
+        naoInformado++
       }
     })
     return [
       { name: 'Voluntário', value: vol },
-      { name: 'Involuntário', value: invol }
+      { name: 'Involuntário', value: invol },
+      { name: 'Não Informado', value: naoInformado }
     ]
   }, [filteredTerminations])
 
@@ -284,7 +285,7 @@ export function RHTurnover() {
     success: '#10b981',   // Green
     text: '#6b7280',
     grid: '#e5e7eb',
-    pie: ['#3b82f6', '#ef4444', '#f59e0b', '#10b981']
+    pie: ['#3b82f6', '#ef4444', '#9ca3af', '#f59e0b', '#10b981']
   }
 
   if (loading) {
@@ -479,6 +480,7 @@ export function RHTurnover() {
                   >
                     <Cell fill={COLORS.pie[0]} /> {/* Blue for Vol */}
                     <Cell fill={COLORS.pie[1]} /> {/* Red for Invol */}
+                    <Cell fill={COLORS.pie[2]} /> {/* Gray for Não Informado */}
                   </Pie>
                   <Tooltip content={RHChartTooltip} />
                   <Legend verticalAlign="bottom" height={36} />

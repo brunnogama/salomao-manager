@@ -1,19 +1,9 @@
-import { useState, useMemo, useEffect } from 'react'
 import {
   LayoutDashboard,
-  Users,
   Maximize2,
   Minimize2,
-  Cake,
-  TrendingUp,
-  Award,
-  MapPin,
-  DoorOpen,
-  PieChart as PieChartIcon
 } from 'lucide-react'
 import { usePresentation } from '../../../contexts/PresentationContext'
-import { useColaboradores } from '../hooks/useColaboradores'
-import { Collaborator } from '../../../types/controladoria'
 import { RHEvolucaoPessoal } from './RHEvolucaoPessoal'
 import { RHTempoCasa } from './RHTempoCasa'
 import { RHHeadcount } from './RHHeadcount'

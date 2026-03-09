@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import {
   TrendingUp,
   Filter,
@@ -46,6 +46,14 @@ const formatCompact = (val: number | undefined | null) => {
     compactDisplay: 'short',
     maximumFractionDigits: 1
   }).format(val);
+}
+
+const COLORS = {
+  primary: '#ea580c',   // Admin (Dark Orange)
+  secondary: '#1e3a8a', // Jurídico (Dark Blue)
+  tertiary: '#f59e0b',  // Amber
+  text: '#6b7280',
+  grid: '#e5e7eb'
 }
 
 // --- Main Component ---
@@ -234,7 +242,7 @@ export function RHEvolucaoPessoal() {
     }
   }, [filteredData, filterYear, filterMonth])
   // 2. Hiring Ranking by Role (Horizontal Bar)
-  const processHiringRanking = (targetSegment: Segment) => {
+  const processHiringRanking = useCallback((targetSegment: Segment) => {
     const roleCounts = new Map<string, number>()
 
     // Aggregation based on current filters
@@ -263,15 +271,12 @@ export function RHEvolucaoPessoal() {
     const data = Array.from(roleCounts.entries())
       .map(([role, count]) => ({ role, count }))
       .sort((a, b) => b.count - a.count) // Descending
-    // Take top 10? Or all? Let's show all for now, scroll if needed or just grow.
-    // User didn't specify limit, but chart size is fixed.
-    // Let's name it 'y' and 'x' for simple charting
 
     return data
-  }
+  }, [filteredData, filterYear, filterMonth])
 
-  const hiringAdminRanking = useMemo(() => processHiringRanking('Administrativo'), [filteredData, filterYear, filterMonth])
-  const hiringLegalRanking = useMemo(() => processHiringRanking('Jurídico'), [filteredData, filterYear, filterMonth])
+  const hiringAdminRanking = useMemo(() => processHiringRanking('Administrativo'), [processHiringRanking])
+  const hiringLegalRanking = useMemo(() => processHiringRanking('Jurídico'), [processHiringRanking])
 
   // 3. Hiring Flow (Line Area)
   const yearlyHiringFlow = useMemo(() => {
@@ -456,13 +461,7 @@ export function RHEvolucaoPessoal() {
     );
   };
 
-  const COLORS = {
-    primary: '#ea580c',   // Admin (Dark Orange)
-    secondary: '#1e3a8a', // Jurídico (Dark Blue)
-    tertiary: '#f59e0b',  // Amber
-    text: '#6b7280',
-    grid: '#e5e7eb'
-  }
+
 
   if (loading) {
     return (

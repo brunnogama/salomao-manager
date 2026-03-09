@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { RHAcoesFormModal, RHAction } from '../../collaborators/modals/RHAcoesFormModal'
+import { AlertModal } from '../../../components/ui/AlertModal'
 
 export function RHAcoes() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -18,6 +19,24 @@ export function RHAcoes() {
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedAction, setSelectedAction] = useState<RHAction | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+
+  // Alert Modal State
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    variant: 'success' | 'error' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    variant: 'info'
+  });
+
+  const showAlert = (title: string, description: string, variant: 'success' | 'error' | 'info' = 'info') => {
+    setAlertConfig({ isOpen: true, title, description, variant });
+  };
 
   useEffect(() => {
     fetchActions()
@@ -55,24 +74,29 @@ export function RHAcoes() {
       fetchActions()
     } catch (error) {
       console.error('Error saving action:', error)
-      alert('Erro ao salvar ação')
+      showAlert('Erro', 'Erro ao salvar ação', 'error')
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta ação?')) return
+  const handleDelete = (id: string) => {
+    setPendingDeleteId(id)
+  }
 
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return
     try {
       const { error } = await supabase
         .from('rh_actions')
         .delete()
-        .eq('id', id)
+        .eq('id', pendingDeleteId)
 
       if (error) throw error
       fetchActions()
     } catch (error) {
       console.error('Error deleting action:', error)
-      alert('Erro ao excluir ação')
+      showAlert('Erro', 'Erro ao excluir ação', 'error')
+    } finally {
+      setPendingDeleteId(null)
     }
   }
 
@@ -224,6 +248,27 @@ export function RHAcoes() {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
         initialData={selectedAction}
+      />
+
+      {/* Confirm Delete */}
+      <AlertModal
+        isOpen={!!pendingDeleteId}
+        onClose={() => setPendingDeleteId(null)}
+        title="Excluir Ação"
+        description="Tem certeza que deseja excluir esta ação?"
+        variant="error"
+        confirmText="Excluir"
+        onConfirm={confirmDelete}
+      />
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        title={alertConfig.title}
+        description={alertConfig.description}
+        variant={alertConfig.variant}
+        confirmText="OK"
       />
     </div>
   )

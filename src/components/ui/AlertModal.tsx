@@ -7,7 +7,9 @@ export interface AlertModalProps {
     title: string;
     description?: string;
     confirmText?: string;
+    cancelText?: string;
     variant?: 'success' | 'error' | 'info' | 'warning';
+    onConfirm?: () => void;
 }
 
 export function AlertModal({
@@ -16,7 +18,9 @@ export function AlertModal({
     title,
     description,
     confirmText = 'OK',
-    variant = 'success'
+    cancelText = 'Cancelar',
+    variant = 'success',
+    onConfirm
 }: AlertModalProps) {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -98,12 +102,29 @@ export function AlertModal({
                         </p>
                     )}
 
-                    <button
-                        onClick={onClose}
-                        className={`w-full px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white rounded-xl transition-all shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center gap-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] hover:shadow-lg`}
-                    >
-                        {confirmText}
-                    </button>
+                    {onConfirm ? (
+                        <div className="flex gap-3 w-full">
+                            <button
+                                onClick={onClose}
+                                className="flex-1 px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all active:scale-95 focus:outline-none"
+                            >
+                                {cancelText}
+                            </button>
+                            <button
+                                onClick={() => { onConfirm(); onClose(); }}
+                                className={`flex-1 px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white rounded-xl transition-all shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center gap-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] hover:shadow-lg`}
+                            >
+                                {confirmText}
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={onClose}
+                            className={`w-full px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white rounded-xl transition-all shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center gap-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] hover:shadow-lg`}
+                        >
+                            {confirmText}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { Vaga } from '../../../types/controladoria'
 import {
@@ -17,13 +17,139 @@ import {
   Sparkles,
   UserX
 } from 'lucide-react'
-import { isValid, addDays, getDay, isSameDay } from 'date-fns'
+// date-fns importado acima do componente junto com as funções utilitárias
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 import { VagaFormModal } from '../components/VagaFormModal'
 import { VagaViewModal } from '../components/VagaViewModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
 import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelectionModal'
 import { formatDateToDisplay } from '../utils/colaboradoresUtils'
+import { AlertModal } from '../../../components/ui/AlertModal'
+import { isValid, addDays, getDay, isSameDay } from 'date-fns'
+
+// ==== FUNÇÕES UTILITÁRIAS PURAS (fora do componente para evitar recriação a cada render) ====
+
+const extractTags = (perfilStr?: string): string[] => {
+  if (!perfilStr) return [];
+  return perfilStr
+    .split('\n')
+    .map(t => t.trim())
+    .filter(t => t.length > 0);
+};
+
+const calculateMatchScore = (sourceTags: string[], targetTags: string[]) => {
+  if (sourceTags.length === 0 || targetTags.length === 0) return { score: 0, matches: 0, matchedTags: [] as string[] };
+
+  const sourceLower = sourceTags.map(t => t.toLowerCase());
+  const targetLower = targetTags.map(t => t.toLowerCase());
+
+  const matched = targetLower.filter(t => sourceLower.includes(t));
+  const score = Math.round((matched.length / sourceTags.length) * 100);
+
+  return {
+    score: score > 100 ? 100 : score,
+    matches: matched.length,
+    matchedTags: matched
+  };
+};
+
+const getFeriados = (year: number): Date[] => {
+  const fixed = [
+    new Date(year, 0, 1),
+    new Date(year, 0, 20),
+    new Date(year, 3, 21),
+    new Date(year, 3, 23),
+    new Date(year, 4, 1),
+    new Date(year, 8, 7),
+    new Date(year, 9, 12),
+    new Date(year, 10, 2),
+    new Date(year, 10, 15),
+    new Date(year, 10, 20),
+    new Date(year, 11, 25),
+  ];
+
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  const easter = new Date(year, month, day);
+
+  const carnavalTuesday = addDays(easter, -47);
+  const carnavalMonday = addDays(easter, -48);
+  const sextaSanta = addDays(easter, -2);
+  const corpusChristi = addDays(easter, 60);
+
+  return [...fixed, carnavalMonday, carnavalTuesday, sextaSanta, corpusChristi];
+};
+
+const isFeriado = (date: Date, feriadosCache: Record<number, Date[]>): boolean => {
+  const year = date.getFullYear();
+  if (!feriadosCache[year]) {
+    feriadosCache[year] = getFeriados(year);
+  }
+  return feriadosCache[year].some(feriado => isSameDay(date, feriado));
+};
+
+const countBusinessDays = (start: Date, end: Date): number => {
+  let count = 0;
+  let current = new Date(start);
+  const feriadosCache: Record<number, Date[]> = {};
+
+  current.setHours(0, 0, 0, 0);
+  const endDate = new Date(end);
+  endDate.setHours(0, 0, 0, 0);
+
+  if (current > endDate) return 0;
+
+  while (current < endDate) {
+    const dayOfWeek = getDay(current);
+
+    if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isFeriado(current, feriadosCache)) {
+      count++;
+    }
+    current = addDays(current, 1);
+  }
+
+  return count;
+};
+
+const calculateTempoAberto = (data_abertura?: string, data_fechamento?: string) => {
+  if (!data_abertura) return '-'
+
+  try {
+    const [year, month, day] = data_abertura.split('-').map(Number)
+    const startDate = new Date(year, month - 1, day)
+
+    let endDate = new Date()
+    if (data_fechamento) {
+      const [eYear, eMonth, eDay] = data_fechamento.split('-').map(Number)
+      endDate = new Date(eYear, eMonth - 1, eDay)
+    }
+
+    if (!isValid(startDate) || !isValid(endDate)) return '-'
+
+    const days = countBusinessDays(startDate, endDate);
+
+    if (days === 0 && isSameDay(startDate, endDate)) return 'Hoje';
+    if (days < 0) return '-';
+
+    return `${days} ${days === 1 ? 'dia útil' : 'dias úteis'}`;
+  } catch (e) {
+    return '-'
+  }
+};
+
+// ==== FIM FUNÇÕES UTILITÁRIAS ====
 
 export function RHVagas() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -32,6 +158,23 @@ export function RHVagas() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'reprovados' | 'ats'>('ats')
+
+  // Alert Modal State
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    variant: 'success' | 'error' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    variant: 'info'
+  });
+
+  const showAlert = (title: string, description: string, variant: 'success' | 'error' | 'info' = 'info') => {
+    setAlertConfig({ isOpen: true, title, description, variant });
+  };
 
   // Filtros
   const [filterLider, setFilterLider] = useState('')
@@ -137,32 +280,6 @@ export function RHVagas() {
 
   // ==== MATCH SYSTEM LOGIC ====
 
-  // Helper: Extrair tags de uma string multiline 'perfil'
-  const extractTags = (perfilStr?: string): string[] => {
-    if (!perfilStr) return [];
-    return perfilStr
-      .split('\n')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
-  };
-
-  // Helper: Calcular similaridade básica entre arrays de tags
-  const calculateMatchScore = (sourceTags: string[], targetTags: string[]) => {
-    if (sourceTags.length === 0 || targetTags.length === 0) return { score: 0, matches: 0, matchedTags: [] };
-
-    const sourceLower = sourceTags.map(t => t.toLowerCase());
-    const targetLower = targetTags.map(t => t.toLowerCase());
-
-    const matched = targetLower.filter(t => sourceLower.includes(t));
-    const score = Math.round((matched.length / sourceTags.length) * 100);
-
-    return {
-      score: score > 100 ? 100 : score, // Cap em 100%
-      matches: matched.length,
-      matchedTags: matched
-    };
-  };
-
   const handleRunAiMatch = async (vagaId: string, candidatoId: string) => {
     setIsAiMatching(true);
     try {
@@ -203,7 +320,7 @@ export function RHVagas() {
         }));
       }
     } catch (e: any) {
-      alert("Erro ao processar Match via IA: " + e.message);
+      showAlert('Erro', 'Erro ao processar Match via IA: ' + e.message, 'error');
     } finally {
       setIsAiMatching(false);
     }
@@ -211,7 +328,7 @@ export function RHVagas() {
 
   // State derivado: Vaga Ativa no Match e lista de Candidatos Ordenada
   const activeMatchVaga = vagas.find(v => v.id === selectedMatchVagaId);
-  const matchedCandidatos = (() => {
+  const matchedCandidatos = useMemo(() => {
     if (!activeMatchVaga || matchMode !== 'vaga') return [];
     const vagaTags = extractTags(activeMatchVaga.perfil);
 
@@ -252,11 +369,11 @@ export function RHVagas() {
         candidatoTags
       };
     }).sort((a, b) => b.score - a.score);
-  })();
+  }, [activeMatchVaga, matchMode, candidatos, roleOptions]);
 
   // State derivado: Candidato Ativo no Match e lista de Vagas Ordenada
   const activeMatchCandidato = candidatos.find(c => c.id === selectedMatchCandidatoId);
-  const matchedVagas = (() => {
+  const matchedVagas = useMemo(() => {
     if (!activeMatchCandidato || matchMode !== 'candidato') return [];
     const candidatoTags = extractTags(activeMatchCandidato.perfil);
 
@@ -274,7 +391,7 @@ export function RHVagas() {
           vagaTags
         };
       }).sort((a, b) => b.score - a.score);
-  })();
+  }, [activeMatchCandidato, matchMode, vagas]);
   // ============================
 
   const handleOpenSelectionModal = () => {
@@ -345,37 +462,50 @@ export function RHVagas() {
     setCandidatoInitialFile(null)
   }
 
-  const handleDeleteVaga = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!window.confirm('Tem certeza que deseja excluir esta vaga? Todos os dados vinculados a ela poderão ser perdidos.')) return
+  const [pendingDeleteVaga, setPendingDeleteVaga] = useState<{ id: string } | null>(null)
+  const [pendingDeleteCandidato, setPendingDeleteCandidato] = useState<{ id: string } | null>(null)
 
+  const handleDeleteVaga = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setPendingDeleteVaga({ id })
+  }
+
+  const confirmDeleteVaga = async () => {
+    if (!pendingDeleteVaga) return
     try {
-      const { error } = await supabase.from('vagas').delete().eq('id', id)
+      const { error } = await supabase.from('vagas').delete().eq('id', pendingDeleteVaga.id)
       if (error) throw error
       fetchVagas()
     } catch (err) {
       console.error('Erro ao excluir vaga:', err)
-      alert('Não foi possível excluir a vaga. Verifique se existem talentos vinculados.')
+      showAlert('Erro', 'Não foi possível excluir a vaga. Verifique se existem talentos vinculados.', 'error')
+    } finally {
+      setPendingDeleteVaga(null)
     }
   }
 
-  const handleDeleteCandidato = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteCandidato = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!window.confirm('Tem certeza que deseja excluir este candidato permanentemente?')) return
+    setPendingDeleteCandidato({ id })
+  }
 
+  const confirmDeleteCandidato = async () => {
+    if (!pendingDeleteCandidato) return
     try {
-      const { error } = await supabase.from('candidatos').delete().eq('id', id)
+      const { error } = await supabase.from('candidatos').delete().eq('id', pendingDeleteCandidato.id)
       if (error) throw error
       fetchCandidatos()
     } catch (err) {
       console.error('Erro ao excluir candidato:', err)
-      alert('Não foi possível excluir o candidato. Verifique os vínculos.')
+      showAlert('Erro', 'Não foi possível excluir o candidato. Verifique os vínculos.', 'error')
+    } finally {
+      setPendingDeleteCandidato(null)
     }
   }
 
 
 
-  const filteredVagas = vagas.filter(v => {
+  const filteredVagas = useMemo(() => vagas.filter(v => {
     const term = searchTerm.toLowerCase()
     const matchSearch = (
       v.vaga_id_text?.toLowerCase().includes(term) ||
@@ -393,9 +523,9 @@ export function RHVagas() {
     const matchArea = filterArea ? String(v.area) === filterArea : true
 
     return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchArea
-  })
+  }), [vagas, searchTerm, filterLider, filterPartner, filterLocal, filterCargo, filterArea])
 
-  const filteredCandidatos = candidatos.filter(c => {
+  const filteredCandidatos = useMemo(() => candidatos.filter(c => {
     const term = searchTerm.toLowerCase()
     const matchSearch = c.nome?.toLowerCase().includes(term) || c.email?.toLowerCase().includes(term)
 
@@ -406,126 +536,21 @@ export function RHVagas() {
     const matchArea = filterArea ? String(c.area) === filterArea : true
 
     return matchSearch && matchLocal && matchCargo && matchArea
-  })
+  }), [candidatos, searchTerm, filterLocal, filterCargo, filterArea])
 
-  const getFeriados = (year: number): Date[] => {
-    // Feriados fixos (Nacionais + RJ)
-    const fixed = [
-      new Date(year, 0, 1),   // Confraternização Universal
-      new Date(year, 0, 20),  // São Sebastião (RJ)
-      new Date(year, 3, 21),  // Tiradentes
-      new Date(year, 3, 23),  // São Jorge (RJ)
-      new Date(year, 4, 1),   // Dia do Trabalhador
-      new Date(year, 8, 7),   // Independência
-      new Date(year, 9, 12),  // Nossa Sra Aparecida
-      new Date(year, 10, 2),  // Finados
-      new Date(year, 10, 15), // Proclamação da República
-      new Date(year, 10, 20), // Consciência Negra
-      new Date(year, 11, 25), // Natal
-    ];
-
-    // Cálculo da Páscoa (Computus)
-    const a = year % 19;
-    const b = Math.floor(year / 100);
-    const c = year % 100;
-    const d = Math.floor(b / 4);
-    const e = b % 4;
-    const f = Math.floor((b + 8) / 25);
-    const g = Math.floor((b - f + 1) / 3);
-    const h = (19 * a + b - d - g + 15) % 30;
-    const i = Math.floor(c / 4);
-    const k = c % 4;
-    const l = (32 + 2 * e + 2 * i - h - k) % 7;
-    const m = Math.floor((a + 11 * h + 22 * l) / 451);
-    const month = Math.floor((h + l - 7 * m + 114) / 31) - 1; // 0-indexed month
-    const day = ((h + l - 7 * m + 114) % 31) + 1;
-    const easter = new Date(year, month, day);
-
-    // Feriados Móveis
-    const carnavalTuesday = addDays(easter, -47);
-    const carnavalMonday = addDays(easter, -48);
-    const sextaSanta = addDays(easter, -2);
-    const corpusChristi = addDays(easter, 60);
-
-    return [...fixed, carnavalMonday, carnavalTuesday, sextaSanta, corpusChristi];
-  }
-
-  const isFeriado = (date: Date, feriadosCache: Record<number, Date[]>): boolean => {
-    const year = date.getFullYear();
-    if (!feriadosCache[year]) {
-      feriadosCache[year] = getFeriados(year);
-    }
-    return feriadosCache[year].some(feriado => isSameDay(date, feriado));
-  }
-
-  const countBusinessDays = (start: Date, end: Date): number => {
-    let count = 0;
-    let current = new Date(start);
-    const feriadosCache: Record<number, Date[]> = {};
-
-    // Se as datas forem no mesmo dia ou end for antes, a lógica dependerá se conta o próprio dia
-    // SLA geralmente conta os dias que se passaram, então se abrir e fechar no mesmo dia útil: 1 dia ou 0? 
-    // Faremos com que 1 dia completo passe a ser 1
-
-    // Normalize para meia-noite
-    current.setHours(0, 0, 0, 0);
-    const endDate = new Date(end);
-    endDate.setHours(0, 0, 0, 0);
-
-    if (current > endDate) return 0;
-
-    while (current < endDate) {
-      const dayOfWeek = getDay(current); // 0 = Domingo, 6 = Sábado
-
-      // Se não é fim de semana nem feriado, soma 1
-      if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isFeriado(current, feriadosCache)) {
-        count++;
-      }
-      current = addDays(current, 1);
-    }
-
-    return count;
-  }
-
-  const calculateTempoAberto = (data_abertura?: string, data_fechamento?: string) => {
-    if (!data_abertura) return '-'
-
-    try {
-      const [year, month, day] = data_abertura.split('-').map(Number)
-      const startDate = new Date(year, month - 1, day)
-
-      let endDate = new Date()
-      // Caso não tenha fechamento, finalizamos o cálculo no final do dia de hoje (ou no começo, para igualar SLA)
-      if (data_fechamento) {
-        const [eYear, eMonth, eDay] = data_fechamento.split('-').map(Number)
-        endDate = new Date(eYear, eMonth - 1, eDay)
-      }
-
-      if (!isValid(startDate) || !isValid(endDate)) return '-'
-
-      // O SLA usa apenas de dias passados
-      const days = countBusinessDays(startDate, endDate);
-
-      if (days === 0 && isSameDay(startDate, endDate)) return 'Hoje';
-      if (days < 0) return '-';
-
-      return `${days} ${days === 1 ? 'dia útil' : 'dias úteis'}`;
-    } catch (e) {
-      return '-'
-    }
-  }
-
-  // Stats
-  const vagasAbertas = vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').length
+  // Stats (memorizados)
+  const vagasAbertas = useMemo(() => vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').length, [vagas])
   const totalTalentosCount = candidatos.length
 
-  const currentMonth = new Date().getMonth()
-  const currentYear = new Date().getFullYear()
-  const vagasFechadasNoMes = vagas.filter(v => {
-    if (v.status !== 'Fechada' || !v.data_fechamento) return false
-    const d = new Date(v.data_fechamento)
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
-  }).length
+  const vagasFechadasNoMes = useMemo(() => {
+    const currentMonth = new Date().getMonth()
+    const currentYear = new Date().getFullYear()
+    return vagas.filter(v => {
+      if (v.status !== 'Fechada' || !v.data_fechamento) return false
+      const d = new Date(v.data_fechamento)
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear
+    }).length
+  }, [vagas])
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24">
@@ -1276,6 +1301,38 @@ export function RHVagas() {
         isOpen={isSelectionModalOpen}
         onClose={() => setIsSelectionModalOpen(false)}
         onSelect={handleSelection}
+      />
+
+      {/* Confirm Delete Vaga */}
+      <AlertModal
+        isOpen={!!pendingDeleteVaga}
+        onClose={() => setPendingDeleteVaga(null)}
+        title="Excluir Vaga"
+        description="Tem certeza que deseja excluir esta vaga? Todos os dados vinculados a ela poderão ser perdidos."
+        variant="error"
+        confirmText="Excluir"
+        onConfirm={confirmDeleteVaga}
+      />
+
+      {/* Confirm Delete Candidato */}
+      <AlertModal
+        isOpen={!!pendingDeleteCandidato}
+        onClose={() => setPendingDeleteCandidato(null)}
+        title="Excluir Candidato"
+        description="Tem certeza que deseja excluir este candidato permanentemente?"
+        variant="error"
+        confirmText="Excluir"
+        onConfirm={confirmDeleteCandidato}
+      />
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        title={alertConfig.title}
+        description={alertConfig.description}
+        variant={alertConfig.variant}
+        confirmText="OK"
       />
     </div>
   )
