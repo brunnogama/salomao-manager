@@ -57,6 +57,15 @@ body {
   overflow: hidden;
 }
 
+/* Utilitário para ocultar scrollbar mantendo scroll funcional */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Customização de Scrollbar para as colunas e áreas de conteúdo */
 .custom-scrollbar::-webkit-scrollbar {
   width: 10px;
