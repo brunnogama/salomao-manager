@@ -126,7 +126,7 @@ export const formatMonthYearDateToISO = (displayDate: string | undefined | null)
 
 export const formatDbMoneyToDisplay = (dbValue: string | number | null | undefined): string => {
   if (dbValue === null || dbValue === undefined || dbValue === '') return '';
-  let asNum = typeof dbValue === 'string' ? Number(dbValue.replace(/[^0-9.-]+/g,"")) : dbValue;
+  let asNum = typeof dbValue === 'string' ? Number(dbValue.replace(/[^0-9.-]+/g, "")) : dbValue;
   if (isNaN(asNum)) return '';
   return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(asNum);
 }
@@ -147,3 +147,48 @@ export const getWorkingDaysInCurrentMonth = (): number => {
   }
   return workingDays;
 }
+
+export const getInternScholarshipValue = async (hireDateUrlFormat: string | undefined, educationHistory: any[] | undefined) => {
+  if (!hireDateUrlFormat || !educationHistory) return null;
+
+  // Find current graduation period
+  const graduacaoAtual = educationHistory.find(e => e.nivel === 'Graduação' && e.status === 'Cursando');
+  if (!graduacaoAtual || !graduacaoAtual.semestre) return null;
+
+  // extract number from semestre ("4º Período" -> 4)
+  const periodoMatch = graduacaoAtual.semestre.match(/\d+/);
+  if (!periodoMatch) return null;
+  const periodoAtual = parseInt(periodoMatch[0]);
+
+  // Calculate years of house
+  const [day, month, year] = hireDateUrlFormat.split('/').map(Number);
+  if (!day || !month || !year) return null;
+
+  const hireDateObj = new Date(year, month - 1, day);
+  const now = new Date();
+
+  let anosDeCasa = now.getFullYear() - hireDateObj.getFullYear();
+  const m = now.getMonth() - hireDateObj.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < hireDateObj.getDate())) {
+    anosDeCasa--;
+  }
+
+  // Base ano_de_casa is at least 1 (e.g., first year is 1)
+  anosDeCasa = anosDeCasa + 1;
+
+  // Import dynamically here or at top (it's fine to use supabase here)
+  const { supabase } = require('../../../lib/supabase');
+
+  const { data, error } = await supabase
+    .from('bolsa_estagio_rules')
+    .select('*')
+    .lte('ano_inicio', anosDeCasa)
+    .gte('ano_fim', anosDeCasa)
+    .lte('periodo_inicio', periodoAtual)
+    .gte('periodo_fim', periodoAtual)
+    .limit(1);
+
+  if (error || !data || data.length === 0) return null;
+
+  return data[0].valor_bolsa;
+};

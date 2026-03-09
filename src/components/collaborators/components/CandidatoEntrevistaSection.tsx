@@ -40,6 +40,7 @@ export function CandidatoEntrevistaSection({
         }
     };
     const [vagasAbertas, setVagasAbertas] = useState<any[]>([])
+    const [roleNameCache, setRoleNameCache] = useState<string>('');
 
     useEffect(() => {
         async function fetchVagas() {
@@ -62,6 +63,35 @@ export function CandidatoEntrevistaSection({
 
     // Dados da entrevista ficam salvos dentro de formData.entrevista_dados (jsonb)
     const entrevista = formData.entrevista_dados || {}
+
+    useEffect(() => {
+        async function fetchRoleName() {
+            const roleId = formData.role || formData.entrevista_dados?.cargo;
+            if (!roleId) {
+                setRoleNameCache('');
+                return;
+            }
+            const roleStr = String(roleId);
+            if (roleStr.toLowerCase().includes('advogado') || isNaN(Number(roleId)) && !roleStr.includes('-')) {
+                // Se já for uma string contendo 'advogado' ou um texto comum (não-UUID, não-número)
+                setRoleNameCache(roleStr);
+                return;
+            }
+            try {
+                const { data } = await supabase.from('roles').select('name').eq('id', roleId).maybeSingle();
+                if (data && data.name) {
+                    setRoleNameCache(data.name);
+                } else {
+                    setRoleNameCache(roleStr);
+                }
+            } catch (err) {
+                setRoleNameCache(roleStr);
+            }
+        }
+        fetchRoleName();
+    }, [formData.role, formData.entrevista_dados?.cargo]);
+
+    const isAdvogado = area === 'Jurídica' && typeof roleNameCache === 'string' && roleNameCache.toLowerCase().includes('advogado');
 
     const handleEntrevistaChange = (field: string, value: any) => {
         setFormData({
@@ -236,7 +266,7 @@ export function CandidatoEntrevistaSection({
                     </div>
                 )}
 
-                {area === 'Jurídica' && (
+                {area === 'Jurídica' && !isAdvogado && (
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <SearchableSelect
@@ -344,6 +374,128 @@ export function CandidatoEntrevistaSection({
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Pretensão Salarial</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={entrevista.pretensao_salarial || ''}
+                                    onChange={(e) => handleEntrevistaChange('pretensao_salarial', maskCurrencyInput(e.target.value))}
+                                    placeholder="R$ 0,00"
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {area === 'Jurídica' && isAdvogado && (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <SearchableSelect
+                                label="Entrevistadoras"
+                                placeholder="Selecione..."
+                                value={entrevista.entrevistadoras || ''}
+                                onChange={(val) => handleEntrevistaChange('entrevistadoras', val)}
+                                disabled={isViewMode}
+                                options={[
+                                    { id: 'Karina Reis Dos Prazeres', name: 'Karina Reis Dos Prazeres' },
+                                    { id: 'Tatiana Gonçalves Gomes', name: 'Tatiana Gonçalves Gomes' },
+                                    { id: 'Karina e Tatiana', name: 'Karina e Tatiana' }
+                                ]}
+                            />
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Indicação</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
+                                    value={formData.indicado_por || ''}
+                                    onChange={(e) => setFormData({ ...formData, indicado_por: e.target.value })}
+                                    disabled={isViewMode}
+                                />
+                            </div>
+                        </div>
+
+                        {[
+                            {
+                                section: "1. Abertura e Apresentação",
+                                questions: [
+                                    { key: 'abertura_apresentacao', label: 'Trajetória profissional' }
+                                ]
+                            },
+                            {
+                                section: "2. Experiência Técnica e Áreas de Atuação",
+                                questions: [
+                                    { key: 'exp_areas_especializacao', label: 'Principais áreas de especialização jurídica' },
+                                    { key: 'exp_contencioso_consultivo', label: 'Atuação com contencioso e consultivo' },
+                                    { key: 'exp_projeto_relevante', label: 'Projeto relevante que você liderou' },
+                                    { key: 'exp_atualizacao_legislacao', label: 'Atualização das informações da legislação?' }
+                                ]
+                            },
+                            {
+                                section: "3. Liderança e Gestão",
+                                questions: [
+                                    { key: 'lid_experiencia', label: 'Experiência com liderança de equipes ou departamentos jurídicos' },
+                                    { key: 'lid_delegacao', label: 'Delegação de tarefas e acompanhamento do desempenho dos membros da equipe?' },
+                                    { key: 'lid_conflitos', label: 'Conflitos internos na equipe. Como resolveu?' }
+                                ]
+                            },
+                            {
+                                section: "4. Relacionamento com Clientes e Comunicação",
+                                questions: [
+                                    { key: 'rel_clientes_dificeis', label: 'Relacionamento com clientes difíceis ou situações de crise' },
+                                    { key: 'rel_capacidade_negociacao', label: 'Capacidade de negociação' },
+                                    { key: 'rel_comunicacao_nao_tecnico', label: 'Comunicação com cliente não técnico' }
+                                ]
+                            },
+                            {
+                                section: "5. Tomada de Decisão e Ética",
+                                questions: [
+                                    { key: 'tomada_decisao_dificil', label: 'Tomada de decisão difícil.' }
+                                ]
+                            },
+                            {
+                                section: "6. Alinhamento Estratégico e Visão de Negócio",
+                                questions: [
+                                    { key: 'ali_papel_juridico', label: 'Como você observa o papel do departamento jurídico na estratégia da empresa?' },
+                                    { key: 'ali_projetos_multidisciplinares', label: 'Projetos multidisciplinares com outras áreas' },
+                                    { key: 'ali_atuacao_preventiva', label: 'Essencial para que o jurídico atue de forma preventiva e não apenas reativa?' }
+                                ]
+                            },
+                            {
+                                section: "7. Adequação Cultural e Motivação",
+                                questions: [
+                                    { key: 'adeq_interesse', label: 'Interesse em trabalhar conosco' },
+                                    { key: 'adeq_valores', label: 'Valores profissionais e como eles se alinham com a cultura da nossa organização?' },
+                                    { key: 'adeq_projeto_futuro', label: 'Projeto profissional nos próximos 3 a 5 anos' }
+                                ]
+                            },
+                            {
+                                section: "8. Encerramento",
+                                questions: [
+                                    { key: 'disponibilidade', label: 'Disponibilidade' }
+                                ]
+                            }
+                        ].map((group, groupIdx) => (
+                            <div key={groupIdx} className="space-y-4 pt-4 border-t border-gray-100 first:border-0 first:pt-0">
+                                <h4 className="text-sm font-black text-[#0a192f]">{group.section}</h4>
+                                <div className="grid grid-cols-1 gap-4">
+                                    {group.questions.map(field => (
+                                        <div key={field.key} className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block ml-1">• {field.label}</label>
+                                            <textarea
+                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm min-h-[80px] resize-y font-medium text-gray-700 disabled:opacity-70"
+                                                value={entrevista[field.key] || ''}
+                                                onChange={(e) => handleEntrevistaChange(field.key, e.target.value)}
+                                                disabled={isViewMode}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-100 pt-6">
                             <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Pretensão Salarial</label>
                                 <input

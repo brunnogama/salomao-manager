@@ -7,6 +7,7 @@ interface PhotoUploadSectionProps {
   photoInputRef: React.RefObject<HTMLInputElement>
   setPhotoPreview: (preview: string | null) => void
   onPhotoSelected?: (file: File | null) => void
+  onRemovePhoto?: () => void
 }
 
 export function PhotoUploadSection({
@@ -14,7 +15,8 @@ export function PhotoUploadSection({
   uploadingPhoto,
   photoInputRef,
   setPhotoPreview,
-  onPhotoSelected
+  onPhotoSelected,
+  onRemovePhoto
 }: PhotoUploadSectionProps) {
   return (
     <div className="flex flex-col items-center gap-3">
@@ -41,12 +43,29 @@ export function PhotoUploadSection({
         </div>
       </div>
 
-      <button
-        onClick={() => photoInputRef.current?.click()}
-        className="text-[10px] uppercase font-black tracking-[0.2em] text-[#1e3a8a] hover:text-[#112240] transition-colors py-1 px-3 rounded-full hover:bg-blue-50"
-      >
-        {photoPreview ? 'Alterar Foto' : 'Adicionar Foto'}
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => photoInputRef.current?.click()}
+          className="text-[10px] uppercase font-black tracking-[0.2em] text-[#1e3a8a] hover:text-[#112240] transition-colors py-1 px-3 rounded-full hover:bg-blue-50"
+        >
+          {photoPreview ? 'Alterar' : 'Adicionar Foto'}
+        </button>
+        {photoPreview && onRemovePhoto && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (photoInputRef.current) photoInputRef.current.value = '';
+              onRemovePhoto();
+            }}
+            className="text-[10px] uppercase font-black tracking-[0.2em] text-red-600 hover:text-red-700 transition-colors py-1 px-3 rounded-full hover:bg-red-50"
+          >
+            Remover
+          </button>
+        )}
+      </div>
 
       <input
         type="file"

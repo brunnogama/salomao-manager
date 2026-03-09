@@ -66,7 +66,7 @@ export function Proposals() {
 
   // Modal State (for after generation)
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [caseSaved, setCaseSaved] = useState(false);
+  const [, setCaseSaved] = useState(false);
   const caseSavedRef = useRef(false);
   const [contractFormData, setContractFormData] = useState<Contract>({} as Contract);
   const [processes, setProcesses] = useState<ContractProcess[]>([]);
@@ -167,9 +167,23 @@ export function Proposals() {
   };
 
   const fetchClients = async () => {
-    const { data } = await supabase.from('clients').select('name, cnpj').order('name');
+    const { data } = await supabase.from('clients').select('id, name, cnpj').order('name');
     if (data) {
-      setClientOptions(data.map(c => ({ label: c.name, value: c.name }))); // Value is name for the proposal
+      // Remove exact duplicates (same name and CNPJ) just in case
+      const uniqueClients: any[] = [];
+      const seen = new Set();
+      data.forEach(c => {
+        const key = `${c.name}-${c.cnpj || ''}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueClients.push(c);
+        }
+      });
+      // Store JSON in value to easily retrieve name and cnpj when selected
+      setClientOptions(uniqueClients.map(c => ({
+        label: c.cnpj ? `${c.name} - ${maskCNPJ(c.cnpj)}` : c.name,
+        value: JSON.stringify({ name: c.name, cnpj: c.cnpj, id: c.id })
+      })));
     }
   };
 
@@ -325,13 +339,28 @@ export function Proposals() {
     });
   };
 
-  const handleClientNameChange = async (name: string) => {
-    setProposalData(prev => ({ ...prev, clientName: name }));
-    // Try to find CNPJ if existing client selected
-    if (name) {
-      const { data } = await supabase.from('clients').select('cnpj').eq('name', name).maybeSingle();
-      if (data && data.cnpj) {
-        setProposalData(prev => ({ ...prev, cnpj: maskCNPJ(data.cnpj) }));
+  const handleClientNameChange = async (val: string) => {
+    try {
+      // Try parsing if it's the JSON string from dropdown
+      const parsed = JSON.parse(val);
+      if (parsed && typeof parsed === 'object') {
+        setProposalData(prev => ({
+          ...prev,
+          clientName: parsed.name,
+          cnpj: parsed.cnpj ? maskCNPJ(parsed.cnpj) : ''
+        }));
+        return;
+      }
+    } catch {
+      // It's a custom string typed by the user
+      setProposalData(prev => ({ ...prev, clientName: val }));
+
+      // Try to find CNPJ if existing client typed exactly
+      if (val) {
+        const { data } = await supabase.from('clients').select('cnpj').eq('name', val).maybeSingle();
+        if (data && data.cnpj) {
+          setProposalData(prev => ({ ...prev, cnpj: maskCNPJ(data.cnpj) }));
+        }
       }
     }
   };
@@ -492,14 +521,86 @@ export function Proposals() {
   };
 
   const generateDefaultBodyText = () => {
-    let text = `1. OBJETO E ESCOPO DO SERVIÇO:\n\n`;
-    text += `1.1. O objeto da presente proposta é a assessoria jurídica a ser realizada pelos advogados que compõem Salomão Advogados (“Escritório”), com vistas à representação judicial em favor do Cliente ${proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'} (“Cliente” ou “Contratante”) no ${proposalData.object || '[incluir objeto da disputa]'}.\n\n`;
+    const todayStr = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const location = proposalData.contractLocation || '[Cidade]';
+
+    let text = `<<RIGHT>>${location}, ${todayStr}.\n\n`;
+    text += `**AO ${proposalData.clientName ? proposalData.clientName.toUpperCase() : '[NOME DA EMPRESA CLIENTE]'}**\n`;
+    if (!proposalData.isPerson) {
+      text += `**${proposalData.cnpj || '[CNPJ da empresa cliente]'}**\n`;
+    }
+    text += `\n`;
+    text += `**Ref:** ${proposalData.reference || '[incluir referência da proposta]'}\n`;
+    text += `**Cód.:** [código proposta]\n\n`;
+    text += `Prezados,\n\n`;
+
+    text += `É com grande honra que **SALOMÃO ADVOGADOS**, neste ato representado, respectivamente, por seus sócios `;
+
+    if (proposalData.selectedPartners.length > 0) {
+      const partnersList = proposalData.selectedPartners.map((p, idx) => {
+        const data = p.collaboratorData;
+        const gender = data?.gender || p.gender || 'M';
+        const isFem = ['F', 'Feminino', 'Female'].includes(gender);
+
+        let oab = (data as any)?.oab_numero || p.oab_number || 'XXXXXX';
+        let oabUf = (data as any)?.oab_uf || p.oab_state || 'RJ';
+
+        if (proposalData.contractLocation && data?.oabs && data.oabs.length > 0) {
+          const cityToUf: Record<string, string> = {
+            "Rio de Janeiro": "RJ", "São Paulo": "SP", "Brasília": "DF",
+            "Vitória": "ES", "Salvador": "BA", "Florianópolis": "SC",
+            "Belém": "PA", "Curitiba": "PR", "Belo Horizonte": "MG", "Porto Alegre": "RS"
+          };
+          const targetUf = cityToUf[proposalData.contractLocation] || proposalData.contractLocation;
+
+          const matchingOab = data.oabs.find((o: any) => o.uf === targetUf && o.tipo !== 'Inativa');
+          if (matchingOab) {
+            oab = matchingOab.numero;
+            oabUf = matchingOab.uf;
+          } else {
+            const principalOab = data.oabs.find((o: any) => o.tipo === 'Principal') || data.oabs[0];
+            if (principalOab) {
+              oab = principalOab.numero;
+              oabUf = principalOab.uf;
+            }
+          }
+        }
+
+        const cpf = data?.cpf || p.cpf || 'XXX.XXX.XXX-XX';
+        const civil = data?.civil_status ? data.civil_status.toLowerCase() : 'casado';
+        const nacionalidade = data?.nacionalidade ? data.nacionalidade.toLowerCase() : 'brasileiro';
+
+        const textNacionalidade = isFem && nacionalidade.includes('brasileir') ? 'brasileira' : nacionalidade;
+        const textCivil = isFem && civil.includes('casad') ? 'casada' : (isFem && civil.includes('solteir') ? 'solteira' : civil);
+        const textAdvogado = isFem ? 'advogada' : 'advogado';
+        const textInscrito = isFem ? 'inscrita' : 'inscrito';
+        const textPortador = isFem ? 'portadora' : 'portador';
+
+        let prefix = "";
+        if (proposalData.selectedPartners.length > 1 && idx === proposalData.selectedPartners.length - 1) {
+          prefix = " e ";
+        } else if (idx > 0) {
+          prefix = ", ";
+        }
+
+        return `${prefix}**${p.name.toUpperCase()}**, ${textNacionalidade}, ${textCivil}, ${textAdvogado}, ${textInscrito} na OAB/${oabUf} sob o nº ${oab}, ${textPortador} do CPF/MF nº ${cpf}`;
+      }).join('');
+
+      text += partnersList;
+    } else {
+      text += `**[NOME DO SÓCIO]**`;
+    }
+
+    text += `, vem formular a presente proposta de honorários.\n\n`;
+
+    text += `**1. OBJETO E ESCOPO DO SERVIÇO:**\n\n`;
+    text += `1.1. O objeto da presente proposta é a assessoria jurídica a ser realizada pelos advogados que compõem Salomão Advogados (“Escritório”), com vistas à representação judicial em favor do Cliente **${proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}** (“Cliente” ou “Contratante”) no **${proposalData.object || '[incluir objeto da disputa]'}**.\n\n`;
     text += `1.2. Os serviços previstos nesta proposta abrangem a defesa dos interesses do Contratante em toda e qualquer discussão relacionada ao tema tratado.\n\n`;
     text += `1.3. Além da análise do caso e definição da estratégia jurídica, o escopo dos serviços profissionais compreende a análise completa dos documentos e informações enviadas pelo Cliente, elaboração das peças processuais, acompanhamento processual, realização de sustentações orais, despachos, bem como todos os atos conexos necessários a atender os interesses do Cliente nos referidos processos.\n\n`;
     text += `1.4. Os serviços aqui propostos compreende a participação em reuniões com o Cliente sempre que necessário para entendimentos, esclarecimentos e discussão de estratégias, sempre objetivando a melhor atuação possível do Escritório em defesa dos interesses do Cliente.\n\n`;
     text += `1.5. Também está incluída a assessoria jurídica na interlocução com a contraparte, para fins de autocomposição.\n\n`;
     text += `1.6. Os serviços aqui propostos não incluem consultoria geral ou outra que não possua correlação com o objeto da proposta.\n\n`;
-    text += `2. HONORÁRIOS E FORMA DE PAGAMENTO:\n\n`;
+    text += `**2. HONORÁRIOS E FORMA DE PAGAMENTO:**\n\n`;
     text += `2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:\n\n`;
 
     let clauseIndex = 2;
@@ -512,7 +613,7 @@ export function Proposals() {
 
     proposalData.intermediate_fee_clauses.forEach((c) => {
       if (c.value) {
-        text += `2.${clauseIndex}. Êxito intermediário: ${c.value}, ${c.description || '[descrição]'}\n\n`;
+        text += `2.${clauseIndex}. Êxito intermediário de ${c.value}, ${c.description || '[descrição]'}\n\n`;
         clauseIndex++;
       }
     });
@@ -528,7 +629,7 @@ export function Proposals() {
     text += `2.${clauseIndex}. Os honorários de êxito serão integralmente devidos pelo Cliente em caso de transação ou rescisão imotivada do presente contrato.\n\n`;
     text += `2.${clauseIndex + 1}. Nos casos de (a) desistência e/ou renúncia que encerrem as discussões travadas; (b) perda superveniente de seu objeto; (c) destituição dos profissionais do ESCRITÓRIO sem culpa dos mesmos; e/ou (d) cessões e/ou operações envolvendo direitos do Contratante e/ou os interesses do ESCRITÓRIO, as Partes decidem, de boa-fé e na melhor forma de Direito, que todos os valores contemplados nesse Contrato, sem exceção, serão integralmente e automaticamente devidos, mesmo se e independentemente se os eventos de êxito ocorrerem após o desligamento do ESCRITÓRIO e independentemente do teor de quaisquer Decisões Judiciais que sejam proferidas, em reconhecimento, pelo Cliente, de que a estratégia desenhada e executada pelo ESCRITÓRIO afigurou-se determinante à obtenção do sucesso em seu favor. Esses valores serão pagos em até 10 (dez) dias após a ocorrência de quaisquer desses eventos.\n\n`;
 
-    text += `3. CONDIÇÕES GERAIS:\n\n`;
+    text += `**3. CONDIÇÕES GERAIS:**\n\n`;
     text += `3.1. Não estão incluídas nos honorários as despesas relacionadas ao caso, tais como aquelas com custas judiciais, extrajudiciais, passagens aéreas e hospedagens, dentre outras próprias da(o) Cliente. As despesas poderão ser adiantadas pelo Escritório e submetidas à reembolso pela(o) Cliente. Caso venhamos a contratar outros profissionais, peritos, vistoriadores, tradutores ou demais prestadores de serviços em nome da(o) Cliente e sob prévia aprovação de V.Sa., tal contratação será feita na qualidade de mandatários da(o) Cliente ficando V.Sas. desde já responsável pelo pagamento dos honorários dos profissionais supramencionados.\n\n`;
     text += `3.2. O atraso no pagamento dos honorários sujeitará o Cliente ao pagamento de multa de mora de 10% (dez por cento), juros de mora de 1% (um por cento) ao mês e correção monetária pela variação positiva do IPCA. Na hipótese de necessidade de cobrança judicial, serão devidos também honorários à razão de 20% (vinte por cento) do valor atualizado do débito.\n\n`;
     text += `3.3. Os valores previstos na presente proposta, incluindo eventual limite sobre os honorários de êxito, deverão ser corrigidos monetariamente pela variação positiva do IPCA desde a presente data até sua efetiva liquidação.\n\n`;
@@ -544,7 +645,20 @@ export function Proposals() {
     text += `3.13. As partes se comprometem a cumprir toda a legislação aplicável sobre segurança da informação, privacidade e proteção de dados, inclusive a Constituição Federal, o Código de Defesa do Consumidor, o Código Civil, o Marco Civil da Internet (Lei Federal n. 12.965/2014), seu decreto regulamentador (Decreto 8.771/2016), a Lei Geral de Proteção de Dados (Lei Federal n. 13.709/2018), e demais normas setoriais ou gerais sobre o tema, se comprometendo a tratar apenas os dados mencionados e/ou nas formas dispostas neste instrumento mediante instruções expressas do controlador de dados (parte que determina as finalidades e os meios de tratamento de dados pessoais); ou com o devido embasamento legal, sem transferi-los a qualquer terceiro, exceto se expressamente autorizado por este ou outro instrumento que as vincule.\n\n`;
     text += `3.14. As partes concordam em tratar e manter todas e quaisquer informações (escritas ou verbais) como confidenciais, ficando vedado, por ação ou omissão, a revelação de quaisquer informações, documentos entre outros, obtidos nas tratativas e/ou na execução do Contrato, sem prévio e expresso consentimento da outra parte. Tal regra não abrange as informações que se encontram em domínio público nem impede a menção da(o) Contratante como cliente do Escritório.\n\n`;
     text += `3.15. As partes elegem o foro da Comarca da Capital da Cidade do Rio de Janeiro para dirimir todas as controvérsias oriundas do presente instrumento, com renúncia expressa a qualquer outro.\n\n`;
-    text += `O Cliente e o Escritório concordam que esta proposta poderá ser firmada de maneira digital por todos os seus signatários. Para este fim, serão utilizados serviços disponíveis no mercado e amplamente utilizados que possibilitam a segurança de assinatura digital por meio de sistemas de certificação capazes de validar a autoria de assinatura eletrônica, bem como de certificar sua integridade, através de certificado digital emitido no padrão ICP-Brasil, autorizando, inclusive, a sua assinatura digital por meio de plataformas digitais.`;
+    text += `O Cliente e o Escritório concordam que esta proposta poderá ser firmada de maneira digital por todos os seus signatários. Para este fim, serão utilizados serviços disponíveis no mercado e amplamente utilizados que possibilitam a segurança de assinatura digital por meio de sistemas de certificação capazes de validar a autoria de assinatura eletrônica, bem como de certificar sua integridade, através de certificado digital emitido no padrão ICP-Brasil, autorizando, inclusive, a sua assinatura digital por meio de plataformas digitais.\n\n`;
+
+    text += `<<CENTER>>Cordialmente,\n\n\n`;
+
+    if (proposalData.selectedPartners.length > 0) {
+      text += proposalData.selectedPartners.map(p => {
+        return `<<CENTER>>____________________________________\n<<CENTER>>**${p.name.toUpperCase()}**\n<<CENTER>>**SALOMÃO ADVOGADOS**`;
+      }).join('\n\n\n');
+    } else {
+      text += `<<CENTER>>____________________________________\n<<CENTER>>**[NOME DO SÓCIO]**\n<<CENTER>>**SALOMÃO ADVOGADOS**`;
+    }
+
+    text += `\n\n\n<<CENTER>>____________________________________\n<<CENTER>>**${proposalData.clientName ? proposalData.clientName.toUpperCase() : '[CLIENTE]'}**`;
+    text += `\n\n\n<<LEFT>>De acordo em: ___/___/___`;
 
     return text;
   };
@@ -557,8 +671,6 @@ export function Proposals() {
     const toastId = toast.loading("Gerando proposta e documentos...");
 
     try {
-      // 1. Create Contract Record
-
       // 1. Create Contract Record
       const {
         contractData: newContract,
@@ -603,10 +715,8 @@ export function Proposals() {
 
       // 3. Generate DOCX
       // Prepare full data object for generator
-      // 3. Generate DOCX
-      // Prepare full data object for generator
       const fullContractData: any = prepareFullContractData(
-        insertedContract,
+        newContract,
         primaryPartner,
         proposalCode,
         currencyExtras,
@@ -616,6 +726,13 @@ export function Proposals() {
         proLaboreExtras,
         proLaboreExtrasClauses
       );
+
+      // FORCE update of body text if not explicitly customized, so latest form values are compiled
+      // This needs to be done *before* generating the DOCX, and `generateDefaultBodyText` relies on `proposalData`
+      // which might be cleared later.
+      if (!isEditingBody && !customBodyText) {
+        fullContractData.custom_body_text = generateDefaultBodyText();
+      }
 
       const docBlob = await generateProposalDocx(fullContractData, proposalCode);
       const fileName = `Proposta_${proposalData.clientName.replace(/[^a-z0-9]/gi, '_')}_${proposalCode}.docx`;
@@ -720,6 +837,13 @@ export function Proposals() {
         proLaboreExtrasClauses
       );
 
+      // FORCE update of body text if not explicitly customized, so latest form values are compiled
+      // This needs to be done *before* generating the DOCX, and `generateDefaultBodyText` relies on `proposalData`
+      // which might be cleared later.
+      if (!isEditingBody && !customBodyText) {
+        fullContractData.custom_body_text = generateDefaultBodyText();
+      }
+
       const docBlob = await generateProposalDocx(fullContractData, proposalCode);
       const fileName = `Proposta_${proposalData.clientName.replace(/[^a-z0-9]/gi, '_')}_${proposalCode}.docx`;
 
@@ -735,143 +859,52 @@ export function Proposals() {
   };
 
   // Helpers for Mock Preview
-  const today = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
 
   const renderPreviewContent = () => (
-    <div>
-      {/* Date */}
-      <div className="text-right mb-5 leading-5">
-        <span className="bg-yellow-200/50 px-1">{proposalData.contractLocation || '[Cidade]'}, {today}</span>.
-      </div>
+    <div className="w-full h-full pb-5">
+      {(customBodyText || generateDefaultBodyText()).split('\n').map((paragraph, idx) => {
+        if (!paragraph.trim()) {
+          return <div key={idx} className="h-4"></div>;
+        }
 
-      {/* Addressee */}
-      <div className="mb-5 font-bold leading-5">
-        <p>AO <span className="bg-yellow-200/50 px-1 uppercase">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span></p>
-        {!proposalData.isPerson && (
-          <p className="mt-0"><span className="bg-yellow-200/50 px-1">{proposalData.cnpj || '[CNPJ da empresa cliente]'}</span></p>
-        )}
-      </div>
+        let alignClass = "text-justify";
+        let pText = paragraph;
 
-      {/* Ref */}
-      <div className="mb-5 leading-5">
-        <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.reference || '[incluir referência da proposta]'}</span></p>
-        <p><strong>Cód.:</strong> <span className="bg-yellow-200/50 px-1">[código proposta]</span></p>
-      </div>
+        if (pText.startsWith('<<RIGHT>>')) {
+          alignClass = "text-right";
+          pText = pText.replace('<<RIGHT>>', '');
+        } else if (pText.startsWith('<<CENTER>>')) {
+          alignClass = "text-center";
+          pText = pText.replace('<<CENTER>>', '');
+        } else if (pText.startsWith('<<LEFT>>')) {
+          alignClass = "text-left";
+          pText = pText.replace('<<LEFT>>', '');
+        }
 
-      <p className="mb-5 leading-5">Prezados,</p>
+        // Component for highlighted and bold text
+        const renderFormattedText = (text: string) => {
+          const boldParts = text.split(/(\*\*.*?\*\*)/g);
+          return boldParts.map((bPart, bIdx) => {
+            if (bPart.startsWith('**') && bPart.endsWith('**')) {
+              const innerText = bPart.slice(2, -2);
+              const hiParts = innerText.split(/(\[.*?\])/g);
+              return <span key={bIdx} className="font-bold">
+                {hiParts.map((hi, i) => hi.startsWith('[') && hi.endsWith(']') ? <span key={`${bIdx}-${i}`} className="bg-yellow-200/50 px-1">{hi}</span> : hi)}
+              </span>;
+            }
+            const hiParts = bPart.split(/(\[.*?\])/g);
+            return <React.Fragment key={bIdx}>
+              {hiParts.map((hi, i) => hi.startsWith('[') && hi.endsWith(']') ? <span key={`${bIdx}-${i}`} className="bg-yellow-200/50 px-1 font-bold">{hi}</span> : hi)}
+            </React.Fragment>;
+          });
+        };
 
-      <p className="text-justify mb-5 leading-5">
-        É com grande honra que <strong>SALOMÃO ADVOGADOS</strong>, neste ato representado, respectivamente, por seus sócios
-        {proposalData.selectedPartners.length > 0 ? (
-          proposalData.selectedPartners.map((p, idx) => (
-            <span key={p.id}>
-              {idx > 0 && ", e "}
-              <span className="bg-yellow-200/50 px-1 font-bold ml-1">{p.name}</span>
-              {(() => {
-                const data = p.collaboratorData;
-                const gender = data?.gender || p.gender || 'M';
-                const isFem = ['F', 'Feminino', 'Female'].includes(gender);
-
-                let oab = (data as any)?.oab_numero || p.oab_number || 'XXXXXX';
-                let oabUf = (data as any)?.oab_uf || p.oab_state || 'RJ';
-
-                if (proposalData.contractLocation && data?.oabs && data.oabs.length > 0) {
-                  const cityToUf: Record<string, string> = {
-                    "Rio de Janeiro": "RJ", "São Paulo": "SP", "Brasília": "DF",
-                    "Vitória": "ES", "Salvador": "BA", "Florianópolis": "SC",
-                    "Belém": "PA", "Curitiba": "PR", "Belo Horizonte": "MG", "Porto Alegre": "RS"
-                  };
-                  const targetUf = cityToUf[proposalData.contractLocation] || proposalData.contractLocation;
-
-                  const matchingOab = data.oabs.find((o: any) => o.uf === targetUf && o.tipo !== 'Inativa');
-                  if (matchingOab) {
-                    oab = matchingOab.numero;
-                    oabUf = matchingOab.uf;
-                  } else {
-                    const principalOab = data.oabs.find((o: any) => o.tipo === 'Principal') || data.oabs[0];
-                    if (principalOab) {
-                      oab = principalOab.numero;
-                      oabUf = principalOab.uf;
-                    }
-                  }
-                }
-
-                const cpf = data?.cpf || p.cpf || 'XXX.XXX.XXX-XX';
-
-                const civil = data?.civil_status ? data.civil_status.toLowerCase() : 'casado';
-                const nacionalidade = data?.nacionalidade ? data.nacionalidade.toLowerCase() : 'brasileiro';
-
-                // Inflections
-                const textNacionalidade = isFem && nacionalidade.includes('brasileir') ? 'brasileira' : nacionalidade;
-                const textCivil = isFem && civil.includes('casad') ? 'casada' : (isFem && civil.includes('solteir') ? 'solteira' : civil);
-                const textAdvogado = isFem ? 'advogada' : 'advogado';
-                const textInscrito = isFem ? 'inscrita' : 'inscrito';
-                const textPortador = isFem ? 'portadora' : 'portador';
-
-                return `, ${textNacionalidade}, ${textCivil}, ${textAdvogado}, ${textInscrito} na OAB/${oabUf} sob o nº ${oab}, ${textPortador} do CPF/MF nº ${cpf}`;
-              })()}
-            </span>
-          ))
-        ) : (
-          <span className="bg-yellow-200/50 px-1 font-bold ml-1">[incluir nome do sócio]</span>
-        )}
-        , vem formular a presente proposta de honorários...
-      </p>
-
-      <div className="mb-5 text-justify whitespace-pre-line leading-5 pb-5">
-        {(customBodyText || generateDefaultBodyText()).split('\n\n').map((paragraph, idx) => {
-          const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
-
-          // Component for highlighted text
-          const renderHighlightedText = (text: string) => {
-            const parts = text.split(/(\[.*?\])/g);
-            return parts.map((part, i) =>
-              part.startsWith('[') && part.endsWith(']') ? (
-                <span key={i} className="bg-yellow-200/50 px-1">{part}</span>
-              ) : (
-                part
-              )
-            );
-          };
-
-          return (
-            <p key={idx} className={`${isHeading ? 'font-bold mt-5' : ''} mb-5`}>
-              {renderHighlightedText(paragraph)}
-            </p>
-          );
-        })}
-      </div>
-
-      {/* Signatures */}
-      <div className="text-center mt-10 pb-10">
-        <div className="leading-5 mb-16">
-          <p className="mb-4">Cordialmente,</p>
-        </div>
-        <div className="space-y-16">
-          {proposalData.selectedPartners.length > 0 ? proposalData.selectedPartners.map(p => (
-            <div key={p.id} className="leading-5">
-              <p>____________________________________</p>
-              <p className="px-1 font-bold mt-2 block">{p.name}</p>
-              <p className="font-bold">SALOMÃO ADVOGADOS</p>
-            </div>
-          )) : (
-            <div className="leading-5">
-              <p>____________________________________</p>
-              <p className="bg-yellow-200/50 px-1 font-bold mt-2 inline-block">[Incluir nome do sócio]</p>
-              <p className="font-bold">SALOMÃO ADVOGADOS</p>
-            </div>
-          )}
-        </div>
-
-        <div className="leading-5 mt-16">
-          <p>____________________________________</p>
-          <p className="px-1 font-bold mt-2 inline-block uppercase">{proposalData.clientName || '[CLIENTE]'}</p>
-        </div>
-
-        <div className="text-left mt-10 leading-5">
-          <p>De acordo em: ___/___/___</p>
-        </div>
-      </div>
+        return (
+          <p key={idx} className={`${alignClass} mb-2`}>
+            {renderFormattedText(pText)}
+          </p>
+        );
+      })}
     </div>
   );
 
@@ -1424,7 +1457,7 @@ export function Proposals() {
                     <FileSignature className="w-6 h-6 text-[#1e3a8a]" />
                     Editor Avançado da Proposta
                   </h3>
-                  <p className="text-xs font-semibold text-gray-500 mt-1">Edite livremente o conteúdo da proposta. Deixe linhas em branco para separar os parágrafos.</p>
+                  <p className="text-xs font-semibold text-gray-500 mt-1">Edite livremente todo o documento. Utilize tags especiais como <strong>&lt;&lt;CENTER&gt;&gt;</strong>, <strong>&lt;&lt;RIGHT&gt;&gt;</strong> ou <strong>&lt;&lt;LEFT&gt;&gt;</strong> no início das linhas para alinhamento, e asteriscos duplos (<strong>**texto**</strong>) para negrito.</p>
                 </div>
                 <button
                   onClick={() => setIsEditingBody(false)}

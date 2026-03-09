@@ -335,6 +335,9 @@ export default function AtualizacaoCadastral() {
                 })),
 
                 email_pessoal: formData.email_pessoal,
+                telefone: formData.telefone,
+                indicado_por: formData.indicado_por,
+                linkedin_url: formData.linkedin_url,
                 forma_pagamento: formData.forma_pagamento,
                 banco_nome: formData.banco_nome,
                 banco_tipo_conta: formData.banco_tipo_conta,

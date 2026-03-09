@@ -1,6 +1,6 @@
 import XLSX from 'xlsx-js-style'
 import { Collaborator, Partner } from '../../../types/controladoria'
-import { formatDateToDisplay } from './colaboradoresUtils'
+import { formatDateToDisplay, formatMonthYearDateToDisplay } from './colaboradoresUtils'
 
 interface ExportOptions {
     filtered: Collaborator[];
@@ -170,5 +170,52 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Colaboradores");
+    XLSX.writeFile(wb, finalFileName);
+};
+
+export const exportVTXLSX = (options: ExportOptions) => {
+    const {
+        filtered,
+        colaboradores,
+    } = options;
+
+    const sortedData = [...filtered].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    const dataToExport = sortedData.map(c => {
+        const lider = (c as any).leader?.name || getLookupName(colaboradores as any[], c.leader_id) || '-';
+        // Use custom mapped currentVtTotal if available (from Colaboradores page UI logic), otherwise fallback to 0 calculation
+        const transporte = (c as any).currentVtTotal !== undefined
+            ? (c as any).currentVtTotal
+            : 0;
+
+        return {
+            'Nome (do colaborador)': c.name,
+            'Líder Direto': lider,
+            'Previsão de Formatura': formatMonthYearDateToDisplay(c.previsao_formatura) || '-',
+            'Término Contrato': formatDateToDisplay(c.termino_contrato_estagio) || '-',
+            'Bolsa': c.bolsa_valor || '-',
+            'Transporte': transporte,
+            'VR': c.vr_valor || '-',
+            'Endereço': c.address || '-',
+            'Bairro': c.neighborhood || '-',
+            'Cidade': c.city || '-',
+            'Estado': c.state || '-'
+        };
+    });
+
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('pt-BR').replace(/\//g, '-');
+    const finalFileName = options.fileName
+        ? `${options.fileName}.xlsx`
+        : `Custo_Vale_Transporte_${formattedDate}.xlsx`;
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+
+    // Auto-width for columns
+    const wscols = Object.keys(dataToExport[0] || {}).map(() => ({ wch: 20 }));
+    ws['!cols'] = wscols;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "RelatorioVT");
     XLSX.writeFile(wb, finalFileName);
 };

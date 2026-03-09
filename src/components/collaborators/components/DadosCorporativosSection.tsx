@@ -7,6 +7,7 @@ import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { differenceInMonths, differenceInYears } from 'date-fns'
 import { TransporteSection } from './TransporteSection'
 import { supabase } from '../../../lib/supabase'
+import { getInternScholarshipValue, formatDbMoneyToDisplay } from '../utils/colaboradoresUtils'
 
 interface DadosCorporativosSectionProps {
   formData: Partial<Collaborator>
@@ -54,6 +55,34 @@ export function DadosCorporativosSection({
   const isEstagiario = useMemo(() => {
     return roleName.toLowerCase().includes('estagiário') || roleName.toLowerCase().includes('estagiario') || formData.contract_type?.toUpperCase() === 'ESTAGIÁRIO'
   }, [roleName, formData.contract_type])
+
+  // Calculate Intern Scholarship Automatically
+  const [isCalculatingScholarship, setIsCalculatingScholarship] = useState(false)
+  useEffect(() => {
+    const calculateScholarship = async () => {
+      if (!isEstagiario || formData.area !== 'Jurídica' || !formData.hire_date || !formData.education_history || isViewMode) {
+        return;
+      }
+
+      setIsCalculatingScholarship(true);
+      try {
+        const valueStr = await getInternScholarshipValue(formData.hire_date, formData.education_history);
+        if (valueStr !== null && valueStr !== undefined) {
+          const formatted = formatDbMoneyToDisplay(valueStr);
+          // Only update if it's different to avoid infinite loop
+          if (formData.bolsa_valor !== formatted) {
+            setFormData({ ...formData, bolsa_valor: formatted });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to auto calculate scholarship", error);
+      } finally {
+        setIsCalculatingScholarship(false);
+      }
+    };
+
+    calculateScholarship();
+  }, [formData.hire_date, formData.education_history, isEstagiario, formData.area, isViewMode]);
 
   // Calculate duration if dates are available
   const duration = useMemo(() => {
@@ -244,7 +273,13 @@ export function DadosCorporativosSection({
                 tableName="roles"
                 clientFilter={(item: any) => {
                   const roleName = item.name.toLowerCase();
-                  const isJuridico = roleName.includes('advogado') || roleName.includes('sócio') || roleName.includes('socio') || roleName.includes('estagiário') || roleName.includes('estagiario');
+                  const isJuridico = roleName.includes('advogado') ||
+                    roleName.includes('sócio') ||
+                    roleName.includes('socio') ||
+                    roleName.includes('estagiário') ||
+                    roleName.includes('estagiario') ||
+                    roleName.includes('jurídico') ||
+                    roleName.includes('juridico');
                   if (formData.area === 'Jurídica') {
                     return isJuridico;
                   } else if (formData.area === 'Administrativa') {
@@ -307,11 +342,11 @@ export function DadosCorporativosSection({
                   value={formData.contract_type || ''}
                   onChange={(v) => setFormData({ ...formData, contract_type: v })}
                   options={[
-                    { id: 'ADVOGADO', name: 'ADVOGADO' },
                     { id: 'CLT', name: 'CLT' },
                     { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' },
                     { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' },
-                    { id: 'PJ', name: 'PJ' }
+                    { id: 'PJ', name: 'PJ' },
+                    { id: 'TERCEIRIZADO', name: 'TERCEIRIZADO' }
                   ]}
                   uppercase={false}
                   disabled={isViewMode}
@@ -366,11 +401,15 @@ export function DadosCorporativosSection({
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">Bolsa</label>
+                      <label className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2 flex items-center justify-between">
+                        <span>Bolsa</span>
+                        {isCalculatingScholarship && <span className="text-[8px] text-amber-500 normal-case">(calculando...)</span>}
+                        {(!isCalculatingScholarship && formData.area === 'Jurídica') && <span className="text-[8px] text-emerald-600 normal-case">(Tabela)</span>}
+                      </label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">R$</span>
                         <input
-                          className={`w-full pl-9 bg-white border border-blue-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                          className={`w-full pl-9 bg-white border border-blue-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''} ${formData.area === 'Jurídica' ? 'bg-emerald-50/30' : ''}`}
                           value={formData.bolsa_valor || ''}
                           onChange={e => {
                             let val = e.target.value.replace(/\D/g, '');
@@ -383,8 +422,9 @@ export function DadosCorporativosSection({
                             setFormData({ ...formData, bolsa_valor: formatted });
                           }}
                           placeholder="0,00"
-                          disabled={isViewMode}
-                          readOnly={isViewMode}
+                          disabled={isViewMode || formData.area === 'Jurídica'}
+                          readOnly={isViewMode || formData.area === 'Jurídica'}
+                          title={formData.area === 'Jurídica' ? "Valor definido automaticamente pela tabela de regras para estagiários da área Jurídica." : undefined}
                         />
                       </div>
                     </div>
