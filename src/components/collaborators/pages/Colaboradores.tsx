@@ -1420,64 +1420,70 @@ export function Colaboradores({ }: ColaboradoresProps) {
   }
 
   const handleExportVTPDF = async () => {
-    if (!vtReportRef.current) return;
+    const reportElem = vtReportRef.current;
+    if (!reportElem) return;
     setExportingPDF(true);
-    try {
-      const canvas = await html2canvas(vtReportRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#f8fafc' // Tailwind gray-50 to match background
-      });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      // Add Salomão Logo at the top left
-      // Ensure aspect ratio is preserved
+    // Wait for the DOM to update to hide CLTs and expand Estagiários
+    setTimeout(async () => {
       try {
-        const logoImg = new Image();
-        logoImg.src = '/logo-salomao.png';
-        await new Promise((resolve) => {
-          logoImg.onload = resolve;
-          logoImg.onerror = resolve;
+        const canvas = await html2canvas(reportElem, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#f8fafc' // Tailwind gray-50 to match background
         });
 
-        if (logoImg.width && logoImg.height) {
-          const logoWidth = 40;
-          const logoHeight = (logoImg.height * logoWidth) / logoImg.width;
-          pdf.addImage(logoImg, 'PNG', 10, 10, logoWidth, logoHeight);
-        } else {
-          pdf.addImage('/logo-salomao.png', 'PNG', 10, 10, 40, 15);
+        const imgData = canvas.toDataURL('image/png');
+        const pdfWidth = 210; // A4 width in mm
+        const expectedHeight = (canvas.height * pdfWidth) / canvas.width;
+        // Make the page height dynamic so everything fits on one continuous page
+        const pdfHeight = Math.max(297, expectedHeight + 45);
+        const pdf = new jsPDF('p', 'mm', [pdfWidth, pdfHeight]);
+
+        // Add Salomão Logo at the top left
+        try {
+          const logoImg = new Image();
+          logoImg.src = '/logo-salomao.png';
+          await new Promise((resolve) => {
+            logoImg.onload = resolve;
+            logoImg.onerror = resolve;
+          });
+
+          if (logoImg.width && logoImg.height) {
+            const logoWidth = 40;
+            const logoHeight = (logoImg.height * logoWidth) / logoImg.width;
+            pdf.addImage(logoImg, 'PNG', 10, 10, logoWidth, logoHeight);
+          } else {
+            pdf.addImage('/logo-salomao.png', 'PNG', 10, 10, 40, 15);
+          }
+        } catch (e) {
+          console.warn('Could not load logo for PDF', e);
         }
-      } catch (e) {
-        console.warn('Could not load logo for PDF', e);
+
+        // Title
+        pdf.setFontSize(14);
+        pdf.setTextColor(30, 58, 138); // #1e3a8a
+        pdf.setFont("helvetica", "bold");
+        pdf.text("Relatório Comparativo de Vale Transporte", 60, 20);
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 60, 25);
+
+        // Add the content block below the header
+        pdf.addImage(imgData, 'PNG', 10, 35, pdfWidth - 20, expectedHeight);
+
+        pdf.save(`Comparativo_VT_Estagiarios_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+      } catch (error) {
+        console.error('Erro ao gerar PDF', error);
+        showAlert('Erro', 'Não foi possível gerar o PDF.', 'error');
+      } finally {
+        setExportingPDF(false);
+        setShowExportVTMenu(false);
       }
-
-      // Title
-      pdf.setFontSize(14);
-      pdf.setTextColor(30, 58, 138); // #1e3a8a
-      pdf.setFont("helvetica", "bold");
-      pdf.text("Relatório Comparativo de Vale Transporte", 60, 20);
-
-      pdf.setFontSize(10);
-      pdf.setTextColor(100, 100, 100);
-      pdf.setFont("helvetica", "normal");
-      pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 60, 25);
-
-      // Add the content block below the header
-      pdf.addImage(imgData, 'PNG', 10, 35, pdfWidth - 20, pdfHeight - 20);
-
-      pdf.save(`Comparativo_VT_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
-    } catch (error) {
-      console.error('Erro ao gerar PDF', error);
-      showAlert('Erro', 'Não foi possível gerar o PDF.', 'error');
-    } finally {
-      setExportingPDF(false);
-      setShowExportVTMenu(false);
-    }
+    }, 150);
   };
 
   return (
@@ -2450,24 +2456,27 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   }
                 });
 
+                const economiaCen1 = totalActualEstagio - (countEstagio * customVt1);
+                const economiaCen2 = totalActualEstagio - (countEstagio * customVt2);
+
                 const chartData = [
                   {
-                    name: 'Estagiários',
+                    name: 'Custo Total',
                     'Atual': totalActualEstagio,
                     'Cenário 1': countEstagio * customVt1,
                     'Cenário 2': countEstagio * customVt2
                   },
                   {
-                    name: 'CLT',
-                    'Atual': totalActualCLT,
-                    'Cenário 1': countCLT * customVt1,
-                    'Cenário 2': countCLT * customVt2
+                    name: 'Economia Projetada',
+                    'Atual': 0,
+                    'Cenário 1': economiaCen1,
+                    'Cenário 2': economiaCen2
                   }
                 ];
 
                 return (
                   <div className="mb-8 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-                    <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider mb-4">Comparativo de Custos Mensais</h4>
+                    <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider mb-4">Comparativo de Custos Mensais (Apenas Estagiários)</h4>
                     <div className="h-64 w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
@@ -2489,13 +2498,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           />
                           <Legend wrapperStyle={{ paddingTop: '20px' }} />
                           <Bar dataKey="Atual" fill="#1e3a8a" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="Atual" position="top" formatter={(val: number) => `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e3a8a' }} />
+                            <LabelList dataKey="Atual" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e3a8a' }} />
                           </Bar>
                           <Bar dataKey="Cenário 1" fill="#f59e0b" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="Cenário 1" position="top" formatter={(val: number) => `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f59e0b' }} />
+                            <LabelList dataKey="Cenário 1" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f59e0b' }} />
                           </Bar>
                           <Bar dataKey="Cenário 2" fill="#10b981" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="Cenário 2" position="top" formatter={(val: number) => `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#10b981' }} />
+                            <LabelList dataKey="Cenário 2" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#10b981' }} />
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
@@ -2505,9 +2514,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
               })()}
 
               {[
-                { type: 'Estágio', label: 'Estagiário', isExpanded: isVtEstagioExpanded, setIsExpanded: setIsVtEstagioExpanded },
+                { type: 'Estágio', label: 'Estagiário', isExpanded: exportingPDF ? true : isVtEstagioExpanded, setIsExpanded: setIsVtEstagioExpanded },
                 { type: 'CLT', label: 'CLT', isExpanded: isVtCltExpanded, setIsExpanded: setIsVtCltExpanded }
-              ].map((groupConfig, idx) => {
+              ].filter(g => exportingPDF ? g.type === 'Estágio' : true).map((groupConfig, idx) => {
                 const workingDays = getWorkingDaysInCurrentMonth();
                 const activeColabs = colaboradores.filter(c => c.status === 'active');
 
@@ -2577,33 +2586,41 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               <th className="p-4 text-right">
                                 <div className="flex flex-col items-end gap-1">
                                   <span>Cenário 1</span>
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-gray-400 font-medium">R$</span>
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
-                                      value={customVt1}
-                                      onChange={(e) => setCustomVt1(Number(e.target.value) || 0)}
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
-                                  </div>
+                                  {exportingPDF ? (
+                                    <span className="text-amber-600 font-bold text-xs">R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt1)}</span>
+                                  ) : (
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-gray-400 font-medium">R$</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                                        value={customVt1}
+                                        onChange={(e) => setCustomVt1(Number(e.target.value) || 0)}
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                    </div>
+                                  )}
                                 </div>
                               </th>
                               <th className="p-4 text-right">
                                 <div className="flex flex-col items-end gap-1">
                                   <span>Cenário 2</span>
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-gray-400 font-medium">R$</span>
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
-                                      value={customVt2}
-                                      onChange={(e) => setCustomVt2(Number(e.target.value) || 0)}
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
-                                  </div>
+                                  {exportingPDF ? (
+                                    <span className="text-amber-600 font-bold text-xs">R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt2)}</span>
+                                  ) : (
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-gray-400 font-medium">R$</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                                        value={customVt2}
+                                        onChange={(e) => setCustomVt2(Number(e.target.value) || 0)}
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                    </div>
+                                  )}
                                 </div>
                               </th>
                             </tr>
