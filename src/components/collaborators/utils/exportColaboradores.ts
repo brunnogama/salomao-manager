@@ -1,6 +1,6 @@
 import XLSX from 'xlsx-js-style'
 import { Collaborator, Partner } from '../../../types/controladoria'
-import { formatDateToDisplay } from './colaboradoresUtils'
+import { formatDateToDisplay, formatMonthYearDateToDisplay } from './colaboradoresUtils'
 
 interface ExportOptions {
     filtered: Collaborator[];
@@ -191,7 +191,7 @@ export const exportVTXLSX = (options: ExportOptions) => {
         return {
             'Nome (do colaborador)': c.name,
             'Líder Direto': lider,
-            'Previsão de Formatura': formatDateToDisplay(c.escolaridade_previsao_conclusao) || '-',
+            'Previsão de Formatura': formatMonthYearDateToDisplay(c.previsao_formatura) || '-',
             'Término Contrato': formatDateToDisplay(c.termino_contrato_estagio) || '-',
             'Bolsa': c.bolsa_valor || '-',
             'Transporte': transporte,
