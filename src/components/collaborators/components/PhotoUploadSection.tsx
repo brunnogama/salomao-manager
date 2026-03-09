@@ -45,6 +45,7 @@ export function PhotoUploadSection({
 
       <div className="flex gap-2">
         <button
+          type="button"
           onClick={() => photoInputRef.current?.click()}
           className="text-[10px] uppercase font-black tracking-[0.2em] text-[#1e3a8a] hover:text-[#112240] transition-colors py-1 px-3 rounded-full hover:bg-blue-50"
         >
@@ -52,7 +53,13 @@ export function PhotoUploadSection({
         </button>
         {photoPreview && onRemovePhoto && (
           <button
-            onClick={onRemovePhoto}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (photoInputRef.current) photoInputRef.current.value = '';
+              onRemovePhoto();
+            }}
             className="text-[10px] uppercase font-black tracking-[0.2em] text-red-600 hover:text-red-700 transition-colors py-1 px-3 rounded-full hover:bg-red-50"
           >
             Remover
