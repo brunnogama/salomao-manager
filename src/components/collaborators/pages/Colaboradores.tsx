@@ -1544,7 +1544,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               transporteTipoMatch &&
                               gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
                           });
-                          if (tempFiltered.length > 0) exportColaboradoresXLSX(tempFiltered);
+                          if (tempFiltered.length > 0) exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes });
                         }}
                         className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
                       >
@@ -1590,7 +1590,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               transporteTipoMatch &&
                               gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
                           });
-                          if (tempFiltered.length > 0) exportColaboradoresXLSX(tempFiltered);
+                          if (tempFiltered.length > 0) exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes });
                         }}
                         className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
                       >
@@ -1638,7 +1638,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               transporteTipoMatch &&
                               gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
                           });
-                          if (tempFiltered.length > 0) exportColaboradoresXLSX(tempFiltered);
+                          if (tempFiltered.length > 0) exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes });
                         }}
                         className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-bold"
                       >
@@ -2215,13 +2215,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <FileSpreadsheet className="h-5 w-5" /> Gerar Relatório XLSX ({currentAdvancedFiltered.length})
             </button>
           </div>
-          
+
           {/* Relatório de VT por Equipe */}
           <div className="pt-8 border-t border-gray-100 mt-8">
             <h3 className="text-lg font-black text-[#1e3a8a] mb-6 flex items-center gap-2">
               <Bus className="h-5 w-5 text-amber-500" /> Custo de Vale Transporte por Equipe
             </h3>
-            
+
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -2266,7 +2266,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     {(() => {
                       const workingDays = getWorkingDaysInCurrentMonth();
                       const activeColabs = colaboradores.filter(c => c.status === 'active');
-                      
+
                       // Map each team id mapping to team name or fallback to raw equipe name
                       const colabsWithTeamName = activeColabs.map(c => ({
                         ...c,
@@ -2280,24 +2280,24 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           acc[team] = { count: 0, currentVtTotal: 0 };
                         }
                         acc[team].count += 1;
-                        
+
                         // Calculate VT for this collaborator
                         let colabVtDaily = 0;
                         if (c.transportes && Array.isArray(c.transportes)) {
-                           colabVtDaily = c.transportes.reduce((tAcc, t) => {
+                          colabVtDaily = c.transportes.reduce((tAcc, t) => {
                             const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
                             const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
                             return tAcc + idaSum + voltaSum;
-                           }, 0);
+                          }, 0);
                         }
-                        
+
                         acc[team].currentVtTotal += (colabVtDaily * workingDays);
                         return acc;
                       }, {} as Record<string, { count: number, currentVtTotal: number }>);
-                      
+
                       // Sort alphabetically by team name
                       const sortedTeams = Object.keys(teamTotals).sort((a, b) => a.localeCompare(b));
-                      
+
                       let overallCount = 0;
                       let overallVt = 0;
                       let overallFix200 = 0;
@@ -2309,12 +2309,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             const data = teamTotals[team];
                             const fix1 = data.count * customVt1;
                             const fix2 = data.count * customVt2;
-                            
+
                             overallCount += data.count;
                             overallVt += data.currentVtTotal;
                             overallFix200 += fix1;
                             overallFix300 += fix2;
-                            
+
                             return (
                               <tr key={team} className="hover:bg-blue-50/30 transition-colors group">
                                 <td className="p-4 text-sm font-bold text-[#0a192f]">{team}</td>
@@ -2333,7 +2333,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               </tr>
                             );
                           })}
-                          
+
                           {/* Totals Row */}
                           <tr className="bg-gradient-to-r from-emerald-50 to-white/50 border-t-2 border-emerald-100">
                             <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider">Total Geral</td>
@@ -2356,7 +2356,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
               </div>
             </div>
             <p className="text-[10px] text-gray-400 mt-3 font-medium flex gap-2">
-              <span className="text-amber-500 font-bold">*</span> 
+              <span className="text-amber-500 font-bold">*</span>
               Baseado em {getWorkingDaysInCurrentMonth()} dias úteis (Mês Vigente) para colaboradores Ativos.
             </p>
           </div>
