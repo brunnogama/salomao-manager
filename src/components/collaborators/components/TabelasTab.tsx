@@ -370,8 +370,9 @@ export function TabelasTab() {
                 // If it was an insert, clear name, keep area.
                 setEditingTag({ oldTag: '', newTag: '', area: editingTag.area });
             } else {
-                // If it was an edit, close the modal because they edited a specific item.
-                handleCloseTagModal();
+                // If it was an edit, keep the modal open and update the oldTag reference
+                // so subsequent saves update the same record instead of inserting new ones.
+                setEditingTag({ oldTag: newTagName, newTag: newTagName, area: editingTag.area });
             }
         } catch (error: any) {
             console.error('Erro ao salvar tag:', error);
