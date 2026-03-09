@@ -58,10 +58,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   Legend,
-  LabelList,
-  PieChart,
-  Pie,
-  Cell
+  LabelList
 } from 'recharts'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -2477,101 +2474,40 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   }
                 ];
 
-                // Agrupando para o Pie Chart (Líder Direto -> Valor Atual)
-                const costByLeader: Record<string, number> = {};
-                activeColabs.forEach(c => {
-                  const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
-                  const isEstagio = c.contract_type === 'Estágio' || roleName.includes('estagiário') || roleName.includes('estagiario') || roleName.includes('estagio') || roleName.includes('estágio');
-                  if (isEstagio) {
-                    let colabVtDaily = 0;
-                    if (c.transportes && Array.isArray(c.transportes)) {
-                      colabVtDaily = c.transportes.reduce((tAcc, t) => {
-                        const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                        const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                        return tAcc + idaSum + voltaSum;
-                      }, 0);
-                    }
-                    const leaderName = (c as any).leader?.name || 'S/ Líder';
-                    costByLeader[leaderName] = (costByLeader[leaderName] || 0) + (colabVtDaily * workingDays);
-                  }
-                });
-
-                const pieData = Object.entries(costByLeader)
-                  .map(([name, value]) => ({ name, value }))
-                  .sort((a, b) => b.value - a.value)
-                  .filter(item => item.value > 0);
-
-                const COLORS = ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#64748b'];
-
                 return (
                   <div className="mb-8 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
                     <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider mb-4">Comparativo de Custos Mensais (Apenas Estagiários)</h4>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      {/* Bar Chart (Current vs Scenarios) */}
-                      <div className="h-64 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart
-                            data={chartData}
-                            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                            <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
-                            <YAxis
-                              tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
-                              tick={{ fill: '#64748b', fontSize: 11 }}
-                              axisLine={false}
-                              tickLine={false}
-                            />
-                            <RechartsTooltip
-                              formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
-                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                              cursor={{ fill: '#f1f5f9' }}
-                            />
-                            <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                            <Bar dataKey="Atual" fill="#1e3a8a" radius={[4, 4, 0, 0]}>
-                              <LabelList dataKey="Atual" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e3a8a' }} />
-                            </Bar>
-                            <Bar dataKey="Cenário 1" fill="#f59e0b" radius={[4, 4, 0, 0]}>
-                              <LabelList dataKey="Cenário 1" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f59e0b' }} />
-                            </Bar>
-                            <Bar dataKey="Cenário 2" fill="#10b981" radius={[4, 4, 0, 0]}>
-                              <LabelList dataKey="Cenário 2" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#10b981' }} />
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-
-                      {/* Donut Chart (Cost by Leader) */}
-                      <div className="h-64 w-full flex flex-col items-center">
-                        <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Custo Atual por Líder Direto</h5>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={pieData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={80}
-                              paddingAngle={2}
-                              dataKey="value"
-                            >
-                              {pieData.map((_, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <RechartsTooltip
-                              formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
-                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            />
-                            <Legend
-                              layout="vertical"
-                              verticalAlign="middle"
-                              align="right"
-                              wrapperStyle={{ fontSize: '11px', fontWeight: "bold" }}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
+                    <div className="h-64 w-full mt-4">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={chartData}
+                          margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                          <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+                          <YAxis
+                            tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
+                            tick={{ fill: '#64748b', fontSize: 11 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <RechartsTooltip
+                            formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            cursor={{ fill: '#f1f5f9' }}
+                          />
+                          <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                          <Bar dataKey="Atual" fill="#1e3a8a" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Atual" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e3a8a' }} />
+                          </Bar>
+                          <Bar dataKey="Cenário 1" fill="#f59e0b" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Cenário 1" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f59e0b' }} />
+                          </Bar>
+                          <Bar dataKey="Cenário 2" fill="#10b981" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Cenário 2" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#10b981' }} />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
                 );
