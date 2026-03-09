@@ -399,7 +399,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   useDatabaseSync(() => {
     fetchColaboradores()
     fetchPartners()
-  }, ['collaborators', 'partners'])
+  }, ['collaborators', 'partners', 'transportes'])
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -500,7 +500,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         termReasonsRes,
         atuacoesRes
       ] = await Promise.all([
-        supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name), oab_number(*)`).order('name'),
+        supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name), oab_number(*), transportes(*)`).order('name'),
         supabase.from('roles').select('id, name'),
         supabase.from('locations').select('id, name'),
         supabase.from('teams').select('id, name'),
