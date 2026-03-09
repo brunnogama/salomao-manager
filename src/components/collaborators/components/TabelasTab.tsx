@@ -146,8 +146,8 @@ export function TabelasTab() {
         }
     };
 
-    const fetchTagSet = async () => {
-        setLoading(true);
+    const fetchTagSet = async (backgroundLoad = false) => {
+        if (!backgroundLoad) setLoading(true);
         try {
             const { data, error } = await supabase.from('perfil_tags').select('*').order('tag', { ascending: true });
             if (!error && data) {
@@ -156,7 +156,7 @@ export function TabelasTab() {
         } catch (e) {
             console.error('Error fetching tag data:', e);
         } finally {
-            setLoading(false);
+            if (!backgroundLoad) setLoading(false);
         }
     };
 
@@ -362,17 +362,14 @@ export function TabelasTab() {
                 if (error) throw error;
             }
 
-            await fetchTagSet();
-            // User requested not to close the modal and not to jump the screen.
-            // We just reset the tag name so they can keep adding more rapidly,
-            // while preserving the area they just selected to speed up their flow!
+            await fetchTagSet(true);
+
+            // Only keep the modal open if we are inserting a NEW bag (so we can type multiple).
+            // If editing an existing one, close it normally.
             if (!editingTag.oldTag) {
-                // If it was an insert, clear name, keep area.
                 setEditingTag({ oldTag: '', newTag: '', area: editingTag.area });
             } else {
-                // If it was an edit, keep the modal open and update the oldTag reference
-                // so subsequent saves update the same record instead of inserting new ones.
-                setEditingTag({ oldTag: newTagName, newTag: newTagName, area: editingTag.area });
+                handleCloseTagModal();
             }
         } catch (error: any) {
             console.error('Erro ao salvar tag:', error);
@@ -401,7 +398,7 @@ export function TabelasTab() {
                 .eq('tag', tagToDelete);
 
             if (error) throw error;
-            await fetchTagSet();
+            await fetchTagSet(true);
             setTagToDelete(null);
             setIsDeleteTagModalOpen(false);
         } catch (error) {
