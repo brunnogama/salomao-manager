@@ -2635,8 +2635,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
               </p>
             </div>
           </div>
-        )}
         </div>
+      )}
 
       {/* VIEW MODAL (Original Window) */}
       {selectedColaborador && renderModalLayout(
