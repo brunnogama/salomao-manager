@@ -2478,605 +2478,671 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   <div className="mb-8 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
                     <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider mb-4">Comparativo de Custos Mensais (Apenas Estagiários)</h4>
                     <div className="h-64 w-full mt-4">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={chartData}
-                          margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
-                          <YAxis
-                            tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
-                            tick={{ fill: '#64748b', fontSize: 11 }}
-                            axisLine={false}
-                            tickLine={false}
-                          />
-                          <RechartsTooltip
-                            formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            cursor={{ fill: '#f1f5f9' }}
-                          />
-                          <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                          <Bar dataKey="Atual" fill="#1e3a8a" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="Atual" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e3a8a' }} />
-                          </Bar>
-                          <Bar dataKey="Cenário 1" fill="#f59e0b" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="Cenário 1" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f59e0b' }} />
-                          </Bar>
-                          <Bar dataKey="Cenário 2" fill="#10b981" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="Cenário 2" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#10b981' }} />
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {[
-                { type: 'Estágio', label: 'Estagiário', isExpanded: exportingPDF ? true : isVtEstagioExpanded, setIsExpanded: setIsVtEstagioExpanded },
-                { type: 'CLT', label: 'CLT', isExpanded: isVtCltExpanded, setIsExpanded: setIsVtCltExpanded }
-              ].filter(g => exportingPDF ? g.type === 'Estágio' : true).map((groupConfig, idx) => {
-                const workingDays = getWorkingDaysInCurrentMonth();
-                const activeColabs = colaboradores.filter(c => c.status === 'active');
-
-                // Filtra os colaboradores do grupo atual (Estágio vs CLT)
-                const groupColaboradores = activeColabs
-                  .filter(c => {
-                    if (groupConfig.type === 'Estágio') {
-                      const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
-                      return c.contract_type === 'Estágio' || roleName.includes('estagiário') || roleName.includes('estagiario') || roleName.includes('estagio') || roleName.includes('estágio');
-                    }
-                    return c.contract_type === groupConfig.type;
-                  })
-                  .map(c => {
-                    let colabVtDaily = 0;
-                    if (c.transportes && Array.isArray(c.transportes)) {
-                      colabVtDaily = c.transportes.reduce((tAcc, t) => {
-                        const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                        const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                        return tAcc + idaSum + voltaSum;
-                      }, 0);
-                    }
-                    return {
-                      ...c,
-                      atuacaoName: (c as any).atuacoes?.name || c.atuacao || 'S/ Atuação',
-                      liderName: (c as any).leader?.name || 'S/ Líder',
-                      currentVtTotal: colabVtDaily * workingDays
-                    };
-                  })
-                  .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-                if (groupColaboradores.length === 0) return null;
-
-                // Agrupando os dados de acordo com o tipo
-                const groupedData: Record<string, typeof groupColaboradores> = {};
-                let overallCount = 0;
-                let overallVt = 0;
-                let overallEconomia1 = 0;
-                let overallEconomia2 = 0;
-
-                groupColaboradores.forEach(colab => {
-                  const groupKey = groupConfig.type === 'Estágio' ? colab.liderName : colab.atuacaoName;
-                  if (!groupedData[groupKey]) groupedData[groupKey] = [];
-                  groupedData[groupKey].push(colab);
-
-                  overallCount++;
-                  overallVt += colab.currentVtTotal;
-                  if (groupConfig.type === 'Estágio') {
-                    overallEconomia1 += Math.max(0, colab.currentVtTotal - customVt1);
-                    overallEconomia2 += Math.max(0, colab.currentVtTotal - customVt2);
-                  }
-                });
-
-                // Ordenar as chaves de agrupamento
-                const sortedGroupKeys = Object.keys(groupedData).sort((a, b) => a.localeCompare(b));
-
-                return (
-                  <div key={idx} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">
-                    <button
-                      onClick={() => groupConfig.setIsExpanded(!groupConfig.isExpanded)}
-                      className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        {groupConfig.isExpanded ? <ChevronDown className="h-5 w-5 text-[#1e3a8a]" /> : <ChevronRight className="h-5 w-5 text-[#1e3a8a]" />}
-                        <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider">{groupConfig.label} ({overallCount})</h4>
-                      </div>
-                      <span className="text-sm font-bold text-emerald-700">Total VT: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}</span>
-                    </button>
-
-                    {groupConfig.isExpanded && (
-                      <div className="overflow-x-auto border-t border-gray-200">
-                        <table className="w-full text-left border-collapse">
-                          <thead>
-                            <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
-                              <th className="p-4">Colaborador</th>
-                              <th className="p-4 text-center">Vínculo</th>
-                              {groupConfig.type === 'CLT' && (
-                                <th className="p-4 text-center">Líder Direto</th>
-                              )}
-                              <th className="p-4 text-center">Local</th>
-                              <th className="p-4 text-center">Bairro</th>
-                              <th className="p-4 text-right">VT Atual</th>
-
-                              {groupConfig.type === 'Estágio' && (
-                                <>
-                                  <th className="p-4 text-right">Valor Cenário 1</th>
-                                  <th className="p-4 text-right">
-                                    <div className="flex flex-col items-end gap-1">
-                                      <span>Economia (Cenário 1)</span>
-                                      {exportingPDF ? (
-                                        <span className="text-amber-600 font-bold text-xs">Custo Alvo: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt1)}</span>
-                                      ) : (
-                                        <div className="flex items-center gap-1" title="Defina o teto do VT neste cenário">
-                                          <span className="text-gray-400 font-medium tooltip">Teto: R$</span>
-                                          <input
-                                            type="number"
-                                            min="0"
-                                            className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
-                                            value={customVt1}
-                                            onChange={(e) => setCustomVt1(Number(e.target.value) || 0)}
-                                            onClick={(e) => e.stopPropagation()}
-                                          />
-                                        </div>
-                                      )}
-                                    </div>
-                                  </th>
-                                  <th className="p-4 text-right">Valor Cenário 2</th>
-                                  <th className="p-4 text-right">
-                                    <div className="flex flex-col items-end gap-1">
-                                      <span>Economia (Cenário 2)</span>
-                                      {exportingPDF ? (
-                                        <span className="text-amber-600 font-bold text-xs">Custo Alvo: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt2)}</span>
-                                      ) : (
-                                        <div className="flex items-center gap-1" title="Defina o teto do VT neste cenário">
-                                          <span className="text-gray-400 font-medium">Teto: R$</span>
-                                          <input
-                                            type="number"
-                                            min="0"
-                                            className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
-                                            value={customVt2}
-                                            onChange={(e) => setCustomVt2(Number(e.target.value) || 0)}
-                                            onClick={(e) => e.stopPropagation()}
-                                          />
-                                        </div>
-                                      )}
-                                    </div>
-                                  </th>
-                                </>
-                              )}
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-50">
-                            {sortedGroupKeys.map(groupKey => {
-                              const colabsInGroup = groupedData[groupKey];
-                              const groupSubtotalVt = colabsInGroup.reduce((acc, curr) => acc + curr.currentVtTotal, 0);
-                              const groupSubtotalEco1 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt1), 0);
-                              const groupSubtotalEco2 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt2), 0);
-                              const groupSubtotalValCen1 = groupSubtotalVt - groupSubtotalEco1;
-                              const groupSubtotalValCen2 = groupSubtotalVt - groupSubtotalEco2;
-
+                      <BarChart
+                        data={chartData}
+                        margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+                        <YAxis
+                          tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
+                          tick={{ fill: '#64748b', fontSize: 11 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <RechartsTooltip
+                          formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                          cursor={{ fill: '#f1f5f9' }}
+                        />
+                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        <Bar dataKey="Atual" fill="#1e3a8a" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="Atual" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e3a8a' }} />
+                        </Bar>
+                        <Bar dataKey="Cenário 1" fill="#f59e0b" radius={[4, 4, 0, 0]}>
+                          <LabelList
+                            dataKey="Cenário 1"
+                            position="top"
+                            content={(props: any) => {
+                              const { x, y, width, value, index } = props;
+                              if (value === 0) return null;
+                              if (index === 1) { // Economia Projetada
+                                const percCen1 = totalActualEstagio > 0 ? ((economiaCen1 / totalActualEstagio) * 100).toFixed(1) : '0.0';
+                                return (
+                                  <g>
+                                    <text x={x + width / 2} y={y - 15} fill="#f59e0b" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                      R$ {value.toLocaleString('pt-BR')}
+                                    </text>
+                                    <text x={x + width / 2} y={y - 5} fill="#f59e0b" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                      ({percCen1}%)
+                                    </text>
+                                  </g>
+                                );
+                              }
                               return (
-                                <React.Fragment key={groupKey}>
-                                  {/* Cabeçalho do Grupo */}
-                                  <tr className="bg-gray-50/80">
-                                    <td colSpan={groupConfig.type === 'Estágio' ? 9 : 6} className="p-3 text-xs font-bold text-[#1e3a8a]">
-                                      {groupConfig.type === 'Estágio' ? 'Líder Direto: ' : 'Atuação: '} {groupKey} ({colabsInGroup.length})
-                                    </td>
-                                  </tr>
-
-                                  {/* Linhas do Grupo */}
-                                  {colabsInGroup.map(colab => {
-                                    const economia1 = Math.max(0, colab.currentVtTotal - customVt1);
-                                    const economia2 = Math.max(0, colab.currentVtTotal - customVt2);
-                                    const valCen1 = colab.currentVtTotal - economia1;
-                                    const valCen2 = colab.currentVtTotal - economia2;
-
-                                    return (
-                                      <tr key={colab.id} className="hover:bg-blue-50/30 transition-colors group">
-                                        <td className="p-4 text-sm font-bold text-[#0a192f] pl-8">{colab.name}</td>
-                                        <td className="p-4 text-sm font-medium text-gray-600 text-center">
-                                          <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{colab.contract_type}</span>
-                                        </td>
-                                        {groupConfig.type === 'CLT' && (
-                                          <td className="p-4 text-sm font-medium text-gray-500 text-center">
-                                            {colab.liderName}
-                                          </td>
-                                        )}
-                                        <td className="p-4 text-sm font-medium text-gray-500 text-center">
-                                          {colab.local || '-'}
-                                        </td>
-                                        <td className="p-4 text-sm font-medium text-gray-500 text-center">
-                                          {colab.bairro || '-'}
-                                        </td>
-                                        <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
-                                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(colab.currentVtTotal)}
-                                        </td>
-
-                                        {groupConfig.type === 'Estágio' && (
-                                          <>
-                                            <td className="p-4 text-sm font-bold text-gray-600 text-right">
-                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valCen1)}
-                                            </td>
-                                            <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt1}, a economia será este valor.`}>
-                                              {economia1 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia1) : '-'}
-                                            </td>
-                                            <td className="p-4 text-sm font-bold text-gray-600 text-right">
-                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valCen2)}
-                                            </td>
-                                            <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt2}, a economia será este valor.`}>
-                                              {economia2 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia2) : '-'}
-                                            </td>
-                                          </>
-                                        )}
-                                      </tr>
-                                    );
-                                  })}
-
-                                  {/* Subtotal do Grupo */}
-                                  <tr className="bg-gray-50/50 border-b-2 border-gray-200">
-                                    <td colSpan={groupConfig.type === 'Estágio' ? 4 : 5} className="p-3 text-xs font-bold text-gray-600 text-right">
-                                      Subtotal {groupKey}:
-                                    </td>
-                                    <td className="p-3 text-sm font-black text-[#1e3a8a] text-right">
-                                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalVt)}
-                                    </td>
-                                    {groupConfig.type === 'Estágio' && (
-                                      <>
-                                        <td className="p-3 text-sm font-bold text-gray-600 text-right">
-                                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalValCen1)}
-                                        </td>
-                                        <td className="p-3 text-sm font-bold text-amber-600 text-right">
-                                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco1)}
-                                        </td>
-                                        <td className="p-3 text-sm font-bold text-gray-600 text-right">
-                                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalValCen2)}
-                                        </td>
-                                        <td className="p-3 text-sm font-bold text-amber-600 text-right">
-                                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco2)}
-                                        </td>
-                                      </>
-                                    )}
-                                  </tr>
-                                </React.Fragment>
+                                <text x={x + width / 2} y={y - 5} fill="#f59e0b" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                  R$ {value.toLocaleString('pt-BR')}
+                                </text>
                               );
-                            })}
-
-                            {/* Total Geral de todos os grupos combinados */}
-                            <tr className="bg-gradient-to-r from-emerald-50 to-white/50 border-t-2 border-emerald-200">
-                              <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider" colSpan={groupConfig.type === 'Estágio' ? 4 : 5}>Total Geral ({overallCount})</td>
-                              <td className="p-4 text-base font-black text-emerald-700 text-right">
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}
-                              </td>
-                              {groupConfig.type === 'Estágio' && (
-                                <>
-                                  <td className="p-4 text-base font-bold text-emerald-700/80 text-right">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt - overallEconomia1)}
-                                  </td>
-                                  <td className="p-4 text-base font-black text-emerald-700 text-right">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia1)}
-                                  </td>
-                                  <td className="p-4 text-base font-bold text-emerald-700/80 text-right">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt - overallEconomia2)}
-                                  </td>
-                                  <td className="p-4 text-base font-black text-emerald-700 text-right">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia2)}
-                                  </td>
-                                </>
-                              )}
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
+                            }}
+                          />
+                        </Bar>
+                        <Bar dataKey="Cenário 2" fill="#10b981" radius={[4, 4, 0, 0]}>
+                          <LabelList
+                            dataKey="Cenário 2"
+                            position="top"
+                            content={(props: any) => {
+                              const { x, y, width, value, index } = props;
+                              if (value === 0) return null;
+                              if (index === 1) { // Economia Projetada
+                                const percCen2 = totalActualEstagio > 0 ? ((economiaCen2 / totalActualEstagio) * 100).toFixed(1) : '0.0';
+                                return (
+                                  <g>
+                                    <text x={x + width / 2} y={y - 15} fill="#10b981" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                      R$ {value.toLocaleString('pt-BR')}
+                                    </text>
+                                    <text x={x + width / 2} y={y - 5} fill="#10b981" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                      ({percCen2}%)
+                                    </text>
+                                  </g>
+                                );
+                              }
+                              return (
+                                <text x={x + width / 2} y={y - 5} fill="#10b981" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                  R$ {value.toLocaleString('pt-BR')}
+                                </text>
+                              );
+                            }}
+                          />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                );
-              })}
+                </div>
+            );
+            })()}
 
-              <p className="text-[10px] text-gray-400 mt-3 font-medium flex gap-2">
-                <span className="text-amber-500 font-bold">*</span>
-                Baseado em {getWorkingDaysInCurrentMonth()} dias úteis (Mês Vigente) para colaboradores Ativos (CLT e Estágio).
-              </p>
-            </div>
+            {[
+              { type: 'Estágio', label: 'Estagiário', isExpanded: exportingPDF ? true : isVtEstagioExpanded, setIsExpanded: setIsVtEstagioExpanded },
+              { type: 'CLT', label: 'CLT', isExpanded: isVtCltExpanded, setIsExpanded: setIsVtCltExpanded }
+            ].filter(g => exportingPDF ? g.type === 'Estágio' : true).map((groupConfig, idx) => {
+              const workingDays = getWorkingDaysInCurrentMonth();
+              const activeColabs = colaboradores.filter(c => c.status === 'active');
+
+              // Filtra os colaboradores do grupo atual (Estágio vs CLT)
+              const groupColaboradores = activeColabs
+                .filter(c => {
+                  if (groupConfig.type === 'Estágio') {
+                    const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
+                    return c.contract_type === 'Estágio' || roleName.includes('estagiário') || roleName.includes('estagiario') || roleName.includes('estagio') || roleName.includes('estágio');
+                  }
+                  return c.contract_type === groupConfig.type;
+                })
+                .map(c => {
+                  let colabVtDaily = 0;
+                  if (c.transportes && Array.isArray(c.transportes)) {
+                    colabVtDaily = c.transportes.reduce((tAcc, t) => {
+                      const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                      const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                      return tAcc + idaSum + voltaSum;
+                    }, 0);
+                  }
+                  return {
+                    ...c,
+                    atuacaoName: (c as any).atuacoes?.name || c.atuacao || 'S/ Atuação',
+                    liderName: (c as any).leader?.name || 'S/ Líder',
+                    localName: (c as any).locations?.name || c.local || '-',
+                    bairroName: (c as any).bairro || '-',
+                    currentVtTotal: colabVtDaily * workingDays
+                  };
+                })
+                .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+              if (groupColaboradores.length === 0) return null;
+
+              // Agrupando os dados de acordo com o tipo
+              const groupedData: Record<string, typeof groupColaboradores> = {};
+              let overallCount = 0;
+              let overallVt = 0;
+              let overallEconomia1 = 0;
+              let overallEconomia2 = 0;
+
+              groupColaboradores.forEach(colab => {
+                const groupKey = groupConfig.type === 'Estágio' ? colab.liderName : colab.atuacaoName;
+                if (!groupedData[groupKey]) groupedData[groupKey] = [];
+                groupedData[groupKey].push(colab);
+
+                overallCount++;
+                overallVt += colab.currentVtTotal;
+                if (groupConfig.type === 'Estágio') {
+                  overallEconomia1 += Math.max(0, colab.currentVtTotal - customVt1);
+                  overallEconomia2 += Math.max(0, colab.currentVtTotal - customVt2);
+                }
+              });
+
+              // Ordenar as chaves de agrupamento
+              const sortedGroupKeys = Object.keys(groupedData).sort((a, b) => a.localeCompare(b));
+
+              return (
+                <div key={idx} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">
+                  <button
+                    onClick={() => groupConfig.setIsExpanded(!groupConfig.isExpanded)}
+                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      {groupConfig.isExpanded ? <ChevronDown className="h-5 w-5 text-[#1e3a8a]" /> : <ChevronRight className="h-5 w-5 text-[#1e3a8a]" />}
+                      <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider">{groupConfig.label} ({overallCount})</h4>
+                    </div>
+                    <span className="text-sm font-bold text-emerald-700">Total VT: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}</span>
+                  </button>
+
+                  {groupConfig.isExpanded && (
+                    <div className="overflow-x-auto border-t border-gray-200">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
+                            <th className="p-4">Colaborador</th>
+                            <th className="p-4 text-center">Vínculo</th>
+                            {groupConfig.type === 'CLT' && (
+                              <th className="p-4 text-center">Líder Direto</th>
+                            )}
+                            <th className="p-4 text-center">Local</th>
+                            <th className="p-4 text-center">Bairro</th>
+                            <th className="p-4 text-right">VT Atual</th>
+
+                            {groupConfig.type === 'Estágio' && (
+                              <>
+                                <th className="p-4 text-right">
+                                  <div className="flex flex-col items-end gap-1">
+                                    <span>Valor Cenário 1</span>
+                                    {exportingPDF ? (
+                                      <span className="text-amber-600 font-bold text-xs">Custo Alvo: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt1)}</span>
+                                    ) : (
+                                      <div className="flex items-center gap-1" title="Defina o teto do VT neste cenário">
+                                        <span className="text-gray-400 font-medium tooltip">Teto: R$</span>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                                          value={customVt1}
+                                          onChange={(e) => setCustomVt1(Number(e.target.value) || 0)}
+                                          onClick={(e) => e.stopPropagation()}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                </th>
+                                <th className="p-4 text-right">
+                                  <span>Economia (Cenário 1)</span>
+                                </th>
+                                <th className="p-4 text-right">
+                                  <div className="flex flex-col items-end gap-1">
+                                    <span>Valor Cenário 2</span>
+                                    {exportingPDF ? (
+                                      <span className="text-amber-600 font-bold text-xs">Custo Alvo: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt2)}</span>
+                                    ) : (
+                                      <div className="flex items-center gap-1" title="Defina o teto do VT neste cenário">
+                                        <span className="text-gray-400 font-medium tooltip">Teto: R$</span>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                                          value={customVt2}
+                                          onChange={(e) => setCustomVt2(Number(e.target.value) || 0)}
+                                          onClick={(e) => e.stopPropagation()}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                </th>
+                                <th className="p-4 text-right">
+                                  <span>Economia (Cenário 2)</span>
+                                </th>
+                              </>
+                            )}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {sortedGroupKeys.map(groupKey => {
+                            const colabsInGroup = groupedData[groupKey];
+                            const groupSubtotalVt = colabsInGroup.reduce((acc, curr) => acc + curr.currentVtTotal, 0);
+                            const groupSubtotalEco1 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt1), 0);
+                            const groupSubtotalEco2 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt2), 0);
+                            const groupSubtotalValCen1 = groupSubtotalVt - groupSubtotalEco1;
+                            const groupSubtotalValCen2 = groupSubtotalVt - groupSubtotalEco2;
+
+                            return (
+                              <React.Fragment key={groupKey}>
+                                {/* Cabeçalho do Grupo */}
+                                <tr className="bg-gray-50/80">
+                                  <td colSpan={groupConfig.type === 'Estágio' ? 9 : 6} className="p-3 text-xs font-bold text-[#1e3a8a]">
+                                    {groupConfig.type === 'Estágio' ? 'Líder Direto: ' : 'Atuação: '} {groupKey} ({colabsInGroup.length})
+                                  </td>
+                                </tr>
+
+                                {/* Linhas do Grupo */}
+                                {colabsInGroup.map(colab => {
+                                  const economia1 = Math.max(0, colab.currentVtTotal - customVt1);
+                                  const economia2 = Math.max(0, colab.currentVtTotal - customVt2);
+                                  const valCen1 = colab.currentVtTotal - economia1;
+                                  const valCen2 = colab.currentVtTotal - economia2;
+
+                                  return (
+                                    <tr key={colab.id} className="hover:bg-blue-50/30 transition-colors group">
+                                      <td className="p-4 text-sm font-bold text-[#0a192f] pl-8">{colab.name}</td>
+                                      <td className="p-4 text-sm font-medium text-gray-600 text-center">
+                                        <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{colab.contract_type}</span>
+                                      </td>
+                                      {groupConfig.type === 'CLT' && (
+                                        <td className="p-4 text-sm font-medium text-gray-500 text-center">
+                                          {colab.liderName}
+                                        </td>
+                                      )}
+                                      <td className="p-4 text-sm font-medium text-gray-500 text-center">
+                                        {colab.localName}
+                                      </td>
+                                      <td className="p-4 text-sm font-medium text-gray-500 text-center">
+                                        {colab.bairroName}
+                                      </td>
+                                      <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(colab.currentVtTotal)}
+                                      </td>
+
+                                      {groupConfig.type === 'Estágio' && (
+                                        <>
+                                          <td className="p-4 text-sm font-bold text-gray-600 text-right">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valCen1)}
+                                          </td>
+                                          <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt1}, a economia será este valor.`}>
+                                            {economia1 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia1) : '-'}
+                                          </td>
+                                          <td className="p-4 text-sm font-bold text-gray-600 text-right">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valCen2)}
+                                          </td>
+                                          <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt2}, a economia será este valor.`}>
+                                            {economia2 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia2) : '-'}
+                                          </td>
+                                        </>
+                                      )}
+                                    </tr>
+                                  );
+                                })}
+
+                                {/* Subtotal do Grupo */}
+                                <tr className="bg-gray-50/50 border-b-2 border-gray-200">
+                                  <td colSpan={groupConfig.type === 'Estágio' ? 4 : 5} className="p-3 text-xs font-bold text-gray-600 text-right">
+                                    Subtotal {groupKey}:
+                                  </td>
+                                  <td className="p-3 text-sm font-black text-[#1e3a8a] text-right">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalVt)}
+                                  </td>
+                                  {groupConfig.type === 'Estágio' && (
+                                    <>
+                                      <td className="p-3 text-sm font-bold text-gray-600 text-right">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalValCen1)}
+                                      </td>
+                                      <td className="p-3 text-sm font-bold text-amber-600 text-right">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco1)}
+                                      </td>
+                                      <td className="p-3 text-sm font-bold text-gray-600 text-right">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalValCen2)}
+                                      </td>
+                                      <td className="p-3 text-sm font-bold text-amber-600 text-right">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco2)}
+                                      </td>
+                                    </>
+                                  )}
+                                </tr>
+                              </React.Fragment>
+                            );
+                          })}
+
+                          {/* Total Geral de todos os grupos combinados */}
+                          <tr className="bg-gradient-to-r from-emerald-50 to-white/50 border-t-2 border-emerald-200">
+                            <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider" colSpan={groupConfig.type === 'Estágio' ? 4 : 5}>Total Geral ({overallCount})</td>
+                            <td className="p-4 text-base font-black text-emerald-700 text-right">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}
+                            </td>
+                            {groupConfig.type === 'Estágio' && (
+                              <>
+                                <td className="p-4 text-base font-bold text-emerald-700/80 text-right">
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt - overallEconomia1)}
+                                </td>
+                                <td className="p-4 text-base font-black text-emerald-700 text-right">
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia1)}
+                                </td>
+                                <td className="p-4 text-base font-bold text-emerald-700/80 text-right">
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt - overallEconomia2)}
+                                </td>
+                                <td className="p-4 text-base font-black text-emerald-700 text-right">
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia2)}
+                                </td>
+                              </>
+                            )}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            <p className="text-[10px] text-gray-400 mt-3 font-medium flex gap-2">
+              <span className="text-amber-500 font-bold">*</span>
+              Baseado em {getWorkingDaysInCurrentMonth()} dias úteis (Mês Vigente) para colaboradores Ativos (CLT e Estágio).
+            </p>
           </div>
         </div>
-      )}
+        </div>
+  )
+}
 
-      {/* VIEW MODAL (Original Window) */}
-      {selectedColaborador && renderModalLayout(
-        toTitleCase(selectedColaborador.name),
-        () => setSelectedColaborador(null),
-        activeDetailTab,
-        setActiveDetailTab,
-        renderModalContent(activeDetailTab, true, selectedColaborador),
-        (
-          <>
-            <button
-              onClick={() => handleDelete(selectedColaborador)}
-              className="px-6 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all flex items-center gap-2"
-            >
-              <Trash2 className="h-4 w-4" /> Excluir
-            </button>
-            <button
-              onClick={() => handleEdit(selectedColaborador)}
-              className="px-6 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
-            >
-              <Pencil className="h-4 w-4" /> Editar Perfil
-            </button>
-          </>
-        ),
-        // Sidebar Content (Display Photo)
-        <div className="flex flex-col items-center">
-          <div className="w-48 h-48 rounded-full overflow-hidden border-[6px] border-white shadow-xl bg-gray-50 flex items-center justify-center cursor-pointer transition-transform hover:scale-105" onClick={() => selectedColaborador.photo_url && setViewingPhoto(selectedColaborador.photo_url)}>
-            {selectedColaborador.photo_url ? (
-              <img src={selectedColaborador.photo_url} className="w-full h-full object-cover" alt={selectedColaborador.name} />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center">
-                <span className="text-5xl font-black text-white opacity-50">{selectedColaborador.name?.charAt(0).toUpperCase()}</span>
-              </div>
-            )}
+{/* VIEW MODAL (Original Window) */ }
+{
+  selectedColaborador && renderModalLayout(
+    toTitleCase(selectedColaborador.name),
+    () => setSelectedColaborador(null),
+    activeDetailTab,
+    setActiveDetailTab,
+    renderModalContent(activeDetailTab, true, selectedColaborador),
+    (
+      <>
+        <button
+          onClick={() => handleDelete(selectedColaborador)}
+          className="px-6 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all flex items-center gap-2"
+        >
+          <Trash2 className="h-4 w-4" /> Excluir
+        </button>
+        <button
+          onClick={() => handleEdit(selectedColaborador)}
+          className="px-6 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
+        >
+          <Pencil className="h-4 w-4" /> Editar Perfil
+        </button>
+      </>
+    ),
+    // Sidebar Content (Display Photo)
+    <div className="flex flex-col items-center">
+      <div className="w-48 h-48 rounded-full overflow-hidden border-[6px] border-white shadow-xl bg-gray-50 flex items-center justify-center cursor-pointer transition-transform hover:scale-105" onClick={() => selectedColaborador.photo_url && setViewingPhoto(selectedColaborador.photo_url)}>
+        {selectedColaborador.photo_url ? (
+          <img src={selectedColaborador.photo_url} className="w-full h-full object-cover" alt={selectedColaborador.name} />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center">
+            <span className="text-5xl font-black text-white opacity-50">{selectedColaborador.name?.charAt(0).toUpperCase()}</span>
           </div>
-          {selectedColaborador.matricula_interna && (
-            <div className="mt-4 px-4 py-1.5 bg-gray-100/80 rounded-full border border-gray-200 shadow-sm">
-              <span className="text-xs font-black text-gray-500 tracking-wider">{selectedColaborador.matricula_interna}</span>
+        )}
+      </div>
+      {selectedColaborador.matricula_interna && (
+        <div className="mt-4 px-4 py-1.5 bg-gray-100/80 rounded-full border border-gray-200 shadow-sm">
+          <span className="text-xs font-black text-gray-500 tracking-wider">{selectedColaborador.matricula_interna}</span>
+        </div>
+      )}
+    </div>,
+    false,
+    selectedColaborador
+  )
+}
+
+{/* FORM PAGE (Full Page Layout) */ }
+{
+  showFormModal && renderPageLayout(
+    formData.id ? 'Editar Colaborador' : 'Novo Colaborador',
+    () => setShowFormModal(false),
+    activeFormTab,
+    setActiveFormTab,
+    renderModalContent(activeFormTab, false, formData),
+    (
+      <>
+        <button
+          onClick={() => setShowFormModal(false)}
+          className="px-6 py-3 text-[10px] font-black text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]"
+        >
+          Cancelar
+        </button>
+        <button
+          onClick={() => handleSave(true)}
+          className="flex items-center gap-2 px-8 py-3 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+        >
+          <Save className="h-5 w-5" /> Salvar Tudo
+        </button>
+      </>
+    ),
+    // Sidebar Content (Photo Upload)
+    <PhotoUploadSection
+      photoPreview={photoPreview}
+      uploadingPhoto={uploadingPhoto}
+      photoInputRef={photoInputRef}
+      setPhotoPreview={setPhotoPreview}
+      onPhotoSelected={setSelectedPhotoFile}
+      onRemovePhoto={() => {
+        setPhotoPreview(null)
+        setSelectedPhotoFile(null)
+        setFormData(prev => ({ ...prev, photo_url: undefined, foto_url: undefined }))
+      }}
+    />,
+    true, // isEditMode = true for the form modal
+    formData
+  )
+}
+
+{
+  viewingPhoto && (
+    <div className="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in" onClick={() => setViewingPhoto(null)}>
+      <button className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors" onClick={() => setViewingPhoto(null)}>
+        <X className="h-8 w-8" />
+      </button>
+      <img src={viewingPhoto} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default" onClick={e => e.stopPropagation()} alt="Visualização" />
+    </div>
+  )
+}
+
+{/* LINKS MODAL */ }
+{
+  showLinksModal && (
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="bg-white rounded-2xl w-full max-w-3xl flex flex-col overflow-hidden shadow-2xl relative">
+        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+              <LinkIcon className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-[#0a192f]">Links de Atualização Copiáveis</h3>
+              <p className="text-xs text-gray-500 font-medium">Envie estes links únicos para cada colaborador.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowLinksModal(false)}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4">
+          <div className="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm mb-4 border border-blue-100 flex items-start gap-3">
+            <CheckCircle2 className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+            <p>Nesta seção você tem acesso aos links únicos. <strong>Atenção:</strong> Os links expiram em exatos 7 dias contados a partir de agora. Após expirarem, o colaborador precisará que você gere e envie um novo link.</p>
+          </div>
+
+          {generatedLinks.map((link, idx) => {
+            const isSendingEmail = sendingEmailStatus[idx] || false;
+            return (
+              <div key={idx} className="flex items-center gap-3 bg-white border border-gray-200 p-3 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0 font-bold">
+                  {link.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-[#0a192f] truncate">{toTitleCase(link.name)}</p>
+                  <p className="text-xs text-blue-600 font-medium truncate">{link.url}</p>
+                </div>
+
+                {/* EMail action */}
+                <button
+                  disabled={isSendingEmail}
+                  onClick={async () => {
+                    setSendingEmailStatus(prev => ({ ...prev, [idx]: true }));
+                    try {
+                      const colabEmail = colaboradores.find(c => c.name === link.name)?.email;
+
+                      if (!colabEmail) {
+                        showAlert('Erro', `O colaborador ${link.name} não possui um e-mail corporativo cadastrado.`, 'error');
+                        return;
+                      }
+
+                      await fetch('https://hook.us2.make.com/5lv612jlqx6cqnfwu5qnivxgsvkcphwq', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          nome_colaborador: link.name,
+                          email_colaborador: colabEmail,
+                          link_atualizacao: link.url
+                        })
+                      });
+
+                      // With 'no-cors', response type will be 'opaque' and status will be 0.
+                      // It won't fail with CORS, but we can't reliably read the status code.
+                      // We'll optimistically assume success if no network error was caught.
+                      showAlert('Sucesso', `E-mail enviado para o Make.com (${colabEmail})!`, 'success');
+                    } catch (error) {
+                      showAlert('Erro', 'Ocorreu um erro ao enviar para o Make.com. Verifique o console.', 'error');
+                      console.error(error);
+                    } finally {
+                      setSendingEmailStatus(prev => ({ ...prev, [idx]: false }));
+                    }
+                  }}
+                  className="p-2.5 bg-gray-50 hover:bg-blue-50 text-gray-500 hover:text-blue-600 rounded-lg transition-colors border border-gray-200 border-dashed group-hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Enviar este link por E-mail (Make.com)"
+                >
+                  {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                </button>
+
+                {/* Copy action */}
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`Olá ${toTitleCase(link.name)}, por favor, atualize seus dados no sistema através deste link único: ${link.url}`);
+                    showAlert('Sucesso', 'Mensagem pronta copiada para a área de transferência!', 'success');
+                  }}
+                  className="p-2.5 bg-gray-50 hover:bg-amber-50 text-gray-500 hover:text-amber-600 rounded-lg transition-colors border border-gray-200 border-dashed group-hover:border-amber-200"
+                  title="Copiar mensagem pronta com o link"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+          <button
+            onClick={() => setShowLinksModal(false)}
+            className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-[#112240] transition-colors shadow-lg"
+          >
+            Concluí
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+{/* HR NOTIFICATIONS MODAL */ }
+{
+  showNotificationsModal && (
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="bg-white rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden shadow-2xl relative">
+        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+              <BellRing className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-[#0a192f]">Avisos do RH</h3>
+              <p className="text-xs text-gray-500 font-medium">Você tem {totalNotifications} {totalNotifications === 1 ? 'pendência' : 'pendências'} de hoje.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowNotificationsModal(false)}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Fechar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-[60vh] space-y-6">
+
+          {/* Mochila Section */}
+          {pendingBackpacks.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                <Briefcase className="h-4 w-4 text-[#1e3a8a]" />
+                <h4 className="font-bold text-[#0a192f] text-sm uppercase tracking-wider">Entrega de Mochila (3 Meses)</h4>
+              </div>
+              {pendingBackpacks.map(c => (
+                <div key={c.id} className="flex items-center justify-between bg-blue-50/50 border border-blue-100 p-3 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Avatar src={c.photo_url || c.foto_url} name={c.name} size="sm" />
+                    <div>
+                      <p className="text-sm font-bold text-[#0a192f]">{c.name}</p>
+                      <p className="text-[10px] uppercase font-bold text-gray-500">Admissão: {formatDateToDisplay(c.hire_date)}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleMarkBackpackDelivered(c.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-[10px] font-bold uppercase transition-colors hover:bg-emerald-600"
+                    title="Marcar como Entregue"
+                  >
+                    <CheckCircle2 className="h-3 w-3" /> Entregue
+                  </button>
+                </div>
+              ))}
             </div>
           )}
-        </div>,
-        false,
-        selectedColaborador
-      )}
 
-      {/* FORM PAGE (Full Page Layout) */}
-      {showFormModal && renderPageLayout(
-        formData.id ? 'Editar Colaborador' : 'Novo Colaborador',
-        () => setShowFormModal(false),
-        activeFormTab,
-        setActiveFormTab,
-        renderModalContent(activeFormTab, false, formData),
-        (
-          <>
-            <button
-              onClick={() => setShowFormModal(false)}
-              className="px-6 py-3 text-[10px] font-black text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={() => handleSave(true)}
-              className="flex items-center gap-2 px-8 py-3 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-            >
-              <Save className="h-5 w-5" /> Salvar Tudo
-            </button>
-          </>
-        ),
-        // Sidebar Content (Photo Upload)
-        <PhotoUploadSection
-          photoPreview={photoPreview}
-          uploadingPhoto={uploadingPhoto}
-          photoInputRef={photoInputRef}
-          setPhotoPreview={setPhotoPreview}
-          onPhotoSelected={setSelectedPhotoFile}
-          onRemovePhoto={() => {
-            setPhotoPreview(null)
-            setSelectedPhotoFile(null)
-            setFormData(prev => ({ ...prev, photo_url: undefined, foto_url: undefined }))
-          }}
-        />,
-        true, // isEditMode = true for the form modal
-        formData
-      )}
+          {/* Aniversariantes Section */}
+          {pendingBirthdays.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                <User className="h-4 w-4 text-[#1e3a8a]" />
+                <h4 className="font-bold text-[#0a192f] text-sm uppercase tracking-wider">Aniversariantes do Dia</h4>
+              </div>
+              {pendingBirthdays.map(c => (
+                <div key={c.id} className="flex items-center justify-between bg-amber-50/50 border border-amber-100 p-3 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Avatar src={c.photo_url || c.foto_url} name={c.name} size="sm" />
+                    <div>
+                      <p className="text-sm font-bold text-[#0a192f]">{c.name}</p>
+                      <p className="text-[10px] uppercase font-bold text-gray-500">Data: {formatDateToDisplay(c.birthday)}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleMarkBirthdayCongratulated(c.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase transition-colors hover:bg-amber-600"
+                    title="Marcar como Feito"
+                  >
+                    <CheckCircle2 className="h-3 w-3" /> Feito
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
-      {viewingPhoto && (
-        <div className="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in" onClick={() => setViewingPhoto(null)}>
-          <button className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors" onClick={() => setViewingPhoto(null)}>
-            <X className="h-8 w-8" />
+        </div>
+
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+          <button
+            onClick={() => setShowNotificationsModal(false)}
+            className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-[#112240] transition-colors shadow-lg"
+          >
+            Fechar
           </button>
-          <img src={viewingPhoto} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default" onClick={e => e.stopPropagation()} alt="Visualização" />
         </div>
-      )}
-
-      {/* LINKS MODAL */}
-      {showLinksModal && (
-        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-2xl w-full max-w-3xl flex flex-col overflow-hidden shadow-2xl relative">
-            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
-                  <LinkIcon className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-[#0a192f]">Links de Atualização Copiáveis</h3>
-                  <p className="text-xs text-gray-500 font-medium">Envie estes links únicos para cada colaborador.</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowLinksModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4">
-              <div className="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm mb-4 border border-blue-100 flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <p>Nesta seção você tem acesso aos links únicos. <strong>Atenção:</strong> Os links expiram em exatos 7 dias contados a partir de agora. Após expirarem, o colaborador precisará que você gere e envie um novo link.</p>
-              </div>
-
-              {generatedLinks.map((link, idx) => {
-                const isSendingEmail = sendingEmailStatus[idx] || false;
-                return (
-                  <div key={idx} className="flex items-center gap-3 bg-white border border-gray-200 p-3 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0 font-bold">
-                      {link.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-[#0a192f] truncate">{toTitleCase(link.name)}</p>
-                      <p className="text-xs text-blue-600 font-medium truncate">{link.url}</p>
-                    </div>
-
-                    {/* EMail action */}
-                    <button
-                      disabled={isSendingEmail}
-                      onClick={async () => {
-                        setSendingEmailStatus(prev => ({ ...prev, [idx]: true }));
-                        try {
-                          const colabEmail = colaboradores.find(c => c.name === link.name)?.email;
-
-                          if (!colabEmail) {
-                            showAlert('Erro', `O colaborador ${link.name} não possui um e-mail corporativo cadastrado.`, 'error');
-                            return;
-                          }
-
-                          await fetch('https://hook.us2.make.com/5lv612jlqx6cqnfwu5qnivxgsvkcphwq', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              nome_colaborador: link.name,
-                              email_colaborador: colabEmail,
-                              link_atualizacao: link.url
-                            })
-                          });
-
-                          // With 'no-cors', response type will be 'opaque' and status will be 0.
-                          // It won't fail with CORS, but we can't reliably read the status code.
-                          // We'll optimistically assume success if no network error was caught.
-                          showAlert('Sucesso', `E-mail enviado para o Make.com (${colabEmail})!`, 'success');
-                        } catch (error) {
-                          showAlert('Erro', 'Ocorreu um erro ao enviar para o Make.com. Verifique o console.', 'error');
-                          console.error(error);
-                        } finally {
-                          setSendingEmailStatus(prev => ({ ...prev, [idx]: false }));
-                        }
-                      }}
-                      className="p-2.5 bg-gray-50 hover:bg-blue-50 text-gray-500 hover:text-blue-600 rounded-lg transition-colors border border-gray-200 border-dashed group-hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Enviar este link por E-mail (Make.com)"
-                    >
-                      {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                    </button>
-
-                    {/* Copy action */}
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(`Olá ${toTitleCase(link.name)}, por favor, atualize seus dados no sistema através deste link único: ${link.url}`);
-                        showAlert('Sucesso', 'Mensagem pronta copiada para a área de transferência!', 'success');
-                      }}
-                      className="p-2.5 bg-gray-50 hover:bg-amber-50 text-gray-500 hover:text-amber-600 rounded-lg transition-colors border border-gray-200 border-dashed group-hover:border-amber-200"
-                      title="Copiar mensagem pronta com o link"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
-              <button
-                onClick={() => setShowLinksModal(false)}
-                className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-[#112240] transition-colors shadow-lg"
-              >
-                Concluí
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* HR NOTIFICATIONS MODAL */}
-      {showNotificationsModal && (
-        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden shadow-2xl relative">
-            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
-                  <BellRing className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-[#0a192f]">Avisos do RH</h3>
-                  <p className="text-xs text-gray-500 font-medium">Você tem {totalNotifications} {totalNotifications === 1 ? 'pendência' : 'pendências'} de hoje.</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowNotificationsModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Fechar"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto max-h-[60vh] space-y-6">
-
-              {/* Mochila Section */}
-              {pendingBackpacks.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-                    <Briefcase className="h-4 w-4 text-[#1e3a8a]" />
-                    <h4 className="font-bold text-[#0a192f] text-sm uppercase tracking-wider">Entrega de Mochila (3 Meses)</h4>
-                  </div>
-                  {pendingBackpacks.map(c => (
-                    <div key={c.id} className="flex items-center justify-between bg-blue-50/50 border border-blue-100 p-3 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <Avatar src={c.photo_url || c.foto_url} name={c.name} size="sm" />
-                        <div>
-                          <p className="text-sm font-bold text-[#0a192f]">{c.name}</p>
-                          <p className="text-[10px] uppercase font-bold text-gray-500">Admissão: {formatDateToDisplay(c.hire_date)}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleMarkBackpackDelivered(c.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-[10px] font-bold uppercase transition-colors hover:bg-emerald-600"
-                        title="Marcar como Entregue"
-                      >
-                        <CheckCircle2 className="h-3 w-3" /> Entregue
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Aniversariantes Section */}
-              {pendingBirthdays.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-                    <User className="h-4 w-4 text-[#1e3a8a]" />
-                    <h4 className="font-bold text-[#0a192f] text-sm uppercase tracking-wider">Aniversariantes do Dia</h4>
-                  </div>
-                  {pendingBirthdays.map(c => (
-                    <div key={c.id} className="flex items-center justify-between bg-amber-50/50 border border-amber-100 p-3 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <Avatar src={c.photo_url || c.foto_url} name={c.name} size="sm" />
-                        <div>
-                          <p className="text-sm font-bold text-[#0a192f]">{c.name}</p>
-                          <p className="text-[10px] uppercase font-bold text-gray-500">Data: {formatDateToDisplay(c.birthday)}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleMarkBirthdayCongratulated(c.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase transition-colors hover:bg-amber-600"
-                        title="Marcar como Feito"
-                      >
-                        <CheckCircle2 className="h-3 w-3" /> Feito
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-            </div>
-
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
-              <button
-                onClick={() => setShowNotificationsModal(false)}
-                className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-[#112240] transition-colors shadow-lg"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
+    </div>
+  )
+}
 
       <AlertModal
         isOpen={alertConfig.isOpen}
@@ -3108,20 +3174,20 @@ export function Colaboradores({ }: ColaboradoresProps) {
         cancelText="Cancelar"
         variant="danger"
       />
-    </div>
+    </div >
   )
 
-  // --- SUB-COMPONENTS ---
+// --- SUB-COMPONENTS ---
 
-  function Avatar({ src, name, size = 'sm', onImageClick }: any) {
-    const sz = size === 'lg' ? 'w-20 h-20 text-xl' : 'w-10 h-10 text-sm'
-    const clickableClass = onImageClick && src ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
+function Avatar({ src, name, size = 'sm', onImageClick }: any) {
+  const sz = size === 'lg' ? 'w-20 h-20 text-xl' : 'w-10 h-10 text-sm'
+  const clickableClass = onImageClick && src ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
 
-    if (src) return <img src={src} loading="lazy" onClick={onImageClick} className={`${sz} rounded-full object-cover border-2 border-white shadow-sm ${clickableClass}`} alt={name} />
-    return (
-      <div className={`${sz} rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center font-black text-white shadow-md`}>
-        {name?.charAt(0).toUpperCase()}
-      </div>
-    )
-  }
+  if (src) return <img src={src} loading="lazy" onClick={onImageClick} className={`${sz} rounded-full object-cover border-2 border-white shadow-sm ${clickableClass}`} alt={name} />
+  return (
+    <div className={`${sz} rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center font-black text-white shadow-md`}>
+      {name?.charAt(0).toUpperCase()}
+    </div>
+  )
+}
 }
