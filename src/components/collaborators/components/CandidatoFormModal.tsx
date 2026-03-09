@@ -8,7 +8,7 @@ import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
 import { DadosEscolaridadeSection } from './DadosEscolaridadeSection'
 import { CandidatoExperienciasSection } from './CandidatoExperienciasSection'
-import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, Edit2, Camera } from 'lucide-react'
+import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, Edit2, Camera, Search } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
 import { EnderecoSection } from './EnderecoSection'
@@ -64,6 +64,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const [tagSearch, setTagSearch] = useState('')
     const [tagInputValue, setTagInputValue] = useState('')
     const [availableTags, setAvailableTags] = useState<string[]>([])
+    const [tagDropdownSearch, setTagDropdownSearch] = useState('')
 
     const [showReprovadoModal, setShowReprovadoModal] = useState(false)
     const [tempReprovadoMotivo, setTempReprovadoMotivo] = useState('')
@@ -660,6 +661,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         setTagInputValue('');
         setIsTagging(false);
         setTagSearch('');
+        setTagDropdownSearch('');
     };
 
     const steps = [
@@ -910,13 +912,27 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                                     />
 
                                     {isTagging && availableTags.length > 0 && (
-                                        <div className="absolute top-12 left-3 w-[80%] max-w-sm bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-48 overflow-y-auto ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="absolute top-12 left-3 w-[80%] max-w-sm bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-64 overflow-hidden ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col">
                                             <div className="px-3 py-2 text-[10px] font-black text-blue-800 bg-blue-50/50 border-b border-blue-100 uppercase tracking-widest sticky top-0 backdrop-blur-sm">
                                                 Sugestões da Nuvem
                                             </div>
-                                            <div className="p-1">
+                                            <div className="px-2 py-2 border-b border-gray-100 sticky top-0 bg-white">
+                                                <div className="relative">
+                                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Buscar por palavra-chave..."
+                                                        value={tagDropdownSearch}
+                                                        onChange={(e) => setTagDropdownSearch(e.target.value)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none font-medium bg-gray-50"
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="p-1 overflow-y-auto flex-1">
                                                 {availableTags
-                                                    .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
+                                                    .filter(t => t.toLowerCase().includes((tagDropdownSearch || tagSearch).toLowerCase()))
                                                     .filter(t => !(formData.perfil || '').split('\n').filter(Boolean).includes(t))
                                                     .map(t => (
                                                         <button
@@ -930,10 +946,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                                                     ))}
                                             </div>
                                             {availableTags
-                                                .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
+                                                .filter(t => t.toLowerCase().includes((tagDropdownSearch || tagSearch).toLowerCase()))
                                                 .filter(t => !(formData.perfil || '').split('\n').filter(Boolean).includes(t))
                                                 .length === 0 && (
-                                                    <div className="px-4 py-3 text-xs text-gray-400 text-center font-medium">Nenhuma tag encontrada para "{tagSearch}"</div>
+                                                    <div className="px-4 py-3 text-xs text-gray-400 text-center font-medium">Nenhuma tag encontrada para "{tagDropdownSearch || tagSearch}"</div>
                                                 )}
                                         </div>
                                     )}

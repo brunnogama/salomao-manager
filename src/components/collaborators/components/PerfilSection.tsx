@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Tag, Save, AlertCircle, Loader2, Sparkles } from 'lucide-react';
+import { Tag, Save, AlertCircle, Loader2, Sparkles, Search } from 'lucide-react';
 
 interface PerfilSectionProps {
     collaboratorId: string;
@@ -18,6 +18,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
     const [tagSearch, setTagSearch] = useState('');
     const [availableTags, setAvailableTags] = useState<string[]>([]);
     const [cursorPosition, setCursorPosition] = useState(0);
+    const [tagDropdownSearch, setTagDropdownSearch] = useState('');
 
     useEffect(() => {
         fetchPerfil();
@@ -82,6 +83,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
         setPerfil(newText);
         setIsTagging(false);
         setTagSearch('');
+        setTagDropdownSearch('');
     };
 
     const handleSave = async () => {
@@ -242,20 +244,41 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
                     />
 
                     {isTagging && (
-                        <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-48 overflow-y-auto ring-1 ring-black/5">
-                            {availableTags
-                                .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
-                                .map(tag => (
-                                    <button
-                                        key={tag}
-                                        onClick={() => insertTag(tag)}
-                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-[#0a192f] font-medium border-b border-gray-50 last:border-0"
-                                    >
-                                        <Tag className="h-4 w-4 text-blue-500" />
-                                        {tag}
-                                    </button>
-                                ))
-                            }
+                        <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-64 overflow-hidden ring-1 ring-black/5 flex flex-col">
+                            <div className="px-2 py-2 border-b border-gray-100 sticky top-0 bg-white">
+                                <div className="relative">
+                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar por palavra-chave..."
+                                        value={tagDropdownSearch}
+                                        onChange={(e) => setTagDropdownSearch(e.target.value)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none font-medium bg-gray-50"
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+                            <div className="overflow-y-auto flex-1">
+                                {availableTags
+                                    .filter(t => t.toLowerCase().includes((tagDropdownSearch || tagSearch).toLowerCase()))
+                                    .map(tag => (
+                                        <button
+                                            key={tag}
+                                            onClick={() => insertTag(tag)}
+                                            className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-[#0a192f] font-medium border-b border-gray-50 last:border-0"
+                                        >
+                                            <Tag className="h-4 w-4 text-blue-500" />
+                                            {tag}
+                                        </button>
+                                    ))
+                                }
+                                {availableTags
+                                    .filter(t => t.toLowerCase().includes((tagDropdownSearch || tagSearch).toLowerCase()))
+                                    .length === 0 && (
+                                        <div className="px-4 py-3 text-xs text-gray-400 text-center font-medium">Nenhuma tag encontrada para "{tagDropdownSearch || tagSearch}"</div>
+                                    )}
+                            </div>
                         </div>
                     )}
                 </div>

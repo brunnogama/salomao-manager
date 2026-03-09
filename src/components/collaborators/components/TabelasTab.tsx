@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Plus, Loader2, Save, Trash2, Edit2, X, ArrowRight, ArrowLeft, Tag, Briefcase, GraduationCap } from 'lucide-react';
+import { Plus, Loader2, Save, Trash2, Edit2, X, ArrowRight, ArrowLeft, Tag, Briefcase, GraduationCap, Search } from 'lucide-react';
 import { formatDbMoneyToDisplay } from '../utils/colaboradoresUtils';
 import { ConfirmationModal } from '../../ui/ConfirmationModal';
 import { AlertModal } from '../../ui/AlertModal';
@@ -51,6 +51,7 @@ export function TabelasTab() {
     const [tagSearch, setTagSearch] = useState('');
     const [cursorPosition, setCursorPosition] = useState(0);
     const [availableTags, setAvailableTags] = useState<{ tag: string, area?: string }[]>([]);
+    const [tagDropdownSearch, setTagDropdownSearch] = useState('');
 
     // Derived state for Roles
     const [rolesJuridico, setRolesJuridico] = useState<Role[]>([]);
@@ -295,6 +296,7 @@ export function TabelasTab() {
         setEditingRole({ ...editingRole, default_tags: newText });
         setIsTagging(false);
         setTagSearch('');
+        setTagDropdownSearch('');
     };
 
     const handleSaveRole = async () => {
@@ -890,35 +892,51 @@ export function TabelasTab() {
 
                                 {/* Sub-menu for @ tags */}
                                 {isTagging && (
-                                    <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-48 overflow-y-auto">
-                                        {availableTags
-                                            .filter(t => {
-                                                // Filter by text match
-                                                if (!t.tag.toLowerCase().includes(tagSearch.toLowerCase())) return false;
-                                                // Filter by area match
-                                                if (editingRole) {
-                                                    const isJuridico = rolesJuridico.some(r => r.id === editingRole.id);
-                                                    const roleArea = isJuridico ? 'Jurídica' : 'Administrativa';
-                                                    if (t.area && t.area !== 'Ambas' && t.area !== roleArea) return false;
-                                                }
-                                                return true;
-                                            })
-                                            .map(tagItem => (
-                                                <button
-                                                    key={tagItem.tag}
-                                                    onClick={() => insertRoleTag(tagItem.tag)}
-                                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-[#0a192f] font-medium border-b border-gray-50 last:border-0"
-                                                >
-                                                    <Tag className="h-4 w-4 text-blue-500" />
-                                                    {tagItem.tag}
-                                                </button>
-                                            ))
-                                        }
-                                        {availableTags.filter(t => t.tag.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
-                                            <div className="px-4 py-3 text-sm text-gray-500 italic">
-                                                Nenhuma tag cadastrada com "{tagSearch}"... Quando você salvar, ela será criada!
+                                    <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-64 overflow-hidden flex flex-col">
+                                        <div className="px-2 py-2 border-b border-gray-100 sticky top-0 bg-white">
+                                            <div className="relative">
+                                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Buscar por palavra-chave..."
+                                                    value={tagDropdownSearch}
+                                                    onChange={(e) => setTagDropdownSearch(e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none font-medium bg-gray-50"
+                                                    autoFocus
+                                                />
                                             </div>
-                                        )}
+                                        </div>
+                                        <div className="overflow-y-auto flex-1">
+                                            {availableTags
+                                                .filter(t => {
+                                                    // Filter by text match
+                                                    if (!t.tag.toLowerCase().includes((tagDropdownSearch || tagSearch).toLowerCase())) return false;
+                                                    // Filter by area match
+                                                    if (editingRole) {
+                                                        const isJuridico = rolesJuridico.some(r => r.id === editingRole.id);
+                                                        const roleArea = isJuridico ? 'Jurídica' : 'Administrativa';
+                                                        if (t.area && t.area !== 'Ambas' && t.area !== roleArea) return false;
+                                                    }
+                                                    return true;
+                                                })
+                                                .map(tagItem => (
+                                                    <button
+                                                        key={tagItem.tag}
+                                                        onClick={() => insertRoleTag(tagItem.tag)}
+                                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-[#0a192f] font-medium border-b border-gray-50 last:border-0"
+                                                    >
+                                                        <Tag className="h-4 w-4 text-blue-500" />
+                                                        {tagItem.tag}
+                                                    </button>
+                                                ))
+                                            }
+                                            {availableTags.filter(t => t.tag.toLowerCase().includes((tagDropdownSearch || tagSearch).toLowerCase())).length === 0 && (
+                                                <div className="px-4 py-3 text-sm text-gray-500 italic">
+                                                    Nenhuma tag cadastrada com "{tagDropdownSearch || tagSearch}"... Quando você salvar, ela será criada!
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>

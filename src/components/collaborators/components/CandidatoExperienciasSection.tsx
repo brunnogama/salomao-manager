@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Briefcase, Plus, Trash2, Loader2, Edit2, Check } from 'lucide-react'
+import { Briefcase, Plus, Trash2, Loader2, Edit2, Check, Search } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 
 interface CandidatoExperienciasSectionProps {
@@ -33,6 +33,7 @@ export function CandidatoExperienciasSection({
     const [tagSearchExp, setTagSearchExp] = useState('')
     const [availableTags, setAvailableTags] = useState<string[]>([])
     const [cursorPositionExp, setCursorPositionExp] = useState(0)
+    const [tagDropdownSearch, setTagDropdownSearch] = useState('')
 
     // Edit states
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -193,6 +194,7 @@ export function CandidatoExperienciasSection({
         setPerfilExp(newText);
         setIsTaggingExp(false);
         setTagSearchExp('');
+        setTagDropdownSearch('');
     }
 
     const allExperiencias = [...pendingExperiencias, ...experienciasList]
@@ -311,18 +313,39 @@ export function CandidatoExperienciasSection({
                                 onChange={handlePerfilExpChange}
                             />
                             {isTaggingExp && (
-                                <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-48 overflow-y-auto">
-                                    {availableTags
-                                        .filter(t => t.toLowerCase().includes(tagSearchExp.toLowerCase()))
-                                        .map(t => (
-                                            <button
-                                                key={t}
-                                                onClick={() => insertTagExp(t)}
-                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors border-b border-gray-50 last:border-0"
-                                            >
-                                                {t}
-                                            </button>
-                                        ))}
+                                <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-64 overflow-hidden flex flex-col">
+                                    <div className="px-2 py-2 border-b border-gray-100 sticky top-0 bg-white">
+                                        <div className="relative">
+                                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                placeholder="Buscar por palavra-chave..."
+                                                value={tagDropdownSearch}
+                                                onChange={(e) => setTagDropdownSearch(e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none font-medium bg-gray-50"
+                                                autoFocus
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="overflow-y-auto flex-1">
+                                        {availableTags
+                                            .filter(t => t.toLowerCase().includes((tagDropdownSearch || tagSearchExp).toLowerCase()))
+                                            .map(t => (
+                                                <button
+                                                    key={t}
+                                                    onClick={() => insertTagExp(t)}
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors border-b border-gray-50 last:border-0"
+                                                >
+                                                    {t}
+                                                </button>
+                                            ))}
+                                        {availableTags
+                                            .filter(t => t.toLowerCase().includes((tagDropdownSearch || tagSearchExp).toLowerCase()))
+                                            .length === 0 && (
+                                                <div className="px-4 py-3 text-xs text-gray-400 text-center font-medium">Nenhuma tag encontrada para "{tagDropdownSearch || tagSearchExp}"</div>
+                                            )}
+                                    </div>
                                 </div>
                             )}
                         </div>
