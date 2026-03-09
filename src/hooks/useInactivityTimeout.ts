@@ -40,8 +40,18 @@ export function useInactivityTimeout({
 
     useEffect(() => {
         const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
-
+        
+        // Use a simple throttle to avoid calling resetTimers thousands of times per second
+        let throttleTimer: NodeJS.Timeout | null = null;
+        
         const handleActivity = () => {
+            // Only actually reset timers once per second maximum to improve performance
+            if (throttleTimer) return;
+            
+            throttleTimer = setTimeout(() => {
+                throttleTimer = null;
+            }, 1000);
+            
             resetTimers();
         };
 
@@ -58,6 +68,9 @@ export function useInactivityTimeout({
             events.forEach((event) => {
                 window.removeEventListener(event, handleActivity);
             });
+            // Cleanup throttle
+            if (throttleTimer) clearTimeout(throttleTimer);
+            
             // Cleanup timers
             if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
             if (idleTimerRef.current) clearTimeout(idleTimerRef.current);

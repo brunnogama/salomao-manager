@@ -91,6 +91,12 @@ export interface Collaborator {
   pis_pasep?: string;
   dispensa_militar?: string;
 
+  // Benefícios / Estágio
+  bolsa_valor?: string;
+  vr_valor?: string;
+  previsao_formatura?: string;
+  termino_contrato_estagio?: string;
+
   // Notificações de RH
   mochila_entregue?: boolean;
   ultimo_aniversario_parabenizado?: number;
@@ -110,11 +116,15 @@ export interface Collaborator {
     instituicao: string;
     instituicao_uf?: string; // Novo campo
     curso: string;
-    status: 'Cursando' | 'Formado(a)';
+    status: 'Cursando' | 'Formado(a)' | 'Trancado';
     matricula?: string;
     semestre?: string;
     previsao_conclusao?: string;
     ano_conclusao?: string;
+    periodo_trancamento?: string;
+    ano_trancamento?: string;
+    pretende_retornar?: string;
+    cr?: string;
   }[];
 
   // Novos Campos (Solicitados)
@@ -469,6 +479,7 @@ export interface Candidato {
   curriculo_url?: string;
   atividades_academicas?: string;
   idiomas?: string;
+  photo_url?: string;
   created_at?: string;
 }
 

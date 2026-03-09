@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCloseOnEscape } from '../../../hooks/useCloseOnEscape'
 import { supabase } from '../../../lib/supabase'
@@ -8,10 +8,11 @@ import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
 import { DadosEscolaridadeSection } from './DadosEscolaridadeSection'
 import { CandidatoExperienciasSection } from './CandidatoExperienciasSection'
-import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, ChevronDown, Edit2 } from 'lucide-react'
+import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, Edit2, Camera } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
 import { EnderecoSection } from './EnderecoSection'
+import { CandidatoPhotoModal } from './CandidatoPhotoModal'
 
 import {
     maskCPF,
@@ -36,10 +37,14 @@ interface CandidatoFormModalProps {
 export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile, viewMode = false, onEdit }: CandidatoFormModalProps) {
     const navigate = useNavigate()
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
-    const downloadLinkRef = React.useRef<HTMLAnchorElement>(null)
+    const downloadLinkRef = useRef<HTMLAnchorElement>(null)
 
     const handleRequestClose = () => {
-        setShowCancelConfirm(true)
+        if (viewMode) {
+            onClose();
+        } else {
+            setShowCancelConfirm(true);
+        }
     }
 
     const confirmClose = () => {
@@ -60,30 +65,31 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const [tagInputValue, setTagInputValue] = useState('')
     const [availableTags, setAvailableTags] = useState<string[]>([])
 
-    const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false)
-    const statusMenuRef = React.useRef<HTMLDivElement>(null)
+    const [showReprovadoModal, setShowReprovadoModal] = useState(false)
+    const [tempReprovadoMotivo, setTempReprovadoMotivo] = useState('')
 
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (statusMenuRef.current && !statusMenuRef.current.contains(event.target as Node)) {
-                setIsStatusMenuOpen(false)
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
+    // Aprovado Confirm State
+    const [showAprovadoConfirm, setShowAprovadoConfirm] = useState(false)
+    const [savedCandidatoData, setSavedCandidatoData] = useState<any>(null)
 
-    // GED State
+    // Photo Modal state
+    const [showPhotoModal, setShowPhotoModal] = useState(false)
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+    const [uploadingPhoto, setUploadingPhoto] = useState(false)
+    const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(initialFile || null)
+
     const [gedCategories] = useState([
-        { id: 'Currículo', name: 'Currículo' },
-        { id: 'Portfólio', name: 'Portfólio' },
         { id: 'Certificado', name: 'Certificado' },
+        { id: 'Currículo', name: 'Currículo' },
+        { id: 'Entrevista', name: 'Entrevista' },
+        { id: 'Portfólio', name: 'Portfólio' },
         { id: 'Prova', name: 'Prova' },
+        { id: 'Redação', name: 'Redação' },
         { id: 'Outros', name: 'Outros' }
     ])
     const [selectedGedCategory, setSelectedGedCategory] = useState('')
     const [atestadoDatas, setAtestadoDatas] = useState<{ inicio: string, fim: string }>({ inicio: '', fim: '' })
-    const gedInputRef = React.useRef<HTMLInputElement>(null)
+    const gedInputRef = useRef<HTMLInputElement>(null)
     const [gedDocs, setGedDocs] = useState<any[]>([])
     const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, label?: string, tempId: string, atestadoDatas?: { inicio: string, fim: string } }[]>([])
     const [pendingHistorico, setPendingHistorico] = useState<any[]>([])
@@ -112,7 +118,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     name: initialData.nome || '',
                     email: initialData.email || '',
                     email_pessoal: initialData.email || '',
-                    phone: initialData.telefone || '',
+                    telefone: initialData.telefone || '',
+                    gender: initialData.genero || '',
                     birth_date: initialData.data_nascimento || '',
                     zip_code: initialData.endereco?.cep || '',
                     address: initialData.endereco?.logradouro || '',
@@ -160,10 +167,22 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             } else {
                 setFormData({})
                 setGedDocs([])
+                setPhotoPreview(null)
+                setSelectedPhotoFile(null)
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, candidatoId, initialData, initialFile])
+
+    useEffect(() => {
+        if (selectedPhotoFile) {
+            const r = new FileReader()
+            r.onload = (e) => setPhotoPreview(e.target?.result as string)
+            r.readAsDataURL(selectedPhotoFile)
+        } else {
+            setPhotoPreview(null)
+        }
+    }, [selectedPhotoFile])
 
     const fetchTags = async () => {
         try {
@@ -210,7 +229,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const handleCepBlur = async () => {
         if (formData.zip_code?.length === 9) {
             try {
-                const response = await fetch(`https://viacep.com.br/ws/${formData.zip_code.replace('-', '')}/json/`)
+                const response = await fetch('https://viacep.com.br/ws/' + formData.zip_code.replace('-', '') + '/json/')
                 const data = await response.json()
                 if (!data.erro) {
                     setFormData(prev => ({
@@ -272,7 +291,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             }
 
             if (result.success && result.data) {
-                const { resumoProfissional, perfilTags, sugestaoCargo, atividades_academicas, idiomas, email, telefone } = result.data;
+                const { resumoProfissional, perfilTags, sugestaoCargo, atividades_academicas, idiomas, email, telefone, genero } = result.data;
 
                 // Merge no formData
                 setFormData((prev: any) => {
@@ -282,7 +301,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     return {
                         ...prev,
                         email_pessoal: email || prev.email_pessoal,
-                        phone: telefone || prev.phone,
+                        telefone: telefone || prev.telefone,
+                        gender: genero || prev.gender,
                         resumo_cv: resumoProfissional || prev.resumo_cv,
                         atividades_academicas: atividades_academicas || prev.atividades_academicas,
                         idiomas: idiomas || prev.idiomas,
@@ -383,11 +403,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 }
             }
 
-            // Allowed fields based on the actual Candidato schema via OpenAPI
             const allowedFields = [
-                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'resumo_cv', 'role', 'local', 'area', 'contract_type',
+                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'resumo_cv', 'role', 'local', 'area', 'atuacao_id', 'contract_type',
                 'gender', 'rg', 'cpf', 'birthday', 'civil_status', 'email_pessoal', 'linkedin_url',
-                'has_children', 'children_count', 'children_data', 'atividades_academicas', 'idiomas',
+                'has_children', 'children_count', 'children_data', 'atividades_academicas', 'idiomas', 'photo_url',
                 'zip_code', 'address', 'address_number', 'address_complement', 'neighborhood', 'city', 'state',
                 'forma_pagamento', 'banco_nome', 'banco_tipo_conta', 'banco_agencia', 'banco_conta', 'pix_tipo', 'pix_chave',
                 'emergency_contacts', 'education_history', 'status_selecao', 'motivo_reprovacao', 'entrevista_dados', 'indicado_por'
@@ -501,29 +520,103 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             }
 
             onSave()
-            if (formData.status_selecao === 'Aprovado') {
-                if (window.confirm("Candidato salvo como Aprovado!\nDeseja ir para a tela de pré-cadastro de Colaborador agora?")) {
-                    navigate('/rh/colaboradores', {
-                        state: {
-                            cadastrarCandidato: {
+            if (formData.status_selecao === 'Aprovado em Vaga') {
+                // Auto-register candidate into collaborators with "Pré-Cadastro" status
+                try {
+                    const commonFields = {
+                        status: 'Pré-Cadastro',
+                        role: formData.role ? formData.role.toString() : null,
+                        atuacao: formData.atuacao_id ? formData.atuacao_id.toString() : null,
+                        local: formData.local ? formData.local.toString() : null,
+                        area: formData.area || null,
+                        hire_date: new Date().toISOString().split('T')[0],
+                        perfil: formData.perfil || null,
+                        candidato_id: finalCandidatoId
+                    };
+                    
+                    let query = supabase.from('collaborators').select('id');
+                    if (formData.email) {
+                        query = query.or(`email.eq.${formData.email},name.ilike.${formData.nome || formData.name}`);
+                    } else {
+                        query = query.ilike('name', formData.nome || formData.name);
+                    }
+                    const { data: existingColab } = await query.maybeSingle();
+                    
+                    if (!existingColab) {
+                        const newColab = {
+                            ...commonFields,
+                            name: formData.nome || formData.name,
+                            email: formData.email || null,
+                            telefone: formData.telefone || null,
+                            foto_url: formData.photo_url || formData.foto_url || null,
+                        };
+                        const { data: insertedColab, error: colabErr } = await supabase.from('collaborators').insert([newColab]).select('id').single();
+                        if (colabErr) {
+                            console.error("Error inserting auto colab", colabErr);
+                        } else if (insertedColab) {
+                            setSavedCandidatoData({
                                 ...formData,
-                                name: formData.nome,
-                                hire_date: new Date().toISOString().split('T')[0],
-                                candidato_id: finalCandidatoId,
+                                id: insertedColab.id,
+                                name: formData.nome || formData.name,
+                                ...commonFields,
                                 status_selecao: undefined,
                                 motivo_reprovacao: undefined
-                            }
+                            });
                         }
+                    } else {
+                        const { error: updateColabErr } = await supabase.from('collaborators').update(commonFields).eq('id', existingColab.id);
+                        if (updateColabErr) console.error("Error updating existing colab", updateColabErr);
+                        
+                        setSavedCandidatoData({
+                            ...formData,
+                            id: existingColab.id,
+                            name: formData.nome || formData.name,
+                            ...commonFields,
+                            status_selecao: undefined,
+                            motivo_reprovacao: undefined
+                        });
+                    }
+                    
+                    // If setSavedCandidatoData wasn't updated because of errors, set a fallback
+                    setSavedCandidatoData((prev: any) => prev || {
+                        ...formData,
+                        name: formData.nome || formData.name,
+                        hire_date: new Date().toISOString().split('T')[0],
+                        candidato_id: finalCandidatoId,
+                        status: 'Pré-Cadastro',
+                        status_selecao: undefined,
+                        motivo_reprovacao: undefined
                     });
+                    
+                } catch (e) {
+                    console.error("Error auto-registering candidate as collaborator:", e);
                 }
+
+                setShowAprovadoConfirm(true);
+            } else {
+                onClose()
             }
-            onClose()
         } catch (error) {
             console.error('Error saving:', error)
         } finally {
             setLoading(false)
         }
     }
+
+    const handleConfirmAprovadoRedirect = () => {
+        setShowAprovadoConfirm(false);
+        navigate('/rh/colaboradores', {
+            state: {
+                cadastrarCandidato: savedCandidatoData
+            }
+        });
+        onClose();
+    };
+
+    const handleCancelAprovadoRedirect = () => {
+        setShowAprovadoConfirm(false);
+        onClose();
+    };
 
 
 
@@ -579,19 +672,19 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         { id: 7, label: 'GED', icon: Files },
     ]
 
-    const handleStatusSelecaoChange = (value: string) => {
-        setFormData(prev => ({ ...prev, status_selecao: value }));
-        setIsStatusMenuOpen(false);
-        if (value === 'Reprovado' && !formData.motivo_reprovacao) {
-            // Se precisar abrir modal de motivo específico, podemos definir alertConfig ou similar
-            // Porém usando o proprio alert pra facilitar a UI
-            let motivo = window.prompt("Por favor, digite o motivo da reprovação:");
-            if (motivo) {
-                setFormData(prev => ({ ...prev, motivo_reprovacao: motivo, status_selecao: 'Reprovado' }));
-            } else {
-                setFormData(prev => ({ ...prev, status_selecao: 'Aberto' }));
-            }
+    const handleConfirmReprovado = () => {
+        if (!tempReprovadoMotivo.trim()) {
+            showAlert('Atenção', 'Por favor, informe o motivo da reprovação.', 'warning');
+            return;
         }
+        setFormData(prev => ({ ...prev, motivo_reprovacao: tempReprovadoMotivo, status_selecao: 'Reprovado' }));
+        setShowReprovadoModal(false);
+    };
+
+    const handleCancelReprovado = () => {
+        // Revert to Aberto if cancelling
+        setFormData(prev => ({ ...prev, status_selecao: 'Aberto' }));
+        setShowReprovadoModal(false);
     };
 
     if (!isOpen) return null
@@ -604,6 +697,25 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             setActiveTab={setActiveTab}
             isEditMode={!viewMode}
             currentSteps={steps}
+            sidebarContent={
+                <div className="flex flex-col items-center w-full px-2 group">
+                    <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-[4px] border-white shadow-xl bg-gray-50 flex items-center justify-center shrink-0">
+                        {photoPreview || formData.photo_url || formData.foto_url ? (
+                            <img src={photoPreview || formData.photo_url || formData.foto_url} alt="Foto Candidato" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center">
+                                <span className="text-4xl font-black text-white opacity-50">{formData.nome?.charAt(0).toUpperCase() || <User className="w-10 h-10 text-white/50" />}</span>
+                            </div>
+                        )}
+                        {!viewMode && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm"
+                             onClick={() => setShowPhotoModal(true)}>
+                            <Camera className="w-8 h-8 text-white" />
+                        </div>
+                        )}
+                    </div>
+                </div>
+            }
             footer={
                 viewMode ? (
                     <div className="flex items-center justify-between w-full">
@@ -630,36 +742,6 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     </div>
                 ) : (
                     <div className="flex items-center gap-4">
-                        <div className="flex flex-col pr-4 sm:w-[220px] relative" ref={statusMenuRef}>
-                            <div className="mb-1 text-right border-b border-gray-100 pb-1"></div>
-                            <button
-                                type="button"
-                                onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
-                                className={`flex items-center justify-between w-full text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl border transition-all ${formData.status_selecao === 'Aprovado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
-                                    formData.status_selecao === 'Reprovado' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
-                                        formData.status_selecao === 'Reaproveitamento' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
-                                            'bg-blue-50 text-[#1e3a8a] border-blue-200 hover:bg-blue-100'
-                                    }`}
-                            >
-                                <span>{formData.status_selecao || 'Aberto'}</span>
-                                <ChevronDown className={`w-4 h-4 transition-transform ${isStatusMenuOpen ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {isStatusMenuOpen && (
-                                <div className="absolute bottom-full left-0 mb-2 w-48 bg-[#33353A] rounded-xl shadow-xl border border-gray-700 overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50">
-                                    {['Aberto', 'Aprovado', 'Reprovado', 'Reaproveitamento'].map(status => (
-                                        <button
-                                            key={status}
-                                            type="button"
-                                            onClick={() => handleStatusSelecaoChange(status)}
-                                            className="w-full text-left px-5 py-3 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
-                                        >
-                                            {status}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
                         <button
                             onClick={handleSave}
                             disabled={loading}
@@ -702,6 +784,13 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             background-repeat: no-repeat !important;
                             background-position: right 12px center !important;
                             padding-right: 36px !important;
+                        }
+                        
+                        /* Support for SearchableSelect inside ai-highlight */
+                        .ai-highlight .searchable-select-container > div:last-child {
+                            border-color: #c7d2fe !important;
+                            background-color: #f8fafc !important;
+                            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
                         }
                     `}</style>
                         <DadosPessoaisSection
@@ -752,6 +841,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             formData={formData}
                             setFormData={setFormData}
                             isViewMode={false}
+                            onShowReprovadoModal={() => setShowReprovadoModal(true)}
                         />
                     </div>
                 )}
@@ -961,7 +1051,99 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     </div>
                 </div>
             )}
+
+            {/* Modal Reprovação */}
+            {showReprovadoModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#0a192f]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100 flex flex-col">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                            <h3 className="font-bold text-[#0a192f]">Motivo da Reprovação</h3>
+                            <button
+                                type="button"
+                                onClick={handleCancelReprovado}
+                                className="p-2 -mr-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">
+                                Por favor, digite o motivo da reprovação:
+                            </label>
+                            <textarea
+                                autoFocus
+                                value={tempReprovadoMotivo}
+                                onChange={(e) => setTempReprovadoMotivo(e.target.value)}
+                                className="w-full bg-gray-50 border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none min-h-[120px] resize-y"
+                                placeholder="Motivo pelo qual o candidato foi reprovado..."
+                            />
+                        </div>
+                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={handleCancelReprovado}
+                                className="px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmReprovado}
+                                className="px-6 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-md hover:bg-[#1e3a8a]/90 transition-all active:scale-95"
+                            >
+                                Confirmar Reprovação
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Aprovado Confirmação Modal */}
+            {showAprovadoConfirm && (
+                <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-8 text-center space-y-4">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 scale-110">
+                                <Sparkles className="w-8 h-8 text-emerald-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900">
+                                Candidato Aprovado!
+                            </h3>
+                            <p className="text-sm text-gray-500 font-medium pb-2">
+                                Deseja ir para a tela de pré-cadastro de <span className="text-[#1e3a8a] font-bold">Colaborador</span> agora?
+                            </p>
+                        </div>
+                        <div className="px-6 py-5 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
+                            <button
+                                onClick={handleCancelAprovadoRedirect}
+                                className="flex-1 px-4 py-2.5 rounded-xl font-bold text-sm text-gray-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all border-gray-300"
+                            >
+                                Depois
+                            </button>
+                            <button
+                                onClick={handleConfirmAprovadoRedirect}
+                                className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:shadow-xl font-bold text-sm hover:bg-emerald-700 transition-all shadow-emerald-600/20 active:scale-95 hover:-translate-y-0.5"
+                            >
+                                Sim, ir agora
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            <CandidatoPhotoModal
+                isOpen={showPhotoModal}
+                onClose={() => setShowPhotoModal(false)}
+                uploadingPhoto={uploadingPhoto}
+                currentPhotoUrl={photoPreview || formData.photo_url || formData.foto_url || ''}
+                onPhotoSelected={(file) => {
+                    setSelectedPhotoFile(file);
+                    // Clear the URL format since we're using a file
+                    if (file) setFormData(prev => ({ ...prev, photo_url: '', foto_url: '' }));
+                }}
+                onUrlUpdated={(url) => {
+                    setFormData(prev => ({ ...prev, photo_url: url, foto_url: url }));
+                    setSelectedPhotoFile(null); // Clear the file selection since we're using URL
+                }}
+            />
         </CollaboratorModalLayout>
     )
-}
-
+} 

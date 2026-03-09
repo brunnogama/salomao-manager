@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './lib/supabase'
 import { logAction } from './lib/logger'
-import { User, Lock, ArrowRight, Loader2, LayoutGrid, Eye, EyeOff, Scale, Mail } from 'lucide-react'
+import { User, Lock, ArrowRight, Loader2, LayoutGrid, Eye, EyeOff, Scale, Users, Briefcase, UserCog, Package, Banknote } from 'lucide-react'
 import { SYSTEM_VERSION } from './config/version'
 export default function Login() {
   const [emailPrefix, setEmailPrefix] = useState('')
@@ -66,7 +66,6 @@ export default function Login() {
           {/* Logo & Welcome */}
           <div className="flex flex-col items-center mb-10">
             <div className="relative group cursor-default">
-              <div className="absolute inset-0 bg-[#1e3a8a]/5 blur-2xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
               <img
                 src="/logo-salomao.png"
                 alt="Salomão Advogados"
@@ -263,18 +262,16 @@ export default function Login() {
       {/* LADO DIREITO - BRANDING SALOMÃO MANAGER */}
       <div className="hidden lg:flex w-1/2 relative bg-[#0a0a0a] items-center justify-center overflow-hidden">
 
-        {/* Imagem de Fundo (Abstract Dark) */}
+        {/* Imagem de Fundo */}
         <div
           className="absolute inset-0 z-0 bg-cover bg-center opacity-30 mix-blend-luminosity"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1557683311-eac922347aa1?q=80&w=2029&auto=format&fit=crop')"
+            backgroundImage: "url('/foto-fundo.jpg')"
           }}
         ></div>
 
         {/* Gradientes e Overlay */}
         <div className="absolute inset-0 z-1 bg-gradient-to-br from-[#0a192f]/90 via-[#0a0a0a]/95 to-[#1a2c4e]/90"></div>
-        <div className="absolute -top-[30%] -right-[20%] w-[70%] h-[70%] rounded-full bg-[#1e3a8a]/20 blur-[120px] z-2"></div>
-        <div className="absolute -bottom-[20%] -left-[20%] w-[60%] h-[60%] rounded-full bg-[#d4af37]/10 blur-[100px] z-2"></div>
 
         {/* Pattern decorativo sutil */}
         <div className="absolute inset-0 z-5 opacity-[0.03]" style={{
@@ -319,7 +316,7 @@ export default function Login() {
             {/* CRM/Brindes */}
             <div className="relative z-10 flex items-start gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 backdrop-blur-md group hover:-translate-y-0.5">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 flex items-center justify-center border border-blue-500/20 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all shrink-0">
-                <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+                <Users className="w-4 h-4 text-blue-400" />
               </div>
               <div>
                 <strong className="block text-sm font-bold text-white tracking-wide mb-1">Clientes</strong>
@@ -330,7 +327,7 @@ export default function Login() {
             {/* Secretaria Executiva */}
             <div className="relative z-10 flex items-start gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 backdrop-blur-md group hover:-translate-y-0.5">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center border border-purple-500/20 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all shrink-0">
-                <div className="w-2 h-2 rounded-full bg-purple-400"></div>
+                <Briefcase className="w-4 h-4 text-purple-400" />
               </div>
               <div>
                 <strong className="block text-sm font-bold text-white tracking-wide mb-1">Executiva</strong>
@@ -341,7 +338,7 @@ export default function Login() {
             {/* Colaboradores */}
             <div className="relative z-10 flex items-start gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 backdrop-blur-md group hover:-translate-y-0.5">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/10 flex items-center justify-center border border-green-500/20 group-hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all shrink-0">
-                <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                <UserCog className="w-4 h-4 text-green-400" />
               </div>
               <div>
                 <strong className="block text-sm font-bold text-white tracking-wide mb-1">RH</strong>
@@ -352,7 +349,7 @@ export default function Login() {
             {/* Financeiro */}
             <div className="relative z-10 flex items-start gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 backdrop-blur-md group hover:-translate-y-0.5">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 flex items-center justify-center border border-emerald-500/20 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all shrink-0">
-                <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                <Banknote className="w-4 h-4 text-emerald-400" />
               </div>
               <div>
                 <strong className="block text-sm font-bold text-white tracking-wide mb-1">Financeiro</strong>
@@ -363,7 +360,7 @@ export default function Login() {
             {/* Operacional */}
             <div className="relative z-10 flex items-start gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 backdrop-blur-md group hover:-translate-y-0.5">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center border border-amber-500/20 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all shrink-0">
-                <div className="w-2 h-2 rounded-full bg-amber-400"></div>
+                <Package className="w-4 h-4 text-amber-400" />
               </div>
               <div>
                 <strong className="block text-sm font-bold text-white tracking-wide mb-1">Operacional</strong>

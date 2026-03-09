@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, Loader2, UserPlus,
-  GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Clock,
-  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, Filter, FilterX, BellRing, Tag as TagIcon
+  GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Bus, Clock,
+  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon
 } from 'lucide-react'
 
 import { exportColaboradoresXLSX } from '../utils/exportColaboradores'
@@ -16,6 +16,7 @@ import { AlertModal } from '../../ui/AlertModal'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync'
+import { getWorkingDaysInCurrentMonth } from '../utils/colaboradoresUtils';
 
 import { DadosPessoaisSection } from '../components/DadosPessoaisSection'
 import { EnderecoSection } from '../components/EnderecoSection'
@@ -42,7 +43,11 @@ import {
   maskPhone,
   maskCNPJ,
   formatDateToDisplay,
-  formatDateToISO
+  formatDateToISO,
+  formatMonthYearDateToDisplay,
+  formatMonthYearDateToISO,
+  formatDbMoneyToDisplay,
+  parseCurrency
 } from '../utils/colaboradoresUtils'
 // ... existing imports
 
@@ -132,12 +137,23 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterExpectedCompletion, setAdvFilterExpectedCompletion] = useState('');
   const [advFilterCompletionYear, setAdvFilterCompletionYear] = useState('');
 
+  // Custom VT Scenarios State
+  const [customVt1, setCustomVt1] = useState<number>(200);
+  const [customVt2, setCustomVt2] = useState<number>(300);
+
   const location = useLocation()
 
   useEffect(() => {
     if (location.state?.roleFilter) {
       setAdvFilterRole(location.state.roleFilter)
       setActiveMainTab('Colaboradores')
+    }
+    if (location.state?.cadastrarCandidato) {
+      setFormData(location.state.cadastrarCandidato);
+      setShowFormModal(true);
+      setActiveMainTab('Colaboradores');
+      // Clear the state so it doesn't reopen on refresh
+      window.history.replaceState({}, document.title)
     }
   }, [location.state])
 
@@ -340,10 +356,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
     { id: 'CPF', name: 'CPF' },
     { id: 'Currículo', name: 'Currículo' },
     { id: 'Documento de Identificação (RG/CNH)', name: 'Documento de Identificação (RG/CNH)' },
-    { id: 'Outros', name: 'Outros' },
+    { id: 'Entrevista', name: 'Entrevista' },
     { id: 'PIS/PASEP', name: 'PIS/PASEP' },
     { id: 'Prova', name: 'Prova' },
-    { id: 'Título de Eleitor', name: 'Título de Eleitor' }
+    { id: 'Redação', name: 'Redação' },
+    { id: 'Título de Eleitor', name: 'Título de Eleitor' },
+    { id: 'Outros', name: 'Outros' }
   ]
 
   const photoInputRef = useRef<HTMLInputElement>(null)
@@ -703,6 +721,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
         hire_date: formatDateToISO(formData.hire_date) || null,
         termination_date: formatDateToISO(formData.termination_date) || null,
         escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null,
+        previsao_formatura: formatMonthYearDateToISO(formData.previsao_formatura) || null,
+        termino_contrato_estagio: formatDateToISO(formData.termino_contrato_estagio) || null,
+        bolsa_valor: formData.bolsa_valor ? parseCurrency(formData.bolsa_valor) : null,
+        vr_valor: formData.vr_valor ? parseCurrency(formData.vr_valor) : null,
         children_data: formData.children_data?.map(c => ({
           ...c,
           birth_date: formatDateToISO(c.birth_date) || null
@@ -863,6 +885,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
         validade: formatDateToDisplay(o.validade)
       })) || [],
       escolaridade_previsao_conclusao: formatDateToDisplay(colaborador.escolaridade_previsao_conclusao),
+      previsao_formatura: formatMonthYearDateToDisplay(colaborador.previsao_formatura),
+      termino_contrato_estagio: formatDateToDisplay(colaborador.termino_contrato_estagio),
+      bolsa_valor: formatDbMoneyToDisplay(colaborador.bolsa_valor),
+      vr_valor: formatDbMoneyToDisplay(colaborador.vr_valor),
       children_data: colaborador.children_data?.map((child: any) => ({
         ...child,
         birth_date: formatDateToDisplay(child.birth_date)
@@ -897,7 +923,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const filtered = colaboradores.filter(c => {
     const normalizer = (str: string) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '';
     const term = normalizer(searchTerm);
-    const matchSearch = normalizer(c.name).includes(term) || normalizer(c.email).includes(term);
+    const matchSearch = normalizer(c.name).includes(term) || normalizer(c.email || '').includes(term);
     const matchLider = filterLider ? String(c.leader_id) === filterLider : true
     const matchPartner = filterPartner ? String(c.partner_id) === filterPartner : true
     const matchLocal = filterLocal ? String(c.local) === filterLocal : true
@@ -1306,6 +1332,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
       termination_date: formatDateToDisplay(c.termination_date),
       oab_emissao: formatDateToDisplay(c.oab_emissao),
       escolaridade_previsao_conclusao: formatDateToDisplay(c.escolaridade_previsao_conclusao),
+      previsao_formatura: formatMonthYearDateToDisplay(c.previsao_formatura),
+      bolsa_valor: formatDbMoneyToDisplay(c.bolsa_valor),
+      vr_valor: formatDbMoneyToDisplay(c.vr_valor),
       children_data: c.children_data?.map((child: any) => ({
         ...child,
         birth_date: formatDateToDisplay(child.birth_date)
@@ -2186,6 +2215,152 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <FileSpreadsheet className="h-5 w-5" /> Gerar Relatório XLSX ({currentAdvancedFiltered.length})
             </button>
           </div>
+          
+          {/* Relatório de VT por Equipe */}
+          <div className="pt-8 border-t border-gray-100 mt-8">
+            <h3 className="text-lg font-black text-[#1e3a8a] mb-6 flex items-center gap-2">
+              <Bus className="h-5 w-5 text-amber-500" /> Custo de Vale Transporte por Equipe
+            </h3>
+            
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
+                      <th className="p-4">Equipe</th>
+                      <th className="p-4 text-center">Qtd. Ativos</th>
+                      <th className="p-4 text-right">VT Calculado (Atual)</th>
+                      <th className="p-4 text-right">
+                        <div className="flex flex-col items-end gap-1">
+                          <span>Cenário 1</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-gray-400 font-medium">R$</span>
+                            <input
+                              type="number"
+                              min="0"
+                              className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                              value={customVt1}
+                              onChange={(e) => setCustomVt1(Number(e.target.value) || 0)}
+                            />
+                          </div>
+                        </div>
+                      </th>
+                      <th className="p-4 text-right">
+                        <div className="flex flex-col items-end gap-1">
+                          <span>Cenário 2</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-gray-400 font-medium">R$</span>
+                            <input
+                              type="number"
+                              min="0"
+                              className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                              value={customVt2}
+                              onChange={(e) => setCustomVt2(Number(e.target.value) || 0)}
+                            />
+                          </div>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {(() => {
+                      const workingDays = getWorkingDaysInCurrentMonth();
+                      const activeColabs = colaboradores.filter(c => c.status === 'active');
+                      
+                      // Map each team id mapping to team name or fallback to raw equipe name
+                      const colabsWithTeamName = activeColabs.map(c => ({
+                        ...c,
+                        teamName: (c as any).teams?.name || c.equipe || 'S/ Equipe'
+                      }));
+
+                      // Group by teamName using Set and Map or simple reduce
+                      const teamTotals = colabsWithTeamName.reduce((acc, c) => {
+                        const team = c.teamName;
+                        if (!acc[team]) {
+                          acc[team] = { count: 0, currentVtTotal: 0 };
+                        }
+                        acc[team].count += 1;
+                        
+                        // Calculate VT for this collaborator
+                        let colabVtDaily = 0;
+                        if (c.transportes && Array.isArray(c.transportes)) {
+                           colabVtDaily = c.transportes.reduce((tAcc, t) => {
+                            const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                            const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                            return tAcc + idaSum + voltaSum;
+                           }, 0);
+                        }
+                        
+                        acc[team].currentVtTotal += (colabVtDaily * workingDays);
+                        return acc;
+                      }, {} as Record<string, { count: number, currentVtTotal: number }>);
+                      
+                      // Sort alphabetically by team name
+                      const sortedTeams = Object.keys(teamTotals).sort((a, b) => a.localeCompare(b));
+                      
+                      let overallCount = 0;
+                      let overallVt = 0;
+                      let overallFix200 = 0;
+                      let overallFix300 = 0;
+
+                      return (
+                        <>
+                          {sortedTeams.map(team => {
+                            const data = teamTotals[team];
+                            const fix1 = data.count * customVt1;
+                            const fix2 = data.count * customVt2;
+                            
+                            overallCount += data.count;
+                            overallVt += data.currentVtTotal;
+                            overallFix200 += fix1;
+                            overallFix300 += fix2;
+                            
+                            return (
+                              <tr key={team} className="hover:bg-blue-50/30 transition-colors group">
+                                <td className="p-4 text-sm font-bold text-[#0a192f]">{team}</td>
+                                <td className="p-4 text-sm font-medium text-gray-600 text-center">
+                                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{data.count}</span>
+                                </td>
+                                <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.currentVtTotal)}
+                                </td>
+                                <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors">
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fix1)}
+                                </td>
+                                <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors">
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fix2)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          
+                          {/* Totals Row */}
+                          <tr className="bg-gradient-to-r from-emerald-50 to-white/50 border-t-2 border-emerald-100">
+                            <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider">Total Geral</td>
+                            <td className="p-4 text-sm font-black text-emerald-800 text-center">{overallCount}</td>
+                            <td className="p-4 text-base font-black text-emerald-700 text-right">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}
+                            </td>
+                            <td className="p-4 text-sm font-black text-emerald-700/80 text-right">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallFix200)}
+                            </td>
+                            <td className="p-4 text-sm font-black text-emerald-700/80 text-right">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallFix300)}
+                            </td>
+                          </tr>
+                        </>
+                      );
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p className="text-[10px] text-gray-400 mt-3 font-medium flex gap-2">
+              <span className="text-amber-500 font-bold">*</span> 
+              Baseado em {getWorkingDaysInCurrentMonth()} dias úteis (Mês Vigente) para colaboradores Ativos.
+            </p>
+          </div>
+
         </div>
       )}
 

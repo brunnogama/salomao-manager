@@ -13,6 +13,7 @@ import {
   GraduationCap
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface SidebarProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface SidebarProps {
 }
 
 export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
+  const { signOut } = useAuth()
   const navigate = useNavigate()
   const [userName, setUserName] = useState('Carregando...')
   const [vencidosCount, setVencidosCount] = useState(0)
@@ -42,8 +44,7 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    navigate('/login')
+    await signOut()
   }
 
   useEffect(() => {

@@ -157,7 +157,7 @@ export function RHVagas() {
   const [candidatos, setCandidatos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'reprovados' | 'ats'>('ats')
+  const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'reprovados' | 'ats'>('abertas')
 
   // Alert Modal State
   const [alertConfig, setAlertConfig] = useState<{
@@ -204,6 +204,7 @@ export function RHVagas() {
   const [selectedMatchCandidatoId, setSelectedMatchCandidatoId] = useState<string | null>(null)
   const [isAiMatching, setIsAiMatching] = useState(false)
   const [aiMatchResults, setAiMatchResults] = useState<Record<string, { score: number, justificativa?: string, matchesTags?: string[], gaps?: string[] }>>({})
+  const [atsMatchArea, setAtsMatchArea] = useState<'Administrativa' | 'Jurídica' | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -241,7 +242,6 @@ export function RHVagas() {
         *,
         role:role_id (id, name),
         location:location_id (id, name),
-        atuacao:atuacao_id (id, name),
         partner:partner_id (id, name),
         leader:leader_id (id, name),
         candidato_aprovado:candidato_aprovado_id (nome)
@@ -332,46 +332,55 @@ export function RHVagas() {
     if (!activeMatchVaga || matchMode !== 'vaga') return [];
     const vagaTags = extractTags(activeMatchVaga.perfil);
 
-    return candidatos.map(c => {
-      const candidatoTags = extractTags(c.perfil);
-      const match = calculateMatchScore(vagaTags, candidatoTags);
+    return candidatos
+      .filter(c => !activeMatchVaga.area || String(c.area) === String(activeMatchVaga.area)) // STRICT AREA MATCH
+      .map(c => {
+        const candidatoTags = extractTags(c.perfil);
+        const match = calculateMatchScore(vagaTags, candidatoTags);
 
-      // Lógica de Relevância Inteligente (Boosts)
-      let relevanceScore = match.score;
+        // Lógica de Relevância Inteligente (Boosts)
+        let relevanceScore = match.score;
 
-      // 1. Boost por Área (Ex: Jurídico com Jurídico)
-      const sameArea = c.area === activeMatchVaga.area;
-      if (sameArea && c.area) relevanceScore += 50;
+        // Se o perfil do candidato não tem tags que coincidem com a vaga, a aderência é zero.
+        if (match.matches > 0 && candidatoTags.length > 0) {
+          // 1. Boost por Área (Ex: Jurídico com Jurídico)
+          const sameArea = String(c.area) === String(activeMatchVaga.area);
+          if (sameArea && c.area) relevanceScore += 50;
 
-      // 2. Boost por Cargo
-      // ID idêntico
-      const sameRoleId = String(c.role) === String(activeMatchVaga.role_id);
-      if (sameRoleId) relevanceScore += 30;
-      else {
-        // Similaridade de nome (ex: Paralegal vs Advogado)
-        const candRoleName = (roleOptions.find(r => String(r.value) === String(c.role))?.label || '').toLowerCase();
-        const vagaRoleName = (activeMatchVaga.role?.name || '').toLowerCase();
+          // 2. Boost por Cargo
+          // ID idêntico
+          const sameRoleId = String(c.role) === String(activeMatchVaga.role_id);
+          if (sameRoleId) relevanceScore += 30;
+          else {
+            // Similaridade de nome (ex: Paralegal vs Advogado)
+            const candRoleName = (roleOptions.find(r => String(r.value) === String(c.role))?.label || '').toLowerCase();
+            const vagaRoleName = (activeMatchVaga.role?.name || '').toLowerCase();
 
-        if (candRoleName && vagaRoleName) {
-          const commonKeywords = ['advogado', 'paralegal', 'estagiario', 'juridico', 'administrativo', 'recepcionista', 'auxiliar'];
-          const hasCommonKeyword = commonKeywords.some(key => candRoleName.includes(key) && vagaRoleName.includes(key));
-          if (hasCommonKeyword) relevanceScore += 15;
+            if (candRoleName && vagaRoleName) {
+              const commonKeywords = ['advogado', 'paralegal', 'estagiario', 'juridico', 'administrativo', 'recepcionista', 'auxiliar'];
+              const hasCommonKeyword = commonKeywords.some(key => candRoleName.includes(key) && vagaRoleName.includes(key));
+              if (hasCommonKeyword) relevanceScore += 15;
+            }
+          }
+        } else {
+          relevanceScore = 0;
         }
-      }
 
-      return {
-        candidato: c,
-        score: relevanceScore, // Score turbinado
-        baseScore: match.score, // Mantemos o original para referência se necessário
-        matches: match.matches,
-        totalTags: vagaTags.length,
-        matchedTags: match.matchedTags,
-        candidatoTags
-      };
-    }).sort((a, b) => b.score - a.score);
+        // Cap relevance score at 100%
+        relevanceScore = Math.min(relevanceScore, 100);
+
+        return {
+          candidato: c,
+          score: relevanceScore, // Score turbinado (capped a 100%)
+          baseScore: match.score, // Mantemos o original para referência se necessário
+          matches: match.matches,
+          totalTags: vagaTags.length,
+          matchedTags: match.matchedTags,
+          candidatoTags
+        };
+      }).sort((a, b) => b.score - a.score);
   }, [activeMatchVaga, matchMode, candidatos, roleOptions]);
 
-  // State derivado: Candidato Ativo no Match e lista de Vagas Ordenada
   const activeMatchCandidato = candidatos.find(c => c.id === selectedMatchCandidatoId);
   const matchedVagas = useMemo(() => {
     if (!activeMatchCandidato || matchMode !== 'candidato') return [];
@@ -379,12 +388,27 @@ export function RHVagas() {
 
     return vagas
       .filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização') // Apenas ativas
+      .filter(v => !activeMatchCandidato.area || String(v.area) === String(activeMatchCandidato.area)) // STRICT AREA MATCH
       .map(v => {
         const vagaTags = extractTags(v.perfil);
         const match = calculateMatchScore(candidatoTags, vagaTags); // Queremos saber o quanto a vaga atende aos requisitos/skills do candidato (invertido)
+
+        // Aplica boosters parecidos
+        let score = match.score;
+        if (match.matches > 0 && vagaTags.length > 0) {
+          if (v.area && String(v.area) === String(activeMatchCandidato?.area)) {
+            score += 50;
+          }
+        } else {
+          score = 0;
+        }
+
+        // Cap relevance score at 100%
+        score = Math.min(score, 100);
+
         return {
           vaga: v,
-          score: match.score, // Score baseado em quantas skills do candidato a vaga "exige" ou tem match
+          score: score, // Use the newly calculated score
           matches: match.matches,
           totalTags: candidatoTags.length > 0 ? candidatoTags.length : vagaTags.length, // Tratamento para não quebrar a UI
           matchedTags: match.matchedTags,
@@ -523,6 +547,10 @@ export function RHVagas() {
     const matchArea = filterArea ? String(v.area) === filterArea : true
 
     return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchArea
+  }).sort((a, b) => {
+    const nameA = a.role?.name || ''
+    const nameB = b.role?.name || ''
+    return nameA.localeCompare(nameB)
   }), [vagas, searchTerm, filterLider, filterPartner, filterLocal, filterCargo, filterArea])
 
   const filteredCandidatos = useMemo(() => candidatos.filter(c => {
@@ -534,17 +562,29 @@ export function RHVagas() {
     const matchLocal = filterLocal ? String(c.local) === filterLocal : true
     const matchCargo = filterCargo ? String(c.role) === filterCargo : true
     const matchArea = filterArea ? String(c.area) === filterArea : true
+    // For Reprovados, we might want to also filter by Partner/Leader if those applied to the Vaga they were rejected from, 
+    // but the Candidato record doesn't store this. The user specifically asked to hide Lider/Socio from Talentos previously, 
+    // and requested "os mesmos campos de buscas e filtros que tem em vagas fechadas". Let's hide Lider/Socio in Reprovados 
+    // to keep it consistent with what can actually be filtered on a Candidate.
+
+    // We already hid Lider and Socio for Talentos, and we hid them for Reprovados in the UI earlier. 
+    // The filter variables used here are Local, Cargo, and Area.
 
     return matchSearch && matchLocal && matchCargo && matchArea
+  }).sort((a, b) => {
+    const nameA = a.nome || ''
+    const nameB = b.nome || ''
+    return nameA.localeCompare(nameB)
   }), [candidatos, searchTerm, filterLocal, filterCargo, filterArea])
 
   // Stats (memorizados)
   const vagasAbertas = useMemo(() => vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').length, [vagas])
   const totalTalentosCount = candidatos.length
 
+  const currentMonth = new Date().getMonth()
+  const currentYear = new Date().getFullYear()
+
   const vagasFechadasNoMes = useMemo(() => {
-    const currentMonth = new Date().getMonth()
-    const currentYear = new Date().getFullYear()
     return vagas.filter(v => {
       if (v.status !== 'Fechada' || !v.data_fechamento) return false
       const d = new Date(v.data_fechamento)
@@ -552,8 +592,14 @@ export function RHVagas() {
     }).length
   }, [vagas])
 
+  const reprovadosNoMes = candidatos.filter(c => {
+    if (c.status_selecao !== 'Reprovado' || !c.data_reprovacao) return false
+    const d = new Date(c.data_reprovacao)
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
+  }).length
+
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24">
+    <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24">
 
       {/* PAGE HEADER COMPLETO - Título + Actions */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
@@ -576,14 +622,7 @@ export function RHVagas() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto justify-end mt-2 md:mt-0 custom-scrollbar">
-          {/* TABS MOVED HERE - OUTSIDE TERNARY */}
           <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
-            <button
-              onClick={() => setActiveTab('ats')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'ats' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <Sparkles className="h-4 w-4" /> Match Inteligente (ATS)
-            </button>
             <button
               onClick={() => setActiveTab('abertas')}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'abertas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
@@ -610,7 +649,18 @@ export function RHVagas() {
             </button>
           </div>
 
-          <div className="flex items-center gap-4 border-l border-gray-100 pl-4 ml-2">
+          <div className="flex items-center gap-3 border-l border-gray-100 pl-4 ml-2">
+            <button
+              onClick={() => setActiveTab('ats')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap shadow-sm
+                ${activeTab === 'ats'
+                  ? 'bg-gradient-to-r from-blue-700 to-[#112240] text-white shadow-blue-500/40 ring-2 ring-blue-500/50 ring-offset-1'
+                  : 'bg-gradient-to-r from-blue-600 to-[#1e3a8a] text-white shadow-blue-500/30 hover:from-blue-700 hover:to-[#112240]'}
+              `}
+              title="Match Inteligente (ATS)"
+            >
+              <Sparkles className="h-4 w-4" /> Match Inteligente (ATS)
+            </button>
             <button
               onClick={handleOpenSelectionModal}
               className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
@@ -622,428 +672,503 @@ export function RHVagas() {
         </div>
       </div>
 
-      {activeTab !== 'reprovados' && activeTab !== 'ats' && (
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-none">
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
+      {
+        activeTab !== 'ats' && (
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-none">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
 
-            {/* Active Count Card */}
-            {activeTab === 'abertas' && (
-              <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0">
-                <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
-                  <Clock className="h-4 w-4" />
+              {/* Active Count Card */}
+              {activeTab === 'abertas' && (
+                <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0">
+                  <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Abertas</p>
+                    <p className="text-sm font-bold text-[#1e3a8a] leading-none">{vagasAbertas}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Abertas</p>
-                  <p className="text-sm font-bold text-[#1e3a8a] leading-none">{vagasAbertas}</p>
-                </div>
-              </div>
-            )}
-            {activeTab === 'talentos' && (
-              <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0">
-                <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
-                  <Users className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Total Talentos</p>
-                  <p className="text-sm font-bold text-[#1e3a8a] leading-none">{totalTalentosCount}</p>
-                </div>
-              </div>
-            )}
-            {activeTab === 'fechadas' && (
-              <div className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-100 rounded-xl px-4 py-2.5 shrink-0">
-                <div className="p-1.5 bg-emerald-100 rounded-lg text-emerald-700">
-                  <CheckCircle2 className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-emerald-900/40 uppercase tracking-widest leading-none mb-1">Fechadas no Mês</p>
-                  <p className="text-sm font-bold text-emerald-700 leading-none">{vagasFechadasNoMes}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Search Bar - Expanded */}
-            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
-              <Search className="h-4 w-4 text-gray-400 mr-3 shrink-0" />
-              <input
-                type="text"
-                placeholder="Buscar..."
-                className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400 pr-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
-                  title="Limpar busca"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
               )}
-            </div>
+              {activeTab === 'talentos' && (
+                <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0">
+                  <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Total Talentos</p>
+                    <p className="text-sm font-bold text-[#1e3a8a] leading-none">{totalTalentosCount}</p>
+                  </div>
+                </div>
+              )}
+              {activeTab === 'fechadas' && (
+                <div className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-100 rounded-xl px-4 py-2.5 shrink-0">
+                  <div className="p-1.5 bg-emerald-100 rounded-lg text-emerald-700">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-emerald-900/40 uppercase tracking-widest leading-none mb-1">Fechadas no Mês</p>
+                    <p className="text-sm font-bold text-emerald-700 leading-none">{vagasFechadasNoMes}</p>
+                  </div>
+                </div>
+              )}
+              {activeTab === 'reprovados' && (
+                <div className="flex items-center gap-3 bg-red-50/50 border border-red-100 rounded-xl px-4 py-2.5 shrink-0">
+                  <div className="p-1.5 bg-red-100 rounded-lg text-red-700">
+                    <UserX className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-red-900/40 uppercase tracking-widest leading-none mb-1">Reprovados no Mês</p>
+                    <p className="text-sm font-bold text-red-700 leading-none">{reprovadosNoMes}</p>
+                  </div>
+                </div>
+              )}
 
-            {/* Filters Row - Auto-sizing */}
-            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
-              <FilterSelect
-                icon={User}
-                value={filterLider}
-                onChange={setFilterLider}
-                options={liderOptions}
-                placeholder="Líder"
-              />
-              <FilterSelect
-                icon={Users}
-                value={filterPartner}
-                onChange={setFilterPartner}
-                options={partnerOptions}
-                placeholder="Sócio"
-              />
-              <FilterSelect
-                icon={Building2}
-                value={filterLocal}
-                onChange={setFilterLocal}
-                options={locationOptions}
-                placeholder="Local"
-              />
-              <FilterSelect
-                icon={Briefcase}
-                value={filterCargo}
-                onChange={setFilterCargo}
-                options={roleOptions}
-                placeholder="Cargo"
-              />
-              <FilterSelect
-                icon={Briefcase}
-                value={filterArea}
-                onChange={setFilterArea}
-                options={[
-                  { value: 'Administrativa', label: 'Administrativa' },
-                  { value: 'Jurídica', label: 'Jurídica' }
-                ]}
-                placeholder="Área"
-              />
+              {/* Search Bar - Expanded */}
+              <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
+                <Search className="h-4 w-4 text-gray-400 mr-3 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400 pr-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
+                    title="Limpar busca"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Filters Row - Auto-sizing */}
+              <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
+                {activeTab !== 'talentos' && activeTab !== 'reprovados' && (
+                  <>
+                    <FilterSelect
+                      icon={User}
+                      value={filterLider}
+                      onChange={setFilterLider}
+                      options={liderOptions}
+                      placeholder="Líder"
+                    />
+                    <FilterSelect
+                      icon={Users}
+                      value={filterPartner}
+                      onChange={setFilterPartner}
+                      options={partnerOptions}
+                      placeholder="Sócio"
+                    />
+                  </>
+                )}
+                {/* Area filter */}
+                <FilterSelect
+                  icon={Briefcase}
+                  value={filterArea}
+                  onChange={setFilterArea}
+                  options={[
+                    { value: 'Administrativa', label: 'Administrativa' },
+                    { value: 'Jurídica', label: 'Jurídica' }
+                  ]}
+                  placeholder="Área"
+                />
+                <FilterSelect
+                  icon={Briefcase}
+                  value={filterCargo}
+                  onChange={setFilterCargo}
+                  options={roleOptions}
+                  placeholder="Cargo"
+                />
+                <FilterSelect
+                  icon={Building2}
+                  value={filterLocal}
+                  onChange={setFilterLocal}
+                  options={locationOptions}
+                  placeholder="Local"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
 
 
       {/* ATS MATCH TAB */}
-      {activeTab === 'ats' && (
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-gray-100 pb-4 mb-6 gap-4 shrink-0">
-            <div>
-              <h2 className="text-xl font-black text-[#1e3a8a] tracking-tight">Match Inteligente (ATS)</h2>
-              <p className="text-xs font-semibold text-gray-500 mt-1">Encontre a aderência perfeita cruzando perfis e vagas</p>
-            </div>
+      {
+        activeTab === 'ats' && (
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col min-h-0">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-gray-100 pb-4 mb-6 gap-4 shrink-0">
+              <div>
+                <h2 className="text-xl font-black text-[#1e3a8a] tracking-tight">Match Inteligente (ATS)</h2>
+                <p className="text-xs font-semibold text-gray-500 mt-1">Encontre a aderência perfeita cruzando perfis e vagas</p>
+              </div>
 
-            <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto">
-              <button
-                onClick={() => setMatchMode('vaga')}
-                className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap ${matchMode === 'vaga' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                <Briefcase className="h-4 w-4" /> Por Vaga
-              </button>
-              <button
-                onClick={() => setMatchMode('candidato')}
-                className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap ${matchMode === 'candidato' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                <User className="h-4 w-4" /> Por Candidato
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-            {matchMode === 'vaga' ? (
-              // VISÃO POR VAGA
-              <div className="space-y-6">
-                <div className="bg-blue-50/50 p-4 sm:p-6 rounded-2xl border border-blue-100">
-                  <h3 className="text-sm font-bold text-[#0a192f] mb-3">1. Selecione a Vaga Alvo</h3>
-                  <div className="w-full sm:max-w-md">
-                    <FilterSelect
-                      placeholder="Buscar vaga"
-                      value={selectedMatchVagaId || ''}
-                      onChange={setSelectedMatchVagaId}
-                      options={[
-                        { value: '', label: 'Selecione uma vaga em aberto...' },
-                        ...vagas
-                          .filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização')
-                          .sort((a, b) => (a.vaga_id_text || '').localeCompare(b.vaga_id_text || ''))
-                          .map(v => ({
-                            value: String(v.id),
-                            label: `${v.vaga_id_text} - ${v.role?.name || 'Sem cargo'} (${v.location?.name || 'Sem local'})`
-                          }))
-                      ]}
-                      icon={Briefcase}
-                    />
-                  </div>
-
-                  {selectedMatchVagaId && (
-                    <div className="mt-4 animate-in slide-in-from-top-2">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-800/60 mb-2">Tags Exigidas pela Vaga</p>
-                      {activeMatchVaga && extractTags(activeMatchVaga.perfil).length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {extractTags(activeMatchVaga.perfil).map((tag, i) => (
-                            <span key={i} className="px-2.5 py-1 bg-white text-blue-700 border border-blue-200 rounded-lg text-xs font-bold shadow-sm">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-blue-600/60 font-medium italic">Esta vaga não possui tags de perfil registradas. O match não será preciso.</p>
-                      )}
-                    </div>
-                  )}
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                {/* Filtros de Área (Pré-Match) */}
+                <div className="flex bg-gray-50 p-1 rounded-xl w-full sm:w-auto border border-gray-100">
+                  <button
+                    onClick={() => {
+                      setAtsMatchArea(atsMatchArea === 'Administrativa' ? null : 'Administrativa')
+                      // Clear selected vacancy/candidate when switching areas to avoid bugs
+                      setSelectedMatchVagaId(null)
+                      setSelectedMatchCandidatoId(null)
+                    }}
+                    className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${atsMatchArea === 'Administrativa' ? 'bg-orange-500 text-white shadow-md' : 'text-gray-500 hover:text-orange-500 hover:bg-orange-50'}`}
+                    title="Filtrar por Administrativa"
+                  >
+                    <Building2 className="h-3.5 w-3.5" /> Admin
+                  </button>
+                  <div className="w-px bg-gray-200 mx-1"></div>
+                  <button
+                    onClick={() => {
+                      setAtsMatchArea(atsMatchArea === 'Jurídica' ? null : 'Jurídica')
+                      // Clear selected vacancy/candidate when switching areas to avoid bugs
+                      setSelectedMatchVagaId(null)
+                      setSelectedMatchCandidatoId(null)
+                    }}
+                    className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${atsMatchArea === 'Jurídica' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+                    title="Filtrar por Jurídica"
+                  >
+                    <Briefcase className="h-3.5 w-3.5" /> Jurídico
+                  </button>
                 </div>
 
-                {selectedMatchVagaId && (
-                  <div>
-                    <h3 className="text-sm font-bold text-[#0a192f] mb-3 flex items-center gap-2">
-                      <Users className="w-4 h-4 text-blue-600" /> Talentos Compatíveis Ordenados
-                    </h3>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {matchedCandidatos.map((m) => {
-                        const aiData = aiMatchResults[`${selectedMatchVagaId}_${m.candidato.id}`];
-                        const isLoading = isAiMatching; // Simplified for MVP
-
-                        // Mix fallback (local tags) com inteligência artificial se existir
-                        const displayScore = aiData ? aiData.score : m.score;
-                        const scoreColor = displayScore >= 80 ? 'text-green-600 bg-green-50 border-green-200' :
-                          displayScore >= 50 ? 'text-amber-600 bg-amber-50 border-amber-200' : 'text-rose-600 bg-rose-50 border-rose-200';
-                        const barColor = displayScore >= 80 ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                          displayScore >= 50 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-rose-400 to-rose-500';
-
-                        return (
-                          <div key={m.candidato.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between cursor-pointer group/card" onClick={() => handleOpenCandidatoViewModal(m.candidato.id)}>
-                            <div className="flex items-start gap-4">
-                              {/* Avatar Block */}
-                              <div className="flex-shrink-0 h-14 w-14 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-white shadow flex items-center justify-center">
-                                <span className="text-xl font-black text-blue-700">{m.candidato.nome.charAt(0)}</span>
-                              </div>
-
-                              {/* Info Block */}
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-bold text-[#0a192f] truncate group-hover/card:text-blue-600 transition-colors">
-                                  {m.candidato.nome}
-                                </h4>
-                                <p className="text-[10px] text-gray-500 truncate mb-1">{m.candidato.email}</p>
-                                <p className="text-xs font-semibold text-gray-700 bg-gray-50 inline-flex px-2 py-0.5 rounded border border-gray-100">
-                                  {roleOptions.find(r => String(r.value) === String(m.candidato.role))?.label || m.candidato.role || 'Sem cargo atual'}
-                                </p>
-                              </div>
-
-                              {/* Action Block - Run AI */}
-                              {!aiData && (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleRunAiMatch(selectedMatchVagaId!, m.candidato.id); }}
-                                  disabled={isLoading}
-                                  className="flex-shrink-0 p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors group relative"
-                                  title="Analisar profundamente com IA"
-                                >
-                                  <Sparkles className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                                </button>
-                              )}
-                            </div>
-
-                            {/* Score Bar */}
-                            <div className="mt-4 pt-4 border-t border-gray-50">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Aderência Global</span>
-                                <span className={`px-2 py-0.5 rounded-lg text-xs font-black border ${scoreColor}`}>
-                                  {displayScore}%
-                                </span>
-                              </div>
-                              <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden shadow-inner">
-                                <div className={`h-full rounded-full ${barColor} shadow-sm transition-all duration-1000`} style={{ width: `${displayScore}%` }}></div>
-                              </div>
-                            </div>
-
-                            {/* AI / Tags Block */}
-                            {aiData ? (
-                              <div className="mt-4 bg-gray-50/50 p-3 rounded-xl border border-blue-100/50">
-                                <p className="text-xs text-gray-700 font-medium italic leading-relaxed mb-3">
-                                  "{aiData.justificativa}"
-                                </p>
-                                {aiData.gaps && aiData.gaps.length > 0 && (
-                                  <div className="mb-2">
-                                    <p className="text-[9px] font-black tracking-widest uppercase text-rose-500 mb-1">⚠️ Gaps Encontrados</p>
-                                    <div className="flex flex-wrap gap-1">
-                                      {aiData.gaps.map((gap, i) => <span key={`gap-${i}`} className="text-[9px] px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded border border-rose-100">{gap}</span>)}
-                                    </div>
-                                  </div>
-                                )}
-                                <div>
-                                  <p className="text-[9px] font-black tracking-widest uppercase text-green-600 mb-1">✓ Pontos Fortes</p>
-                                  <div className="flex flex-wrap gap-1">
-                                    {aiData.matchesTags?.map((tag, i) => <span key={`tag-${i}`} className="text-[9px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded border border-green-100">{tag}</span>)}
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="mt-4 flex flex-wrap gap-1.5">
-                                {m.candidatoTags.slice(0, 6).map((tag, i) => {
-                                  const isMatch = m.matchedTags.includes(tag.toLowerCase());
-                                  return (
-                                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-tight border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-                                      {tag}
-                                    </span>
-                                  );
-                                })}
-                                {m.candidatoTags.length > 6 && <span className="text-[10px] text-gray-400 font-medium py-0.5">+{m.candidatoTags.length - 6} tags</span>}
-                                {m.candidatoTags.length === 0 && <span className="text-[10px] text-gray-400 italic">Preencha o perfil para calcular localmente.</span>}
-                              </div>
-                            )}
-
-                          </div>
-                        )
-                      })}
-                      {matchedCandidatos.length === 0 && (
-                        <div className="col-span-1 lg:col-span-2 p-8 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
-                          <p className="text-sm font-semibold text-gray-500">Nenhum candidato na base.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* Modo de Match */}
+                <div className="flex bg-gray-100 p-1 rounded-xl w-full sm:w-auto">
+                  <button
+                    onClick={() => setMatchMode('vaga')}
+                    className={`flex-1 sm:flex-none px-6 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap ${matchMode === 'vaga' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    <Briefcase className="h-4 w-4" /> Por Vaga
+                  </button>
+                  <button
+                    onClick={() => setMatchMode('candidato')}
+                    className={`flex-1 sm:flex-none px-6 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap ${matchMode === 'candidato' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    <User className="h-4 w-4" /> Por Candidato
+                  </button>
+                </div>
               </div>
-            ) : (
-              // VISÃO POR CANDIDATO
-              <div className="space-y-6">
-                <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl border border-emerald-100">
-                  <h3 className="text-sm font-bold text-[#0a192f] mb-3">1. Selecione o Talento</h3>
-                  <div className="w-full sm:max-w-md">
-                    <FilterSelect
-                      placeholder="Buscar candidato"
-                      value={selectedMatchCandidatoId || ''}
-                      onChange={setSelectedMatchCandidatoId}
-                      options={[
-                        { value: '', label: 'Selecione um candidato...' },
-                        ...candidatos
-                          .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
-                          .map(c => ({
-                            value: String(c.id),
-                            label: `${c.nome} (${roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || 'Sem cargo'})`
-                          }))
-                      ]}
-                      icon={Users}
-                    />
-                  </div>
+            </div>
 
-                  {selectedMatchCandidatoId && (
-                    <>
-                      <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl border border-emerald-100 flex items-center justify-between gap-4 cursor-pointer hover:bg-emerald-100/50 transition-colors mt-6" onClick={() => handleOpenCandidatoViewModal(selectedMatchCandidatoId!)}>
-                        <div className="flex items-center gap-4">
-                          <div className="flex-shrink-0 h-14 w-14 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-200 border-2 border-white shadow flex items-center justify-center">
-                            <span className="text-xl font-black text-emerald-700">{activeMatchCandidato?.nome?.charAt(0)}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-bold text-[#0a192f] truncate group-hover/card:text-emerald-600 transition-colors">
-                              {activeMatchCandidato?.nome}
-                            </h4>
-                            <p className="text-[10px] text-gray-500 truncate mb-1">{activeMatchCandidato?.email}</p>
-                          </div>
-                        </div>
-                      </div>
+            <div className="flex-1 pr-2">
+              {matchMode === 'vaga' ? (
+                // VISÃO POR VAGA
+                <div className="space-y-6">
+                  <div className="bg-blue-50/50 p-4 sm:p-6 rounded-2xl border border-blue-100">
+                    <h3 className="text-sm font-bold text-[#0a192f] mb-3">1. Selecione a Vaga Alvo</h3>
+                    <div className="w-full sm:max-w-md">
+                      <FilterSelect
+                        placeholder="Buscar vaga"
+                        value={selectedMatchVagaId || ''}
+                        onChange={setSelectedMatchVagaId}
+                        options={[
+                          { value: '', label: 'Selecione uma vaga em aberto...' },
+                          ...vagas
+                            .filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização')
+                            .filter(v => atsMatchArea ? String(v.area) === atsMatchArea : true)
+                            .sort((a, b) => (a.vaga_id_text || '').localeCompare(b.vaga_id_text || ''))
+                            .map(v => ({
+                              value: String(v.id),
+                              label: `${v.vaga_id_text} - ${v.role?.name || 'Sem cargo'} (${v.location?.name || 'Sem local'})`
+                            }))
+                        ]}
+                        icon={Briefcase}
+                      />
+                    </div>
 
+                    {selectedMatchVagaId && (
                       <div className="mt-4 animate-in slide-in-from-top-2">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60 mb-2">Habilidades (Tags) do Candidato</p>
-                        {activeMatchCandidato && extractTags(activeMatchCandidato.perfil).length > 0 ? (
+                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-800/60 mb-2">Tags Exigidas pela Vaga</p>
+                        {activeMatchVaga && extractTags(activeMatchVaga.perfil).length > 0 ? (
                           <div className="flex flex-wrap gap-2">
-                            {extractTags(activeMatchCandidato.perfil).map((tag, i) => (
-                              <span key={i} className="px-2.5 py-1 bg-white text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold shadow-sm">
+                            {extractTags(activeMatchVaga.perfil).map((tag, i) => (
+                              <span key={i} className="px-2.5 py-1 bg-white text-blue-700 border border-blue-200 rounded-lg text-xs font-bold shadow-sm">
                                 {tag}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-emerald-600/60 font-medium italic">Este candidato não possui tags de perfil registradas. Preencha no cadastro para utilizar o match.</p>
+                          <p className="text-xs text-blue-600/60 font-medium italic">Esta vaga não possui tags de perfil registradas. O match não será preciso.</p>
                         )}
                       </div>
+                    )}
+                  </div>
 
-                      <div className="mt-8">
-                        <h3 className="text-sm font-bold text-[#0a192f] mb-3 flex items-center gap-2">
-                          <Briefcase className="w-4 h-4 text-emerald-600" /> Vagas Abertas Compatíveis
-                        </h3>
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                          <table className="w-full min-w-max text-left border-collapse">
-                            <thead className="bg-[#059669]">
-                              <tr>
-                                <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-48">Aderência (Match)</th>
-                                <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px]">Vaga</th>
-                                <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px]">Líder / Sócio</th>
-                                <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Tags da Vaga (Highlight do Match)</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                              {matchedVagas.map((m) => (
-                                <tr key={m.vaga.id} onClick={() => handleOpenViewModal(m.vaga.id)} className="hover:bg-emerald-50/40 cursor-pointer transition-colors">
-                                  <td className="px-4 py-4 whitespace-nowrap">
-                                    <div className="flex flex-col gap-1.5">
-                                      <div className="flex items-center justify-between">
-                                        <span className={`text-sm font-black ${m.score >= 80 ? 'text-green-600' : m.score >= 50 ? 'text-amber-500' : 'text-gray-400'}`}>
-                                          {m.score}%
-                                        </span>
-                                        <span className="text-[10px] font-bold text-gray-500">{m.matches} de {m.totalTags}</span>
+                  {selectedMatchVagaId && (
+                    <div>
+                      <h3 className="text-sm font-bold text-[#0a192f] mb-3 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-blue-600" /> Talentos Compatíveis Ordenados
+                      </h3>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {matchedCandidatos.map((m) => {
+                          const aiData = aiMatchResults[`${selectedMatchVagaId}_${m.candidato.id}`];
+                          const isLoading = isAiMatching; // Simplified for MVP
+
+                          // Mix fallback (local tags) com inteligência artificial se existir
+                          const displayScore = aiData ? aiData.score : m.score;
+                          const scoreColor = displayScore >= 80 ? 'text-green-600 bg-green-50 border-green-200' :
+                            displayScore >= 50 ? 'text-amber-600 bg-amber-50 border-amber-200' : 'text-rose-600 bg-rose-50 border-rose-200';
+                          const barColor = displayScore >= 80 ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                            displayScore >= 50 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-rose-400 to-rose-500';
+
+                          return (
+                            <div key={m.candidato.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between cursor-pointer group/card" onClick={() => handleOpenCandidatoViewModal(m.candidato.id)}>
+                              <div className="flex items-start gap-4">
+                                {/* Avatar Block */}
+                                <div className="flex-shrink-0 h-14 w-14 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-white shadow flex items-center justify-center">
+                                  <span className="text-xl font-black text-blue-700">{m.candidato.nome.charAt(0)}</span>
+                                </div>
+
+                                {/* Info Block */}
+                                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                  <div className="flex items-center gap-3">
+                                    <h4 className="text-sm font-bold text-[#0a192f] truncate group-hover/card:text-blue-600 transition-colors">
+                                      {m.candidato.nome}
+                                    </h4>
+                                    {m.matchedTags.length > 0 && (
+                                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm border
+                                      ${m.candidato.area === 'Administrativa' ? 'bg-orange-50 text-orange-600 border-orange-200' :
+                                          m.candidato.area === 'Jurídica' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                            'bg-blue-50 text-blue-600 border-blue-200'}`
+                                      }>
+                                        🔥 {m.matchedTags.length} Match{m.matchedTags.length > 1 ? 'es' : ''}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[10px] text-gray-500 truncate mb-1">{m.candidato.email}</p>
+                                  <p className="text-xs font-semibold text-gray-700 bg-gray-50 inline-flex px-2 py-0.5 rounded border border-gray-100 w-max">
+                                    {roleOptions.find(r => String(r.value) === String(m.candidato.role))?.label || m.candidato.role || 'Sem cargo atual'}
+                                  </p>
+                                </div>
+
+                                {/* Action Block - Run AI */}
+                                {!aiData && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleRunAiMatch(selectedMatchVagaId!, m.candidato.id); }}
+                                    disabled={isLoading}
+                                    className="flex-shrink-0 p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors group relative"
+                                    title="Analisar profundamente com IA"
+                                  >
+                                    <Sparkles className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Score Bar */}
+                              <div className="mt-4 pt-4 border-t border-gray-50">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Aderência Global</span>
+                                  <span className={`px-2 py-0.5 rounded-lg text-xs font-black border ${scoreColor}`}>
+                                    {displayScore}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden shadow-inner">
+                                  <div className={`h-full rounded-full ${barColor} shadow-sm transition-all duration-1000`} style={{ width: `${displayScore}%` }}></div>
+                                </div>
+                              </div>
+
+                              {/* AI / Tags Block */}
+                              {aiData ? (
+                                <div className="mt-4 bg-gray-50/50 p-3 rounded-xl border border-blue-100/50">
+                                  <p className="text-xs text-gray-700 font-medium italic leading-relaxed mb-3">
+                                    "{aiData.justificativa}"
+                                  </p>
+                                  {aiData.gaps && aiData.gaps.length > 0 && (
+                                    <div className="mb-2">
+                                      <p className="text-[9px] font-black tracking-widest uppercase text-rose-500 mb-1">⚠️ Gaps Encontrados</p>
+                                      <div className="flex flex-wrap gap-1">
+                                        {aiData.gaps.map((gap, i) => <span key={`gap-${i}`} className="text-[9px] px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded border border-rose-100">{gap}</span>)}
                                       </div>
-                                      <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                        <div
-                                          className={`h-full rounded-full ${m.score >= 80 ? 'bg-green-500' : m.score >= 50 ? 'bg-amber-400' : 'bg-gray-300'}`}
-                                          style={{ width: `${m.score}%` }}
-                                        ></div>
-                                      </div>
                                     </div>
-                                  </td>
-                                  <td className="px-3 py-4">
-                                    <div className="flex items-center gap-2">
-                                      <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[9px] font-black tracking-widest uppercase">{m.vaga.vaga_id_text}</span>
-                                      <p className="font-bold text-sm text-[#0a192f] truncate">{m.vaga.role?.name || 'Sem cargo'}</p>
+                                  )}
+                                  <div>
+                                    <p className="text-[9px] font-black tracking-widest uppercase text-green-600 mb-1">✓ Pontos Fortes</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {aiData.matchesTags?.map((tag, i) => <span key={`tag-${i}`} className="text-[9px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded border border-green-100">{tag}</span>)}
                                     </div>
-                                    <p className="text-[10px] text-gray-500 mt-1">{m.vaga.location?.name || 'Local não informado'}</p>
-                                  </td>
-                                  <td className="px-3 py-4 text-xs font-semibold text-gray-700">
-                                    <p>{m.vaga.leader?.name || '-'}</p>
-                                    <p className="text-[10px] text-gray-500">{m.vaga.partner?.name || '-'}</p>
-                                  </td>
-                                  <td className="px-3 py-4">
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {m.vagaTags.map((tag, i) => {
-                                        const isMatch = m.matchedTags.includes(tag.toLowerCase());
-                                        return (
-                                          <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-                                            {tag}
-                                          </span>
-                                        );
-                                      })}
-                                      {m.vagaTags.length === 0 && <span className="text-xs text-gray-400 italic">Sem tags registradas</span>}
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                              {matchedVagas.length === 0 && (
-                                <tr>
-                                  <td colSpan={4} className="px-4 py-8 text-center text-sm font-semibold text-gray-500">
-                                    Nenhuma vaga avaliada ou lista vazia.
-                                  </td>
-                                </tr>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="mt-4 flex flex-wrap gap-1.5">
+                                  {m.candidatoTags.map((tag, i) => {
+                                    const isMatch = m.matchedTags.includes(tag.toLowerCase());
+                                    return (
+                                      <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-tight border ${isMatch ? 'bg-green-50 text-green-700 border-green-200 shadow-sm shadow-green-100' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                                        {tag}
+                                      </span>
+                                    );
+                                  })}
+                                  {m.candidatoTags.length === 0 && <span className="text-[10px] text-gray-400 italic">Preencha o perfil para calcular localmente.</span>}
+                                </div>
                               )}
-                            </tbody>
-                          </table>
-                        </div>
+
+                            </div>
+                          )
+                        })}
+                        {matchedCandidatos.length === 0 && (
+                          <div className="col-span-1 lg:col-span-2 p-8 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
+                            <p className="text-sm font-semibold text-gray-500">Nenhum candidato na base.</p>
+                          </div>
+                        )}
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
+              ) : (
+                // VISÃO POR CANDIDATO
+                <div className="space-y-6">
+                  <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl border border-emerald-100">
+                    <h3 className="text-sm font-bold text-[#0a192f] mb-3">1. Selecione o Talento</h3>
+                    <div className="w-full sm:max-w-md">
+                      <FilterSelect
+                        placeholder="Buscar candidato"
+                        value={selectedMatchCandidatoId || ''}
+                        onChange={setSelectedMatchCandidatoId}
+                        options={[
+                          { value: '', label: 'Selecione um candidato...' },
+                          ...candidatos
+                            .filter(c => atsMatchArea ? String(c.area) === atsMatchArea : true)
+                            .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
+                            .map(c => ({
+                              value: String(c.id),
+                              label: `${c.nome} (${roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || 'Sem cargo'})`
+                            }))
+                        ]}
+                        icon={Users}
+                      />
+                    </div>
+
+                    {selectedMatchCandidatoId && (
+                      <>
+                        <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl border border-emerald-100 flex items-center justify-between gap-4 cursor-pointer hover:bg-emerald-100/50 transition-colors mt-6" onClick={() => handleOpenCandidatoViewModal(selectedMatchCandidatoId!)}>
+                          <div className="flex items-center gap-4">
+                            <div className="flex-shrink-0 h-14 w-14 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-200 border-2 border-white shadow flex items-center justify-center">
+                              <span className="text-xl font-black text-emerald-700">{activeMatchCandidato?.nome?.charAt(0)}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-bold text-[#0a192f] truncate group-hover/card:text-emerald-600 transition-colors">
+                                {activeMatchCandidato?.nome}
+                              </h4>
+                              <p className="text-[10px] text-gray-500 truncate mb-1">{activeMatchCandidato?.email}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 animate-in slide-in-from-top-2">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60 mb-2">Habilidades (Tags) do Candidato</p>
+                          {activeMatchCandidato && extractTags(activeMatchCandidato.perfil).length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {extractTags(activeMatchCandidato.perfil).map((tag, i) => (
+                                <span key={i} className="px-2.5 py-1 bg-white text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold shadow-sm">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-emerald-600/60 font-medium italic">Este candidato não possui tags de perfil registradas. Preencha no cadastro para utilizar o match.</p>
+                          )}
+                        </div>
+
+                        <div className="mt-8">
+                          <h3 className="text-sm font-bold text-[#0a192f] mb-3 flex items-center gap-2">
+                            <Briefcase className="w-4 h-4 text-emerald-600" /> Vagas Abertas Compatíveis
+                          </h3>
+                          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <table className="w-full min-w-max text-left border-collapse">
+                              <thead className="bg-[#059669]">
+                                <tr>
+                                  <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-48">Aderência (Match)</th>
+                                  <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px]">Vaga</th>
+                                  <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px]">Líder / Sócio</th>
+                                  <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Tags da Vaga (Highlight do Match)</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100">
+                                {matchedVagas.map((m) => (
+                                  <tr key={m.vaga.id} onClick={() => handleOpenViewModal(m.vaga.id)} className="hover:bg-emerald-50/40 cursor-pointer transition-colors">
+                                    <td className="px-4 py-4 whitespace-nowrap">
+                                      <div className="flex flex-col gap-1.5">
+                                        <div className="flex items-center justify-between">
+                                          <span className={`text-sm font-black ${m.score >= 80 ? 'text-green-600' : m.score >= 50 ? 'text-amber-500' : 'text-gray-400'}`}>
+                                            {m.score}%
+                                          </span>
+                                          <span className="text-[10px] font-bold text-gray-500">{m.matches} de {m.totalTags}</span>
+                                        </div>
+                                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                          <div
+                                            className={`h-full rounded-full ${m.score >= 80 ? 'bg-green-500' : m.score >= 50 ? 'bg-amber-400' : 'bg-gray-300'}`}
+                                            style={{ width: `${m.score}%` }}
+                                          ></div>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="px-3 py-4">
+                                      <div className="flex items-center gap-2">
+                                        <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[9px] font-black tracking-widest uppercase">{m.vaga.vaga_id_text}</span>
+                                        <p className="font-bold text-sm text-[#0a192f] truncate">{m.vaga.role?.name || 'Sem cargo'}</p>
+                                      </div>
+                                      <p className="text-[10px] text-gray-500 mt-1">{m.vaga.location?.name || 'Local não informado'}</p>
+                                    </td>
+                                    <td className="px-3 py-4 text-xs font-semibold text-gray-700">
+                                      <p className="flex items-center gap-2">
+                                        {m.vaga.leader?.name || '-'}
+                                        {m.matchedTags.length > 0 && (
+                                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm border
+                                          ${m.vaga.area === 'Administrativa' ? 'bg-orange-50 text-orange-600 border-orange-200' :
+                                              m.vaga.area === 'Jurídica' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                                'bg-blue-50 text-blue-600 border-blue-200'}`
+                                          }>
+                                            🔥 {m.matchedTags.length} Match{m.matchedTags.length > 1 ? 'es' : ''}
+                                          </span>
+                                        )}
+                                      </p>
+                                      <p className="text-[10px] text-gray-500">{m.vaga.partner?.name || '-'}</p>
+                                    </td>
+                                    <td className="px-3 py-4">
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {m.vagaTags.map((tag, i) => {
+                                          const isMatch = m.matchedTags.includes(tag.toLowerCase());
+                                          return (
+                                            <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isMatch ? 'bg-green-50 text-green-700 border-green-200 shadow-sm shadow-green-100' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                                              {tag}
+                                            </span>
+                                          );
+                                        })}
+                                        {m.vagaTags.length === 0 && <span className="text-xs text-gray-400 italic">Sem tags registradas</span>}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                                {matchedVagas.length === 0 && (
+                                  <tr>
+                                    <td colSpan={4} className="px-4 py-8 text-center text-sm font-semibold text-gray-500">
+                                      Nenhuma vaga avaliada ou lista vazia.
+                                    </td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* LISTA DE VAGAS / CANDIDATOS */}
       {
         activeTab !== 'ats' && (
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0">
             {loading ? (
               <div className="flex justify-center items-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1e3a8a]"></div>
@@ -1078,7 +1203,7 @@ export function RHVagas() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-y-auto overflow-x-auto min-h-[400px]">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-x-auto min-h-[400px]">
                 {activeTab === 'talentos' || activeTab === 'reprovados' ? (
                   <table className="w-full min-w-max text-left border-collapse">
                     <thead className="bg-[#1e3a8a]">
@@ -1094,13 +1219,21 @@ export function RHVagas() {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {(activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado')).map((c: any) => {
-                        const hasInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
+                        const hasHistoricInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
+                        const hasInterview = hasHistoricInterview || !!c.entrevista_dados?.data_entrevista;
+
                         const interviewDates = c.candidato_historico
                           ?.filter((h: any) => h.tipo === 'Entrevista')
                           .map((h: any) => h.entrevista_data || h.data_registro || null)
                           .filter(Boolean)
-                          .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime());
-                        const lastInterviewDateRaw = interviewDates && interviewDates.length > 0 ? interviewDates[0] : null;
+                          .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime()) || [];
+
+                        if (c.entrevista_dados?.data_entrevista) {
+                          interviewDates.push(c.entrevista_dados.data_entrevista);
+                          interviewDates.sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime());
+                        }
+
+                        const lastInterviewDateRaw = interviewDates.length > 0 ? interviewDates[0] : null;
 
 
                         // Ocultar se já for colaborador (estamos em uma página de recrutamento/vagas ativos)
@@ -1120,25 +1253,36 @@ export function RHVagas() {
                               <span className="inline-flex items-center justify-center px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px] font-black tracking-widest uppercase">{c.candidato_id_text || 'Sem ID'}</span>
                             </td>
                             <td className="px-3 py-4">
-                              <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
-                              {(c.email || c.telefone) && (
-                                <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
-                              )}
-                              {activeTab === 'reprovados' && c.motivo_reprovacao && (
-                                <p className="text-[10px] text-red-600 font-bold mt-1 bg-red-100 p-1 rounded inline-block">Motivo: {c.motivo_reprovacao}</p>
-                              )}
-                              {c.perfil && (
-                                <div className="flex flex-wrap gap-1 mt-1.5">
-                                  {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                    <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                      {tag.trim()}
-                                    </span>
-                                  ))}
-                                  {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                    <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
+                              <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center border-2 border-white shadow-sm">
+                                  {c.photo_url || c.foto_url ? (
+                                    <img src={c.photo_url || c.foto_url} alt={c.nome} className="h-full w-full object-cover" />
+                                  ) : (
+                                    <span className="text-sm font-black text-white">{c.nome?.charAt(0).toUpperCase()}</span>
                                   )}
                                 </div>
-                              )}
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
+                                  {(c.email || c.telefone) && (
+                                    <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
+                                  )}
+                                  {activeTab === 'reprovados' && c.motivo_reprovacao && (
+                                    <p className="text-[10px] text-red-600 font-bold mt-1 bg-red-100 p-1 rounded inline-block">Motivo: {c.motivo_reprovacao}</p>
+                                  )}
+                                  {c.perfil && (
+                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                      {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
+                                        <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                          {tag.trim()}
+                                        </span>
+                                      ))}
+                                      {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
+                                        <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </td>
                             <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
                               {roleName}
@@ -1210,10 +1354,24 @@ export function RHVagas() {
                             }
                           </td>
                           <td className="px-3 py-3">
-                            <div className="flex items-center gap-2 max-w-[200px] truncate">
-                              <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
-                              {vaga.sigilosa && (
-                                <span className="text-[8px] shrink-0 bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
+                            <div className="flex flex-col gap-1.5 max-w-[250px]">
+                              <div className="flex items-center gap-2 truncate">
+                                <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
+                                {vaga.sigilosa && (
+                                  <span className="text-[8px] shrink-0 bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
+                                )}
+                              </div>
+                              {vaga.perfil && (
+                                <div className="flex flex-wrap gap-1">
+                                  {vaga.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
+                                    <span key={i} className="px-1.5 py-0.5 bg-green-50/50 text-green-700 border border-green-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                      {tag.trim()}
+                                    </span>
+                                  ))}
+                                  {vaga.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
+                                    <span className="text-[8px] font-bold text-green-500 ml-0.5">...</span>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </td>

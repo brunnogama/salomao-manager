@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay, Sparkles } from 'lucide-react'
+import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay, Sparkles, Gift } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { logAction } from '../lib/logger'
 import { APP_UPDATES } from '../config/updates'
 import { UpdateNotificationModal } from './UpdateNotificationModal'
 
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 interface ModuleSelectorProps {
   onSelect: (module: 'crm' | 'collaborators' | 'operational' | 'financial' | 'settings' | 'executive' | 'controladoria') => void;
@@ -13,6 +14,7 @@ interface ModuleSelectorProps {
 }
 
 export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
+  const { signOut } = useAuth()
   const navigate = useNavigate()
   const [allowedModules, setAllowedModules] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -96,15 +98,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   }, [])
 
   const handleLogout = async () => {
-
-    const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal')
-    localStorage.clear()
-    sessionStorage.clear()
-    if (hasSeenWelcome) {
-      localStorage.setItem('hasSeenWelcomeModal', hasSeenWelcome)
-    }
-    await supabase.auth.signOut()
-    window.location.reload()
+    await signOut()
   }
 
   const isModuleAllowed = (moduleKey: string) => {
@@ -223,7 +217,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
       <div className="h-screen w-screen bg-[#f8fafc] flex flex-col items-center justify-center overflow-hidden">
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
-            <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
             <img
               src="/logo-salomao.png"
               alt="Carregando..."
@@ -239,6 +232,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
     )
   }
 
+
   return (
     <div className="h-screen w-screen bg-[#0a192f] flex flex-col relative overflow-hidden">
 
@@ -250,7 +244,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         {/* Logo */}
         <div className="flex items-center gap-4 group cursor-default">
           <div className="relative">
-            <div className="absolute inset-0 bg-white/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             <img
               src="/logo-salomao.png"
               alt="Salomão Advogados"
@@ -284,14 +277,43 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
           {/* What's New Button */}
           {hasNewUpdate && (
+            <div className="relative group/novidades flex items-center">
+              {/* Tooltip Animado */}
+              <div className="absolute top-14 right-0 w-max max-w-[200px] z-50 animate-in fade-in slide-in-from-top-2 duration-500 ease-out">
+                {/* Arrow up */}
+                <div className="absolute -top-2 right-4 w-4 h-4 bg-amber-50 border-t border-l border-amber-200/50 transform rotate-45 rounded-tl-sm"></div>
+                {/* Content */}
+                <div className="bg-amber-50 border border-amber-200/50 shadow-xl shadow-amber-900/10 rounded-xl p-3 relative flex items-start gap-3">
+                  <div className="p-1.5 bg-amber-100/80 rounded-lg text-amber-600 shrink-0">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-800 mb-0.5">Novidades!</span>
+                    <span className="text-xs font-bold text-amber-900/70 leading-tight">Veja o que acabou de mudar no sistema.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Icon Button */}
+              <button
+                onClick={handleOpenUpdateModal}
+                className="p-2.5 text-amber-300 hover:text-amber-200 transition-all rounded-full hover:bg-white/10 active:scale-95 animate-pulse hover:animate-none flex items-center justify-center relative"
+                title="Novidades do Sistema"
+              >
+                <Gift className="h-5 w-5" />
+                <span className="absolute top-1.5 right-1.5 w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] border border-white animate-ping"></span>
+                <span className="absolute top-1.5 right-1.5 w-3 h-3 rounded-full bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)] border border-white"></span>
+              </button>
+            </div>
+          )}
+
+          {!hasNewUpdate && (
             <button
               onClick={handleOpenUpdateModal}
-              className="p-2.5 text-amber-300 hover:text-amber-200 transition-all rounded-full hover:bg-white/10 active:scale-95 animate-pulse hover:animate-none flex items-center justify-center relative"
+              className="p-2.5 text-white/50 hover:text-[#d4af37] transition-all rounded-full hover:bg-white/10 active:scale-95"
               title="Novidades do Sistema"
             >
-              <Sparkles className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span>
+              <Gift className="h-5 w-5" />
             </button>
           )}
 

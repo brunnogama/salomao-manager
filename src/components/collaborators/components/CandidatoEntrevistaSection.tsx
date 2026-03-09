@@ -1,20 +1,44 @@
-import { useState, useEffect } from 'react'
-import { Printer } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Printer, ChevronDown } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
 import { supabase } from '../../../lib/supabase'
+import { maskCurrencyInput } from '../utils/colaboradoresUtils'
 
 interface CandidatoEntrevistaSectionProps {
     formData: any
     setFormData: (data: any) => void
     isViewMode?: boolean
+    onShowReprovadoModal?: () => void
 }
 
 export function CandidatoEntrevistaSection({
     formData,
     setFormData,
-    isViewMode = false
+    isViewMode = false,
+    onShowReprovadoModal
 }: CandidatoEntrevistaSectionProps) {
+    const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false)
+    const statusMenuRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (statusMenuRef.current && !statusMenuRef.current.contains(event.target as Node)) {
+                setIsStatusMenuOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const handleStatusSelecaoChange = (value: string) => {
+        setIsStatusMenuOpen(false);
+        if (value === 'Reprovado' && onShowReprovadoModal) {
+            onShowReprovadoModal();
+        } else {
+            setFormData({ ...formData, status_selecao: value })
+        }
+    };
     const [vagasAbertas, setVagasAbertas] = useState<any[]>([])
 
     useEffect(() => {
@@ -203,7 +227,7 @@ export function CandidatoEntrevistaSection({
                                     type="text"
                                     className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
                                     value={entrevista.pretensao_salarial || ''}
-                                    onChange={(e) => handleEntrevistaChange('pretensao_salarial', e.target.value)}
+                                    onChange={(e) => handleEntrevistaChange('pretensao_salarial', maskCurrencyInput(e.target.value))}
                                     placeholder="R$ 0,00"
                                     disabled={isViewMode}
                                 />
@@ -215,6 +239,18 @@ export function CandidatoEntrevistaSection({
                 {area === 'Jurídica' && (
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <SearchableSelect
+                                label="Entrevistadoras"
+                                placeholder="Selecione..."
+                                value={entrevista.entrevistadoras || ''}
+                                onChange={(val) => handleEntrevistaChange('entrevistadoras', val)}
+                                disabled={isViewMode}
+                                options={[
+                                    { id: 'Karina Reis Dos Prazeres', name: 'Karina Reis Dos Prazeres' },
+                                    { id: 'Tatiana Gonçalves Gomes', name: 'Tatiana Gonçalves Gomes' },
+                                    { id: 'Karina e Tatiana', name: 'Karina e Tatiana' }
+                                ]}
+                            />
                             <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block print:text-gray-800 print:text-xs">Indicação</label>
                                 <input
@@ -314,7 +350,7 @@ export function CandidatoEntrevistaSection({
                                     type="text"
                                     className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
                                     value={entrevista.pretensao_salarial || ''}
-                                    onChange={(e) => handleEntrevistaChange('pretensao_salarial', e.target.value)}
+                                    onChange={(e) => handleEntrevistaChange('pretensao_salarial', maskCurrencyInput(e.target.value))}
                                     placeholder="R$ 0,00"
                                     disabled={isViewMode}
                                 />
@@ -359,6 +395,44 @@ export function CandidatoEntrevistaSection({
                                 { id: 'Não recomendado', name: 'Não recomendado' }
                             ]}
                         />
+
+                        {/* Status Select */}
+                        <div className="space-y-1.5" ref={statusMenuRef}>
+                            <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Status do Candidato</label>
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+                                    className={`flex items-center justify-between w-full text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl border transition-all ${formData.status_selecao === 'Aprovado em Vaga' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
+                                        formData.status_selecao === 'Reprovado' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
+                                            formData.status_selecao === 'Reaproveitamento' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
+                                                'bg-blue-50 text-[#1e3a8a] border-blue-200 hover:bg-blue-100'
+                                        }`}
+                                    disabled={isViewMode}
+                                >
+                                    <span>{formData.status_selecao || 'Aberto'}</span>
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${isStatusMenuOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {isStatusMenuOpen && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[60]">
+                                        {['Aberto', 'Aprovado em Vaga', 'Reprovado', 'Reaproveitamento'].map(status => (
+                                            <button
+                                                key={status}
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusSelecaoChange(status);
+                                                }}
+                                                className="w-full text-left px-5 py-3 text-xs font-bold text-[#0a192f] hover:bg-blue-50 hover:text-[#1e3a8a] transition-colors border-b border-gray-50 last:border-0"
+                                            >
+                                                {status}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 

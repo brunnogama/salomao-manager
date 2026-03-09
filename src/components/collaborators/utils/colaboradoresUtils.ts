@@ -75,6 +75,15 @@ export const formatCurrency = (value: number | string | undefined): string => {
   return `R$ ${formatted.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 };
 
+export const maskCurrencyInput = (value: string): string => {
+  if (!value) return '';
+  const onlyDigits = value.replace(/\D/g, '');
+  if (!onlyDigits) return '';
+  const numericValue = Number(onlyDigits) / 100;
+  const formatted = numericValue.toFixed(2).replace('.', ',');
+  return `R$ ${formatted.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+};
+
 export const parseCurrency = (value: string): number => {
   if (!value) return 0;
   const numericString = value.replace(/\D/g, '');
@@ -94,6 +103,32 @@ export const formatDateToISO = (displayDate: string | undefined | null) => {
   if (displayDate.includes('-')) return displayDate
   const [d, m, y] = displayDate.split('/')
   return `${y}-${m}-${d}`
+}
+
+export const formatMonthYearDateToDisplay = (isoDate: string | undefined | null) => {
+  if (!isoDate) return ''
+  if (isoDate.includes('/')) return isoDate
+  const cleanDate = isoDate.split('T')[0]
+  const [y, m, _d] = cleanDate.split('-')
+  return `${m}/${y}`
+}
+
+export const formatMonthYearDateToISO = (displayDate: string | undefined | null) => {
+  if (!displayDate) return ''
+  if (displayDate.includes('-')) return displayDate
+  const parts = displayDate.split('/')
+  if (parts.length === 2) {
+    const [m, y] = parts
+    return `${y}-${m}-01`
+  }
+  return ''
+}
+
+export const formatDbMoneyToDisplay = (dbValue: string | number | null | undefined): string => {
+  if (dbValue === null || dbValue === undefined || dbValue === '') return '';
+  let asNum = typeof dbValue === 'string' ? Number(dbValue.replace(/[^0-9.-]+/g,"")) : dbValue;
+  if (isNaN(asNum)) return '';
+  return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(asNum);
 }
 
 export const getWorkingDaysInCurrentMonth = (): number => {

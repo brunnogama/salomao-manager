@@ -10,6 +10,7 @@ import {
   Briefcase
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface SidebarProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const { signOut } = useAuth()
   const navigate = useNavigate()
   const [userName, setUserName] = useState('Carregando...')
   const location = useLocation()
@@ -37,8 +39,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    navigate('/login')
+    await signOut()
   }
 
   useEffect(() => {

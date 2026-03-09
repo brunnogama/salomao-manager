@@ -6,6 +6,7 @@ import {
   BarChart3, History, Settings, LogOut, Menu, X
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext'
 
 // ============================================
 // 🔍 SISTEMA DE DEBUG
@@ -29,6 +30,7 @@ const menuItems = [
 console.log('📋 Menu items configurados:', menuItems.map(m => m.label));
 
 export function Layout() {
+  const { signOut } = useAuth()
   console.log('🔄 Layout - Componente renderizando');
 
   const navigate = useNavigate();
@@ -52,14 +54,7 @@ export function Layout() {
   const currentModule = menuItems.find(m => m.path === location.pathname) || { label: 'Módulo', icon: LayoutDashboard };
 
   const handleLogout = async () => {
-    console.log('🚪 Logout iniciado');
-    try {
-      await supabase.auth.signOut();
-      console.log('✅ Logout bem-sucedido');
-      navigate('/login');
-    } catch (error) {
-      console.error('❌ Erro no logout:', error);
-    }
+    await signOut()
   };
 
   const handleNavigate = (path: string) => {

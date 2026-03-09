@@ -1,6 +1,7 @@
 import { Briefcase } from 'lucide-react'
 import { ManagedSelect } from '../../crm/ManagedSelect'
 import { SearchableSelect } from '../../crm/SearchableSelect'
+import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 
 interface DadosProfissionaisCandidatoProps {
     formData: any
@@ -35,12 +36,13 @@ export function DadosProfissionaisCandidato({
                     </div>
 
                     <div className="relative z-[119]">
-                        <ManagedSelect
+                        <SearchableMultiSelect
                             label="Atuação"
-                            value={formData.atuacao || ''}
-                            onChange={v => setFormData({ ...formData, atuacao: v })}
-                            tableName="atuacoes"
+                            value={formData.atuacao_id?.toString() || ''}
+                            onChange={v => setFormData({ ...formData, atuacao_id: v || null })}
+                            table="atuacoes"
                             disabled={isViewMode}
+                            allowCustom={true}
                         />
                     </div>
 
@@ -65,6 +67,6 @@ export function DadosProfissionaisCandidato({
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     )
 }

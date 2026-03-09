@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import { X, Users } from 'lucide-react'
 
 interface LayoutProps {
@@ -25,8 +25,16 @@ export const CollaboratorModalLayout = ({
     isEditMode = false,
     currentSteps
 }: LayoutProps) => {
+    const scrollRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTo({ top: 0, behavior: 'auto' })
+        }
+    }, [activeTab])
+
     return (
-        <div className="absolute inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-300">
             <div className="bg-white rounded-[2rem] w-full max-w-7xl h-[90vh] flex overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200 relative">
                 {/* Left Sidebar */}
                 <div className="w-80 bg-white border-r border-gray-100 flex flex-col py-10 px-6 shrink-0 overflow-y-auto no-scrollbar">
@@ -66,7 +74,7 @@ export const CollaboratorModalLayout = ({
                         </button>
                     </div>
                     {/* Scrollable Body */}
-                    <div className="flex-1 overflow-y-auto px-12 py-6 pb-32 custom-scrollbar">
+                    <div ref={scrollRef} className="flex-1 overflow-y-auto px-12 py-6 pb-32 custom-scrollbar">
                         {children}
                     </div>
                     {/* Footer */}
@@ -93,8 +101,16 @@ export const CollaboratorPageLayout = ({
     isEditMode = false,
     currentSteps
 }: LayoutProps) => {
+    const scrollRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTo({ top: 0, behavior: 'auto' })
+        }
+    }, [activeTab])
+
     return (
-        <div className="absolute inset-0 z-[100] bg-gray-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+        <div className="fixed inset-0 z-[9999] bg-gray-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
             {/* PAGE HEADER COMPLETO - Restored to System Standard */}
             <div className="flex items-center justify-between bg-white px-8 py-4 border-b border-gray-200 shadow-sm shrink-0">
                 <div className="flex items-center gap-4">
@@ -161,7 +177,7 @@ export const CollaboratorPageLayout = ({
                 </div>
 
                 {/* Right Content */}
-                <div className="flex-1 overflow-y-auto bg-white custom-scrollbar">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto bg-white custom-scrollbar">
                     <div className="max-w-5xl mx-auto px-12 py-10 pb-32">
                         {children}
                     </div>

@@ -19,6 +19,7 @@ export function CandidatoExperienciasSection({
 }: CandidatoExperienciasSectionProps) {
     const [experienciasList, setExperienciasList] = useState<any[]>([])
     const [loadingExp, setLoadingExp] = useState(false)
+    const [isFormOpen, setIsFormOpen] = useState(false)
 
     // Form states for new/edit
     const [empresa, setEmpresa] = useState('')
@@ -95,6 +96,7 @@ export function CandidatoExperienciasSection({
             setEditingTempId(null)
         }
 
+        setIsFormOpen(true)
         setTimeout(() => {
             document.getElementById('form-experiencia')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 100);
@@ -108,6 +110,7 @@ export function CandidatoExperienciasSection({
         setPerfilExp('')
         setEditingId(null)
         setEditingTempId(null)
+        setIsFormOpen(false)
     }
 
     const handleSaveExperiencia = async () => {
@@ -224,15 +227,36 @@ export function CandidatoExperienciasSection({
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-purple-500 rounded-l-2xl"></div>
 
-            <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider flex items-center gap-2 mb-2">
-                <Briefcase className="w-5 h-5 text-purple-500" />
-                Experiências Anteriores / Cargos
-            </h3>
-            <p className="text-xs text-gray-500 font-medium mb-6 ml-7">Adicione as experiências profissionais, cargos ou estágios do talento.</p>
+            <div className="flex justify-between items-start mb-6">
+                <div>
+                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider flex items-center gap-2 mb-2">
+                        <Briefcase className="w-5 h-5 text-purple-500" />
+                        Experiências Anteriores / Cargos
+                    </h3>
+                    <p className="text-xs text-gray-500 font-medium ml-7">Adicione as experiências profissionais, cargos ou estágios do talento.</p>
+                </div>
+                {!isViewMode && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (!isFormOpen) {
+                                clearFormExp();
+                            }
+                            setIsFormOpen(!isFormOpen);
+                        }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold uppercase text-xs tracking-wider transition-all active:scale-95 ${isFormOpen
+                            ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            : 'bg-purple-600 text-white hover:bg-purple-700 shadow-sm'}`}
+                    >
+                        {isFormOpen ? <Trash2 className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                        {isFormOpen ? 'Cancelar' : 'Adicionar Experiência'}
+                    </button>
+                )}
+            </div>
 
             {/* FORM (NOVO / EDITAR) */}
-            {!isViewMode && (
-                <div id="form-experiencia" className={`bg-purple-50/50 p-6 rounded-2xl border ${editingId || editingTempId ? 'border-purple-400 ring-4 ring-purple-100 shadow-md' : 'border-purple-100'} mb-8 space-y-6 transition-all duration-300`}>
+            {!isViewMode && isFormOpen && (
+                <div id="form-experiencia" className={`bg-purple-50/50 p-6 rounded-2xl border ${editingId || editingTempId ? 'border-purple-400 ring-4 ring-purple-100 shadow-md' : 'border-purple-100'} mb-8 space-y-6 transition-all duration-300 animate-in fade-in slide-in-from-top-4`}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Empresa / Instituição</label>
@@ -310,7 +334,7 @@ export function CandidatoExperienciasSection({
                                 onClick={clearFormExp}
                                 className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-gray-200 transition-all"
                             >
-                                Cancelar
+                                Cancelar Edição
                             </button>
                         ) : <div></div>}
                         <button

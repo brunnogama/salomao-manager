@@ -10,6 +10,7 @@ import {
 import { supabase } from '../../../lib/supabase'
 import { ManagedSelect } from '../../crm/ManagedSelect'
 import { SearchableSelect } from '../../crm/SearchableSelect'
+import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { differenceInDays, differenceInMonths, isValid } from 'date-fns'
 
 interface VagaFormModalProps {
@@ -385,11 +386,12 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         uppercase={false}
                                     />
 
-                                    <ManagedSelect
+                                    <SearchableMultiSelect
                                         label="Atuação"
                                         value={formData.atuacao_id?.toString() || ''}
                                         onChange={v => setFormData({ ...formData, atuacao_id: v })}
-                                        tableName="atuacoes"
+                                        table="atuacoes"
+                                        allowCustom={true}
                                     />
 
                                     <div>
