@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'
 import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, Loader2, UserPlus,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Bus, Clock,
-  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon
+  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon, ChevronDown, ChevronRight
 } from 'lucide-react'
 
 import { exportColaboradoresXLSX } from '../utils/exportColaboradores'
@@ -140,6 +139,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
   // Custom VT Scenarios State
   const [customVt1, setCustomVt1] = useState<number>(200);
   const [customVt2, setCustomVt2] = useState<number>(300);
+
+  // Expanded States for VT Tables
+  const [isVtEstagioExpanded, setIsVtEstagioExpanded] = useState(false);
+  const [isVtCltExpanded, setIsVtCltExpanded] = useState(false);
 
   const location = useLocation()
 
@@ -2264,107 +2267,126 @@ export function Colaboradores({ }: ColaboradoresProps) {
               </button>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
-                      <th className="p-4">Colaborador</th>
-                      <th className="p-4 text-center">Vínculo</th>
-                      <th className="p-4 text-center">Equipe</th>
-                      <th className="p-4 text-right">VT Calculado (Atual)</th>
-                      <th className="p-4 text-right">
-                        <div className="flex flex-col items-end gap-1">
-                          <span>Cenário 1</span>
-                          <div className="flex items-center gap-1">
-                            <span className="text-gray-400 font-medium">R$</span>
-                            <input
-                              type="number"
-                              min="0"
-                              className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
-                              value={customVt1}
-                              onChange={(e) => setCustomVt1(Number(e.target.value) || 0)}
-                            />
-                          </div>
-                        </div>
-                      </th>
-                      <th className="p-4 text-right">
-                        <div className="flex flex-col items-end gap-1">
-                          <span>Cenário 2</span>
-                          <div className="flex items-center gap-1">
-                            <span className="text-gray-400 font-medium">R$</span>
-                            <input
-                              type="number"
-                              min="0"
-                              className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
-                              value={customVt2}
-                              onChange={(e) => setCustomVt2(Number(e.target.value) || 0)}
-                            />
-                          </div>
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {(() => {
-                      const workingDays = getWorkingDaysInCurrentMonth();
-                      const activeColabs = colaboradores.filter(c => c.status === 'active');
+            {[
+              { type: 'Estágio', label: 'Estagiário', isExpanded: isVtEstagioExpanded, setIsExpanded: setIsVtEstagioExpanded },
+              { type: 'CLT', label: 'CLT', isExpanded: isVtCltExpanded, setIsExpanded: setIsVtCltExpanded }
+            ].map((groupConfig, idx) => {
+              const workingDays = getWorkingDaysInCurrentMonth();
+              const activeColabs = colaboradores.filter(c => c.status === 'active');
 
-                      const vtColaboradores = activeColabs
-                        .filter(c => c.contract_type === 'CLT' || c.contract_type === 'Estágio')
-                        .map(c => {
-                          let colabVtDaily = 0;
-                          if (c.transportes && Array.isArray(c.transportes)) {
-                            colabVtDaily = c.transportes.reduce((tAcc, t) => {
-                              const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                              const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                              return tAcc + idaSum + voltaSum;
-                            }, 0);
-                          }
-                          return {
-                            ...c,
-                            teamName: (c as any).teams?.name || c.equipe || 'S/ Equipe',
-                            currentVtTotal: colabVtDaily * workingDays
-                          };
-                        })
-                        .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+              const vtColaboradores = activeColabs
+                .filter(c => c.contract_type === groupConfig.type)
+                .map(c => {
+                  let colabVtDaily = 0;
+                  if (c.transportes && Array.isArray(c.transportes)) {
+                    colabVtDaily = c.transportes.reduce((tAcc, t) => {
+                      const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                      const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                      return tAcc + idaSum + voltaSum;
+                    }, 0);
+                  }
+                  return {
+                    ...c,
+                    teamName: (c as any).teams?.name || c.equipe || 'S/ Equipe',
+                    liderName: (c as any).leader?.name || 'S/ Líder',
+                    currentVtTotal: colabVtDaily * workingDays
+                  };
+                })
+                .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-                      let overallCount = 0;
-                      let overallVt = 0;
-                      let overallFix200 = 0;
-                      let overallFix300 = 0;
+              if (vtColaboradores.length === 0) return null;
 
-                      return (
-                        <>
-                          {vtColaboradores.map(colab => {
-                            overallCount += 1;
-                            overallVt += colab.currentVtTotal;
-                            overallFix200 += customVt1;
-                            overallFix300 += customVt2;
+              let overallCount = 0;
+              let overallVt = 0;
+              let overallFix200 = 0;
+              let overallFix300 = 0;
 
-                            return (
-                              <tr key={colab.id} className="hover:bg-blue-50/30 transition-colors group">
-                                <td className="p-4 text-sm font-bold text-[#0a192f]">{colab.name}</td>
-                                <td className="p-4 text-sm font-medium text-gray-600 text-center">
-                                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{colab.contract_type}</span>
-                                </td>
-                                <td className="p-4 text-sm font-medium text-gray-500 text-center">{colab.teamName}</td>
-                                <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
-                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(colab.currentVtTotal)}
-                                </td>
-                                <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors">
-                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customVt1)}
-                                </td>
-                                <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors">
-                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customVt2)}
-                                </td>
-                              </tr>
-                            );
-                          })}
+              vtColaboradores.forEach(colab => {
+                overallCount += 1;
+                overallVt += colab.currentVtTotal;
+                overallFix200 += customVt1;
+                overallFix300 += customVt2;
+              });
 
-                          {/* Totals Row */}
+              return (
+                <div key={idx} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">
+                  <button
+                    onClick={() => groupConfig.setIsExpanded(!groupConfig.isExpanded)}
+                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      {groupConfig.isExpanded ? <ChevronDown className="h-5 w-5 text-[#1e3a8a]" /> : <ChevronRight className="h-5 w-5 text-[#1e3a8a]" />}
+                      <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider">{groupConfig.label} ({overallCount})</h4>
+                    </div>
+                    <span className="text-sm font-bold text-emerald-700">Total VT: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}</span>
+                  </button>
+
+                  {groupConfig.isExpanded && (
+                    <div className="overflow-x-auto border-t border-gray-200">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
+                            <th className="p-4">Colaborador</th>
+                            <th className="p-4 text-center">Vínculo</th>
+                            <th className="p-4 text-center">Equipe</th>
+                            <th className="p-4 text-center">Líder Direto</th>
+                            <th className="p-4 text-right">VT Calculado (Atual)</th>
+                            <th className="p-4 text-right">
+                              <div className="flex flex-col items-end gap-1">
+                                <span>Cenário 1</span>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-gray-400 font-medium">R$</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                                    value={customVt1}
+                                    onChange={(e) => setCustomVt1(Number(e.target.value) || 0)}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </div>
+                              </div>
+                            </th>
+                            <th className="p-4 text-right">
+                              <div className="flex flex-col items-end gap-1">
+                                <span>Cenário 2</span>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-gray-400 font-medium">R$</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                                    value={customVt2}
+                                    onChange={(e) => setCustomVt2(Number(e.target.value) || 0)}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </div>
+                              </div>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {vtColaboradores.map(colab => (
+                            <tr key={colab.id} className="hover:bg-blue-50/30 transition-colors group">
+                              <td className="p-4 text-sm font-bold text-[#0a192f]">{colab.name}</td>
+                              <td className="p-4 text-sm font-medium text-gray-600 text-center">
+                                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{colab.contract_type}</span>
+                              </td>
+                              <td className="p-4 text-sm font-medium text-gray-500 text-center">{colab.teamName}</td>
+                              <td className="p-4 text-sm font-medium text-gray-500 text-center">{colab.liderName}</td>
+                              <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(colab.currentVtTotal)}
+                              </td>
+                              <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customVt1)}
+                              </td>
+                              <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customVt2)}
+                              </td>
+                            </tr>
+                          ))}
                           <tr className="bg-gradient-to-r from-emerald-50 to-white/50 border-t-2 border-emerald-100">
-                            <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider" colSpan={3}>Total Geral ({overallCount} Colaboradores)</td>
+                            <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider" colSpan={4}>Total do Grupo ({overallCount})</td>
                             <td className="p-4 text-base font-black text-emerald-700 text-right">
                               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}
                             </td>
@@ -2375,13 +2397,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallFix300)}
                             </td>
                           </tr>
-                        </>
-                      );
-                    })()}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
             <p className="text-[10px] text-gray-400 mt-3 font-medium flex gap-2">
               <span className="text-amber-500 font-bold">*</span>
               Baseado em {getWorkingDaysInCurrentMonth()} dias úteis (Mês Vigente) para colaboradores Ativos (CLT e Estágio).
