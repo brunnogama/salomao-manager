@@ -1022,6 +1022,26 @@ export function Colaboradores({ }: ColaboradoresProps) {
     })
   };
 
+  const handleExportVT = () => {
+    const activeColabs = colaboradores.filter(c => c.status === 'active');
+    const vtColabs = activeColabs.filter(c => c.contract_type === 'CLT' || c.contract_type === 'Estágio');
+    exportColaboradoresXLSX({
+      filtered: vtColabs,
+      rateios,
+      hiringReasons,
+      partners,
+      colaboradores,
+      terminationInitiatives,
+      terminationTypes,
+      terminationReasons,
+      roles,
+      locations,
+      teams,
+      atuacoes,
+      fileName: `Custo_Vale_Transporte_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}`
+    })
+  };
+
   const calcAgeRange = (start: string, end: string) => {
     if (!start || !end) return null;
     const s = new Date(start);
@@ -2228,19 +2248,28 @@ export function Colaboradores({ }: ColaboradoresProps) {
             </button>
           </div>
 
-          {/* Relatório de VT por Equipe */}
+          {/* Relatório de VT (CLT e Estagiários) */}
           <div className="pt-8 border-t border-gray-100 mt-8">
-            <h3 className="text-lg font-black text-[#1e3a8a] mb-6 flex items-center gap-2">
-              <Bus className="h-5 w-5 text-amber-500" /> Custo de Vale Transporte por Equipe
-            </h3>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-black text-[#1e3a8a] flex items-center gap-2">
+                <Bus className="h-5 w-5 text-amber-500" /> Custo de Vale Transporte (CLT e Estagiários)
+              </h3>
+              <button
+                onClick={handleExportVT}
+                className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-xl active:scale-95 text-xs"
+              >
+                <FileSpreadsheet className="h-4 w-4" /> Exportar Relação (XLSX)
+              </button>
+            </div>
 
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
-                      <th className="p-4">Equipe</th>
-                      <th className="p-4 text-center">Qtd. Ativos</th>
+                      <th className="p-4">Colaborador</th>
+                      <th className="p-4 text-center">Vínculo</th>
+                      <th className="p-4 text-center">Equipe</th>
                       <th className="p-4 text-right">VT Calculado (Atual)</th>
                       <th className="p-4 text-right">
                         <div className="flex flex-col items-end gap-1">
@@ -2279,36 +2308,24 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       const workingDays = getWorkingDaysInCurrentMonth();
                       const activeColabs = colaboradores.filter(c => c.status === 'active');
 
-                      // Map each team id mapping to team name or fallback to raw equipe name
-                      const colabsWithTeamName = activeColabs.map(c => ({
-                        ...c,
-                        teamName: (c as any).teams?.name || c.equipe || 'S/ Equipe'
-                      }));
-
-                      // Group by teamName using Set and Map or simple reduce
-                      const teamTotals = colabsWithTeamName.reduce((acc, c) => {
-                        const team = c.teamName;
-                        if (!acc[team]) {
-                          acc[team] = { count: 0, currentVtTotal: 0 };
-                        }
-                        acc[team].count += 1;
-
-                        // Calculate VT for this collaborator
-                        let colabVtDaily = 0;
-                        if (c.transportes && Array.isArray(c.transportes)) {
-                          colabVtDaily = c.transportes.reduce((tAcc, t) => {
-                            const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                            const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                            return tAcc + idaSum + voltaSum;
-                          }, 0);
-                        }
-
-                        acc[team].currentVtTotal += (colabVtDaily * workingDays);
-                        return acc;
-                      }, {} as Record<string, { count: number, currentVtTotal: number }>);
-
-                      // Sort alphabetically by team name
-                      const sortedTeams = Object.keys(teamTotals).sort((a, b) => a.localeCompare(b));
+                      const vtColaboradores = activeColabs
+                        .filter(c => c.contract_type === 'CLT' || c.contract_type === 'Estágio')
+                        .map(c => {
+                          let colabVtDaily = 0;
+                          if (c.transportes && Array.isArray(c.transportes)) {
+                            colabVtDaily = c.transportes.reduce((tAcc, t) => {
+                              const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                              const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                              return tAcc + idaSum + voltaSum;
+                            }, 0);
+                          }
+                          return {
+                            ...c,
+                            teamName: (c as any).teams?.name || c.equipe || 'S/ Equipe',
+                            currentVtTotal: colabVtDaily * workingDays
+                          };
+                        })
+                        .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
                       let overallCount = 0;
                       let overallVt = 0;
@@ -2317,30 +2334,27 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                       return (
                         <>
-                          {sortedTeams.map(team => {
-                            const data = teamTotals[team];
-                            const fix1 = data.count * customVt1;
-                            const fix2 = data.count * customVt2;
-
-                            overallCount += data.count;
-                            overallVt += data.currentVtTotal;
-                            overallFix200 += fix1;
-                            overallFix300 += fix2;
+                          {vtColaboradores.map(colab => {
+                            overallCount += 1;
+                            overallVt += colab.currentVtTotal;
+                            overallFix200 += customVt1;
+                            overallFix300 += customVt2;
 
                             return (
-                              <tr key={team} className="hover:bg-blue-50/30 transition-colors group">
-                                <td className="p-4 text-sm font-bold text-[#0a192f]">{team}</td>
+                              <tr key={colab.id} className="hover:bg-blue-50/30 transition-colors group">
+                                <td className="p-4 text-sm font-bold text-[#0a192f]">{colab.name}</td>
                                 <td className="p-4 text-sm font-medium text-gray-600 text-center">
-                                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{data.count}</span>
+                                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{colab.contract_type}</span>
                                 </td>
+                                <td className="p-4 text-sm font-medium text-gray-500 text-center">{colab.teamName}</td>
                                 <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
-                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.currentVtTotal)}
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(colab.currentVtTotal)}
                                 </td>
                                 <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors">
-                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fix1)}
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customVt1)}
                                 </td>
                                 <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors">
-                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fix2)}
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customVt2)}
                                 </td>
                               </tr>
                             );
@@ -2348,8 +2362,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                           {/* Totals Row */}
                           <tr className="bg-gradient-to-r from-emerald-50 to-white/50 border-t-2 border-emerald-100">
-                            <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider">Total Geral</td>
-                            <td className="p-4 text-sm font-black text-emerald-800 text-center">{overallCount}</td>
+                            <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider" colSpan={3}>Total Geral ({overallCount} Colaboradores)</td>
                             <td className="p-4 text-base font-black text-emerald-700 text-right">
                               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}
                             </td>
@@ -2369,7 +2382,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
             </div>
             <p className="text-[10px] text-gray-400 mt-3 font-medium flex gap-2">
               <span className="text-amber-500 font-bold">*</span>
-              Baseado em {getWorkingDaysInCurrentMonth()} dias úteis (Mês Vigente) para colaboradores Ativos.
+              Baseado em {getWorkingDaysInCurrentMonth()} dias úteis (Mês Vigente) para colaboradores Ativos (CLT e Estágio).
             </p>
           </div>
 
