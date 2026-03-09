@@ -1544,7 +1544,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               transporteTipoMatch &&
                               gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
                           });
-                          if (tempFiltered.length > 0) exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes });
+                          if (tempFiltered.length > 0) {
+                            const d = new Date();
+                            const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
+                            exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes, fileName: `Colaboradores_Ativos_${fd}` });
+                          }
                         }}
                         className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
                       >
@@ -1590,7 +1594,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               transporteTipoMatch &&
                               gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
                           });
-                          if (tempFiltered.length > 0) exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes });
+                          if (tempFiltered.length > 0) {
+                            const d = new Date();
+                            const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
+                            exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes, fileName: `Colaboradores_Inativos_${fd}` });
+                          }
                         }}
                         className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
                       >
@@ -1638,7 +1646,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               transporteTipoMatch &&
                               gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
                           });
-                          if (tempFiltered.length > 0) exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes });
+                          if (tempFiltered.length > 0) {
+                            const d = new Date();
+                            const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
+                            exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes, fileName: `Colaboradores_Todos_${fd}` });
+                          }
                         }}
                         className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-bold"
                       >

@@ -15,6 +15,7 @@ interface ExportOptions {
     locations?: { id: string | number; name: string }[];
     teams?: { id: string | number; name: string }[];
     atuacoes?: { id: string | number; name: string }[];
+    fileName?: string;
 }
 
 const getLookupName = (list: { id: string | number; name: string }[], id?: string | number) => {
@@ -132,7 +133,9 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
     const now = new Date();
     const formattedDate = now.toLocaleDateString('pt-BR').replace(/\//g, '-');
     const formattedTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', '-');
-    const fileName = `Colaboradores_${formattedDate}_${formattedTime}.xlsx`;
+    const finalFileName = options.fileName
+        ? `${options.fileName}.xlsx`
+        : `Colaboradores_${formattedDate}_${formattedTime}.xlsx`;
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
 
@@ -167,5 +170,5 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Colaboradores");
-    XLSX.writeFile(wb, fileName);
+    XLSX.writeFile(wb, finalFileName);
 };
