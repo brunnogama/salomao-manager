@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { Plus, Loader2, Save, Trash2, Edit2, X, ArrowRight, ArrowLeft, Tag, Briefcase, GraduationCap } from 'lucide-react';
 import { formatDbMoneyToDisplay } from '../utils/colaboradoresUtils';
 import { ConfirmationModal } from '../../ui/ConfirmationModal';
+import { AlertModal } from '../../ui/AlertModal';
 
 interface BolsaEstagioRule {
     id: string;
@@ -61,6 +62,13 @@ export function TabelasTab() {
     const [editingTag, setEditingTag] = useState<{ oldTag: string, newTag: string, area?: 'Jurídica' | 'Administrativa' | 'Ambas' } | null>(null);
     const [tagToDelete, setTagToDelete] = useState<string | null>(null);
     const [isDeleteTagModalOpen, setIsDeleteTagModalOpen] = useState(false);
+
+    // Alert Modal State
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, title: string, description?: string, variant?: 'success' | 'error' | 'warning' | 'info' }>({ isOpen: false, title: '' });
+    const showAlert = (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'error') => {
+        setAlertConfig({ isOpen: true, title, description, variant });
+    };
+    const hideAlert = () => setAlertConfig(prev => ({ ...prev, isOpen: false }));
 
     useEffect(() => {
         if (activeView === 'bolsas') {
@@ -206,7 +214,7 @@ export function TabelasTab() {
             handleCloseRuleModal();
         } catch (error) {
             console.error('Erro ao salvar regra:', error);
-            alert('Erro ao salvar a regra. Tente novamente.');
+            showAlert('Erro', 'Ocorreu um erro ao salvar a regra. Tente novamente.', 'error');
         } finally {
             setSaving(false);
         }
@@ -227,7 +235,7 @@ export function TabelasTab() {
             setIsDeleteModalOpen(false);
         } catch (error) {
             console.error('Erro ao excluir regra:', error);
-            alert('Erro ao excluir a regra. Tente novamente.');
+            showAlert('Erro', 'Ocorreu um erro ao excluir a regra. Tente novamente.', 'error');
         }
     };
 
@@ -319,7 +327,7 @@ export function TabelasTab() {
             handleCloseRoleModal();
         } catch (error) {
             console.error('Erro ao salvar cargos:', error);
-            alert('Erro ao salvar as tags do cargo. Tente novamente.');
+            showAlert('Erro', 'Ocorreu um erro ao salvar as tags do cargo. Tente novamente.', 'error');
         } finally {
             setSaving(false);
         }
@@ -374,9 +382,9 @@ export function TabelasTab() {
         } catch (error: any) {
             console.error('Erro ao salvar tag:', error);
             if (error.code === '23505') {
-                alert('Esta tag já existe na base de dados.');
+                showAlert('Tag Duplicada', 'Esta tag já existe na base de dados.', 'warning');
             } else {
-                alert('Erro ao salvar a tag. Tente novamente.');
+                showAlert('Erro', 'Ocorreu um erro ao salvar a tag. Tente novamente.', 'error');
             }
         } finally {
             setSaving(false);
@@ -403,7 +411,7 @@ export function TabelasTab() {
             setIsDeleteTagModalOpen(false);
         } catch (error) {
             console.error('Erro ao excluir tag:', error);
-            alert('Erro ao excluir a tag. Tente novamente.');
+            showAlert('Erro', 'Ocorreu um erro ao excluir a tag. Tente novamente.', 'error');
         }
     };
 
@@ -1057,6 +1065,14 @@ export function TabelasTab() {
                 confirmText="Excluir"
                 cancelText="Cancelar"
                 variant="danger"
+            />
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={hideAlert}
+                title={alertConfig.title}
+                description={alertConfig.description}
+                variant={alertConfig.variant}
             />
         </div>
     );
