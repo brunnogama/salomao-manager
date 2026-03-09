@@ -695,7 +695,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         return
       }
       setLoading(true)
-      let photoUrl = formData.photo_url
+      let photoUrl = formData.photo_url === undefined ? null : formData.photo_url
 
       if (selectedPhotoFile) {
         setUploadingPhoto(true)
@@ -756,7 +756,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
       });
 
       // Maintain consistency: use foto_url as the database column
+      // photoUrl was captured at the start, and if undefined, turned into null. If a new photo was uploaded, it becomes the URL.
       payload.foto_url = photoUrl;
+      payload.photo_url = photoUrl;
 
       let savedColabId = formData.id;
       if (formData.id) {
