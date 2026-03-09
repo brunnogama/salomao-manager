@@ -912,7 +912,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                                     />
 
                                     {isTagging && availableTags.length > 0 && (
-                                        <div className="absolute bottom-full mb-1 left-0 w-[80%] max-w-sm bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-64 overflow-hidden ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-2 duration-200 flex flex-col">
+                                        <div className="absolute top-12 left-3 w-[80%] max-w-sm bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-64 overflow-hidden ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col">
                                             <div className="px-3 py-2 text-[10px] font-black text-blue-800 bg-blue-50/50 border-b border-blue-100 uppercase tracking-widest sticky top-0 backdrop-blur-sm">
                                                 Sugestões da Nuvem
                                             </div>
