@@ -3,7 +3,8 @@ import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, Loader2, UserPlus,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Bus, Clock,
-  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon, ChevronDown, ChevronRight, TableIcon
+  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon, ChevronDown, ChevronRight, TableIcon,
+  ArrowRight, ArrowLeft, Filter
 } from 'lucide-react'
 
 import { exportColaboradoresXLSX, exportVTXLSX } from '../utils/exportColaboradores'
@@ -121,6 +122,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [activeMainTab, setActiveMainTab] = useState<'Colaboradores' | 'Relatórios' | 'Tabelas'>('Colaboradores');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showExportVTMenu, setShowExportVTMenu] = useState(false);
+  const [activeReportView, setActiveReportView] = useState<'menu' | 'filtros' | 'vt'>('menu');
 
   // Advanced Filters State
   // Pessoais
@@ -2133,737 +2135,774 @@ export function Colaboradores({ }: ColaboradoresProps) {
       )}
 
       {activeMainTab === 'Relatórios' && (
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600 space-y-8 flex-1 overflow-auto custom-scrollbar">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600 flex-1 overflow-auto custom-scrollbar">
 
-          <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-            <h2
-              className="text-lg font-bold text-[#1e3a8a] flex items-center gap-2 cursor-pointer hover:text-[#112240] transition-colors"
-              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-            >
-              {isFiltersExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-              Opções de Filtro
-            </h2>
-            <button
-              onClick={handleClearAdvancedFilters}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors text-xs font-bold uppercase tracking-wider"
-            >
-              <X className="h-4 w-4" /> Limpar Filtros
-            </button>
-          </div>
-
-          {isFiltersExpanded && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
-              {/* Pessoais */}
-              <div>
-                <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><User className="h-4 w-4" /> Filtros Pessoais</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="relative z-[120]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Gênero</label>
-                    <SearchableSelect
-                      value={advFilterGender}
-                      onChange={setAdvFilterGender}
-                      options={[
-                        { id: 'Masculino', label: 'Masculino', value: 'Masculino' },
-                        { id: 'Feminino', label: 'Feminino', value: 'Feminino' },
-                        { id: 'Outro', label: 'Outro', value: 'Outro' }
-                      ]}
-                      placeholder="Todos..."
-                    />
-                  </div>
-                  <div className="relative z-[119]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Filhos</label>
-                    <SearchableSelect
-                      value={advFilterChildren}
-                      onChange={(val) => setAdvFilterChildren(val as any)}
-                      options={[
-                        { id: 'sim', label: 'Sim', value: 'sim' },
-                        { id: 'nao', label: 'Não', value: 'nao' }
-                      ]}
-                      placeholder="Todos..."
-                    />
-                  </div>
-                  <div className="col-span-1 md:col-span-2 relative z-[110]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Estado (Moradia)</label>
-                    <SearchableSelect
-                      value={advFilterStateHome}
-                      onChange={setAdvFilterStateHome}
-                      options={ESTADOS_BRASIL.map(e => ({ id: e.nome, label: e.nome, value: e.nome }))}
-                      placeholder="Selecione..."
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Nasc. (Início e Fim)</label>
-                    <div className="flex items-center gap-2">
-                      <div className="relative w-full">
-                        <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterBirthStart} onChange={e => setAdvFilterBirthStart(e.target.value)} />
-                        {advFilterBirthStart && <button onClick={() => setAdvFilterBirthStart('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full"><X className="h-4 w-4" /></button>}
-                      </div>
-                      <span className="text-gray-400">-</span>
-                      <div className="relative w-full">
-                        <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterBirthEnd} onChange={e => setAdvFilterBirthEnd(e.target.value)} />
-                        {advFilterBirthEnd && <button onClick={() => setAdvFilterBirthEnd('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full"><X className="h-4 w-4" /></button>}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-end pb-2">
-                    {advFilterBirthStart && advFilterBirthEnd && (
-                      <div className="bg-blue-50 text-blue-700 text-xs px-3 py-2 rounded-lg font-bold border border-blue-100 flex items-center">
-                        Intervalo Etário Selecionado: &nbsp;<span className="text-[#1e3a8a]">{calcAgeRange(advFilterBirthStart, advFilterBirthEnd)}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Corporativos */}
-              <div>
-                <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><Briefcase className="h-4 w-4" /> Filtros Corporativos</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="relative z-[118]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
-                    <SearchableSelect
-                      value={advFilterStatus}
-                      onChange={(val) => setAdvFilterStatus(val as any)}
-                      options={[
-                        { id: 'active', label: 'Ativo', value: 'active' },
-                        { id: 'inactive', label: 'Inativo', value: 'inactive' }
-                      ]}
-                      placeholder="Todos..."
-                    />
-                  </div>
-                  <div className="relative z-[109]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Rateio</label>
-                    <SearchableSelect
-                      value={advFilterRateio}
-                      onChange={setAdvFilterRateio}
-                      options={rateios.map(r => ({ id: String(r.id), label: r.name, value: String(r.id) }))}
-                      placeholder="Todos..."
-                    />
-                  </div>
-                  <div className="relative z-[116]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Área</label>
-                    <SearchableSelect
-                      value={advFilterArea}
-                      onChange={setAdvFilterArea}
-                      options={[
-                        { id: 'Administrativa', label: 'Administrativa', value: 'Administrativa' },
-                        { id: 'Jurídica', label: 'Jurídica', value: 'Jurídica' }
-                      ]}
-                      placeholder="Todas..."
-                    />
-                  </div>
-                  <div className="relative z-[115]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Contratação</label>
-                    <SearchableSelect
-                      value={advFilterContractType}
-                      onChange={setAdvFilterContractType}
-                      options={[
-                        { id: 'CLT', label: 'CLT', value: 'CLT' },
-                        { id: 'Sócio', label: 'Sócio', value: 'Sócio' },
-                        { id: 'Associado', label: 'Associado', value: 'Associado' },
-                        { id: 'Estágio', label: 'Estágio', value: 'Estágio' },
-                        { id: 'Jovem Aprendiz', label: 'Jovem Aprendiz', value: 'Jovem Aprendiz' },
-                        { id: 'Terceirizado', label: 'Terceirizado', value: 'Terceirizado' },
-                        { id: 'Outros', label: 'Outros', value: 'Outros' }
-                      ]}
-                      placeholder="Todos..."
-                    />
-                  </div>
-
-                  <div className="relative z-[115]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Sócio</label>
-                    <SearchableSelect
-                      value={advFilterPartnerType}
-                      onChange={setAdvFilterPartnerType}
-                      options={[
-                        { id: 'Sócio de Serviço', label: 'Sócio de Serviço', value: 'Sócio de Serviço' },
-                        { id: 'Sócio de Capital', label: 'Sócio de Capital', value: 'Sócio de Capital' },
-                        { id: 'Sócio Administrador', label: 'Sócio Administrador', value: 'Sócio Administrador' }
-                      ]}
-                      placeholder="Todos..."
-                    />
-                  </div>
-
-                  <div className="relative z-[114]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Meio de Transporte</label>
-                    <SearchableSelect
-                      value={advFilterTransporteTipo}
-                      onChange={setAdvFilterTransporteTipo}
-                      options={[
-                        { id: 'Integração Bilhete Único', label: 'Integração Bilhete Único', value: 'Integração Bilhete Único' },
-                        { id: 'Metrô', label: 'Metrô', value: 'Metrô' },
-                        { id: 'Ônibus', label: 'Ônibus', value: 'Ônibus' },
-                        { id: 'Trem', label: 'Trem', value: 'Trem' },
-                        { id: 'Van', label: 'Van', value: 'Van' },
-                        { id: 'BRT', label: 'BRT', value: 'BRT' },
-                        { id: 'VLT', label: 'VLT', value: 'VLT' },
-                        { id: 'Barcas', label: 'Barcas', value: 'Barcas' },
-                        { id: 'Não Optante', label: 'Não Optante', value: 'Não Optante' }
-                      ]}
-                      placeholder="Todos..."
-                    />
-                  </div>
-
-                  <div className="relative z-[108]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sócio Responsável</label>
-                    <SearchableSelect value={advFilterPartner} onChange={setAdvFilterPartner} options={partnerOptions as any} placeholder="Todos..." />
-                  </div>
-                  <div className="relative z-[107]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Líder Direto</label>
-                    <SearchableSelect value={advFilterLeader} onChange={setAdvFilterLeader} options={liderOptions as any} placeholder="Todos..." />
-                  </div>
-                  <div className="relative z-[106]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Equipe</label>
-                    <SearchableSelect value={advFilterTeam} onChange={setAdvFilterTeam} table="teams" placeholder="Todas..." />
-                  </div>
-                  <div className="relative z-[105]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cargo</label>
-                    <SearchableSelect value={advFilterRole} onChange={setAdvFilterRole} options={roleOptions as any} placeholder="Todos..." />
-                  </div>
-                  <div className="relative z-[104]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local</label>
-                    <SearchableSelect value={advFilterLocal} onChange={setAdvFilterLocal} options={locationOptions as any} placeholder="Todos..." />
-                  </div>
-
-                  <div className="col-span-1 md:col-span-3">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Admissão (Início e Fim)</label>
-                    <div className="flex items-center gap-2 max-w-sm">
-                      <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterAdmissionStart} onChange={e => setAdvFilterAdmissionStart(e.target.value)} />
-                      <span className="text-gray-400">-</span>
-                      <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterAdmissionEnd} onChange={e => setAdvFilterAdmissionEnd(e.target.value)} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Escolares */}
-              <div>
-                <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><GraduationCap className="h-4 w-4" /> Filtros Escolares</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="relative z-[110]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Graduação Completa</label>
-                    <SearchableSelect
-                      value={advFilterGraduationComplete}
-                      onChange={(val) => setAdvFilterGraduationComplete(val as any)}
-                      options={[
-                        { id: 'sim', label: 'Sim', value: 'sim' },
-                        { id: 'nao', label: 'Não', value: 'nao' }
-                      ]}
-                      placeholder="Todos..."
-                    />
-                  </div>
-                  <div className="relative z-[109]">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Pós-Graduação Comp.</label>
-                    <SearchableSelect
-                      value={advFilterPostGraduationComplete}
-                      onChange={(val) => setAdvFilterPostGraduationComplete(val as any)}
-                      options={[
-                        { id: 'sim', label: 'Sim', value: 'sim' },
-                        { id: 'nao', label: 'Não', value: 'nao' }
-                      ]}
-                      placeholder="Todos..."
-                    />
-                  </div>
-                  <div className="relative">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano Prev. Conclusão</label>
-                    <input type="text" placeholder="Ex: 2025" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterExpectedCompletion} onChange={e => setAdvFilterExpectedCompletion(e.target.value)} />
-                    {advFilterExpectedCompletion && <button onClick={() => setAdvFilterExpectedCompletion('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
-                  </div>
-                  <div className="relative">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano de Conclusão</label>
-                    <input type="text" placeholder="Ex: 2020" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterCompletionYear} onChange={e => setAdvFilterCompletionYear(e.target.value)} />
-                    {advFilterCompletionYear && <button onClick={() => setAdvFilterCompletionYear('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-6 border-t border-gray-100">
-                <button
-                  onClick={handleExportAdvanced}
-                  className="flex items-center gap-2 px-8 py-3 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-xl active:scale-95 text-xs"
-                >
-                  <FileSpreadsheet className="h-5 w-5" /> Gerar Relatório XLSX ({currentAdvancedFiltered.length})
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Relatório de VT (CLT e Estagiários) */}
-          <div className="pt-8 border-t border-gray-100 mt-8">
-            <div className="flex justify-between items-center mb-6">
-              <h3
-                className="text-lg font-black text-[#1e3a8a] flex items-center gap-2 cursor-pointer hover:text-[#112240] transition-colors"
-                onClick={() => setIsVtSectionExpanded(!isVtSectionExpanded)}
+          {activeReportView === 'menu' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-fit">
+              <button
+                onClick={() => setActiveReportView('filtros')}
+                className="group relative flex flex-col p-8 bg-white rounded-2xl border border-gray-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-300 text-left overflow-hidden h-full"
               >
-                {isVtSectionExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-                <Bus className="h-5 w-5 text-amber-500" /> Custo de Vale Transporte (CLT e Estagiários)
-              </h3>
-              <div className="relative flex items-center gap-2">
-                <button
-                  onClick={handleExportVTPDF}
-                  disabled={exportingPDF}
-                  className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-xl font-black uppercase tracking-wider hover:bg-red-700 transition-colors shadow-xl active:scale-95 text-xs disabled:opacity-50"
-                >
-                  {exportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
-                  {exportingPDF ? 'Gerando...' : 'Exportar PDF'}
-                </button>
-                <button
-                  onClick={() => setShowExportVTMenu(!showExportVTMenu)}
-                  className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-xl active:scale-95 text-xs"
-                >
-                  <FileSpreadsheet className="h-4 w-4" /> Exportar Relação (XLSX) <ChevronDown className="h-4 w-4 ml-1" />
-                </button>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                <div className="relative z-10 w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                  <Filter className="h-7 w-7" />
+                </div>
+                <h3 className="relative z-10 text-xl font-black text-[#1e3a8a] mb-2 group-hover:text-[#112240]">Opções de Filtro</h3>
+                <p className="relative z-10 text-sm text-gray-500 font-medium flex-1">Gere relatórios customizados avançados utilizando múltiplos critérios de filtragem para toda a equipe.</p>
 
-                {showExportVTMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowExportVTMenu(false)}></div>
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden py-1">
-                      <button
-                        onClick={() => handleExportVT('Estagiários')}
-                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
-                      >
-                        <GraduationCap className="h-4 w-4 text-emerald-600" />
-                        Estagiários
-                      </button>
-                      <button
-                        onClick={() => handleExportVT('CLTs')}
-                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
-                      >
-                        <Briefcase className="h-4 w-4 text-emerald-600" />
-                        CLTs
-                      </button>
-                      <button
-                        onClick={() => handleExportVT('Todos')}
-                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
-                      >
-                        <Users className="h-4 w-4 text-emerald-600" />
-                        Todos (CLT e Estágio)
-                      </button>
-                    </div>
-                  </>
+                <div className="relative z-10 mt-8 flex items-center gap-2 text-blue-600 font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                  Acessar Filtros <ArrowRight className="h-4 w-4" />
+                </div>
+              </button>
+
+              <button
+                onClick={() => setActiveReportView('vt')}
+                className="group relative flex flex-col p-8 bg-white rounded-2xl border border-gray-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-300 text-left overflow-hidden h-full"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                <div className="relative z-10 w-14 h-14 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-6 shadow-inner group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                  <Bus className="h-7 w-7" />
+                </div>
+                <h3 className="relative z-10 text-xl font-black text-[#1e3a8a] mb-2 group-hover:text-[#112240]">Custo de Vale Transporte</h3>
+                <p className="relative z-10 text-sm text-gray-500 font-medium flex-1">Análise, comparativo e projeção de custos com transportes para o mês vigente (CLT e Estagiários).</p>
+
+                <div className="relative z-10 mt-8 flex items-center gap-2 text-emerald-600 font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                  Acessar Relatório <ArrowRight className="h-4 w-4" />
+                </div>
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300 relative">
+              <div className="pb-6 mb-2 border-b border-gray-100 flex items-center justify-between">
+                <button
+                  onClick={() => setActiveReportView('menu')}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-[#1e3a8a] rounded-xl transition-colors text-xs font-bold border border-gray-200 shadow-sm"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Voltar para Menu de Relatórios
+                </button>
+                {activeReportView === 'filtros' && (
+                  <button
+                    onClick={handleClearAdvancedFilters}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition-colors text-xs font-bold uppercase tracking-wider"
+                  >
+                    <X className="h-4 w-4" /> Limpar Filtros
+                  </button>
                 )}
               </div>
-            </div>
 
-            {isVtSectionExpanded && (
-              <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-6">
-                <div ref={vtReportRef} className="bg-[#f8fafc] p-4 rounded-xl">
-                  {(() => {
-                    const workingDays = getWorkingDaysInCurrentMonth();
-                    const activeColabs = colaboradores.filter(c => c.status === 'active');
-
-                    let totalActualEstagio = 0;
-                    let countEstagio = 0;
-                    let totalActualCLT = 0;
-                    let countCLT = 0;
-
-                    activeColabs.forEach(c => {
-                      const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
-                      const isEstagio = c.contract_type === 'Estágio' || roleName.includes('estagiário') || roleName.includes('estagiario') || roleName.includes('estagio') || roleName.includes('estágio');
-                      const isCLT = c.contract_type === 'CLT' && !isEstagio;
-
-                      if (isEstagio || isCLT) {
-                        let colabVtDaily = 0;
-                        if (c.transportes && Array.isArray(c.transportes)) {
-                          colabVtDaily = c.transportes.reduce((tAcc, t) => {
-                            const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                            const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                            return tAcc + idaSum + voltaSum;
-                          }, 0);
-                        }
-                        if (isEstagio) {
-                          totalActualEstagio += colabVtDaily * workingDays;
-                          countEstagio++;
-                        } else if (isCLT) {
-                          totalActualCLT += colabVtDaily * workingDays;
-                          countCLT++;
-                        }
-                      }
-                    });
-
-                    const economiaCen1 = totalActualEstagio - (countEstagio * customVt1);
-                    const economiaCen2 = totalActualEstagio - (countEstagio * customVt2);
-
-                    const chartData = [
-                      {
-                        name: 'Custo Total',
-                        'Atual': totalActualEstagio,
-                        'Cenário 1': countEstagio * customVt1,
-                        'Cenário 2': countEstagio * customVt2
-                      },
-                      {
-                        name: 'Economia Projetada',
-                        'Atual': 0,
-                        'Cenário 1': economiaCen1,
-                        'Cenário 2': economiaCen2
-                      }
-                    ];
-
-                    return (
-                      <div className="mb-8 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-                        <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider mb-4">Comparativo de Custos Mensais (Apenas Estagiários)</h4>
-                        <div className="h-64 w-full mt-4">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                              data={chartData}
-                              margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-                            >
-                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                              <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
-                              <YAxis
-                                tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
-                                tick={{ fill: '#64748b', fontSize: 11 }}
-                                axisLine={false}
-                                tickLine={false}
-                              />
-                              <RechartsTooltip
-                                formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                cursor={{ fill: '#f1f5f9' }}
-                              />
-                              <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                              <Bar dataKey="Atual" fill="#1e3a8a" radius={[4, 4, 0, 0]}>
-                                <LabelList dataKey="Atual" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e3a8a' }} />
-                              </Bar>
-                              <Bar dataKey="Cenário 1" fill="#f59e0b" radius={[4, 4, 0, 0]}>
-                                <LabelList
-                                  dataKey="Cenário 1"
-                                  position="top"
-                                  content={(props: any) => {
-                                    const { x, y, width, value, index } = props;
-                                    if (value === 0) return null;
-                                    if (index === 1) { // Economia Projetada
-                                      const percCen1 = totalActualEstagio > 0 ? ((economiaCen1 / totalActualEstagio) * 100).toFixed(1) : '0.0';
-                                      return (
-                                        <g>
-                                          <text x={x + width / 2} y={y - 15} fill="#f59e0b" fontSize="10px" fontWeight="bold" textAnchor="middle">
-                                            R$ {value.toLocaleString('pt-BR')}
-                                          </text>
-                                          <text x={x + width / 2} y={y - 5} fill="#f59e0b" fontSize="10px" fontWeight="bold" textAnchor="middle">
-                                            ({percCen1}%)
-                                          </text>
-                                        </g>
-                                      );
-                                    }
-                                    return (
-                                      <text x={x + width / 2} y={y - 5} fill="#f59e0b" fontSize="10px" fontWeight="bold" textAnchor="middle">
-                                        R$ {value.toLocaleString('pt-BR')}
-                                      </text>
-                                    );
-                                  }}
-                                />
-                              </Bar>
-                              <Bar dataKey="Cenário 2" fill="#10b981" radius={[4, 4, 0, 0]}>
-                                <LabelList
-                                  dataKey="Cenário 2"
-                                  position="top"
-                                  content={(props: any) => {
-                                    const { x, y, width, value, index } = props;
-                                    if (value === 0) return null;
-                                    if (index === 1) { // Economia Projetada
-                                      const percCen2 = totalActualEstagio > 0 ? ((economiaCen2 / totalActualEstagio) * 100).toFixed(1) : '0.0';
-                                      return (
-                                        <g>
-                                          <text x={x + width / 2} y={y - 15} fill="#10b981" fontSize="10px" fontWeight="bold" textAnchor="middle">
-                                            R$ {value.toLocaleString('pt-BR')}
-                                          </text>
-                                          <text x={x + width / 2} y={y - 5} fill="#10b981" fontSize="10px" fontWeight="bold" textAnchor="middle">
-                                            ({percCen2}%)
-                                          </text>
-                                        </g>
-                                      );
-                                    }
-                                    return (
-                                      <text x={x + width / 2} y={y - 5} fill="#10b981" fontSize="10px" fontWeight="bold" textAnchor="middle">
-                                        R$ {value.toLocaleString('pt-BR')}
-                                      </text>
-                                    );
-                                  }}
-                                />
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
+              {activeReportView === 'filtros' && (
+                <div className="space-y-8 animate-in fade-in duration-500">
+                  <div className="space-y-8">
+                    {/* Pessoais */}
+                    <div>
+                      <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><User className="h-4 w-4" /> Filtros Pessoais</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="relative z-[120]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Gênero</label>
+                          <SearchableSelect
+                            value={advFilterGender}
+                            onChange={setAdvFilterGender}
+                            options={[
+                              { id: 'Masculino', label: 'Masculino', value: 'Masculino' },
+                              { id: 'Feminino', label: 'Feminino', value: 'Feminino' },
+                              { id: 'Outro', label: 'Outro', value: 'Outro' }
+                            ]}
+                            placeholder="Todos..."
+                          />
+                        </div>
+                        <div className="relative z-[119]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Filhos</label>
+                          <SearchableSelect
+                            value={advFilterChildren}
+                            onChange={(val) => setAdvFilterChildren(val as any)}
+                            options={[
+                              { id: 'sim', label: 'Sim', value: 'sim' },
+                              { id: 'nao', label: 'Não', value: 'nao' }
+                            ]}
+                            placeholder="Todos..."
+                          />
+                        </div>
+                        <div className="col-span-1 md:col-span-2 relative z-[110]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Estado (Moradia)</label>
+                          <SearchableSelect
+                            value={advFilterStateHome}
+                            onChange={setAdvFilterStateHome}
+                            options={ESTADOS_BRASIL.map(e => ({ id: e.nome, label: e.nome, value: e.nome }))}
+                            placeholder="Selecione..."
+                          />
                         </div>
                       </div>
-                    );
-                  })()}
-
-                  {[
-                    { type: 'Estágio', label: 'Estagiário', isExpanded: exportingPDF ? true : isVtEstagioExpanded, setIsExpanded: setIsVtEstagioExpanded },
-                    { type: 'CLT', label: 'CLT', isExpanded: isVtCltExpanded, setIsExpanded: setIsVtCltExpanded }
-                  ].filter(g => exportingPDF ? g.type === 'Estágio' : true).map((groupConfig, idx) => {
-                    const workingDays = getWorkingDaysInCurrentMonth();
-                    const activeColabs = colaboradores.filter(c => c.status === 'active');
-
-                    // Filtra os colaboradores do grupo atual (Estágio vs CLT)
-                    const groupColaboradores = activeColabs
-                      .filter(c => {
-                        if (groupConfig.type === 'Estágio') {
-                          const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
-                          return c.contract_type === 'Estágio' || roleName.includes('estagiário') || roleName.includes('estagiario') || roleName.includes('estagio') || roleName.includes('estágio');
-                        }
-                        return c.contract_type === groupConfig.type;
-                      })
-                      .map(c => {
-                        let colabVtDaily = 0;
-                        if (c.transportes && Array.isArray(c.transportes)) {
-                          colabVtDaily = c.transportes.reduce((tAcc, t) => {
-                            const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                            const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
-                            return tAcc + idaSum + voltaSum;
-                          }, 0);
-                        }
-                        return {
-                          ...c,
-                          atuacaoName: (c as any).atuacoes?.name || c.atuacao || 'S/ Atuação',
-                          liderName: (c as any).leader?.name || 'S/ Líder',
-                          localName: (c as any).locations?.name || c.local || '-',
-                          bairroName: (c as any).neighborhood || '-',
-                          currentVtTotal: colabVtDaily * workingDays
-                        };
-                      })
-                      .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-                    if (groupColaboradores.length === 0) return null;
-
-                    // Agrupando os dados de acordo com o tipo
-                    const groupedData: Record<string, typeof groupColaboradores> = {};
-                    let overallCount = 0;
-                    let overallVt = 0;
-                    let overallEconomia1 = 0;
-                    let overallEconomia2 = 0;
-
-                    groupColaboradores.forEach(colab => {
-                      const groupKey = groupConfig.type === 'Estágio' ? colab.liderName : colab.atuacaoName;
-                      if (!groupedData[groupKey]) groupedData[groupKey] = [];
-                      groupedData[groupKey].push(colab);
-
-                      overallCount++;
-                      overallVt += colab.currentVtTotal;
-                      if (groupConfig.type === 'Estágio') {
-                        overallEconomia1 += Math.max(0, colab.currentVtTotal - customVt1);
-                        overallEconomia2 += Math.max(0, colab.currentVtTotal - customVt2);
-                      }
-                    });
-
-                    // Ordenar as chaves de agrupamento
-                    const sortedGroupKeys = Object.keys(groupedData).sort((a, b) => a.localeCompare(b));
-
-                    return (
-                      <div key={idx} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">
-                        <button
-                          onClick={() => groupConfig.setIsExpanded(!groupConfig.isExpanded)}
-                          className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
-                        >
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Nasc. (Início e Fim)</label>
                           <div className="flex items-center gap-2">
-                            {groupConfig.isExpanded ? <ChevronDown className="h-5 w-5 text-[#1e3a8a]" /> : <ChevronRight className="h-5 w-5 text-[#1e3a8a]" />}
-                            <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider">{groupConfig.label} ({overallCount})</h4>
+                            <div className="relative w-full">
+                              <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterBirthStart} onChange={e => setAdvFilterBirthStart(e.target.value)} />
+                              {advFilterBirthStart && <button onClick={() => setAdvFilterBirthStart('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full"><X className="h-4 w-4" /></button>}
+                            </div>
+                            <span className="text-gray-400">-</span>
+                            <div className="relative w-full">
+                              <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterBirthEnd} onChange={e => setAdvFilterBirthEnd(e.target.value)} />
+                              {advFilterBirthEnd && <button onClick={() => setAdvFilterBirthEnd('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full"><X className="h-4 w-4" /></button>}
+                            </div>
                           </div>
-                          <span className="text-sm font-bold text-emerald-700">Total VT: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}</span>
-                        </button>
+                        </div>
+                        <div className="flex items-end pb-2">
+                          {advFilterBirthStart && advFilterBirthEnd && (
+                            <div className="bg-blue-50 text-blue-700 text-xs px-3 py-2 rounded-lg font-bold border border-blue-100 flex items-center">
+                              Intervalo Etário Selecionado: &nbsp;<span className="text-[#1e3a8a]">{calcAgeRange(advFilterBirthStart, advFilterBirthEnd)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
 
-                        {groupConfig.isExpanded && (
-                          <div className="overflow-x-auto border-t border-gray-200">
-                            <table className="w-full text-left border-collapse">
-                              <thead>
-                                <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
-                                  <th className="p-4">Colaborador</th>
-                                  <th className="p-4 text-center">Vínculo</th>
-                                  {groupConfig.type === 'CLT' && (
-                                    <th className="p-4 text-center">Líder Direto</th>
-                                  )}
-                                  <th className="p-4 text-center">Local</th>
-                                  <th className="p-4 text-center">Bairro</th>
-                                  <th className="p-4 text-right">VT Atual</th>
+                    {/* Corporativos */}
+                    <div>
+                      <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><Briefcase className="h-4 w-4" /> Filtros Corporativos</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="relative z-[118]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
+                          <SearchableSelect
+                            value={advFilterStatus}
+                            onChange={(val) => setAdvFilterStatus(val as any)}
+                            options={[
+                              { id: 'active', label: 'Ativo', value: 'active' },
+                              { id: 'inactive', label: 'Inativo', value: 'inactive' }
+                            ]}
+                            placeholder="Todos..."
+                          />
+                        </div>
+                        <div className="relative z-[109]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Rateio</label>
+                          <SearchableSelect
+                            value={advFilterRateio}
+                            onChange={setAdvFilterRateio}
+                            options={rateios.map(r => ({ id: String(r.id), label: r.name, value: String(r.id) }))}
+                            placeholder="Todos..."
+                          />
+                        </div>
+                        <div className="relative z-[116]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Área</label>
+                          <SearchableSelect
+                            value={advFilterArea}
+                            onChange={setAdvFilterArea}
+                            options={[
+                              { id: 'Administrativa', label: 'Administrativa', value: 'Administrativa' },
+                              { id: 'Jurídica', label: 'Jurídica', value: 'Jurídica' }
+                            ]}
+                            placeholder="Todas..."
+                          />
+                        </div>
+                        <div className="relative z-[115]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Contratação</label>
+                          <SearchableSelect
+                            value={advFilterContractType}
+                            onChange={setAdvFilterContractType}
+                            options={[
+                              { id: 'CLT', label: 'CLT', value: 'CLT' },
+                              { id: 'Sócio', label: 'Sócio', value: 'Sócio' },
+                              { id: 'Associado', label: 'Associado', value: 'Associado' },
+                              { id: 'Estágio', label: 'Estágio', value: 'Estágio' },
+                              { id: 'Jovem Aprendiz', label: 'Jovem Aprendiz', value: 'Jovem Aprendiz' },
+                              { id: 'Terceirizado', label: 'Terceirizado', value: 'Terceirizado' },
+                              { id: 'Outros', label: 'Outros', value: 'Outros' }
+                            ]}
+                            placeholder="Todos..."
+                          />
+                        </div>
 
-                                  {groupConfig.type === 'Estágio' && (
-                                    <>
-                                      <th className="p-4 text-right">
-                                        <div className="flex flex-col items-end gap-1">
-                                          <span>Valor Cenário 1</span>
-                                          {exportingPDF ? (
-                                            <span className="text-amber-600 font-bold text-xs">Custo Alvo: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt1)}</span>
-                                          ) : (
-                                            <div className="flex items-center gap-1" title="Defina o teto do VT neste cenário">
-                                              <span className="text-gray-400 font-medium tooltip">Teto: R$</span>
-                                              <input
-                                                type="number"
-                                                min="0"
-                                                className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
-                                                value={customVt1}
-                                                onChange={(e) => setCustomVt1(Number(e.target.value) || 0)}
-                                                onClick={(e) => e.stopPropagation()}
-                                              />
-                                            </div>
-                                          )}
-                                        </div>
-                                      </th>
-                                      <th className="p-4 text-right">
-                                        <span>Economia (Cenário 1)</span>
-                                      </th>
-                                      <th className="p-4 text-right">
-                                        <div className="flex flex-col items-end gap-1">
-                                          <span>Valor Cenário 2</span>
-                                          {exportingPDF ? (
-                                            <span className="text-amber-600 font-bold text-xs">Custo Alvo: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt2)}</span>
-                                          ) : (
-                                            <div className="flex items-center gap-1" title="Defina o teto do VT neste cenário">
-                                              <span className="text-gray-400 font-medium tooltip">Teto: R$</span>
-                                              <input
-                                                type="number"
-                                                min="0"
-                                                className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
-                                                value={customVt2}
-                                                onChange={(e) => setCustomVt2(Number(e.target.value) || 0)}
-                                                onClick={(e) => e.stopPropagation()}
-                                              />
-                                            </div>
-                                          )}
-                                        </div>
-                                      </th>
-                                      <th className="p-4 text-right">
-                                        <span>Economia (Cenário 2)</span>
-                                      </th>
-                                    </>
-                                  )}
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-50">
-                                {sortedGroupKeys.map(groupKey => {
-                                  const colabsInGroup = groupedData[groupKey];
-                                  const groupSubtotalVt = colabsInGroup.reduce((acc, curr) => acc + curr.currentVtTotal, 0);
-                                  const groupSubtotalEco1 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt1), 0);
-                                  const groupSubtotalEco2 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt2), 0);
-                                  const groupSubtotalValCen1 = groupSubtotalVt - groupSubtotalEco1;
-                                  const groupSubtotalValCen2 = groupSubtotalVt - groupSubtotalEco2;
+                        <div className="relative z-[115]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Sócio</label>
+                          <SearchableSelect
+                            value={advFilterPartnerType}
+                            onChange={setAdvFilterPartnerType}
+                            options={[
+                              { id: 'Sócio de Serviço', label: 'Sócio de Serviço', value: 'Sócio de Serviço' },
+                              { id: 'Sócio de Capital', label: 'Sócio de Capital', value: 'Sócio de Capital' },
+                              { id: 'Sócio Administrador', label: 'Sócio Administrador', value: 'Sócio Administrador' }
+                            ]}
+                            placeholder="Todos..."
+                          />
+                        </div>
 
-                                  return (
-                                    <React.Fragment key={groupKey}>
-                                      {/* Cabeçalho do Grupo */}
-                                      <tr className="bg-gray-50/80">
-                                        <td colSpan={groupConfig.type === 'Estágio' ? 9 : 6} className="p-3 text-xs font-bold text-[#1e3a8a]">
-                                          {groupConfig.type === 'Estágio' ? 'Líder Direto: ' : 'Atuação: '} {groupKey} ({colabsInGroup.length})
-                                        </td>
-                                      </tr>
+                        <div className="relative z-[114]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Meio de Transporte</label>
+                          <SearchableSelect
+                            value={advFilterTransporteTipo}
+                            onChange={setAdvFilterTransporteTipo}
+                            options={[
+                              { id: 'Integração Bilhete Único', label: 'Integração Bilhete Único', value: 'Integração Bilhete Único' },
+                              { id: 'Metrô', label: 'Metrô', value: 'Metrô' },
+                              { id: 'Ônibus', label: 'Ônibus', value: 'Ônibus' },
+                              { id: 'Trem', label: 'Trem', value: 'Trem' },
+                              { id: 'Van', label: 'Van', value: 'Van' },
+                              { id: 'BRT', label: 'BRT', value: 'BRT' },
+                              { id: 'VLT', label: 'VLT', value: 'VLT' },
+                              { id: 'Barcas', label: 'Barcas', value: 'Barcas' },
+                              { id: 'Não Optante', label: 'Não Optante', value: 'Não Optante' }
+                            ]}
+                            placeholder="Todos..."
+                          />
+                        </div>
 
-                                      {/* Linhas do Grupo */}
-                                      {colabsInGroup.map(colab => {
-                                        const economia1 = Math.max(0, colab.currentVtTotal - customVt1);
-                                        const economia2 = Math.max(0, colab.currentVtTotal - customVt2);
-                                        const valCen1 = colab.currentVtTotal - economia1;
-                                        const valCen2 = colab.currentVtTotal - economia2;
+                        <div className="relative z-[108]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sócio Responsável</label>
+                          <SearchableSelect value={advFilterPartner} onChange={setAdvFilterPartner} options={partnerOptions as any} placeholder="Todos..." />
+                        </div>
+                        <div className="relative z-[107]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Líder Direto</label>
+                          <SearchableSelect value={advFilterLeader} onChange={setAdvFilterLeader} options={liderOptions as any} placeholder="Todos..." />
+                        </div>
+                        <div className="relative z-[106]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Equipe</label>
+                          <SearchableSelect value={advFilterTeam} onChange={setAdvFilterTeam} table="teams" placeholder="Todas..." />
+                        </div>
+                        <div className="relative z-[105]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cargo</label>
+                          <SearchableSelect value={advFilterRole} onChange={setAdvFilterRole} options={roleOptions as any} placeholder="Todos..." />
+                        </div>
+                        <div className="relative z-[104]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local</label>
+                          <SearchableSelect value={advFilterLocal} onChange={setAdvFilterLocal} options={locationOptions as any} placeholder="Todos..." />
+                        </div>
 
+                        <div className="col-span-1 md:col-span-3">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Admissão (Início e Fim)</label>
+                          <div className="flex items-center gap-2 max-w-sm">
+                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterAdmissionStart} onChange={e => setAdvFilterAdmissionStart(e.target.value)} />
+                            <span className="text-gray-400">-</span>
+                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterAdmissionEnd} onChange={e => setAdvFilterAdmissionEnd(e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Escolares */}
+                    <div>
+                      <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><GraduationCap className="h-4 w-4" /> Filtros Escolares</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="relative z-[110]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Graduação Completa</label>
+                          <SearchableSelect
+                            value={advFilterGraduationComplete}
+                            onChange={(val) => setAdvFilterGraduationComplete(val as any)}
+                            options={[
+                              { id: 'sim', label: 'Sim', value: 'sim' },
+                              { id: 'nao', label: 'Não', value: 'nao' }
+                            ]}
+                            placeholder="Todos..."
+                          />
+                        </div>
+                        <div className="relative z-[109]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Pós-Graduação Comp.</label>
+                          <SearchableSelect
+                            value={advFilterPostGraduationComplete}
+                            onChange={(val) => setAdvFilterPostGraduationComplete(val as any)}
+                            options={[
+                              { id: 'sim', label: 'Sim', value: 'sim' },
+                              { id: 'nao', label: 'Não', value: 'nao' }
+                            ]}
+                            placeholder="Todos..."
+                          />
+                        </div>
+                        <div className="relative">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano Prev. Conclusão</label>
+                          <input type="text" placeholder="Ex: 2025" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterExpectedCompletion} onChange={e => setAdvFilterExpectedCompletion(e.target.value)} />
+                          {advFilterExpectedCompletion && <button onClick={() => setAdvFilterExpectedCompletion('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
+                        </div>
+                        <div className="relative">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano de Conclusão</label>
+                          <input type="text" placeholder="Ex: 2020" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterCompletionYear} onChange={e => setAdvFilterCompletionYear(e.target.value)} />
+                          {advFilterCompletionYear && <button onClick={() => setAdvFilterCompletionYear('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-6 border-t border-gray-100">
+                      <button
+                        onClick={handleExportAdvanced}
+                        className="flex items-center gap-2 px-8 py-3 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-xl active:scale-95 text-xs"
+                      >
+                        <FileSpreadsheet className="h-5 w-5" /> Gerar Relatório XLSX ({currentAdvancedFiltered.length})
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Relatório de VT (CLT e Estagiários) */}
+              {activeReportView === 'vt' && (
+                <div className="flex flex-col h-full animate-in fade-in duration-500">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-black text-[#1e3a8a] flex items-center gap-2">
+                      <Bus className="h-5 w-5 text-amber-500" /> Custo de Vale Transporte (CLT e Estagiários)
+                    </h3>
+                    <div className="relative flex items-center gap-2">
+                      <button
+                        onClick={handleExportVTPDF}
+                        disabled={exportingPDF}
+                        className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-xl font-black uppercase tracking-wider hover:bg-red-700 transition-colors shadow-xl active:scale-95 text-xs disabled:opacity-50"
+                      >
+                        {exportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+                        {exportingPDF ? 'Gerando...' : 'Exportar PDF'}
+                      </button>
+                      <button
+                        onClick={() => setShowExportVTMenu(!showExportVTMenu)}
+                        className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-xl active:scale-95 text-xs"
+                      >
+                        <FileSpreadsheet className="h-4 w-4" /> Exportar Relação (XLSX) <ChevronDown className="h-4 w-4 ml-1" />
+                      </button>
+
+                      {showExportVTMenu && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setShowExportVTMenu(false)}></div>
+                          <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                            <button
+                              onClick={() => handleExportVT('Estagiários')}
+                              className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
+                            >
+                              <GraduationCap className="h-4 w-4 text-emerald-600" />
+                              Estagiários
+                            </button>
+                            <button
+                              onClick={() => handleExportVT('CLTs')}
+                              className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
+                            >
+                              <Briefcase className="h-4 w-4 text-emerald-600" />
+                              CLTs
+                            </button>
+                            <button
+                              onClick={() => handleExportVT('Todos')}
+                              className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
+                            >
+                              <Users className="h-4 w-4 text-emerald-600" />
+                              Todos (CLT e Estágio)
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-6">
+                    <div ref={vtReportRef} className="bg-[#f8fafc] p-4 rounded-xl">
+                      {(() => {
+                        const workingDays = getWorkingDaysInCurrentMonth();
+                        const activeColabs = colaboradores.filter(c => c.status === 'active');
+
+                        let totalActualEstagio = 0;
+                        let countEstagio = 0;
+                        let totalActualCLT = 0;
+                        let countCLT = 0;
+
+                        activeColabs.forEach(c => {
+                          const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
+                          const isEstagio = c.contract_type === 'Estágio' || roleName.includes('estagiário') || roleName.includes('estagiario') || roleName.includes('estagio') || roleName.includes('estágio');
+                          const isCLT = c.contract_type === 'CLT' && !isEstagio;
+
+                          if (isEstagio || isCLT) {
+                            let colabVtDaily = 0;
+                            if (c.transportes && Array.isArray(c.transportes)) {
+                              colabVtDaily = c.transportes.reduce((tAcc, t) => {
+                                const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                                const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                                return tAcc + idaSum + voltaSum;
+                              }, 0);
+                            }
+                            if (isEstagio) {
+                              totalActualEstagio += colabVtDaily * workingDays;
+                              countEstagio++;
+                            } else if (isCLT) {
+                              totalActualCLT += colabVtDaily * workingDays;
+                              countCLT++;
+                            }
+                          }
+                        });
+
+                        const economiaCen1 = totalActualEstagio - (countEstagio * customVt1);
+                        const economiaCen2 = totalActualEstagio - (countEstagio * customVt2);
+
+                        const chartData = [
+                          {
+                            name: 'Custo Total',
+                            'Atual': totalActualEstagio,
+                            'Cenário 1': countEstagio * customVt1,
+                            'Cenário 2': countEstagio * customVt2
+                          },
+                          {
+                            name: 'Economia Projetada',
+                            'Atual': 0,
+                            'Cenário 1': economiaCen1,
+                            'Cenário 2': economiaCen2
+                          }
+                        ];
+
+                        return (
+                          <div className="mb-8 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                            <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider mb-4">Comparativo de Custos Mensais (Apenas Estagiários)</h4>
+                            <div className="h-64 w-full mt-4">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                  data={chartData}
+                                  margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                  <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+                                  <YAxis
+                                    tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
+                                    tick={{ fill: '#64748b', fontSize: 11 }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                  />
+                                  <RechartsTooltip
+                                    formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    cursor={{ fill: '#f1f5f9' }}
+                                  />
+                                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                  <Bar dataKey="Atual" fill="#1e3a8a" radius={[4, 4, 0, 0]}>
+                                    <LabelList dataKey="Atual" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e3a8a' }} />
+                                  </Bar>
+                                  <Bar dataKey="Cenário 1" fill="#f59e0b" radius={[4, 4, 0, 0]}>
+                                    <LabelList
+                                      dataKey="Cenário 1"
+                                      position="top"
+                                      content={(props: any) => {
+                                        const { x, y, width, value, index } = props;
+                                        if (value === 0) return null;
+                                        if (index === 1) { // Economia Projetada
+                                          const percCen1 = totalActualEstagio > 0 ? ((economiaCen1 / totalActualEstagio) * 100).toFixed(1) : '0.0';
+                                          return (
+                                            <g>
+                                              <text x={x + width / 2} y={y - 15} fill="#f59e0b" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                                R$ {value.toLocaleString('pt-BR')}
+                                              </text>
+                                              <text x={x + width / 2} y={y - 5} fill="#f59e0b" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                                ({percCen1}%)
+                                              </text>
+                                            </g>
+                                          );
+                                        }
                                         return (
-                                          <tr key={colab.id} className="hover:bg-blue-50/30 transition-colors group">
-                                            <td className="p-4 text-sm font-bold text-[#0a192f] pl-8">{colab.name}</td>
-                                            <td className="p-4 text-sm font-medium text-gray-600 text-center">
-                                              <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{colab.contract_type}</span>
-                                            </td>
-                                            {groupConfig.type === 'CLT' && (
-                                              <td className="p-4 text-sm font-medium text-gray-500 text-center">
-                                                {colab.liderName}
-                                              </td>
-                                            )}
-                                            <td className="p-4 text-sm font-medium text-gray-500 text-center">
-                                              {colab.localName}
-                                            </td>
-                                            <td className="p-4 text-sm font-medium text-gray-500 text-center">
-                                              {colab.bairroName}
-                                            </td>
-                                            <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
-                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(colab.currentVtTotal)}
-                                            </td>
+                                          <text x={x + width / 2} y={y - 5} fill="#f59e0b" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                            R$ {value.toLocaleString('pt-BR')}
+                                          </text>
+                                        );
+                                      }}
+                                    />
+                                  </Bar>
+                                  <Bar dataKey="Cenário 2" fill="#10b981" radius={[4, 4, 0, 0]}>
+                                    <LabelList
+                                      dataKey="Cenário 2"
+                                      position="top"
+                                      content={(props: any) => {
+                                        const { x, y, width, value, index } = props;
+                                        if (value === 0) return null;
+                                        if (index === 1) { // Economia Projetada
+                                          const percCen2 = totalActualEstagio > 0 ? ((economiaCen2 / totalActualEstagio) * 100).toFixed(1) : '0.0';
+                                          return (
+                                            <g>
+                                              <text x={x + width / 2} y={y - 15} fill="#10b981" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                                R$ {value.toLocaleString('pt-BR')}
+                                              </text>
+                                              <text x={x + width / 2} y={y - 5} fill="#10b981" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                                ({percCen2}%)
+                                              </text>
+                                            </g>
+                                          );
+                                        }
+                                        return (
+                                          <text x={x + width / 2} y={y - 5} fill="#10b981" fontSize="10px" fontWeight="bold" textAnchor="middle">
+                                            R$ {value.toLocaleString('pt-BR')}
+                                          </text>
+                                        );
+                                      }}
+                                    />
+                                  </Bar>
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
+                      {[
+                        { type: 'Estágio', label: 'Estagiário', isExpanded: exportingPDF ? true : isVtEstagioExpanded, setIsExpanded: setIsVtEstagioExpanded },
+                        { type: 'CLT', label: 'CLT', isExpanded: isVtCltExpanded, setIsExpanded: setIsVtCltExpanded }
+                      ].filter(g => exportingPDF ? g.type === 'Estágio' : true).map((groupConfig, idx) => {
+                        const workingDays = getWorkingDaysInCurrentMonth();
+                        const activeColabs = colaboradores.filter(c => c.status === 'active');
+
+                        // Filtra os colaboradores do grupo atual (Estágio vs CLT)
+                        const groupColaboradores = activeColabs
+                          .filter(c => {
+                            if (groupConfig.type === 'Estágio') {
+                              const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
+                              return c.contract_type === 'Estágio' || roleName.includes('estagiário') || roleName.includes('estagiario') || roleName.includes('estagio') || roleName.includes('estágio');
+                            }
+                            return c.contract_type === groupConfig.type;
+                          })
+                          .map(c => {
+                            let colabVtDaily = 0;
+                            if (c.transportes && Array.isArray(c.transportes)) {
+                              colabVtDaily = c.transportes.reduce((tAcc, t) => {
+                                const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                                const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                                return tAcc + idaSum + voltaSum;
+                              }, 0);
+                            }
+                            return {
+                              ...c,
+                              atuacaoName: (c as any).atuacoes?.name || c.atuacao || 'S/ Atuação',
+                              liderName: (c as any).leader?.name || 'S/ Líder',
+                              localName: (c as any).locations?.name || c.local || '-',
+                              bairroName: (c as any).neighborhood || '-',
+                              currentVtTotal: colabVtDaily * workingDays
+                            };
+                          })
+                          .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                        if (groupColaboradores.length === 0) return null;
+
+                        // Agrupando os dados de acordo com o tipo
+                        const groupedData: Record<string, typeof groupColaboradores> = {};
+                        let overallCount = 0;
+                        let overallVt = 0;
+                        let overallEconomia1 = 0;
+                        let overallEconomia2 = 0;
+
+                        groupColaboradores.forEach(colab => {
+                          const groupKey = groupConfig.type === 'Estágio' ? colab.liderName : colab.atuacaoName;
+                          if (!groupedData[groupKey]) groupedData[groupKey] = [];
+                          groupedData[groupKey].push(colab);
+
+                          overallCount++;
+                          overallVt += colab.currentVtTotal;
+                          if (groupConfig.type === 'Estágio') {
+                            overallEconomia1 += Math.max(0, colab.currentVtTotal - customVt1);
+                            overallEconomia2 += Math.max(0, colab.currentVtTotal - customVt2);
+                          }
+                        });
+
+                        // Ordenar as chaves de agrupamento
+                        const sortedGroupKeys = Object.keys(groupedData).sort((a, b) => a.localeCompare(b));
+
+                        return (
+                          <div key={idx} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">
+                            <button
+                              onClick={() => groupConfig.setIsExpanded(!groupConfig.isExpanded)}
+                              className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                {groupConfig.isExpanded ? <ChevronDown className="h-5 w-5 text-[#1e3a8a]" /> : <ChevronRight className="h-5 w-5 text-[#1e3a8a]" />}
+                                <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider">{groupConfig.label} ({overallCount})</h4>
+                              </div>
+                              <span className="text-sm font-bold text-emerald-700">Total VT: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}</span>
+                            </button>
+
+                            {groupConfig.isExpanded && (
+                              <div className="overflow-x-auto border-t border-gray-200">
+                                <table className="w-full text-left border-collapse">
+                                  <thead>
+                                    <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
+                                      <th className="p-4">Colaborador</th>
+                                      <th className="p-4 text-center">Vínculo</th>
+                                      {groupConfig.type === 'CLT' && (
+                                        <th className="p-4 text-center">Líder Direto</th>
+                                      )}
+                                      <th className="p-4 text-center">Local</th>
+                                      <th className="p-4 text-center">Bairro</th>
+                                      <th className="p-4 text-right">VT Atual</th>
+
+                                      {groupConfig.type === 'Estágio' && (
+                                        <>
+                                          <th className="p-4 text-right">
+                                            <div className="flex flex-col items-end gap-1">
+                                              <span>Valor Cenário 1</span>
+                                              {exportingPDF ? (
+                                                <span className="text-amber-600 font-bold text-xs">Custo Alvo: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt1)}</span>
+                                              ) : (
+                                                <div className="flex items-center gap-1" title="Defina o teto do VT neste cenário">
+                                                  <span className="text-gray-400 font-medium tooltip">Teto: R$</span>
+                                                  <input
+                                                    type="number"
+                                                    min="0"
+                                                    className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                                                    value={customVt1}
+                                                    onChange={(e) => setCustomVt1(Number(e.target.value) || 0)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  />
+                                                </div>
+                                              )}
+                                            </div>
+                                          </th>
+                                          <th className="p-4 text-right">
+                                            <span>Economia (Cenário 1)</span>
+                                          </th>
+                                          <th className="p-4 text-right">
+                                            <div className="flex flex-col items-end gap-1">
+                                              <span>Valor Cenário 2</span>
+                                              {exportingPDF ? (
+                                                <span className="text-amber-600 font-bold text-xs">Custo Alvo: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt2)}</span>
+                                              ) : (
+                                                <div className="flex items-center gap-1" title="Defina o teto do VT neste cenário">
+                                                  <span className="text-gray-400 font-medium tooltip">Teto: R$</span>
+                                                  <input
+                                                    type="number"
+                                                    min="0"
+                                                    className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                                                    value={customVt2}
+                                                    onChange={(e) => setCustomVt2(Number(e.target.value) || 0)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  />
+                                                </div>
+                                              )}
+                                            </div>
+                                          </th>
+                                          <th className="p-4 text-right">
+                                            <span>Economia (Cenário 2)</span>
+                                          </th>
+                                        </>
+                                      )}
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-50">
+                                    {sortedGroupKeys.map(groupKey => {
+                                      const colabsInGroup = groupedData[groupKey];
+                                      const groupSubtotalVt = colabsInGroup.reduce((acc, curr) => acc + curr.currentVtTotal, 0);
+                                      const groupSubtotalEco1 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt1), 0);
+                                      const groupSubtotalEco2 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt2), 0);
+                                      const groupSubtotalValCen1 = groupSubtotalVt - groupSubtotalEco1;
+                                      const groupSubtotalValCen2 = groupSubtotalVt - groupSubtotalEco2;
+
+                                      return (
+                                        <React.Fragment key={groupKey}>
+                                          {/* Cabeçalho do Grupo */}
+                                          <tr className="bg-gray-50/80">
+                                            <td colSpan={groupConfig.type === 'Estágio' ? 9 : 6} className="p-3 text-xs font-bold text-[#1e3a8a]">
+                                              {groupConfig.type === 'Estágio' ? 'Líder Direto: ' : 'Atuação: '} {groupKey} ({colabsInGroup.length})
+                                            </td>
+                                          </tr>
+
+                                          {/* Linhas do Grupo */}
+                                          {colabsInGroup.map(colab => {
+                                            const economia1 = Math.max(0, colab.currentVtTotal - customVt1);
+                                            const economia2 = Math.max(0, colab.currentVtTotal - customVt2);
+                                            const valCen1 = colab.currentVtTotal - economia1;
+                                            const valCen2 = colab.currentVtTotal - economia2;
+
+                                            return (
+                                              <tr key={colab.id} className="hover:bg-blue-50/30 transition-colors group">
+                                                <td className="p-4 text-sm font-bold text-[#0a192f] pl-8">{colab.name}</td>
+                                                <td className="p-4 text-sm font-medium text-gray-600 text-center">
+                                                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{colab.contract_type}</span>
+                                                </td>
+                                                {groupConfig.type === 'CLT' && (
+                                                  <td className="p-4 text-sm font-medium text-gray-500 text-center">
+                                                    {colab.liderName}
+                                                  </td>
+                                                )}
+                                                <td className="p-4 text-sm font-medium text-gray-500 text-center">
+                                                  {colab.localName}
+                                                </td>
+                                                <td className="p-4 text-sm font-medium text-gray-500 text-center">
+                                                  {colab.bairroName}
+                                                </td>
+                                                <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
+                                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(colab.currentVtTotal)}
+                                                </td>
+
+                                                {groupConfig.type === 'Estágio' && (
+                                                  <>
+                                                    <td className="p-4 text-sm font-bold text-gray-600 text-right">
+                                                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valCen1)}
+                                                    </td>
+                                                    <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt1}, a economia será este valor.`}>
+                                                      {economia1 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia1) : '-'}
+                                                    </td>
+                                                    <td className="p-4 text-sm font-bold text-gray-600 text-right">
+                                                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valCen2)}
+                                                    </td>
+                                                    <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt2}, a economia será este valor.`}>
+                                                      {economia2 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia2) : '-'}
+                                                    </td>
+                                                  </>
+                                                )}
+                                              </tr>
+                                            );
+                                          })}
+
+                                          {/* Subtotal do Grupo */}
+                                          <tr className="bg-gray-50/50 border-b-2 border-gray-200">
+                                            <td colSpan={groupConfig.type === 'Estágio' ? 4 : 5} className="p-3 text-xs font-bold text-gray-600 text-right">
+                                              Subtotal {groupKey}:
+                                            </td>
+                                            <td className="p-3 text-sm font-black text-[#1e3a8a] text-right">
+                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalVt)}
+                                            </td>
                                             {groupConfig.type === 'Estágio' && (
                                               <>
-                                                <td className="p-4 text-sm font-bold text-gray-600 text-right">
-                                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valCen1)}
+                                                <td className="p-3 text-sm font-bold text-gray-600 text-right">
+                                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalValCen1)}
                                                 </td>
-                                                <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt1}, a economia será este valor.`}>
-                                                  {economia1 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia1) : '-'}
+                                                <td className="p-3 text-sm font-bold text-amber-600 text-right">
+                                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco1)}
                                                 </td>
-                                                <td className="p-4 text-sm font-bold text-gray-600 text-right">
-                                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valCen2)}
+                                                <td className="p-3 text-sm font-bold text-gray-600 text-right">
+                                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalValCen2)}
                                                 </td>
-                                                <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt2}, a economia será este valor.`}>
-                                                  {economia2 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia2) : '-'}
+                                                <td className="p-3 text-sm font-bold text-amber-600 text-right">
+                                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco2)}
                                                 </td>
                                               </>
                                             )}
                                           </tr>
-                                        );
-                                      })}
+                                        </React.Fragment>
+                                      );
+                                    })}
 
-                                      {/* Subtotal do Grupo */}
-                                      <tr className="bg-gray-50/50 border-b-2 border-gray-200">
-                                        <td colSpan={groupConfig.type === 'Estágio' ? 4 : 5} className="p-3 text-xs font-bold text-gray-600 text-right">
-                                          Subtotal {groupKey}:
-                                        </td>
-                                        <td className="p-3 text-sm font-black text-[#1e3a8a] text-right">
-                                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalVt)}
-                                        </td>
-                                        {groupConfig.type === 'Estágio' && (
-                                          <>
-                                            <td className="p-3 text-sm font-bold text-gray-600 text-right">
-                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalValCen1)}
-                                            </td>
-                                            <td className="p-3 text-sm font-bold text-amber-600 text-right">
-                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco1)}
-                                            </td>
-                                            <td className="p-3 text-sm font-bold text-gray-600 text-right">
-                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalValCen2)}
-                                            </td>
-                                            <td className="p-3 text-sm font-bold text-amber-600 text-right">
-                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco2)}
-                                            </td>
-                                          </>
-                                        )}
-                                      </tr>
-                                    </React.Fragment>
-                                  );
-                                })}
-
-                                {/* Total Geral de todos os grupos combinados */}
-                                <tr className="bg-gradient-to-r from-emerald-50 to-white/50 border-t-2 border-emerald-200">
-                                  <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider" colSpan={groupConfig.type === 'Estágio' ? 4 : 5}>Total Geral ({overallCount})</td>
-                                  <td className="p-4 text-base font-black text-emerald-700 text-right">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}
-                                  </td>
-                                  {groupConfig.type === 'Estágio' && (
-                                    <>
-                                      <td className="p-4 text-base font-bold text-emerald-700/80 text-right">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt - overallEconomia1)}
-                                      </td>
+                                    {/* Total Geral de todos os grupos combinados */}
+                                    <tr className="bg-gradient-to-r from-emerald-50 to-white/50 border-t-2 border-emerald-200">
+                                      <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider" colSpan={groupConfig.type === 'Estágio' ? 4 : 5}>Total Geral ({overallCount})</td>
                                       <td className="p-4 text-base font-black text-emerald-700 text-right">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia1)}
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}
                                       </td>
-                                      <td className="p-4 text-base font-bold text-emerald-700/80 text-right">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt - overallEconomia2)}
-                                      </td>
-                                      <td className="p-4 text-base font-black text-emerald-700 text-right">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia2)}
-                                      </td>
-                                    </>
-                                  )}
-                                </tr>
-                              </tbody>
-                            </table>
+                                      {groupConfig.type === 'Estágio' && (
+                                        <>
+                                          <td className="p-4 text-base font-bold text-emerald-700/80 text-right">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt - overallEconomia1)}
+                                          </td>
+                                          <td className="p-4 text-base font-black text-emerald-700 text-right">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia1)}
+                                          </td>
+                                          <td className="p-4 text-base font-bold text-emerald-700/80 text-right">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt - overallEconomia2)}
+                                          </td>
+                                          <td className="p-4 text-base font-black text-emerald-700 text-right">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia2)}
+                                          </td>
+                                        </>
+                                      )}
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
 
-                  <p className="text-[10px] text-gray-400 mt-3 font-medium flex gap-2">
-                    <span className="text-amber-500 font-bold">*</span>
-                    Baseado em {getWorkingDaysInCurrentMonth()} dias úteis (Mês Vigente) para colaboradores Ativos (CLT e Estágio).
-                  </p>
+                      <p className="text-[10px] text-gray-400 mt-3 font-medium flex gap-2">
+                        <span className="text-amber-500 font-bold">*</span>
+                        Baseado em {getWorkingDaysInCurrentMonth()} dias úteis (Mês Vigente) para colaboradores Ativos (CLT e Estágio).
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
