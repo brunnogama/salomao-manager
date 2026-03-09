@@ -2592,15 +2592,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
                               <th className="p-4">Colaborador</th>
                               <th className="p-4 text-center">Vínculo</th>
-                              {groupConfig.type === 'CLT' ? (
+                              {groupConfig.type === 'CLT' && (
                                 <th className="p-4 text-center">Líder Direto</th>
-                              ) : (
-                                <th className="p-4 text-center">Atuação</th>
                               )}
-                              <th className="p-4 text-right">VT Calculado (Atual)</th>
+                              <th className="p-4 text-center">Local</th>
+                              <th className="p-4 text-center">Bairro</th>
+                              <th className="p-4 text-right">VT Atual</th>
 
                               {groupConfig.type === 'Estágio' && (
                                 <>
+                                  <th className="p-4 text-right">Valor Cenário 1</th>
                                   <th className="p-4 text-right">
                                     <div className="flex flex-col items-end gap-1">
                                       <span>Economia (Cenário 1)</span>
@@ -2621,6 +2622,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                                       )}
                                     </div>
                                   </th>
+                                  <th className="p-4 text-right">Valor Cenário 2</th>
                                   <th className="p-4 text-right">
                                     <div className="flex flex-col items-end gap-1">
                                       <span>Economia (Cenário 2)</span>
@@ -2651,12 +2653,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               const groupSubtotalVt = colabsInGroup.reduce((acc, curr) => acc + curr.currentVtTotal, 0);
                               const groupSubtotalEco1 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt1), 0);
                               const groupSubtotalEco2 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt2), 0);
+                              const groupSubtotalValCen1 = groupSubtotalVt - groupSubtotalEco1;
+                              const groupSubtotalValCen2 = groupSubtotalVt - groupSubtotalEco2;
 
                               return (
                                 <React.Fragment key={groupKey}>
                                   {/* Cabeçalho do Grupo */}
                                   <tr className="bg-gray-50/80">
-                                    <td colSpan={groupConfig.type === 'Estágio' ? 6 : 4} className="p-3 text-xs font-bold text-[#1e3a8a]">
+                                    <td colSpan={groupConfig.type === 'Estágio' ? 9 : 6} className="p-3 text-xs font-bold text-[#1e3a8a]">
                                       {groupConfig.type === 'Estágio' ? 'Líder Direto: ' : 'Atuação: '} {groupKey} ({colabsInGroup.length})
                                     </td>
                                   </tr>
@@ -2665,6 +2669,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
                                   {colabsInGroup.map(colab => {
                                     const economia1 = Math.max(0, colab.currentVtTotal - customVt1);
                                     const economia2 = Math.max(0, colab.currentVtTotal - customVt2);
+                                    const valCen1 = colab.currentVtTotal - economia1;
+                                    const valCen2 = colab.currentVtTotal - economia2;
 
                                     return (
                                       <tr key={colab.id} className="hover:bg-blue-50/30 transition-colors group">
@@ -2672,8 +2678,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
                                         <td className="p-4 text-sm font-medium text-gray-600 text-center">
                                           <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{colab.contract_type}</span>
                                         </td>
+                                        {groupConfig.type === 'CLT' && (
+                                          <td className="p-4 text-sm font-medium text-gray-500 text-center">
+                                            {colab.liderName}
+                                          </td>
+                                        )}
                                         <td className="p-4 text-sm font-medium text-gray-500 text-center">
-                                          {groupConfig.type === 'CLT' ? colab.liderName : colab.atuacaoName}
+                                          {colab.local || '-'}
+                                        </td>
+                                        <td className="p-4 text-sm font-medium text-gray-500 text-center">
+                                          {colab.bairro || '-'}
                                         </td>
                                         <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
                                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(colab.currentVtTotal)}
@@ -2681,8 +2695,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                                         {groupConfig.type === 'Estágio' && (
                                           <>
+                                            <td className="p-4 text-sm font-bold text-gray-600 text-right">
+                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valCen1)}
+                                            </td>
                                             <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt1}, a economia será este valor.`}>
                                               {economia1 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia1) : '-'}
+                                            </td>
+                                            <td className="p-4 text-sm font-bold text-gray-600 text-right">
+                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valCen2)}
                                             </td>
                                             <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt2}, a economia será este valor.`}>
                                               {economia2 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia2) : '-'}
@@ -2695,7 +2715,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                                   {/* Subtotal do Grupo */}
                                   <tr className="bg-gray-50/50 border-b-2 border-gray-200">
-                                    <td colSpan={3} className="p-3 text-xs font-bold text-gray-600 text-right">
+                                    <td colSpan={groupConfig.type === 'Estágio' ? 4 : 5} className="p-3 text-xs font-bold text-gray-600 text-right">
                                       Subtotal {groupKey}:
                                     </td>
                                     <td className="p-3 text-sm font-black text-[#1e3a8a] text-right">
@@ -2703,8 +2723,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
                                     </td>
                                     {groupConfig.type === 'Estágio' && (
                                       <>
+                                        <td className="p-3 text-sm font-bold text-gray-600 text-right">
+                                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalValCen1)}
+                                        </td>
                                         <td className="p-3 text-sm font-bold text-amber-600 text-right">
                                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco1)}
+                                        </td>
+                                        <td className="p-3 text-sm font-bold text-gray-600 text-right">
+                                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalValCen2)}
                                         </td>
                                         <td className="p-3 text-sm font-bold text-amber-600 text-right">
                                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco2)}
@@ -2718,14 +2744,20 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                             {/* Total Geral de todos os grupos combinados */}
                             <tr className="bg-gradient-to-r from-emerald-50 to-white/50 border-t-2 border-emerald-200">
-                              <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider" colSpan={3}>Total Geral ({overallCount})</td>
+                              <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider" colSpan={groupConfig.type === 'Estágio' ? 4 : 5}>Total Geral ({overallCount})</td>
                               <td className="p-4 text-base font-black text-emerald-700 text-right">
                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}
                               </td>
                               {groupConfig.type === 'Estágio' && (
                                 <>
+                                  <td className="p-4 text-base font-bold text-emerald-700/80 text-right">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt - overallEconomia1)}
+                                  </td>
                                   <td className="p-4 text-base font-black text-emerald-700 text-right">
                                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia1)}
+                                  </td>
+                                  <td className="p-4 text-base font-bold text-emerald-700/80 text-right">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt - overallEconomia2)}
                                   </td>
                                   <td className="p-4 text-base font-black text-emerald-700 text-right">
                                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia2)}
