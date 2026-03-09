@@ -40,6 +40,7 @@ export function CandidatoEntrevistaSection({
         }
     };
     const [vagasAbertas, setVagasAbertas] = useState<any[]>([])
+    const [roleNameCache, setRoleNameCache] = useState<string>('');
 
     useEffect(() => {
         async function fetchVagas() {
@@ -63,9 +64,34 @@ export function CandidatoEntrevistaSection({
     // Dados da entrevista ficam salvos dentro de formData.entrevista_dados (jsonb)
     const entrevista = formData.entrevista_dados || {}
 
-    // Check if the role is 'Advogado'
-    const rolePretendido = formData.role || entrevista.cargo || '';
-    const isAdvogado = area === 'Jurídica' && rolePretendido.toLowerCase().includes('advogado');
+    useEffect(() => {
+        async function fetchRoleName() {
+            const roleId = formData.role || formData.entrevista_dados?.cargo;
+            if (!roleId) {
+                setRoleNameCache('');
+                return;
+            }
+            const roleStr = String(roleId);
+            if (roleStr.toLowerCase().includes('advogado') || isNaN(Number(roleId)) && !roleStr.includes('-')) {
+                // Se já for uma string contendo 'advogado' ou um texto comum (não-UUID, não-número)
+                setRoleNameCache(roleStr);
+                return;
+            }
+            try {
+                const { data } = await supabase.from('roles').select('name').eq('id', roleId).maybeSingle();
+                if (data && data.name) {
+                    setRoleNameCache(data.name);
+                } else {
+                    setRoleNameCache(roleStr);
+                }
+            } catch (err) {
+                setRoleNameCache(roleStr);
+            }
+        }
+        fetchRoleName();
+    }, [formData.role, formData.entrevista_dados?.cargo]);
+
+    const isAdvogado = area === 'Jurídica' && typeof roleNameCache === 'string' && roleNameCache.toLowerCase().includes('advogado');
 
     const handleEntrevistaChange = (field: string, value: any) => {
         setFormData({
