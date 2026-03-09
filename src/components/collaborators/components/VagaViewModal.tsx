@@ -46,7 +46,6 @@ export function VagaViewModal({ isOpen, onClose, vagaId, onEdit }: VagaViewModal
                     *,
                     role:role_id(name),
                     location:location_id(name),
-                    atuacao:atuacao_id(name),
                     hiring_reason:hiring_reason_id(name),
                     leader:leader_id(name),
                     partner:partner_id(name),
@@ -143,10 +142,10 @@ export function VagaViewModal({ isOpen, onClose, vagaId, onEdit }: VagaViewModal
                                         <h3 className={`text-xl font-bold ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</h3>
                                         <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
                                             <span>{vaga.area || 'Sem área'}</span>
-                                            {vaga.atuacao?.name && (
+                                            {vaga.atuacao_id && (
                                                 <>
                                                     <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                                                    <span>{vaga.atuacao.name}</span>
+                                                    <span>{String(vaga.atuacao_id)}</span>
                                                 </>
                                             )}
                                         </p>
