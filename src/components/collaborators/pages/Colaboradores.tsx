@@ -57,7 +57,8 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
   CartesianGrid,
-  Legend
+  Legend,
+  LabelList
 } from 'recharts'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -154,8 +155,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [customVt2, setCustomVt2] = useState<number>(300);
 
   // Expanded States for VT Tables
-  const [isVtEstagioExpanded, setIsVtEstagioExpanded] = useState(false);
-  const [isVtCltExpanded, setIsVtCltExpanded] = useState(false);
+  const [isVtEstagioExpanded, setIsVtEstagioExpanded] = useState(true);
+  const [isVtCltExpanded, setIsVtCltExpanded] = useState(true);
 
   const vtReportRef = useRef<HTMLDivElement>(null);
   const [exportingPDF, setExportingPDF] = useState(false);
@@ -1435,10 +1436,22 @@ export function Colaboradores({ }: ColaboradoresProps) {
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
       // Add Salomão Logo at the top left
-      // Assume the logo is accessible at the public path or imported if needed.
-      // Easiest is to use the existing logo path from the project, e.g., /logo-salomao.png
+      // Ensure aspect ratio is preserved
       try {
-        pdf.addImage('/logo-salomao.png', 'PNG', 10, 10, 40, 15);
+        const logoImg = new Image();
+        logoImg.src = '/logo-salomao.png';
+        await new Promise((resolve) => {
+          logoImg.onload = resolve;
+          logoImg.onerror = resolve;
+        });
+
+        if (logoImg.width && logoImg.height) {
+          const logoWidth = 40;
+          const logoHeight = (logoImg.height * logoWidth) / logoImg.width;
+          pdf.addImage(logoImg, 'PNG', 10, 10, logoWidth, logoHeight);
+        } else {
+          pdf.addImage('/logo-salomao.png', 'PNG', 10, 10, 40, 15);
+        }
       } catch (e) {
         console.warn('Could not load logo for PDF', e);
       }
@@ -2475,9 +2488,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             cursor={{ fill: '#f1f5f9' }}
                           />
                           <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                          <Bar dataKey="Atual" fill="#1e3a8a" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="Cenário 1" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="Cenário 2" fill="#10b981" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="Atual" fill="#1e3a8a" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Atual" position="top" formatter={(val: number) => `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e3a8a' }} />
+                          </Bar>
+                          <Bar dataKey="Cenário 1" fill="#f59e0b" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Cenário 1" position="top" formatter={(val: number) => `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f59e0b' }} />
+                          </Bar>
+                          <Bar dataKey="Cenário 2" fill="#10b981" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Cenário 2" position="top" formatter={(val: number) => `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#10b981' }} />
+                          </Bar>
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
