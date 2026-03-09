@@ -1,6 +1,7 @@
 import { X, Users, Briefcase, Bot, UserPlus, UploadCloud, Loader2, ArrowLeft } from 'lucide-react'
 import { useEscKey } from '../../../hooks/useEscKey'
 import { useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../../../lib/supabase'
 
 export type VagasCreationType = 'vaga' | 'candidato' | { type: 'candidato_ia', data: any, file: File }
@@ -102,7 +103,7 @@ export function VagasSelectionModal({ isOpen, onClose, onSelect }: VagasSelectio
         }
     }
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50">
@@ -244,6 +245,7 @@ export function VagasSelectionModal({ isOpen, onClose, onSelect }: VagasSelectio
                     </p>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }
