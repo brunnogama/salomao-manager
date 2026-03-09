@@ -2158,6 +2158,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     { id: 'Metrô', label: 'Metrô', value: 'Metrô' },
                     { id: 'Ônibus', label: 'Ônibus', value: 'Ônibus' },
                     { id: 'Trem', label: 'Trem', value: 'Trem' },
+                    { id: 'Van', label: 'Van', value: 'Van' },
+                    { id: 'BRT', label: 'BRT', value: 'BRT' },
                     { id: 'VLT', label: 'VLT', value: 'VLT' },
                     { id: 'Barcas', label: 'Barcas', value: 'Barcas' },
                     { id: 'Não Optante', label: 'Não Optante', value: 'Não Optante' }

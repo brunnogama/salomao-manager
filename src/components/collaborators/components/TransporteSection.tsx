@@ -245,6 +245,8 @@ export function TransporteSection({
                             { id: 'Metrô', name: 'Metrô' },
                             { id: 'Ônibus', name: 'Ônibus' },
                             { id: 'Trem', name: 'Trem' },
+                            { id: 'Van', name: 'Van' },
+                            { id: 'BRT', name: 'BRT' },
                             { id: 'VLT', name: 'VLT' },
                             { id: 'Barcas', name: 'Barcas' },
                             { id: 'Não Optante', name: 'Não Optante' }
