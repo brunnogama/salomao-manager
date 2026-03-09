@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Briefcase, Plus, Trash2, Loader2, Edit2, Check, Search } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 
@@ -34,6 +34,8 @@ export function CandidatoExperienciasSection({
     const [availableTags, setAvailableTags] = useState<string[]>([])
     const [cursorPositionExp, setCursorPositionExp] = useState(0)
     const [tagDropdownSearch, setTagDropdownSearch] = useState('')
+    const [dropdownTop, setDropdownTop] = useState(0)
+    const perfilExpTextareaRef = useRef<HTMLTextAreaElement>(null)
 
     // Edit states
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -180,6 +182,14 @@ export function CandidatoExperienciasSection({
             setIsTaggingExp(true);
             setTagSearchExp(text.substring(lastAtSymbol + 1, position));
             setCursorPositionExp(lastAtSymbol);
+
+            // Calcular posição vertical do cursor
+            const textBeforeCursor = text.substring(0, position);
+            const lineNumber = textBeforeCursor.split('\n').length;
+            const lineHeight = 20;
+            const paddingTop = 16; // p-4
+            const scrollTop = e.target.scrollTop || 0;
+            setDropdownTop(paddingTop + (lineNumber * lineHeight) - scrollTop);
         } else {
             setIsTaggingExp(false);
         }
@@ -307,13 +317,14 @@ export function CandidatoExperienciasSection({
                         </label>
                         <div className="relative">
                             <textarea
+                                ref={perfilExpTextareaRef}
                                 className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl p-4 min-h-[100px] focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all resize-none shadow-sm"
                                 placeholder="Descreva as atividades, habilidades... Use @ para usar tags da nuvem de talentos"
                                 value={perfilExp}
                                 onChange={handlePerfilExpChange}
                             />
                             {isTaggingExp && (
-                                <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-64 overflow-hidden flex flex-col">
+                                <div className="absolute left-0 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-64 overflow-hidden flex flex-col" style={{ top: `${dropdownTop}px` }}>
                                     <div className="px-2 py-2 border-b border-gray-100 sticky top-0 bg-white">
                                         <div className="relative">
                                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />

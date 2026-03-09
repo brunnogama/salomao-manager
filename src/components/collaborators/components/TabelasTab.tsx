@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Plus, Loader2, Save, Trash2, Edit2, X, ArrowRight, ArrowLeft, Tag, Briefcase, GraduationCap, Search } from 'lucide-react';
 import { formatDbMoneyToDisplay } from '../utils/colaboradoresUtils';
@@ -52,6 +52,8 @@ export function TabelasTab() {
     const [cursorPosition, setCursorPosition] = useState(0);
     const [availableTags, setAvailableTags] = useState<{ tag: string, area?: string }[]>([]);
     const [tagDropdownSearch, setTagDropdownSearch] = useState('');
+    const [dropdownTop, setDropdownTop] = useState(0);
+    const tagsTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Derived state for Roles
     const [rolesJuridico, setRolesJuridico] = useState<Role[]>([]);
@@ -278,6 +280,14 @@ export function TabelasTab() {
             setIsTagging(true);
             setTagSearch(text.substring(lastAtSymbol + 1, position));
             setCursorPosition(lastAtSymbol);
+
+            // Calcular posição vertical do cursor
+            const textBeforeCursor = text.substring(0, position);
+            const lineNumber = textBeforeCursor.split('\n').length;
+            const lineHeight = 20;
+            const paddingTop = 12; // p-3
+            const scrollTop = e.target.scrollTop || 0;
+            setDropdownTop(paddingTop + (lineNumber * lineHeight) - scrollTop);
         } else {
             setIsTagging(false);
         }
@@ -878,12 +888,14 @@ export function TabelasTab() {
                         </div>
 
                         <div className="p-6">
-                            <div className="relative">
+                            <div>
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex justify-between items-center">
                                     Tags Padrão
                                     <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Use @ para pesquisar tags</span>
                                 </label>
+                                <div className="relative">
                                 <textarea
+                                    ref={tagsTextareaRef}
                                     value={editingRole?.default_tags || ''}
                                     onChange={handleTagsChange}
                                     placeholder="Descreva as tags (cada linha salva vira uma tag)&#10;Ex:&#10;Experiência no contencioso cível&#10;Legalone&#10;&#10;Dica: Use @ para buscar na nuvem de talentos"
@@ -892,7 +904,7 @@ export function TabelasTab() {
 
                                 {/* Sub-menu for @ tags */}
                                 {isTagging && (
-                                    <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-64 overflow-hidden flex flex-col">
+                                    <div className="absolute left-0 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-64 overflow-hidden flex flex-col" style={{ top: `${dropdownTop}px` }}>
                                         <div className="px-2 py-2 border-b border-gray-100 sticky top-0 bg-white">
                                             <div className="relative">
                                                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
@@ -939,6 +951,7 @@ export function TabelasTab() {
                                         </div>
                                     </div>
                                 )}
+                                </div>
                             </div>
                             <p className="text-xs text-gray-500 mt-4 leading-relaxed">
                                 Estas tags serão preenchidas automaticamente no campo <strong>Perfil</strong> ao criar uma nova Vaga vinculada a este Cargo.

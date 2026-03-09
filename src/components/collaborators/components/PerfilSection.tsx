@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Tag, Save, AlertCircle, Loader2, Sparkles, Search } from 'lucide-react';
 
@@ -19,6 +19,8 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
     const [availableTags, setAvailableTags] = useState<string[]>([]);
     const [cursorPosition, setCursorPosition] = useState(0);
     const [tagDropdownSearch, setTagDropdownSearch] = useState('');
+    const [dropdownTop, setDropdownTop] = useState(0);
+    const perfilTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         fetchPerfil();
@@ -68,6 +70,14 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
             setIsTagging(true);
             setTagSearch(text.substring(lastAtSymbol + 1, position));
             setCursorPosition(lastAtSymbol);
+
+            // Calcular posição vertical do cursor no textarea
+            const textBeforeCursor = text.substring(0, position);
+            const lineNumber = textBeforeCursor.split('\n').length;
+            const lineHeight = 20; // text-sm line-height aprox
+            const paddingTop = 16; // p-4
+            const scrollTop = e.target.scrollTop || 0;
+            setDropdownTop(paddingTop + (lineNumber * lineHeight) - scrollTop);
         } else {
             setIsTagging(false);
         }
@@ -231,12 +241,14 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
                     />
                 </div>
 
-                <div className="relative">
+                <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1 flex justify-between">
                         Tags de Perfil
                         <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Dica: Use @ para buscar na nuvem</span>
                     </label>
+                    <div className="relative">
                     <textarea
+                        ref={perfilTextareaRef}
                         value={perfil}
                         onChange={handlePerfilChange}
                         placeholder="Adicione habilidades, experiências e competências...&#10;Cada linha vira uma tag técnica automaticamente."
@@ -244,7 +256,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
                     />
 
                     {isTagging && (
-                        <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-64 overflow-hidden ring-1 ring-black/5 flex flex-col">
+                        <div className="absolute left-0 w-full bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-64 overflow-hidden ring-1 ring-black/5 flex flex-col" style={{ top: `${dropdownTop}px` }}>
                             <div className="px-2 py-2 border-b border-gray-100 sticky top-0 bg-white">
                                 <div className="relative">
                                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
@@ -281,6 +293,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
                             </div>
                         </div>
                     )}
+                    </div>
                 </div>
 
                 {/* Tag Cloud Visualization */}
