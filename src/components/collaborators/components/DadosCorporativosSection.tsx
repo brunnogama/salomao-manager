@@ -273,7 +273,13 @@ export function DadosCorporativosSection({
                 tableName="roles"
                 clientFilter={(item: any) => {
                   const roleName = item.name.toLowerCase();
-                  const isJuridico = roleName.includes('advogado') || roleName.includes('sócio') || roleName.includes('socio') || roleName.includes('estagiário') || roleName.includes('estagiario');
+                  const isJuridico = roleName.includes('advogado') ||
+                    roleName.includes('sócio') ||
+                    roleName.includes('socio') ||
+                    roleName.includes('estagiário') ||
+                    roleName.includes('estagiario') ||
+                    roleName.includes('jurídico') ||
+                    roleName.includes('juridico');
                   if (formData.area === 'Jurídica') {
                     return isJuridico;
                   } else if (formData.area === 'Administrativa') {
