@@ -58,7 +58,10 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   Legend,
-  LabelList
+  LabelList,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -2474,40 +2477,101 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   }
                 ];
 
+                // Agrupando para o Pie Chart (Líder Direto -> Valor Atual)
+                const costByLeader: Record<string, number> = {};
+                activeColabs.forEach(c => {
+                  const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
+                  const isEstagio = c.contract_type === 'Estágio' || roleName.includes('estagiário') || roleName.includes('estagiario') || roleName.includes('estagio') || roleName.includes('estágio');
+                  if (isEstagio) {
+                    let colabVtDaily = 0;
+                    if (c.transportes && Array.isArray(c.transportes)) {
+                      colabVtDaily = c.transportes.reduce((tAcc, t) => {
+                        const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                        const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+                        return tAcc + idaSum + voltaSum;
+                      }, 0);
+                    }
+                    const leaderName = (c as any).leader?.name || 'S/ Líder';
+                    costByLeader[leaderName] = (costByLeader[leaderName] || 0) + (colabVtDaily * workingDays);
+                  }
+                });
+
+                const pieData = Object.entries(costByLeader)
+                  .map(([name, value]) => ({ name, value }))
+                  .sort((a, b) => b.value - a.value)
+                  .filter(item => item.value > 0);
+
+                const COLORS = ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#64748b'];
+
                 return (
                   <div className="mb-8 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
                     <h4 className="text-md font-black text-[#1e3a8a] uppercase tracking-wider mb-4">Comparativo de Custos Mensais (Apenas Estagiários)</h4>
-                    <div className="h-64 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={chartData}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
-                          <YAxis
-                            tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
-                            tick={{ fill: '#64748b', fontSize: 11 }}
-                            axisLine={false}
-                            tickLine={false}
-                          />
-                          <RechartsTooltip
-                            formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            cursor={{ fill: '#f1f5f9' }}
-                          />
-                          <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                          <Bar dataKey="Atual" fill="#1e3a8a" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="Atual" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e3a8a' }} />
-                          </Bar>
-                          <Bar dataKey="Cenário 1" fill="#f59e0b" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="Cenário 1" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f59e0b' }} />
-                          </Bar>
-                          <Bar dataKey="Cenário 2" fill="#10b981" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="Cenário 2" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#10b981' }} />
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Bar Chart (Current vs Scenarios) */}
+                      <div className="h-64 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={chartData}
+                            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                            <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+                            <YAxis
+                              tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
+                              tick={{ fill: '#64748b', fontSize: 11 }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <RechartsTooltip
+                              formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                              cursor={{ fill: '#f1f5f9' }}
+                            />
+                            <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                            <Bar dataKey="Atual" fill="#1e3a8a" radius={[4, 4, 0, 0]}>
+                              <LabelList dataKey="Atual" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e3a8a' }} />
+                            </Bar>
+                            <Bar dataKey="Cenário 1" fill="#f59e0b" radius={[4, 4, 0, 0]}>
+                              <LabelList dataKey="Cenário 1" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f59e0b' }} />
+                            </Bar>
+                            <Bar dataKey="Cenário 2" fill="#10b981" radius={[4, 4, 0, 0]}>
+                              <LabelList dataKey="Cenário 2" position="top" formatter={(val: number) => val === 0 ? '' : `R$ ${val.toLocaleString('pt-BR')}`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#10b981' }} />
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Donut Chart (Cost by Leader) */}
+                      <div className="h-64 w-full flex flex-col items-center">
+                        <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Custo Atual por Líder Direto</h5>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={pieData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={2}
+                              dataKey="value"
+                            >
+                              {pieData.map((_, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <RechartsTooltip
+                              formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            />
+                            <Legend
+                              layout="vertical"
+                              verticalAlign="middle"
+                              align="right"
+                              wrapperStyle={{ fontSize: '11px', fontWeight: "bold" }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
                 );
@@ -2520,7 +2584,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 const workingDays = getWorkingDaysInCurrentMonth();
                 const activeColabs = colaboradores.filter(c => c.status === 'active');
 
-                const vtColaboradores = activeColabs
+                // Filtra os colaboradores do grupo atual (Estágio vs CLT)
+                const groupColaboradores = activeColabs
                   .filter(c => {
                     if (groupConfig.type === 'Estágio') {
                       const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
@@ -2546,19 +2611,30 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   })
                   .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-                if (vtColaboradores.length === 0) return null;
+                if (groupColaboradores.length === 0) return null;
 
+                // Agrupando os dados de acordo com o tipo
+                const groupedData: Record<string, typeof groupColaboradores> = {};
                 let overallCount = 0;
                 let overallVt = 0;
-                let overallFix200 = 0;
-                let overallFix300 = 0;
+                let overallEconomia1 = 0;
+                let overallEconomia2 = 0;
 
-                vtColaboradores.forEach(colab => {
-                  overallCount += 1;
+                groupColaboradores.forEach(colab => {
+                  const groupKey = groupConfig.type === 'Estágio' ? colab.liderName : colab.atuacaoName;
+                  if (!groupedData[groupKey]) groupedData[groupKey] = [];
+                  groupedData[groupKey].push(colab);
+
+                  overallCount++;
                   overallVt += colab.currentVtTotal;
-                  overallFix200 += customVt1;
-                  overallFix300 += customVt2;
+                  if (groupConfig.type === 'Estágio') {
+                    overallEconomia1 += Math.max(0, colab.currentVtTotal - customVt1);
+                    overallEconomia2 += Math.max(0, colab.currentVtTotal - customVt2);
+                  }
                 });
+
+                // Ordenar as chaves de agrupamento
+                const sortedGroupKeys = Object.keys(groupedData).sort((a, b) => a.localeCompare(b));
 
                 return (
                   <div key={idx} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">
@@ -2580,82 +2656,146 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
                               <th className="p-4">Colaborador</th>
                               <th className="p-4 text-center">Vínculo</th>
-                              <th className="p-4 text-center">Atuação</th>
-                              <th className="p-4 text-center">Líder Direto</th>
+                              {groupConfig.type === 'CLT' ? (
+                                <th className="p-4 text-center">Líder Direto</th>
+                              ) : (
+                                <th className="p-4 text-center">Atuação</th>
+                              )}
                               <th className="p-4 text-right">VT Calculado (Atual)</th>
-                              <th className="p-4 text-right">
-                                <div className="flex flex-col items-end gap-1">
-                                  <span>Cenário 1</span>
-                                  {exportingPDF ? (
-                                    <span className="text-amber-600 font-bold text-xs">R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt1)}</span>
-                                  ) : (
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-gray-400 font-medium">R$</span>
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
-                                        value={customVt1}
-                                        onChange={(e) => setCustomVt1(Number(e.target.value) || 0)}
-                                        onClick={(e) => e.stopPropagation()}
-                                      />
+
+                              {groupConfig.type === 'Estágio' && (
+                                <>
+                                  <th className="p-4 text-right">
+                                    <div className="flex flex-col items-end gap-1">
+                                      <span>Economia (Cenário 1)</span>
+                                      {exportingPDF ? (
+                                        <span className="text-amber-600 font-bold text-xs">Custo Alvo: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt1)}</span>
+                                      ) : (
+                                        <div className="flex items-center gap-1" title="Defina o teto do VT neste cenário">
+                                          <span className="text-gray-400 font-medium tooltip">Teto: R$</span>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                                            value={customVt1}
+                                            onChange={(e) => setCustomVt1(Number(e.target.value) || 0)}
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
-                                </div>
-                              </th>
-                              <th className="p-4 text-right">
-                                <div className="flex flex-col items-end gap-1">
-                                  <span>Cenário 2</span>
-                                  {exportingPDF ? (
-                                    <span className="text-amber-600 font-bold text-xs">R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt2)}</span>
-                                  ) : (
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-gray-400 font-medium">R$</span>
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
-                                        value={customVt2}
-                                        onChange={(e) => setCustomVt2(Number(e.target.value) || 0)}
-                                        onClick={(e) => e.stopPropagation()}
-                                      />
+                                  </th>
+                                  <th className="p-4 text-right">
+                                    <div className="flex flex-col items-end gap-1">
+                                      <span>Economia (Cenário 2)</span>
+                                      {exportingPDF ? (
+                                        <span className="text-amber-600 font-bold text-xs">Custo Alvo: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(customVt2)}</span>
+                                      ) : (
+                                        <div className="flex items-center gap-1" title="Defina o teto do VT neste cenário">
+                                          <span className="text-gray-400 font-medium">Teto: R$</span>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            className="w-20 px-2 py-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none text-right"
+                                            value={customVt2}
+                                            onChange={(e) => setCustomVt2(Number(e.target.value) || 0)}
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
-                                </div>
-                              </th>
+                                  </th>
+                                </>
+                              )}
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-50">
-                            {vtColaboradores.map(colab => (
-                              <tr key={colab.id} className="hover:bg-blue-50/30 transition-colors group">
-                                <td className="p-4 text-sm font-bold text-[#0a192f]">{colab.name}</td>
-                                <td className="p-4 text-sm font-medium text-gray-600 text-center">
-                                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{colab.contract_type}</span>
-                                </td>
-                                <td className="p-4 text-sm font-medium text-gray-500 text-center">{colab.atuacaoName}</td>
-                                <td className="p-4 text-sm font-medium text-gray-500 text-center">{colab.liderName}</td>
-                                <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
-                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(colab.currentVtTotal)}
-                                </td>
-                                <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors">
-                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customVt1)}
-                                </td>
-                                <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors">
-                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customVt2)}
-                                </td>
-                              </tr>
-                            ))}
-                            <tr className="bg-gradient-to-r from-emerald-50 to-white/50 border-t-2 border-emerald-100">
-                              <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider" colSpan={4}>Total do Grupo ({overallCount})</td>
+                            {sortedGroupKeys.map(groupKey => {
+                              const colabsInGroup = groupedData[groupKey];
+                              const groupSubtotalVt = colabsInGroup.reduce((acc, curr) => acc + curr.currentVtTotal, 0);
+                              const groupSubtotalEco1 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt1), 0);
+                              const groupSubtotalEco2 = colabsInGroup.reduce((acc, curr) => acc + Math.max(0, curr.currentVtTotal - customVt2), 0);
+
+                              return (
+                                <React.Fragment key={groupKey}>
+                                  {/* Cabeçalho do Grupo */}
+                                  <tr className="bg-gray-50/80">
+                                    <td colSpan={groupConfig.type === 'Estágio' ? 6 : 4} className="p-3 text-xs font-bold text-[#1e3a8a]">
+                                      {groupConfig.type === 'Estágio' ? 'Líder Direto: ' : 'Atuação: '} {groupKey} ({colabsInGroup.length})
+                                    </td>
+                                  </tr>
+
+                                  {/* Linhas do Grupo */}
+                                  {colabsInGroup.map(colab => {
+                                    const economia1 = Math.max(0, colab.currentVtTotal - customVt1);
+                                    const economia2 = Math.max(0, colab.currentVtTotal - customVt2);
+
+                                    return (
+                                      <tr key={colab.id} className="hover:bg-blue-50/30 transition-colors group">
+                                        <td className="p-4 text-sm font-bold text-[#0a192f] pl-8">{colab.name}</td>
+                                        <td className="p-4 text-sm font-medium text-gray-600 text-center">
+                                          <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{colab.contract_type}</span>
+                                        </td>
+                                        <td className="p-4 text-sm font-medium text-gray-500 text-center">
+                                          {groupConfig.type === 'CLT' ? colab.liderName : colab.atuacaoName}
+                                        </td>
+                                        <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
+                                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(colab.currentVtTotal)}
+                                        </td>
+
+                                        {groupConfig.type === 'Estágio' && (
+                                          <>
+                                            <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt1}, a economia será este valor.`}>
+                                              {economia1 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia1) : '-'}
+                                            </td>
+                                            <td className="p-4 text-sm font-bold text-gray-600 text-right group-hover:text-amber-600 transition-colors" title={`Se o teto for R$ ${customVt2}, a economia será este valor.`}>
+                                              {economia2 > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(economia2) : '-'}
+                                            </td>
+                                          </>
+                                        )}
+                                      </tr>
+                                    );
+                                  })}
+
+                                  {/* Subtotal do Grupo */}
+                                  <tr className="bg-gray-50/50 border-b-2 border-gray-200">
+                                    <td colSpan={3} className="p-3 text-xs font-bold text-gray-600 text-right">
+                                      Subtotal {groupKey}:
+                                    </td>
+                                    <td className="p-3 text-sm font-black text-[#1e3a8a] text-right">
+                                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalVt)}
+                                    </td>
+                                    {groupConfig.type === 'Estágio' && (
+                                      <>
+                                        <td className="p-3 text-sm font-bold text-amber-600 text-right">
+                                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco1)}
+                                        </td>
+                                        <td className="p-3 text-sm font-bold text-amber-600 text-right">
+                                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(groupSubtotalEco2)}
+                                        </td>
+                                      </>
+                                    )}
+                                  </tr>
+                                </React.Fragment>
+                              );
+                            })}
+
+                            {/* Total Geral de todos os grupos combinados */}
+                            <tr className="bg-gradient-to-r from-emerald-50 to-white/50 border-t-2 border-emerald-200">
+                              <td className="p-4 text-sm font-black text-emerald-800 uppercase tracking-wider" colSpan={3}>Total Geral ({overallCount})</td>
                               <td className="p-4 text-base font-black text-emerald-700 text-right">
                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallVt)}
                               </td>
-                              <td className="p-4 text-sm font-black text-emerald-700/80 text-right">
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallFix200)}
-                              </td>
-                              <td className="p-4 text-sm font-black text-emerald-700/80 text-right">
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallFix300)}
-                              </td>
+                              {groupConfig.type === 'Estágio' && (
+                                <>
+                                  <td className="p-4 text-base font-black text-emerald-700 text-right">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia1)}
+                                  </td>
+                                  <td className="p-4 text-base font-black text-emerald-700 text-right">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(overallEconomia2)}
+                                  </td>
+                                </>
+                              )}
                             </tr>
                           </tbody>
                         </table>
