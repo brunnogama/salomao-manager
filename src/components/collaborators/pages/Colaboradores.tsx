@@ -6,7 +6,7 @@ import {
   Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon, ChevronDown, ChevronRight
 } from 'lucide-react'
 
-import { exportColaboradoresXLSX } from '../utils/exportColaboradores'
+import { exportColaboradoresXLSX, exportVTXLSX } from '../utils/exportColaboradores'
 import { supabase } from '../../../lib/supabase'
 import { logAction } from '../../../lib/logger'
 
@@ -1031,8 +1031,31 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   const handleExportVT = () => {
     const activeColabs = colaboradores.filter(c => c.status === 'active');
-    const vtColabs = activeColabs.filter(c => c.contract_type === 'CLT' || c.contract_type === 'Estágio');
-    exportColaboradoresXLSX({
+
+    const vtColabs = activeColabs
+      .filter(c => {
+        const roleName = ((c as any).roles?.name || String(c.role || '')).toLowerCase();
+        const isEstagio = c.contract_type === 'Estágio' || roleName.includes('estagiário') || roleName.includes('estagiario') || roleName.includes('estagio') || roleName.includes('estágio');
+        const isCLT = c.contract_type === 'CLT';
+        return isEstagio || isCLT;
+      })
+      .map(c => {
+        let colabVtDaily = 0;
+        if (c.transportes && Array.isArray(c.transportes)) {
+          colabVtDaily = c.transportes.reduce((tAcc, t) => {
+            const idaSum = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+            const voltaSum = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+            return tAcc + idaSum + voltaSum;
+          }, 0);
+        }
+
+        return {
+          ...c,
+          currentVtTotal: colabVtDaily * getWorkingDaysInCurrentMonth()
+        };
+      });
+
+    exportVTXLSX({
       filtered: vtColabs,
       rateios,
       hiringReasons,
@@ -1045,8 +1068,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       locations,
       teams,
       atuacoes,
-      fileName: `Custo_Vale_Transporte_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}`
-    })
+    });
   };
 
   const calcAgeRange = (start: string, end: string) => {
