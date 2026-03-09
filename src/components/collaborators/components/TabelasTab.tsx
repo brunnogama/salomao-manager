@@ -697,7 +697,7 @@ export function TabelasTab() {
                                                                 </span>
                                                             )}
                                                             {tagItem.area === 'Administrativa' && (
-                                                                <span className="px-2 py-1 bg-gray-100 text-gray-600 border border-gray-200 text-[10px] font-bold uppercase tracking-wider rounded-lg">
+                                                                <span className="px-2 py-1 bg-orange-50 text-orange-600 border border-orange-200 text-[10px] font-bold uppercase tracking-wider rounded-lg">
                                                                     Administrativa
                                                                 </span>
                                                             )}
