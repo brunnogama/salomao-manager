@@ -2620,7 +2620,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           atuacaoName: (c as any).atuacoes?.name || c.atuacao || 'S/ Atuação',
                           liderName: (c as any).leader?.name || 'S/ Líder',
                           localName: (c as any).locations?.name || c.local || '-',
-                          bairroName: (c as any).bairro || '-',
+                          bairroName: (c as any).neighborhood || '-',
                           currentVtTotal: colabVtDaily * workingDays
                         };
                       })
