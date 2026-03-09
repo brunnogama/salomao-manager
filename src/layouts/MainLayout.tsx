@@ -142,7 +142,7 @@ export function MainLayout() {
             </div>
 
             {/* Main content area */}
-            <main className={`flex-1 flex flex-col h-screen overflow-hidden min-w-0 transition-all duration-300`}>
+            <main className={`flex-1 flex flex-col h-screen overflow-hidden min-w-0 transition-[flex,width,margin,padding] duration-300`}>
                 {!isRoot && (
                     <div className="md:hidden bg-white border-b px-4 py-3 flex items-center">
                         <button
