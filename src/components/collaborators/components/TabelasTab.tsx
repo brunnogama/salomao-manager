@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Plus, Loader2, Save, Trash2, Edit2, X, Table as TableIcon } from 'lucide-react';
 import { formatDbMoneyToDisplay } from '../utils/colaboradoresUtils';
+import { ConfirmationModal } from '../../ui/ConfirmationModal';
 
 interface BolsaEstagioRule {
     id: string;
@@ -22,6 +23,9 @@ export function TabelasTab() {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRule, setEditingRule] = useState<Partial<BolsaEstagioRule> | null>(null);
+
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
 
     useEffect(() => {
         fetchRules();
@@ -105,17 +109,24 @@ export function TabelasTab() {
         }
     };
 
-    const handleDeleteRule = async (id: string) => {
-        if (!window.confirm('Tem certeza que deseja excluir esta regra?')) return;
+    const handleConfirmDelete = (id: string) => {
+        setRuleToDelete(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    const executeDeleteRule = async () => {
+        if (!ruleToDelete) return;
 
         try {
             const { error } = await supabase
                 .from('bolsa_estagio_rules')
                 .delete()
-                .eq('id', id);
+                .eq('id', ruleToDelete);
 
             if (error) throw error;
             await fetchRules();
+            setRuleToDelete(null);
+            setIsDeleteModalOpen(false);
         } catch (error) {
             console.error('Erro ao excluir regra:', error);
             alert('Erro ao excluir a regra. Tente novamente.');
@@ -205,7 +216,7 @@ export function TabelasTab() {
                                                         <Edit2 className="h-4 w-4" />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDeleteRule(rule.id)}
+                                                        onClick={() => handleConfirmDelete(rule.id)}
                                                         className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                                                         title="Excluir"
                                                     >
@@ -328,6 +339,17 @@ export function TabelasTab() {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={executeDeleteRule}
+                title="Excluir Regra"
+                description="Tem certeza que deseja excluir esta regra? Esta ação não pode ser desfeita."
+                confirmText="Excluir"
+                cancelText="Cancelar"
+                variant="danger"
+            />
         </div>
     );
 }
