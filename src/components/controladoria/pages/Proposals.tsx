@@ -66,7 +66,7 @@ export function Proposals() {
 
   // Modal State (for after generation)
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [caseSaved, setCaseSaved] = useState(false);
+  const [, setCaseSaved] = useState(false);
   const caseSavedRef = useRef(false);
   const [contractFormData, setContractFormData] = useState<Contract>({} as Contract);
   const [processes, setProcesses] = useState<ContractProcess[]>([]);
@@ -167,9 +167,23 @@ export function Proposals() {
   };
 
   const fetchClients = async () => {
-    const { data } = await supabase.from('clients').select('name, cnpj').order('name');
+    const { data } = await supabase.from('clients').select('id, name, cnpj').order('name');
     if (data) {
-      setClientOptions(data.map(c => ({ label: c.name, value: c.name }))); // Value is name for the proposal
+      // Remove exact duplicates (same name and CNPJ) just in case
+      const uniqueClients: any[] = [];
+      const seen = new Set();
+      data.forEach(c => {
+        const key = `${c.name}-${c.cnpj || ''}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueClients.push(c);
+        }
+      });
+      // Store JSON in value to easily retrieve name and cnpj when selected
+      setClientOptions(uniqueClients.map(c => ({
+        label: c.cnpj ? `${c.name} - ${maskCNPJ(c.cnpj)}` : c.name,
+        value: JSON.stringify({ name: c.name, cnpj: c.cnpj, id: c.id })
+      })));
     }
   };
 
@@ -325,13 +339,28 @@ export function Proposals() {
     });
   };
 
-  const handleClientNameChange = async (name: string) => {
-    setProposalData(prev => ({ ...prev, clientName: name }));
-    // Try to find CNPJ if existing client selected
-    if (name) {
-      const { data } = await supabase.from('clients').select('cnpj').eq('name', name).maybeSingle();
-      if (data && data.cnpj) {
-        setProposalData(prev => ({ ...prev, cnpj: maskCNPJ(data.cnpj) }));
+  const handleClientNameChange = async (val: string) => {
+    try {
+      // Try parsing if it's the JSON string from dropdown
+      const parsed = JSON.parse(val);
+      if (parsed && typeof parsed === 'object') {
+        setProposalData(prev => ({
+          ...prev,
+          clientName: parsed.name,
+          cnpj: parsed.cnpj ? maskCNPJ(parsed.cnpj) : ''
+        }));
+        return;
+      }
+    } catch {
+      // It's a custom string typed by the user
+      setProposalData(prev => ({ ...prev, clientName: val }));
+
+      // Try to find CNPJ if existing client typed exactly
+      if (val) {
+        const { data } = await supabase.from('clients').select('cnpj').eq('name', val).maybeSingle();
+        if (data && data.cnpj) {
+          setProposalData(prev => ({ ...prev, cnpj: maskCNPJ(data.cnpj) }));
+        }
       }
     }
   };
@@ -584,7 +613,7 @@ export function Proposals() {
 
     proposalData.intermediate_fee_clauses.forEach((c) => {
       if (c.value) {
-        text += `2.${clauseIndex}. Êxito intermediário: ${c.value}, ${c.description || '[descrição]'}\n\n`;
+        text += `2.${clauseIndex}. Êxito intermediário de ${c.value}, ${c.description || '[descrição]'}\n\n`;
         clauseIndex++;
       }
     });
@@ -643,8 +672,6 @@ export function Proposals() {
 
     try {
       // 1. Create Contract Record
-
-      // 1. Create Contract Record
       const {
         contractData: newContract,
         primaryPartner,
@@ -688,10 +715,8 @@ export function Proposals() {
 
       // 3. Generate DOCX
       // Prepare full data object for generator
-      // 3. Generate DOCX
-      // Prepare full data object for generator
       const fullContractData: any = prepareFullContractData(
-        insertedContract,
+        newContract,
         primaryPartner,
         proposalCode,
         currencyExtras,
@@ -701,6 +726,13 @@ export function Proposals() {
         proLaboreExtras,
         proLaboreExtrasClauses
       );
+
+      // FORCE update of body text if not explicitly customized, so latest form values are compiled
+      // This needs to be done *before* generating the DOCX, and `generateDefaultBodyText` relies on `proposalData`
+      // which might be cleared later.
+      if (!isEditingBody && !customBodyText) {
+        fullContractData.custom_body_text = generateDefaultBodyText();
+      }
 
       const docBlob = await generateProposalDocx(fullContractData, proposalCode);
       const fileName = `Proposta_${proposalData.clientName.replace(/[^a-z0-9]/gi, '_')}_${proposalCode}.docx`;
@@ -804,6 +836,13 @@ export function Proposals() {
         proLaboreExtras,
         proLaboreExtrasClauses
       );
+
+      // FORCE update of body text if not explicitly customized, so latest form values are compiled
+      // This needs to be done *before* generating the DOCX, and `generateDefaultBodyText` relies on `proposalData`
+      // which might be cleared later.
+      if (!isEditingBody && !customBodyText) {
+        fullContractData.custom_body_text = generateDefaultBodyText();
+      }
 
       const docBlob = await generateProposalDocx(fullContractData, proposalCode);
       const fileName = `Proposta_${proposalData.clientName.replace(/[^a-z0-9]/gi, '_')}_${proposalCode}.docx`;
