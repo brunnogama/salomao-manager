@@ -2294,7 +2294,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   }
                   return {
                     ...c,
-                    teamName: (c as any).teams?.name || c.equipe || 'S/ Equipe',
+                    atuacaoName: (c as any).atuacoes?.name || c.atuacao || 'S/ Atuação',
                     liderName: (c as any).leader?.name || 'S/ Líder',
                     currentVtTotal: colabVtDaily * workingDays
                   };
@@ -2335,7 +2335,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
                             <th className="p-4">Colaborador</th>
                             <th className="p-4 text-center">Vínculo</th>
-                            <th className="p-4 text-center">Equipe</th>
+                            <th className="p-4 text-center">Atuação</th>
                             <th className="p-4 text-center">Líder Direto</th>
                             <th className="p-4 text-right">VT Calculado (Atual)</th>
                             <th className="p-4 text-right">
@@ -2379,7 +2379,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               <td className="p-4 text-sm font-medium text-gray-600 text-center">
                                 <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{colab.contract_type}</span>
                               </td>
-                              <td className="p-4 text-sm font-medium text-gray-500 text-center">{colab.teamName}</td>
+                              <td className="p-4 text-sm font-medium text-gray-500 text-center">{colab.atuacaoName}</td>
                               <td className="p-4 text-sm font-medium text-gray-500 text-center">{colab.liderName}</td>
                               <td className="p-4 text-sm font-black text-[#1e3a8a] text-right">
                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(colab.currentVtTotal)}
