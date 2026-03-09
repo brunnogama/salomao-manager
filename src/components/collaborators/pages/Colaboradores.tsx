@@ -718,8 +718,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
       }
 
       // Prepare data for save: Convert DD/MM/YYYY back to YYYY-MM-DD
+      const candidateFormData = formData as any; // Bypass TS linting for Candidate-only fields during map
       const dataToSave = {
         ...formData,
+        linkedin_url: candidateFormData.linkedin || formData.linkedin_url, // map linkedin from candidate
+        atuacao: candidateFormData.atuacao_id || formData.atuacao, // map atuacao_id from candidate
         cadastro_atualizado: false,
         birthday: formatDateToISO(formData.birthday) || null,
         hire_date: formatDateToISO(formData.hire_date) || null,
@@ -744,7 +747,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       const payload: any = {};
       Object.entries(dataToSave).forEach(([key, value]) => {
         // Skip metadata, joined objects, photo fields, and independent sections (Perfil manages its own data)
-        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs', 'oab_numero', 'oab_uf', 'oab_tipo', 'oab_emissao', 'original_role', 'role_change_date', 'perfil', 'competencias', 'resumo_cv'].includes(key)) return;
+        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs', 'oab_numero', 'oab_uf', 'oab_tipo', 'oab_emissao', 'original_role', 'role_change_date', 'perfil', 'competencias', 'resumo_cv', 'linkedin', 'atuacao_id', 'nome'].includes(key)) return;
         if (value !== null && typeof value === 'object' && !Array.isArray(value)) return;
 
         // Map empty strings to null for better DB consistency
