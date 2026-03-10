@@ -237,10 +237,25 @@ export function Demandas() {
             hasPercent = true;
         }
 
+        const checkTextForPercent = (text: any) => {
+            if (!text || typeof text !== 'string') return false;
+            const lower = text.toLowerCase();
+            return lower.includes('%') || lower.includes('percent') || lower.includes('porcentagem') || lower.includes('êxito de') || lower.includes('exito de') || lower.includes('sobre o valor');
+        }
+
+        if (checkTextForPercent(c.pro_labore_clause) || checkTextForPercent(c.final_success_fee_clause) || checkTextForPercent(c.other_fees_clause)) {
+            hasPercent = true;
+        }
+
+        if (c.pro_labore_extras_clauses && Array.isArray(c.pro_labore_extras_clauses) && c.pro_labore_extras_clauses.some(checkTextForPercent)) hasPercent = true;
+        if (c.final_success_extras_clauses && Array.isArray(c.final_success_extras_clauses) && c.final_success_extras_clauses.some(checkTextForPercent)) hasPercent = true;
+        if (c.intermediate_fees_clauses && Array.isArray(c.intermediate_fees_clauses) && c.intermediate_fees_clauses.some(checkTextForPercent)) hasPercent = true;
+
         return hasPercent;
     };
 
     const isOnlyPercentage = (c: any): boolean => {
+        if (c.timesheet) return false;
         const totalMonetary = calculateTotalProLabore(c) + calculateTotalSuccess(c);
         return totalMonetary === 0 && hasPercentageFees(c);
     };
