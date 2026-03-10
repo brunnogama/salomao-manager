@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import {
     User,
@@ -17,8 +17,49 @@ import {
     Award,
     ShieldCheck,
     Building2,
-    Calendar
+    Calendar,
+    MessageSquare
 } from 'lucide-react'
+
+// Mapeamento amigável das chaves da entrevista para labels
+const ENTREVISTA_LABELS: Record<string, string> = {
+    data_entrevista: "Entrevista realizada em",
+    entrevistadoras: "Entrevistadoras",
+    pretensao_salarial: "Pretensão Salarial",
+    pontos_fortes: "Pontos Fortes",
+    pontos_a_desenvolver: "Pontos a Desenvolver",
+    recomendacao_final: "Recomendação Final",
+    abertura_apresentacao: "Abertura e Apresentação / Trajetória",
+    experiencia_tecnica: "Experiência Técnica e Áreas de Atuação",
+    aderencia_atividades: "Aderência às atividades",
+    conclusao: "Conclusão",
+    disponibilidade: "Disponibilidade",
+    disponibilidade_inicio: "Disponibilidade para início",
+    reside: "Reside (Local)",
+    ms_office: "Conhecimento em MS Office",
+    formacao_academica: "Detalhes de Formação",
+    horario_estudo: "Horário de Estudo",
+    melhor_horario_estagio: "Melhor horário de estágio",
+    ingles: "Nível de Inglês",
+    experiencia_prof_pessoal: "Experiência profissional e pessoal",
+    exp_areas_especializacao: "Principais áreas de especialização",
+    exp_contencioso_consultivo: "Atuação com contencioso e consultivo",
+    exp_projeto_relevante: "Projeto relevante",
+    exp_atualizacao_legislacao: "Atualização de legislação",
+    lid_experiencia: "Experiência com liderança",
+    lid_delegacao: "Delegação e acompanhamento",
+    lid_conflitos: "Resolução de conflitos internos",
+    rel_clientes_dificeis: "Relacionamento com clientes difíceis",
+    rel_capacidade_negociacao: "Capacidade de negociação",
+    rel_comunicacao_nao_tecnico: "Comunicação com áreas não técnicas",
+    tomada_decisao_dificil: "Tomada de decisão difícil",
+    ali_papel_juridico: "Papel do jurídico na estratégia",
+    ali_projetos_multidisciplinares: "Projetos multidisciplinares",
+    ali_atuacao_preventiva: "Atuação preventiva vs reativa",
+    adeq_interesse: "Interesse na organização",
+    adeq_valores: "Alinhamento de valores",
+    adeq_projeto_futuro: "Projetos futuros (3 a 5 anos)"
+};
 
 export function CandidatoPublicProfile() {
     const { id } = useParams<{ id: string }>()
@@ -256,6 +297,60 @@ export function CandidatoPublicProfile() {
                                         </div>
                                     ))}
                                 </div>
+                            </section>
+                        )}
+
+                        {/* Dados da Entrevista */}
+                        {candidato.entrevista_dados && Object.keys(candidato.entrevista_dados).filter(k => candidato.entrevista_dados[k] && k !== 'cargo' && k !== 'vaga').length > 0 && (
+                            <section className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+                                <h3 className="text-sm font-black text-[#1e3a8a] uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <MessageSquare className="w-4 h-4" /> Relatório de Entrevista
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                                    {/* Mostrar os campos básicos primeiro (Data, Entrevistadoras, Pretensão, Recom.) */}
+                                    {['data_entrevista', 'entrevistadoras', 'pretensao_salarial', 'recomendacao_final'].map(key => {
+                                        const value = candidato.entrevista_dados[key];
+                                        if (!value) return null;
+                                        const displayValue = key === 'data_entrevista' ? new Date(value).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : value;
+                                        return (
+                                            <div key={key} className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{ENTREVISTA_LABELS[key] || key}</p>
+                                                <p className="text-sm font-bold text-gray-800">{displayValue}</p>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
+                                {/* Demais campos longos e perguntas abertas */}
+                                <div className="mt-8 space-y-6">
+                                    {Object.entries(candidato.entrevista_dados)
+                                        .filter(([k, v]) => v && !['cargo', 'vaga', 'data_entrevista', 'entrevistadoras', 'pretensao_salarial', 'recomendacao_final', 'pontos_fortes', 'pontos_a_desenvolver'].includes(k))
+                                        .map(([key, value]) => (
+                                            <div key={key} className="relative pl-4 border-l-2 border-blue-200">
+                                                <h4 className="text-xs font-black text-gray-500 uppercase tracking-wider mb-2">{ENTREVISTA_LABELS[key] || key.replace(/_/g, ' ')}</h4>
+                                                <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{String(value)}</p>
+                                            </div>
+                                        ))}
+                                </div>
+
+                                {/* Pontos Fortes e a Desenvolver */}
+                                {(candidato.entrevista_dados.pontos_fortes || candidato.entrevista_dados.pontos_a_desenvolver) && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 pt-6 border-t border-gray-100">
+                                        {candidato.entrevista_dados.pontos_fortes && (
+                                            <div className="bg-green-50/50 p-5 rounded-2xl border border-green-100">
+                                                <h4 className="text-xs font-black text-green-700 uppercase tracking-wider mb-2">Pontos Fortes</h4>
+                                                <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{candidato.entrevista_dados.pontos_fortes}</p>
+                                            </div>
+                                        )}
+                                        {candidato.entrevista_dados.pontos_a_desenvolver && (
+                                            <div className="bg-amber-50/50 p-5 rounded-2xl border border-amber-100">
+                                                <h4 className="text-xs font-black text-amber-700 uppercase tracking-wider mb-2">Pontos a Desenvolver</h4>
+                                                <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{candidato.entrevista_dados.pontos_a_desenvolver}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </section>
                         )}
 

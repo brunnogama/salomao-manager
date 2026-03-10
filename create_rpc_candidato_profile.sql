@@ -29,7 +29,8 @@ BEGIN
     city,
     state,
     education_history,
-    candidato_id_text
+    candidato_id_text,
+    entrevista_dados
   INTO v_candidato
   FROM candidatos
   WHERE id = p_candidato_id;
@@ -84,7 +85,8 @@ BEGIN
       'city', v_candidato.city,
       'state', v_candidato.state,
       'education_history', v_candidato.education_history,
-      'candidato_id_text', v_candidato.candidato_id_text
+      'candidato_id_text', v_candidato.candidato_id_text,
+      'entrevista_dados', COALESCE(v_candidato.entrevista_dados, '{}'::jsonb)
     ),
     'documentos', COALESCE(v_documentos, '[]'::json),
     'experiencias', COALESCE(v_experiencias, '[]'::json)
