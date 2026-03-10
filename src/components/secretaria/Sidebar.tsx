@@ -96,7 +96,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* 2. MENU PRINCIPAL */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 no-scrollbar">
           {mainItems.map((item) => (
             <Link
               key={item.path}
