@@ -67,7 +67,7 @@ export function Demandas() {
                     .select('id, name'),
                 supabase
                     .from('contracts')
-                    .select('id, client_name, contract_date, status, pro_labore, pro_labore_extras, final_success_fee, intermediate_fees, final_success_extras, timesheet')
+                    .select('id, client_name, contract_date, status, pro_labore, pro_labore_extras, final_success_fee, intermediate_fees, final_success_extras, timesheet, percent_extras, final_success_percent')
                     .eq('status', 'active') // Status active mean it's closed/signed
                     .gte('contract_date', startDate)
                     .lte('contract_date', endDate)
@@ -148,9 +148,25 @@ export function Demandas() {
         }
 
         // Remove "R$", pontos e troca vírgula por ponto
-        const cleanStr = strVal.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+        const cleanStr = strVal.replace(/[R$\s%]/g, '').replace(/\./g, '').replace(',', '.');
         const num = parseFloat(cleanStr);
         return isNaN(num) ? 0 : num;
+    };
+
+    const hasPercentageFees = (c: any): boolean => {
+        let hasPercent = false;
+        if (c.percent_extras && Array.isArray(c.percent_extras) && c.percent_extras.some((p: string) => p.trim() !== '')) {
+            hasPercent = true;
+        }
+        if (c.final_success_percent && c.final_success_percent.trim() !== '') {
+            hasPercent = true;
+        }
+        return hasPercent;
+    };
+
+    const isOnlyPercentage = (c: any): boolean => {
+        const totalMonetary = calculateTotalProLabore(c) + calculateTotalSuccess(c);
+        return totalMonetary === 0 && hasPercentageFees(c);
     };
 
     const calculateTotalProLabore = (c: any): number => {
@@ -384,7 +400,8 @@ export function Demandas() {
                                             <th className="p-4 text-right bg-gray-50">Data</th>
                                             <th className="p-4 text-right bg-gray-50">Pró-labore</th>
                                             <th className="p-4 text-right bg-gray-50">Êxito</th>
-                                            <th className="p-4 text-center rounded-tr-lg bg-gray-50">Timesheet</th>
+                                            <th className="p-4 text-center bg-gray-50">Timesheet</th>
+                                            <th className="p-4 text-center rounded-tr-lg bg-gray-50">Hon. %</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -411,6 +428,9 @@ export function Demandas() {
                                                     </td>
                                                     <td className="p-4 text-center text-xs font-bold text-gray-500">
                                                         {c.timesheet ? <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Sim</span> : '-'}
+                                                    </td>
+                                                    <td className="p-4 text-center text-xs font-bold text-gray-500">
+                                                        {isOnlyPercentage(c) ? <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Sim</span> : '-'}
                                                     </td>
                                                 </tr>
                                             ))
