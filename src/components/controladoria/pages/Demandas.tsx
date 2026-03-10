@@ -1,5 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import {
     TrendingUp,
     Users,
@@ -7,7 +9,8 @@ import {
     DollarSign,
     Calendar,
     Loader2,
-    FileSignature
+    FileSignature,
+    Download
 } from 'lucide-react';
 import {
     AreaChart,
@@ -52,6 +55,10 @@ export function Demandas() {
     const [collaborators, setCollaborators] = useState<Collaborator[]>([]); // Hired in period
     const [allCollaborators, setAllCollaborators] = useState<Collaborator[]>([]); // All juridica (active + recent terminated)
     const [contracts, setContracts] = useState<Contract[]>([]);
+
+    const pageRef = useRef<HTMLDivElement>(null);
+    const tableRef = useRef<HTMLDivElement>(null);
+    const [isExporting, setIsExporting] = useState(false);
 
     // Filtros de Data. Default: 1 de Julho de 2025 até hoje.
     const [startDate, setStartDate] = useState(() => {
@@ -378,8 +385,34 @@ export function Demandas() {
         return result;
     }, [allCollaborators, endDate]);
 
+    const exportToPDF = async (elementRef: React.RefObject<HTMLDivElement>, filename: string) => {
+        if (!elementRef.current) return;
+        setIsExporting(true);
+        try {
+            const canvas = await html2canvas(elementRef.current, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`${filename}.pdf`);
+        } catch (error) {
+            console.error('Erro ao exportar PDF:', error);
+            alert('Não foi possível gerar o PDF.');
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in duration-500">
+        <div ref={pageRef} className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in duration-500">
 
             {/* Header */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
@@ -613,7 +646,7 @@ export function Demandas() {
                             </div>
 
                             {/* Tabela de Contratos */}
-                            <div className="flex flex-col flex-1">
+                            <div ref={tableRef} className="flex flex-col flex-1 bg-white">
                                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-emerald-50 rounded-lg">
@@ -621,6 +654,16 @@ export function Demandas() {
                                         </div>
                                         <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Detalhamento de Contratos Fechados</h3>
                                     </div>
+                                    <button
+                                        onClick={() => exportToPDF(tableRef, 'Detalhamento_Contratos')}
+                                        disabled={isExporting}
+                                        data-html2canvas-ignore
+                                        className="text-gray-500 hover:text-[#1e3a8a] p-2 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-2"
+                                        title="Exportar Tabela"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        <span className="text-xs font-bold hidden sm:block">PDF</span>
+                                    </button>
                                 </div>
                                 <div className="p-2 overflow-x-auto flex-1 relative">
                                     <table className="w-full text-left border-collapse whitespace-nowrap">
