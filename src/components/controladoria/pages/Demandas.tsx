@@ -114,10 +114,12 @@ export function Demandas() {
     };
 
     // Helper para limpar formatação monetária padrão BRL ex: "R$ 1.000,00" para número math.
-    const parseCurrency = (val: string | null | undefined): number => {
+    const parseCurrency = (val: any): number => {
         if (!val) return 0;
+        // Garantir que é string antes de tentar usar .replace
+        const strVal = typeof val === 'string' ? val : String(val);
         // Remove "R$", pontos e troca vírgula por ponto
-        const cleanStr = val.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+        const cleanStr = strVal.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
         const num = parseFloat(cleanStr);
         return isNaN(num) ? 0 : num;
     };
