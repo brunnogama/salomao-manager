@@ -55,6 +55,7 @@ export function Demandas() {
     const [collaborators, setCollaborators] = useState<Collaborator[]>([]); // Hired in period
     const [allCollaborators, setAllCollaborators] = useState<Collaborator[]>([]); // All juridica (active + recent terminated)
     const [contracts, setContracts] = useState<Contract[]>([]);
+    const [isFirstLoad, setIsFirstLoad] = useState(true);
 
     const pageRef = useRef<HTMLDivElement>(null);
     const tableRef = useRef<HTMLDivElement>(null);
@@ -89,10 +90,8 @@ export function Demandas() {
                     .select('id, name, role, hire_date, area, status, termination_date, leader:leader_id(name)')
                     // We need to fetch ALL juridical collaborators to compute the headcount properly. 
                     // We avoid filtering by hire_date here to get historical data for the chart, 
-                    // or we fetch since '2025-07-01' but also need people hired before that were active.
-                    // For the main table it uses hire_date, but for headcount we need active status or termination_date >= jul 2025.
-                    // To be safe and get accurate headcount, let's fetch all active, OR terminated after jul 2025.
-                    .or(`status.eq.active,termination_date.gte.2025-07-01`),
+                    // To be safe and get accurate headcount for the period, let's fetch all active, OR terminated after the startDate.
+                    .or(`status.eq.active,termination_date.gte.${startDate}`),
                 supabase
                     .from('roles')
                     .select('id, name'),
@@ -152,6 +151,7 @@ export function Demandas() {
             console.error('Error fetching Demandas data', error);
         } finally {
             setLoading(false);
+            setIsFirstLoad(false);
         }
     };
 
@@ -355,10 +355,10 @@ export function Demandas() {
 
     // Headcount Evolution Logic
     const headcountEvolution = useMemo(() => {
-        // Build a list of months from July 2025 to EndDate
+        // Build a list of months from startDate to EndDate
         if (!allCollaborators || allCollaborators.length === 0) return [];
 
-        const startDateObj = new Date('2025-07-01T12:00:00'); // Hardcode baseline
+        const startDateObj = new Date(startDate + 'T12:00:00'); 
         const endDateObj = new Date(endDate + 'T12:00:00');
 
         let currentDate = new Date(startDateObj);
@@ -377,17 +377,16 @@ export function Demandas() {
             data[m] = { month: displayMonth.replace('. de ', '/'), hires: 0, terminations: 0, balance: 0 };
         });
 
-        // We calculate balance as a running total. We need historical baseline or compute dynamically.
-        // Since we only query active OR terminated since Jul 2025, people hired BEFORE Jul 2025 and ACTIVE will be just "Base".
-        // Let's count them in the first month or keep a "baseline" variable!
+        // We calculate balance as a running total.
         let baseline = 0;
+        const startMonthStr = `${startDateObj.getFullYear()}-${String(startDateObj.getMonth() + 1).padStart(2, '0')}`;
 
         allCollaborators.forEach(c => {
             const hDateStr = c.hire_date ? c.hire_date.substring(0, 7) : null;
             const tDateStr = c.termination_date ? c.termination_date.substring(0, 7) : null;
 
-            // Baseline: Hired before Jul 2025 and (Still active OR terminated >= Jul 2025)
-            if (hDateStr && hDateStr < '2025-07') {
+            // Baseline: Hired before the startMonth and (Still active OR terminated in or after startMonth)
+            if (hDateStr && hDateStr < startMonthStr) {
                 baseline += 1;
             } else if (hDateStr && data[hDateStr]) {
                 data[hDateStr].hires += 1;
@@ -408,7 +407,7 @@ export function Demandas() {
         });
 
         return result;
-    }, [allCollaborators, endDate]);
+    }, [allCollaborators, startDate, endDate]);
 
     const exportToPDF = async (elementRef: React.RefObject<HTMLDivElement>, filename: string) => {
         if (!elementRef.current) return;
@@ -465,7 +464,12 @@ export function Demandas() {
                 </div>
 
                 {/* Filtros */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full lg:w-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full lg:w-auto relative">
+                    {loading && !isFirstLoad && (
+                        <div className="absolute -left-6 top-1/2 -translate-y-1/2 hidden lg:flex">
+                            <Loader2 className="w-4 h-4 text-[#1e3a8a] animate-spin" />
+                        </div>
+                    )}
                     <div className="flex bg-gray-100 p-1 rounded-lg">
                         <button
                             onClick={() => handleQuickSelect('30_days')}
@@ -506,13 +510,13 @@ export function Demandas() {
                 </div>
             </div>
 
-            {loading ? (
+            {isFirstLoad ? (
                 <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center flex flex-col items-center justify-center">
                     <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mb-4" />
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando comparativo...</p>
                 </div>
             ) : (
-                <>
+                <div className={`space-y-4 sm:space-y-6 transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
                     {/* Indicadores Principais */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-[#1e3a8a]/30 transition-all">
@@ -760,7 +764,7 @@ export function Demandas() {
                             </div>
                         </div>
                     </div>
-                </>
+                </div>
             )}
         </div>
     );
