@@ -268,8 +268,7 @@ export function RHVagas() {
       
       showAlert('Copiado com Sucesso! ✨', 'Os perfis foram copiados com um layout elegante para e-mail. Um rascunho será aberto, basta colar (Ctrl+V) no corpo do e-mail!', 'success');
       
-      const body = encodeURIComponent(`(Cole aqui os perfis que foram copiados para sua área de transferência)`);
-      window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+      window.open(`mailto:?subject=${subject}`, '_blank');
     } catch (err) {
       console.error('Erro ao copiar HTML para clipboard:', err);
       const body = encodeURIComponent(textBody);
@@ -1529,8 +1528,7 @@ export function RHVagas() {
                                         await navigator.clipboard.write([clipboardItem]);
                                         showAlert('Copiado com Sucesso! ✨', 'O perfil foi copiado com um layout elegante para e-mail. Um rascunho será aberto, basta colar (Ctrl+V) no corpo do e-mail!', 'success');
                                         
-                                        const body = encodeURIComponent(`(Cole aqui o perfil que foi copiado para sua área de transferência)`);
-                                        window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+                                        window.open(`mailto:?subject=${subject}`, '_blank');
                                       } catch (err) {
                                         console.error('Erro ao copiar HTML para clipboard:', err);
                                         const body = encodeURIComponent(textBody);
