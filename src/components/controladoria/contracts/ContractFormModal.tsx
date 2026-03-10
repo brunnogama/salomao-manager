@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import {
   X, Save,
@@ -807,7 +808,7 @@ export function ContractFormModal(props: Props) {
 
   // --- NOVA UI (SIDEBAR + CONTENT) ---
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
 
@@ -1034,6 +1035,7 @@ export function ContractFormModal(props: Props) {
       )}
 
       <ProcessDetailsModal process={viewProcess} onClose={() => setViewProcess(null)} onEdit={() => { if (viewProcessIndex !== null) { setViewProcess(null); editProcess(viewProcessIndex); } }} />
-    </div>
+    </div>,
+    document.body
   );
 }
