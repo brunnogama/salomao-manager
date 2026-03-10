@@ -126,6 +126,13 @@ export const formatMonthYearDateToISO = (displayDate: string | undefined | null)
 
 export const formatDbMoneyToDisplay = (dbValue: string | number | null | undefined): string => {
   if (dbValue === null || dbValue === undefined || dbValue === '') return '';
+  if (typeof dbValue === 'string') {
+    if (dbValue.includes(',')) {
+      const parsedNumeric = parseFloat(dbValue.replace(/\./g, '').replace(',', '.'));
+      if (isNaN(parsedNumeric)) return '';
+      return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parsedNumeric);
+    }
+  }
   let asNum = typeof dbValue === 'string' ? Number(dbValue.replace(/[^0-9.-]+/g, "")) : dbValue;
   if (isNaN(asNum)) return '';
   return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(asNum);

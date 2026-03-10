@@ -174,7 +174,26 @@ export function Colaboradores({ }: ColaboradoresProps) {
       setActiveMainTab('Colaboradores')
     }
     if (location.state?.cadastrarCandidato) {
-      setFormData(location.state.cadastrarCandidato);
+      const candidato = location.state.cadastrarCandidato;
+      setFormData({
+        ...candidato,
+        birthday: formatDateToDisplay(candidato.birthday),
+        hire_date: formatDateToDisplay(candidato.hire_date),
+        termination_date: formatDateToDisplay(candidato.termination_date),
+        termino_contrato_estagio: formatDateToDisplay(candidato.termino_contrato_estagio),
+        escolaridade_previsao_conclusao: formatDateToDisplay(candidato.escolaridade_previsao_conclusao),
+        previsao_formatura: formatMonthYearDateToDisplay(candidato.previsao_formatura),
+        bolsa_valor: formatDbMoneyToDisplay(candidato.bolsa_valor),
+        vr_valor: formatDbMoneyToDisplay(candidato.vr_valor),
+        children_data: candidato.children_data?.map((child: any) => ({
+          ...child,
+          birth_date: formatDateToDisplay(child.birth_date)
+        })) || [],
+        education_history: candidato.education_history?.map((edu: any) => ({
+          ...edu,
+          previsao_conclusao: formatDateToDisplay(edu.previsao_conclusao)
+        })) || []
+      });
       setShowFormModal(true);
       setActiveMainTab('Colaboradores');
       // Clear the state so it doesn't reopen on refresh

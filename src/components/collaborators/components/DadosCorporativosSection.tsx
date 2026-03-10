@@ -419,9 +419,9 @@ export function DadosCorporativosSection({
                             setFormData({ ...formData, bolsa_valor: formatted });
                           }}
                           placeholder="0,00"
-                          disabled={isViewMode || formData.area === 'Jurídica'}
-                          readOnly={isViewMode || formData.area === 'Jurídica'}
-                          title={formData.area === 'Jurídica' ? "Valor definido automaticamente pela tabela de regras para estagiários da área Jurídica." : undefined}
+                          disabled={isViewMode}
+                          readOnly={isViewMode}
+                          title={formData.area === 'Jurídica' ? "Valor sugerido automaticamente pela tabela de regras para estagiários da área Jurídica." : undefined}
                         />
                       </div>
                     </div>
