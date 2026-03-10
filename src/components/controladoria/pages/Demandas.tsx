@@ -133,7 +133,10 @@ export function Demandas() {
         }
 
         // Garantir que é string antes de tentar usar .replace
-        const strVal = typeof val === 'string' ? val : String(val);
+        let strVal = typeof val === 'string' ? val : String(val);
+
+        // Se for um percentual, retornamos 0 para não somar como valor financeiro
+        if (strVal.includes('%')) return 0;
 
         // Se a string parece um JSON array, tentar parsear
         if (strVal.trim().startsWith('[') && strVal.trim().endsWith(']')) {
@@ -148,7 +151,7 @@ export function Demandas() {
         }
 
         // Remove "R$", pontos e troca vírgula por ponto
-        const cleanStr = strVal.replace(/[R$\s%]/g, '').replace(/\./g, '').replace(',', '.');
+        const cleanStr = strVal.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
         const num = parseFloat(cleanStr);
         return isNaN(num) ? 0 : num;
     };
@@ -161,6 +164,27 @@ export function Demandas() {
         if (c.final_success_percent && c.final_success_percent.trim() !== '') {
             hasPercent = true;
         }
+
+        // As vezes o percentual é salvo direto no pro_labore ou êxito
+        const checkPercent = (val: any) => {
+            if (!val) return false;
+            if (typeof val === 'string' && val.includes('%')) return true;
+            if (Array.isArray(val) && val.some(v => typeof v === 'string' && v.includes('%'))) return true;
+            if (typeof val === 'string' && val.startsWith('[')) {
+                try {
+                    const parsed = JSON.parse(val);
+                    if (Array.isArray(parsed) && parsed.some(v => typeof v === 'string' && v.includes('%'))) return true;
+                } catch { return false; }
+            }
+            return false;
+        };
+
+        if (checkPercent(c.pro_labore) || checkPercent(c.pro_labore_extras) ||
+            checkPercent(c.final_success_fee) || checkPercent(c.final_success_extras) ||
+            checkPercent(c.intermediate_fees)) {
+            hasPercent = true;
+        }
+
         return hasPercent;
     };
 
