@@ -1480,11 +1480,11 @@ export function RHVagas() {
                       <thead className="bg-[#1e3a8a]">
                         <tr>
                           <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-20 whitespace-nowrap">ID</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap">Vaga (Cargo)</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap">Atuação</th>
                           <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">Abertura</th>
                           <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-28 whitespace-nowrap">SLA / Aberto</th>
                           <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">{activeTab === 'fechadas' ? 'Fechamento' : 'Prazo'}</th>
-                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap">Vaga (Cargo)</th>
-                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap">Atuação</th>
                           {activeTab === 'fechadas' && <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap">Candidato Aprovado</th>}
                           <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[100px] whitespace-nowrap">Local</th>
                           <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[140px] whitespace-nowrap">Líder Direto</th>
@@ -1497,6 +1497,39 @@ export function RHVagas() {
                           <tr key={vaga.id} onClick={() => handleOpenViewModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
                             <td className="px-3 py-3 whitespace-nowrap">
                               <span className="inline-block px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-black tracking-widest uppercase">{vaga.vaga_id_text || 'Sem ID'}</span>
+                            </td>
+                            <td className="px-3 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className={`flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden bg-gradient-to-br ${vaga.area === 'Administrativa' ? 'from-orange-500 to-orange-600' : vaga.area === 'Jurídica' ? 'from-[#1e3a8a] to-[#112240]' : 'from-gray-400 to-gray-500'} flex items-center justify-center border-2 border-white shadow-sm`}>
+                                  <span className="text-sm font-black text-white">
+                                    {(vaga.role?.name || 'V').split(' ').length > 1 ? (vaga.role?.name || 'V').split(' ').map((w: string) => w[0]).join('').substring(0, 2).toUpperCase() : (vaga.role?.name || 'V').substring(0, 2).toUpperCase()}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col gap-1.5 max-w-[200px]">
+                                  <div className="flex items-center gap-2 truncate">
+                                    <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
+                                    {vaga.sigilosa && (
+                                      <span className="text-[8px] shrink-0 bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
+                                    )}
+                                  </div>
+                                  {vaga.perfil && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {vaga.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
+                                        <span key={i} className="px-1.5 py-0.5 bg-green-50/50 text-green-700 border border-green-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                          {tag.trim()}
+                                        </span>
+                                      ))}
+                                      {vaga.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
+                                        <span className="text-[8px] font-bold text-green-500 ml-0.5">...</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
+                              {/* TODO: check if atuacao_id should be string or not, if not wait, it's atuacao?.name */}
+                              {typeof vaga.atuacao === 'string' ? vaga.atuacao : (vaga.atuacao?.name || '-')}
                             </td>
                             <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
                               {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
@@ -1512,31 +1545,6 @@ export function RHVagas() {
                                 ? (vaga.data_fechamento ? new Date(vaga.data_fechamento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-')
                                 : (vaga.data_prazo ? new Date(vaga.data_prazo).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-')
                               }
-                            </td>
-                            <td className="px-3 py-3">
-                              <div className="flex flex-col gap-1.5 max-w-[250px]">
-                                <div className="flex items-center gap-2 truncate">
-                                  <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
-                                  {vaga.sigilosa && (
-                                    <span className="text-[8px] shrink-0 bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
-                                  )}
-                                </div>
-                                {vaga.perfil && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {vaga.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                      <span key={i} className="px-1.5 py-0.5 bg-green-50/50 text-green-700 border border-green-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                        {tag.trim()}
-                                      </span>
-                                    ))}
-                                    {vaga.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                      <span className="text-[8px] font-bold text-green-500 ml-0.5">...</span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
-                              {vaga.atuacao?.name || '-'}
                             </td>
                             {activeTab === 'fechadas' && (
                               <td className="px-3 py-3 text-xs font-bold text-[#1e3a8a] whitespace-nowrap">
