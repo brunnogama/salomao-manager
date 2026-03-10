@@ -255,6 +255,27 @@ export function Demandas() {
         return Object.entries(counts).sort((a, b) => b[1] - a[1]);
     }, [collaborators]);
 
+    // Metrics By Leader
+    const hiresByLeader = useMemo(() => {
+        const leaderData: Record<string, { total: number, estagiarios: number, advogados: number }> = {};
+        collaborators.forEach(c => {
+            const leaderName = (c as any).leader_name || 'Sem Líder Direto';
+            if (!leaderData[leaderName]) {
+                leaderData[leaderName] = { total: 0, estagiarios: 0, advogados: 0 };
+            }
+            leaderData[leaderName].total += 1;
+
+            const isEstagiario = typeof c.role === 'string' && (c.role.toLowerCase().includes('estagiário') || c.role.toLowerCase().includes('estagiario'));
+            if (isEstagiario) {
+                leaderData[leaderName].estagiarios += 1;
+            } else {
+                leaderData[leaderName].advogados += 1;
+            }
+        });
+
+        return Object.entries(leaderData).sort((a, b) => b[1].total - a[1].total);
+    }, [collaborators]);
+
     return (
         <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in duration-500">
 
@@ -396,6 +417,46 @@ export function Demandas() {
                                                     <td className="p-4 text-right">
                                                         <span className="inline-flex items-center justify-center px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-black text-[11px] min-w-[32px]">
                                                             {count}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Divisão por Líder */}
+                            <div className="p-5 border-t border-gray-100 flex items-center gap-3">
+                                <div className="p-2 bg-purple-50 rounded-lg">
+                                    <Users className="w-5 h-5 text-purple-600" />
+                                </div>
+                                <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Divisão por Líder Direto</h3>
+                            </div>
+                            <div className="p-2 overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-gray-50/80 text-gray-500 text-[10px] font-black uppercase tracking-widest">
+                                            <th className="p-4 rounded-tl-lg">Líder</th>
+                                            <th className="p-4 text-center">Advogados</th>
+                                            <th className="p-4 text-center">Estagiários</th>
+                                            <th className="p-4 text-right rounded-tr-lg">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {hiresByLeader.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} className="p-8 text-center text-sm text-gray-400 font-medium">Nenhum dado encontrado.</td>
+                                            </tr>
+                                        ) : (
+                                            hiresByLeader.map(([leader, data], idx) => (
+                                                <tr key={idx} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                                    <td className="p-4 font-bold text-gray-700 text-xs">{leader}</td>
+                                                    <td className="p-4 text-center text-xs font-semibold text-gray-600">{data.advogados}</td>
+                                                    <td className="p-4 text-center text-xs font-semibold text-gray-600">{data.estagiarios}</td>
+                                                    <td className="p-4 text-right">
+                                                        <span className="inline-flex items-center justify-center px-3 py-1 bg-purple-50 text-purple-700 rounded-full font-black text-[11px] min-w-[32px]">
+                                                            {data.total}
                                                         </span>
                                                     </td>
                                                 </tr>
