@@ -56,48 +56,45 @@ export function Demandas() {
             // Buscamos todos e filtramos no JS, ou filtramos no supabase.
             // A tabela é "collaborators". Área pode estar no campo 'area' ou 'atuacao'.
             // Como o DB pode ter nuances, vamos buscar e filtrar em memoria para ser seguro no começo.
-            const { data: collabData, error: collabError } = await supabase
-                .from('collaborators')
-                .select(`
-                    id, 
-                    name, 
-                    role:role_id(id, name), 
-                    hire_date, 
-                    area, 
-                    status
-                `)
-                .gte('hire_date', startDate)
-                .lte('hire_date', endDate);
+            const [collabRes, rolesRes, contractRes] = await Promise.all([
+                supabase
+                    .from('collaborators')
+                    .select('id, name, role, hire_date, area, status')
+                    .gte('hire_date', startDate)
+                    .lte('hire_date', endDate),
+                supabase
+                    .from('roles')
+                    .select('id, name'),
+                supabase
+                    .from('contracts')
+                    .select('id, client_name, contract_date, status, pro_labore, final_success_fee')
+                    .eq('status', 'active') // Status active mean it's closed/signed
+                    .gte('contract_date', startDate)
+                    .lte('contract_date', endDate)
+            ]);
 
-            if (collabError) throw collabError;
+            if (collabRes.error) throw collabRes.error;
+            if (contractRes.error) throw contractRes.error;
+
+            const rolesMap = new Map(rolesRes.data?.map((r: any) => [String(r.id), r.name]) || []);
 
             // Filtrar apenas da área jurídica
             // Tabela também tem as 'roles' em inglês ou português? Geralmente role no RH é o Cargo. 
             // Em Utils vimos as roles da jurídica, estão salvos na string do cargo, ou na Area='Jurídica'
-            const juridicaCollabs = (collabData as any[] || []).filter(c => {
+            const juridicaCollabs = (collabRes.data as any[] || []).filter(c => {
                 // Check if 'area' is 'Jurídica' or the role name matches Juridica terms
-                const roleName = c.role?.name || typeof c.role === 'string' ? c.role : '';
+                const mappedRoleName = rolesMap.get(String(c.role)) || (typeof c.role === 'string' ? c.role : '');
                 const isJuridica = c.area === 'Jurídica' ||
-                    (typeof roleName === 'string' && (roleName.includes('Advogado') || roleName.includes('Sócio') || roleName.includes('Jurídico') || roleName.includes('Paralegal') || roleName.includes('Estagiário')));
+                    (typeof mappedRoleName === 'string' && (mappedRoleName.includes('Advogado') || mappedRoleName.includes('Sócio') || mappedRoleName.includes('Jurídico') || mappedRoleName.includes('Paralegal') || mappedRoleName.includes('Estagiário')));
 
                 // Map it so it's a flat format
                 return isJuridica;
             }).map(c => ({
                 ...c,
-                role: c.role?.name || c.role
+                role: rolesMap.get(String(c.role)) || c.role
             }));
             setCollaborators(juridicaCollabs);
-
-            // Fetch Contracts closed in the period
-            const { data: contractData, error: contractError } = await supabase
-                .from('contracts')
-                .select('id, client_name, contract_date, status, pro_labore, final_success_fee')
-                .eq('status', 'active') // Status active mean it's closed/signed
-                .gte('contract_date', startDate)
-                .lte('contract_date', endDate);
-
-            if (contractError) throw contractError;
-            setContracts((contractData as any[]) || []);
+            setContracts((contractRes.data as any[]) || []);
 
         } catch (error) {
             console.error('Error fetching Demandas data', error);
