@@ -1452,6 +1452,19 @@ export function RHVagas() {
                               </td>
                               <td className="px-3 py-3 text-right whitespace-nowrap">
                                 <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button onClick={(e) => {
+                                      e.stopPropagation();
+                                      const slugFallback = c.slug || (c.nome ? c.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : c.id);
+                                      const profileUrl = `${window.location.origin}/candidato/perfil/${slugFallback}`;
+                                      const subject = encodeURIComponent(`Perfil de Candidato - ${c.nome}`);
+                                      const body = encodeURIComponent(`Olá,\n\nSegue o link para o perfil consolidado do(a) candidato(a) ${c.nome}:\n\n${profileUrl}\n\nAtenciosamente,\nEquipe de RH`);
+                                      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                                    }} 
+                                    className="p-1.5 text-emerald-600 text-xs hover:bg-emerald-50 rounded-xl transition-all hover:scale-110 active:scale-95"
+                                    title="Compartilhar Perfil Público"
+                                  >
+                                    <Share2 className="h-4 w-4" />
+                                  </button>
                                   <button onClick={(e) => { e.stopPropagation(); handleOpenCandidatoModal(c.id); }} className="p-1.5 text-[#1e3a8a] text-xs hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
                                   <button onClick={(e) => handleDeleteCandidato(c.id, e)} className="p-1.5 text-red-600 text-xs hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
                                 </div>
