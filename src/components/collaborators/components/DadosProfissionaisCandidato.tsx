@@ -2,6 +2,7 @@ import { Briefcase } from 'lucide-react'
 import { ManagedSelect } from '../../crm/ManagedSelect'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
+import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA } from '../utils/cargosAtuacoesUtils'
 
 interface DadosProfissionaisCandidatoProps {
     formData: any
@@ -43,6 +44,12 @@ export function DadosProfissionaisCandidato({
                             table="atuacoes"
                             disabled={isViewMode}
                             allowCustom={true}
+                            clientFilter={(item: any) => {
+                                const name = item.name || item;
+                                if (formData.area === 'Jurídica') return ATUACOES_JURIDICA.includes(name);
+                                if (formData.area === 'Administrativa') return ATUACOES_ADMINISTRATIVA.includes(name);
+                                return true;
+                            }}
                         />
                     </div>
 
@@ -53,6 +60,12 @@ export function DadosProfissionaisCandidato({
                             onChange={v => setFormData({ ...formData, role: v })}
                             tableName="roles"
                             disabled={isViewMode}
+                            clientFilter={(item: any) => {
+                                const roleName = item.name;
+                                if (formData.area === 'Jurídica') return CARGOS_JURIDICA.includes(roleName);
+                                if (formData.area === 'Administrativa') return CARGOS_ADMINISTRATIVA.includes(roleName);
+                                return true;
+                            }}
                         />
                     </div>
 

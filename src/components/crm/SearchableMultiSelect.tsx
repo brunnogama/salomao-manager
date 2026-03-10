@@ -28,6 +28,7 @@ interface SearchableMultiSelectProps {
   align?: 'left' | 'right';
   icon?: React.ReactNode;
   allowCustom?: boolean;
+  clientFilter?: (item: any) => boolean;
 }
 
 export function SearchableMultiSelect({
@@ -46,7 +47,8 @@ export function SearchableMultiSelect({
   dropdownWidth,
   align = 'left',
   icon,
-  allowCustom = false
+  allowCustom = false,
+  clientFilter
 }: SearchableMultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,6 +129,11 @@ export function SearchableMultiSelect({
   const getId = (opt: Option) => opt.id || opt.value || Math.random();
 
   const filteredOptions = options.filter(opt => {
+    // 1. Appy clientFilter from props if provided
+    if (clientFilter && !clientFilter(opt)) {
+      return false;
+    }
+    // 2. Apply search term text filter
     const searchTarget = getName(opt).toLowerCase();
     return searchTarget.includes((searchTerm || '').toLowerCase());
   });
@@ -297,7 +304,7 @@ export function SearchableMultiSelect({
       >
         <div className="flex items-center gap-2 flex-1 flex-wrap min-w-0 pr-2">
           {icon && <div className="flex-shrink-0 ml-1">{icon}</div>}
-          
+
           {selectedValuesArray.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {selectedValuesArray.map((val, index) => (

@@ -4,6 +4,7 @@ import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
 import { supabase } from '../../../lib/supabase'
 import { maskCurrencyInput } from '../utils/colaboradoresUtils'
+import { CARGOS_ADMINISTRATIVA, CARGOS_JURIDICA } from '../utils/cargosAtuacoesUtils'
 
 interface CandidatoEntrevistaSectionProps {
     formData: any
@@ -216,6 +217,12 @@ export function CandidatoEntrevistaSection({
                                 onChange={(val) => handleEntrevistaChange('cargo', val)}
                                 disabled={isViewMode}
                                 tableName="roles"
+                                clientFilter={(item: any) => {
+                                    const roleName = item.name;
+                                    if (area === 'Jurídica') return CARGOS_JURIDICA.includes(roleName);
+                                    if (area === 'Administrativa') return CARGOS_ADMINISTRATIVA.includes(roleName);
+                                    return true;
+                                }}
                             />
                         </div>
 

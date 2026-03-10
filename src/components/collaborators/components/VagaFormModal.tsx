@@ -13,6 +13,7 @@ import { ManagedSelect } from '../../crm/ManagedSelect'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { differenceInDays, differenceInMonths, isValid } from 'date-fns'
+import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA } from '../utils/cargosAtuacoesUtils'
 
 interface VagaFormModalProps {
     isOpen: boolean;
@@ -417,6 +418,12 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                             }
                                         }}
                                         tableName="roles"
+                                        clientFilter={(item: any) => {
+                                            const roleName = item.name;
+                                            if (formData.area === 'Jurídica') return CARGOS_JURIDICA.includes(roleName);
+                                            if (formData.area === 'Administrativa') return CARGOS_ADMINISTRATIVA.includes(roleName);
+                                            return true;
+                                        }}
                                     />
 
                                     <SearchableSelect
@@ -433,6 +440,12 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         onChange={v => setFormData({ ...formData, atuacao_id: v })}
                                         table="atuacoes"
                                         allowCustom={true}
+                                        clientFilter={(item: any) => {
+                                            const name = item.name || item;
+                                            if (formData.area === 'Jurídica') return ATUACOES_JURIDICA.includes(name);
+                                            if (formData.area === 'Administrativa') return ATUACOES_ADMINISTRATIVA.includes(name);
+                                            return true;
+                                        }}
                                     />
 
                                     <div>
@@ -572,57 +585,57 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                             <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Use @ para pesquisar tags</span>
                                         </label>
                                         <div className="relative">
-                                        <textarea
-                                            ref={perfilTextareaRef}
-                                            value={formData.perfil || ''}
-                                            onChange={handlePerfilChange}
-                                            placeholder="Descreva o perfil (cada linha salva vira uma tag)&#10;Ex:&#10;Experiência no contencioso cível&#10;Legalone&#10;&#10;Dica: Use @ para buscar na nuvem de talentos"
-                                            className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm h-32 resize-none"
-                                        />
+                                            <textarea
+                                                ref={perfilTextareaRef}
+                                                value={formData.perfil || ''}
+                                                onChange={handlePerfilChange}
+                                                placeholder="Descreva o perfil (cada linha salva vira uma tag)&#10;Ex:&#10;Experiência no contencioso cível&#10;Legalone&#10;&#10;Dica: Use @ para buscar na nuvem de talentos"
+                                                className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm h-32 resize-none"
+                                            />
 
-                                        {/* Sub-menu for @ tags */}
-                                        {isTagging && (
-                                            <div className="absolute left-0 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-64 overflow-hidden flex flex-col" style={{ top: `${dropdownTop}px` }}>
-                                                <div className="px-2 py-2 border-b border-gray-100 sticky top-0 bg-white">
-                                                    <div className="relative">
-                                                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Buscar por palavra-chave..."
-                                                            value={tagDropdownSearch}
-                                                            onChange={(e) => setTagDropdownSearch(e.target.value)}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none font-medium bg-gray-50"
-                                                            autoFocus
-                                                        />
+                                            {/* Sub-menu for @ tags */}
+                                            {isTagging && (
+                                                <div className="absolute left-0 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-64 overflow-hidden flex flex-col" style={{ top: `${dropdownTop}px` }}>
+                                                    <div className="px-2 py-2 border-b border-gray-100 sticky top-0 bg-white">
+                                                        <div className="relative">
+                                                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Buscar por palavra-chave..."
+                                                                value={tagDropdownSearch}
+                                                                onChange={(e) => setTagDropdownSearch(e.target.value)}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none font-medium bg-gray-50"
+                                                                autoFocus
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="overflow-y-auto flex-1">
+                                                        {availableTags
+                                                            .filter(t => {
+                                                                if (!t.tag.toLowerCase().includes((tagDropdownSearch || tagSearch).toLowerCase())) return false;
+                                                                if (formData.area && t.area && t.area !== 'Ambas' && t.area !== formData.area) return false;
+                                                                return true;
+                                                            })
+                                                            .map(tagItem => (
+                                                                <button
+                                                                    key={tagItem.tag}
+                                                                    onClick={() => insertTag(tagItem.tag)}
+                                                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-[#0a192f] font-medium border-b border-gray-50 last:border-0"
+                                                                >
+                                                                    <Tag className="h-4 w-4 text-blue-500" />
+                                                                    {tagItem.tag}
+                                                                </button>
+                                                            ))
+                                                        }
+                                                        {availableTags.filter(t => t.tag.toLowerCase().includes((tagDropdownSearch || tagSearch).toLowerCase())).length === 0 && (
+                                                            <div className="px-4 py-3 text-sm text-gray-500 italic">
+                                                                Nenhuma tag cadastrada com "{tagDropdownSearch || tagSearch}"... Quando você salvar, ela será criada!
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="overflow-y-auto flex-1">
-                                                    {availableTags
-                                                        .filter(t => {
-                                                            if (!t.tag.toLowerCase().includes((tagDropdownSearch || tagSearch).toLowerCase())) return false;
-                                                            if (formData.area && t.area && t.area !== 'Ambas' && t.area !== formData.area) return false;
-                                                            return true;
-                                                        })
-                                                        .map(tagItem => (
-                                                            <button
-                                                                key={tagItem.tag}
-                                                                onClick={() => insertTag(tagItem.tag)}
-                                                                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-[#0a192f] font-medium border-b border-gray-50 last:border-0"
-                                                            >
-                                                                <Tag className="h-4 w-4 text-blue-500" />
-                                                                {tagItem.tag}
-                                                            </button>
-                                                        ))
-                                                    }
-                                                    {availableTags.filter(t => t.tag.toLowerCase().includes((tagDropdownSearch || tagSearch).toLowerCase())).length === 0 && (
-                                                        <div className="px-4 py-3 text-sm text-gray-500 italic">
-                                                            Nenhuma tag cadastrada com "{tagDropdownSearch || tagSearch}"... Quando você salvar, ela será criada!
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
+                                            )}
                                         </div>
                                     </div>
 

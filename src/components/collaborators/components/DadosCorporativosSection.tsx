@@ -8,6 +8,7 @@ import { differenceInMonths, differenceInYears } from 'date-fns'
 import { TransporteSection } from './TransporteSection'
 import { supabase } from '../../../lib/supabase'
 import { getInternScholarshipValue, formatDbMoneyToDisplay } from '../utils/colaboradoresUtils'
+import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA } from '../utils/cargosAtuacoesUtils'
 
 interface DadosCorporativosSectionProps {
   formData: Partial<Collaborator>
@@ -264,6 +265,12 @@ export function DadosCorporativosSection({
                 table="atuacoes"
                 disabled={isViewMode}
                 allowCustom={true}
+                clientFilter={(item: any) => {
+                  const name = item.name || item;
+                  if (formData.area === 'Jurídica') return ATUACOES_JURIDICA.includes(name);
+                  if (formData.area === 'Administrativa') return ATUACOES_ADMINISTRATIVA.includes(name);
+                  return true;
+                }}
               />
 
               <ManagedSelect
@@ -272,20 +279,10 @@ export function DadosCorporativosSection({
                 onChange={v => setFormData({ ...formData, role: v })}
                 tableName="roles"
                 clientFilter={(item: any) => {
-                  const roleName = item.name.toLowerCase();
-                  const isJuridico = roleName.includes('advogado') ||
-                    roleName.includes('sócio') ||
-                    roleName.includes('socio') ||
-                    roleName.includes('estagiário') ||
-                    roleName.includes('estagiario') ||
-                    roleName.includes('jurídico') ||
-                    roleName.includes('juridico');
-                  if (formData.area === 'Jurídica') {
-                    return isJuridico;
-                  } else if (formData.area === 'Administrativa') {
-                    return !isJuridico;
-                  }
-                  return true; // if no area is selected, show all
+                  const roleName = item.name;
+                  if (formData.area === 'Jurídica') return CARGOS_JURIDICA.includes(roleName);
+                  if (formData.area === 'Administrativa') return CARGOS_ADMINISTRATIVA.includes(roleName);
+                  return true;
                 }}
                 disabled={isViewMode}
               />
