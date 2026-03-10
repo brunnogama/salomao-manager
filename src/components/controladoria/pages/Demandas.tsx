@@ -17,7 +17,8 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    Legend
+    Legend,
+    LabelList
 } from 'recharts';
 
 interface Collaborator {
@@ -600,7 +601,9 @@ export function Demandas() {
                                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', fontSize: '12px', fontWeight: 'bold' }}
                                                 />
                                                 <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold', paddingTop: '10px' }} />
-                                                <Area type="monotone" name="Saldo Ativos" dataKey="balance" stroke="#1e3a8a" strokeWidth={3} fillOpacity={1} fill="url(#colorBalance)" />
+                                                <Area type="monotone" name="Saldo Ativos" dataKey="balance" stroke="#1e3a8a" strokeWidth={3} fillOpacity={1} fill="url(#colorBalance)">
+                                                    <LabelList dataKey="balance" position="top" offset={10} fontSize={10} fontWeight="bold" fill="#1e3a8a" />
+                                                </Area>
                                                 <Area type="monotone" name="Entradas" dataKey="hires" stroke="#10b981" strokeWidth={2} fillOpacity={0} />
                                                 <Area type="monotone" name="Saídas" dataKey="terminations" stroke="#ef4444" strokeWidth={2} fillOpacity={0} />
                                             </AreaChart>
@@ -619,7 +622,7 @@ export function Demandas() {
                                         <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Detalhamento de Contratos Fechados</h3>
                                     </div>
                                 </div>
-                                <div className="p-2 overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar flex-1 relative">
+                                <div className="p-2 overflow-x-auto flex-1 relative">
                                     <table className="w-full text-left border-collapse whitespace-nowrap">
                                         <thead className="sticky top-0 z-20 shadow-[0_1px_0_0_#f3f4f6]">
                                             <tr className="bg-white text-gray-500 text-[10px] font-black uppercase tracking-widest">
