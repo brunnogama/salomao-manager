@@ -233,8 +233,14 @@ export function RHVagas() {
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   }
 
-  const handleRemoveFeedback = async (candidatoId: string, nome: string) => {
-    if (!confirm(`Deseja remover a avaliação do líder do destaque para o candidato ${nome}?`)) return;
+  const [pendingRemoveFeedback, setPendingRemoveFeedback] = useState<{ id: string, name: string } | null>(null);
+
+  const handleRemoveFeedback = (candidatoId: string, nome: string) => {
+    setPendingRemoveFeedback({ id: candidatoId, name: nome });
+  }
+
+  const confirmRemoveFeedback = async () => {
+    if (!pendingRemoveFeedback) return;
 
     try {
       // 1. Apagar campos do perfil
@@ -242,24 +248,26 @@ export function RHVagas() {
         avaliacao_lider: null,
         obs_lider: null,
         data_avaliacao: null
-      }).eq('id', candidatoId);
+      }).eq('id', pendingRemoveFeedback.id);
 
       if (error) throw error;
 
       // 2. Registrar no histórico que foi removido
       await supabase.from('candidato_historico').insert({
-        candidato_id: candidatoId,
+        candidato_id: pendingRemoveFeedback.id,
         tipo: 'Avaliação Removida',
         data_registro: new Date().toISOString(),
         observacoes: 'A badge de avaliação do líder foi removida/arquivada pelo avaliador do RH.',
       });
 
       // 3. Update state local
-      setCandidatos(prev => prev.map(c => c.id === candidatoId ? { ...c, avaliacao_lider: null, obs_lider: null, data_avaliacao: null } : c));
+      setCandidatos(prev => prev.map(c => c.id === pendingRemoveFeedback.id ? { ...c, avaliacao_lider: null, obs_lider: null, data_avaliacao: null } : c));
 
     } catch (err) {
       console.error('Erro ao remover badge:', err);
       showAlert('Erro', 'Não foi possível remover a badge de avaliação.', 'error');
+    } finally {
+      setPendingRemoveFeedback(null);
     }
   }
 
@@ -1620,6 +1628,17 @@ export function RHVagas() {
         variant="error"
         confirmText="Excluir"
         onConfirm={confirmDeleteCandidato}
+      />
+
+      {/* Confirm Remove Feedback */}
+      <AlertModal
+        isOpen={!!pendingRemoveFeedback}
+        onClose={() => setPendingRemoveFeedback(null)}
+        title="Remover Avaliação"
+        description={`Deseja remover a avaliação do líder do destaque para o candidato ${pendingRemoveFeedback?.name}?`}
+        variant="warning"
+        confirmText="Remover"
+        onConfirm={confirmRemoveFeedback}
       />
 
       {/* Alert Modal */}
