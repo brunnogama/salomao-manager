@@ -182,6 +182,8 @@ export function Demandas() {
     // Metrics calculation
     const metrics = useMemo(() => {
         const totalAdvogados = collaborators.length;
+        const totalEstagiarios = collaborators.filter(c => c.role?.toLowerCase().includes('estagiário') || c.role?.toLowerCase().includes('estagiario')).length;
+        const totalOutros = totalAdvogados - totalEstagiarios;
         const totalContratos = contracts.length;
 
         let totalProLaboreNum = 0;
@@ -194,6 +196,8 @@ export function Demandas() {
 
         return {
             totalAdvogados,
+            totalEstagiarios,
+            totalOutros,
             totalContratos,
             totalProLabore: formatCurrency(totalProLaboreNum),
             totalExito: formatCurrency(totalExitoNum)
@@ -278,22 +282,19 @@ export function Demandas() {
                     {/* Indicadores Principais */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-[#1e3a8a]/30 transition-all">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <Users className="w-16 h-16 text-[#1e3a8a] -mr-4 -mt-4 transform rotate-12" />
-                            </div>
                             <div className="flex items-center gap-3 mb-2 relative z-10">
                                 <div className="p-2 bg-blue-50 rounded-lg">
                                     <Users className="w-5 h-5 text-blue-600" />
                                 </div>
                                 <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Contratações Jud.</h3>
                             </div>
-                            <p className="text-3xl font-black text-[#0a192f] mt-2 relative z-10">{metrics.totalAdvogados}</p>
+                            <div className="flex items-baseline gap-2 mt-2 relative z-10">
+                                <span className="text-3xl font-black text-[#0a192f]">{metrics.totalAdvogados}</span>
+                                <span className="text-[11px] font-bold text-gray-500">({metrics.totalEstagiarios} Estagiários / {metrics.totalOutros} Demais)</span>
+                            </div>
                         </div>
 
                         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-[#1e3a8a]/30 transition-all">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <Briefcase className="w-16 h-16 text-emerald-600 -mr-4 -mt-4 transform rotate-12" />
-                            </div>
                             <div className="flex items-center gap-3 mb-2 relative z-10">
                                 <div className="p-2 bg-emerald-50 rounded-lg">
                                     <Briefcase className="w-5 h-5 text-emerald-600" />
@@ -304,9 +305,6 @@ export function Demandas() {
                         </div>
 
                         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-[#1e3a8a]/30 transition-all">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <DollarSign className="w-16 h-16 text-[#0a192f] -mr-4 -mt-4 transform rotate-12" />
-                            </div>
                             <div className="flex items-center gap-3 mb-2 relative z-10">
                                 <div className="p-2 bg-gray-100 rounded-lg">
                                     <DollarSign className="w-5 h-5 text-[#0a192f]" />
@@ -317,9 +315,6 @@ export function Demandas() {
                         </div>
 
                         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-[#1e3a8a]/30 transition-all">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <TrendingUp className="w-16 h-16 text-emerald-600 -mr-4 -mt-4 transform rotate-12" />
-                            </div>
                             <div className="flex items-center gap-3 mb-2 relative z-10">
                                 <div className="p-2 bg-emerald-50 rounded-lg">
                                     <TrendingUp className="w-5 h-5 text-emerald-600" />
@@ -381,15 +376,15 @@ export function Demandas() {
                                     <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Detalhamento de Contratos Fechados</h3>
                                 </div>
                             </div>
-                            <div className="p-2 overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
+                            <div className="p-2 overflow-x-auto max-h-[700px] overflow-y-auto custom-scrollbar flex-1 relative">
                                 <table className="w-full text-left border-collapse whitespace-nowrap">
-                                    <thead className="sticky top-0 z-10">
-                                        <tr className="bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-widest">
-                                            <th className="p-4 rounded-tl-lg">Cliente / Contrato</th>
-                                            <th className="p-4 text-right">Data</th>
-                                            <th className="p-4 text-right">Pró-labore</th>
-                                            <th className="p-4 text-right">Êxito</th>
-                                            <th className="p-4 text-center rounded-tr-lg">Timesheet</th>
+                                    <thead className="sticky top-0 z-20 shadow-[0_1px_0_0_#f3f4f6]">
+                                        <tr className="bg-white text-gray-500 text-[10px] font-black uppercase tracking-widest">
+                                            <th className="p-4 rounded-tl-lg bg-gray-50">Cliente / Contrato</th>
+                                            <th className="p-4 text-right bg-gray-50">Data</th>
+                                            <th className="p-4 text-right bg-gray-50">Pró-labore</th>
+                                            <th className="p-4 text-right bg-gray-50">Êxito</th>
+                                            <th className="p-4 text-center rounded-tr-lg bg-gray-50">Timesheet</th>
                                         </tr>
                                     </thead>
                                     <tbody>
