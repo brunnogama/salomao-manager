@@ -15,7 +15,8 @@ import {
   Building2,
   Trash2,
   Sparkles,
-  UserX
+  UserX,
+  Share2
 } from 'lucide-react'
 // date-fns importado acima do componente junto com as funções utilitárias
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
@@ -197,6 +198,25 @@ export function RHVagas() {
   const [isCandidatoViewModalOpen, setIsCandidatoViewModalOpen] = useState(false)
   const [selectedVagaId, setSelectedVagaId] = useState<string | null>(null)
   const [selectedCandidatoId, setSelectedCandidatoId] = useState<string | null>(null)
+  const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
+
+  useEffect(() => {
+    setSelectedCandidates([])
+  }, [activeTab])
+
+  const handleShareSelected = () => {
+    if (selectedCandidates.length === 0) return;
+
+    // Get profiles and build email body
+    const candsToShare = candidatos.filter(c => selectedCandidates.includes(c.id));
+
+    const linksInfo = candsToShare.map(c => `Candidato: ${c.nome}\nCargo: ${roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-'}\nAcesse o perfil completo: ${window.location.origin}/candidato/perfil/${c.id}`).join('\n\n');
+
+    const subject = encodeURIComponent(`Perfis de Talentos para Avaliação`);
+    const body = encodeURIComponent(`Olá,\n\nSegue abaixo os perfis dos talentos para sua avaliação:\n\n${linksInfo}\n\nAtenciosamente,\nEquipe de RH`);
+
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
 
   // Match System State
   const [matchMode, setMatchMode] = useState<'vaga' | 'candidato'>('vaga')
@@ -1203,210 +1223,243 @@ export function RHVagas() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-x-auto min-h-[400px]">
-                {activeTab === 'talentos' || activeTab === 'reprovados' ? (
-                  <table className="w-full min-w-max text-left border-collapse">
-                    <thead className="bg-[#1e3a8a]">
-                      <tr>
-                        <th className="px-5 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-32 whitespace-nowrap text-left">ID</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap text-left">Nome</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap text-left">Cargo Pretendido</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap text-left">Local</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap text-center">Entrevistado?</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap text-center">Data da entrevista</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl w-16 whitespace-nowrap">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {(activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado')).map((c: any) => {
-                        const hasHistoricInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
-                        const hasInterview = hasHistoricInterview || !!c.entrevista_dados?.data_entrevista;
+              <div className="flex-1 flex flex-col min-h-[400px]">
+                {(activeTab === 'talentos' || activeTab === 'reprovados') && selectedCandidates.length > 0 && (
+                  <div className="bg-blue-50 px-5 py-3 flex items-center justify-between border border-blue-100 rounded-t-xl shrink-0">
+                    <span className="text-sm font-bold text-[#1e3a8a]">{selectedCandidates.length} candidato(s) selecionado(s)</span>
+                    <button onClick={handleShareSelected} className="flex items-center gap-2 bg-[#1e3a8a] text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-[#112240] transition-colors shadow-sm">
+                      <Share2 className="w-4 h-4" /> Compartilhar Perfis
+                    </button>
+                  </div>
+                )}
+                <div className={`bg-white shadow-sm border border-gray-100 flex-1 flex flex-col overflow-x-auto ${(activeTab === 'talentos' || activeTab === 'reprovados') && selectedCandidates.length > 0 ? 'rounded-b-xl border-t-0' : 'rounded-xl'}`}>
+                  {activeTab === 'talentos' || activeTab === 'reprovados' ? (
+                    <table className="w-full min-w-max text-left border-collapse">
+                      <thead className="bg-[#1e3a8a]">
+                        <tr>
+                          <th className="px-4 py-3 w-10 rounded-tl-xl text-center">
+                            <input
+                              type="checkbox"
+                              className="rounded border-white/30 bg-white/10 text-blue-500 focus:ring-blue-500 h-4 w-4 cursor-pointer"
+                              checked={selectedCandidates.length > 0 && selectedCandidates.length === (activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado')).length}
+                              onChange={(e) => {
+                                const list = activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado');
+                                if (e.target.checked) setSelectedCandidates(list.map((c: any) => c.id));
+                                else setSelectedCandidates([]);
+                              }}
+                            />
+                          </th>
+                          <th className="px-2 py-3 text-[10px] font-black text-white uppercase tracking-wider w-32 whitespace-nowrap text-left">ID</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap text-left">Nome</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap text-left">Cargo Pretendido</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap text-left">Local</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap text-center">Entrevistado?</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap text-center">Data da entrevista</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl w-16 whitespace-nowrap">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {(activeTab === 'talentos' ? filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado') : filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado')).map((c: any) => {
+                          const hasHistoricInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
+                          const hasInterview = hasHistoricInterview || !!c.entrevista_dados?.data_entrevista;
 
-                        const interviewDates = c.candidato_historico
-                          ?.filter((h: any) => h.tipo === 'Entrevista')
-                          .map((h: any) => h.entrevista_data || h.data_registro || null)
-                          .filter(Boolean)
-                          .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime()) || [];
+                          const interviewDates = c.candidato_historico
+                            ?.filter((h: any) => h.tipo === 'Entrevista')
+                            .map((h: any) => h.entrevista_data || h.data_registro || null)
+                            .filter(Boolean)
+                            .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime()) || [];
 
-                        if (c.entrevista_dados?.data_entrevista) {
-                          interviewDates.push(c.entrevista_dados.data_entrevista);
-                          interviewDates.sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime());
-                        }
+                          if (c.entrevista_dados?.data_entrevista) {
+                            interviewDates.push(c.entrevista_dados.data_entrevista);
+                            interviewDates.sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime());
+                          }
 
-                        const lastInterviewDateRaw = interviewDates.length > 0 ? interviewDates[0] : null;
+                          const lastInterviewDateRaw = interviewDates.length > 0 ? interviewDates[0] : null;
 
 
-                        // Ocultar se já for colaborador (estamos em uma página de recrutamento/vagas ativos)
-                        // Nota: Precisamos carregar a lista de IDs de candidatos que já são colaboradores se quisermos ser precisos,
-                        // ou checar se existe um colaborador vinculado via query mais robusta. 
-                        // Para o MVP solicitado: "Quando o candidato é aprovado, pode retirar da lista de talentos"
-                        // Vou assumir que se ele está marcado como "Aprovado" ou vinculado a uma vaga fechada, ou se já existe na tabela de collaborators.
-                        // Vou precisar atualizar a query inicial de fetchCandidatos para trazer essa info.
+                          // Ocultar se já for colaborador (estamos em uma página de recrutamento/vagas ativos)
+                          // Nota: Precisamos carregar a lista de IDs de candidatos que já são colaboradores se quisermos ser precisos,
+                          // ou checar se existe um colaborador vinculado via query mais robusta. 
+                          // Para o MVP solicitado: "Quando o candidato é aprovado, pode retirar da lista de talentos"
+                          // Vou assumir que se ele está marcado como "Aprovado" ou vinculado a uma vaga fechada, ou se já existe na tabela de collaborators.
+                          // Vou precisar atualizar a query inicial de fetchCandidatos para trazer essa info.
 
-                        // Find names for role and local from options if they are just IDs
-                        const roleName = roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-';
-                        const localName = locationOptions.find(l => String(l.value) === String(c.local))?.label || c.local || '-';
+                          // Find names for role and local from options if they are just IDs
+                          const roleName = roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-';
+                          const localName = locationOptions.find(l => String(l.value) === String(c.local))?.label || c.local || '-';
 
-                        return (
-                          <tr key={c.id} onClick={() => handleOpenCandidatoViewModal(c.id)} className={`hover:bg-blue-50/50 cursor-pointer transition-colors group ${activeTab === 'reprovados' ? 'bg-red-50/30' : ''}`}>
-                            <td className="px-5 py-4 whitespace-nowrap text-left">
-                              <span className="inline-flex items-center justify-center px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px] font-black tracking-widest uppercase">{c.candidato_id_text || 'Sem ID'}</span>
+                          return (
+                            <tr key={c.id} onClick={() => handleOpenCandidatoViewModal(c.id)} className={`hover:bg-blue-50/50 cursor-pointer transition-colors group ${activeTab === 'reprovados' ? 'bg-red-50/30' : ''} ${selectedCandidates.includes(c.id) ? 'bg-blue-50/80' : ''}`}>
+                              <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="checkbox"
+                                  className="rounded border-gray-300 text-[#1e3a8a] focus:ring-[#1e3a8a] h-4 w-4 cursor-pointer"
+                                  checked={selectedCandidates.includes(c.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) setSelectedCandidates(prev => [...prev, c.id]);
+                                    else setSelectedCandidates(prev => prev.filter(id => id !== c.id));
+                                  }}
+                                />
+                              </td>
+                              <td className="px-2 py-4 whitespace-nowrap text-left">
+                                <span className="inline-flex items-center justify-center px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px] font-black tracking-widest uppercase">{c.candidato_id_text || 'Sem ID'}</span>
+                              </td>
+                              <td className="px-3 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center border-2 border-white shadow-sm">
+                                    {c.photo_url || c.foto_url ? (
+                                      <img src={c.photo_url || c.foto_url} alt={c.nome} className="h-full w-full object-cover" />
+                                    ) : (
+                                      <span className="text-sm font-black text-white">{c.nome?.charAt(0).toUpperCase()}</span>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
+                                    {(c.email || c.telefone) && (
+                                      <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
+                                    )}
+                                    {activeTab === 'reprovados' && c.motivo_reprovacao && (
+                                      <p className="text-[10px] text-red-600 font-bold mt-1 bg-red-100 p-1 rounded inline-block">Motivo: {c.motivo_reprovacao}</p>
+                                    )}
+                                    {c.perfil && (
+                                      <div className="flex flex-wrap gap-1 mt-1.5">
+                                        {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
+                                          <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                            {tag.trim()}
+                                          </span>
+                                        ))}
+                                        {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
+                                          <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
+                                {roleName}
+                              </td>
+                              <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
+                                {localName}
+                              </td>
+                              <td className="px-3 py-3 whitespace-nowrap">
+                                {hasInterview ? (
+                                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-green-50 text-green-700 border-green-200">
+                                    <CheckCircle2 className="w-3 h-3" /> Sim
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-gray-50 text-gray-600 border-gray-200">
+                                    Não
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap text-center">
+                                {lastInterviewDateRaw ? formatDateToDisplay(lastInterviewDateRaw) : '-'}
+                              </td>
+                              <td className="px-3 py-3 text-right whitespace-nowrap">
+                                <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button onClick={(e) => { e.stopPropagation(); handleOpenCandidatoModal(c.id); }} className="p-1.5 text-[#1e3a8a] text-xs hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
+                                  <button onClick={(e) => handleDeleteCandidato(c.id, e)} className="p-1.5 text-red-600 text-xs hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <table className="w-full min-w-max text-left border-collapse">
+                      <thead className="bg-[#1e3a8a]">
+                        <tr>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-20 whitespace-nowrap">ID</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">Abertura</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-28 whitespace-nowrap">SLA / Aberto</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">{activeTab === 'fechadas' ? 'Fechamento' : 'Prazo'}</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap">Vaga (Cargo)</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap">Atuação</th>
+                          {activeTab === 'fechadas' && <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap">Candidato Aprovado</th>}
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[100px] whitespace-nowrap">Local</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[140px] whitespace-nowrap">Líder Direto</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-28 whitespace-nowrap">Status</th>
+                          <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl w-16 whitespace-nowrap">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).map(vaga => (
+                          <tr key={vaga.id} onClick={() => handleOpenViewModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
+                            <td className="px-3 py-3 whitespace-nowrap">
+                              <span className="inline-block px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-black tracking-widest uppercase">{vaga.vaga_id_text || 'Sem ID'}</span>
                             </td>
-                            <td className="px-3 py-4">
-                              <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center border-2 border-white shadow-sm">
-                                  {c.photo_url || c.foto_url ? (
-                                    <img src={c.photo_url || c.foto_url} alt={c.nome} className="h-full w-full object-cover" />
-                                  ) : (
-                                    <span className="text-sm font-black text-white">{c.nome?.charAt(0).toUpperCase()}</span>
-                                  )}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
-                                  {(c.email || c.telefone) && (
-                                    <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
-                                  )}
-                                  {activeTab === 'reprovados' && c.motivo_reprovacao && (
-                                    <p className="text-[10px] text-red-600 font-bold mt-1 bg-red-100 p-1 rounded inline-block">Motivo: {c.motivo_reprovacao}</p>
-                                  )}
-                                  {c.perfil && (
-                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                      {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                        <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                          {tag.trim()}
-                                        </span>
-                                      ))}
-                                      {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                        <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
+                            <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
+                              {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
+                            </td>
+                            <td className="px-3 py-3 text-xs font-semibold text-[#1e3a8a] whitespace-nowrap">
+                              <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 w-max shrink-0">
+                                <Clock className="w-3.5 h-3.5 text-blue-500" />
+                                {calculateTempoAberto(vaga.data_abertura, vaga.status === 'Fechada' ? vaga.data_fechamento : undefined)}
                               </div>
                             </td>
                             <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
-                              {roleName}
+                              {activeTab === 'fechadas'
+                                ? (vaga.data_fechamento ? new Date(vaga.data_fechamento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-')
+                                : (vaga.data_prazo ? new Date(vaga.data_prazo).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-')
+                              }
                             </td>
-                            <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
-                              {localName}
+                            <td className="px-3 py-3">
+                              <div className="flex flex-col gap-1.5 max-w-[250px]">
+                                <div className="flex items-center gap-2 truncate">
+                                  <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
+                                  {vaga.sigilosa && (
+                                    <span className="text-[8px] shrink-0 bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
+                                  )}
+                                </div>
+                                {vaga.perfil && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {vaga.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
+                                      <span key={i} className="px-1.5 py-0.5 bg-green-50/50 text-green-700 border border-green-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                        {tag.trim()}
+                                      </span>
+                                    ))}
+                                    {vaga.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
+                                      <span className="text-[8px] font-bold text-green-500 ml-0.5">...</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
+                              {vaga.atuacao?.name || '-'}
+                            </td>
+                            {activeTab === 'fechadas' && (
+                              <td className="px-3 py-3 text-xs font-bold text-[#1e3a8a] whitespace-nowrap">
+                                {(vaga as any).candidato_aprovado?.nome || '-'}
+                              </td>
+                            )}
+                            <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
+                              {vaga.location?.name || '-'}
+                            </td>
+                            <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
+                              <div className="max-w-[140px] truncate">
+                                {vaga.leader?.name || '-'}
+                              </div>
                             </td>
                             <td className="px-3 py-3 whitespace-nowrap">
-                              {hasInterview ? (
-                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-green-50 text-green-700 border-green-200">
-                                  <CheckCircle2 className="w-3 h-3" /> Sim
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-gray-50 text-gray-600 border-gray-200">
-                                  Não
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap text-center">
-                              {lastInterviewDateRaw ? formatDateToDisplay(lastInterviewDateRaw) : '-'}
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${vaga.status === 'Aberta' ? 'bg-green-50 text-green-700 border-green-200' : vaga.status === 'Congelada' ? 'bg-amber-50 text-amber-700 border-amber-200' : vaga.status === 'Aguardando Autorização' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                                {vaga.status}
+                              </span>
                             </td>
                             <td className="px-3 py-3 text-right whitespace-nowrap">
                               <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={(e) => { e.stopPropagation(); handleOpenCandidatoModal(c.id); }} className="p-1.5 text-[#1e3a8a] text-xs hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
-                                <button onClick={(e) => handleDeleteCandidato(c.id, e)} className="p-1.5 text-red-600 text-xs hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handleOpenModal(vaga.id) }} className="p-1.5 text-[#1e3a8a] text-xs hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
+                                <button onClick={(e) => handleDeleteVaga(vaga.id, e)} className="p-1.5 text-red-600 text-xs hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
                               </div>
                             </td>
                           </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                ) : (
-                  <table className="w-full min-w-max text-left border-collapse">
-                    <thead className="bg-[#1e3a8a]">
-                      <tr>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-20 whitespace-nowrap">ID</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">Abertura</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-28 whitespace-nowrap">SLA / Aberto</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">{activeTab === 'fechadas' ? 'Fechamento' : 'Prazo'}</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap">Vaga (Cargo)</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap">Atuação</th>
-                        {activeTab === 'fechadas' && <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap">Candidato Aprovado</th>}
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[100px] whitespace-nowrap">Local</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[140px] whitespace-nowrap">Líder Direto</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-28 whitespace-nowrap">Status</th>
-                        <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl w-16 whitespace-nowrap">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).map(vaga => (
-                        <tr key={vaga.id} onClick={() => handleOpenViewModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <span className="inline-block px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-black tracking-widest uppercase">{vaga.vaga_id_text || 'Sem ID'}</span>
-                          </td>
-                          <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
-                            {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
-                          </td>
-                          <td className="px-3 py-3 text-xs font-semibold text-[#1e3a8a] whitespace-nowrap">
-                            <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 w-max shrink-0">
-                              <Clock className="w-3.5 h-3.5 text-blue-500" />
-                              {calculateTempoAberto(vaga.data_abertura, vaga.status === 'Fechada' ? vaga.data_fechamento : undefined)}
-                            </div>
-                          </td>
-                          <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
-                            {activeTab === 'fechadas'
-                              ? (vaga.data_fechamento ? new Date(vaga.data_fechamento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-')
-                              : (vaga.data_prazo ? new Date(vaga.data_prazo).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-')
-                            }
-                          </td>
-                          <td className="px-3 py-3">
-                            <div className="flex flex-col gap-1.5 max-w-[250px]">
-                              <div className="flex items-center gap-2 truncate">
-                                <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
-                                {vaga.sigilosa && (
-                                  <span className="text-[8px] shrink-0 bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
-                                )}
-                              </div>
-                              {vaga.perfil && (
-                                <div className="flex flex-wrap gap-1">
-                                  {vaga.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                    <span key={i} className="px-1.5 py-0.5 bg-green-50/50 text-green-700 border border-green-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                      {tag.trim()}
-                                    </span>
-                                  ))}
-                                  {vaga.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                    <span className="text-[8px] font-bold text-green-500 ml-0.5">...</span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
-                            {vaga.atuacao?.name || '-'}
-                          </td>
-                          {activeTab === 'fechadas' && (
-                            <td className="px-3 py-3 text-xs font-bold text-[#1e3a8a] whitespace-nowrap">
-                              {(vaga as any).candidato_aprovado?.nome || '-'}
-                            </td>
-                          )}
-                          <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
-                            {vaga.location?.name || '-'}
-                          </td>
-                          <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
-                            <div className="max-w-[140px] truncate">
-                              {vaga.leader?.name || '-'}
-                            </div>
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${vaga.status === 'Aberta' ? 'bg-green-50 text-green-700 border-green-200' : vaga.status === 'Congelada' ? 'bg-amber-50 text-amber-700 border-amber-200' : vaga.status === 'Aguardando Autorização' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-                              {vaga.status}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 text-right whitespace-nowrap">
-                            <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={(e) => { e.stopPropagation(); handleOpenModal(vaga.id) }} className="p-1.5 text-[#1e3a8a] text-xs hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
-                              <button onClick={(e) => handleDeleteVaga(vaga.id, e)} className="p-1.5 text-red-600 text-xs hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </div>
             )
             }
