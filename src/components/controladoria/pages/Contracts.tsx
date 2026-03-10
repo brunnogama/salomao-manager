@@ -397,7 +397,11 @@ export function Contracts() {
       'Fixo Mensal', 'Cláusula Fixo Mensal',
       'Êxito Intermediário', 'Cláusula Intermediário',
       'Êxito Final', 'Cláusula Êxito Final',
-      'Êxito (Total)', 'Observações'
+      'Êxito (Total)',
+      'Posição do Cliente', 'Nº Processo', 'UF (Processo)', 'Tribunal', 'Comarca', 'Vara',
+      'Autor', 'CNPJ Autor', 'Réu / Parte Adversa', 'CNPJ Réu', 'Assunto / Objeto',
+      'Valor da Causa', 'Magistrados',
+      'Observações'
     ];
 
     const rows: any[] = [];
@@ -441,6 +445,19 @@ export function Contracts() {
         vFinal,
         (c as any).final_success_fee_clause || '-',
         vTotalSuccess,
+        c.client_position || '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.process_number || '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.uf || '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.court || '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.comarca || '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.vara || '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.author || '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.author_cnpj || '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.opponent || '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.opponent_cnpj || '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.subject || '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.value_of_cause ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.value_of_cause) : '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.magistrates && p.magistrates.length > 0 ? p.magistrates.map((m: any) => `${m.title || ''} ${m.name}`.trim()).join(' / ') : '-').join('\n') : '-',
         c.observations || '-'
       ]);
 
@@ -465,14 +482,18 @@ export function Contracts() {
           '', '',
           '', clause.type === 'Intermediário' ? clause.text : '',
           '', clause.type === 'Extra Êxito Final' ? clause.text : '',
-          '', ''
+          '',
+          '', '', '', '', '', '', '', '', '', '', '', '', '',
+          ''
         ]);
       });
     });
 
     const totalRow = [
       'TOTAIS', '', '', '', '', '', '',
-      sumPro, '', sumOther, '', sumFixed, '', sumInter, '', sumFinal, '', sumTotalSuccess, ''
+      sumPro, '', sumOther, '', sumFixed, '', sumInter, '', sumFinal, '', sumTotalSuccess,
+      '', '', '', '', '', '', '', '', '', '', '', '', '',
+      ''
     ];
 
     const dataWithHeader = [header, ...rows, [], totalRow];
