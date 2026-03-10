@@ -4,6 +4,8 @@ import { SearchableSelect } from '../../crm/SearchableSelect'
 import { Collaborator } from '../../../types/controladoria'
 import { supabase } from '../../../lib/supabase'
 import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
+import { toast } from 'sonner'
+import { AlertModal } from '../../../components/ui/AlertModal'
 
 interface HistoricoSectionProps {
     formData: Partial<Collaborator>
@@ -34,6 +36,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
     // --- CARGOS STATE ---
     const [roleHistory, setRoleHistory] = useState<any[]>([])
+    const [pendingDeleteRoleId, setPendingDeleteRoleId] = useState<string | null>(null)
 
     // --- ADVERTÊNCIAS STATE ---
     const [warningReason, setWarningReason] = useState('')
@@ -166,17 +169,23 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
     }
 
     // --- DELETE HANDLER ---
-    const handleDeleteRoleHistory = async (id: string) => {
-        if (!confirm('Deseja realmente excluir este registro de histórico?')) return;
+    const handleDeleteRoleHistoryClick = (id: string) => {
+        setPendingDeleteRoleId(id);
+    }
+
+    const confirmDeleteRoleHistory = async () => {
+        if (!pendingDeleteRoleId) return;
         setLoading(true);
         try {
-            const { error } = await supabase.from('collaborator_role_history').delete().eq('id', id);
+            const { error } = await supabase.from('collaborator_role_history').delete().eq('id', pendingDeleteRoleId);
             if (error) throw error;
-            setRoleHistory(prev => prev.filter(item => item.id !== id));
+            setRoleHistory(prev => prev.filter(item => item.id !== pendingDeleteRoleId));
+            toast.success('Registro de histórico excluído com sucesso.');
         } catch (e: any) {
-            alert('Erro ao excluir histórico: ' + e.message);
+            toast.error('Erro ao excluir histórico: ' + e.message);
         } finally {
             setLoading(false);
+            setPendingDeleteRoleId(null);
         }
     }
 
@@ -193,12 +202,12 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                 description: warningDesc
             })
             if (error) throw error
-            alert('Advertência salva com sucesso!')
+            toast.success('Advertência salva com sucesso!')
             setWarningReason('')
             setWarningDesc('')
             setActiveSection('none')
         } catch (e: any) {
-            alert('Erro ao salvar: ' + e.message)
+            toast.error('Erro ao salvar: ' + e.message)
         } finally {
             setLoading(false)
         }
@@ -215,10 +224,10 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
             if (error) throw error
             setFormData(prev => ({ ...prev, history_observations: obsText }))
-            alert('Observações atualizadas!')
+            toast.success('Observações atualizadas!')
             setActiveSection('none')
         } catch (e: any) {
-            alert('Erro ao salvar: ' + e.message)
+            toast.error('Erro ao salvar: ' + e.message)
         } finally {
             setLoading(false)
         }
@@ -313,6 +322,16 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                 </button>
             </div>
 
+            <AlertModal
+                isOpen={!!pendingDeleteRoleId}
+                onClose={() => setPendingDeleteRoleId(null)}
+                title="Deseja realmente excluir?"
+                description="Tem certeza que quer excluir este registro de histórico? Esta ação não pode ser desfeita."
+                variant="error"
+                confirmText="Excluir"
+                onConfirm={confirmDeleteRoleHistory}
+            />
+
             {/* SECTIONS CONTENT */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[300px] relative">
                 {activeSection === 'none' && (
@@ -371,7 +390,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                                     </p>
                                                     {!isViewMode && (
                                                         <button
-                                                            onClick={() => handleDeleteRoleHistory(item.id)}
+                                                            onClick={() => handleDeleteRoleHistoryClick(item.id)}
                                                             className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                                                             title="Excluir histórico"
                                                         >

@@ -33,14 +33,12 @@ BEGIN
         candidato_id,
         tipo,
         data_registro,
-        descricao,
-        created_at
+        descricao
     ) VALUES (
         p_candidato_id,
         'Avaliação do Líder',
         NOW(),
-        'Avaliação: ' || p_avaliacao || '. Observação: ' || COALESCE(p_obs, ''),
-        NOW()
+        'Avaliação: ' || p_avaliacao || '. Observação: ' || COALESCE(p_obs, '')
     );
 
     RETURN TRUE;

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Save, Loader2, History, MessageSquare, Trash2, Calendar } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { supabase } from '../../../lib/supabase'
+import { AlertModal } from '../../../components/ui/AlertModal'
 
 interface CandidatoHistoricoSectionProps {
     candidatoId: string | null
@@ -24,6 +25,7 @@ export function CandidatoHistoricoSection({
     const [entrevistaHora, setEntrevistaHora] = useState('')
     const [compareceu, setCompareceu] = useState<string>('Pendente')
     const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, title: string, message: string, type: 'success' | 'warning' | 'error' }>({ isOpen: false, title: '', message: '', type: 'success' })
+    const [pendingDeleteId, setPendingDeleteId] = useState<{ id?: string, temp_id?: string } | null>(null)
 
     const showAlert = (title: string, message: string, type: 'success' | 'warning' | 'error') => {
         setAlertConfig({ isOpen: true, title, message, type });
@@ -82,8 +84,18 @@ export function CandidatoHistoricoSection({
     }
 
     // --- DELETE HANDLER ---
-    const handleDeleteHistorico = async (id?: string, temp_id?: string) => {
-        if (!confirm('Deseja realmente excluir este registro de histórico?')) return;
+    const handleDeleteHistoricoClick = (id?: string, temp_id?: string) => {
+        if (id?.startsWith('ev_')) {
+            showAlert('Ação não permitida', 'Este evento foi gerado pela Agenda e deve ser removido por lá.', 'warning');
+            return;
+        }
+        setPendingDeleteId({ id, temp_id });
+    }
+
+    const confirmDeleteHistorico = async () => {
+        if (!pendingDeleteId) return;
+        const { id, temp_id } = pendingDeleteId;
+        setPendingDeleteId(null);
 
         if (temp_id && setPendingHistorico) {
             setPendingHistorico(prev => prev.filter(item => item.temp_id !== temp_id));
@@ -92,11 +104,6 @@ export function CandidatoHistoricoSection({
 
         if (!id) return;
 
-        if (id.startsWith('ev_')) {
-            alert('Este evento foi gerado pela Agenda e deve ser removido por lá.');
-            return;
-        }
-
         const realId = id.replace('hist_', '');
 
         setLoading(true);
@@ -104,8 +111,9 @@ export function CandidatoHistoricoSection({
             const { error } = await supabase.from('candidato_historico').delete().eq('id', realId);
             if (error) throw error;
             setHistoricoList(prev => prev.filter(item => item.id !== id));
+            showAlert('Sucesso', 'Registro excluído com sucesso.', 'success');
         } catch (e: any) {
-            alert('Erro ao excluir histórico: ' + e.message);
+            showAlert('Erro', 'Erro ao excluir histórico: ' + e.message, 'error');
         } finally {
             setLoading(false);
         }
@@ -113,7 +121,7 @@ export function CandidatoHistoricoSection({
 
     const handleUpdateCompareceu = async (id: string, value: string) => {
         if (id.startsWith('ev_')) {
-            alert('A presença de eventos nativos do Calendário devem ser alteradas na aba de Reuniões da Agenda.');
+            showAlert('Ação não permitida', 'A presença de eventos nativos do Calendário devem ser alteradas na aba de Reuniões da Agenda.', 'warning');
             return;
         }
         const realId = id.replace('hist_', '');
@@ -230,6 +238,16 @@ export function CandidatoHistoricoSection({
                     </div>
                 </div>
             )}
+
+            <AlertModal
+                isOpen={!!pendingDeleteId}
+                onClose={() => setPendingDeleteId(null)}
+                title="Deseja realmente excluir?"
+                description="Tem certeza que quer excluir este registro de histórico? Esta ação não pode ser desfeita."
+                variant="error"
+                confirmText="Excluir"
+                onConfirm={confirmDeleteHistorico}
+            />
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[300px] relative p-8">
                 {/* INTERVIEWS PANEL directly shown */}
@@ -350,7 +368,7 @@ export function CandidatoHistoricoSection({
                                                     </div>
                                                     {!isViewMode && (
                                                         <button
-                                                            onClick={() => handleDeleteHistorico(item.id, item.temp_id)}
+                                                            onClick={() => handleDeleteHistoricoClick(item.id, item.temp_id)}
                                                             className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
                                                             title="Excluir histórico"
                                                         >
