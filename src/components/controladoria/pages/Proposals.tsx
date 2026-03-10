@@ -169,16 +169,29 @@ export function Proposals() {
   const fetchClients = async () => {
     const { data } = await supabase.from('clients').select('id, name, cnpj').order('name');
     if (data) {
-      // Remove exact duplicates (same name and CNPJ) just in case
-      const uniqueClients: any[] = [];
-      const seen = new Set();
+      // Agrupar por CNPJ: clientes com mesmo CNPJ aparecem apenas uma vez
+      const cnpjMap = new Map<string, any>();
+      const noCnpjClients: any[] = [];
+      const seenNames = new Set<string>();
+
       data.forEach(c => {
-        const key = `${c.name}-${c.cnpj || ''}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          uniqueClients.push(c);
+        const cnpjClean = c.cnpj?.replace(/\D/g, '') || '';
+        if (cnpjClean.length > 0) {
+          // Agrupar por CNPJ — manter o primeiro encontrado
+          if (!cnpjMap.has(cnpjClean)) {
+            cnpjMap.set(cnpjClean, c);
+          }
+        } else {
+          // Sem CNPJ — deduplicar por nome
+          if (!seenNames.has(c.name)) {
+            seenNames.add(c.name);
+            noCnpjClients.push(c);
+          }
         }
       });
+
+      const uniqueClients = [...cnpjMap.values(), ...noCnpjClients];
+
       // Store JSON in value to easily retrieve name and cnpj when selected
       setClientOptions(uniqueClients.map(c => ({
         label: c.cnpj ? `${c.name} - ${maskCNPJ(c.cnpj)}` : c.name,

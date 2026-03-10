@@ -78,11 +78,35 @@ export function useContractOptions({ formData, setFormData, currentProcess, setC
             setAuthorOptions(uniqueAuthors);
         }
 
-        // 🔧 CORREÇÃO PRINCIPAL: Remover duplicatas de clientes
-        const { data: clients } = await supabase.from('clients').select('name').order('name');
+        // 🔧 CORREÇÃO PRINCIPAL: Remover duplicatas de clientes por CNPJ
+        const { data: clients } = await supabase.from('clients').select('name, cnpj').order('name');
         if (clients) {
-            const uniqueClients = Array.from(new Set(clients.map(c => c.name).filter(name => name && name.trim() !== ''))).sort((a, b) => a.localeCompare(b));
-            setClientOptions(uniqueClients);
+            const cnpjSeen = new Set<string>();
+            const nameSeen = new Set<string>();
+            const uniqueNames: string[] = [];
+
+            clients.forEach(c => {
+                if (!c.name || c.name.trim() === '') return;
+                const cnpjClean = c.cnpj?.replace(/\D/g, '') || '';
+                if (cnpjClean.length > 0) {
+                    // Agrupar por CNPJ — manter o primeiro nome encontrado
+                    if (!cnpjSeen.has(cnpjClean)) {
+                        cnpjSeen.add(cnpjClean);
+                        if (!nameSeen.has(c.name)) {
+                            nameSeen.add(c.name);
+                            uniqueNames.push(c.name);
+                        }
+                    }
+                } else {
+                    // Sem CNPJ — deduplicar por nome
+                    if (!nameSeen.has(c.name)) {
+                        nameSeen.add(c.name);
+                        uniqueNames.push(c.name);
+                    }
+                }
+            });
+
+            setClientOptions(uniqueNames.sort((a, b) => a.localeCompare(b)));
         }
 
         // 🔧 Buscar locais de faturamento únicos
