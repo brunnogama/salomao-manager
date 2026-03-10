@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Save, Upload, Settings2, ChevronDown, Trash2, Plus, ExternalLink } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { SearchableSelect } from '../../SearchableSelect';
@@ -160,7 +161,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
         }
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in duration-200">
                 <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-start sm:items-center bg-gray-50 rounded-t-2xl shrink-0">
@@ -576,6 +577,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                 isOpen={isAgencyModalOpen}
                 onClose={() => setIsAgencyModalOpen(false)}
             />
-        </div>
+        </div>,
+        document.body
     );
 }

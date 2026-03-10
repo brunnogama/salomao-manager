@@ -1,6 +1,7 @@
 // brunnogama/salomao-manager/salomao-manager-3e743876de4fb5af74c8aedf5b89ce1e3913c795/src/components/controladoria/clients/ClientFormModal.tsx
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Save, Search, Loader2, AlertTriangle, Plus, Trash2, UserPlus, User, MapPin, Users, FileText, Gift } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Client, Partner, ClientContact } from '../../../types/controladoria';
@@ -246,7 +247,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl h-[85vh] flex overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
 
@@ -653,6 +654,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
