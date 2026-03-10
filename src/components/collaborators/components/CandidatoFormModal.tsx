@@ -8,7 +8,7 @@ import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
 import { DadosEscolaridadeSection } from './DadosEscolaridadeSection'
 import { CandidatoExperienciasSection } from './CandidatoExperienciasSection'
-import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, Edit2, Camera, Search } from 'lucide-react'
+import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, Edit2, Camera, Search, Share2 } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
 import { EnderecoSection } from './EnderecoSection'
@@ -534,7 +534,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         perfil: formData.perfil || null,
                         candidato_id: finalCandidatoId
                     };
-                    
+
                     let query = supabase.from('collaborators').select('id');
                     if (formData.email) {
                         query = query.or(`email.eq.${formData.email},name.ilike.${formData.nome || formData.name}`);
@@ -542,7 +542,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         query = query.ilike('name', formData.nome || formData.name);
                     }
                     const { data: existingColab } = await query.maybeSingle();
-                    
+
                     if (!existingColab) {
                         const newColab = {
                             ...commonFields,
@@ -567,7 +567,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     } else {
                         const { error: updateColabErr } = await supabase.from('collaborators').update(commonFields).eq('id', existingColab.id);
                         if (updateColabErr) console.error("Error updating existing colab", updateColabErr);
-                        
+
                         setSavedCandidatoData({
                             ...formData,
                             id: existingColab.id,
@@ -577,7 +577,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             motivo_reprovacao: undefined
                         });
                     }
-                    
+
                     // If setSavedCandidatoData wasn't updated because of errors, set a fallback
                     setSavedCandidatoData((prev: any) => prev || {
                         ...formData,
@@ -588,7 +588,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         status_selecao: undefined,
                         motivo_reprovacao: undefined
                     });
-                    
+
                 } catch (e) {
                     console.error("Error auto-registering candidate as collaborator:", e);
                 }
@@ -648,6 +648,17 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             currentTags.push(tagText);
             setFormData({ ...formData, perfil: currentTags.join('\n') });
         }
+    };
+
+    const handleSharePublicProfile = () => {
+        if (!candidatoId || !formData.nome) return;
+
+        const subject = encodeURIComponent(`Perfil de Candidato - ${formData.nome}`);
+        let body = `Olá,\n\nSegue o link para o perfil consolidado do(a) candidato(a) ${formData.nome}:\n\n`;
+        const profileUrl = `${window.location.origin}/candidato/perfil/${candidatoId}`;
+        body += `${profileUrl}\n\nAtenciosamente,\nEquipe de RH`;
+
+        window.location.href = `mailto:?subject=${subject}&body=${encodeURIComponent(body)}`;
     };
 
     const removeTagFromFormData = (indexToRemove: number) => {
@@ -710,10 +721,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             </div>
                         )}
                         {!viewMode && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm"
-                             onClick={() => setShowPhotoModal(true)}>
-                            <Camera className="w-8 h-8 text-white" />
-                        </div>
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm"
+                                onClick={() => setShowPhotoModal(true)}>
+                                <Camera className="w-8 h-8 text-white" />
+                            </div>
                         )}
                     </div>
                 </div>
@@ -728,19 +739,32 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         >
                             Fechar
                         </button>
-                        {candidatoId && onEdit && (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    onClose()
-                                    onEdit(candidatoId)
-                                }}
-                                className="bg-[#1e3a8a] text-white px-8 py-2.5 rounded-xl font-bold text-sm hover:bg-[#1e3a8a]/90 transition-all flex items-center gap-2 shadow-lg shadow-[#1e3a8a]/20 active:scale-95 hover:-translate-y-0.5"
-                            >
-                                <Edit2 className="w-4 h-4" />
-                                Editar Candidato
-                            </button>
-                        )}
+                        <div className="flex items-center gap-3">
+                            {candidatoId && (
+                                <button
+                                    type="button"
+                                    onClick={handleSharePublicProfile}
+                                    title="Compartilhar Perfil Público"
+                                    className="bg-blue-50 text-blue-700 px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-100 transition-all flex items-center gap-2 border border-blue-200 active:scale-95 hover:-translate-y-0.5"
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                    Compartilhar
+                                </button>
+                            )}
+                            {candidatoId && onEdit && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onClose()
+                                        onEdit(candidatoId)
+                                    }}
+                                    className="bg-[#1e3a8a] text-white px-8 py-2.5 rounded-xl font-bold text-sm hover:bg-[#1e3a8a]/90 transition-all flex items-center gap-2 shadow-lg shadow-[#1e3a8a]/20 active:scale-95 hover:-translate-y-0.5"
+                                >
+                                    <Edit2 className="w-4 h-4" />
+                                    Editar Candidato
+                                </button>
+                            )}
+                        </div>
                     </div>
                 ) : (
                     <div className="flex items-center gap-4">
