@@ -8,7 +8,7 @@ import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
 import { DadosEscolaridadeSection } from './DadosEscolaridadeSection'
 import { CandidatoExperienciasSection } from './CandidatoExperienciasSection'
-import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, Edit2, Camera, Search, Share2 } from 'lucide-react'
+import { User, BookOpen, Briefcase, Hash, X, Sparkles, Bot, Loader2, Clock, TagIcon, Files, CalendarHeart, Edit2, Camera, Search, Share2, Building2 } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { CandidatoEntrevistaSection } from './CandidatoEntrevistaSection'
 import { EnderecoSection } from './EnderecoSection'
@@ -76,7 +76,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     // Photo Modal state
     const [showPhotoModal, setShowPhotoModal] = useState(false)
     const [photoPreview, setPhotoPreview] = useState<string | null>(null)
-    const [uploadingPhoto, setUploadingPhoto] = useState(false)
+    const [uploadingPhoto] = useState(false)
     const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(initialFile || null)
 
     const [gedCategories] = useState([
@@ -693,11 +693,12 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
     const steps = [
         { id: 1, label: 'Dados Pessoais e Bancários', icon: User },
-        { id: 4, label: 'Dados Corporativos', icon: Briefcase },
+        { id: 6, label: 'Experiências Profissionais', icon: Briefcase },
+        { id: 4, label: 'Dados Corporativos', icon: Building2 },
         { id: 3, label: 'Dados de Escolaridade', icon: BookOpen },
         { id: 10, label: 'Entrevista', icon: CalendarHeart },
         { id: 9, label: 'Perfil e Tags', icon: TagIcon },
-        { id: 6, label: 'Histórico', icon: Clock },
+        { id: 8, label: 'Registros', icon: Clock },
         { id: 7, label: 'GED', icon: Files },
     ]
 
@@ -1023,6 +1024,11 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             setPendingExperiencias={setPendingExperiencias}
                             showAlert={showAlert}
                         />
+                    </div>
+                )}
+
+                {activeTab === 8 && (
+                    <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
                         <CandidatoHistoricoSection
                             candidatoId={candidatoId || null}
                             isViewMode={false}

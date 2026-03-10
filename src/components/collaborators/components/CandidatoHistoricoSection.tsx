@@ -251,6 +251,7 @@ export function CandidatoHistoricoSection({
                                     disabled={isViewMode}
                                     options={[
                                         { id: 'Observação', name: 'Observação' },
+                                        { id: 'Avaliação do Líder', name: 'Avaliação do Líder' },
                                         { id: 'Teste Prático', name: 'Teste Prático' },
                                         { id: 'Dinâmica', name: 'Dinâmica' },
                                         { id: 'Outros', name: 'Outros' }
@@ -319,8 +320,9 @@ export function CandidatoHistoricoSection({
                                         <div key={item.id || item.temp_id || index} className="flex items-start gap-4 p-5 border border-gray-100 rounded-2xl bg-white hover:border-blue-200 transition-colors shadow-sm relative group overflow-hidden">
                                             <div className={`absolute top-0 left-0 w-1.5 h-full ${item.tipo === 'Entrevista' ? 'bg-blue-500' :
                                                 item.tipo === 'Observação' ? 'bg-amber-500' :
-                                                    item.tipo === 'Teste Prático' ? 'bg-purple-500' :
-                                                        'bg-gray-400'
+                                                    item.tipo === 'Avaliação do Líder' ? 'bg-emerald-500' :
+                                                        item.tipo === 'Teste Prático' ? 'bg-purple-500' :
+                                                            'bg-gray-400'
                                                 }`} />
 
                                             <div className="p-3 bg-gray-50 text-gray-500 rounded-xl mt-1 shrink-0">
@@ -335,8 +337,9 @@ export function CandidatoHistoricoSection({
                                                             </span>
                                                             <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.tipo === 'Entrevista' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                                                                 item.tipo === 'Observação' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                                                    item.tipo === 'Teste Prático' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                                                        'bg-gray-50 text-gray-600 border-gray-200'
+                                                                    item.tipo === 'Avaliação do Líder' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                                        item.tipo === 'Teste Prático' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                                            'bg-gray-50 text-gray-600 border-gray-200'
                                                                 }`}>
                                                                 {item.tipo}
                                                             </span>
