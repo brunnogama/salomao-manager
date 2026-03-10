@@ -1399,16 +1399,11 @@ export function RHVagas() {
                                     {activeTab === 'reprovados' && c.motivo_reprovacao && (
                                       <p className="text-[10px] text-red-600 font-bold mt-1 bg-red-100 p-1 rounded inline-block">Motivo: {c.motivo_reprovacao}</p>
                                     )}
-                                    {c.perfil && (
+                                    {c.perfil && c.perfil.split('\n').filter((l: string) => l.trim()).length > 0 && (
                                       <div className="flex flex-wrap gap-1 mt-1.5">
-                                        {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                          <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                            {tag.trim()}
-                                          </span>
-                                        ))}
-                                        {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                          <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
-                                        )}
+                                        <span className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                          {c.perfil.split('\n').filter((l: string) => l.trim()).length} tag{c.perfil.split('\n').filter((l: string) => l.trim()).length !== 1 ? 's' : ''}
+                                        </span>
                                       </div>
                                     )}
                                     {/* Indicador de Avaliação do Líder */}
@@ -1512,16 +1507,11 @@ export function RHVagas() {
                                       <span className="text-[8px] shrink-0 bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
                                     )}
                                   </div>
-                                  {vaga.perfil && (
-                                    <div className="flex flex-wrap gap-1">
-                                      {vaga.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                        <span key={i} className="px-1.5 py-0.5 bg-green-50/50 text-green-700 border border-green-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                          {tag.trim()}
-                                        </span>
-                                      ))}
-                                      {vaga.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                        <span className="text-[8px] font-bold text-green-500 ml-0.5">...</span>
-                                      )}
+                                  {vaga.perfil && vaga.perfil.split('\n').filter((l: string) => l.trim()).length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      <span className="px-1.5 py-0.5 bg-green-50/50 text-green-700 border border-green-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                        {vaga.perfil.split('\n').filter((l: string) => l.trim()).length} tag{vaga.perfil.split('\n').filter((l: string) => l.trim()).length !== 1 ? 's' : ''}
+                                      </span>
                                     </div>
                                   )}
                                 </div>
