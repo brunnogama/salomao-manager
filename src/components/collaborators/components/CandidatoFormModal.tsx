@@ -656,7 +656,9 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         // Converter URL local para compartilhamento
         const subject = encodeURIComponent(`Perfil de Candidato - ${formData.nome}`);
         let body = `Olá,\n\nSegue o link para o perfil consolidado do(a) candidato(a) ${formData.nome}:\n\n`;
-        const profileUrl = `${window.location.origin}/candidato/perfil/${candidatoId}`;
+        // Use slug se disponível, senão tenta criar um fallback baseado no nome, senão usa o ID
+        const slugFallback = formData.slug || (formData.nome ? formData.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : candidatoId);
+        const profileUrl = `${window.location.origin}/candidato/perfil/${slugFallback}`;
         body += `${profileUrl}\n\nAtenciosamente,\nEquipe de RH`;
 
         try {

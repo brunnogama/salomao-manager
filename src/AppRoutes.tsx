@@ -178,7 +178,7 @@ export function AppRoutes() {
 
             {/* Public Routes accessible by everyone (including logged in users) */}
             <Route path="/atualizacao-cadastral/:token" element={<AtualizacaoCadastral />} />
-            <Route path="/candidato/perfil/:id" element={<CandidatoPublicProfile />} />
+            <Route path="/candidato/perfil/:identifier" element={<CandidatoPublicProfile />} />
             <Route path="/report/controladoria" element={<ReportControladoria />} />
 
             {/* Protected Routes */}

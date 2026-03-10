@@ -65,7 +65,7 @@ const ENTREVISTA_LABELS: Record<string, string> = {
 };
 
 export function CandidatoPublicProfile() {
-    const { id } = useParams<{ id: string }>()
+    const { identifier } = useParams<{ identifier: string }>()
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -80,8 +80,8 @@ export function CandidatoPublicProfile() {
     const [feedbackSuccess, setFeedbackSuccess] = useState(false)
 
     useEffect(() => {
-        if (!id) {
-            setError('ID de candidato não fornecido na URL.')
+        if (!identifier) {
+            setError('Identificador de candidato não fornecido na URL.')
             setLoading(false)
             return
         }
@@ -91,7 +91,7 @@ export function CandidatoPublicProfile() {
                 setLoading(true)
                 setError(null)
 
-                const { data, error: rpcError } = await fallbackFetchProfile(id);
+                const { data, error: rpcError } = await fallbackFetchProfile(identifier);
 
                 if (rpcError) throw rpcError
                 if (!data || !data.candidato) throw new Error('Candidato não encontrado.')
@@ -115,12 +115,12 @@ export function CandidatoPublicProfile() {
         }
 
         fetchProfile()
-    }, [id])
+    }, [identifier])
 
-    const fallbackFetchProfile = async (candidatoId: string) => {
+    const fallbackFetchProfile = async (identifierParam: string) => {
         // First try the RPC
-        const { data, error } = await supabase.rpc('get_candidato_public_profile', {
-            p_candidato_id: candidatoId
+        const { data, error } = await supabase.rpc('get_candidato_public_profile_v2', {
+            p_identifier: identifierParam
         });
         return { data, error };
     };
@@ -130,8 +130,8 @@ export function CandidatoPublicProfile() {
 
         try {
             setIsSubmittingFeedback(true);
-            const { error } = await supabase.rpc('save_candidato_feedback', {
-                p_candidato_id: id,
+            const { error } = await supabase.rpc('save_candidato_feedback_v2', {
+                p_identifier: identifier,
                 p_avaliacao: avaliacaoForm.voto,
                 p_obs: avaliacaoForm.obs
             });
