@@ -67,7 +67,7 @@ export function Demandas() {
                     .select('id, name'),
                 supabase
                     .from('contracts')
-                    .select('id, client_name, contract_date, status, pro_labore, final_success_fee, intermediate_fees, final_success_extras, timesheet')
+                    .select('id, client_name, contract_date, status, pro_labore, pro_labore_extras, final_success_fee, intermediate_fees, final_success_extras, timesheet')
                     .eq('status', 'active') // Status active mean it's closed/signed
                     .gte('contract_date', startDate)
                     .lte('contract_date', endDate)
@@ -153,6 +153,15 @@ export function Demandas() {
         return isNaN(num) ? 0 : num;
     };
 
+    const calculateTotalProLabore = (c: any): number => {
+        let total = parseCurrency(c.pro_labore);
+
+        if (c.pro_labore_extras && Array.isArray(c.pro_labore_extras)) {
+            c.pro_labore_extras.forEach((fee: string) => total += parseCurrency(fee));
+        }
+        return total;
+    };
+
     const calculateTotalSuccess = (c: any): number => {
         let total = parseCurrency(c.final_success_fee);
 
@@ -179,8 +188,8 @@ export function Demandas() {
         let totalExitoNum = 0;
 
         contracts.forEach(c => {
-            totalProLaboreNum += parseCurrency(c.pro_labore);
-            totalExitoNum += parseCurrency(c.final_success_fee);
+            totalProLaboreNum += calculateTotalProLabore(c);
+            totalExitoNum += calculateTotalSuccess(c);
         });
 
         return {
@@ -377,10 +386,10 @@ export function Demandas() {
                                     <thead className="sticky top-0 z-10">
                                         <tr className="bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-widest">
                                             <th className="p-4 rounded-tl-lg">Cliente / Contrato</th>
-                                            <th className="p-4 text-center">Timesheet</th>
                                             <th className="p-4 text-right">Data</th>
                                             <th className="p-4 text-right">Pró-labore</th>
-                                            <th className="p-4 text-right rounded-tr-lg">Êxito</th>
+                                            <th className="p-4 text-right">Êxito</th>
+                                            <th className="p-4 text-center rounded-tr-lg">Timesheet</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -396,17 +405,17 @@ export function Demandas() {
                                                             <span className="font-bold text-gray-800 text-xs">{c.client_name || 'Sem Cliente'}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="p-4 text-center text-xs font-bold text-gray-500">
-                                                        {c.timesheet ? <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Sim</span> : '-'}
-                                                    </td>
                                                     <td className="p-4 text-right text-xs text-gray-500">
                                                         {c.contract_date ? new Date(c.contract_date).toLocaleDateString('pt-BR') : '-'}
                                                     </td>
                                                     <td className="p-4 text-right text-xs font-bold text-[#0a192f]">
-                                                        {c.pro_labore ? formatCurrency(parseCurrency(c.pro_labore)) : '-'}
+                                                        {calculateTotalProLabore(c) > 0 ? formatCurrency(calculateTotalProLabore(c)) : '-'}
                                                     </td>
                                                     <td className="p-4 text-right text-xs font-bold text-emerald-600">
                                                         {calculateTotalSuccess(c) > 0 ? formatCurrency(calculateTotalSuccess(c)) : '-'}
+                                                    </td>
+                                                    <td className="p-4 text-center text-xs font-bold text-gray-500">
+                                                        {c.timesheet ? <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Sim</span> : '-'}
                                                     </td>
                                                 </tr>
                                             ))
