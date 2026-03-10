@@ -368,7 +368,7 @@ export function Demandas() {
                 data[hDateStr].hires += 1;
             }
 
-            if (c.status === 'inativo' && tDateStr && data[tDateStr]) {
+            if (tDateStr && data[tDateStr]) {
                 data[tDateStr].terminations -= 1; // Negative for visualizing leaving
             }
         });
@@ -400,8 +400,21 @@ export function Demandas() {
 
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const pageHeight = pdf.internal.pageSize.getHeight();
 
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            let heightLeft = pdfHeight;
+            let position = 0;
+
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft > 0) {
+                position -= pageHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                heightLeft -= pageHeight;
+            }
+
             pdf.save(`${filename}.pdf`);
         } catch (error) {
             console.error('Erro ao exportar PDF:', error);
@@ -620,7 +633,7 @@ export function Demandas() {
                                         <div className="h-full flex items-center justify-center text-sm text-gray-400 font-medium">Sem dados para exibir.</div>
                                     ) : (
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={headcountEvolution} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                            <AreaChart data={headcountEvolution} margin={{ top: 20, right: 40, left: 0, bottom: 0 }}>
                                                 <defs>
                                                     <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
                                                         <stop offset="5%" stopColor="#1e3a8a" stopOpacity={0.3} />
@@ -637,8 +650,12 @@ export function Demandas() {
                                                 <Area type="monotone" name="Saldo Ativos" dataKey="balance" stroke="#1e3a8a" strokeWidth={3} fillOpacity={1} fill="url(#colorBalance)">
                                                     <LabelList dataKey="balance" position="top" offset={10} fontSize={10} fontWeight="bold" fill="#1e3a8a" />
                                                 </Area>
-                                                <Area type="monotone" name="Entradas" dataKey="hires" stroke="#10b981" strokeWidth={2} fillOpacity={0} />
-                                                <Area type="monotone" name="Saídas" dataKey="terminations" stroke="#ef4444" strokeWidth={2} fillOpacity={0} />
+                                                <Area type="monotone" name="Entradas" dataKey="hires" stroke="#10b981" strokeWidth={2} fillOpacity={0}>
+                                                    <LabelList dataKey="hires" position="top" offset={10} fontSize={10} fontWeight="bold" fill="#10b981" />
+                                                </Area>
+                                                <Area type="monotone" name="Saídas" dataKey="terminations" stroke="#ef4444" strokeWidth={2} fillOpacity={0}>
+                                                    <LabelList dataKey="terminations" position="bottom" offset={10} fontSize={10} fontWeight="bold" fill="#ef4444" />
+                                                </Area>
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     )}
