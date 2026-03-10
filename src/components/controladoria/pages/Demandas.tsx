@@ -9,6 +9,16 @@ import {
     Loader2,
     FileSignature
 } from 'lucide-react';
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Legend
+} from 'recharts';
 
 interface Collaborator {
     id: string;
@@ -17,6 +27,7 @@ interface Collaborator {
     hire_date: string | null;
     area: string | null; // Jurídica ou Administrativa
     status: string;
+    termination_date: string | null;
 }
 
 interface Contract {
@@ -28,9 +39,17 @@ interface Contract {
     final_success_fee: string | null;
 }
 
+interface HeadcountData {
+    month: string;
+    hires: number;
+    terminations: number;
+    balance: number;
+}
+
 export function Demandas() {
     const [loading, setLoading] = useState(true);
-    const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+    const [collaborators, setCollaborators] = useState<Collaborator[]>([]); // Hired in period
+    const [allCollaborators, setAllCollaborators] = useState<Collaborator[]>([]); // All juridica (active + recent terminated)
     const [contracts, setContracts] = useState<Contract[]>([]);
 
     // Filtros de Data. Default: 1 de Julho de 2025 até hoje.
@@ -59,9 +78,13 @@ export function Demandas() {
             const [collabRes, rolesRes, contractRes, partnersRes] = await Promise.all([
                 supabase
                     .from('collaborators')
-                    .select('id, name, role, hire_date, area, status, leader:leader_id(name)')
-                    .gte('hire_date', startDate)
-                    .lte('hire_date', endDate),
+                    .select('id, name, role, hire_date, area, status, termination_date, leader:leader_id(name)')
+                    // We need to fetch ALL juridical collaborators to compute the headcount properly. 
+                    // We avoid filtering by hire_date here to get historical data for the chart, 
+                    // or we fetch since '2025-07-01' but also need people hired before that were active.
+                    // For the main table it uses hire_date, but for headcount we need active status or termination_date >= jul 2025.
+                    // To be safe and get accurate headcount, let's fetch all active, OR terminated after jul 2025.
+                    .or(`status.eq.active,termination_date.gte.2025-07-01`),
                 supabase
                     .from('roles')
                     .select('id, name'),
@@ -98,7 +121,18 @@ export function Demandas() {
                 role: rolesMap.get(String(c.role)) || c.role,
                 leader_name: c.leader?.name || 'Sem Líder Direto'
             }));
-            setCollaborators(juridicaCollabs);
+
+            // The dashboard cards and tables expect `collaborators` to be those HIRED in the selected period.
+            // The chart needs historical data. 
+            // We will store all fetched in `allJuridicaCollabs` and filter `collaborators` for the UI cards.
+            const hiredInPeriod = juridicaCollabs.filter(c => {
+                if (!c.hire_date) return false;
+                const hDate = c.hire_date;
+                return hDate >= startDate && hDate <= endDate;
+            });
+
+            setCollaborators(hiredInPeriod);
+            setAllCollaborators(juridicaCollabs);
 
             const contractsWithPartners = (contractRes.data as any[] || []).map(c => ({
                 ...c,
@@ -285,6 +319,63 @@ export function Demandas() {
 
         return Object.entries(leaderData).sort((a, b) => b[1].total - a[1].total);
     }, [collaborators]);
+
+    // Headcount Evolution Logic
+    const headcountEvolution = useMemo(() => {
+        // Build a list of months from July 2025 to EndDate
+        if (!allCollaborators || allCollaborators.length === 0) return [];
+
+        const startDateObj = new Date('2025-07-01T12:00:00'); // Hardcode baseline
+        const endDateObj = new Date(endDate + 'T12:00:00');
+
+        let currentDate = new Date(startDateObj);
+        const months: string[] = [];
+
+        while (currentDate <= endDateObj) {
+            const m = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            if (!months.includes(m)) months.push(m);
+            currentDate.setMonth(currentDate.getMonth() + 1);
+        }
+
+        const data: Record<string, HeadcountData> = {};
+        months.forEach(m => {
+            const [year, month] = m.split('-');
+            const displayMonth = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+            data[m] = { month: displayMonth.replace('. de ', '/'), hires: 0, terminations: 0, balance: 0 };
+        });
+
+        // We calculate balance as a running total. We need historical baseline or compute dynamically.
+        // Since we only query active OR terminated since Jul 2025, people hired BEFORE Jul 2025 and ACTIVE will be just "Base".
+        // Let's count them in the first month or keep a "baseline" variable!
+        let baseline = 0;
+
+        allCollaborators.forEach(c => {
+            const hDateStr = c.hire_date ? c.hire_date.substring(0, 7) : null;
+            const tDateStr = c.termination_date ? c.termination_date.substring(0, 7) : null;
+
+            // Baseline: Hired before Jul 2025 and (Still active OR terminated >= Jul 2025)
+            if (hDateStr && hDateStr < '2025-07') {
+                baseline += 1;
+            } else if (hDateStr && data[hDateStr]) {
+                data[hDateStr].hires += 1;
+            }
+
+            if (c.status === 'inativo' && tDateStr && data[tDateStr]) {
+                data[tDateStr].terminations -= 1; // Negative for visualizing leaving
+            }
+        });
+
+        let currentBalance = baseline;
+        const result: HeadcountData[] = [];
+        months.forEach(m => {
+            currentBalance += data[m].hires;
+            currentBalance += data[m].terminations; // It's negative already
+            data[m].balance = currentBalance;
+            result.push(data[m]);
+        });
+
+        return result;
+    }, [allCollaborators, endDate]);
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in duration-500">
@@ -477,64 +568,109 @@ export function Demandas() {
                             </div>
                         </div>
 
-                        {/* Bloco 2: Contratos Fechados (Maior) */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-2">
-                            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-emerald-50 rounded-lg">
-                                        <FileSignature className="w-5 h-5 text-emerald-600" />
+                        {/* Bloco 2: Contratos Fechados */}
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-2 space-y-6">
+
+                            {/* Gráfico de Headcount */}
+                            <div className="flex flex-col flex-1 border-b border-gray-100 pb-4">
+                                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-indigo-50 rounded-lg">
+                                            <TrendingUp className="w-5 h-5 text-indigo-600" />
+                                        </div>
+                                        <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Evolução do Headcount (Jurídico)</h3>
                                     </div>
-                                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Detalhamento de Contratos Fechados</h3>
+                                </div>
+                                <div className="p-4 h-[300px] w-full">
+                                    {headcountEvolution.length === 0 ? (
+                                        <div className="h-full flex items-center justify-center text-sm text-gray-400 font-medium">Sem dados para exibir.</div>
+                                    ) : (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={headcountEvolution} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                                <defs>
+                                                    <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#1e3a8a" stopOpacity={0.3} />
+                                                        <stop offset="95%" stopColor="#1e3a8a" stopOpacity={0} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                                <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#6B7280' }} tickLine={false} axisLine={false} />
+                                                <YAxis tick={{ fontSize: 10, fill: '#6B7280' }} tickLine={false} axisLine={false} />
+                                                <Tooltip
+                                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', fontSize: '12px', fontWeight: 'bold' }}
+                                                />
+                                                <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold', paddingTop: '10px' }} />
+                                                <Area type="monotone" name="Saldo Ativos" dataKey="balance" stroke="#1e3a8a" strokeWidth={3} fillOpacity={1} fill="url(#colorBalance)" />
+                                                <Area type="monotone" name="Entradas" dataKey="hires" stroke="#10b981" strokeWidth={2} fillOpacity={0} />
+                                                <Area type="monotone" name="Saídas" dataKey="terminations" stroke="#ef4444" strokeWidth={2} fillOpacity={0} />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    )}
                                 </div>
                             </div>
-                            <div className="p-2 overflow-x-auto max-h-[700px] overflow-y-auto custom-scrollbar flex-1 relative">
-                                <table className="w-full text-left border-collapse whitespace-nowrap">
-                                    <thead className="sticky top-0 z-20 shadow-[0_1px_0_0_#f3f4f6]">
-                                        <tr className="bg-white text-gray-500 text-[10px] font-black uppercase tracking-widest">
-                                            <th className="p-4 rounded-tl-lg bg-gray-50">Cliente / Contrato</th>
-                                            <th className="p-4 text-right bg-gray-50">Data</th>
-                                            <th className="p-4 text-right bg-gray-50">Pró-labore</th>
-                                            <th className="p-4 text-right bg-gray-50">Êxito</th>
-                                            <th className="p-4 text-center bg-gray-50">Timesheet</th>
-                                            <th className="p-4 text-center rounded-tr-lg bg-gray-50">Hon. %</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {contracts.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={5} className="p-8 text-center text-sm text-gray-400 font-medium">Nenhum contrato fechado no período selecionado.</td>
+
+                            {/* Tabela de Contratos */}
+                            <div className="flex flex-col flex-1">
+                                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-emerald-50 rounded-lg">
+                                            <FileSignature className="w-5 h-5 text-emerald-600" />
+                                        </div>
+                                        <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Detalhamento de Contratos Fechados</h3>
+                                    </div>
+                                </div>
+                                <div className="p-2 overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar flex-1 relative">
+                                    <table className="w-full text-left border-collapse whitespace-nowrap">
+                                        <thead className="sticky top-0 z-20 shadow-[0_1px_0_0_#f3f4f6]">
+                                            <tr className="bg-white text-gray-500 text-[10px] font-black uppercase tracking-widest">
+                                                <th className="p-4 rounded-tl-lg bg-gray-50">Cliente / Contrato</th>
+                                                <th className="p-4 bg-gray-50">Sócio Responsável</th>
+                                                <th className="p-4 text-right bg-gray-50">Data</th>
+                                                <th className="p-4 text-right bg-gray-50">Pró-labore</th>
+                                                <th className="p-4 text-right bg-gray-50">Êxito</th>
+                                                <th className="p-4 text-center bg-gray-50">Timesheet</th>
+                                                <th className="p-4 text-center rounded-tr-lg bg-gray-50">Hon. %</th>
                                             </tr>
-                                        ) : (
-                                            contracts.sort((a, b) => new Date(b.contract_date || 0).getTime() - new Date(a.contract_date || 0).getTime()).map((c: any) => (
-                                                <tr key={c.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
-                                                    <td className="p-4">
-                                                        <div className="flex flex-col">
-                                                            <span className="font-bold text-gray-800 text-xs">{c.client_name || 'Sem Cliente'}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-4 text-right text-xs text-gray-500">
-                                                        {c.contract_date ? new Date(c.contract_date).toLocaleDateString('pt-BR') : '-'}
-                                                    </td>
-                                                    <td className="p-4 text-right text-xs font-bold text-[#0a192f]">
-                                                        {calculateTotalProLabore(c) > 0 ? formatCurrency(calculateTotalProLabore(c)) : '-'}
-                                                    </td>
-                                                    <td className="p-4 text-right text-xs font-bold text-emerald-600">
-                                                        {calculateTotalSuccess(c) > 0 ? formatCurrency(calculateTotalSuccess(c)) : '-'}
-                                                    </td>
-                                                    <td className="p-4 text-center text-xs font-bold text-gray-500">
-                                                        {c.timesheet ? <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Sim</span> : '-'}
-                                                    </td>
-                                                    <td className="p-4 text-center text-xs font-bold text-gray-500">
-                                                        {isOnlyPercentage(c) ? <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Sim</span> : '-'}
-                                                    </td>
+                                        </thead>
+                                        <tbody>
+                                            {contracts.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} className="p-8 text-center text-sm text-gray-400 font-medium">Nenhum contrato fechado no período selecionado.</td>
                                                 </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
+                                            ) : (
+                                                contracts.sort((a, b) => new Date(b.contract_date || 0).getTime() - new Date(a.contract_date || 0).getTime()).map((c: any) => (
+                                                    <tr key={c.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                                        <td className="p-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="font-bold text-gray-800 text-xs">{c.client_name || 'Sem Cliente'}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-4 text-xs font-semibold text-gray-600">
+                                                            {c.partner_name}
+                                                        </td>
+                                                        <td className="p-4 text-right text-xs text-gray-500">
+                                                            {c.contract_date ? new Date(c.contract_date).toLocaleDateString('pt-BR') : '-'}
+                                                        </td>
+                                                        <td className="p-4 text-right text-xs font-bold text-[#0a192f]">
+                                                            {calculateTotalProLabore(c) > 0 ? formatCurrency(calculateTotalProLabore(c)) : '-'}
+                                                        </td>
+                                                        <td className="p-4 text-right text-xs font-bold text-emerald-600">
+                                                            {calculateTotalSuccess(c) > 0 ? formatCurrency(calculateTotalSuccess(c)) : '-'}
+                                                        </td>
+                                                        <td className="p-4 text-center text-xs font-bold text-gray-500">
+                                                            {c.timesheet ? <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Sim</span> : '-'}
+                                                        </td>
+                                                        <td className="p-4 text-center text-xs font-bold text-gray-500">
+                                                            {isOnlyPercentage(c) ? <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Sim</span> : '-'}
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
-
                     </div>
                 </>
             )}
