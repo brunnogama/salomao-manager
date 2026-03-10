@@ -98,6 +98,19 @@ export function CandidatoPublicProfile() {
 
                 setProfileData(data)
 
+                // Resolve role ID to role name
+                if (data.candidato.role && !isNaN(Number(data.candidato.role))) {
+                    const { data: roleData } = await supabase
+                        .from('roles')
+                        .select('name')
+                        .eq('id', Number(data.candidato.role))
+                        .maybeSingle();
+                    if (roleData?.name) {
+                        data.candidato.role = roleData.name;
+                        setProfileData({ ...data });
+                    }
+                }
+
                 // Set initial feedback state if already evaluated
                 if (data.candidato.data_avaliacao) {
                     setAvaliacaoForm({
