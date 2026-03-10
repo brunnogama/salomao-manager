@@ -215,7 +215,7 @@ export function RHVagas() {
         candidato_id: id,
         tipo: 'Envio para Análise',
         data_registro: new Date().toISOString(),
-        observacoes: 'Perfil público compartilhado com o Líder para avaliação.',
+        descricao: 'Perfil público compartilhado com o Líder para avaliação.',
       }));
       await supabase.from('candidato_historico').insert(historyRows);
     } catch (err) {
@@ -257,7 +257,7 @@ export function RHVagas() {
         candidato_id: pendingRemoveFeedback.id,
         tipo: 'Avaliação Removida',
         data_registro: new Date().toISOString(),
-        observacoes: 'A badge de avaliação do líder foi removida/arquivada pelo avaliador do RH.',
+        descricao: 'A badge de avaliação do líder foi removida/arquivada pelo avaliador do RH.',
       });
 
       // 3. Update state local

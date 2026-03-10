@@ -665,7 +665,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 candidato_id: candidatoId,
                 tipo: 'Envio para Análise',
                 data_registro: new Date().toISOString(),
-                observacoes: 'Perfil público compartilhado com o Líder para avaliação.'
+                descricao: 'Perfil público compartilhado com o Líder para avaliação.'
             });
 
             // Atualiza de leve o estado de histórico se quisermos ver rápido (mas a tab precisaria re-montar)

@@ -33,7 +33,7 @@ BEGIN
         candidato_id,
         tipo,
         data_registro,
-        observacoes,
+        descricao,
         created_at
     ) VALUES (
         p_candidato_id,
