@@ -58,7 +58,14 @@ export function Demandas() {
             // Como o DB pode ter nuances, vamos buscar e filtrar em memoria para ser seguro no começo.
             const { data: collabData, error: collabError } = await supabase
                 .from('collaborators')
-                .select('id, name, role, hire_date, area, status')
+                .select(`
+                    id, 
+                    name, 
+                    role:role_id(id, name), 
+                    hire_date, 
+                    area, 
+                    status
+                `)
                 .gte('hire_date', startDate)
                 .lte('hire_date', endDate);
 
@@ -68,11 +75,17 @@ export function Demandas() {
             // Tabela também tem as 'roles' em inglês ou português? Geralmente role no RH é o Cargo. 
             // Em Utils vimos as roles da jurídica, estão salvos na string do cargo, ou na Area='Jurídica'
             const juridicaCollabs = (collabData as any[] || []).filter(c => {
-                // Assume que 'area' === 'Jurídica' ou o cargo contém 'Advogado', 'Sócio', 'Auxiliar Jurídico'
+                // Check if 'area' is 'Jurídica' or the role name matches Juridica terms
+                const roleName = c.role?.name || typeof c.role === 'string' ? c.role : '';
                 const isJuridica = c.area === 'Jurídica' ||
-                    (c.role && typeof c.role === 'string' && (c.role.includes('Advogado') || c.role.includes('Sócio') || c.role.includes('Jurídico') || c.role.includes('Paralegal') || c.role.includes('Estagiário')));
+                    (typeof roleName === 'string' && (roleName.includes('Advogado') || roleName.includes('Sócio') || roleName.includes('Jurídico') || roleName.includes('Paralegal') || roleName.includes('Estagiário')));
+
+                // Map it so it's a flat format
                 return isJuridica;
-            });
+            }).map(c => ({
+                ...c,
+                role: c.role?.name || c.role
+            }));
             setCollaborators(juridicaCollabs);
 
             // Fetch Contracts closed in the period
@@ -357,10 +370,10 @@ export function Demandas() {
                                                         {c.contract_date ? new Date(c.contract_date).toLocaleDateString('pt-BR') : '-'}
                                                     </td>
                                                     <td className="p-4 text-right text-xs font-bold text-[#0a192f]">
-                                                        {c.pro_labore || '-'}
+                                                        {c.pro_labore ? formatCurrency(parseCurrency(c.pro_labore)) : '-'}
                                                     </td>
                                                     <td className="p-4 text-right text-xs font-bold text-emerald-600">
-                                                        {c.final_success_fee || '-'}
+                                                        {c.final_success_fee ? formatCurrency(parseCurrency(c.final_success_fee)) : '-'}
                                                     </td>
                                                 </tr>
                                             ))
