@@ -230,10 +230,53 @@ export function RHVagas() {
       return `Candidato: ${c.nome}\nCargo: ${roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-'}\nAcesse o perfil completo: ${window.location.origin}/candidato/perfil/${slugFallback}`;
     }).join('\n\n');
 
-    const subject = encodeURIComponent(`Perfis de Talentos para Avaliação`);
-    const body = encodeURIComponent(`Olá,\n\nSegue abaixo os perfis dos talentos para sua avaliação:\n\n${linksInfo}\n\nAtenciosamente,\nEquipe de RH`);
+    const htmlCards = candsToShare.map(c => {
+      const slugFallback = c.slug || (c.nome ? c.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") : c.id);
+      const url = `${window.location.origin}/candidato/perfil/${slugFallback}`;
+      const cargo = roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-';
+      
+      return `
+        <div style="font-family: Arial, sans-serif; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; max-width: 500px; background-color: #f8fafc;">
+          <h3 style="margin: 0 0 8px 0; color: #1e3a8a; font-size: 18px;">${c.nome}</h3>
+          <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px;"><strong>Cargo/Área:</strong> ${cargo}</p>
+          <div>
+            <a href="${url}" style="background-color: #1e3a8a; color: white; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; display: inline-block;">Acessar Perfil Completo</a>
+          </div>
+        </div>
+      `;
+    }).join('');
 
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    const textBody = `Olá,\n\nSegue abaixo os perfis dos talentos para sua avaliação:\n\n${linksInfo}\n\nAtenciosamente,\nEquipe de RH`;
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; color: #334155;">
+        <p>Olá,</p>
+        <p>Segue abaixo os perfis dos talentos para sua avaliação:</p>
+        ${htmlCards}
+        <p>Atenciosamente,<br><strong>Equipe de RH</strong></p>
+      </div>
+    `;
+
+    const subject = encodeURIComponent(`Perfis de Talentos para Avaliação`);
+
+    try {
+      const htmlBlob = new Blob([htmlBody], { type: 'text/html' });
+      const textBlob = new Blob([textBody], { type: 'text/plain' });
+      const clipboardItem = new ClipboardItem({
+        'text/html': htmlBlob,
+        'text/plain': textBlob
+      });
+      
+      await navigator.clipboard.write([clipboardItem]);
+      
+      showAlert('Copiado com Sucesso! ✨', 'Os perfis foram copiados com um layout elegante para e-mail. Um rascunho será aberto, basta colar (Ctrl+V) no corpo do e-mail!', 'success');
+      
+      const body = encodeURIComponent(`(Cole aqui os perfis que foram copiados para sua área de transferência)`);
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    } catch (err) {
+      console.error('Erro ao copiar HTML para clipboard:', err);
+      const body = encodeURIComponent(textBody);
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    }
   }
 
   const [pendingRemoveFeedback, setPendingRemoveFeedback] = useState<{ id: string, name: string } | null>(null);
@@ -1451,13 +1494,50 @@ export function RHVagas() {
                               </td>
                               <td className="px-3 py-3 text-right whitespace-nowrap">
                                 <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={(e) => {
+                                  <button onClick={async (e) => {
                                       e.stopPropagation();
                                       const slugFallback = c.slug || (c.nome ? c.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : c.id);
                                       const profileUrl = `${window.location.origin}/candidato/perfil/${slugFallback}`;
+                                      const cargo = roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-';
+                                      
+                                      const htmlCard = `
+                                        <div style="font-family: Arial, sans-serif; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; max-width: 500px; background-color: #f8fafc;">
+                                          <h3 style="margin: 0 0 8px 0; color: #1e3a8a; font-size: 18px;">${c.nome}</h3>
+                                          <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px;"><strong>Cargo/Área:</strong> ${cargo}</p>
+                                          <div>
+                                            <a href="${profileUrl}" style="background-color: #1e3a8a; color: white; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; display: inline-block;">Acessar Perfil Completo</a>
+                                          </div>
+                                        </div>
+                                      `;
+                                      const htmlBody = `
+                                        <div style="font-family: Arial, sans-serif; color: #334155;">
+                                          <p>Olá,</p>
+                                          <p>Segue abaixo o perfil do talento para sua avaliação:</p>
+                                          ${htmlCard}
+                                          <p>Atenciosamente,<br><strong>Equipe de RH</strong></p>
+                                        </div>
+                                      `;
+                                      const textBody = `Olá,\n\nSegue o link para o perfil consolidado do(a) candidato(a) ${c.nome}:\n\n${profileUrl}\n\nAtenciosamente,\nEquipe de RH`;
+                                      
                                       const subject = encodeURIComponent(`Perfil de Candidato - ${c.nome}`);
-                                      const body = encodeURIComponent(`Olá,\n\nSegue o link para o perfil consolidado do(a) candidato(a) ${c.nome}:\n\n${profileUrl}\n\nAtenciosamente,\nEquipe de RH`);
-                                      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                                      
+                                      try {
+                                        const htmlBlob = new Blob([htmlBody], { type: 'text/html' });
+                                        const textBlob = new Blob([textBody], { type: 'text/plain' });
+                                        const clipboardItem = new ClipboardItem({
+                                          'text/html': htmlBlob,
+                                          'text/plain': textBlob
+                                        });
+                                        await navigator.clipboard.write([clipboardItem]);
+                                        showAlert('Copiado com Sucesso! ✨', 'O perfil foi copiado com um layout elegante para e-mail. Um rascunho será aberto, basta colar (Ctrl+V) no corpo do e-mail!', 'success');
+                                        
+                                        const body = encodeURIComponent(`(Cole aqui o perfil que foi copiado para sua área de transferência)`);
+                                        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                                      } catch (err) {
+                                        console.error('Erro ao copiar HTML para clipboard:', err);
+                                        const body = encodeURIComponent(textBody);
+                                        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                                      }
                                     }} 
                                     className="p-1.5 text-emerald-600 text-xs hover:bg-emerald-50 rounded-xl transition-all hover:scale-110 active:scale-95"
                                     title="Compartilhar Perfil Público"

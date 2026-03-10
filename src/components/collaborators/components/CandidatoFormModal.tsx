@@ -653,30 +653,60 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const handleSharePublicProfile = async () => {
         if (!candidatoId || !formData.nome) return;
 
-        // Converter URL local para compartilhamento
         const subject = encodeURIComponent(`Perfil de Candidato - ${formData.nome}`);
-        let body = `Olá,\n\nSegue o link para o perfil consolidado do(a) candidato(a) ${formData.nome}:\n\n`;
-        // Use slug se disponível, senão tenta criar um fallback baseado no nome, senão usa o ID
         const slugFallback = formData.slug || (formData.nome ? formData.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : candidatoId);
         const profileUrl = `${window.location.origin}/candidato/perfil/${slugFallback}`;
-        body += `${profileUrl}\n\nAtenciosamente,\nEquipe de RH`;
+        const area = formData.area || 'Não informada';
+
+        const htmlCard = `
+          <div style="font-family: Arial, sans-serif; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; max-width: 500px; background-color: #f8fafc;">
+            <h3 style="margin: 0 0 8px 0; color: #1e3a8a; font-size: 18px;">${formData.nome}</h3>
+            <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px;"><strong>Área:</strong> ${area}</p>
+            <div>
+              <a href="${profileUrl}" style="background-color: #1e3a8a; color: white; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; display: inline-block;">Acessar Perfil Completo</a>
+            </div>
+          </div>
+        `;
+
+        const htmlBody = `
+          <div style="font-family: Arial, sans-serif; color: #334155;">
+            <p>Olá,</p>
+            <p>Segue abaixo o perfil do talento para sua avaliação:</p>
+            ${htmlCard}
+            <p>Atenciosamente,<br><strong>Equipe de RH</strong></p>
+          </div>
+        `;
+
+        const textBody = `Olá,\n\nSegue o link para o perfil consolidado do(a) candidato(a) ${formData.nome}:\n\n${profileUrl}\n\nAtenciosamente,\nEquipe de RH`;
 
         try {
-            // Guardar no histórico que foi compartilhado
             await supabase.from('candidato_historico').insert({
                 candidato_id: candidatoId,
                 tipo: 'Envio para Análise',
                 data_registro: new Date().toISOString(),
                 descricao: 'Perfil público compartilhado com o Líder para avaliação.'
             });
-
-            // Atualiza de leve o estado de histórico se quisermos ver rápido (mas a tab precisaria re-montar)
-            // fetchCandidateHistory/fetchCandidateData could be re-called, but simply generating it is fine.
         } catch (error) {
             console.error('Falha ao gravar histórico de compartilhamento:', error);
         }
 
-        window.location.href = `mailto:?subject=${subject}&body=${encodeURIComponent(body)}`;
+        try {
+            const htmlBlob = new Blob([htmlBody], { type: 'text/html' });
+            const textBlob = new Blob([textBody], { type: 'text/plain' });
+            const clipboardItem = new ClipboardItem({
+                'text/html': htmlBlob,
+                'text/plain': textBlob
+            });
+            await navigator.clipboard.write([clipboardItem]);
+            showAlert('Copiado com Sucesso! ✨', 'O perfil foi copiado com um layout elegante para e-mail. Um rascunho será aberto, basta colar (Ctrl+V) no corpo do e-mail!', 'success');
+            
+            const body = encodeURIComponent(`(Cole aqui o perfil que foi copiado para sua área de transferência)`);
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        } catch (err) {
+            console.error('Erro ao copiar HTML para clipboard:', err);
+            const body = encodeURIComponent(textBody);
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        }
     };
 
     const removeTagFromFormData = (indexToRemove: number) => {
