@@ -342,7 +342,7 @@ export function Contracts() {
         p.court?.toLowerCase().includes(term) ||
         p.vara?.toLowerCase().includes(term) ||
         p.comarca?.toLowerCase().includes(term) ||
-        (Array.isArray(p.magistrates) && p.magistrates.some(m => m.name.toLowerCase().includes(term)))
+        (Array.isArray(p.magistrates) && p.magistrates.some((m: any) => m?.name?.toLowerCase().includes(term)))
       ));
 
     const matchesStatus = statusFilter === '' || c.status === statusFilter;
