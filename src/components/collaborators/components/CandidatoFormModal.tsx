@@ -661,10 +661,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         const htmlCard = `
           <div style="font-family: Arial, sans-serif; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; max-width: 500px; background-color: #f8fafc;">
             <h3 style="margin: 0 0 8px 0; color: #1e3a8a; font-size: 18px;">${formData.nome}</h3>
-            <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px;"><strong>Área:</strong> ${area}</p>
-            <div>
-              <a href="${profileUrl}" style="background-color: #1e3a8a; color: white; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; display: inline-block;">Acessar Perfil Completo</a>
-            </div>
+            <p style="margin: 0 0 8px 0; color: #475569; font-size: 14px;"><strong>Área:</strong> ${area}</p>
+            <p style="margin: 0; font-size: 14px;"><strong>Perfil Completo:</strong> <a href="${profileUrl}" style="color: #1e3a8a; text-decoration: underline;">${profileUrl}</a></p>
           </div>
         `;
 
