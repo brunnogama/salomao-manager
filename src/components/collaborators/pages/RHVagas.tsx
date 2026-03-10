@@ -206,8 +206,21 @@ export function RHVagas() {
     setSelectedCandidates([])
   }, [activeTab])
 
-  const handleShareSelected = () => {
+  const handleShareSelected = async () => {
     if (selectedCandidates.length === 0) return;
+
+    // Registrar histórico
+    try {
+      const historyRows = selectedCandidates.map(id => ({
+        candidato_id: id,
+        tipo: 'Envio para Análise',
+        data_registro: new Date().toISOString(),
+        observacoes: 'Perfil público compartilhado com o Líder para avaliação.',
+      }));
+      await supabase.from('candidato_historico').insert(historyRows);
+    } catch (err) {
+      console.error('Erro ao registrar histórico de compartilhamento:', err);
+    }
 
     // Get profiles and build email body
     const candsToShare = candidatos.filter(c => selectedCandidates.includes(c.id));
@@ -218,6 +231,36 @@ export function RHVagas() {
     const body = encodeURIComponent(`Olá,\n\nSegue abaixo os perfis dos talentos para sua avaliação:\n\n${linksInfo}\n\nAtenciosamente,\nEquipe de RH`);
 
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+
+  const handleRemoveFeedback = async (candidatoId: string, nome: string) => {
+    if (!confirm(`Deseja remover a avaliação do líder do destaque para o candidato ${nome}?`)) return;
+
+    try {
+      // 1. Apagar campos do perfil
+      const { error } = await supabase.from('candidatos').update({
+        avaliacao_lider: null,
+        obs_lider: null,
+        data_avaliacao: null
+      }).eq('id', candidatoId);
+
+      if (error) throw error;
+
+      // 2. Registrar no histórico que foi removido
+      await supabase.from('candidato_historico').insert({
+        candidato_id: candidatoId,
+        tipo: 'Avaliação Removida',
+        data_registro: new Date().toISOString(),
+        observacoes: 'A badge de avaliação do líder foi removida/arquivada pelo avaliador do RH.',
+      });
+
+      // 3. Update state local
+      setCandidatos(prev => prev.map(c => c.id === candidatoId ? { ...c, avaliacao_lider: null, obs_lider: null, data_avaliacao: null } : c));
+
+    } catch (err) {
+      console.error('Erro ao remover badge:', err);
+      showAlert('Erro', 'Não foi possível remover a badge de avaliação.', 'error');
+    }
   }
 
   // Match System State
@@ -610,6 +653,14 @@ export function RHVagas() {
 
     return matchSearch && matchLocal && matchCargo && matchArea
   }).sort((a, b) => {
+    // Priority: Candidatos com avaliação do lider recente vêm em primeiro
+    if (a.data_avaliacao && !b.data_avaliacao) return -1;
+    if (!a.data_avaliacao && b.data_avaliacao) return 1;
+    if (a.data_avaliacao && b.data_avaliacao) {
+      return new Date(b.data_avaliacao).getTime() - new Date(a.data_avaliacao).getTime();
+    }
+
+    // Fallback: Ordem alfabética
     const nameA = a.nome || ''
     const nameB = b.nome || ''
     return nameA.localeCompare(nameB)
@@ -1353,12 +1404,19 @@ export function RHVagas() {
                                     )}
                                     {/* Indicador de Avaliação do Líder */}
                                     {c.avaliacao_lider && (
-                                      <div className={`mt-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${c.avaliacao_lider === 'Recomendado'
+                                      <div className={`mt-2 mb-1 inline-flex items-center gap-1 group/badge px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border transition-colors ${c.avaliacao_lider === 'Recomendado'
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                         : 'bg-red-50 text-red-700 border-red-200'
                                         }`} title={c.obs_lider ? `Observações do Líder:\n${c.obs_lider}` : 'Avaliado pelo Líder via link seguro'}>
                                         {c.avaliacao_lider === 'Recomendado' ? <ThumbsUp className="w-3 h-3" /> : <ThumbsDown className="w-3 h-3" />}
                                         Líder: {c.avaliacao_lider}
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); handleRemoveFeedback(c.id, c.nome); }}
+                                          className={`ml-1 hover:text-red-500 transition-colors opacity-0 group-hover/badge:opacity-100 ${c.avaliacao_lider === 'Recomendado' ? 'text-emerald-400' : 'text-red-400'}`}
+                                          title="Ocultar Avaliação do Líder"
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </button>
                                       </div>
                                     )}
                                   </div>

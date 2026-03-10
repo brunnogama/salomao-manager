@@ -650,13 +650,29 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         }
     };
 
-    const handleSharePublicProfile = () => {
+    const handleSharePublicProfile = async () => {
         if (!candidatoId || !formData.nome) return;
 
+        // Converter URL local para compartilhamento
         const subject = encodeURIComponent(`Perfil de Candidato - ${formData.nome}`);
         let body = `Olá,\n\nSegue o link para o perfil consolidado do(a) candidato(a) ${formData.nome}:\n\n`;
         const profileUrl = `${window.location.origin}/candidato/perfil/${candidatoId}`;
         body += `${profileUrl}\n\nAtenciosamente,\nEquipe de RH`;
+
+        try {
+            // Guardar no histórico que foi compartilhado
+            await supabase.from('candidato_historico').insert({
+                candidato_id: candidatoId,
+                tipo: 'Envio para Análise',
+                data_registro: new Date().toISOString(),
+                observacoes: 'Perfil público compartilhado com o Líder para avaliação.'
+            });
+
+            // Atualiza de leve o estado de histórico se quisermos ver rápido (mas a tab precisaria re-montar)
+            // fetchCandidateHistory/fetchCandidateData could be re-called, but simply generating it is fine.
+        } catch (error) {
+            console.error('Falha ao gravar histórico de compartilhamento:', error);
+        }
 
         window.location.href = `mailto:?subject=${subject}&body=${encodeURIComponent(body)}`;
     };

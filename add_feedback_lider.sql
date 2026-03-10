@@ -28,6 +28,21 @@ BEGIN
         data_avaliacao = NOW()
     WHERE id = p_candidato_id;
 
+    -- Insert into history
+    INSERT INTO candidato_historico (
+        candidato_id,
+        tipo,
+        data_registro,
+        observacoes,
+        created_at
+    ) VALUES (
+        p_candidato_id,
+        'Avaliação do Líder',
+        NOW(),
+        'Avaliação: ' || p_avaliacao || '. Observação: ' || COALESCE(p_obs, ''),
+        NOW()
+    );
+
     RETURN TRUE;
 EXCEPTION
     WHEN OTHERS THEN
