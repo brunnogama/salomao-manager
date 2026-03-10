@@ -640,9 +640,9 @@ export function Demandas() {
                                             ) : (
                                                 contracts.sort((a, b) => new Date(b.contract_date || 0).getTime() - new Date(a.contract_date || 0).getTime()).map((c: any) => (
                                                     <tr key={c.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
-                                                        <td className="p-4">
+                                                        <td className="p-4 max-w-[180px] lg:max-w-[250px]">
                                                             <div className="flex flex-col">
-                                                                <span className="font-bold text-gray-800 text-xs">{c.client_name || 'Sem Cliente'}</span>
+                                                                <span className="font-bold text-gray-800 text-xs truncate" title={c.client_name || 'Sem Cliente'}>{c.client_name || 'Sem Cliente'}</span>
                                                             </div>
                                                         </td>
                                                         <td className="p-4 text-xs font-semibold text-gray-600">
