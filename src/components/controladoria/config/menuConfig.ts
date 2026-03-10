@@ -8,7 +8,8 @@ import {
   Users,
   KanbanSquare,
   FolderOpen,
-  Share2 // <--- Adicionado
+  Share2, // <--- Adicionado
+  TrendingUp // Adicionado para Demandas
 } from 'lucide-react';
 
 export const menuItems = [
@@ -16,6 +17,7 @@ export const menuItems = [
   { label: 'Contratos', path: '/contratos', icon: FileSignature },
   { label: 'Propostas', path: '/propostas', icon: FileText },
   { label: 'Compliance', path: '/compliance', icon: ShieldCheck },
+  { label: 'Demandas Jurídicas', path: '/demandas', icon: TrendingUp },
   { label: 'Financeiro', path: '/financeiro', icon: DollarSign },
   { label: 'Jurimetria', path: '/jurimetria', icon: Share2 }, // <--- Adicionado
   { label: 'Volumetria', path: '/volumetria', icon: BarChart3 },

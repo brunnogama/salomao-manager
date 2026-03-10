@@ -62,6 +62,7 @@ import { Volumetry as ControlVolumetry } from './components/controladoria/pages/
 import { History as ControlHistory } from './components/controladoria/pages/History';
 import { Settings as ControlSettings } from './components/controladoria/pages/Settings';
 import { Compliance as ControlCompliance } from './components/controladoria/pages/Compliance';
+import { Demandas as ControlDemandas } from './components/controladoria/pages/Demandas';
 
 // Operational Components
 import { Dashboard as OperationalDashboard } from './components/operational/pages/Dashboard';
@@ -256,6 +257,7 @@ export function AppRoutes() {
                     <Route path="ged" element={<WithProps Component={ControlGED} />} />
                     <Route path="propostas" element={<WithProps Component={ControlProposals} />} />
                     <Route path="compliance" element={<WithProps Component={ControlCompliance} />} />
+                    <Route path="demandas" element={<WithProps Component={ControlDemandas} />} />
                     <Route path="jurimetria" element={<WithProps Component={ControlJurimetria} />} />
                     <Route path="volumetria" element={<WithProps Component={ControlVolumetry} />} />
                     <Route path="historico" element={<WithProps Component={ControlHistory} />} />
