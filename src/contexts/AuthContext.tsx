@@ -121,12 +121,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // after being closed, because session cookies don't persist across browser restarts.
                 // We must log the user out to enforce the "logout on browser close" rule.
                 if (!hasSessionCookie()) {
-                    console.log('🚪 Browser restart detected (no session cookie). Logging out automatically.');
-                    // Don't set state, just force a sign out and let the onAuthStateChange handle the rest
-                    supabase.auth.signOut().then(() => {
-                        window.location.href = '/login';
-                    });
-                    return;
+                    // Não forçar logout em rotas públicas que não precisam de sessão
+                    const publicPaths = ['/candidato/perfil/', '/atualizacao-cadastral/', '/report/controladoria'];
+                    const isPublicRoute = publicPaths.some(p => window.location.pathname.startsWith(p));
+                    if (!isPublicRoute) {
+                        console.log('🚪 Browser restart detected (no session cookie). Logging out automatically.');
+                        // Don't set state, just force a sign out and let the onAuthStateChange handle the rest
+                        supabase.auth.signOut().then(() => {
+                            window.location.href = '/login';
+                        });
+                        return;
+                    }
                 }
                 
                 // Otherwise this is a normal reload or tab open with an active session cookie
