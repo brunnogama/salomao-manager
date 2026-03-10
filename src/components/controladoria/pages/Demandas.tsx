@@ -67,7 +67,7 @@ export function Demandas() {
                     .select('id, name'),
                 supabase
                     .from('contracts')
-                    .select('id, client_name, contract_date, status, pro_labore, final_success_fee')
+                    .select('id, client_name, contract_date, status, pro_labore, final_success_fee, intermediate_fees, final_success_extras')
                     .eq('status', 'active') // Status active mean it's closed/signed
                     .gte('contract_date', startDate)
                     .lte('contract_date', endDate)
@@ -126,12 +126,44 @@ export function Demandas() {
     // Helper para limpar formatação monetária padrão BRL ex: "R$ 1.000,00" para número math.
     const parseCurrency = (val: any): number => {
         if (!val) return 0;
+
+        // Handle array of strings (like tags used in Contracts)
+        if (Array.isArray(val)) {
+            return val.reduce((acc: number, curr: any) => acc + parseCurrency(curr), 0);
+        }
+
         // Garantir que é string antes de tentar usar .replace
         const strVal = typeof val === 'string' ? val : String(val);
+
+        // Se a string parece um JSON array, tentar parsear
+        if (strVal.trim().startsWith('[') && strVal.trim().endsWith(']')) {
+            try {
+                const parsedArray = JSON.parse(strVal);
+                if (Array.isArray(parsedArray)) {
+                    return parsedArray.reduce((acc: number, curr: any) => acc + parseCurrency(curr), 0);
+                }
+            } catch (e) {
+                // If it fails to parse (e.g., "[Not an array"), just fall through to normal currency parse
+            }
+        }
+
         // Remove "R$", pontos e troca vírgula por ponto
         const cleanStr = strVal.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
         const num = parseFloat(cleanStr);
         return isNaN(num) ? 0 : num;
+    };
+
+    const calculateTotalSuccess = (c: any): number => {
+        let total = parseCurrency(c.final_success_fee);
+
+        if (c.final_success_extras && Array.isArray(c.final_success_extras)) {
+            c.final_success_extras.forEach((fee: string) => total += parseCurrency(fee));
+        }
+
+        if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
+            c.intermediate_fees.forEach((fee: string) => total += parseCurrency(fee));
+        }
+        return total;
     };
 
     const formatCurrency = (val: number): string => {
@@ -370,7 +402,7 @@ export function Demandas() {
                                                         {c.pro_labore ? formatCurrency(parseCurrency(c.pro_labore)) : '-'}
                                                     </td>
                                                     <td className="p-4 text-right text-xs font-bold text-emerald-600">
-                                                        {c.final_success_fee ? formatCurrency(parseCurrency(c.final_success_fee)) : '-'}
+                                                        {calculateTotalSuccess(c) > 0 ? formatCurrency(calculateTotalSuccess(c)) : '-'}
                                                     </td>
                                                 </tr>
                                             ))
