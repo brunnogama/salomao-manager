@@ -67,7 +67,7 @@ export function Demandas() {
                     .select('id, name'),
                 supabase
                     .from('contracts')
-                    .select('id, client_name, contract_date, status, pro_labore, final_success_fee, intermediate_fees, final_success_extras')
+                    .select('id, client_name, contract_date, status, pro_labore, final_success_fee, intermediate_fees, final_success_extras, timesheet')
                     .eq('status', 'active') // Status active mean it's closed/signed
                     .gte('contract_date', startDate)
                     .lte('contract_date', endDate)
@@ -322,10 +322,10 @@ export function Demandas() {
                     </div>
 
                     {/* Tabelas Lado a Lado */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-                        {/* Bloco 1: Advogados por Nível */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+                        {/* Bloco 1: Advogados por Nível (Menor) */}
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-1">
                             <div className="p-5 border-b border-gray-100 flex items-center gap-3">
                                 <div className="p-2 bg-blue-50 rounded-lg">
                                     <Users className="w-5 h-5 text-blue-600" />
@@ -362,8 +362,8 @@ export function Demandas() {
                             </div>
                         </div>
 
-                        {/* Bloco 2: Contratos Fechados */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+                        {/* Bloco 2: Contratos Fechados (Maior) */}
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-2">
                             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-emerald-50 rounded-lg">
@@ -377,6 +377,7 @@ export function Demandas() {
                                     <thead className="sticky top-0 z-10">
                                         <tr className="bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-widest">
                                             <th className="p-4 rounded-tl-lg">Cliente / Contrato</th>
+                                            <th className="p-4 text-center">Timesheet</th>
                                             <th className="p-4 text-right">Data</th>
                                             <th className="p-4 text-right">Pró-labore</th>
                                             <th className="p-4 text-right rounded-tr-lg">Êxito</th>
@@ -385,15 +386,18 @@ export function Demandas() {
                                     <tbody>
                                         {contracts.length === 0 ? (
                                             <tr>
-                                                <td colSpan={4} className="p-8 text-center text-sm text-gray-400 font-medium">Nenhum contrato fechado no período selecionado.</td>
+                                                <td colSpan={5} className="p-8 text-center text-sm text-gray-400 font-medium">Nenhum contrato fechado no período selecionado.</td>
                                             </tr>
                                         ) : (
-                                            contracts.sort((a, b) => new Date(b.contract_date || 0).getTime() - new Date(a.contract_date || 0).getTime()).map((c) => (
+                                            contracts.sort((a, b) => new Date(b.contract_date || 0).getTime() - new Date(a.contract_date || 0).getTime()).map((c: any) => (
                                                 <tr key={c.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
                                                     <td className="p-4">
                                                         <div className="flex flex-col">
                                                             <span className="font-bold text-gray-800 text-xs">{c.client_name || 'Sem Cliente'}</span>
                                                         </div>
+                                                    </td>
+                                                    <td className="p-4 text-center text-xs font-bold text-gray-500">
+                                                        {c.timesheet ? <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Sim</span> : '-'}
                                                     </td>
                                                     <td className="p-4 text-right text-xs text-gray-500">
                                                         {c.contract_date ? new Date(c.contract_date).toLocaleDateString('pt-BR') : '-'}
