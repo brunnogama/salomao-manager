@@ -18,52 +18,12 @@ import { supabase } from '../../../lib/supabase'
 interface VagaViewModalProps {
     isOpen: boolean;
     onClose: () => void;
-    vagaId: string | null;
+    vaga: any | null;
     onEdit: (id: string) => void;
 }
 
-export function VagaViewModal({ isOpen, onClose, vagaId, onEdit }: VagaViewModalProps) {
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const [vaga, setVaga] = useState<Vaga | null>(null)
+export function VagaViewModal({ isOpen, onClose, vaga, onEdit }: VagaViewModalProps) {
 
-    useEffect(() => {
-        if (isOpen && vagaId) {
-            fetchVaga(vagaId)
-        } else {
-            setVaga(null)
-        }
-    }, [isOpen, vagaId])
-
-    const fetchVaga = async (id: string) => {
-        try {
-            setLoading(true)
-            setError(null)
-
-            const { data, error: dbError } = await supabase
-                .from('vagas')
-                .select(`
-                    *,
-                    role:role_id(name),
-                    location:location_id(name),
-                    hiring_reason:hiring_reason_id(name),
-                    leader:leader_id(name),
-                    partner:partner_id(name),
-                    replaced:replaced_collaborator_id(name),
-                    candidato:candidato_aprovado_id(nome)
-                `)
-                .eq('id', id)
-                .single()
-
-            if (dbError) throw dbError
-            setVaga(data)
-        } catch (err: any) {
-            console.error('Error fetching vaga:', err)
-            setError('Erro ao carregar dados da vaga.')
-        } finally {
-            setLoading(false)
-        }
-    }
 
     if (!isOpen) return null
 
@@ -123,18 +83,7 @@ export function VagaViewModal({ isOpen, onClose, vagaId, onEdit }: VagaViewModal
                 {/* BODY */}
                 <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
                     <div className="space-y-8">
-                        {error && (
-                            <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                                <span className="text-sm font-medium">{error}</span>
-                            </div>
-                        )}
-
-                        {loading ? (
-                            <div className="flex justify-center py-20">
-                                <div className="w-8 h-8 border-4 border-blue-200 border-t-[#1e3a8a] rounded-full animate-spin" />
-                            </div>
-                        ) : vaga ? (
+                        {vaga ? (
                             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300 relative">
 
                                 <div className="flex justify-between items-start">
@@ -177,7 +126,7 @@ export function VagaViewModal({ isOpen, onClose, vagaId, onEdit }: VagaViewModal
                                                 <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1.5">
                                                     <User className="w-3.5 h-3.5" /> Aprovado
                                                 </span>
-                                                <span className="text-sm font-bold text-blue-900 line-clamp-1">{vaga.candidato?.nome || '-'}</span>
+                                                <span className="text-sm font-bold text-blue-900 line-clamp-1">{vaga.candidato_aprovado?.nome || vaga.candidato?.nome || '-'}</span>
                                             </div>
                                         </>
                                     ) : (

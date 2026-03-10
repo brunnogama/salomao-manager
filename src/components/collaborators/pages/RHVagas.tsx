@@ -317,7 +317,8 @@ export function RHVagas() {
         location:location_id (id, name),
         partner:partner_id (id, name),
         leader:leader_id (id, name),
-        candidato_aprovado:candidato_aprovado_id (nome)
+        candidato_aprovado:candidato_aprovado_id (nome),
+        hiring_reason:hiring_reason_id (id, name)
       `)
       .order('created_at', { ascending: false })
 
@@ -1587,7 +1588,7 @@ export function RHVagas() {
       <VagaViewModal
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
-        vagaId={selectedVagaId}
+        vaga={vagas.find(v => String(v.id) === String(selectedVagaId)) || null}
         onEdit={(id) => handleOpenModal(id)}
       />
 
