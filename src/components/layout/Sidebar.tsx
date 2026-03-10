@@ -60,7 +60,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <aside className={`
         fixed md:static top-0 left-0 z-50 md:z-auto h-screen bg-[#0a192f] text-gray-300 flex flex-col font-sans border-r border-gray-800 shadow-2xl md:shadow-none
         transition-all duration-300 ease-in-out group/sidebar overflow-x-hidden
-        w-64 md:w-[80px] md:hover:w-64
+        w-64 md:w-[80px] md:hover:w-64 md:hover:delay-300
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
         md:translate-x-0
       `}>
@@ -77,7 +77,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="p-6 pb-2">
           <div className="flex items-center gap-3 mb-6">
             <img src="/so_logo-branca.png" alt="S" className="h-6 w-6 drop-shadow-md shrink-0" />
-            <div className="opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
+            <div className="opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 md:group-hover/sidebar:delay-300 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
               <h2 className="text-sm font-bold text-white leading-none tracking-wide">CONTROLADORIA</h2>
               <h2 className="text-xl font-black text-white leading-none tracking-wide mt-0.5">JURÍDICA</h2>
             </div>
@@ -99,11 +99,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 }`}
             >
               <item.icon className={`h-5 w-5 shrink-0 transition-transform duration-300 ${isActive(item.path) ? 'scale-110' : 'group-hover:scale-110'}`} />
-              <span className="text-sm font-medium flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
+              <span className="text-sm font-medium flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 md:group-hover/sidebar:delay-300 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
                 {item.label}
               </span>
               {isActive(item.path) && (
-                <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-blue-400 opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity duration-300" />
+                <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-blue-400 opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 md:group-hover/sidebar:delay-300 transition-opacity duration-300" />
               )}
             </Link>
           ))}
@@ -118,7 +118,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               title="Mudar Módulo"
             >
               <LayoutDashboard className="w-5 h-5 shrink-0 text-blue-300 group-hover:text-white" />
-              <span className="text-[10px] uppercase tracking-wider text-blue-300 group-hover:text-white font-bold opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Módulos</span>
+              <span className="text-[10px] uppercase tracking-wider text-blue-300 group-hover:text-white font-bold opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 md:group-hover/sidebar:delay-300 transition-opacity duration-300 whitespace-nowrap">Módulos</span>
             </button>
             <button
               onClick={handleLogout}
@@ -126,7 +126,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               title="Sair"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 shrink-0 text-red-400 group-hover:text-red-300"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
-              <span className="text-[10px] uppercase tracking-wider text-red-400 group-hover:text-red-300 font-bold opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Sair</span>
+              <span className="text-[10px] uppercase tracking-wider text-red-400 group-hover:text-red-300 font-bold opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 md:group-hover/sidebar:delay-300 transition-opacity duration-300 whitespace-nowrap">Sair</span>
             </button>
           </div>
         </div>
