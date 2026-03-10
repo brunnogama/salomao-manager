@@ -225,7 +225,10 @@ export function RHVagas() {
     // Get profiles and build email body
     const candsToShare = candidatos.filter(c => selectedCandidates.includes(c.id));
 
-    const linksInfo = candsToShare.map(c => `Candidato: ${c.nome}\nCargo: ${roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-'}\nAcesse o perfil completo: ${window.location.origin}/candidato/perfil/${c.id}`).join('\n\n');
+    const linksInfo = candsToShare.map(c => {
+      const slugFallback = c.slug || (c.nome ? c.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") : c.id);
+      return `Candidato: ${c.nome}\nCargo: ${roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-'}\nAcesse o perfil completo: ${window.location.origin}/candidato/perfil/${slugFallback}`;
+    }).join('\n\n');
 
     const subject = encodeURIComponent(`Perfis de Talentos para Avaliação`);
     const body = encodeURIComponent(`Olá,\n\nSegue abaixo os perfis dos talentos para sua avaliação:\n\n${linksInfo}\n\nAtenciosamente,\nEquipe de RH`);
