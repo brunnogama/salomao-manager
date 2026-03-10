@@ -457,7 +457,7 @@ export function Contracts() {
         c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.opponent_cnpj || '-').join('\n') : '-',
         c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.subject || '-').join('\n') : '-',
         c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.value_of_cause ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.value_of_cause) : '-').join('\n') : '-',
-        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.magistrates && p.magistrates.length > 0 ? p.magistrates.map((m: any) => `${m.title || ''} ${m.name}`.trim()).join(' / ') : '-').join('\n') : '-',
+        c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.magistrates && Array.isArray(p.magistrates) && p.magistrates.length > 0 ? p.magistrates.map((m: any) => `${m.title || ''} ${m.name}`.trim()).join(' / ') : '-').join('\n') : '-',
         c.observations || '-'
       ]);
 
