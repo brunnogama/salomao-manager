@@ -16,7 +16,9 @@ import {
   Trash2,
   Sparkles,
   UserX,
-  Share2
+  Share2,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react'
 // date-fns importado acima do componente junto com as funções utilitárias
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
@@ -293,7 +295,23 @@ export function RHVagas() {
     const contratadosIds = new Set(colabLinks?.map(cl => cl.candidato_id).filter(Boolean))
 
     // Filtrar candidatos que já são colaboradores
-    const talentosAbertos = (candData || []).filter(c => !contratadosIds.has(c.id))
+    let talentosAbertos = (candData || []).filter(c => !contratadosIds.has(c.id))
+
+    // Ordenar: candidatos recém-avaliados pelo líder (data_avaliacao) no topo
+    talentosAbertos = talentosAbertos.sort((a, b) => {
+      // Se A tem avaliação e B não, A vem primeiro
+      if (a.data_avaliacao && !b.data_avaliacao) return -1;
+      // Se B tem avaliação e A não, B vem primeiro
+      if (!a.data_avaliacao && b.data_avaliacao) return 1;
+
+      // Se ambos têm, ordenar pela data de avaliação (mais recente primeiro)
+      if (a.data_avaliacao && b.data_avaliacao) {
+        return new Date(b.data_avaliacao).getTime() - new Date(a.data_avaliacao).getTime();
+      }
+
+      // Se nenhum tem (ou como fallback), manter ordem original por data de criação descrescente
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
     setCandidatos(talentosAbertos)
   }
@@ -1331,6 +1349,16 @@ export function RHVagas() {
                                         {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
                                           <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
                                         )}
+                                      </div>
+                                    )}
+                                    {/* Indicador de Avaliação do Líder */}
+                                    {c.avaliacao_lider && (
+                                      <div className={`mt-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${c.avaliacao_lider === 'Recomendado'
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                        : 'bg-red-50 text-red-700 border-red-200'
+                                        }`} title={c.obs_lider ? `Observações do Líder:\n${c.obs_lider}` : 'Avaliado pelo Líder via link seguro'}>
+                                        {c.avaliacao_lider === 'Recomendado' ? <ThumbsUp className="w-3 h-3" /> : <ThumbsDown className="w-3 h-3" />}
+                                        Líder: {c.avaliacao_lider}
                                       </div>
                                     )}
                                   </div>

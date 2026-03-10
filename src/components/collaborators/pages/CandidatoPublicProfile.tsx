@@ -18,7 +18,10 @@ import {
     ShieldCheck,
     Building2,
     Calendar,
-    MessageSquare
+    MessageSquare,
+    ThumbsUp,
+    ThumbsDown,
+    Send
 } from 'lucide-react'
 
 // Mapeamento amigável das chaves da entrevista para labels
@@ -68,6 +71,14 @@ export function CandidatoPublicProfile() {
     const [error, setError] = useState<string | null>(null)
     const [profileData, setProfileData] = useState<any>(null)
 
+    // Feedback state
+    const [avaliacaoForm, setAvaliacaoForm] = useState({
+        voto: '' as 'Recomendado' | 'Não Recomendado' | '',
+        obs: ''
+    })
+    const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
+    const [feedbackSuccess, setFeedbackSuccess] = useState(false)
+
     useEffect(() => {
         if (!id) {
             setError('ID de candidato não fornecido na URL.')
@@ -80,14 +91,21 @@ export function CandidatoPublicProfile() {
                 setLoading(true)
                 setError(null)
 
-                const { data, error: rpcError } = await supabase.rpc('get_candidato_public_profile', {
-                    p_candidato_id: id
-                })
+                const { data, error: rpcError } = await fallbackFetchProfile(id);
 
                 if (rpcError) throw rpcError
                 if (!data || !data.candidato) throw new Error('Candidato não encontrado.')
 
                 setProfileData(data)
+
+                // Set initial feedback state if already evaluated
+                if (data.candidato.data_avaliacao) {
+                    setAvaliacaoForm({
+                        voto: data.candidato.avaliacao_lider || '',
+                        obs: data.candidato.obs_lider || ''
+                    });
+                    setFeedbackSuccess(true);
+                }
             } catch (err: any) {
                 console.error('Error fetching public candidate profile:', err)
                 setError(err.message || 'Ocorreu um erro ao carregar o perfil do candidato.')
@@ -98,6 +116,36 @@ export function CandidatoPublicProfile() {
 
         fetchProfile()
     }, [id])
+
+    const fallbackFetchProfile = async (candidatoId: string) => {
+        // First try the RPC
+        const { data, error } = await supabase.rpc('get_candidato_public_profile', {
+            p_candidato_id: candidatoId
+        });
+        return { data, error };
+    };
+
+    const handleFeedbackSubmit = async () => {
+        if (!avaliacaoForm.voto) return;
+
+        try {
+            setIsSubmittingFeedback(true);
+            const { error } = await supabase.rpc('save_candidato_feedback', {
+                p_candidato_id: id,
+                p_avaliacao: avaliacaoForm.voto,
+                p_obs: avaliacaoForm.obs
+            });
+
+            if (error) throw error;
+
+            setFeedbackSuccess(true);
+        } catch (err) {
+            console.error('Erro ao salvar avaliação:', err);
+            alert('Não foi possível salvar sua avaliação no momento. Tente novamente mais tarde.');
+        } finally {
+            setIsSubmittingFeedback(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -427,6 +475,83 @@ export function CandidatoPublicProfile() {
 
                     </div>
 
+                </div>
+
+                {/* Área de Avaliação do Líder */}
+                <div className="mt-8 bg-white p-6 md:p-8 rounded-3xl shadow-xl shadow-blue-900/5 border border-blue-100 max-w-4xl mx-auto">
+                    <div className="text-center mb-6">
+                        <h2 className="text-xl font-black text-[#0a192f] mb-2">Avaliação do Perfil</h2>
+                        <p className="text-sm text-gray-500 font-medium">
+                            {feedbackSuccess
+                                ? 'Sua avaliação já foi registrada no sistema do RH.'
+                                : 'Deixe sua avaliação sobre este talento para a equipe de recrutamento.'}
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <button
+                            onClick={() => !feedbackSuccess && setAvaliacaoForm({ ...avaliacaoForm, voto: 'Recomendado' })}
+                            disabled={feedbackSuccess}
+                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${avaliacaoForm.voto === 'Recomendado'
+                                    ? 'border-emerald-500 bg-emerald-50 text-emerald-800 shadow-md transform scale-[1.02]'
+                                    : feedbackSuccess
+                                        ? 'border-gray-100 bg-gray-50 text-gray-400 opacity-50 cursor-not-allowed'
+                                        : 'border-gray-200 hover:border-emerald-200 hover:bg-emerald-50/50 text-gray-600'
+                                }`}
+                        >
+                            <div className={`p-3 rounded-full mb-3 ${avaliacaoForm.voto === 'Recomendado' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
+                                <ThumbsUp className="w-8 h-8" />
+                            </div>
+                            <span className="font-bold">Recomendado</span>
+                        </button>
+
+                        <button
+                            onClick={() => !feedbackSuccess && setAvaliacaoForm({ ...avaliacaoForm, voto: 'Não Recomendado' })}
+                            disabled={feedbackSuccess}
+                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${avaliacaoForm.voto === 'Não Recomendado'
+                                    ? 'border-red-500 bg-red-50 text-red-800 shadow-md transform scale-[1.02]'
+                                    : feedbackSuccess
+                                        ? 'border-gray-100 bg-gray-50 text-gray-400 opacity-50 cursor-not-allowed'
+                                        : 'border-gray-200 hover:border-red-200 hover:bg-red-50/50 text-gray-600'
+                                }`}
+                        >
+                            <div className={`p-3 rounded-full mb-3 ${avaliacaoForm.voto === 'Não Recomendado' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
+                                <ThumbsDown className="w-8 h-8" />
+                            </div>
+                            <span className="font-bold">Não Recomendado</span>
+                        </button>
+                    </div>
+
+                    <div className="space-y-3">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 block">
+                            Observações do Líder (Opcional)
+                        </label>
+                        <textarea
+                            className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm outline-none transition-all shadow-sm min-h-[100px] resize-y font-medium text-gray-700 ${feedbackSuccess ? 'disabled:opacity-70 disabled:bg-gray-100 cursor-not-allowed' : 'focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'}`}
+                            value={avaliacaoForm.obs}
+                            onChange={(e) => setAvaliacaoForm({ ...avaliacaoForm, obs: e.target.value })}
+                            placeholder={feedbackSuccess ? '' : "Escreva seus comentários, razões da recusa ou pontos de atenção para entrevista final..."}
+                            disabled={feedbackSuccess}
+                        />
+                    </div>
+
+                    {!feedbackSuccess && (
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={handleFeedbackSubmit}
+                                disabled={!avaliacaoForm.voto || isSubmittingFeedback}
+                                className="flex items-center gap-2 px-8 py-3 bg-[#1e3a8a] text-white rounded-xl text-sm font-bold uppercase tracking-wider shadow-lg hover:bg-blue-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 hover:shadow-blue-900/20"
+                            >
+                                {isSubmittingFeedback ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    <>
+                                        <Send className="w-5 h-5" /> Enviar Avaliação
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
