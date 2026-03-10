@@ -699,11 +699,11 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             showAlert('Copiado com Sucesso! ✨', 'O perfil foi copiado com um layout elegante para e-mail. Um rascunho será aberto, basta colar (Ctrl+V) no corpo do e-mail!', 'success');
             
             const body = encodeURIComponent(`(Cole aqui o perfil que foi copiado para sua área de transferência)`);
-            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+            window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
         } catch (err) {
             console.error('Erro ao copiar HTML para clipboard:', err);
             const body = encodeURIComponent(textBody);
-            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+            window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
         }
     };
 
