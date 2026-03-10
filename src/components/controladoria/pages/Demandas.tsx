@@ -344,13 +344,13 @@ export function Demandas() {
                     {/* Tabelas Lado a Lado */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-                        {/* Bloco 1: Advogados por Nível (Menor) */}
+                        {/* Bloco 1: Jurídicos por Nível (Menor) */}
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-1">
                             <div className="p-5 border-b border-gray-100 flex items-center gap-3">
                                 <div className="p-2 bg-blue-50 rounded-lg">
                                     <Users className="w-5 h-5 text-blue-600" />
                                 </div>
-                                <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Advogados Contratados por Nível</h3>
+                                <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Jurídicos Contratados por Nível</h3>
                             </div>
                             <div className="p-2 overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
