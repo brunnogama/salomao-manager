@@ -56,10 +56,10 @@ export function Demandas() {
             // Buscamos todos e filtramos no JS, ou filtramos no supabase.
             // A tabela é "collaborators". Área pode estar no campo 'area' ou 'atuacao'.
             // Como o DB pode ter nuances, vamos buscar e filtrar em memoria para ser seguro no começo.
-            const [collabRes, rolesRes, contractRes] = await Promise.all([
+            const [collabRes, rolesRes, contractRes, partnersRes] = await Promise.all([
                 supabase
                     .from('collaborators')
-                    .select('id, name, role, hire_date, area, status')
+                    .select('id, name, role, hire_date, area, status, leader:leader_id(name)')
                     .gte('hire_date', startDate)
                     .lte('hire_date', endDate),
                 supabase
@@ -67,10 +67,13 @@ export function Demandas() {
                     .select('id, name'),
                 supabase
                     .from('contracts')
-                    .select('id, client_name, contract_date, status, pro_labore, pro_labore_extras, final_success_fee, intermediate_fees, final_success_extras, timesheet, percent_extras, final_success_percent')
+                    .select('id, client_name, contract_date, status, pro_labore, pro_labore_extras, final_success_fee, intermediate_fees, final_success_extras, timesheet, percent_extras, final_success_percent, partner_id')
                     .eq('status', 'active') // Status active mean it's closed/signed
                     .gte('contract_date', startDate)
-                    .lte('contract_date', endDate)
+                    .lte('contract_date', endDate),
+                supabase
+                    .from('partners')
+                    .select('id, name')
             ]);
 
             if (collabRes.error) throw collabRes.error;
@@ -81,20 +84,27 @@ export function Demandas() {
             // Filtrar apenas da área jurídica
             // Tabela também tem as 'roles' em inglês ou português? Geralmente role no RH é o Cargo. 
             // Em Utils vimos as roles da jurídica, estão salvos na string do cargo, ou na Area='Jurídica'
+            const partnersMap = new Map(partnersRes.data?.map((p: any) => [String(p.id), p.name]) || []);
+
             const juridicaCollabs = (collabRes.data as any[] || []).filter(c => {
                 // Check if 'area' is 'Jurídica' or the role name matches Juridica terms
                 const mappedRoleName = rolesMap.get(String(c.role)) || (typeof c.role === 'string' ? c.role : '');
                 const isJuridica = c.area === 'Jurídica' ||
                     (typeof mappedRoleName === 'string' && (mappedRoleName.includes('Advogado') || mappedRoleName.includes('Sócio') || mappedRoleName.includes('Jurídico') || mappedRoleName.includes('Paralegal') || mappedRoleName.includes('Estagiário')));
 
-                // Map it so it's a flat format
                 return isJuridica;
             }).map(c => ({
                 ...c,
-                role: rolesMap.get(String(c.role)) || c.role
+                role: rolesMap.get(String(c.role)) || c.role,
+                leader_name: c.leader?.name || 'Sem Líder Direto'
             }));
             setCollaborators(juridicaCollabs);
-            setContracts((contractRes.data as any[]) || []);
+
+            const contractsWithPartners = (contractRes.data as any[] || []).map(c => ({
+                ...c,
+                partner_name: partnersMap.get(String(c.partner_id)) || 'Não Informado'
+            }));
+            setContracts(contractsWithPartners);
 
         } catch (error) {
             console.error('Error fetching Demandas data', error);
