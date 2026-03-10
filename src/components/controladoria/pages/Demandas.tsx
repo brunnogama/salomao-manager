@@ -308,25 +308,35 @@ export function Demandas() {
     }, [collaborators]);
 
     // Metrics By Leader
+    // Metrics By Leader (Based on active headcount in period + hires + terminations)
     const hiresByLeader = useMemo(() => {
-        const leaderData: Record<string, { total: number, estagiarios: number, advogados: number }> = {};
-        collaborators.forEach(c => {
+        const leaderData: Record<string, { ativos: number, entradas: number, saidas: number }> = {};
+
+        allCollaborators.forEach(c => {
             const leaderName = (c as any).leader_name || 'Sem Líder Direto';
             if (!leaderData[leaderName]) {
-                leaderData[leaderName] = { total: 0, estagiarios: 0, advogados: 0 };
+                leaderData[leaderName] = { ativos: 0, entradas: 0, saidas: 0 };
             }
-            leaderData[leaderName].total += 1;
 
-            const isEstagiario = typeof c.role === 'string' && (c.role.toLowerCase().includes('estagiário') || c.role.toLowerCase().includes('estagiario'));
-            if (isEstagiario) {
-                leaderData[leaderName].estagiarios += 1;
-            } else {
-                leaderData[leaderName].advogados += 1;
+            // Ativos (Active right now, or active within the period depending on definition, but user wants 'total de ativos atual por lider')
+            // If they are not terminated, or terminated in the future, they are active now.
+            if (c.status === 'ativo' || !c.termination_date) {
+                leaderData[leaderName].ativos += 1;
+            }
+
+            // Entradas no periodo
+            if (c.hire_date && c.hire_date >= startDate && c.hire_date <= endDate) {
+                leaderData[leaderName].entradas += 1;
+            }
+
+            // Saídas no periodo
+            if (c.termination_date && c.termination_date >= startDate && c.termination_date <= endDate) {
+                leaderData[leaderName].saidas += 1;
             }
         });
 
-        return Object.entries(leaderData).sort((a, b) => b[1].total - a[1].total);
-    }, [collaborators]);
+        return Object.entries(leaderData).sort((a, b) => b[1].ativos - a[1].ativos);
+    }, [allCollaborators, startDate, endDate]);
 
     // Headcount Evolution Logic
     const headcountEvolution = useMemo(() => {
@@ -586,9 +596,9 @@ export function Demandas() {
                                     <thead>
                                         <tr className="bg-gray-50/80 text-gray-500 text-[10px] font-black uppercase tracking-widest">
                                             <th className="p-4 rounded-tl-lg">Líder</th>
-                                            <th className="p-4 text-center">Advogados</th>
-                                            <th className="p-4 text-center">Estagiários</th>
-                                            <th className="p-4 text-right rounded-tr-lg">Total</th>
+                                            <th className="p-4 text-center">Entradas</th>
+                                            <th className="p-4 text-center">Saídas</th>
+                                            <th className="p-4 text-right rounded-tr-lg">Total Ativos (Atual)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -600,11 +610,11 @@ export function Demandas() {
                                             hiresByLeader.map(([leader, data], idx) => (
                                                 <tr key={idx} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
                                                     <td className="p-4 font-bold text-gray-700 text-xs">{leader}</td>
-                                                    <td className="p-4 text-center text-xs font-semibold text-gray-600">{data.advogados}</td>
-                                                    <td className="p-4 text-center text-xs font-semibold text-gray-600">{data.estagiarios}</td>
+                                                    <td className="p-4 text-center text-xs font-semibold text-emerald-600">{data.entradas > 0 ? `+${data.entradas}` : '-'}</td>
+                                                    <td className="p-4 text-center text-xs font-semibold text-red-600">{data.saidas > 0 ? `-${data.saidas}` : '-'}</td>
                                                     <td className="p-4 text-right">
                                                         <span className="inline-flex items-center justify-center px-3 py-1 bg-purple-50 text-purple-700 rounded-full font-black text-[11px] min-w-[32px]">
-                                                            {data.total}
+                                                            {data.ativos}
                                                         </span>
                                                     </td>
                                                 </tr>
