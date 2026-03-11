@@ -32,13 +32,25 @@ export function Volumetry() {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('processos')
-        .select('*')
-        .limit(100000); // Override postgREST default limit
+      let allData: any[] = [];
+      let from = 0;
+      const step = 1000;
+      
+      while (true) {
+        const { data, error } = await supabase
+          .from('processos')
+          .select('*')
+          .range(from, from + step - 1);
 
-      if (error) throw error;
-      setProcesses(data || []);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        
+        allData = [...allData, ...data];
+        if (data.length < step) break;
+        from += step;
+      }
+
+      setProcesses(allData);
     } catch (error) {
       console.error('Erro ao carregar volumetria de processos:', error);
     } finally {

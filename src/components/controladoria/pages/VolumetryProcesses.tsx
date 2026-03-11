@@ -71,14 +71,26 @@ export function VolumetryProcesses() {
   const fetchProcesses = async () => {
     setLoading(true);
     try {
-      const { data: processesData, error } = await supabase
-        .from('processos')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100000); // Override postgREST default limit
+      let allData: any[] = [];
+      let from = 0;
+      const step = 1000;
+      
+      while (true) {
+        const { data, error } = await supabase
+          .from('processos')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, from + step - 1);
 
-      if (error) throw error;
-      if (processesData) setData(processesData);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        
+        allData = [...allData, ...data];
+        if (data.length < step) break;
+        from += step;
+      }
+
+      setData(allData);
     } catch (error) {
       console.error('Erro ao buscar processos:', error);
       setAlertConfig({
@@ -116,9 +128,12 @@ export function VolumetryProcesses() {
     if (!file) return;
 
     setImporting(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (evt) => {
+    
+    // Pequeno delay para o React renderizar o estado de "Lendo arquivo..." antes de travar a thread
+    setTimeout(() => {
+      try {
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
         const bstr = evt.target?.result;
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsname = wb.SheetNames[0];
@@ -175,21 +190,21 @@ export function VolumetryProcesses() {
         });
         
         fetchProcesses(); // Recarrega a tabela
-      };
-      reader.readAsBinaryString(file);
-    } catch (error) {
-      console.error('Erro ao importar planilha:', error);
-      setAlertConfig({
-        isOpen: true,
-        title: 'Falha na Importação',
-        message: 'Ocorreu um erro ao importar a planilha. Verifique a formatação do arquivo.',
-        type: 'error'
-      });
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      setImporting(false);
-      setImportProgress({ current: 0, total: 0 });
-    }
+        };
+        reader.readAsBinaryString(file);
+      } catch (error) {
+        console.error('Erro ao importar planilha:', error);
+        setAlertConfig({
+          isOpen: true,
+          title: 'Falha na Importação',
+          message: 'Ocorreu um erro ao importar a planilha. Verifique a formatação do arquivo.',
+          type: 'error'
+        });
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        setImporting(false);
+        setImportProgress({ current: 0, total: 0 });
+      }
+    }, 100);
   };
 
   const handleClearData = async () => {
