@@ -1,12 +1,63 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Upload, FileText, Database, Loader2, Trash2 } from 'lucide-react';
+import { Upload, FileText, Database, Loader2, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
+
+// Custom AlertDialog (Design System Salomão)
+function AlertDialog({ isOpen, title, message, type = 'success', onClose }: { isOpen: boolean; title: string; message: string; type?: 'success' | 'warning' | 'error'; onClose: () => void }) {
+  if (!isOpen) return null;
+
+  const icons = {
+    success: <CheckCircle2 className="w-8 h-8 text-emerald-500" />,
+    warning: <AlertCircle className="w-8 h-8 text-amber-500" />,
+    error: <AlertCircle className="w-8 h-8 text-red-500" />
+  };
+
+  const bgColors = {
+    success: 'bg-emerald-50',
+    warning: 'bg-amber-50',
+    error: 'bg-red-50'
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-6 text-center flex flex-col items-center">
+          <div className={`${bgColors[type]} p-4 rounded-full mb-4`}>
+            {icons[type]}
+          </div>
+          <h3 className="text-lg font-black text-[#0a192f] uppercase tracking-tight mb-2">{title}</h3>
+          <p className="text-sm font-semibold text-gray-500">{message}</p>
+        </div>
+        <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl hover:bg-blue-800 transition-all text-[10px] font-black uppercase tracking-[0.2em] shadow-sm w-full"
+          >
+            Entendido
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function VolumetryProcesses() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // States para Importação
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
+  
+  // State para Alertas Customizados
+  const [alertConfig, setAlertConfig] = useState<{isOpen: boolean; title: string; message: string; type: 'success' | 'warning' | 'error'}>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'success'
+  });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -25,7 +76,12 @@ export function VolumetryProcesses() {
       if (processesData) setData(processesData);
     } catch (error) {
       console.error('Erro ao buscar processos:', error);
-      alert('Erro ao carregar os processos.');
+      setAlertConfig({
+        isOpen: true,
+        title: 'Erro de Leitura',
+        message: 'Não foi possível carregar os processos da base.',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -65,10 +121,17 @@ export function VolumetryProcesses() {
         const rawData = XLSX.utils.sheet_to_json(ws);
 
         if (rawData.length === 0) {
-            alert('A planilha está vazia.');
+            setAlertConfig({
+              isOpen: true,
+              title: 'Planilha Vazia',
+              message: 'Não encontramos nenhum dado válido na planilha.',
+              type: 'warning'
+            });
             setImporting(false);
             return;
         }
+
+        setImportProgress({ current: 0, total: rawData.length });
 
         const formattedData = rawData.map((row: any) => ({
           pasta: row['Pasta']?.toString() || null,
@@ -83,22 +146,44 @@ export function VolumetryProcesses() {
           instancia: row['Tipo_1']?.toString() || row['Instância']?.toString() || null // Excel pode nomear colunas duplicadas com _1
         }));
 
-        const { error } = await supabase
-          .from('processos')
-          .insert(formattedData);
+        // Em vez de inserir tudo de uma vez, divide em lotes para atualizar o progresso
+        const batchSize = 100;
+        let inserted = 0;
 
-        if (error) throw error;
+        for (let i = 0; i < formattedData.length; i += batchSize) {
+            const batch = formattedData.slice(i, i + batchSize);
+            const { error } = await supabase
+              .from('processos')
+              .insert(batch);
 
-        alert('Processos importados com sucesso!');
+            if (error) throw error;
+            
+            inserted += batch.length;
+            setImportProgress({ current: inserted, total: rawData.length });
+        }
+
+        setAlertConfig({
+          isOpen: true,
+          title: 'Importação Concluída',
+          message: `${inserted} processos foram importados com sucesso!`,
+          type: 'success'
+        });
+        
         fetchProcesses(); // Recarrega a tabela
       };
       reader.readAsBinaryString(file);
     } catch (error) {
       console.error('Erro ao importar planilha:', error);
-      alert('Ocorreu um erro ao importar a planilha. Verifique o formato.');
+      setAlertConfig({
+        isOpen: true,
+        title: 'Falha na Importação',
+        message: 'Ocorreu um erro ao importar a planilha. Verifique a formatação do arquivo.',
+        type: 'error'
+      });
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = '';
       setImporting(false);
+      setImportProgress({ current: 0, total: 0 });
     }
   };
 
@@ -117,10 +202,20 @@ export function VolumetryProcesses() {
         if (error) throw error;
         
         setData([]);
-        alert('Base de processos limpa com sucesso.');
+        setAlertConfig({
+          isOpen: true,
+          title: 'Base Limpa',
+          message: 'Todos os processos foram apagados com sucesso.',
+          type: 'success'
+        });
     } catch (error) {
         console.error('Erro ao limpar processos:', error);
-        alert('Erro ao limpar os registros.');
+        setAlertConfig({
+          isOpen: true,
+          title: 'Erro na Exclusão',
+          message: 'Não foi possível limpar a base de processos.',
+          type: 'error'
+        });
     } finally {
         setLoading(false);
     }
@@ -128,8 +223,27 @@ export function VolumetryProcesses() {
 
 
   return (
-    <div className="flex flex-col space-y-6">
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+    <div className="flex flex-col space-y-6 relative">
+      <AlertDialog 
+        isOpen={alertConfig.isOpen}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+      />
+
+      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
+        
+        {/* Barra de Progresso no Topo do Header */}
+        {importing && importProgress.total > 0 && (
+          <div className="absolute top-0 left-0 w-full h-1 bg-gray-100">
+             <div 
+               className="h-full bg-blue-600 transition-all duration-300 ease-out"
+               style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+             />
+          </div>
+        )}
+
         <div className="flex items-center gap-3">
           <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
             <Database className="w-6 h-6" />
@@ -160,10 +274,10 @@ export function VolumetryProcesses() {
           <button 
             onClick={() => fileInputRef.current?.click()}
             disabled={importing}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl hover:bg-blue-800 transition-all text-[10px] font-black uppercase tracking-[0.2em] shadow-sm disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl hover:bg-blue-800 transition-all text-[10px] font-black uppercase tracking-[0.2em] shadow-sm disabled:opacity-50 min-w-[180px]"
           >
             {importing ? (
-               <><Loader2 className="w-4 h-4 animate-spin" /> Importando...</>
+               <><Loader2 className="w-4 h-4 animate-spin" /> {importProgress.current > 0 ? `${importProgress.current} / ${importProgress.total}` : 'Lendo arquivo...'}</>
             ) : (
                <><Upload className="w-4 h-4" /> Importar Planilha</>
             )}
