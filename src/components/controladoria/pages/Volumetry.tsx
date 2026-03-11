@@ -2,122 +2,115 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
   BarChart3,
-  Users,
   Scale,
   FileText,
-  Layers,
-  Download
+  Download,
+  PieChart,
+  Activity,
+  Layers
 } from 'lucide-react';
-import { Contract, Partner } from '../../../types/controladoria';
-import { ContractFilters } from '../contracts/ContractFilters';
 import XLSX from 'xlsx-js-style';
 
+import { VolumetryProcesses } from './VolumetryProcesses';
+
 export function Volumetry() {
-
-
-  const [contracts, setContracts] = useState<Contract[]>([]);
-  const [partners, setPartners] = useState<Partner[]>([]);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'processos'>('dashboard');
+  const [processes, setProcesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados dos Filtros (Iguais aos de Contratos)
+  // Filtros Globais para o Dashboard
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [partnerFilter, setPartnerFilter] = useState('');
-  const [sortOrder, setSortOrder] = useState<'name' | 'date'>('date');
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('card');
+  const [partnerFilter, setPartnerFilter] = useState(''); // Responsável Principal
 
   useEffect(() => {
+    fetchProcesses();
+  }, [activeTab]); // Recarrega quando muda de aba, caso a pessoa importe novos
 
-    fetchData();
-  }, []);
-
-
-
-  const fetchData = async () => {
+  const fetchProcesses = async () => {
+    if (activeTab === 'processos') return; // A aba de processos cuida do seu próprio fetch
+    
     setLoading(true);
     try {
-      // Busca contratos com os relacionamentos necessários: parceiro e processos
-      const { data: contractsData, error: contractsError } = await supabase
-        .from('contracts')
-        .select(`
-          *,
-          partner:partners(name),
-          processes:contract_processes(*)
-        `);
+      let allData: any[] = [];
+      let from = 0;
+      const step = 1000;
+      
+      while (true) {
+        const { data, error } = await supabase
+          .from('processos')
+          .select('*')
+          .range(from, from + step - 1);
 
-      if (contractsError) throw contractsError;
-
-      // Busca sócios ativos
-      const { data: partnersData, error: partnersError } = await supabase
-        .from('partners')
-        .select('*')
-        .eq('active', true);
-
-      if (partnersError) throw partnersError;
-
-      if (contractsData) {
-        // Formata os dados para incluir contagens e nomes
-        const formattedContracts = contractsData.map((c: any) => ({
-          ...c,
-          partner_name: c.partner?.name || 'Sem Sócio',
-          process_count: c.processes?.length || 0
-        }));
-        setContracts(formattedContracts);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        
+        allData = [...allData, ...data];
+        if (data.length < step) break;
+        from += step;
       }
 
-      if (partnersData) setPartners(partnersData);
-
+      setProcesses(allData);
     } catch (error) {
-      console.error('Erro ao carregar volumetria:', error);
+      console.error('Erro ao carregar volumetria de processos:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Lógica de Filtragem (Idêntica à de Contratos)
-  const filteredContracts = contracts.filter((contract: Contract) => {
+  // --------------- Lógica de Filtragem no Dashboard ---------------
+  const filteredProcesses = processes.filter((proc: any) => {
     const matchesSearch =
-      contract.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (contract.cnpj && contract.cnpj.includes(searchTerm));
+      (proc.cliente_principal && proc.cliente_principal.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (proc.numero_cnj && proc.numero_cnj.includes(searchTerm)) ||
+      (proc.pasta && proc.pasta.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesStatus = statusFilter ? contract.status === statusFilter : true;
-    const matchesPartner = partnerFilter ? contract.partner_id === partnerFilter : true;
+    const matchesStatus = statusFilter ? proc.status?.toLowerCase() === statusFilter.toLowerCase() : true;
+    const matchesPartner = partnerFilter ? proc.responsavel_principal === partnerFilter : true;
 
     return matchesSearch && matchesStatus && matchesPartner;
   });
 
-  // Lógica de Agrupamento por Sócio
-  const metricsByPartner = partners.map((partner: any) => {
-    // Filtra os contratos (já filtrados pelos inputs) que pertencem a este sócio
-    const partnerContracts = filteredContracts.filter((c: Contract) => c.partner_id === partner.id);
+  // Métricas
+  const totalProcesses = filteredProcesses.length;
+  
+  const ativosCount = filteredProcesses.filter(p => p.status?.toLowerCase() === 'ativo').length;
+  const arquivadosCount = filteredProcesses.filter(p => p.status?.toLowerCase() === 'arquivado').length;
 
-    const contractCount = partnerContracts.length;
-    // Soma a quantidade de processos de todos os contratos desse sócio
-    const processCount = partnerContracts.reduce((acc: number, curr: Contract) => acc + (curr.process_count || 0), 0);
+  const uniqueClients = new Set(filteredProcesses.map(p => p.cliente_principal).filter(Boolean)).size;
 
+  // Extrair lista de responsáveis únicos para o filtro
+  const allPartners = Array.from(new Set(processes.map(p => p.responsavel_principal).filter(Boolean))).sort();
+  // Extrair status únicos (Ativo, Arquivado, etc)
+  const allStatuses = Array.from(new Set(processes.map(p => p.status).filter(Boolean))).sort();
+
+  // --------------- Agrupamento por Responsável ---------------
+  const volumetryByPartner = allPartners.map(partnerName => {
+    const partnerProcs = filteredProcesses.filter(p => p.responsavel_principal === partnerName);
+    
     return {
-      id: partner.id,
-      name: partner.name,
-      contractCount,
-      processCount,
+      name: partnerName || 'Sem Responsável',
+      count: partnerProcs.length,
+      percentage: totalProcesses > 0 ? ((partnerProcs.length / totalProcesses) * 100).toFixed(1) : "0",
+      ativos: partnerProcs.filter(p => p.status?.toLowerCase() === 'ativo').length,
+      arquivados: partnerProcs.filter(p => p.status?.toLowerCase() === 'arquivado').length,
     };
-  }).sort((a: any, b: any) => b.contractCount - a.contractCount); // Ordena por quem tem mais contratos
+  }).filter(p => p.count > 0).sort((a, b) => b.count - a.count); // Remove quem zerou no filtro e ordena desc
 
-  // Totais Gerais (Baseado nos filtros atuais)
-  const totalContracts = filteredContracts.length;
-  const totalProcesses = filteredContracts.reduce((acc: number, c: Contract) => acc + (c.process_count || 0), 0);
 
-  const handleExport = () => {
-    const exportData = metricsByPartner.map((m: any) => ({
-      'Sócio': m.name,
-      'Qtd. Contratos': m.contractCount,
-      'Qtd. Processos': m.processCount
+  const handleExportDashboard = () => {
+    const exportData = volumetryByPartner.map((m: any) => ({
+      'Líder Responsável': m.name,
+      'Total de Processos': m.count,
+      'Ativos': m.ativos,
+      'Arquivados': m.arquivados,
+      '% Representatividade': `${m.percentage}%`
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Volumetria");
-    XLSX.writeFile(wb, "Volumetria_Socios.xlsx");
+    XLSX.writeFile(wb, "Volumetria_LegalOne.xlsx");
   };
 
   return (
@@ -131,144 +124,219 @@ export function Volumetry() {
           </div>
           <div>
             <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Volumetria</h1>
-            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Análise Quantitativa por Sócio</p>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Visão Analítica LegalOne</p>
           </div>
         </div>
-
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button onClick={handleExport} className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
-            <Download className="h-4 w-4" /> Exportar XLS
-          </button>
+          {activeTab === 'dashboard' && volumetryByPartner.length > 0 && (
+            <button onClick={handleExportDashboard} className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
+              <Download className="h-4 w-4" /> Exportar Dashboard
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 2. Filtros Reutilizados */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <ContractFilters
-          searchTerm={searchTerm} setSearchTerm={setSearchTerm}
-          statusFilter={statusFilter} setStatusFilter={setStatusFilter}
-          partnerFilter={partnerFilter} setPartnerFilter={setPartnerFilter}
-          partners={partners}
-          sortOrder={sortOrder} setSortOrder={setSortOrder}
-          viewMode={viewMode} setViewMode={setViewMode}
-
-        />
+      {/* Navegação de Abas */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            activeTab === 'dashboard'
+              ? 'bg-[#1e3a8a] text-white shadow-md'
+              : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
+          }`}
+        >
+          Dashboard Processual
+        </button>
+        <button
+          onClick={() => setActiveTab('processos')}
+          className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            activeTab === 'processos'
+              ? 'bg-[#1e3a8a] text-white shadow-md'
+              : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
+          }`}
+        >
+          Base de Processos (Planilha)
+        </button>
       </div>
 
-      {/* 3. Cards de Resumo - Salomão Design System */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contratos Filtrados</p>
-            <p className="text-2xl font-black text-blue-900 mt-1">{totalContracts}</p>
-          </div>
-          <div className="p-3 bg-blue-50 rounded-xl">
-            <FileText className="h-6 w-6 text-blue-600" />
-          </div>
-        </div>
+      {activeTab === 'dashboard' ? (
+        <div className="flex flex-col space-y-6">
+          
+          {/* Dashboard Filters */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
+             <div className="flex-1 min-w-[200px]">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Busca (Cliente, CNJ ou Pasta)</label>
+                <input
+                  type="text"
+                  placeholder="Pesquisar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-600 font-medium placeholder:text-gray-400"
+                />
+              </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-indigo-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos Judiciais</p>
-            <p className="text-2xl font-black text-indigo-900 mt-1">{totalProcesses}</p>
-          </div>
-          <div className="p-3 bg-indigo-50 rounded-xl">
-            <Scale className="h-6 w-6 text-indigo-600" />
-          </div>
-        </div>
+              <div className="w-full sm:w-48">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Líder Responsável</label>
+                <select
+                  value={partnerFilter}
+                  onChange={(e) => setPartnerFilter(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-600 font-medium appearance-none"
+                >
+                  <option value="">Todos</option>
+                  {allPartners.map((p, idx) => (
+                    <option key={idx} value={p as string}>{p as string}</option>
+                  ))}
+                </select>
+              </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sócios Ativos</p>
-            <p className="text-2xl font-black text-emerald-900 mt-1">{partners.length}</p>
+              <div className="w-full sm:w-48">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-600 font-medium appearance-none"
+                >
+                  <option value="">Todos</option>
+                  {allStatuses.map((s, idx) => (
+                    <option key={idx} value={s as string}>{s as string}</option>
+                  ))}
+                </select>
+              </div>
           </div>
-          <div className="p-3 bg-emerald-50 rounded-xl">
-            <Users className="h-6 w-6 text-emerald-600" />
-          </div>
-        </div>
-      </div>
 
-      {/* 4. Lista de Volumetria por Sócio */}
-      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-          <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[#1e3a8a]" /> Distribuição por Sócio
-          </h2>
-        </div>
+          {/* Cards de Resumo */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+              <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Processos</p>
+                <p className="text-2xl font-black text-blue-900 mt-1">{totalProcesses}</p>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-xl">
+                <Scale className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
 
-        {loading ? (
-          <div className="p-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
-            Processando métricas...
-          </div>
-        ) : metricsByPartner.length === 0 ? (
-          <div className="p-20 text-center">
-            <EmptyState
-              icon={BarChart3}
-              title="Sem dados para os filtros"
-              description="Ajuste os filtros de busca para visualizar a volumetria."
-            />
-          </div>
-        ) : (
-          <div className="overflow-x-auto custom-scrollbar">
-            <div className="min-w-[800px]">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Sócio Responsável</th>
-                    <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Contratos</th>
-                    <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Processos</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Representatividade</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {metricsByPartner.map((partner) => {
-                    const percentage = totalContracts > 0 ? ((partner.contractCount / totalContracts) * 100).toFixed(1) : "0";
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+              <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos Ativos</p>
+                <p className="text-2xl font-black text-emerald-900 mt-1">{ativosCount}</p>
+              </div>
+              <div className="p-3 bg-emerald-50 rounded-xl">
+                <Activity className="h-6 w-6 text-emerald-600" />
+              </div>
+            </div>
 
-                    return (
-                      <tr key={partner.id} className="hover:bg-blue-50/30 transition-colors group">
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-blue-100">
-                              {partner.name.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{partner.name}</span>
-                          </div>
-                        </td>
-                        <td className="p-4 text-center">
-                          <span className="bg-blue-50 text-[#1e3a8a] px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-blue-100">
-                            {partner.contractCount}
-                          </span>
-                        </td>
-                        <td className="p-4 text-center">
-                          <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-purple-100">
-                            {partner.processCount}
-                          </span>
-                        </td>
-                        <td className="p-4 align-middle">
-                          <div className="flex items-center gap-4">
-                            <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden max-w-[200px] border border-gray-200/50 shadow-inner">
-                              <div
-                                className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] h-full rounded-full transition-all duration-500"
-                                style={{ width: `${percentage}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest w-12">{percentage}%</span>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+              <div className="absolute right-0 top-0 h-full w-1 bg-amber-500"></div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos Arquivados</p>
+                <p className="text-2xl font-black text-amber-900 mt-1">{arquivadosCount}</p>
+              </div>
+              <div className="p-3 bg-amber-50 rounded-xl">
+                <FileText className="h-6 w-6 text-amber-600" />
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+              <div className="absolute right-0 top-0 h-full w-1 bg-purple-600"></div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Clientes Únicos</p>
+                <p className="text-2xl font-black text-purple-900 mt-1">{uniqueClients}</p>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-xl">
+                <PieChart className="h-6 w-6 text-purple-600" />
+              </div>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Lista de Volumetria por Responsável */}
+          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+              <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
+                <Layers className="w-4 h-4 text-[#1e3a8a]" /> Distribuição por Líder Responsável
+              </h2>
+            </div>
+
+            {loading ? (
+              <div className="p-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
+                Carregando visão analítica...
+              </div>
+            ) : volumetryByPartner.length === 0 ? (
+              <div className="p-20 text-center">
+                <EmptyState
+                  icon={BarChart3}
+                  title="Sem dados disponíveis"
+                  description={processes.length === 0 ? "Nenhum processo foi importado na aba 'Base de Processos'." : "Ajuste os filtros de busca para visualizar os dados."}
+                />
+              </div>
+            ) : (
+              <div className="overflow-x-auto custom-scrollbar">
+                <div className="min-w-[800px]">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Líder Responsável</th>
+                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Total de Processos</th>
+                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Ativos</th>
+                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Arquivados</th>
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Representatividade na Base</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {volumetryByPartner.map((partner, idx) => (
+                        <tr key={idx} className="hover:bg-blue-50/30 transition-colors group">
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-blue-100">
+                                {partner.name.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{partner.name}</span>
+                            </div>
+                          </td>
+                          <td className="p-4 text-center">
+                            <span className="bg-blue-50 text-[#1e3a8a] px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-blue-100">
+                              {partner.count}
+                            </span>
+                          </td>
+                          <td className="p-4 text-center">
+                            <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-emerald-100">
+                              {partner.ativos}
+                            </span>
+                          </td>
+                          <td className="p-4 text-center">
+                            <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
+                              {partner.arquivados}
+                            </span>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <div className="flex items-center gap-4">
+                              <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden max-w-[200px] border border-gray-200/50 shadow-inner">
+                                <div
+                                  className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] h-full rounded-full transition-all duration-500"
+                                  style={{ width: `${partner.percentage}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest w-12">{partner.percentage}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+      ) : (
+        <VolumetryProcesses />
+      )}
     </div>
   );
 }
@@ -277,7 +345,6 @@ const Loader2 = ({ className }: { className?: string }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
 );
 
-// Rota para o componente EmptyState se necessário (mock para manter o arquivo completo)
 function EmptyState({ icon: Icon, title, description }: any) {
   return (
     <div className="flex flex-col items-center justify-center text-center p-10">
