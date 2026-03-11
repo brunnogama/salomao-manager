@@ -52,7 +52,7 @@ export function Volumetry() {
       const { data: partnersData, error: partnersError } = await supabase
         .from('partners')
         .select('*')
-        .eq('active', true);
+        .eq('status', 'active');
 
       if (partnersError) throw partnersError;
 
