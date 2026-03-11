@@ -12,9 +12,10 @@ import { Contract, Partner } from '../../../types/controladoria';
 import { ContractFilters } from '../contracts/ContractFilters';
 import XLSX from 'xlsx-js-style';
 
+import { VolumetryProcesses } from './VolumetryProcesses';
+
 export function Volumetry() {
-
-
+  const [activeTab, setActiveTab] = useState<'contratos' | 'processos'>('contratos');
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,14 +138,42 @@ export function Volumetry() {
 
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button onClick={handleExport} className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
-            <Download className="h-4 w-4" /> Exportar XLS
-          </button>
+          {activeTab === 'contratos' && (
+            <button onClick={handleExport} className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
+              <Download className="h-4 w-4" /> Exportar XLS
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 2. Filtros Reutilizados */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      {/* Navegação de Abas */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveTab('contratos')}
+          className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            activeTab === 'contratos'
+              ? 'bg-[#1e3a8a] text-white shadow-md'
+              : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
+          }`}
+        >
+          Contratos e Sócios
+        </button>
+        <button
+          onClick={() => setActiveTab('processos')}
+          className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            activeTab === 'processos'
+              ? 'bg-[#1e3a8a] text-white shadow-md'
+              : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
+          }`}
+        >
+          Base de Processos
+        </button>
+      </div>
+
+      {activeTab === 'contratos' ? (
+        <div className="flex flex-col space-y-6">
+          {/* 2. Filtros Reutilizados */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <ContractFilters
           searchTerm={searchTerm} setSearchTerm={setSearchTerm}
           statusFilter={statusFilter} setStatusFilter={setStatusFilter}
@@ -269,6 +298,10 @@ export function Volumetry() {
           </div>
         )}
       </div>
+        </div>
+      ) : (
+        <VolumetryProcesses />
+      )}
     </div>
   );
 }
