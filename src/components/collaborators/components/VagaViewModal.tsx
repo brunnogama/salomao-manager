@@ -91,10 +91,10 @@ export function VagaViewModal({ isOpen, onClose, vaga, onEdit }: VagaViewModalPr
                                         <h3 className={`text-xl font-bold ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</h3>
                                         <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
                                             <span>{vaga.area || 'Sem área'}</span>
-                                            {vaga.atuacao_id && (
+                                            {vaga.atuacao && (
                                                 <>
                                                     <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                                                    <span>{String(vaga.atuacao_id)}</span>
+                                                    <span>{typeof vaga.atuacao === 'string' ? vaga.atuacao : (vaga.atuacao?.name || '-')}</span>
                                                 </>
                                             )}
                                         </p>
