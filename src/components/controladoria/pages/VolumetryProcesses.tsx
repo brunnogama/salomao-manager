@@ -1,7 +1,131 @@
-import { Upload, FileText, Database } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { supabase } from '../../../lib/supabase';
+import { Upload, FileText, Database, Loader2, Trash2 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 export function VolumetryProcesses() {
-  const data: any[] = [];
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetchProcesses();
+  }, []);
+
+  const fetchProcesses = async () => {
+    setLoading(true);
+    try {
+      const { data: processesData, error } = await supabase
+        .from('processos')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (processesData) setData(processesData);
+    } catch (error) {
+      console.error('Erro ao buscar processos:', error);
+      alert('Erro ao carregar os processos.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const parseExcelDate = (excelDate: any) => {
+    if (!excelDate) return null;
+    // Se já for uma string de data válida (YYYY-MM-DD ou contém T)
+    if (typeof excelDate === 'string') {
+        const parts = excelDate.split('/');
+        if (parts.length === 3) {
+            // Supondo formato DD/MM/YYYY
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        return excelDate;
+    }
+    // Se for número serial do Excel
+    if (typeof excelDate === 'number') {
+        const date = new Date(Math.round((excelDate - 25569) * 86400 * 1000));
+        return date.toISOString().split('T')[0];
+    }
+    return null;
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const rawData = XLSX.utils.sheet_to_json(ws);
+
+        if (rawData.length === 0) {
+            alert('A planilha está vazia.');
+            setImporting(false);
+            return;
+        }
+
+        const formattedData = rawData.map((row: any) => ({
+          pasta: row['Pasta']?.toString() || null,
+          tipo: row['Tipo']?.toString() || null,
+          data_cadastro: parseExcelDate(row['Data Cadastro']),
+          responsavel_principal: row['Responsável principal']?.toString() || null,
+          cliente_principal: row['Cliente principal']?.toString() || null,
+          numero_cnj: row['Número de CNJ']?.toString() || null,
+          uf: row['UF']?.toString() || null,
+          status: row['Status']?.toString() || null,
+          data_encerramento: parseExcelDate(row['Data do encerramento']),
+          instancia: row['Tipo_1']?.toString() || row['Instância']?.toString() || null // Excel pode nomear colunas duplicadas com _1
+        }));
+
+        const { error } = await supabase
+          .from('processos')
+          .insert(formattedData);
+
+        if (error) throw error;
+
+        alert('Processos importados com sucesso!');
+        fetchProcesses(); // Recarrega a tabela
+      };
+      reader.readAsBinaryString(file);
+    } catch (error) {
+      console.error('Erro ao importar planilha:', error);
+      alert('Ocorreu um erro ao importar a planilha. Verifique o formato.');
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setImporting(false);
+    }
+  };
+
+  const handleClearData = async () => {
+    if (!window.confirm('Tem certeza que deseja apagar TODOS os processos importados? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+    
+    setLoading(true);
+    try {
+        const { error } = await supabase
+            .from('processos')
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+            
+        if (error) throw error;
+        
+        setData([]);
+        alert('Base de processos limpa com sucesso.');
+    } catch (error) {
+        console.error('Erro ao limpar processos:', error);
+        alert('Erro ao limpar os registros.');
+    } finally {
+        setLoading(false);
+    }
+  };
+
 
   return (
     <div className="flex flex-col space-y-6">
@@ -12,37 +136,68 @@ export function VolumetryProcesses() {
           </div>
           <div>
             <h2 className="text-lg font-black text-[#0a192f] uppercase tracking-tight">Base de Processos</h2>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Importação e Consulta</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{data.length} registros encontrados</p>
           </div>
         </div>
 
-        <div>
-          <button className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl hover:bg-blue-800 transition-all text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
-            <Upload className="w-4 h-4" /> Importar Planilha
+        <div className="flex items-center gap-3">
+          {data.length > 0 && (
+            <button 
+              onClick={handleClearData}
+              className="flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 border border-red-100 rounded-xl hover:bg-red-100 transition-all text-[10px] font-black uppercase tracking-[0.2em] shadow-sm"
+            >
+              <Trash2 className="w-4 h-4" /> Limpar Base
+            </button>
+          )}
+          
+          <input 
+            type="file" 
+            accept=".xlsx, .xls" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            className="hidden" 
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl hover:bg-blue-800 transition-all text-[10px] font-black uppercase tracking-[0.2em] shadow-sm disabled:opacity-50"
+          >
+            {importing ? (
+               <><Loader2 className="w-4 h-4 animate-spin" /> Importando...</>
+            ) : (
+               <><Upload className="w-4 h-4" /> Importar Planilha</>
+            )}
           </button>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-1">
         <div className="overflow-x-auto custom-scrollbar">
-          <div className="min-w-[1200px]">
-            <table className="w-full text-left border-collapse">
-              <thead>
+          <div className="max-h-[600px] overflow-y-auto min-w-[1200px]">
+            <table className="w-full text-left border-collapse relative">
+              <thead className="sticky top-0 bg-white shadow-sm z-10">
                 <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Pasta</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data Cadastro</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest min-w-[120px]">Data Cadastro</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável Principal</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente Principal</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Número de CNJ</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">UF</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data do Encerramento</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest min-w-[150px]">Data do Encerramento</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Instância/Recurso</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {data.length === 0 ? (
+                {loading ? (
+                    <tr>
+                    <td colSpan={10} className="p-20 text-center">
+                      <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando dados...</p>
+                    </td>
+                  </tr>
+                ) : data.length === 0 ? (
                   <tr>
                     <td colSpan={10} className="p-20 text-center bg-gray-50/50">
                       <div className="flex flex-col items-center justify-center">
@@ -55,11 +210,28 @@ export function VolumetryProcesses() {
                     </td>
                   </tr>
                 ) : (
-                  <tr>
-                    <td colSpan={10} className="p-4 text-center text-xs text-gray-500">
-                      Dados serão exibidos aqui.
-                    </td>
-                  </tr>
+                  data.map((row, index) => (
+                    <tr key={row.id || index} className="hover:bg-blue-50/30 transition-colors">
+                      <td className="p-4 text-xs font-bold text-[#0a192f]">{row.pasta || '-'}</td>
+                      <td className="p-4 text-xs text-gray-600">{row.tipo || '-'}</td>
+                      <td className="p-4 text-xs text-gray-600">{row.data_cadastro ? new Date(row.data_cadastro).toLocaleDateString('pt-BR') : '-'}</td>
+                      <td className="p-4 text-xs font-semibold text-gray-800">{row.responsavel_principal || '-'}</td>
+                      <td className="p-4 text-xs text-gray-600">{row.cliente_principal || '-'}</td>
+                      <td className="p-4 text-xs font-mono text-gray-500">{row.numero_cnj || '-'}</td>
+                      <td className="p-4 text-xs font-bold text-gray-600">{row.uf || '-'}</td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border ${
+                          row.status?.toLowerCase() === 'ativo' 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-gray-100 text-gray-600 border-gray-200'
+                        }`}>
+                            {row.status || '-'}
+                        </span>
+                      </td>
+                      <td className="p-4 text-xs text-gray-600">{row.data_encerramento ? new Date(row.data_encerramento).toLocaleDateString('pt-BR') : '-'}</td>
+                      <td className="p-4 text-xs text-gray-600">{row.instancia || '-'}</td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
