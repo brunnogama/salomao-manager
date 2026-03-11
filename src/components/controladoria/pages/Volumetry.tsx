@@ -34,7 +34,8 @@ export function Volumetry() {
     try {
       const { data, error } = await supabase
         .from('processos')
-        .select('*');
+        .select('*')
+        .limit(100000); // Override postgREST default limit
 
       if (error) throw error;
       setProcesses(data || []);

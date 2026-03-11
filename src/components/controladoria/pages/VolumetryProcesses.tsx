@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Upload, FileText, Database, Loader2, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ConfirmModal } from '../../controladoria/ui/ConfirmModal';
 import * as XLSX from 'xlsx';
 
 // Custom AlertDialog (Design System Salomão)
@@ -58,6 +59,9 @@ export function VolumetryProcesses() {
     type: 'success'
   });
 
+  // State para ConfirmModal de Exclusão
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -70,7 +74,8 @@ export function VolumetryProcesses() {
       const { data: processesData, error } = await supabase
         .from('processos')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100000); // Override postgREST default limit
 
       if (error) throw error;
       if (processesData) setData(processesData);
@@ -188,10 +193,6 @@ export function VolumetryProcesses() {
   };
 
   const handleClearData = async () => {
-    if (!window.confirm('Tem certeza que deseja apagar TODOS os processos importados? Esta ação não pode ser desfeita.')) {
-        return;
-    }
-    
     setLoading(true);
     try {
         const { error } = await supabase
@@ -232,6 +233,17 @@ export function VolumetryProcesses() {
         onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
       />
 
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={handleClearData}
+        title="Limpar Base de Processos"
+        description="Tem certeza que deseja apagar TODOS os processos importados? Esta ação não pode ser desfeita."
+        confirmText="Sim, apagar tudo"
+        cancelText="Cancelar"
+        variant="danger"
+      />
+
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
         
         {/* Barra de Progresso no Topo do Header */}
@@ -257,7 +269,7 @@ export function VolumetryProcesses() {
         <div className="flex items-center gap-3">
           {data.length > 0 && (
             <button 
-              onClick={handleClearData}
+              onClick={() => setIsConfirmModalOpen(true)}
               className="flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 border border-red-100 rounded-xl hover:bg-red-100 transition-all text-[10px] font-black uppercase tracking-[0.2em] shadow-sm"
             >
               <Trash2 className="w-4 h-4" /> Limpar Base
