@@ -577,13 +577,14 @@ export function ContractFormModal(props: Props) {
               author_cnpj,
               opponent_cnpj,
               cause_value,
+              value_of_cause,
               ...rest
             } = p as any;
 
             return {
               ...rest,
               contract_id: savedId,
-              value_of_cause: cause_value ? safeParseFloat(cause_value) : 0
+              value_of_cause: cause_value ? safeParseFloat(cause_value) : (value_of_cause || 0)
             };
           });
 

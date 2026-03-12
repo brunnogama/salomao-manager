@@ -209,7 +209,10 @@ export function Contracts() {
       supabase.from('contract_processes').select('*').eq('contract_id', contract.id),
       supabase.from('contract_timeline').select('*').eq('contract_id', contract.id).order('changed_at', { ascending: false })
     ]);
-    if (procRes.data) setProcesses(procRes.data);
+    if (procRes.data) setProcesses(procRes.data.map((p: any) => ({
+      ...p,
+      cause_value: p.value_of_cause ? p.value_of_cause.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : ''
+    })));
     if (timeRes.data) setTimelineData(timeRes.data);
     setIsDetailsModalOpen(true);
   };
