@@ -574,9 +574,9 @@ export function ContractFormModal(props: Props) {
             const {
               id,
               created_at,
+              updated_at,
               author_cnpj,
               opponent_cnpj,
-              cause_value,
               value_of_cause,
               ...rest
             } = p as any;
@@ -584,7 +584,8 @@ export function ContractFormModal(props: Props) {
             return {
               ...rest,
               contract_id: savedId,
-              value_of_cause: cause_value ? safeParseFloat(cause_value) : (value_of_cause || 0)
+              cause_value: rest.cause_value || '',
+              magistrates: Array.isArray(rest.magistrates) ? JSON.stringify(rest.magistrates) : (rest.magistrates || '[]')
             };
           });
 

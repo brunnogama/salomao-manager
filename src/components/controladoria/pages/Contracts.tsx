@@ -154,7 +154,14 @@ export function Contracts() {
         ...c,
         partner_name: c.partner?.name,
         process_count: c.processes?.length || 0,
-        display_id: String(c.seq_id || 0).padStart(6, '0')
+        display_id: String(c.seq_id || 0).padStart(6, '0'),
+        processes: c.processes?.map((p: any) => {
+          let magistrates = p.magistrates;
+          if (typeof magistrates === 'string') {
+            try { magistrates = JSON.parse(magistrates); } catch { magistrates = []; }
+          }
+          return { ...p, magistrates: Array.isArray(magistrates) ? magistrates : [] };
+        }) || []
       }));
       setContracts(formatted);
     }
@@ -209,10 +216,13 @@ export function Contracts() {
       supabase.from('contract_processes').select('*').eq('contract_id', contract.id),
       supabase.from('contract_timeline').select('*').eq('contract_id', contract.id).order('changed_at', { ascending: false })
     ]);
-    if (procRes.data) setProcesses(procRes.data.map((p: any) => ({
-      ...p,
-      cause_value: p.value_of_cause ? p.value_of_cause.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : ''
-    })));
+    if (procRes.data) setProcesses(procRes.data.map((p: any) => {
+      let magistrates = p.magistrates;
+      if (typeof magistrates === 'string') {
+        try { magistrates = JSON.parse(magistrates); } catch { magistrates = []; }
+      }
+      return { ...p, magistrates: Array.isArray(magistrates) ? magistrates : [] };
+    }));
     if (timeRes.data) setTimelineData(timeRes.data);
     setIsDetailsModalOpen(true);
   };
