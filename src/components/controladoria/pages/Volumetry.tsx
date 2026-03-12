@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
   BarChart3,
@@ -7,9 +7,11 @@ import {
   Download,
   PieChart,
   Activity,
-  Layers
+  Layers,
+  TrendingUp
 } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
+import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 import { VolumetryProcesses } from './VolumetryProcesses';
 
@@ -22,6 +24,8 @@ export function Volumetry() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [partnerFilter, setPartnerFilter] = useState(''); // Responsável Principal
+
+  const [selectedChartYear, setSelectedChartYear] = useState<number>(new Date().getFullYear());
 
   useEffect(() => {
     fetchProcesses();
@@ -78,6 +82,71 @@ export function Volumetry() {
   const arquivadosCount = filteredProcesses.filter(p => p.status?.toLowerCase() === 'arquivado').length;
 
   const uniqueClients = new Set(filteredProcesses.map(p => p.cliente_principal).filter(Boolean)).size;
+
+  const { allYears, chartDataYearly } = useMemo(() => {
+    const yearsSet = new Set<number>();
+    filteredProcesses.forEach(p => {
+      if (p.data_cadastro) {
+        yearsSet.add(parseInt(p.data_cadastro.substring(0, 4), 10));
+      }
+      if (p.data_encerramento) {
+        yearsSet.add(parseInt(p.data_encerramento.substring(0, 4), 10));
+      }
+    });
+
+    const years = Array.from(yearsSet).filter(y => !isNaN(y)).sort((a, b) => a - b);
+    const minYear = years[0] || new Date().getFullYear();
+    const maxYear = years[years.length - 1] || new Date().getFullYear();
+    
+    let runningSaldo = 0;
+    const dataByYear: Record<number, any[]> = {};
+    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+    for (let y = minYear; y <= maxYear; y++) {
+      dataByYear[y] = [];
+      for (let m = 0; m < 12; m++) {
+        const entrantesCount = filteredProcesses.filter(p => {
+          if (!p.data_cadastro) return false;
+          const py = parseInt(p.data_cadastro.substring(0, 4), 10);
+          const pm = parseInt(p.data_cadastro.substring(5, 7), 10) - 1;
+          return py === y && pm === m;
+        }).length;
+        
+        const encerradosCount = filteredProcesses.filter(p => {
+          if (!p.data_encerramento) return false;
+          const py = parseInt(p.data_encerramento.substring(0, 4), 10);
+          const pm = parseInt(p.data_encerramento.substring(5, 7), 10) - 1;
+          return py === y && pm === m;
+        }).length;
+
+        runningSaldo = runningSaldo + entrantesCount - encerradosCount;
+        
+        dataByYear[y].push({
+          name: monthNames[m],
+          Entrantes: entrantesCount,
+          Encerrados: encerradosCount,
+          Saldo: runningSaldo,
+        });
+      }
+    }
+
+    if (years.length === 0) {
+        years.push(new Date().getFullYear());
+        dataByYear[new Date().getFullYear()] = monthNames.map(name => ({
+            name, Entrantes: 0, Encerrados: 0, Saldo: 0
+        }));
+    }
+
+    return { allYears: years, chartDataYearly: dataByYear };
+  }, [filteredProcesses]);
+
+  useEffect(() => {
+    if (allYears.length > 0 && !allYears.includes(selectedChartYear)) {
+      setSelectedChartYear(allYears[allYears.length - 1]);
+    }
+  }, [allYears, selectedChartYear]);
+
+  const currentChartData = chartDataYearly[selectedChartYear] || [];
 
   // Extrair lista de responsáveis únicos para o filtro
   const allPartners = Array.from(new Set(processes.map(p => p.responsavel_principal).filter(Boolean))).sort();
@@ -250,6 +319,74 @@ export function Volumetry() {
               <div className="p-3 bg-purple-50 rounded-xl">
                 <PieChart className="h-6 w-6 text-purple-600" />
               </div>
+            </div>
+          </div>
+
+          {/* Gráfico Mensal de Entrantes e Encerrados */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+            <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-[#1e3a8a]" /> Movimentação Processual
+              </h2>
+              
+              {/* Abas por Ano */}
+              <div className="flex bg-white border border-gray-200 p-1 rounded-xl overflow-x-auto max-w-full custom-scrollbar shadow-sm">
+                {allYears.map(year => (
+                  <button
+                    key={year}
+                    onClick={() => setSelectedChartYear(year)}
+                    className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                      selectedChartYear === year
+                        ? 'bg-[#1e3a8a] text-white shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-6" style={{ height: 400 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart
+                  data={currentChartData}
+                  margin={{ top: 20, right: 20, bottom: 20, left: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#6B7280', fontSize: 10, fontWeight: 800 }}
+                    dy={10}
+                  />
+                  <YAxis 
+                    yAxisId="left"
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#6B7280', fontSize: 10, fontWeight: 800 }}
+                  />
+                  <YAxis 
+                    yAxisId="right"
+                    orientation="right"
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#6B7280', fontSize: 10, fontWeight: 800 }}
+                  />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                    labelStyle={{ fontWeight: 900, color: '#0a192f', marginBottom: '8px', textTransform: 'uppercase' }}
+                    itemStyle={{ fontWeight: 700 }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px', fontWeight: 800, fontSize: '10px', textTransform: 'uppercase' }}
+                  />
+                  <Bar yAxisId="left" dataKey="Entrantes" name="Entrantes" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Bar yAxisId="left" dataKey="Encerrados" name="Encerrados" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Line yAxisId="right" type="monotone" dataKey="Saldo" name="Saldo Ativo" stroke="#1e3a8a" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
