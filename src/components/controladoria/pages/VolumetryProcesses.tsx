@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { Upload, FileText, Database, Loader2, Trash2, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { ConfirmModal } from '../../controladoria/ui/ConfirmModal';
 import * as XLSX from 'xlsx';
+import { normalizeResponsavel } from '../utils/responsavelAliases';
 
 // Custom AlertDialog (Design System Salomão)
 function AlertDialog({ isOpen, title, message, type = 'success', onClose }: { isOpen: boolean; title: string; message: string; type?: 'success' | 'warning' | 'error'; onClose: () => void }) {
@@ -192,7 +193,7 @@ export function VolumetryProcesses() {
           pasta: getCellValue(row, ['Pasta']),
           tipo: getCellValue(row, ['Tipo']),
           data_cadastro: parseExcelDate(getCellValue(row, ['Data Cadastro', 'Data de Cadastro', 'Data Cad', 'Data Cad.'])),
-          responsavel_principal: getCellValue(row, ['Responsável principal', 'Responsável']),
+          responsavel_principal: normalizeResponsavel(getCellValue(row, ['Responsável principal', 'Responsável'])),
           cliente_principal: getCellValue(row, ['Cliente principal', 'Cliente']),
           numero_cnj: getCellValue(row, ['Número de CNJ', 'CNJ', 'Numero CNJ']),
           uf: getCellValue(row, ['UF', 'Estado']),

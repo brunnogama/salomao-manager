@@ -16,6 +16,7 @@ import XLSX from 'xlsx-js-style';
 import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList } from 'recharts';
 
 import { VolumetryProcesses } from './VolumetryProcesses';
+import { normalizeResponsavel } from '../utils/responsavelAliases';
 
 export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'processos'>('dashboard');
@@ -156,15 +157,15 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
   // Normalizar nome para Title Case
   const toTitleCase = (str: string) => str.trim().toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
 
-  // Extrair lista de responsáveis únicos para o filtro (normalizados em Title Case)
-  const allPartners = Array.from(new Set(processes.map(p => p.responsavel_principal).filter(Boolean).map(toTitleCase))).sort();
+  // Extrair lista de responsáveis únicos para o filtro (normalizados com aliases + Title Case)
+  const allPartners = Array.from(new Set(processes.map(p => normalizeResponsavel(p.responsavel_principal)).filter((v): v is string => Boolean(v)).map(toTitleCase))).sort();
   // Extrair status únicos (Ativo, Arquivado, etc)
   const allStatuses = Array.from(new Set(processes.map(p => p.status).filter(Boolean))).sort();
 
   // --------------- Agrupamento por Responsável ---------------
   const totalForPartners = processesMatchingSearchAndStatus.length;
   const volumetryByPartner = allPartners.map(partnerName => {
-    const partnerProcs = processesMatchingSearchAndStatus.filter(p => (p.responsavel_principal || '').trim().toLowerCase() === partnerName.trim().toLowerCase());
+    const partnerProcs = processesMatchingSearchAndStatus.filter(p => toTitleCase(normalizeResponsavel(p.responsavel_principal) || '') === partnerName);
     
     return {
       name: partnerName || 'Sem Responsável',
