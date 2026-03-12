@@ -989,7 +989,7 @@ export function Organograma() {
 
                         {/* Unassigned or Orphan Nodes Pool */}
                         <div className="mt-16 pt-8 border-t border-gray-200">
-                            <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6">Colaboradores sem subordinação (ou raiz não-sócio)</h3>
+                            <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6">Colaboradores sem subordinação</h3>
                             <Droppable droppableId="unassigned" direction="horizontal" type="COLAB">
                                 {(provided, snapshot) => (
                                     <div
@@ -999,6 +999,7 @@ export function Organograma() {
                       ${snapshot.isDraggingOver ? 'border-[#1e3a8a] bg-blue-50/50' : 'border-gray-200 bg-white'}`}
                                     >
                                         {data.filter(c => {
+                                            if (c.isSocio) return false;
                                             if (c.leader_id || roots.some(r => r.id === c.id)) return false;
                                             if (activeTab === 'JURIDICO' && !c.isJuridico) return false;
                                             if (activeTab === 'ADMINISTRATIVO' && !c.isAdministrativo) return false;
@@ -1042,6 +1043,7 @@ export function Organograma() {
                                         ))}
                                         {provided.placeholder}
                                         {data.filter(c => {
+                                            if (c.isSocio) return false;
                                             if (c.leader_id || roots.some(r => r.id === c.id)) return false;
                                             if (activeTab === 'JURIDICO' && !c.isJuridico) return false;
                                             if (activeTab === 'ADMINISTRATIVO' && !c.isAdministrativo) return false;
