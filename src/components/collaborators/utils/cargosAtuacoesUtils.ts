@@ -3,6 +3,7 @@ export const ATUACOES_ADMINISTRATIVA = [
   'Controladoria',
   'Copa',
   'Financeiro',
+  'Fiscal',
   'Marketing',
   'Mobilidade',
   'Operacional',
