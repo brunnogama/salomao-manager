@@ -9,6 +9,21 @@ export interface AppUpdate {
 
 export const APP_UPDATES: AppUpdate[] = [
     {
+        version: '1.5.0',
+        date: '12/03/2026',
+        title: 'Correções na Controladoria - Cadastro de Processos',
+        description: 'Corrigimos problemas críticos no salvamento de dados dos processos judiciais dentro do módulo de Contratos da Controladoria.',
+        features: [
+            'Assunto e Magistrado agora são incluídos automaticamente ao clicar em "Adicionar Processo", mesmo sem clicar no botão "+" separadamente.'
+        ],
+        fixes: [
+            'Correção no campo Valor da Causa que não persistia ao reabrir o caso.',
+            'Correção no campo Magistrado que não era salvo corretamente no banco de dados.',
+            'Correção no campo Assunto que não era transferido para o processo ao salvar.',
+            'Mapeamento explícito de todos os campos do processo para evitar perda de dados.'
+        ]
+    },
+    {
         version: '1.4.0',
         date: '07/03/2026',
         title: 'Inteligência Artificial Recrutadora e Experiência de Vagas',
