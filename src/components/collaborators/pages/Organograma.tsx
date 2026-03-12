@@ -582,12 +582,15 @@ export function Organograma() {
         });
     }, []);
 
-    // Callback ref: scrola até o primeiro sócio quando ele monta no DOM
+    // Callback ref: reseta scroll do container quando o primeiro sócio monta no DOM
     const firstSocioRef = useCallback((node: HTMLDivElement | null) => {
         if (!node) return;
-        // Usar requestAnimationFrame para garantir que o layout já foi calculado
         requestAnimationFrame(() => {
-            node.scrollIntoView({ behavior: 'auto', block: 'center' });
+            // Apenas resetar scroll interno do container — não mexer no scroll da janela
+            if (scrollContainerRef.current) {
+                scrollContainerRef.current.scrollTop = 0;
+                scrollContainerRef.current.scrollLeft = 0;
+            }
         });
     }, []);
 
