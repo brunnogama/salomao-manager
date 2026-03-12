@@ -32,7 +32,7 @@ const UFS = [{ sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { 
 interface Props {
   isOpen: boolean; onClose: () => void; formData: Contract; setFormData: React.Dispatch<React.SetStateAction<Contract>>; onSave: () => void; loading: boolean; isEditing: boolean;
   partners: Partner[]; onOpenPartnerManager: () => void; analysts: Analyst[]; onOpenAnalystManager: () => void;
-  onCNPJSearch: () => void; processes: ContractProcess[]; currentProcess: ContractProcess; setCurrentProcess: React.Dispatch<React.SetStateAction<ContractProcess>>; editingProcessIndex: number | null; handleProcessAction: () => void; editProcess: (idx: number) => void; removeProcess: (idx: number) => void; newIntermediateFee: string; setNewIntermediateFee: (v: string) => void; addIntermediateFee: () => void; removeIntermediateFee: (idx: number) => void; timelineData: TimelineEvent[]; getStatusColor: (s: string) => string; getStatusLabel: (s: string) => string;
+  onCNPJSearch: () => void; processes: ContractProcess[]; currentProcess: ContractProcess; setCurrentProcess: React.Dispatch<React.SetStateAction<ContractProcess>>; editingProcessIndex: number | null; handleProcessAction: (updatedProcess?: ContractProcess) => void; editProcess: (idx: number) => void; removeProcess: (idx: number) => void; newIntermediateFee: string; setNewIntermediateFee: (v: string) => void; addIntermediateFee: () => void; removeIntermediateFee: (idx: number) => void; timelineData: TimelineEvent[]; getStatusColor: (s: string) => string; getStatusLabel: (s: string) => string;
 }
 
 export function ContractFormModal(props: Props) {
@@ -500,6 +500,29 @@ export function ContractFormModal(props: Props) {
     if (!currentProcess.subject) return;
     const updatedSubjects = currentProcess.subject.split(';').map(s => s.trim()).filter(s => s !== '' && s !== subjectToRemove);
     setCurrentProcess(prev => ({ ...prev, subject: updatedSubjects.join('; ') }));
+  };
+
+  const wrappedHandleProcessAction = () => {
+    let processToAdd = { ...currentProcess };
+
+    // Auto-incluir assunto pendente (selecionado no dropdown mas sem clicar "+")
+    if (newSubject.trim()) {
+      const cleanSubject = toTitleCase(newSubject.trim());
+      const currentSubjects = processToAdd.subject ? processToAdd.subject.split(';').map(s => s.trim()).filter(s => s !== '') : [];
+      if (!currentSubjects.includes(cleanSubject)) {
+        processToAdd.subject = [...currentSubjects, cleanSubject].join('; ');
+      }
+      setNewSubject('');
+    }
+
+    // Auto-incluir magistrado pendente (selecionado no dropdown mas sem clicar "+")
+    if (newMagistrateName.trim()) {
+      processToAdd.magistrates = [...(processToAdd.magistrates || []), { title: newMagistrateTitle, name: newMagistrateName }];
+      setNewMagistrateName('');
+      setNewMagistrateTitle('');
+    }
+
+    handleProcessAction(processToAdd);
   };
 
   const handleSaveWithIntegrations = async () => {
@@ -986,7 +1009,7 @@ export function ContractFormModal(props: Props) {
                     addSubjectToProcess={addSubjectToProcess}
                     removeSubject={removeSubject}
                     editingProcessIndex={editingProcessIndex}
-                    handleProcessAction={handleProcessAction}
+                    handleProcessAction={wrappedHandleProcessAction}
                     handlePartyCNPJSearch={handlePartyCNPJSearch}
                     localMaskCNJ={localMaskCNJ}
                     ensureDateValue={ensureDateValue}

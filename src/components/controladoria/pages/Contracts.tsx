@@ -274,17 +274,18 @@ export function Contracts() {
     toast.success(isEditing ? 'Contrato atualizado com sucesso!' : 'Contrato criado com sucesso!');
   };
 
-  const handleProcessAction = () => {
+  const handleProcessAction = (updatedProcess?: ContractProcess) => {
+    const processToSave = updatedProcess || currentProcess;
     // Se não tiver número, mas for um tipo não judicial (opcional), podemos permitir ou exigir algo
-    if (!currentProcess.process_number && !currentProcess.court) return;
+    if (!processToSave.process_number && !processToSave.court) return;
 
     if (editingProcessIndex !== null) {
       const updated = [...processes];
-      updated[editingProcessIndex] = currentProcess;
+      updated[editingProcessIndex] = processToSave;
       setProcesses(updated);
       setEditingProcessIndex(null);
     } else {
-      setProcesses([...processes, currentProcess]);
+      setProcesses([...processes, processToSave]);
     }
     // Limpa o objeto completo, não apenas o número
     setCurrentProcess({
