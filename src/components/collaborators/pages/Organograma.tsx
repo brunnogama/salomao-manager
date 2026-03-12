@@ -940,11 +940,19 @@ export function Organograma() {
                             setSelectedPartner('ALL');
                             // Centralizar o primeiro sócio na tela
                             setTimeout(() => {
+                                // Resetar scroll do container interno primeiro
+                                if (containerRef.current) {
+                                    containerRef.current.scrollTop = 0;
+                                    containerRef.current.scrollLeft = 0;
+                                }
+                                // Scrollar a janela para posicionar o container no topo
                                 const el = document.querySelector('[data-first-socio]');
                                 if (el) {
-                                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    const rect = el.getBoundingClientRect();
+                                    const scrollTop = window.pageYOffset + rect.top - 120;
+                                    window.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' });
                                 }
-                            }, 100);
+                            }, 150);
                         }}
                         className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
                             selectedPartner === 'ALL'
