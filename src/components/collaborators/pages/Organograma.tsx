@@ -179,13 +179,20 @@ const OrganogramNode = React.memo(({
                     <div className="w-[2px] h-8 bg-gray-300"></div>
                     <div className="flex flex-col items-center w-full relative z-10">
                         {isJuridicoTab ? (
-                            // JURIDICO: Vertical role blocks (as before)
+                            // JURIDICO: Vertical role blocks with horizontal connectors
                             roleGroups.map((group, groupIndex) => (
-                                <div key={groupIndex} className="flex justify-center w-full relative pb-16">
+                                <div key={groupIndex} className="flex flex-col items-center w-full relative pb-16">
                                     {groupIndex < roleGroups.length - 1 && (
                                         <div className="absolute top-0 left-1/2 w-[2px] h-full bg-gray-300 -translate-x-1/2 -z-10"></div>
                                     )}
                                     <div className="flex justify-center relative pt-4 w-full">
+                                        {/* Horizontal connector bar between siblings */}
+                                        {group.length > 1 && (
+                                            <div className="absolute top-0 h-[2px] bg-gray-300" style={{
+                                                left: `${100 / (group.length * 2)}%`,
+                                                right: `${100 / (group.length * 2)}%`
+                                            }}></div>
+                                        )}
                                         {group.map((sub) => (
                                             <div key={sub.id} className={`relative flex flex-col items-center ${group.length > 8 ? 'px-0' : group.length > 5 ? 'px-0.5' : 'px-4'}`}>
                                                 <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
@@ -403,6 +410,7 @@ export function Organograma() {
     const [zoomLevel, setZoomLevel] = useState(1);
     const [selectedColabForModal, setSelectedColabForModal] = useState<any | null>(null);
     const [activeTab, setActiveTab] = useState<'JURIDICO' | 'ADMINISTRATIVO'>('JURIDICO');
+    const [selectedPartner, setSelectedPartner] = useState<string | 'ALL'>('ALL');
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
@@ -814,6 +822,38 @@ export function Organograma() {
                 </div>
             </div>
 
+            {/* Sub-abas por Sócio (Jurídico) */}
+            {activeTab === 'JURIDICO' && roots.length > 0 && (
+                <div className="flex items-center gap-2 mt-2 mb-1 overflow-x-auto pb-1 custom-scrollbar">
+                    <button
+                        onClick={() => setSelectedPartner('ALL')}
+                        className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap border ${
+                            selectedPartner === 'ALL'
+                                ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
+                                : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
+                        }`}
+                    >
+                        Todos
+                    </button>
+                    {roots.map((root) => (
+                        <button
+                            key={root.id}
+                            onClick={() => setSelectedPartner(root.id)}
+                            className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap border flex items-center gap-2 ${
+                                selectedPartner === root.id
+                                    ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
+                                    : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
+                            }`}
+                        >
+                            {root.photo_url && (
+                                <img src={root.photo_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                            )}
+                            {root.name}
+                        </button>
+                    ))}
+                </div>
+            )}
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 mb-2">
                 <div className="text-[11px] font-bold text-gray-400 bg-white border border-gray-100 px-4 py-2 rounded-xl shadow-sm inline-flex items-center gap-2 max-w-fit">
                     <AlertCircle className="w-4 h-4 text-[#1e3a8a]" />
@@ -841,12 +881,24 @@ export function Organograma() {
                                     context={nodeContext}
                                 />
                             ) : roots.length > 0 ? (
-                                roots.map((root, index) => (
-                                    <div key={root.id} className="relative flex flex-col items-center w-full">
-                                        <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
-                                        {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
-                                    </div>
-                                ))
+                                selectedPartner === 'ALL' ? (
+                                    roots.map((root, index) => (
+                                        <div key={root.id} className="relative flex flex-col items-center w-full">
+                                            <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
+                                            {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
+                                        </div>
+                                    ))
+                                ) : (
+                                    (() => {
+                                        const selectedRoot = roots.find(r => r.id === selectedPartner);
+                                        if (!selectedRoot) return null;
+                                        return (
+                                            <div className="relative flex flex-col items-center w-full">
+                                                <OrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
+                                            </div>
+                                        );
+                                    })()
+                                )
                             ) : (
                                 <div className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest">
                                     Nenhuma estrutura principal encontrada.
