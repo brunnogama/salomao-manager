@@ -106,25 +106,54 @@ export function VolumetryProcesses() {
     }
   };
 
+  const getCellValue = (row: any, searchTerms: string[]) => {
+    const keys = Object.keys(row);
+    for (const term of searchTerms) {
+      const matchKey = keys.find(k => k.toLowerCase().trim().replace(/ /g, '') === term.toLowerCase().replace(/ /g, ''));
+      if (matchKey !== undefined) return row[matchKey];
+    }
+    // Fallback: se não achar exato, tenta .includes
+    for (const term of searchTerms) {
+      const matchKey = keys.find(k => k.toLowerCase().includes(term.toLowerCase()));
+      if (matchKey !== undefined) return row[matchKey];
+    }
+    return null;
+  };
+
   const parseExcelDate = (excelDate: any) => {
     if (!excelDate) return null;
-    // Se já for uma string de data válida (YYYY-MM-DD ou contém T)
+    // Se for string "03/08/2023 19:14:09" (limpa espaço, pega o d/m/y)
     if (typeof excelDate === 'string') {
-        const datePart = excelDate.split(' ')[0]; // Limpa a hora caso exista "03/08/2023 19:14:09"
-        
+        let datePart = excelDate.trim().split(' ')[0];
         if (datePart.includes('/')) {
             const parts = datePart.split('/');
             if (parts.length === 3) {
-                // Supondo formato DD/MM/YYYY
-                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                // DD/MM/YYYY
+                const day = parts[0].padStart(2, '0');
+                const month = parts[1].padStart(2, '0');
+                let year = parts[2];
+                if (year.length === 2) year = `20${year}`;
+                return `${year}-${month}-${day}`;
+            }
+        } else if (datePart.includes('-')) {
+            const parts = datePart.split('-');
+            if (parts.length === 3) {
+                 if (parts[0].length === 4) return datePart; // YYYY-MM-DD
+                 // DD-MM-YYYY
+                 const day = parts[0].padStart(2, '0');
+                 const month = parts[1].padStart(2, '0');
+                 let year = parts[2];
+                 if (year.length === 2) year = `20${year}`;
+                 return `${year}-${month}-${day}`;
             }
         }
         return datePart;
     }
-    // Se for número serial do Excel
+    // Se for número serial (Data Excel)
     if (typeof excelDate === 'number') {
-        const date = new Date(Math.round((excelDate - 25569) * 86400 * 1000));
-        return date.toISOString().split('T')[0];
+        const dateObj = new Date(Math.round((excelDate - 25569) * 86400 * 1000));
+        // Ajusta pro timezone zero pra não ter risco do UTC voltar um dia (UTC-3 Brasil seria ontem final da noite)
+        return new Date(dateObj.getTime() + Math.abs(dateObj.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     }
     return null;
   };
@@ -160,16 +189,16 @@ export function VolumetryProcesses() {
         setImportProgress({ current: 0, total: rawData.length });
 
         const formattedData = rawData.map((row: any) => ({
-          pasta: row['Pasta']?.toString() || null,
-          tipo: row['Tipo']?.toString() || null,
-          data_cadastro: parseExcelDate(row['Data Cadastro']),
-          responsavel_principal: row['Responsável principal']?.toString() || null,
-          cliente_principal: row['Cliente principal']?.toString() || null,
-          numero_cnj: row['Número de CNJ']?.toString() || null,
-          uf: row['UF']?.toString() || null,
-          status: row['Status']?.toString() || null,
-          data_encerramento: parseExcelDate(row['Data do encerramento']),
-          instancia: row['Tipo_1']?.toString() || row['Instância']?.toString() || null // Excel pode nomear colunas duplicadas com _1
+          pasta: getCellValue(row, ['Pasta']),
+          tipo: getCellValue(row, ['Tipo']),
+          data_cadastro: parseExcelDate(getCellValue(row, ['Data Cadastro', 'Data de Cadastro', 'Data Cad', 'Data Cad.'])),
+          responsavel_principal: getCellValue(row, ['Responsável principal', 'Responsável']),
+          cliente_principal: getCellValue(row, ['Cliente principal', 'Cliente']),
+          numero_cnj: getCellValue(row, ['Número de CNJ', 'CNJ', 'Numero CNJ']),
+          uf: getCellValue(row, ['UF', 'Estado']),
+          status: getCellValue(row, ['Status']),
+          data_encerramento: parseExcelDate(getCellValue(row, ['Data do encerramento', 'Data Encerramento', 'Data de Encerramento', 'Data Enc.'])),
+          instancia: getCellValue(row, ['Tipo_1', 'Instância', 'Instancia'])
         }));
 
         // Em vez de inserir tudo de uma vez, divide em lotes para atualizar o progresso
