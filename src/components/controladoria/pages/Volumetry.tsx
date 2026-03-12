@@ -317,7 +317,7 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
               <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Processos</p>
-                <p className="text-2xl font-black text-blue-900 mt-1">{totalProcesses}</p>
+                <p className="text-2xl font-black text-blue-900 mt-1">{totalProcesses.toLocaleString('pt-BR')}</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl">
                 <Scale className="h-6 w-6 text-blue-600" />
@@ -328,7 +328,7 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
               <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos Ativos</p>
-                <p className="text-2xl font-black text-emerald-900 mt-1">{ativosCount}</p>
+                <p className="text-2xl font-black text-emerald-900 mt-1">{ativosCount.toLocaleString('pt-BR')}</p>
               </div>
               <div className="p-3 bg-emerald-50 rounded-xl">
                 <Activity className="h-6 w-6 text-emerald-600" />
@@ -339,7 +339,7 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
               <div className="absolute right-0 top-0 h-full w-1 bg-amber-500"></div>
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos Arquivados</p>
-                <p className="text-2xl font-black text-amber-900 mt-1">{arquivadosCount}</p>
+                <p className="text-2xl font-black text-amber-900 mt-1">{arquivadosCount.toLocaleString('pt-BR')}</p>
               </div>
               <div className="p-3 bg-amber-50 rounded-xl">
                 <FileText className="h-6 w-6 text-amber-600" />
@@ -350,7 +350,7 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
               <div className="absolute right-0 top-0 h-full w-1 bg-purple-600"></div>
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Clientes Únicos</p>
-                <p className="text-2xl font-black text-purple-900 mt-1">{uniqueClients}</p>
+                <p className="text-2xl font-black text-purple-900 mt-1">{uniqueClients.toLocaleString('pt-BR')}</p>
               </div>
               <div className="p-3 bg-purple-50 rounded-xl">
                 <PieChart className="h-6 w-6 text-purple-600" />
