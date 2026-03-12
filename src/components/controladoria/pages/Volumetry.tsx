@@ -10,7 +10,8 @@ import {
   Layers,
   TrendingUp,
   Share2,
-  Check
+  Check,
+  ShieldCheck
 } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList } from 'recharts';
@@ -47,7 +48,7 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
       while (true) {
         const { data, error } = await supabase
           .from('processos')
-          .select('cliente_principal,numero_cnj,pasta,status,responsavel_principal,data_cadastro,data_encerramento')
+          .select('cliente_principal,numero_cnj,pasta,status,responsavel_principal,data_cadastro,data_encerramento,uf,tipo,instancia')
           .range(from, from + step - 1);
 
         if (error) throw error;
@@ -542,10 +543,109 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
             )}
           </div>
 
+          {/* Qualidade da Base */}
+          {!loading && processes.length > 0 && (
+            <DataQualitySection processes={filteredProcesses} />
+          )}
+
         </div>
       ) : (
         <VolumetryProcesses />
       )}
+    </div>
+  );
+}
+
+function DataQualitySection({ processes }: { processes: any[] }) {
+  const total = processes.length;
+  if (total === 0) return null;
+
+  const fields = [
+    { key: 'responsavel_principal', label: 'Responsável Principal' },
+    { key: 'cliente_principal', label: 'Cliente Principal' },
+    { key: 'numero_cnj', label: 'Número CNJ' },
+    { key: 'status', label: 'Status' },
+    { key: 'data_cadastro', label: 'Data de Cadastro' },
+    { key: 'data_encerramento', label: 'Data de Encerramento' },
+    { key: 'uf', label: 'UF (Estado)' },
+    { key: 'tipo', label: 'Tipo de Ação' },
+    { key: 'instancia', label: 'Instância' },
+    { key: 'pasta', label: 'Pasta' },
+  ];
+
+  const stats = fields.map(f => {
+    const filled = processes.filter(p => p[f.key] != null && String(p[f.key]).trim() !== '').length;
+    const pct = Math.round((filled / total) * 100);
+    return { ...f, filled, pct };
+  }).sort((a, b) => a.pct - b.pct);
+
+  const overallScore = Math.round(stats.reduce((sum, s) => sum + s.pct, 0) / stats.length);
+
+  const getColor = (pct: number) => {
+    if (pct >= 80) return { bar: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' };
+    if (pct >= 50) return { bar: 'bg-amber-500', text: 'text-amber-700', bg: 'bg-amber-50' };
+    return { bar: 'bg-red-500', text: 'text-red-700', bg: 'bg-red-50' };
+  };
+
+  const scoreColor = getColor(overallScore);
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-[#1e3a8a]" /> Qualidade da Base
+        </h2>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Score Geral</span>
+          <span className={`px-3 py-1 rounded-lg font-black text-sm border ${scoreColor.bg} ${scoreColor.text}`}>
+            {overallScore}%
+          </span>
+        </div>
+      </div>
+
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+          {stats.map(s => {
+            const color = getColor(s.pct);
+            return (
+              <div key={s.key} className="flex items-center gap-4">
+                <div className="w-[140px] shrink-0">
+                  <p className="text-[11px] font-black text-[#0a192f] uppercase tracking-tight truncate" title={s.label}>{s.label}</p>
+                </div>
+                <div className="flex-1 flex items-center gap-3">
+                  <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200/50 shadow-inner">
+                    <div
+                      className={`${color.bar} h-full rounded-full transition-all duration-700`}
+                      style={{ width: `${s.pct}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 w-[90px] justify-end">
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${color.text}`}>{s.pct}%</span>
+                    <span className="text-[9px] font-bold text-gray-400">
+                      {s.filled.toLocaleString('pt-BR')}/{total.toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-6 pt-4 border-t border-gray-100 flex flex-wrap gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Bom (&ge; 80%)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Regular (50-79%)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Crítico (&lt; 50%)</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
