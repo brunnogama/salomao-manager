@@ -290,7 +290,8 @@ const OrganogramNode = React.memo(({
 const AdminOrganogramTree = React.memo(({
     diretorFinanceiro,
     allAdminColabs,
-    context
+    context,
+    selectedAtuacao = 'ALL'
 }: {
     diretorFinanceiro: ColaboradorCard,
     allAdminColabs: ColaboradorCard[],
@@ -302,7 +303,8 @@ const AdminOrganogramTree = React.memo(({
         setEditingCompetenciasId: (id: string | null) => void,
         setEditingCompetenciasText: (text: string) => void,
         subordinatesMap: Map<string | null, ColaboradorCard[]>,
-    }
+    },
+    selectedAtuacao?: string | 'ALL'
 }) => {
     const { setSelectedColabForModal } = context;
 
@@ -329,7 +331,10 @@ const AdminOrganogramTree = React.memo(({
         });
     }, [diretorFinanceiro.id]);
 
-    const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    const atuacaoEntriesAll = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    const atuacaoEntries = selectedAtuacao === 'ALL'
+        ? atuacaoEntriesAll
+        : atuacaoEntriesAll.filter(([name]) => name === selectedAtuacao);
 
     // Reusable Diretor Financeiro mini-node (Droppable)
     const DiretorSection = ({ atuacaoName }: { atuacaoName: string }) => (
@@ -394,32 +399,33 @@ const AdminOrganogramTree = React.memo(({
 
                         {/* Horizontal layout for all top-level peers in this sector */}
                         {topLevel.length > 1 && (
-                            <div className="relative flex items-start">
-                                <div className="flex" style={{ gap: topLevel.length > 12 ? '0' : topLevel.length > 7 ? '0.125rem' : '1rem' }}>
-                                    {topLevel.map((colab, idx) => (
-                                        <div key={colab.id} className="flex flex-col items-center relative">
-                                            {/* Per-child horizontal segment */}
+                            <div className="flex justify-center relative pt-4 w-full">
+                                {topLevel.map((colab, idx) => (
+                                    <div key={colab.id} className={`relative flex flex-col items-center ${topLevel.length > 8 ? 'px-0' : topLevel.length > 5 ? 'px-0.5' : 'px-4'}`}>
+                                        {/* Per-child horizontal segment */}
+                                        {topLevel.length > 1 && (
                                             <div className="absolute h-[2px] bg-gray-300" style={{
-                                                top: '0',
+                                                top: '-1rem',
                                                 left: idx === 0 ? '50%' : '0',
                                                 right: idx === topLevel.length - 1 ? '50%' : '0'
                                             }}></div>
-                                            <div className="w-[2px] h-4 bg-gray-300"></div>
-                                            <div style={{
-                                                transform: topLevel.length > 12 ? 'scale(0.8)' : topLevel.length > 7 ? 'scale(0.9)' : 'scale(1)',
-                                                transformOrigin: 'top center'
-                                            }}>
-                                                <OrganogramNode
-                                                    colab={colab}
-                                                    context={context}
-                                                    visitedIds={new Set<string>([diretorFinanceiro.id])}
-                                                    isDense={topLevel.length > 5 && topLevel.length <= 8}
-                                                    isSuperDense={topLevel.length > 8}
-                                                />
-                                            </div>
+                                        )}
+                                        {/* Vertical stub up */}
+                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                        <div style={{
+                                            transform: topLevel.length > 12 ? 'scale(0.8)' : topLevel.length > 7 ? 'scale(0.9)' : 'scale(1)',
+                                            transformOrigin: 'top center'
+                                        }}>
+                                            <OrganogramNode
+                                                colab={colab}
+                                                context={context}
+                                                visitedIds={new Set<string>([diretorFinanceiro.id])}
+                                                isDense={topLevel.length > 5 && topLevel.length <= 8}
+                                                isSuperDense={topLevel.length > 8}
+                                            />
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
 
@@ -447,6 +453,7 @@ export function Organograma() {
     const [selectedColabForModal, setSelectedColabForModal] = useState<any | null>(null);
     const [activeTab, setActiveTab] = useState<'JURIDICO' | 'ADMINISTRATIVO'>('JURIDICO');
     const [selectedPartner, setSelectedPartner] = useState<string | 'ALL'>('ALL');
+    const [selectedAtuacao, setSelectedAtuacao] = useState<string | 'ALL'>('ALL');
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
@@ -890,6 +897,43 @@ export function Organograma() {
                 </div>
             )}
 
+            {/* Sub-abas por Atuação (Administrativo) */}
+            {activeTab === 'ADMINISTRATIVO' && (() => {
+                const atuacaoSet = new Set<string>();
+                adminColabs.forEach(c => {
+                    if (c.atuacao) atuacaoSet.add(c.atuacao);
+                });
+                const atuacaoList = Array.from(atuacaoSet).sort((a, b) => a.localeCompare(b));
+                if (atuacaoList.length === 0) return null;
+                return (
+                    <div className="flex items-center gap-2 mt-2 mb-1 overflow-x-auto pb-2 custom-scrollbar">
+                        <button
+                            onClick={() => setSelectedAtuacao('ALL')}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
+                                selectedAtuacao === 'ALL'
+                                    ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
+                                    : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
+                            }`}
+                        >
+                            Todos
+                        </button>
+                        {atuacaoList.map((atuacao) => (
+                            <button
+                                key={atuacao}
+                                onClick={() => setSelectedAtuacao(atuacao)}
+                                className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
+                                    selectedAtuacao === atuacao
+                                        ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
+                                        : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
+                                }`}
+                            >
+                                {atuacao}
+                            </button>
+                        ))}
+                    </div>
+                );
+            })()}
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 mb-2">
                 <div className="text-[11px] font-bold text-gray-400 bg-white border border-gray-100 px-4 py-2 rounded-xl shadow-sm inline-flex items-center gap-2 max-w-fit">
                     <AlertCircle className="w-4 h-4 text-[#1e3a8a]" />
@@ -915,6 +959,7 @@ export function Organograma() {
                                     diretorFinanceiro={roots[0]}
                                     allAdminColabs={adminColabs}
                                     context={nodeContext}
+                                    selectedAtuacao={selectedAtuacao}
                                 />
                             ) : roots.length > 0 ? (
                                 selectedPartner === 'ALL' ? (
