@@ -445,6 +445,11 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
             </div>
           </div>
 
+          {/* Qualidade da Base */}
+          {!loading && processes.length > 0 && (
+            <DataQualitySection processes={filteredProcesses} />
+          )}
+
           {/* Lista de Volumetria por Responsável */}
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50">
@@ -543,10 +548,6 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
             )}
           </div>
 
-          {/* Qualidade da Base */}
-          {!loading && processes.length > 0 && (
-            <DataQualitySection processes={filteredProcesses} />
-          )}
 
         </div>
       ) : (
