@@ -176,10 +176,23 @@ export function Volumetry() {
       '% Representatividade': `${m.percentage}%`
     }));
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
+    const ws1 = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Volumetria");
-    XLSX.writeFile(wb, "Volumetria_LegalOne.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws1, "Volumetria por Líder");
+
+    // Gerar aba extra de Movimento Processual baseada no ano selecionado
+    const chartExportData = currentChartData.map((d: any) => ({
+      'Mês': d.name,
+      'Entrantes (Novos)': d.Entrantes,
+      'Encerrados (Baixas)': d.Encerrados,
+      'Saldo Ativo Total': d.Saldo,
+      'Ano Base': selectedChartYear
+    }));
+
+    const ws2 = XLSX.utils.json_to_sheet(chartExportData);
+    XLSX.utils.book_append_sheet(wb, ws2, `Movimentação ${selectedChartYear}`);
+
+    XLSX.writeFile(wb, "Volumetria_LegalOne_Dashboard.xlsx");
   };
 
   return (
