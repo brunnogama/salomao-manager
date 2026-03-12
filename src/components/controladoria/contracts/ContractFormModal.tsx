@@ -571,21 +571,32 @@ export function ContractFormModal(props: Props) {
         if (processes.length > 0) {
           await supabase.from('contract_processes').delete().eq('contract_id', savedId);
           const processesToInsert = processes.map(p => {
-            const {
-              id,
-              created_at,
-              updated_at,
-              author_cnpj,
-              opponent_cnpj,
-              value_of_cause,
-              ...rest
-            } = p as any;
-
+            const proc = p as any;
+            const magistratesValue = Array.isArray(proc.magistrates) ? JSON.stringify(proc.magistrates) : (proc.magistrates || '[]');
             return {
-              ...rest,
               contract_id: savedId,
-              cause_value: rest.cause_value || '',
-              magistrates: Array.isArray(rest.magistrates) ? JSON.stringify(rest.magistrates) : (rest.magistrates || '[]')
+              process_number: proc.process_number || '',
+              author: proc.author || '',
+              opponent: proc.opponent || '',
+              court: proc.court || '',
+              vara: proc.vara || '',
+              comarca: proc.comarca || '',
+              uf: proc.uf || '',
+              position: proc.position || '',
+              subject: proc.subject || '',
+              magistrates: magistratesValue,
+              cause_value: proc.cause_value || '',
+              numeral: proc.numeral || '',
+              distribution_date: proc.distribution_date || null,
+              justice_type: proc.justice_type || '',
+              process_class: proc.process_class || '',
+              action_type: proc.action_type || '',
+              instance: proc.instance || '',
+              nature: proc.nature || '',
+              notes: proc.notes || '',
+              judge: proc.judge || '',
+              link: proc.link || '',
+              status: proc.status || '',
             };
           });
 
