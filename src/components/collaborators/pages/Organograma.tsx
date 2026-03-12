@@ -583,20 +583,25 @@ export function Organograma() {
     }, []);
 
     // Scroll to first sócio when switching to ALL
+    const prevSelectedPartner = useRef(selectedPartner);
     useEffect(() => {
-        if (selectedPartner === 'ALL' && activeTab === 'JURIDICO') {
-            // requestAnimationFrame garante que o DOM já foi atualizado pelo React
-            requestAnimationFrame(() => {
+        const wasNotAll = prevSelectedPartner.current !== 'ALL';
+        prevSelectedPartner.current = selectedPartner;
+
+        if (selectedPartner === 'ALL' && activeTab === 'JURIDICO' && wasNotAll) {
+            // Delay para garantir que o React renderizou toda a árvore
+            setTimeout(() => {
                 // Resetar scroll do container interno
                 if (scrollContainerRef.current) {
                     scrollContainerRef.current.scrollTop = 0;
                     scrollContainerRef.current.scrollLeft = 0;
                 }
-                // Scrollar a janela para que o container do organograma fique visível
-                if (scrollContainerRef.current) {
-                    scrollContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Scrollar até o primeiro sócio
+                const firstSocio = document.querySelector('[data-first-socio]');
+                if (firstSocio) {
+                    firstSocio.scrollIntoView({ behavior: 'auto', block: 'start' });
                 }
-            });
+            }, 300);
         }
     }, [selectedPartner, activeTab]);
 
