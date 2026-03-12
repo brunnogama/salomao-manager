@@ -582,33 +582,23 @@ export function Organograma() {
         });
     }, []);
 
-    // Scroll to first sócio when viewing ALL in Jurídico
-    useEffect(() => {
-        if (selectedPartner !== 'ALL' || activeTab !== 'JURIDICO') return;
-
-        // Polling: tentar encontrar o elemento até ele existir no DOM (max 2s)
-        let attempts = 0;
-        const maxAttempts = 20;
-        const interval = setInterval(() => {
-            attempts++;
-            const firstSocio = document.querySelector('[data-first-socio]') as HTMLElement | null;
-            if (firstSocio && scrollContainerRef.current) {
-                clearInterval(interval);
-                // Calcular offset do primeiro sócio relativo ao container scrollável
-                const containerRect = scrollContainerRef.current.getBoundingClientRect();
-                const socioRect = firstSocio.getBoundingClientRect();
-                // Ajustar scroll interno do container para mostrar o sócio no topo
-                const scrollNeeded = socioRect.top - containerRect.top + scrollContainerRef.current.scrollTop;
-                scrollContainerRef.current.scrollTop = Math.max(0, scrollNeeded - 16);
+    // Callback ref: scrola quando o primeiro sócio monta no DOM
+    const firstSocioRef = useCallback((node: HTMLDivElement | null) => {
+        if (!node) return;
+        // Pequeno delay para garantir layout completo
+        setTimeout(() => {
+            // Resetar scroll interno do container
+            if (scrollContainerRef.current) {
+                scrollContainerRef.current.scrollTop = 0;
                 scrollContainerRef.current.scrollLeft = 0;
-                // Scrollar a janela para mostrar o container
-                scrollContainerRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
             }
-            if (attempts >= maxAttempts) clearInterval(interval);
-        }, 100);
-
-        return () => clearInterval(interval);
-    }, [selectedPartner, activeTab]);
+            // Posicionar a janela para mostrar o header + organograma
+            if (containerRef.current) {
+                const headerRect = containerRef.current.getBoundingClientRect();
+                window.scrollTo({ top: window.pageYOffset + headerRect.top, behavior: 'auto' });
+            }
+        }, 50);
+    }, []);
 
     // Filter and sort collaborators based on Jurídico hierarchy initially
     useEffect(() => {
@@ -1060,7 +1050,7 @@ export function Organograma() {
                             ) : roots.length > 0 ? (
                                 selectedPartner === 'ALL' ? (
                                     roots.map((root, index) => (
-                                        <div key={root.id} className="relative flex flex-col items-center w-full" {...(index === 0 ? { 'data-first-socio': true } : {})}>
+                                        <div key={root.id} className="relative flex flex-col items-center w-full" ref={index === 0 ? firstSocioRef : undefined}>
                                             <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
                                             {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
                                         </div>
