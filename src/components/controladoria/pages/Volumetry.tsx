@@ -77,7 +77,7 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
   });
 
   const filteredProcesses = processesMatchingSearchAndStatus.filter((proc: any) => {
-    return partnerFilter ? proc.responsavel_principal === partnerFilter : true;
+    return partnerFilter ? (proc.responsavel_principal || '').trim().toLowerCase() === partnerFilter.trim().toLowerCase() : true;
   });
 
   // Métricas
@@ -153,15 +153,18 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
 
   const currentChartData = chartDataYearly[selectedChartYear] || [];
 
-  // Extrair lista de responsáveis únicos para o filtro
-  const allPartners = Array.from(new Set(processes.map(p => p.responsavel_principal).filter(Boolean))).sort();
+  // Normalizar nome para Title Case
+  const toTitleCase = (str: string) => str.trim().toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
+
+  // Extrair lista de responsáveis únicos para o filtro (normalizados em Title Case)
+  const allPartners = Array.from(new Set(processes.map(p => p.responsavel_principal).filter(Boolean).map(toTitleCase))).sort();
   // Extrair status únicos (Ativo, Arquivado, etc)
   const allStatuses = Array.from(new Set(processes.map(p => p.status).filter(Boolean))).sort();
 
   // --------------- Agrupamento por Responsável ---------------
   const totalForPartners = processesMatchingSearchAndStatus.length;
   const volumetryByPartner = allPartners.map(partnerName => {
-    const partnerProcs = processesMatchingSearchAndStatus.filter(p => p.responsavel_principal === partnerName);
+    const partnerProcs = processesMatchingSearchAndStatus.filter(p => (p.responsavel_principal || '').trim().toLowerCase() === partnerName.trim().toLowerCase());
     
     return {
       name: partnerName || 'Sem Responsável',
