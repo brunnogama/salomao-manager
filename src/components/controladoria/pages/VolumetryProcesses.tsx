@@ -82,7 +82,7 @@ export function VolumetryProcesses() {
         const { data, error } = await supabase
           .from('processos')
           .select('*')
-          .order('created_at', { ascending: false })
+          .order('data_cadastro', { ascending: false })
           .range(from, from + step - 1);
 
         if (error) throw error;
