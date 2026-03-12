@@ -10,6 +10,8 @@ import AtualizacaoCadastral from './pages/AtualizacaoCadastral';
 import { CandidatoPublicProfile } from './components/collaborators/pages/CandidatoPublicProfile';
 import ReportControladoria from './pages/ReportControladoria';
 import { Presentation } from './pages/presentation/Presentation';
+import { PublicVolumetry } from './components/controladoria/pages/PublicVolumetry';
+import { PublicDemandas } from './components/controladoria/pages/PublicDemandas';
 import { BackupService } from './lib/BackupService';
 import { useEffect } from 'react';
 
@@ -180,6 +182,9 @@ export function AppRoutes() {
             <Route path="/atualizacao-cadastral/:token" element={<AtualizacaoCadastral />} />
             <Route path="/candidato/perfil/:identifier" element={<CandidatoPublicProfile />} />
             <Route path="/report/controladoria" element={<ReportControladoria />} />
+            
+            <Route path="/public/volumetria" element={<PublicVolumetry />} />
+            <Route path="/public/demandas" element={<PublicDemandas />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>

@@ -10,7 +10,9 @@ import {
     Calendar,
     Loader2,
     FileSignature,
-    Download
+    Download,
+    Share2,
+    Check
 } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 import {
@@ -51,12 +53,13 @@ interface HeadcountData {
     balance: number;
 }
 
-export function Demandas() {
+export function Demandas({ isPublicView = false }: { isPublicView?: boolean }) {
     const [loading, setLoading] = useState(true);
     const [collaborators, setCollaborators] = useState<Collaborator[]>([]); // Hired in period
     const [allCollaborators, setAllCollaborators] = useState<Collaborator[]>([]); // All juridica (active + recent terminated)
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [isFirstLoad, setIsFirstLoad] = useState(true);
+    const [copiedLink, setCopiedLink] = useState(false);
 
     const pageRef = useRef<HTMLDivElement>(null);
     const tableRef = useRef<HTMLDivElement>(null);
@@ -537,6 +540,21 @@ export function Demandas() {
                         <div className="absolute -left-6 top-1/2 -translate-y-1/2 hidden lg:flex">
                             <Loader2 className="w-4 h-4 text-[#1e3a8a] animate-spin" />
                         </div>
+                    )}
+
+                    {!isPublicView && (
+                        <button
+                            onClick={() => {
+                                const url = `${window.location.origin}/public/demandas`;
+                                navigator.clipboard.writeText(url);
+                                setCopiedLink(true);
+                                setTimeout(() => setCopiedLink(false), 3000);
+                            }}
+                            className="flex items-center justify-center gap-2 px-4 py-1.5 bg-blue-50 border border-blue-200 text-[#1e3a8a] rounded-lg hover:bg-blue-100 transition-colors text-[10px] font-black uppercase tracking-widest shadow-sm h-full"
+                        >
+                            {copiedLink ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
+                            {copiedLink ? 'Copiado!' : 'Compartilhar'}
+                        </button>
                     )}
                     
                     <button
