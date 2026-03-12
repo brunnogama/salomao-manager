@@ -327,21 +327,21 @@ export function VolumetryProcesses() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-1">
-        <div className="overflow-x-auto custom-scrollbar">
-          <div className="max-h-[600px] overflow-y-auto min-w-[1200px]">
-            <table className="w-full text-left border-collapse relative">
+        <div className="overflow-hidden">
+          <div className="max-h-[600px] overflow-y-auto w-full">
+            <table className="w-full text-left border-collapse relative table-fixed">
               <thead className="sticky top-0 bg-white shadow-sm z-10">
                 <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Pasta</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest min-w-[120px]">Data Cadastro</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável Principal</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente Principal</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Número de CNJ</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">UF</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest min-w-[150px]">Data do Encerramento</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Instância/Recurso</th>
+                  <th className="p-3 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap w-[150px]">Pasta</th>
+                  <th className="p-3 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap w-[120px]">Tipo</th>
+                  <th className="p-3 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap w-[90px]">Data Cad.</th>
+                  <th className="p-3 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap w-[140px]">Líder Resp.</th>
+                  <th className="p-3 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap w-[140px]">Cliente</th>
+                  <th className="p-3 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap w-[120px]">CNJ</th>
+                  <th className="p-3 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap w-[50px]">UF</th>
+                  <th className="p-3 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap w-[100px]">Status</th>
+                  <th className="p-3 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap w-[90px]">Data Enc.</th>
+                  <th className="p-3 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap w-[120px]">Instância</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -367,15 +367,15 @@ export function VolumetryProcesses() {
                 ) : (
                   currentData.map((row, index) => (
                     <tr key={row.id || index} className="hover:bg-blue-50/30 transition-colors">
-                      <td className="p-4 text-xs font-bold text-[#0a192f]">{row.pasta || '-'}</td>
-                      <td className="p-4 text-xs text-gray-600">{row.tipo || '-'}</td>
-                      <td className="p-4 text-xs text-gray-600">{row.data_cadastro ? new Date(row.data_cadastro).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
-                      <td className="p-4 text-xs font-semibold text-gray-800">{row.responsavel_principal || '-'}</td>
-                      <td className="p-4 text-xs text-gray-600">{row.cliente_principal || '-'}</td>
-                      <td className="p-4 text-xs font-mono text-gray-500">{row.numero_cnj || '-'}</td>
-                      <td className="p-4 text-xs font-bold text-gray-600">{row.uf || '-'}</td>
-                      <td className="p-4">
-                        <span className={`px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border ${
+                      <td className="p-3 text-[11px] font-bold text-[#0a192f] truncate max-w-[150px]" title={row.pasta}>{row.pasta || '-'}</td>
+                      <td className="p-3 text-[11px] text-gray-600 truncate max-w-[120px]" title={row.tipo}>{row.tipo || '-'}</td>
+                      <td className="p-3 text-[11px] text-gray-600 whitespace-nowrap">{row.data_cadastro ? new Date(row.data_cadastro).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
+                      <td className="p-3 text-[11px] font-semibold text-gray-800 truncate max-w-[140px]" title={row.responsavel_principal}>{row.responsavel_principal || '-'}</td>
+                      <td className="p-3 text-[11px] text-gray-600 truncate max-w-[140px]" title={row.cliente_principal}>{row.cliente_principal || '-'}</td>
+                      <td className="p-3 text-[10px] font-mono text-gray-500 truncate max-w-[120px]" title={row.numero_cnj}>{row.numero_cnj || '-'}</td>
+                      <td className="p-3 text-[11px] font-bold text-gray-600 truncate max-w-[50px]">{row.uf || '-'}</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-0.5 rounded-md font-black text-[9px] uppercase tracking-widest border whitespace-nowrap ${
                           row.status?.toLowerCase() === 'ativo' 
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : 'bg-gray-100 text-gray-600 border-gray-200'
@@ -383,8 +383,8 @@ export function VolumetryProcesses() {
                             {row.status || '-'}
                         </span>
                       </td>
-                      <td className="p-4 text-xs text-gray-600">{row.data_encerramento ? new Date(row.data_encerramento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
-                      <td className="p-4 text-xs text-gray-600">{row.instancia || '-'}</td>
+                      <td className="p-3 text-[11px] text-gray-600 whitespace-nowrap">{row.data_encerramento ? new Date(row.data_encerramento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
+                      <td className="p-3 text-[11px] text-gray-600 truncate max-w-[120px]" title={row.instancia}>{row.instancia || '-'}</td>
                     </tr>
                   ))
                 )}
