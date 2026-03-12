@@ -181,14 +181,17 @@ const OrganogramNode = React.memo(({
                         {isJuridicoTab && colab.isSocio ? (
                             // JURIDICO - Sócio: all direct subordinates on the same horizontal row
                             <div className="flex justify-center relative pt-4 w-full">
-                                {sortedSubordinates.length > 1 && (
-                                    <div className="absolute top-0 h-[2px] bg-gray-300" style={{
-                                        left: `${100 / (sortedSubordinates.length * 2)}%`,
-                                        right: `${100 / (sortedSubordinates.length * 2)}%`
-                                    }}></div>
-                                )}
-                                {sortedSubordinates.map((sub) => (
+                                {sortedSubordinates.map((sub, idx) => (
                                     <div key={sub.id} className={`relative flex flex-col items-center ${sortedSubordinates.length > 8 ? 'px-0' : sortedSubordinates.length > 5 ? 'px-0.5' : 'px-4'}`}>
+                                        {/* Per-child horizontal segment */}
+                                        {sortedSubordinates.length > 1 && (
+                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                top: '-1rem',
+                                                left: idx === 0 ? '50%' : '0',
+                                                right: idx === sortedSubordinates.length - 1 ? '50%' : '0'
+                                            }}></div>
+                                        )}
+                                        {/* Vertical stub up */}
                                         <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
                                         <div style={{
                                             transform: sortedSubordinates.length > 12 ? 'scale(0.8)' : sortedSubordinates.length > 8 ? 'scale(0.85)' : sortedSubordinates.length > 5 ? 'scale(0.95)' : 'scale(1)',
@@ -214,15 +217,17 @@ const OrganogramNode = React.memo(({
                                         <div className="absolute top-0 left-1/2 w-[2px] h-full bg-gray-300 -translate-x-1/2 -z-10"></div>
                                     )}
                                     <div className="flex justify-center relative pt-4 w-full">
-                                        {/* Horizontal connector bar between siblings */}
-                                        {group.length > 1 && (
-                                            <div className="absolute top-0 h-[2px] bg-gray-300" style={{
-                                                left: `${100 / (group.length * 2)}%`,
-                                                right: `${100 / (group.length * 2)}%`
-                                            }}></div>
-                                        )}
-                                        {group.map((sub) => (
+                                        {group.map((sub, idx) => (
                                             <div key={sub.id} className={`relative flex flex-col items-center ${group.length > 8 ? 'px-0' : group.length > 5 ? 'px-0.5' : 'px-4'}`}>
+                                                {/* Per-child horizontal segment */}
+                                                {group.length > 1 && (
+                                                    <div className="absolute h-[2px] bg-gray-300" style={{
+                                                        top: '-1rem',
+                                                        left: idx === 0 ? '50%' : '0',
+                                                        right: idx === group.length - 1 ? '50%' : '0'
+                                                    }}></div>
+                                                )}
+                                                {/* Vertical stub up */}
                                                 <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
                                                 <div style={{
                                                     transform: group.length > 12 ? 'scale(0.8)' : group.length > 8 ? 'scale(0.85)' : group.length > 5 ? 'scale(0.95)' : 'scale(1)',
@@ -245,14 +250,17 @@ const OrganogramNode = React.memo(({
                         ) : (
                             // ADMINISTRATIVO: Unified horizontal row (peers side-by-side)
                             <div className="flex justify-center relative pt-4 w-full">
-                                {sortedSubordinates.length > 1 && (
-                                    <div className="absolute top-0 h-[2px] bg-gray-300" style={{
-                                        left: `${100 / (sortedSubordinates.length * 2)}%`,
-                                        right: `${100 / (sortedSubordinates.length * 2)}%`
-                                    }}></div>
-                                )}
-                                {sortedSubordinates.map((sub) => (
+                                {sortedSubordinates.map((sub, idx) => (
                                     <div key={sub.id} className={`relative flex flex-col items-center ${sortedSubordinates.length > 8 ? 'px-0' : sortedSubordinates.length > 5 ? 'px-0.5' : 'px-4'}`}>
+                                        {/* Per-child horizontal segment */}
+                                        {sortedSubordinates.length > 1 && (
+                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                top: '-1rem',
+                                                left: idx === 0 ? '50%' : '0',
+                                                right: idx === sortedSubordinates.length - 1 ? '50%' : '0'
+                                            }}></div>
+                                        )}
+                                        {/* Vertical stub up */}
                                         <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
                                         <div style={{
                                             transform: sortedSubordinates.length > 12 ? 'scale(0.8)' : sortedSubordinates.length > 8 ? 'scale(0.85)' : sortedSubordinates.length > 5 ? 'scale(0.95)' : 'scale(1)',
@@ -387,15 +395,15 @@ const AdminOrganogramTree = React.memo(({
                         {/* Horizontal layout for all top-level peers in this sector */}
                         {topLevel.length > 1 && (
                             <div className="relative flex items-start">
-                                {/* Horizontal connector line */}
-                                <div className="absolute top-0 h-[2px] bg-gray-300" style={{
-                                    left: `${100 / (topLevel.length * 2)}%`,
-                                    right: `${100 / (topLevel.length * 2)}%`
-                                }}></div>
-
                                 <div className="flex" style={{ gap: topLevel.length > 12 ? '0' : topLevel.length > 7 ? '0.125rem' : '1rem' }}>
-                                    {topLevel.map((colab) => (
-                                        <div key={colab.id} className="flex flex-col items-center">
+                                    {topLevel.map((colab, idx) => (
+                                        <div key={colab.id} className="flex flex-col items-center relative">
+                                            {/* Per-child horizontal segment */}
+                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                top: '0',
+                                                left: idx === 0 ? '50%' : '0',
+                                                right: idx === topLevel.length - 1 ? '50%' : '0'
+                                            }}></div>
                                             <div className="w-[2px] h-4 bg-gray-300"></div>
                                             <div style={{
                                                 transform: topLevel.length > 12 ? 'scale(0.8)' : topLevel.length > 7 ? 'scale(0.9)' : 'scale(1)',
