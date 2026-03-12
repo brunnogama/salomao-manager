@@ -30,6 +30,7 @@ interface ColaboradorCard {
     role: string;
     equipe: string;
     atuacao: string;
+    local: string;
     leader_id?: string;
     competencias?: string;
     photo_url?: string;
@@ -178,38 +179,74 @@ const OrganogramNode = React.memo(({
                 <div className="flex flex-col items-center mt-2 w-full">
                     <div className="w-[2px] h-8 bg-gray-300"></div>
                     <div className="flex flex-col items-center w-full relative z-10">
-                        {isJuridicoTab && colab.isSocio ? (
-                            // JURIDICO - Sócio: all direct subordinates on the same horizontal row
-                            <div className="flex justify-center relative pt-4 w-full">
-                                {sortedSubordinates.map((sub, idx) => (
-                                    <div key={sub.id} className={`relative flex flex-col items-center ${sortedSubordinates.length > 8 ? 'px-0' : sortedSubordinates.length > 5 ? 'px-0.5' : 'px-4'}`}>
-                                        {/* Per-child horizontal segment */}
-                                        {sortedSubordinates.length > 1 && (
-                                            <div className="absolute h-[2px] bg-gray-300" style={{
-                                                top: '-1rem',
-                                                left: idx === 0 ? '50%' : '0',
-                                                right: idx === sortedSubordinates.length - 1 ? '50%' : '0'
-                                            }}></div>
-                                        )}
-                                        {/* Vertical stub up */}
-                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
-                                        <div style={{
-                                            transform: sortedSubordinates.length > 12 ? 'scale(0.8)' : sortedSubordinates.length > 8 ? 'scale(0.85)' : sortedSubordinates.length > 5 ? 'scale(0.95)' : 'scale(1)',
-                                            transformOrigin: 'top center'
-                                        }}>
-                                            <OrganogramNode
-                                                colab={sub}
-                                                context={context}
-                                                visitedIds={nextVisited}
-                                                level={level + 1}
-                                                isDense={sortedSubordinates.length > 5 && sortedSubordinates.length <= 8}
-                                                isSuperDense={sortedSubordinates.length > 8}
-                                            />
+                        {isJuridicoTab && colab.isSocio ? (() => {
+                            // JURIDICO - Sócio: group subordinates by Local
+                            const localGroups = new Map<string, ColaboradorCard[]>();
+                            sortedSubordinates.forEach(sub => {
+                                const key = sub.local || 'Sem Local';
+                                if (!localGroups.has(key)) localGroups.set(key, []);
+                                localGroups.get(key)!.push(sub);
+                            });
+                            const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                            return (
+                                <div className="flex justify-center relative pt-4 w-full">
+                                    {localEntries.map(([localName, localColabs], locIdx) => (
+                                        <div key={localName} className={`relative flex flex-col items-center ${localEntries.length > 5 ? 'px-1' : 'px-6'}`}>
+                                            {/* Per-local horizontal segment */}
+                                            {localEntries.length > 1 && (
+                                                <div className="absolute h-[2px] bg-gray-300" style={{
+                                                    top: '-1rem',
+                                                    left: locIdx === 0 ? '50%' : '0',
+                                                    right: locIdx === localEntries.length - 1 ? '50%' : '0'
+                                                }}></div>
+                                            )}
+                                            {/* Vertical stub up */}
+                                            <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+
+                                            {/* Local Label */}
+                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-2">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.15em]">{localName}</span>
+                                            </div>
+
+                                            {/* Vertical line from Local label to collaborators */}
+                                            <div className="w-[2px] h-6 bg-gray-300"></div>
+
+                                            {/* Collaborators under this Local */}
+                                            <div className="flex justify-center relative pt-4">
+                                                {localColabs.map((sub, idx) => (
+                                                    <div key={sub.id} className={`relative flex flex-col items-center ${localColabs.length > 8 ? 'px-0' : localColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
+                                                        {/* Per-child horizontal segment */}
+                                                        {localColabs.length > 1 && (
+                                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                                top: '-1rem',
+                                                                left: idx === 0 ? '50%' : '0',
+                                                                right: idx === localColabs.length - 1 ? '50%' : '0'
+                                                            }}></div>
+                                                        )}
+                                                        {/* Vertical stub up */}
+                                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                                        <div style={{
+                                                            transform: localColabs.length > 12 ? 'scale(0.8)' : localColabs.length > 8 ? 'scale(0.85)' : localColabs.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                                            transformOrigin: 'top center'
+                                                        }}>
+                                                            <OrganogramNode
+                                                                colab={sub}
+                                                                context={context}
+                                                                visitedIds={nextVisited}
+                                                                level={level + 1}
+                                                                isDense={localColabs.length > 5 && localColabs.length <= 8}
+                                                                isSuperDense={localColabs.length > 8}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : isJuridicoTab ? (
+                                    ))}
+                                </div>
+                            );
+                        })() : isJuridicoTab ? (
                             // JURIDICO - Sub-levels: group by role vertically
                             roleGroups.map((group, groupIndex) => (
                                 <div key={groupIndex} className="flex flex-col items-center w-full relative pb-16">
@@ -392,51 +429,80 @@ const AdminOrganogramTree = React.memo(({
                         {/* Diretor Financeiro & Atuação (repeated per section) */}
                         <DiretorSection atuacaoName={atuacaoName} />
 
-                        {/* Vertical line from Atuação label down to collaborators */}
+                        {/* Vertical line from Atuação label down to locals */}
                         {topLevel.length > 0 && (
                             <div className="w-[2px] h-8 bg-gray-300"></div>
                         )}
 
-                        {/* Horizontal layout for all top-level peers in this sector */}
-                        {topLevel.length > 1 && (
-                            <div className="flex justify-center relative pt-4 w-full">
-                                {topLevel.map((colab, idx) => (
-                                    <div key={colab.id} className={`relative flex flex-col items-center ${topLevel.length > 8 ? 'px-0' : topLevel.length > 5 ? 'px-0.5' : 'px-4'}`}>
-                                        {/* Per-child horizontal segment */}
-                                        {topLevel.length > 1 && (
-                                            <div className="absolute h-[2px] bg-gray-300" style={{
-                                                top: '-1rem',
-                                                left: idx === 0 ? '50%' : '0',
-                                                right: idx === topLevel.length - 1 ? '50%' : '0'
-                                            }}></div>
-                                        )}
-                                        {/* Vertical stub up */}
-                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
-                                        <div style={{
-                                            transform: topLevel.length > 12 ? 'scale(0.8)' : topLevel.length > 7 ? 'scale(0.9)' : 'scale(1)',
-                                            transformOrigin: 'top center'
-                                        }}>
-                                            <OrganogramNode
-                                                colab={colab}
-                                                context={context}
-                                                visitedIds={new Set<string>([diretorFinanceiro.id])}
-                                                isDense={topLevel.length > 5 && topLevel.length <= 8}
-                                                isSuperDense={topLevel.length > 8}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        {/* Group top-level collaborators by Local */}
+                        {(() => {
+                            const localGroups = new Map<string, ColaboradorCard[]>();
+                            topLevel.forEach(c => {
+                                const key = c.local || 'Sem Local';
+                                if (!localGroups.has(key)) localGroups.set(key, []);
+                                localGroups.get(key)!.push(c);
+                            });
+                            const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
-                        {/* Single collaborator — no horizontal bar needed */}
-                        {topLevel.length === 1 && (
-                            <OrganogramNode
-                                colab={topLevel[0]}
-                                context={context}
-                                visitedIds={new Set<string>([diretorFinanceiro.id])}
-                            />
-                        )}
+                            if (localEntries.length === 0) return null;
+
+                            return (
+                                <div className="flex justify-center relative pt-4 w-full">
+                                    {localEntries.map(([localName, localColabs], locIdx) => (
+                                        <div key={localName} className={`relative flex flex-col items-center ${localEntries.length > 5 ? 'px-1' : 'px-6'}`}>
+                                            {/* Per-local horizontal segment */}
+                                            {localEntries.length > 1 && (
+                                                <div className="absolute h-[2px] bg-gray-300" style={{
+                                                    top: '-1rem',
+                                                    left: locIdx === 0 ? '50%' : '0',
+                                                    right: locIdx === localEntries.length - 1 ? '50%' : '0'
+                                                }}></div>
+                                            )}
+                                            {/* Vertical stub up */}
+                                            <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+
+                                            {/* Local Label */}
+                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-2">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.15em]">{localName}</span>
+                                            </div>
+
+                                            {/* Vertical line from Local label to collaborators */}
+                                            <div className="w-[2px] h-6 bg-gray-300"></div>
+
+                                            {/* Collaborators under this Local */}
+                                            <div className="flex justify-center relative pt-4">
+                                                {localColabs.map((colab, idx) => (
+                                                    <div key={colab.id} className={`relative flex flex-col items-center ${localColabs.length > 8 ? 'px-0' : localColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
+                                                        {/* Per-child horizontal segment */}
+                                                        {localColabs.length > 1 && (
+                                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                                top: '-1rem',
+                                                                left: idx === 0 ? '50%' : '0',
+                                                                right: idx === localColabs.length - 1 ? '50%' : '0'
+                                                            }}></div>
+                                                        )}
+                                                        {/* Vertical stub up */}
+                                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                                        <div style={{
+                                                            transform: localColabs.length > 12 ? 'scale(0.8)' : localColabs.length > 7 ? 'scale(0.9)' : 'scale(1)',
+                                                            transformOrigin: 'top center'
+                                                        }}>
+                                                            <OrganogramNode
+                                                                colab={colab}
+                                                                context={context}
+                                                                visitedIds={new Set<string>([diretorFinanceiro.id])}
+                                                                isDense={localColabs.length > 5 && localColabs.length <= 8}
+                                                                isSuperDense={localColabs.length > 8}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
                     </div>
                 );
             })}
@@ -545,6 +611,7 @@ export function Organograma() {
                         role: roleStr || 'Sem Cargo',
                         equipe: (typeof c.teams === 'object' ? (c.teams as any)?.name : c.equipe) || 'Geral',
                         atuacao: atuacaoName,
+                        local: (typeof c.locations === 'object' ? (c.locations as any)?.name : c.local) || 'Sem Local',
                         leader_id: c.leader_id || undefined,
                         competencias: c.competencias || '',
                         photo_url: c.photo_url || c.foto_url,
