@@ -528,6 +528,7 @@ export function Organograma() {
     const [editingPosition, setEditingPosition] = useState<{ top: number, left: number } | null>(null);
     const [showBackToTop, setShowBackToTop] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Alert Modal State
     const [alertConfig, setAlertConfig] = useState<{
@@ -580,6 +581,24 @@ export function Organograma() {
             if (atuData) setAtuacoesMap(new Map(atuData.map(a => [String(a.id), a.name])));
         });
     }, []);
+
+    // Scroll to first sócio when switching to ALL
+    useEffect(() => {
+        if (selectedPartner === 'ALL' && activeTab === 'JURIDICO') {
+            // requestAnimationFrame garante que o DOM já foi atualizado pelo React
+            requestAnimationFrame(() => {
+                // Resetar scroll do container interno
+                if (scrollContainerRef.current) {
+                    scrollContainerRef.current.scrollTop = 0;
+                    scrollContainerRef.current.scrollLeft = 0;
+                }
+                // Scrollar a janela para que o container do organograma fique visível
+                if (scrollContainerRef.current) {
+                    scrollContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        }
+    }, [selectedPartner, activeTab]);
 
     // Filter and sort collaborators based on Jurídico hierarchy initially
     useEffect(() => {
@@ -936,24 +955,7 @@ export function Organograma() {
             {activeTab === 'JURIDICO' && roots.length > 0 && (
                 <div className="flex items-center gap-2 mt-2 mb-1 overflow-x-auto pb-2 custom-scrollbar">
                     <button
-                        onClick={() => {
-                            setSelectedPartner('ALL');
-                            // Centralizar o primeiro sócio na tela
-                            setTimeout(() => {
-                                // Resetar scroll do container interno primeiro
-                                if (containerRef.current) {
-                                    containerRef.current.scrollTop = 0;
-                                    containerRef.current.scrollLeft = 0;
-                                }
-                                // Scrollar a janela para posicionar o container no topo
-                                const el = document.querySelector('[data-first-socio]');
-                                if (el) {
-                                    const rect = el.getBoundingClientRect();
-                                    const scrollTop = window.pageYOffset + rect.top - 120;
-                                    window.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' });
-                                }
-                            }, 150);
-                        }}
+                        onClick={() => setSelectedPartner('ALL')}
                         className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
                             selectedPartner === 'ALL'
                                 ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
@@ -1026,7 +1028,7 @@ export function Organograma() {
             </div>
 
             {/* Main Drag Drop Context Area */}
-            <div ref={containerRef} className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''}`}>
+            <div ref={scrollContainerRef} className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''}`}>
                 <DragDropContext onDragEnd={handleDragEnd}>
                     <div className="p-8 md:p-16 text-center min-w-full inline-block align-top print:w-full">
                         <div
