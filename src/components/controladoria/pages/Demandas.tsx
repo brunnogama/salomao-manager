@@ -12,6 +12,7 @@ import {
     FileSignature,
     Download
 } from 'lucide-react';
+import XLSX from 'xlsx-js-style';
 import {
     AreaChart,
     Area,
@@ -448,6 +449,73 @@ export function Demandas() {
         }
     };
 
+    const exportToExcel = () => {
+        setIsExporting(true);
+        try {
+            const wb = XLSX.utils.book_new();
+
+            // 1. Resumo
+            const resumoData = [
+                { 'Indicador': 'Contratações Jurídicas (Total)', 'Valor': metrics.totalAdvogados },
+                { 'Indicador': 'Estagiários Contratados', 'Valor': metrics.totalEstagiarios },
+                { 'Indicador': 'Demais Contratados', 'Valor': metrics.totalOutros },
+                { 'Indicador': 'Contratos Fechados', 'Valor': metrics.totalContratos },
+                { 'Indicador': 'Total Pró-labore', 'Valor': metrics.totalProLabore },
+                { 'Indicador': 'Total de Êxito', 'Valor': metrics.totalExito }
+            ];
+            const wsResumo = XLSX.utils.json_to_sheet(resumoData);
+            XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
+
+            // 2. Por Nível
+            const nivelData = lawyersByLevel.map(([role, count]) => ({
+                'Cargo / Nível': role,
+                'Quantidade': count
+            }));
+            const wsNivel = XLSX.utils.json_to_sheet(nivelData);
+            if (nivelData.length > 0) XLSX.utils.book_append_sheet(wb, wsNivel, "Por Nível");
+
+            // 3. Por Líder
+            const liderData = hiresByLeader.map(([leader, data]) => ({
+                'Líder': leader,
+                'Entradas': data.entradas,
+                'Saídas': data.saidas,
+                'Total Ativos (Atual)': data.ativos
+            }));
+            const wsLider = XLSX.utils.json_to_sheet(liderData);
+            if (liderData.length > 0) XLSX.utils.book_append_sheet(wb, wsLider, "Por Líder");
+
+            // 4. Headcount
+            const hcData = headcountEvolution.map(d => ({
+                'Mês': d.month,
+                'Entradas': d.hires,
+                'Saídas': Math.abs(d.terminations),
+                'Saldo Ativos': d.balance
+            }));
+            const wsHc = XLSX.utils.json_to_sheet(hcData);
+            if (hcData.length > 0) XLSX.utils.book_append_sheet(wb, wsHc, "Evolução Headcount");
+
+            // 5. Contratos
+            const contratosData = contracts.map((c: any) => ({
+                'Cliente / Contrato': c.client_name || 'Sem Cliente',
+                'Sócio Responsável': c.partner_name,
+                'Data': c.contract_date ? new Date(c.contract_date).toLocaleDateString('pt-BR') : '-',
+                'Pró-labore': calculateTotalProLabore(c) > 0 ? formatCurrency(calculateTotalProLabore(c)) : '-',
+                'Êxito': calculateTotalSuccess(c) > 0 ? formatCurrency(calculateTotalSuccess(c)) : '-',
+                'Timesheet': c.timesheet ? 'Sim' : 'Não',
+                'Hon. %': isOnlyPercentage(c) ? 'Sim' : 'Não'
+            }));
+            const wsContratos = XLSX.utils.json_to_sheet(contratosData);
+            if (contratosData.length > 0) XLSX.utils.book_append_sheet(wb, wsContratos, "Contratos Fechados");
+
+            XLSX.writeFile(wb, "Demandas_Juridicas_LegalOne.xlsx");
+        } catch (error) {
+            console.error('Erro ao exportar Excel:', error);
+            alert('Não foi possível gerar o Excel.');
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     return (
         <div ref={pageRef} className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in duration-500">
 
@@ -470,6 +538,16 @@ export function Demandas() {
                             <Loader2 className="w-4 h-4 text-[#1e3a8a] animate-spin" />
                         </div>
                     )}
+                    
+                    <button
+                        onClick={exportToExcel}
+                        disabled={isExporting}
+                        className="flex items-center justify-center gap-2 px-4 py-1.5 bg-white border border-gray-200 text-[#1e3a8a] rounded-lg hover:bg-blue-50 transition-colors text-[10px] font-black uppercase tracking-widest shadow-sm h-full"
+                    >
+                        <Download className="w-4 h-4" />
+                        Excel
+                    </button>
+
                     <div className="flex bg-gray-100 p-1 rounded-lg">
                         <button
                             onClick={() => handleQuickSelect('30_days')}
