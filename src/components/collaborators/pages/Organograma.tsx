@@ -582,22 +582,13 @@ export function Organograma() {
         });
     }, []);
 
-    // Callback ref: scrola quando o primeiro sócio monta no DOM
+    // Callback ref: scrola até o primeiro sócio quando ele monta no DOM
     const firstSocioRef = useCallback((node: HTMLDivElement | null) => {
         if (!node) return;
-        // Pequeno delay para garantir layout completo
-        setTimeout(() => {
-            // Resetar scroll interno do container
-            if (scrollContainerRef.current) {
-                scrollContainerRef.current.scrollTop = 0;
-                scrollContainerRef.current.scrollLeft = 0;
-            }
-            // Posicionar a janela para mostrar o header + organograma
-            if (containerRef.current) {
-                const headerRect = containerRef.current.getBoundingClientRect();
-                window.scrollTo({ top: window.pageYOffset + headerRect.top, behavior: 'auto' });
-            }
-        }, 50);
+        // Usar requestAnimationFrame para garantir que o layout já foi calculado
+        requestAnimationFrame(() => {
+            node.scrollIntoView({ behavior: 'auto', block: 'center' });
+        });
     }, []);
 
     // Filter and sort collaborators based on Jurídico hierarchy initially
