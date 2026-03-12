@@ -178,24 +178,52 @@ const OrganogramNode = React.memo(({
                 <div className="flex flex-col items-center mt-2 w-full">
                     <div className="w-[2px] h-8 bg-gray-300"></div>
                     <div className="flex flex-col items-center w-full relative z-10">
-                        {isJuridicoTab ? (
-                            // JURIDICO: Vertical role blocks with horizontal connectors
+                        {isJuridicoTab && colab.isSocio ? (
+                            // JURIDICO - Sócio: all direct subordinates on the same horizontal row
+                            <div className="flex justify-center relative pt-4 w-full">
+                                {sortedSubordinates.length > 1 && (
+                                    <div className="absolute top-0 h-[2px] bg-gray-300" style={{
+                                        left: `${100 / (sortedSubordinates.length * 2)}%`,
+                                        right: `${100 / (sortedSubordinates.length * 2)}%`
+                                    }}></div>
+                                )}
+                                {sortedSubordinates.map((sub) => (
+                                    <div key={sub.id} className={`relative flex flex-col items-center ${sortedSubordinates.length > 8 ? 'px-0' : sortedSubordinates.length > 5 ? 'px-0.5' : 'px-4'}`}>
+                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                        <div style={{
+                                            transform: sortedSubordinates.length > 12 ? 'scale(0.8)' : sortedSubordinates.length > 8 ? 'scale(0.85)' : sortedSubordinates.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                            transformOrigin: 'top center'
+                                        }}>
+                                            <OrganogramNode
+                                                colab={sub}
+                                                context={context}
+                                                visitedIds={nextVisited}
+                                                level={level + 1}
+                                                isDense={sortedSubordinates.length > 5 && sortedSubordinates.length <= 8}
+                                                isSuperDense={sortedSubordinates.length > 8}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : isJuridicoTab ? (
+                            // JURIDICO - Sub-levels: group by role vertically
                             roleGroups.map((group, groupIndex) => (
                                 <div key={groupIndex} className="flex flex-col items-center w-full relative pb-16">
                                     {groupIndex < roleGroups.length - 1 && (
                                         <div className="absolute top-0 left-1/2 w-[2px] h-full bg-gray-300 -translate-x-1/2 -z-10"></div>
                                     )}
-                                    <div className="inline-flex justify-center relative pt-4">
+                                    <div className="flex justify-center relative pt-4 w-full">
                                         {/* Horizontal connector bar between siblings */}
                                         {group.length > 1 && (
-                                            <div className="absolute top-4 h-[2px] bg-gray-300" style={{
-                                                left: `calc(${100 / (group.length * 2)}% + 1px)`,
-                                                right: `calc(${100 / (group.length * 2)}% + 1px)`
+                                            <div className="absolute top-0 h-[2px] bg-gray-300" style={{
+                                                left: `${100 / (group.length * 2)}%`,
+                                                right: `${100 / (group.length * 2)}%`
                                             }}></div>
                                         )}
                                         {group.map((sub) => (
                                             <div key={sub.id} className={`relative flex flex-col items-center ${group.length > 8 ? 'px-0' : group.length > 5 ? 'px-0.5' : 'px-4'}`}>
-                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2"></div>
+                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
                                                 <div style={{
                                                     transform: group.length > 12 ? 'scale(0.8)' : group.length > 8 ? 'scale(0.85)' : group.length > 5 ? 'scale(0.95)' : 'scale(1)',
                                                     transformOrigin: 'top center'
