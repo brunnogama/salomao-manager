@@ -582,27 +582,32 @@ export function Organograma() {
         });
     }, []);
 
-    // Scroll to first sócio when switching to ALL
-    const prevSelectedPartner = useRef(selectedPartner);
+    // Scroll to first sócio when viewing ALL in Jurídico
     useEffect(() => {
-        const wasNotAll = prevSelectedPartner.current !== 'ALL';
-        prevSelectedPartner.current = selectedPartner;
+        if (selectedPartner !== 'ALL' || activeTab !== 'JURIDICO') return;
 
-        if (selectedPartner === 'ALL' && activeTab === 'JURIDICO' && wasNotAll) {
-            // Delay para garantir que o React renderizou toda a árvore
-            setTimeout(() => {
-                // Resetar scroll do container interno
-                if (scrollContainerRef.current) {
-                    scrollContainerRef.current.scrollTop = 0;
-                    scrollContainerRef.current.scrollLeft = 0;
-                }
-                // Scrollar até o primeiro sócio
-                const firstSocio = document.querySelector('[data-first-socio]');
-                if (firstSocio) {
-                    firstSocio.scrollIntoView({ behavior: 'auto', block: 'start' });
-                }
-            }, 300);
-        }
+        // Polling: tentar encontrar o elemento até ele existir no DOM (max 2s)
+        let attempts = 0;
+        const maxAttempts = 20;
+        const interval = setInterval(() => {
+            attempts++;
+            const firstSocio = document.querySelector('[data-first-socio]') as HTMLElement | null;
+            if (firstSocio && scrollContainerRef.current) {
+                clearInterval(interval);
+                // Calcular offset do primeiro sócio relativo ao container scrollável
+                const containerRect = scrollContainerRef.current.getBoundingClientRect();
+                const socioRect = firstSocio.getBoundingClientRect();
+                // Ajustar scroll interno do container para mostrar o sócio no topo
+                const scrollNeeded = socioRect.top - containerRect.top + scrollContainerRef.current.scrollTop;
+                scrollContainerRef.current.scrollTop = Math.max(0, scrollNeeded - 16);
+                scrollContainerRef.current.scrollLeft = 0;
+                // Scrollar a janela para mostrar o container
+                scrollContainerRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+            }
+            if (attempts >= maxAttempts) clearInterval(interval);
+        }, 100);
+
+        return () => clearInterval(interval);
     }, [selectedPartner, activeTab]);
 
     // Filter and sort collaborators based on Jurídico hierarchy initially
