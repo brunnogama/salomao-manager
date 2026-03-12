@@ -63,16 +63,18 @@ export function Volumetry() {
   };
 
   // --------------- Lógica de Filtragem no Dashboard ---------------
-  const filteredProcesses = processes.filter((proc: any) => {
+  const processesMatchingSearchAndStatus = processes.filter((proc: any) => {
     const matchesSearch =
       (proc.cliente_principal && proc.cliente_principal.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (proc.numero_cnj && proc.numero_cnj.includes(searchTerm)) ||
       (proc.pasta && proc.pasta.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus = statusFilter ? proc.status?.toLowerCase() === statusFilter.toLowerCase() : true;
-    const matchesPartner = partnerFilter ? proc.responsavel_principal === partnerFilter : true;
+    return matchesSearch && matchesStatus;
+  });
 
-    return matchesSearch && matchesStatus && matchesPartner;
+  const filteredProcesses = processesMatchingSearchAndStatus.filter((proc: any) => {
+    return partnerFilter ? proc.responsavel_principal === partnerFilter : true;
   });
 
   // Métricas
@@ -154,13 +156,14 @@ export function Volumetry() {
   const allStatuses = Array.from(new Set(processes.map(p => p.status).filter(Boolean))).sort();
 
   // --------------- Agrupamento por Responsável ---------------
+  const totalForPartners = processesMatchingSearchAndStatus.length;
   const volumetryByPartner = allPartners.map(partnerName => {
-    const partnerProcs = filteredProcesses.filter(p => p.responsavel_principal === partnerName);
+    const partnerProcs = processesMatchingSearchAndStatus.filter(p => p.responsavel_principal === partnerName);
     
     return {
       name: partnerName || 'Sem Responsável',
       count: partnerProcs.length,
-      percentage: totalProcesses > 0 ? ((partnerProcs.length / totalProcesses) * 100).toFixed(1) : "0",
+      percentage: totalForPartners > 0 ? ((partnerProcs.length / totalForPartners) * 100).toFixed(1) : "0",
       ativos: partnerProcs.filter(p => p.status?.toLowerCase() === 'ativo').length,
       arquivados: partnerProcs.filter(p => p.status?.toLowerCase() === 'arquivado').length,
     };
@@ -414,6 +417,7 @@ export function Volumetry() {
             <div className="p-6 border-b border-gray-100 bg-gray-50/50">
               <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
                 <Layers className="w-4 h-4 text-[#1e3a8a]" /> Distribuição por Líder Responsável
+                <span className="text-[10px] text-gray-400 font-semibold ml-2 normal-case tracking-normal hidden sm:inline">(Clique em um líder para filtrar)</span>
               </h2>
             </div>
 
@@ -445,13 +449,30 @@ export function Volumetry() {
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {volumetryByPartner.map((partner, idx) => (
-                        <tr key={idx} className="hover:bg-blue-50/30 transition-colors group">
+                        <tr 
+                          key={idx} 
+                          onClick={() => setPartnerFilter(partnerFilter === partner.name ? '' : partner.name)}
+                          className={`transition-all cursor-pointer ${
+                            partnerFilter === partner.name 
+                              ? 'bg-blue-50/80 shadow-[inset_4px_0_0_0_#1e3a8a]' 
+                              : 'hover:bg-blue-50/30 group'
+                          }`}
+                        >
                           <td className="p-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-blue-100">
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs border ${
+                                partnerFilter === partner.name ? 'bg-[#1e3a8a] text-white border-[#1e3a8a]' : 'bg-blue-50 text-[#1e3a8a] border-blue-100'
+                              }`}>
                                 {partner.name.charAt(0).toUpperCase()}
                               </div>
-                              <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{partner.name}</span>
+                              <div className="flex flex-col">
+                                <span className={`text-xs font-black uppercase tracking-tight ${partnerFilter === partner.name ? 'text-[#1e3a8a]' : 'text-[#0a192f]'}`}>
+                                  {partner.name}
+                                </span>
+                                {partnerFilter === partner.name && (
+                                  <span className="text-[9px] font-bold text-[#1e3a8a] uppercase tracking-widest mt-0.5">Filtro Ativado (Clique para Remover)</span>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td className="p-4 text-center">
