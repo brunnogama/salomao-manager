@@ -11,7 +11,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
-import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList } from 'recharts';
 
 import { VolumetryProcesses } from './VolumetryProcesses';
 
@@ -382,9 +382,15 @@ export function Volumetry() {
                   <Legend 
                     wrapperStyle={{ paddingTop: '20px', fontWeight: 800, fontSize: '10px', textTransform: 'uppercase' }}
                   />
-                  <Bar yAxisId="left" dataKey="Entrantes" name="Entrantes" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                  <Bar yAxisId="left" dataKey="Encerrados" name="Encerrados" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                  <Line yAxisId="right" type="monotone" dataKey="Saldo" name="Saldo Ativo" stroke="#1e3a8a" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                  <Bar yAxisId="left" dataKey="Entrantes" name="Entrantes" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                    <LabelList dataKey="Entrantes" position="top" style={{ fill: '#10B981', fontSize: '9px', fontWeight: 900, textAnchor: 'middle' }} />
+                  </Bar>
+                  <Bar yAxisId="left" dataKey="Encerrados" name="Encerrados" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                    <LabelList dataKey="Encerrados" position="top" style={{ fill: '#EF4444', fontSize: '9px', fontWeight: 900, textAnchor: 'middle' }} />
+                  </Bar>
+                  <Line yAxisId="right" type="monotone" dataKey="Saldo" name="Saldo Ativo" stroke="#1e3a8a" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }}>
+                    <LabelList dataKey="Saldo" position="top" offset={10} style={{ fill: '#1e3a8a', fontSize: '9px', fontWeight: 900, textAnchor: 'middle' }} />
+                  </Line>
                 </ComposedChart>
               </ResponsiveContainer>
             </div>

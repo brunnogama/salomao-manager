@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Upload, FileText, Database, Loader2, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Database, Loader2, Trash2, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { ConfirmModal } from '../../controladoria/ui/ConfirmModal';
 import * as XLSX from 'xlsx';
 
@@ -46,6 +46,8 @@ function AlertDialog({ isOpen, title, message, type = 'success', onClose }: { is
 export function VolumetryProcesses() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 1000;
   
   // States para Importação
   const [importing, setImporting] = useState(false);
@@ -108,12 +110,16 @@ export function VolumetryProcesses() {
     if (!excelDate) return null;
     // Se já for uma string de data válida (YYYY-MM-DD ou contém T)
     if (typeof excelDate === 'string') {
-        const parts = excelDate.split('/');
-        if (parts.length === 3) {
-            // Supondo formato DD/MM/YYYY
-            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        const datePart = excelDate.split(' ')[0]; // Limpa a hora caso exista "03/08/2023 19:14:09"
+        
+        if (datePart.includes('/')) {
+            const parts = datePart.split('/');
+            if (parts.length === 3) {
+                // Supondo formato DD/MM/YYYY
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
         }
-        return excelDate;
+        return datePart;
     }
     // Se for número serial do Excel
     if (typeof excelDate === 'number') {
@@ -238,6 +244,14 @@ export function VolumetryProcesses() {
   };
 
 
+  const totalPages = Math.ceil(data.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentData = data.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="flex flex-col space-y-6 relative">
       <AlertDialog 
@@ -351,11 +365,11 @@ export function VolumetryProcesses() {
                     </td>
                   </tr>
                 ) : (
-                  data.map((row, index) => (
+                  currentData.map((row, index) => (
                     <tr key={row.id || index} className="hover:bg-blue-50/30 transition-colors">
                       <td className="p-4 text-xs font-bold text-[#0a192f]">{row.pasta || '-'}</td>
                       <td className="p-4 text-xs text-gray-600">{row.tipo || '-'}</td>
-                      <td className="p-4 text-xs text-gray-600">{row.data_cadastro ? new Date(row.data_cadastro).toLocaleDateString('pt-BR') : '-'}</td>
+                      <td className="p-4 text-xs text-gray-600">{row.data_cadastro ? new Date(row.data_cadastro).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
                       <td className="p-4 text-xs font-semibold text-gray-800">{row.responsavel_principal || '-'}</td>
                       <td className="p-4 text-xs text-gray-600">{row.cliente_principal || '-'}</td>
                       <td className="p-4 text-xs font-mono text-gray-500">{row.numero_cnj || '-'}</td>
@@ -369,7 +383,7 @@ export function VolumetryProcesses() {
                             {row.status || '-'}
                         </span>
                       </td>
-                      <td className="p-4 text-xs text-gray-600">{row.data_encerramento ? new Date(row.data_encerramento).toLocaleDateString('pt-BR') : '-'}</td>
+                      <td className="p-4 text-xs text-gray-600">{row.data_encerramento ? new Date(row.data_encerramento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
                       <td className="p-4 text-xs text-gray-600">{row.instancia || '-'}</td>
                     </tr>
                   ))
@@ -378,6 +392,32 @@ export function VolumetryProcesses() {
             </table>
           </div>
         </div>
+
+        {/* Paginação */}
+        {data.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, data.length)} de {data.length}
+            </span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => handlePageChange(1)} disabled={currentPage === 1} className="p-1 rounded-lg text-gray-400 hover:text-[#1e3a8a] hover:bg-white disabled:opacity-50 transition-colors">
+                <ChevronsLeft className="w-5 h-5" />
+              </button>
+              <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="p-1 rounded-lg text-gray-400 hover:text-[#1e3a8a] hover:bg-white disabled:opacity-50 transition-colors">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest shadow-sm">
+                {currentPage} / {totalPages}
+              </span>
+              <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="p-1 rounded-lg text-gray-400 hover:text-[#1e3a8a] hover:bg-white disabled:opacity-50 transition-colors">
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              <button onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} className="p-1 rounded-lg text-gray-400 hover:text-[#1e3a8a] hover:bg-white disabled:opacity-50 transition-colors">
+                <ChevronsRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
