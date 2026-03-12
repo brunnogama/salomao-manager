@@ -938,13 +938,13 @@ export function Organograma() {
                     <button
                         onClick={() => {
                             setSelectedPartner('ALL');
-                            // Centralizar o primeiro sócio na página
+                            // Centralizar o primeiro sócio na tela
                             setTimeout(() => {
-                                if (containerRef.current) {
-                                    containerRef.current.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                                const el = document.querySelector('[data-first-socio]');
+                                if (el) {
+                                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                 }
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }, 50);
+                            }, 100);
                         }}
                         className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
                             selectedPartner === 'ALL'
@@ -1040,7 +1040,7 @@ export function Organograma() {
                             ) : roots.length > 0 ? (
                                 selectedPartner === 'ALL' ? (
                                     roots.map((root, index) => (
-                                        <div key={root.id} className="relative flex flex-col items-center w-full">
+                                        <div key={root.id} className="relative flex flex-col items-center w-full" {...(index === 0 ? { 'data-first-socio': true } : {})}>
                                             <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
                                             {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
                                         </div>
