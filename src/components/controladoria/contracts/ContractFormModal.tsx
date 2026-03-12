@@ -600,7 +600,9 @@ export function ContractFormModal(props: Props) {
             };
           });
 
+          console.log('📋 [DEBUG] processesToInsert:', JSON.stringify(processesToInsert, null, 2));
           const { error: processError } = await supabase.from('contract_processes').insert(processesToInsert);
+          console.log('📋 [DEBUG] processError:', processError);
           if (processError) throw processError;
         }
         if (formData.status === 'active' && formData.physical_signature === false) {
