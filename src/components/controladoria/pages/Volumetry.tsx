@@ -211,67 +211,72 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
 
-      {/* 1. Header - Salomão Design System */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
+      {/* 1. Header - Salomão Design System (Padrão Colaboradores) */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        {/* Left: Título e Ícone */}
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
             <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
             <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Volumetria</h1>
-            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Visão Analítica LegalOne</p>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">Visão Analítica LegalOne</p>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+        {/* Right: Tabs + Actions */}
+        <div className="flex flex-wrap items-center gap-3 shrink-0 w-full md:w-auto justify-end mt-2 md:mt-0">
+          {/* Abas */}
           {!isPublicView && (
-            <button
-              onClick={() => {
-                const url = `${window.location.origin}/public/volumetria`;
-                navigator.clipboard.writeText(url);
-                setCopiedLink(true);
-                setTimeout(() => setCopiedLink(false), 3000);
-              }}
-              className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2.5 bg-blue-50 border border-blue-200 text-[#1e3a8a] rounded-xl hover:bg-blue-100 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95"
-            >
-              {copiedLink ? <Check className="h-4 w-4 text-emerald-600" /> : <Share2 className="h-4 w-4" />}
-              {copiedLink ? 'Link Copiado!' : 'Compartilhar'}
-            </button>
+            <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'dashboard' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <BarChart3 className="h-4 w-4" /> Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab('processos')}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'processos' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <Layers className="h-4 w-4" /> Base de Processos
+              </button>
+            </div>
           )}
 
-          {activeTab === 'dashboard' && volumetryByPartner.length > 0 && (
-            <button onClick={handleExportDashboard} className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
-              <Download className="h-4 w-4" /> Exportar Dashboard
-            </button>
-          )}
+          {/* Botões de Ação (Ícones Redondos) */}
+          <div className="flex items-center gap-2">
+            {!isPublicView && (
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/public/volumetria`;
+                  navigator.clipboard.writeText(url);
+                  setCopiedLink(true);
+                  setTimeout(() => setCopiedLink(false), 3000);
+                }}
+                className={`flex items-center justify-center w-10 h-10 rounded-full transition-all shadow-sm shrink-0 ${
+                  copiedLink
+                    ? 'bg-emerald-500 text-white shadow-emerald-500/30'
+                    : 'bg-blue-50 text-[#1e3a8a] border border-blue-200 hover:bg-blue-100'
+                }`}
+                title={copiedLink ? 'Link Copiado!' : 'Compartilhar Link Público'}
+              >
+                {copiedLink ? <Check className="h-5 w-5" /> : <Share2 className="h-5 w-5" />}
+              </button>
+            )}
+
+            {activeTab === 'dashboard' && volumetryByPartner.length > 0 && (
+              <button
+                onClick={handleExportDashboard}
+                className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+                title="Exportar Dashboard XLS"
+              >
+                <Download className="h-5 w-5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Navegação de Abas - Se não for visão pública */}
-      {!isPublicView && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                activeTab === 'dashboard'
-                  ? 'bg-[#1e3a8a] text-white shadow-md'
-                  : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
-              }`}
-            >
-              Dashboard Processual
-            </button>
-            <button
-              onClick={() => setActiveTab('processos')}
-              className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                activeTab === 'processos'
-                  ? 'bg-[#1e3a8a] text-white shadow-md'
-                  : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
-              }`}
-            >
-              Base de Processos (Planilha)
-            </button>
-          </div>
-      )}
 
       {activeTab === 'dashboard' ? (
         <div className="flex flex-col space-y-6">
