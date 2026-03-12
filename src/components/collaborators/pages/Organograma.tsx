@@ -936,7 +936,16 @@ export function Organograma() {
             {activeTab === 'JURIDICO' && roots.length > 0 && (
                 <div className="flex items-center gap-2 mt-2 mb-1 overflow-x-auto pb-2 custom-scrollbar">
                     <button
-                        onClick={() => setSelectedPartner('ALL')}
+                        onClick={() => {
+                            setSelectedPartner('ALL');
+                            // Centralizar o primeiro sócio na página
+                            setTimeout(() => {
+                                if (containerRef.current) {
+                                    containerRef.current.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                                }
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }, 50);
+                        }}
                         className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
                             selectedPartner === 'ALL'
                                 ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
