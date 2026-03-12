@@ -185,17 +185,17 @@ const OrganogramNode = React.memo(({
                                     {groupIndex < roleGroups.length - 1 && (
                                         <div className="absolute top-0 left-1/2 w-[2px] h-full bg-gray-300 -translate-x-1/2 -z-10"></div>
                                     )}
-                                    <div className="flex justify-center relative pt-4 w-full">
+                                    <div className="inline-flex justify-center relative pt-4">
                                         {/* Horizontal connector bar between siblings */}
                                         {group.length > 1 && (
-                                            <div className="absolute top-0 h-[2px] bg-gray-300" style={{
-                                                left: `${100 / (group.length * 2)}%`,
-                                                right: `${100 / (group.length * 2)}%`
+                                            <div className="absolute top-4 h-[2px] bg-gray-300" style={{
+                                                left: `calc(${100 / (group.length * 2)}% + 1px)`,
+                                                right: `calc(${100 / (group.length * 2)}% + 1px)`
                                             }}></div>
                                         )}
                                         {group.map((sub) => (
                                             <div key={sub.id} className={`relative flex flex-col items-center ${group.length > 8 ? 'px-0' : group.length > 5 ? 'px-0.5' : 'px-4'}`}>
-                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2"></div>
                                                 <div style={{
                                                     transform: group.length > 12 ? 'scale(0.8)' : group.length > 8 ? 'scale(0.85)' : group.length > 5 ? 'scale(0.95)' : 'scale(1)',
                                                     transformOrigin: 'top center'
@@ -824,10 +824,10 @@ export function Organograma() {
 
             {/* Sub-abas por Sócio (Jurídico) */}
             {activeTab === 'JURIDICO' && roots.length > 0 && (
-                <div className="flex items-center gap-2 mt-2 mb-1 overflow-x-auto pb-1 custom-scrollbar">
+                <div className="flex items-center gap-2 mt-2 mb-1 overflow-x-auto pb-2 custom-scrollbar">
                     <button
                         onClick={() => setSelectedPartner('ALL')}
-                        className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap border ${
+                        className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
                             selectedPartner === 'ALL'
                                 ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
                                 : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
@@ -839,7 +839,7 @@ export function Organograma() {
                         <button
                             key={root.id}
                             onClick={() => setSelectedPartner(root.id)}
-                            className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap border flex items-center gap-2 ${
+                            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border flex items-center gap-2 shrink-0 ${
                                 selectedPartner === root.id
                                     ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
                                     : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
