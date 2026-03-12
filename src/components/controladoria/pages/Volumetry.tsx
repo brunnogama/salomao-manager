@@ -46,7 +46,7 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
       while (true) {
         const { data, error } = await supabase
           .from('processos')
-          .select('*')
+          .select('cliente_principal,numero_cnj,pasta,status,responsavel_principal,data_cadastro,data_encerramento')
           .range(from, from + step - 1);
 
         if (error) throw error;
