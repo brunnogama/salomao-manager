@@ -66,6 +66,9 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
     }
   };
 
+  // Normalizar nome para Title Case
+  const toTitleCase = (str: string) => str.trim().toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
+
   // --------------- Lógica de Filtragem no Dashboard ---------------
   const processesMatchingSearchAndStatus = processes.filter((proc: any) => {
     const matchesSearch =
@@ -78,7 +81,9 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
   });
 
   const filteredProcesses = processesMatchingSearchAndStatus.filter((proc: any) => {
-    return partnerFilter ? (proc.responsavel_principal || '').trim().toLowerCase() === partnerFilter.trim().toLowerCase() : true;
+    if (!partnerFilter) return true;
+    const normalized = toTitleCase(normalizeResponsavel(proc.responsavel_principal) || '');
+    return normalized === partnerFilter;
   });
 
   // Métricas
@@ -154,8 +159,6 @@ export function Volumetry({ isPublicView = false }: { isPublicView?: boolean }) 
 
   const currentChartData = chartDataYearly[selectedChartYear] || [];
 
-  // Normalizar nome para Title Case
-  const toTitleCase = (str: string) => str.trim().toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
 
   // Extrair lista de responsáveis únicos para o filtro (normalizados com aliases + Title Case)
   const allPartners = Array.from(new Set(processes.map(p => normalizeResponsavel(p.responsavel_principal)).filter((v): v is string => Boolean(v)).map(toTitleCase))).sort();
