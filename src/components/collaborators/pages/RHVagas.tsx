@@ -388,8 +388,7 @@ export function RHVagas() {
       .from('candidatos')
       .select(`
         *,
-        candidato_historico ( tipo, data_registro, entrevista_data ),
-        education_history ( instituicao, semestre, status )
+        candidato_historico ( tipo, data_registro, entrevista_data )
       `)
       .order('created_at', { ascending: false })
 
