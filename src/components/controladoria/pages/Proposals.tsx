@@ -1238,7 +1238,7 @@ export function Proposals() {
         <button
           onClick={() => {
             if (!isEditingBody && !customBodyText) {
-              setCustomBodyText(generateDefaultBodyText());
+              setCustomBodyText(language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText());
             }
             setIsEditingBody(true);
           }}
