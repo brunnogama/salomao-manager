@@ -226,16 +226,16 @@ export function GestaoFamilia({
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-fit">
             <button
-              onClick={() => setActiveTab('demandas')}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'demandas' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              Demandas
-            </button>
-            <button
               onClick={() => setActiveTab('dashboard')}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('demandas')}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'demandas' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Demandas
             </button>
             <button
               onClick={() => setActiveTab('dados')}

@@ -9,7 +9,7 @@ interface DemandasTableProps {
 
 export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 15
+  const itemsPerPage = 100
 
   const statusColors: any = {
     'Pendente': 'bg-amber-100 text-amber-800 border-amber-200',
@@ -31,15 +31,22 @@ export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTabl
 
   const sortedData = useMemo(() => {
     return [...data].sort((a, b) => {
-      // Sort by status putting Pendente first, then priorities
-      if (a.status !== b.status) {
-        if (a.status === 'Pendente') return -1;
-        if (b.status === 'Pendente') return 1;
-        if (a.status === 'Em andamento') return -1;
-        if (b.status === 'Em andamento') return 1;
+      const aIsActive = a.status !== 'Concluído';
+      const bIsActive = b.status !== 'Concluído';
+      
+      // 1. Filtrar casos ativos para o topo
+      if (aIsActive && !bIsActive) return -1;
+      if (!aIsActive && bIsActive) return 1;
+
+      const dateA = new Date(a.data_solicitacao || 0).getTime();
+      const dateB = new Date(b.data_solicitacao || 0).getTime();
+
+      // 2. Ordem de Data da Solicitação (Ascendente para casos abertos, Descendente para os fechados)
+      if (aIsActive && bIsActive) {
+        return dateA - dateB;
       }
-      // Sort by Date Solicitacao DESC
-      return new Date(b.data_solicitacao || 0).getTime() - new Date(a.data_solicitacao || 0).getTime();
+      
+      return dateB - dateA;
     })
   }, [data])
 
@@ -80,33 +87,42 @@ export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTabl
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {paginatedData.map((item, index) => (
+            {paginatedData.map((item, index) => {
+              const vencido = item.prazo && item.status !== 'Concluído' ? (() => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const [year, month, day] = item.prazo.split('T')[0].split('-');
+                const localPrazo = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                return localPrazo < today;
+              })() : false;
+
+              return (
               <tr 
                 key={item.id || index} 
-                className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
+                className={`transition-colors group cursor-pointer ${vencido ? 'bg-red-50/40 hover:bg-red-100/60' : 'hover:bg-blue-50/30'}`}
                 onClick={() => onEditClick(item)}
               >
                 <td className="p-4">
-                  <span className="text-xs font-bold text-[#112240] bg-gray-100 px-2 py-1 rounded-md">
+                  <span className={`text-xs font-bold px-2 py-1 rounded-md ${vencido ? 'text-red-700 bg-red-100' : 'text-[#112240] bg-gray-100'}`}>
                     {formatDate(item.data_solicitacao)}
                   </span>
                 </td>
                 <td className="p-4">
-                  <span className="text-sm font-semibold text-[#112240]">{item.solicitante || '-'}</span>
+                  <span className={`text-sm font-semibold ${vencido ? 'text-red-700' : 'text-[#112240]'}`}>{item.solicitante || '-'}</span>
                 </td>
                 <td className="p-4">
-                  <span className="text-xs font-medium text-gray-600 bg-gray-50 border border-gray-100 px-2 py-1 rounded-md">
+                  <span className={`text-xs font-medium px-2 py-1 rounded-md border ${vencido ? 'bg-red-50/50 text-red-600 border-red-200' : 'text-gray-600 bg-gray-50 border-gray-100'}`}>
                     {item.unidade || '-'}
                   </span>
                 </td>
-                <td className="p-4 text-sm text-gray-600 font-medium truncate max-w-[150px]">
+                <td className={`p-4 text-sm font-medium truncate max-w-[150px] ${vencido ? 'text-red-600' : 'text-gray-600'}`}>
                   {item.fornecedor || '-'}
                 </td>
                 <td className="p-4">
-                  <p className="text-sm font-medium text-[#112240] truncate max-w-[250px]" title={item.demanda}>
+                  <p className={`text-sm font-medium truncate max-w-[250px] ${vencido ? 'text-red-700' : 'text-[#112240]'}`} title={item.demanda}>
                     {item.demanda || '-'}
                   </p>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-0.5">
+                  <p className={`text-[10px] uppercase tracking-wider mt-0.5 ${vencido ? 'text-red-500' : 'text-gray-400'}`}>
                     {item.categoria || '-'} • {item.tipo || '-'}
                   </p>
                 </td>
@@ -121,7 +137,7 @@ export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTabl
                   </span>
                 </td>
                 <td className="p-4">
-                  <span className="text-xs font-semibold text-gray-600">
+                  <span className={`text-xs font-semibold ${vencido ? 'text-red-600' : 'text-gray-600'}`}>
                     {formatDate(item.prazo)}
                   </span>
                 </td>
@@ -144,7 +160,7 @@ export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTabl
                   </div>
                 </td>
               </tr>
-            ))}
+            )})}
           </tbody>
         </table>
       </div>
