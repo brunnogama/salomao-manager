@@ -29,6 +29,7 @@ interface SearchableSelectProps {
   align?: 'left' | 'right'; // Alinhamento do dropdown
   icon?: React.ReactNode; // Ícone opcional no trigger
   allowCustom?: boolean; // Permite digitação livre caso a opção não exista
+  hideSearch?: boolean; // Esconde o campo de busca
 }
 
 export function SearchableSelect({
@@ -47,7 +48,8 @@ export function SearchableSelect({
   dropdownWidth,
   align = 'left',
   icon,
-  allowCustom = false
+  allowCustom = false,
+  hideSearch = false
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -159,27 +161,29 @@ export function SearchableSelect({
         maxHeight: '300px'
       }}
     >
-      <div className="p-3 border-b border-gray-50 bg-gray-50/50">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Filtrar opções..."
-            className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:border-[#1e3a8a] outline-none transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => {
-              if (allowCustom && e.key === 'Enter' && searchTerm.trim() !== '') {
-                onChange(searchTerm.trim());
-                setIsOpen(false);
-                setSearchTerm('');
-              }
-            }}
-            onClick={(e) => e.stopPropagation()}
-            autoFocus
-          />
+      {!hideSearch && (
+        <div className="p-3 border-b border-gray-50 bg-gray-50/50">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Filtrar opções..."
+              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:border-[#1e3a8a] outline-none transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (allowCustom && e.key === 'Enter' && searchTerm.trim() !== '') {
+                  onChange(searchTerm.trim());
+                  setIsOpen(false);
+                  setSearchTerm('');
+                }
+              }}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="overflow-y-auto p-2 custom-scrollbar" style={{ maxHeight: '220px' }}>
         {loading ? (
