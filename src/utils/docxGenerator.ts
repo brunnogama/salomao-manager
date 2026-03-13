@@ -1,4 +1,4 @@
-import { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType, Header } from 'docx';
+import { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType, Header, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
 import { Contract } from '../types/controladoria';
 interface ProposalData extends Contract {
     partners_data?: {
@@ -53,28 +53,57 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         ],
     });
 
-    // Footer with two distributed images
+    // Footer with two distributed images using a table to force side-by-side
     const footer = new Header({
         children: [
-            new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [
-                    new ImageRun({
-                        data: footer1Buffer,
-                        transformation: {
-                            width: 280,
-                            height: 49,
-                        },
-                    }),
-                    new TextRun({
-                        text: " ".repeat(18), // Spacing to separate them clearly 
-                    }),
-                    new ImageRun({
-                        data: footer2Buffer,
-                        transformation: {
-                            width: 280,
-                            height: 49,
-                        },
+            new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: {
+                    top: { style: BorderStyle.NONE, size: 0, color: "auto" },
+                    bottom: { style: BorderStyle.NONE, size: 0, color: "auto" },
+                    left: { style: BorderStyle.NONE, size: 0, color: "auto" },
+                    right: { style: BorderStyle.NONE, size: 0, color: "auto" },
+                    insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "auto" },
+                    insideVertical: { style: BorderStyle.NONE, size: 0, color: "auto" },
+                },
+                rows: [
+                    new TableRow({
+                        children: [
+                            new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        alignment: AlignmentType.LEFT,
+                                        children: [
+                                            new ImageRun({
+                                                data: footer1Buffer,
+                                                transformation: {
+                                                    width: 220,
+                                                    height: 38,
+                                                },
+                                            }),
+                                        ],
+                                    }),
+                                ],
+                                borders: { top: { style: BorderStyle.NONE, size: 0, color: "auto" }, bottom: { style: BorderStyle.NONE, size: 0, color: "auto" }, left: { style: BorderStyle.NONE, size: 0, color: "auto" }, right: { style: BorderStyle.NONE, size: 0, color: "auto" } },
+                            }),
+                            new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        alignment: AlignmentType.RIGHT,
+                                        children: [
+                                            new ImageRun({
+                                                data: footer2Buffer,
+                                                transformation: {
+                                                    width: 220,
+                                                    height: 38,
+                                                },
+                                            }),
+                                        ],
+                                    }),
+                                ],
+                                borders: { top: { style: BorderStyle.NONE, size: 0, color: "auto" }, bottom: { style: BorderStyle.NONE, size: 0, color: "auto" }, left: { style: BorderStyle.NONE, size: 0, color: "auto" }, right: { style: BorderStyle.NONE, size: 0, color: "auto" } },
+                            }),
+                        ],
                     }),
                 ],
             }),
