@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Search, Trash2, LayoutDashboard, Calendar, CalendarCheck } from 'lucide-react'
+import { Search, Trash2, LayoutDashboard, Calendar, CalendarCheck, X } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { DemandasTable } from './DemandasTable'
 import { DemandasFormModal } from './DemandasFormModal'
+import { SearchableSelect } from '../../SearchableSelect'
 
 export function DemandasFamilia() {
   const [demandas, setDemandas] = useState<any[]>([])
@@ -67,10 +68,10 @@ export function DemandasFamilia() {
   }, [demandas, searchTerm, filterStatus, filterUnidade, filterFornecedor, filterTipo])
 
   // Extract Unique Values for Selects
-  const uniqueStatus = useMemo(() => ['Todos', ...Array.from(new Set(demandas.map(d => d.status).filter(Boolean)))].sort(), [demandas]);
-  const uniqueUnidades = useMemo(() => ['Todos', ...Array.from(new Set(demandas.map(d => d.unidade).filter(Boolean)))].sort(), [demandas]);
-  const uniqueFornecedores = useMemo(() => ['Todos', ...Array.from(new Set(demandas.map(d => d.fornecedor).filter(Boolean)))].sort(), [demandas]);
-  const uniqueTipos = useMemo(() => ['Todos', ...Array.from(new Set(demandas.map(d => d.tipo).filter(Boolean)))].sort(), [demandas]);
+  const uniqueStatus = useMemo(() => [{value: 'Todos', label: 'Status: Todos'}, ...Array.from(new Set(demandas.map(d => d.status).filter(Boolean))).sort().map(s => ({value: s, label: s}))], [demandas]);
+  const uniqueUnidades = useMemo(() => [{value: 'Todos', label: 'Unidade: Todas'}, ...Array.from(new Set(demandas.map(d => d.unidade).filter(Boolean))).sort().map(s => ({value: s, label: s}))], [demandas]);
+  const uniqueFornecedores = useMemo(() => [{value: 'Todos', label: 'Fornecedor: Todos'}, ...Array.from(new Set(demandas.map(d => d.fornecedor).filter(Boolean))).sort().map(s => ({value: s, label: s}))], [demandas]);
+  const uniqueTipos = useMemo(() => [{value: 'Todos', label: 'Tipo: Todos'}, ...Array.from(new Set(demandas.map(d => d.tipo).filter(Boolean))).sort().map(s => ({value: s, label: s}))], [demandas]);
 
   const kpis = useMemo(() => {
     let abertas = 0;
@@ -155,24 +156,8 @@ export function DemandasFamilia() {
       {/* Toolbar / Filtros */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-slate-200 shrink-0">
         
-        {/* Filtros Livres */}
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="bg-slate-50 border border-slate-200 text-[#1e3a8a] text-xs font-semibold rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 cursor-pointer min-w-[120px]">
-            {uniqueStatus.map(s => <option key={s} value={s}>{s === 'Todos' ? 'Status: Todos' : s}</option>)}
-          </select>
-          <select value={filterUnidade} onChange={(e) => setFilterUnidade(e.target.value)} className="bg-slate-50 border border-slate-200 text-[#1e3a8a] text-xs font-semibold rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 cursor-pointer min-w-[120px]">
-            {uniqueUnidades.map(u => <option key={u} value={u}>{u === 'Todos' ? 'Unidade: Todas' : u}</option>)}
-          </select>
-          <select value={filterFornecedor} onChange={(e) => setFilterFornecedor(e.target.value)} className="bg-slate-50 border border-slate-200 text-[#1e3a8a] text-xs font-semibold rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 cursor-pointer min-w-[120px]">
-            {uniqueFornecedores.map(f => <option key={f} value={f}>{f === 'Todos' ? 'Fornecedor: Todos' : f}</option>)}
-          </select>
-          <select value={filterTipo} onChange={(e) => setFilterTipo(e.target.value)} className="bg-slate-50 border border-slate-200 text-[#1e3a8a] text-xs font-semibold rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 cursor-pointer min-w-[120px]">
-            {uniqueTipos.map(t => <option key={t} value={t}>{t === 'Todos' ? 'Tipo: Todos' : t}</option>)}
-          </select>
-        </div>
-
-        {/* Search */}
-        <div className="relative group/search w-full md:w-64 shrink-0">
+        {/* Search (Esquerda) */}
+        <div className="relative group/search w-full md:flex-1">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-slate-400 group-focus-within/search:text-[#001D4A] transition-colors" />
           </div>
@@ -181,8 +166,52 @@ export function DemandasFamilia() {
             placeholder="Buscar demandas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full pl-10 pr-4 py-2.5 bg-slate-50/50 border border-slate-200/60 rounded-xl text-sm placeholder-slate-400 font-medium focus:bg-white focus:border-[#001D4A]/50 focus:ring-4 focus:ring-[#001D4A]/10 transition-all duration-300 shadow-sm outline-none"
+            className="block w-full pl-10 pr-10 py-2.5 bg-slate-50/50 border border-slate-200/60 rounded-xl text-sm placeholder-slate-400 font-medium focus:bg-white focus:border-[#001D4A]/50 focus:ring-4 focus:ring-[#001D4A]/10 transition-all duration-300 shadow-sm outline-none"
           />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center group-hover/search:opacity-100 transition-opacity"
+            >
+              <X className="h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors" />
+            </button>
+          )}
+        </div>
+        
+        {/* Filtros Livres (Direita) */}
+        <div className="flex flex-wrap items-center justify-end gap-2 w-full md:w-auto shrink-0 z-40">
+          <div className="w-full sm:w-[150px]">
+            <SearchableSelect
+              value={filterStatus}
+              onChange={setFilterStatus}
+              options={uniqueStatus}
+              placeholder="Status"
+            />
+          </div>
+          <div className="w-full sm:w-[150px]">
+            <SearchableSelect
+              value={filterUnidade}
+              onChange={setFilterUnidade}
+              options={uniqueUnidades}
+              placeholder="Unidade"
+            />
+          </div>
+          <div className="w-full sm:w-[150px]">
+            <SearchableSelect
+              value={filterFornecedor}
+              onChange={setFilterFornecedor}
+              options={uniqueFornecedores}
+              placeholder="Fornecedor"
+            />
+          </div>
+          <div className="w-full sm:w-[150px]">
+            <SearchableSelect
+              value={filterTipo}
+              onChange={setFilterTipo}
+              options={uniqueTipos}
+              placeholder="Tipo"
+            />
+          </div>
         </div>
       </div>
 
