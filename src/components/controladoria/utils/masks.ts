@@ -20,10 +20,15 @@ export const maskCNPJ = (value: string) => {
   }
 };
 
-export const maskMoney = (value: string) => {
+export const maskMoney = (value: string, lang: 'pt' | 'en' = 'pt') => {
   const onlyDigits = value.replace(/\D/g, "");
   if (!onlyDigits) return "";
   const number = parseFloat(onlyDigits) / 100;
+  
+  if (lang === 'en') {
+    return 'U$$ ' + number.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
   return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
@@ -55,8 +60,8 @@ export const maskCNJ = (value: string) => {
 export const parseCurrency = (value: string | undefined): number => {
   if (!value) return 0;
   if (typeof value === 'number') return value;
-  // Remove R$, pontos e espaços, troca vírgula por ponto
-  const clean = value.replace(/[R$\s.]/g, '').replace(',', '.');
+  // Remove R$, U$$, pontos e espaços, troca vírgula por ponto
+  const clean = value.replace(/[RU$\s.]/g, '').replace(',', '.');
   const parsed = parseFloat(clean);
   return isNaN(parsed) ? 0 : parsed;
 };

@@ -314,7 +314,7 @@ export function Proposals() {
       } else if (field === 'value') {
         const currentType = newClauses[index].type;
         if (currentType === 'currency') {
-          newClauses[index][field] = maskMoney(value);
+          newClauses[index][field] = maskMoney(value, language);
         } else {
           newClauses[index][field] = value;
         }
@@ -615,8 +615,8 @@ export function Proposals() {
       const num = parseFloat(numStr);
       if (isNaN(num)) return type === 'percent' ? `${val}%` : val;
       if (type === 'currency') {
-        const valFormatted = val.replace('R$', '').trim(); // Remove R$ for USD
-        return `USD ${valFormatted} (${currencyToWordsEnglish(num)})`;
+        const valFormatted = val.replace(/[^0-9,.]/g, '').trim(); // Remove symbols (R$, U$$)
+        return `U$$ ${valFormatted} (${currencyToWordsEnglish(num)})`;
       } else {
         return `${val}%`; // Percents in English usually stay numerical, or spelled out. Template implies just values. 
         // We'll leave it as format requested.
@@ -1125,7 +1125,7 @@ export function Proposals() {
                       } else {
                         // Converter Porcentagem para Moeda Formato Simples (limpa o % e devolve a mascara nativa ou deixa cru para o formata no blur)
                         const numbersOnly = clause.value.replace(/[^\d]/g, '');
-                        if (numbersOnly) updateClause(type, index, 'value', `R$ ${numbersOnly},00`);
+                        if (numbersOnly) updateClause(type, index, 'value', language === 'en' ? `U$$ ${numbersOnly},00` : `R$ ${numbersOnly},00`);
                       }
                     }
                   }}
@@ -1483,6 +1483,12 @@ export function Proposals() {
                 type="button"
                 onClick={() => {
                   setLanguage('pt');
+                  setProposalData(prev => ({
+                    ...prev,
+                    pro_labore_clauses: prev.pro_labore_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'pt') } : c),
+                    intermediate_fee_clauses: prev.intermediate_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'pt') } : c),
+                    final_success_fee_clauses: prev.final_success_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'pt') } : c)
+                  }));
                   if (!isEditingBody) setCustomBodyText("");
                 }}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
@@ -1497,6 +1503,12 @@ export function Proposals() {
                 type="button"
                 onClick={() => {
                   setLanguage('en');
+                  setProposalData(prev => ({
+                    ...prev,
+                    pro_labore_clauses: prev.pro_labore_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'en') } : c),
+                    intermediate_fee_clauses: prev.intermediate_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'en') } : c),
+                    final_success_fee_clauses: prev.final_success_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'en') } : c)
+                  }));
                   if (!isEditingBody) setCustomBodyText("");
                 }}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
