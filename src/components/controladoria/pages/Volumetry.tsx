@@ -12,7 +12,7 @@ import {
 import XLSX from 'xlsx-js-style';
 
 import { VolumetryProcesses } from './VolumetryProcesses';
-import { SearchableSelect } from '../../SearchableSelect';
+import { FilterSelect } from '../ui/FilterSelect';
 
 export function Volumetry() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'processos'>('dashboard');
@@ -180,21 +180,21 @@ export function Volumetry() {
 
               <div className="w-full sm:w-48">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Líder Responsável</label>
-                <SearchableSelect
+                <FilterSelect
                   value={partnerFilter}
                   onChange={(v) => setPartnerFilter(v || '')}
                   placeholder="Todos"
-                  options={allPartners.map(p => ({ id: p as string, name: p as string }))}
+                  options={allPartners.map(p => ({ value: p as string, label: p as string }))}
                 />
               </div>
 
               <div className="w-full sm:w-48">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
-                <SearchableSelect
+                <FilterSelect
                   value={statusFilter}
                   onChange={(v) => setStatusFilter(v || '')}
                   placeholder="Todos"
-                  options={allStatuses.map(s => ({ id: s as string, name: s as string }))}
+                  options={allStatuses.map(s => ({ value: s as string, label: s as string }))}
                 />
               </div>
           </div>
