@@ -376,9 +376,14 @@ function DataQualitySection({ processes }: { processes: any[] }) {
   ];
 
   const stats = fields.map(f => {
-    const filled = processes.filter(p => p[f.key] != null && String(p[f.key]).trim() !== '').length;
-    const pct = Math.round((filled / total) * 100);
-    return { ...f, filled, pct };
+    let relevantProcesses = processes;
+    if (f.key === 'data_encerramento') {
+      relevantProcesses = processes.filter(p => p.status?.toLowerCase() === 'arquivado');
+    }
+    const fieldTotal = relevantProcesses.length;
+    const filled = relevantProcesses.filter(p => p[f.key] != null && String(p[f.key]).trim() !== '').length;
+    const pct = fieldTotal > 0 ? Math.round((filled / fieldTotal) * 100) : 100;
+    return { ...f, filled, fieldTotal, pct };
   }).sort((a, b) => a.pct - b.pct);
 
   const overallScore = Math.round(stats.reduce((sum, s) => sum + s.pct, 0) / stats.length);
@@ -424,7 +429,7 @@ function DataQualitySection({ processes }: { processes: any[] }) {
                   <div className="flex items-center gap-2 shrink-0 w-[90px] justify-end">
                     <span className={`text-[10px] font-black uppercase tracking-widest ${color.text}`}>{s.pct}%</span>
                     <span className="text-[9px] font-bold text-gray-400">
-                      {s.filled.toLocaleString('pt-BR')}/{total.toLocaleString('pt-BR')}
+                      {s.filled.toLocaleString('pt-BR')}/{s.fieldTotal.toLocaleString('pt-BR')}
                     </span>
                   </div>
                 </div>
