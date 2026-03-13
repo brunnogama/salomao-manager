@@ -564,7 +564,7 @@ export function CandidatoEntrevistaSection({
                                     type="button"
                                     onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
                                     className={`flex items-center justify-between w-full text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl border transition-all ${formData.status_selecao === 'Aprovado em Vaga' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
-                                        formData.status_selecao?.startsWith('Reprovado') ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
+                                        (typeof formData.status_selecao === 'string' && formData.status_selecao.startsWith('Reprovado')) ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
                                             formData.status_selecao === 'Reaproveitamento' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
                                                 'bg-blue-50 text-[#1e3a8a] border-blue-200 hover:bg-blue-100'
                                         }`}
