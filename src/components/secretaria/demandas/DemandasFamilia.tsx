@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Search, Trash2, LayoutDashboard, Calendar, CalendarCheck, Clock, X } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 import { DemandasTable } from './DemandasTable'
 import { DemandasFormModal } from './DemandasFormModal'
 import { SearchableSelect } from '../../SearchableSelect'
@@ -37,11 +39,33 @@ export function DemandasFamilia() {
       setSelectedItem(null);
       setIsModalOpen(true);
     };
+
+    const handleExportPDF = async () => {
+      const tableElement = document.getElementById('demandas-table-container');
+      if (!tableElement) return;
+      
+      try {
+        const canvas = await html2canvas(tableElement, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save('Demandas_Familia.pdf');
+      } catch (err) {
+        console.error('Erro ao exportar PDF:', err);
+        alert('Ocorreu um erro ao gerar o PDF da Tabela.');
+      }
+    };
     
     document.addEventListener('openNovaDemanda', handleOpenDemandaModal);
+    document.addEventListener('exportarDemandasPDF', handleExportPDF);
     
     return () => {
       document.removeEventListener('openNovaDemanda', handleOpenDemandaModal);
+      document.removeEventListener('exportarDemandasPDF', handleExportPDF);
     };
   }, [])
 
@@ -289,7 +313,7 @@ export function DemandasFamilia() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-slate-200 overflow-hidden flex-1 min-h-[400px]">
+      <div id="demandas-table-container" className="bg-white rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-slate-200 overflow-hidden flex-1 min-h-[400px]">
         <DemandasTable
           data={filteredData}
           onEditClick={handleEditItem}

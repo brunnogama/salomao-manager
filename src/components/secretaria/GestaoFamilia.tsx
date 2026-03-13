@@ -12,7 +12,8 @@ import {
   LogOut,
   Grid,
   Briefcase,
-  Share2
+  Share2,
+  FileText
 } from 'lucide-react'
 import XLSX from 'xlsx-js-style'
 import { supabase } from '../../lib/supabase'
@@ -262,6 +263,13 @@ export function GestaoFamilia({
                 title="Copiar Link Público"
               >
                 <Share2 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => document.dispatchEvent(new CustomEvent('exportarDemandasPDF'))}
+                className="flex items-center justify-center w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all shadow-lg shadow-red-500/30 shrink-0"
+                title="Exportar PDF"
+              >
+                <FileText className="h-5 w-5" />
               </button>
               <button
                 onClick={() => document.dispatchEvent(new CustomEvent('openNovaDemanda'))}
