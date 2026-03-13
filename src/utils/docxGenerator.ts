@@ -77,8 +77,8 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                                             new ImageRun({
                                                 data: footer1Buffer,
                                                 transformation: {
-                                                    width: 220,
-                                                    height: 38,
+                                                    width: 250,
+                                                    height: 44,
                                                 },
                                             }),
                                         ],
@@ -94,8 +94,8 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                                             new ImageRun({
                                                 data: footer2Buffer,
                                                 transformation: {
-                                                    width: 220,
-                                                    height: 38,
+                                                    width: 250,
+                                                    height: 44,
                                                 },
                                             }),
                                         ],
