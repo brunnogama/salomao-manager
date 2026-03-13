@@ -209,7 +209,13 @@ export function Contracts() {
       supabase.from('contract_processes').select('*').eq('contract_id', contract.id),
       supabase.from('contract_timeline').select('*').eq('contract_id', contract.id).order('changed_at', { ascending: false })
     ]);
-    if (procRes.data) setProcesses(procRes.data);
+    if (procRes.data) {
+      const formattedProcesses = procRes.data.map((p: any) => ({
+        ...p,
+        cause_value: p.value_of_cause ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.value_of_cause) : ''
+      }));
+      setProcesses(formattedProcesses);
+    }
     if (timeRes.data) setTimelineData(timeRes.data);
     setIsDetailsModalOpen(true);
   };
@@ -283,7 +289,9 @@ export function Contracts() {
       position: '',
       author: '',
       subject: '',
-      magistrates: []
+      magistrates: [],
+      cause_value: '',
+      value_of_cause: 0
     });
   };
 

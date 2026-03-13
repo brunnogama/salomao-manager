@@ -118,7 +118,7 @@ export function ContractFormModal(props: Props) {
       setInterimClause('');
       setIsStandardCNJ(true);
       setOtherProcessType('');
-      setCurrentProcess(prev => ({ ...prev, process_number: '', uf: '', position: '' }));
+      setCurrentProcess(prev => ({ ...prev, process_number: '', uf: '', position: '', cause_value: '', subject: '' }));
       setNewSubject('');
 
       setDuplicateClientCases([]);
@@ -583,7 +583,7 @@ export function ContractFormModal(props: Props) {
             return {
               ...rest,
               contract_id: savedId,
-              value_of_cause: cause_value ? safeParseFloat(cause_value) : 0
+              value_of_cause: cause_value ? safeParseFloat(cause_value) : (p.value_of_cause || 0)
             };
           });
 
