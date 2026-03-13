@@ -62,18 +62,18 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                     new ImageRun({
                         data: footer1Buffer,
                         transformation: {
-                            width: 400,
-                            height: 70,
+                            width: 280,
+                            height: 49,
                         },
                     }),
                     new TextRun({
-                        text: " ".repeat(5), // Reduced spacing to accommodate larger images
+                        text: " ".repeat(18), // Spacing to separate them clearly 
                     }),
                     new ImageRun({
                         data: footer2Buffer,
                         transformation: {
-                            width: 400,
-                            height: 70,
+                            width: 280,
+                            height: 49,
                         },
                     }),
                 ],

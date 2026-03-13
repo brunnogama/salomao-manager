@@ -9,6 +9,7 @@ import { generateProposalDocx } from '../../../utils/docxGenerator';
 import { maskMoney, maskCNPJ } from '../utils/masks';
 import { CustomSelect } from '../ui/CustomSelect';
 import { safeParseFloat } from '../utils/contractHelpers';
+import { moedaPorExtenso, percentualPorExtenso } from '../../../utils/extenso';
 
 const toTitleCase = (str: string) => {
   return str.replace(
@@ -538,7 +539,7 @@ export function Proposals() {
     const location = proposalData.contractLocation || '[Cidade]';
 
     let text = `<<RIGHT>>${location}, ${todayStr}.\n\n`;
-    text += `**AO ${proposalData.clientName ? proposalData.clientName.toUpperCase() : '[NOME DA EMPRESA CLIENTE]'}**\n`;
+    text += `**A**\n**${proposalData.clientName ? proposalData.clientName.toUpperCase() : '[NOME DA EMPRESA CLIENTE]'}**\n`;
     if (!proposalData.isPerson) {
       text += `**${proposalData.cnpj || '[CNPJ da empresa cliente]'}**\n`;
     }
@@ -616,25 +617,41 @@ export function Proposals() {
     text += `**2. HONORÁRIOS E FORMA DE PAGAMENTO:**\n\n`;
     text += `2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:\n\n`;
 
+    const formatValueWithExtenso = (val: string, type: 'currency' | 'percent') => {
+      if (!val) return '';
+      const numStr = val.replace(/[R$\s.%]/g, '').replace(',', '.');
+      const num = parseFloat(numStr);
+      if (isNaN(num)) return type === 'percent' ? `${val}%` : val;
+      if (type === 'currency') {
+        const valFormatted = val.includes('R$') ? val : `R$ ${val}`;
+        return `${valFormatted} (${moedaPorExtenso(num)})`;
+      } else {
+        return `${val}% (${percentualPorExtenso(num)})`;
+      }
+    };
+
     let clauseIndex = 2;
     proposalData.pro_labore_clauses.forEach((c) => {
       if (c.value) {
-        text += `2.${clauseIndex}. Honorários pró-labore de ${c.value}, ${c.description || 'para engajamento no caso'}.\n\n`;
+        const ext = formatValueWithExtenso(c.value, 'currency');
+        text += `2.${clauseIndex}. Honorários pró-labore de ${ext}, ${c.description || 'para engajamento no caso'}.\n\n`;
         clauseIndex++;
       }
     });
 
     proposalData.intermediate_fee_clauses.forEach((c) => {
       if (c.value) {
-        text += `2.${clauseIndex}. Êxito intermediário de ${c.value}, ${c.description || '[descrição]'}.\n\n`;
+        const ext = formatValueWithExtenso(c.value, 'currency');
+        text += `2.${clauseIndex}. Êxito intermediário de ${ext}, ${c.description || '[descrição]'}.\n\n`;
         clauseIndex++;
       }
     });
 
     proposalData.final_success_fee_clauses.forEach((c) => {
       if (c.value) {
-        const valText = c.type === 'currency' ? c.value : `${c.value}%`;
-        text += `2.${clauseIndex}. Honorários finais de êxito de ${valText}, ${c.description || '[descrição]'}.\n\n`;
+        const typeToUse = c.type === 'currency' ? 'currency' : 'percent';
+        const ext = formatValueWithExtenso(c.value, typeToUse);
+        text += `2.${clauseIndex}. Honorários finais de êxito de ${ext}, ${c.description || '[descrição]'}.\n\n`;
         clauseIndex++;
       }
     });
