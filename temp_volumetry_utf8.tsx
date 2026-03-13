@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
   BarChart3,
@@ -7,13 +7,12 @@ import {
   Download,
   PieChart,
   Activity,
-  Layers,
-  ShieldCheck
+  Layers
 } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 
 import { VolumetryProcesses } from './VolumetryProcesses';
-import { FilterSelect } from '../ui/FilterSelect';
+import { SearchableSelect } from '../../SearchableSelect';
 
 export function Volumetry() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'processos'>('dashboard');
@@ -23,14 +22,14 @@ export function Volumetry() {
   // Filtros Globais para o Dashboard
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [partnerFilter, setPartnerFilter] = useState(''); // Responsável Principal
+  const [partnerFilter, setPartnerFilter] = useState(''); // Respons├ível Principal
 
   useEffect(() => {
     fetchProcesses();
   }, [activeTab]); // Recarrega quando muda de aba, caso a pessoa importe novos
 
   const fetchProcesses = async () => {
-    if (activeTab === 'processos') return; // A aba de processos cuida do seu próprio fetch
+    if (activeTab === 'processos') return; // A aba de processos cuida do seu pr├│prio fetch
     
     setLoading(true);
     try {
@@ -41,7 +40,7 @@ export function Volumetry() {
       while (true) {
         const { data, error } = await supabase
           .from('processos')
-          .select('cliente_principal,numero_cnj,pasta,status,responsavel_principal,data_cadastro,data_encerramento,uf,tipo,instancia')
+          .select('*')
           .range(from, from + step - 1);
 
         if (error) throw error;
@@ -60,14 +59,7 @@ export function Volumetry() {
     }
   };
 
-  // Normalizar nome para Title Case e corrigir Luiz Henrique Pavan
-  const toTitleCase = (str: string) => {
-    let n = str.trim().toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
-    if (n === 'Luiz Henrique Pavan') n = 'Luiz Henrique Miguel Pavan';
-    return n;
-  };
-
-  // --------------- Lógica de Filtragem no Dashboard ---------------
+  // --------------- L├│gica de Filtragem no Dashboard ---------------
   const filteredProcesses = processes.filter((proc: any) => {
     const matchesSearch =
       (proc.cliente_principal && proc.cliente_principal.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -75,12 +67,12 @@ export function Volumetry() {
       (proc.pasta && proc.pasta.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus = statusFilter ? proc.status?.toLowerCase() === statusFilter.toLowerCase() : true;
-    const matchesPartner = partnerFilter ? toTitleCase(proc.responsavel_principal || '') === partnerFilter : true;
+    const matchesPartner = partnerFilter ? proc.responsavel_principal === partnerFilter : true;
 
     return matchesSearch && matchesStatus && matchesPartner;
   });
 
-  // Métricas
+  // M├®tricas
   const totalProcesses = filteredProcesses.length;
   
   const ativosCount = filteredProcesses.filter(p => p.status?.toLowerCase() === 'ativo').length;
@@ -88,17 +80,17 @@ export function Volumetry() {
 
   const uniqueClients = new Set(filteredProcesses.map(p => p.cliente_principal).filter(Boolean)).size;
 
-  // Extrair lista de responsáveis únicos para o filtro
-  const allPartners = Array.from(new Set(processes.map(p => toTitleCase(p.responsavel_principal || '')).filter(Boolean))).sort();
-  // Extrair status únicos (Ativo, Arquivado, etc)
+  // Extrair lista de respons├íveis ├║nicos para o filtro
+  const allPartners = Array.from(new Set(processes.map(p => p.responsavel_principal).filter(Boolean))).sort();
+  // Extrair status ├║nicos (Ativo, Arquivado, etc)
   const allStatuses = Array.from(new Set(processes.map(p => p.status).filter(Boolean))).sort();
 
-  // --------------- Agrupamento por Responsável ---------------
+  // --------------- Agrupamento por Respons├ível ---------------
   const volumetryByPartner = allPartners.map(partnerName => {
-    const partnerProcs = filteredProcesses.filter(p => toTitleCase(p.responsavel_principal || '') === partnerName);
+    const partnerProcs = filteredProcesses.filter(p => p.responsavel_principal === partnerName);
     
     return {
-      name: partnerName || 'Sem Responsável',
+      name: partnerName || 'Sem Respons├ível',
       count: partnerProcs.length,
       percentage: totalProcesses > 0 ? ((partnerProcs.length / totalProcesses) * 100).toFixed(1) : "0",
       ativos: partnerProcs.filter(p => p.status?.toLowerCase() === 'ativo').length,
@@ -109,7 +101,7 @@ export function Volumetry() {
 
   const handleExportDashboard = () => {
     const exportData = volumetryByPartner.map((m: any) => ({
-      'Líder Responsável': m.name,
+      'L├¡der Respons├ível': m.name,
       'Total de Processos': m.count,
       'Ativos': m.ativos,
       'Arquivados': m.arquivados,
@@ -125,44 +117,49 @@ export function Volumetry() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
 
-      {/* 1. Header - Salomão Design System (Padrão Colaboradores) */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        {/* Left: Título e Ícone */}
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
+      {/* 1. Header - Salom├úo Design System */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
             <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
             <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Volumetria</h1>
-            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">Visão Analítica LegalOne</p>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Vis├úo Anal├¡tica LegalOne</p>
           </div>
         </div>
 
-        {/* Right: Tabs + Actions */}
-        <div className="flex flex-wrap items-center gap-3 shrink-0 w-full md:w-auto justify-end mt-2 md:mt-0">
-          {/* Abas */}
-          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'dashboard' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <BarChart3 className="h-4 w-4" /> Dashboard
-            </button>
-            <button
-              onClick={() => setActiveTab('processos')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'processos' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <Layers className="h-4 w-4" /> Base de Processos
-            </button>
-          </div>
-
-          {/* Botões de Ação */}
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           {activeTab === 'dashboard' && volumetryByPartner.length > 0 && (
-            <button onClick={handleExportDashboard} className="flex-1 md:flex-none flex justify-center items-center gap-2 px-6 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[10px] font-black uppercase tracking-[0.1em] shadow-sm active:scale-95">
+            <button onClick={handleExportDashboard} className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
               <Download className="h-4 w-4" /> Exportar Dashboard
             </button>
           )}
         </div>
+      </div>
+
+      {/* Navega├º├úo de Abas */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            activeTab === 'dashboard'
+              ? 'bg-[#1e3a8a] text-white shadow-md'
+              : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
+          }`}
+        >
+          Dashboard Processual
+        </button>
+        <button
+          onClick={() => setActiveTab('processos')}
+          className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            activeTab === 'processos'
+              ? 'bg-[#1e3a8a] text-white shadow-md'
+              : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
+          }`}
+        >
+          Base de Processos (Planilha)
+        </button>
       </div>
 
       {activeTab === 'dashboard' ? (
@@ -182,22 +179,22 @@ export function Volumetry() {
               </div>
 
               <div className="w-full sm:w-48">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Líder Responsável</label>
-                <FilterSelect
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">L├¡der Respons├ível</label>
+                <SearchableSelect
                   value={partnerFilter}
                   onChange={(v) => setPartnerFilter(v || '')}
                   placeholder="Todos"
-                  options={allPartners.map(p => ({ value: p as string, label: p as string }))}
+                  options={allPartners.map(p => ({ id: p as string, name: p as string }))}
                 />
               </div>
 
               <div className="w-full sm:w-48">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
-                <FilterSelect
+                <SearchableSelect
                   value={statusFilter}
                   onChange={(v) => setStatusFilter(v || '')}
                   placeholder="Todos"
-                  options={allStatuses.map(s => ({ value: s as string, label: s as string }))}
+                  options={allStatuses.map(s => ({ id: s as string, name: s as string }))}
                 />
               </div>
           </div>
@@ -208,7 +205,7 @@ export function Volumetry() {
               <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Processos</p>
-                <p className="text-2xl font-black text-blue-900 mt-1">{totalProcesses.toLocaleString('pt-BR')}</p>
+                <p className="text-2xl font-black text-blue-900 mt-1">{totalProcesses}</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl">
                 <Scale className="h-6 w-6 text-blue-600" />
@@ -219,7 +216,7 @@ export function Volumetry() {
               <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos Ativos</p>
-                <p className="text-2xl font-black text-emerald-900 mt-1">{ativosCount.toLocaleString('pt-BR')}</p>
+                <p className="text-2xl font-black text-emerald-900 mt-1">{ativosCount}</p>
               </div>
               <div className="p-3 bg-emerald-50 rounded-xl">
                 <Activity className="h-6 w-6 text-emerald-600" />
@@ -230,7 +227,7 @@ export function Volumetry() {
               <div className="absolute right-0 top-0 h-full w-1 bg-amber-500"></div>
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos Arquivados</p>
-                <p className="text-2xl font-black text-amber-900 mt-1">{arquivadosCount.toLocaleString('pt-BR')}</p>
+                <p className="text-2xl font-black text-amber-900 mt-1">{arquivadosCount}</p>
               </div>
               <div className="p-3 bg-amber-50 rounded-xl">
                 <FileText className="h-6 w-6 text-amber-600" />
@@ -240,8 +237,8 @@ export function Volumetry() {
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
               <div className="absolute right-0 top-0 h-full w-1 bg-purple-600"></div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Clientes Únicos</p>
-                <p className="text-2xl font-black text-purple-900 mt-1">{uniqueClients.toLocaleString('pt-BR')}</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Clientes ├Ünicos</p>
+                <p className="text-2xl font-black text-purple-900 mt-1">{uniqueClients}</p>
               </div>
               <div className="p-3 bg-purple-50 rounded-xl">
                 <PieChart className="h-6 w-6 text-purple-600" />
@@ -249,29 +246,24 @@ export function Volumetry() {
             </div>
           </div>
 
-          {/* Qualidade da Base */}
-          {!loading && processes.length > 0 && (
-            <DataQualitySection processes={filteredProcesses} />
-          )}
-
-          {/* Lista de Volumetria por Responsável */}
+          {/* Lista de Volumetria por Respons├ível */}
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50">
               <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
-                <Layers className="w-4 h-4 text-[#1e3a8a]" /> Distribuição por Líder Responsável
+                <Layers className="w-4 h-4 text-[#1e3a8a]" /> Distribui├º├úo por L├¡der Respons├ível
               </h2>
             </div>
 
             {loading ? (
               <div className="p-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
-                Carregando visão analítica...
+                Carregando vis├úo anal├¡tica...
               </div>
             ) : volumetryByPartner.length === 0 ? (
               <div className="p-20 text-center">
                 <EmptyState
                   icon={BarChart3}
-                  title="Sem dados disponíveis"
+                  title="Sem dados dispon├¡veis"
                   description={processes.length === 0 ? "Nenhum processo foi importado na aba 'Base de Processos'." : "Ajuste os filtros de busca para visualizar os dados."}
                 />
               </div>
@@ -281,7 +273,7 @@ export function Volumetry() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Líder Responsável</th>
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">L├¡der Respons├ível</th>
                         <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Total de Processos</th>
                         <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Ativos</th>
                         <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Arquivados</th>
@@ -301,17 +293,17 @@ export function Volumetry() {
                           </td>
                           <td className="p-4 text-center">
                             <span className="bg-blue-50 text-[#1e3a8a] px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-blue-100">
-                              {partner.count.toLocaleString('pt-BR')}
+                              {partner.count}
                             </span>
                           </td>
                           <td className="p-4 text-center">
                             <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-emerald-100">
-                              {partner.ativos.toLocaleString('pt-BR')}
+                              {partner.ativos}
                             </span>
                           </td>
                           <td className="p-4 text-center">
                             <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
-                              {partner.arquivados.toLocaleString('pt-BR')}
+                              {partner.arquivados}
                             </span>
                           </td>
                           <td className="p-4 align-middle">
@@ -354,100 +346,6 @@ function EmptyState({ icon: Icon, title, description }: any) {
       </div>
       <h3 className="text-sm font-black text-gray-700 uppercase tracking-widest mb-1">{title}</h3>
       <p className="text-xs text-gray-400 uppercase font-bold">{description}</p>
-    </div>
-  );
-}
-
-function DataQualitySection({ processes }: { processes: any[] }) {
-  const total = processes.length;
-  if (total === 0) return null;
-
-  const fields = [
-    { key: 'responsavel_principal', label: 'Responsável Principal' },
-    { key: 'cliente_principal', label: 'Cliente Principal' },
-    { key: 'numero_cnj', label: 'Número CNJ' },
-    { key: 'status', label: 'Status' },
-    { key: 'data_cadastro', label: 'Data de Cadastro' },
-    { key: 'data_encerramento', label: 'Data de Encerramento' },
-    { key: 'uf', label: 'UF (Estado)' },
-    { key: 'tipo', label: 'Tipo de Ação' },
-    { key: 'instancia', label: 'Instância' },
-    { key: 'pasta', label: 'Pasta' },
-  ];
-
-  const stats = fields.map(f => {
-    const filled = processes.filter(p => p[f.key] != null && String(p[f.key]).trim() !== '').length;
-    const pct = Math.round((filled / total) * 100);
-    return { ...f, filled, pct };
-  }).sort((a, b) => a.pct - b.pct);
-
-  const overallScore = Math.round(stats.reduce((sum, s) => sum + s.pct, 0) / stats.length);
-
-  const getColor = (pct: number) => {
-    if (pct >= 80) return { bar: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' };
-    if (pct >= 50) return { bar: 'bg-amber-500', text: 'text-amber-700', bg: 'bg-amber-50' };
-    return { bar: 'bg-red-500', text: 'text-red-700', bg: 'bg-red-50' };
-  };
-
-  const scoreColor = getColor(overallScore);
-
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-[#1e3a8a]" /> Qualidade da Base
-        </h2>
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Score Geral</span>
-          <span className={`px-3 py-1 rounded-lg font-black text-sm border ${scoreColor.bg} ${scoreColor.text}`}>
-            {overallScore}%
-          </span>
-        </div>
-      </div>
-
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-          {stats.map(s => {
-            const color = getColor(s.pct);
-            return (
-              <div key={s.key} className="flex items-center gap-4">
-                <div className="w-[140px] shrink-0">
-                  <p className="text-[11px] font-black text-[#0a192f] uppercase tracking-tight truncate" title={s.label}>{s.label}</p>
-                </div>
-                <div className="flex-1 flex items-center gap-3">
-                  <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200/50 shadow-inner">
-                    <div
-                      className={`${color.bar} h-full rounded-full transition-all duration-700`}
-                      style={{ width: `${s.pct}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0 w-[90px] justify-end">
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${color.text}`}>{s.pct}%</span>
-                    <span className="text-[9px] font-bold text-gray-400">
-                      {s.filled.toLocaleString('pt-BR')}/{total.toLocaleString('pt-BR')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-6 pt-4 border-t border-gray-100 flex flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Bom (&ge; 80%)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Regular (50-79%)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Crítico (&lt; 50%)</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
