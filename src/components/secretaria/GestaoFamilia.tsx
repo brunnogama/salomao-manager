@@ -224,53 +224,41 @@ export function GestaoFamilia({
 
         {/* User Info & Actions */}
         <div className="flex items-center gap-3 shrink-0">
+          <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-fit mr-4">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('dados')}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dados' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Dados
+            </button>
+            <button
+              onClick={() => setActiveTab('demandas')}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'demandas' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Demandas
+            </button>
+          </div>
           <div className="hidden md:flex flex-col items-end">
             <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
             <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
           </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && (
-            <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && (
-            <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all">
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
         </div>
       </div>
 
-      {/* Linha Superior: Cards de Stats e Seletor de Abas */}
+      {/* Linha Superior: Stats */}
+      {activeTab !== 'demandas' && (
       <div className="flex flex-col lg:flex-row items-stretch justify-between gap-6">
-        <div className="flex-1">
+        <div className="flex-1 w-full">
           <FamiliaStats data={dadosFamilia} />
         </div>
-
-        <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-fit self-start lg:self-center shrink-0">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
-          </button>
-          <button
-            onClick={() => setActiveTab('dados')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dados' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            <Database className="h-3.5 w-3.5" /> Dados
-          </button>
-          <button
-            onClick={() => setActiveTab('demandas')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'demandas' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            <Database className="h-3.5 w-3.5" /> Demandas
-          </button>
-        </div>
       </div>
+      )}
 
       {/* Barra de Filtros e Busca */}
       {activeTab !== 'demandas' && (

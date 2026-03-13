@@ -58,7 +58,18 @@ export function DemandasFormModal({ isOpen, onClose, onSave, initialData }: Dema
       for (const field of fields) {
         const { data } = await supabase.from('familia_salomao_demandas').select(field)
         if (data) {
-          const uniqueValues = Array.from(new Set(data.map(item => item[field]).filter(Boolean))) as string[]
+          // Normalize to capitalized strings and remove empty strings
+          const normalizedData = data
+            .map((item: any) => item[field])
+            .filter(Boolean)
+            .map(val => {
+              const str = String(val).trim();
+              if (!str) return '';
+              return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+            })
+            .filter(Boolean);
+
+          const uniqueValues = Array.from(new Set(normalizedData)) as string[]
           
           // Merge with default options to always have them available
           const defaultFieldOptions = defaultOptions[field] || [];

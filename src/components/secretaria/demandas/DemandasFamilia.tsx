@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Search, FileSpreadsheet, Loader2, Trash2, AlertCircle } from 'lucide-react'
+import { Plus, Search, FileSpreadsheet, Loader2, Trash2 } from 'lucide-react'
 import * as XLSX from 'xlsx' 
 import { supabase } from '../../../lib/supabase'
 import { DemandasTable } from './DemandasTable'
@@ -146,45 +146,8 @@ export function DemandasFamilia() {
     reader.readAsBinaryString(file)
   }
 
-  // KPIs
-  const totalPendentes = demandas.filter(d => d.status === 'Pendente').length
-  const totalEmAndamento = demandas.filter(d => d.status === 'Em andamento').length
-  const totalAltaPrioridade = demandas.filter(d => d.prioridade === 'Alta' && d.status !== 'Concluído').length
-
   return (
     <div className="flex flex-col h-full space-y-4 animate-in fade-in zoom-in duration-300">
-      
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pendentes</p>
-            <p className="text-2xl font-black mt-1 text-amber-600">{totalPendentes}</p>
-          </div>
-          <div className="p-3 bg-amber-50 rounded-xl text-amber-600">
-            <Loader2 className="h-5 w-5" />
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Em Andamento</p>
-            <p className="text-2xl font-black mt-1 text-blue-600">{totalEmAndamento}</p>
-          </div>
-          <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-            <Loader2 className="h-5 w-5" />
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Alta Prioridade</p>
-            <p className="text-2xl font-black mt-1 text-red-600">{totalAltaPrioridade}</p>
-          </div>
-          <div className="p-3 bg-red-50 rounded-xl text-red-600">
-            <AlertCircle className="h-5 w-5" />
-          </div>
-        </div>
-      </div>
-
       {/* Toolbar */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0">
         <div className="relative flex-1 w-full max-w-md">
