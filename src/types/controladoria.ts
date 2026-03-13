@@ -125,6 +125,7 @@ export interface Collaborator {
     ano_trancamento?: string;
     pretende_retornar?: string;
     cr?: string;
+    turno?: string;
   }[];
 
   // Novos Campos (Solicitados)

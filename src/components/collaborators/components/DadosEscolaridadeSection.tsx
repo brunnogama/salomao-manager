@@ -75,6 +75,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
             instituicao: '',
             instituicao_uf: '', // Novo campo adicionado localmente para o formulário
             curso: '',
+            turno: '', // Novo campo
             subnivel: nivel === 'Pós-Graduação' ? 'Especialização' : undefined,
             cr: ''
         }
@@ -297,6 +298,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                             {item.previsao_conclusao && <span className="flex items-center gap-1"><span className="text-gray-400">Previsão:</span> <span className="text-amber-600">{formatDisplayDate(item.previsao_conclusao)}</span></span>}
                                             {item.ano_conclusao && <span className="flex items-center gap-1"><span className="text-gray-400">Conclusão:</span> <span className="text-emerald-600">{item.ano_conclusao}</span></span>}
                                             {item.cr && <span className="flex items-center gap-1"><span className="text-gray-400">CR:</span> <span className="text-[#1e3a8a]">{item.cr}</span></span>}
+                                            {item.turno && <span className="flex items-center gap-1"><span className="text-gray-400">Turno:</span> <span className="text-[#1e3a8a]">{item.turno}</span></span>}
                                         </div>
                                     </div>
                                     {!isViewMode && (
@@ -463,28 +465,44 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                 )}
                             </div>
 
-                            {/* Curso */}
-                            <div className="space-y-1.5 col-span-1 md:col-span-2">
-                                <SearchableSelect
-                                    label={['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? "Formação / Habilitação (Opcional)" : "Curso"}
-                                    value={displayCourseValue}
-                                    onChange={(v) => updateEducation(item.id, 'curso', v)}
-                                    options={courseOptions}
-                                    disabled={isViewMode}
-                                    disableFormatting={true}
-                                />
+                            {/* Curso e Turno */}
+                            <div className={`grid grid-cols-1 ${item.status === 'Cursando' && ['Graduação', 'Pós-Graduação'].includes(nivel) ? 'md:grid-cols-2' : ''} gap-4 items-start`}>
+                                <div className="space-y-1.5 w-full">
+                                    <SearchableSelect
+                                        label={['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? "Formação / Habilitação (Opcional)" : "Curso"}
+                                        value={displayCourseValue}
+                                        onChange={(v) => updateEducation(item.id, 'curso', v)}
+                                        options={courseOptions}
+                                        disabled={isViewMode}
+                                        disableFormatting={true}
+                                    />
 
-                                {/* Campo Outro (Texto Livre) */}
-                                {isCustomCourse && (
-                                    <div className="relative mt-2 animate-in fade-in zoom-in duration-200">
-                                        <input
-                                            type="text"
-                                            value={item.curso === ' ' ? '' : item.curso}
-                                            onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
-                                            className={`w-full px-3 py-2.5 bg-blue-50/50 border border-blue-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-blue-300 focus:bg-white focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                            placeholder={['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? "Ex: Formação Geral, Técnico em Informática..." : "Digite o nome do curso..."}
+                                    {/* Campo Outro (Texto Livre) */}
+                                    {isCustomCourse && (
+                                        <div className="relative mt-2 animate-in fade-in zoom-in duration-200">
+                                            <input
+                                                type="text"
+                                                value={item.curso === ' ' ? '' : item.curso}
+                                                onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
+                                                className={`w-full px-3 py-2.5 bg-blue-50/50 border border-blue-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-blue-300 focus:bg-white focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                placeholder={['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? "Ex: Formação Geral, Técnico em Informática..." : "Digite o nome do curso..."}
+                                                disabled={isViewMode}
+                                                autoFocus
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Turno */}
+                                {item.status === 'Cursando' && ['Graduação', 'Pós-Graduação'].includes(nivel) && (
+                                    <div className="space-y-1.5 w-full">
+                                        <SearchableSelect
+                                            label="Turno"
+                                            value={item.turno || ''}
+                                            onChange={(v) => updateEducation(item.id, 'turno', v)}
+                                            options={[{ name: 'Manhã' }, { name: 'Tarde' }, { name: 'Noite' }]}
                                             disabled={isViewMode}
-                                            autoFocus
+                                            disableFormatting={true}
                                         />
                                     </div>
                                 )}
