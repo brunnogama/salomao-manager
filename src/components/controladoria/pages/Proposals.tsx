@@ -918,7 +918,7 @@ export function Proposals() {
       // This needs to be done *before* generating the DOCX, and `generateDefaultBodyText` relies on `proposalData`
       // which might be cleared later.
       if (!isEditingBody && !customBodyText) {
-        fullContractData.custom_body_text = generateDefaultBodyText();
+        fullContractData.custom_body_text = language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText();
       }
 
       const docBlob = await generateProposalDocx(fullContractData, proposalCode);
@@ -1028,7 +1028,7 @@ export function Proposals() {
       // This needs to be done *before* generating the DOCX, and `generateDefaultBodyText` relies on `proposalData`
       // which might be cleared later.
       if (!isEditingBody && !customBodyText) {
-        fullContractData.custom_body_text = generateDefaultBodyText();
+        fullContractData.custom_body_text = language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText();
       }
 
       const docBlob = await generateProposalDocx(fullContractData, proposalCode);
@@ -1049,7 +1049,7 @@ export function Proposals() {
 
   const renderPreviewContent = () => (
     <div className="w-full h-full pb-5">
-      {(customBodyText || generateDefaultBodyText()).split('\n').map((paragraph, idx) => {
+      {(customBodyText || (language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText())).split('\n').map((paragraph, idx) => {
         if (!paragraph.trim()) {
           return <div key={idx} className="h-4"></div>;
         }
