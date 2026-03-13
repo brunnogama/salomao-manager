@@ -11,7 +11,8 @@ import {
   UserCircle,
   LogOut,
   Grid,
-  Briefcase
+  Briefcase,
+  Share2
 } from 'lucide-react'
 import XLSX from 'xlsx-js-style'
 import { supabase } from '../../lib/supabase'
@@ -245,13 +246,26 @@ export function GestaoFamilia({
             </button>
 
             {activeTab === 'demandas' && (
-              <button
-                onClick={() => document.dispatchEvent(new CustomEvent('openNovaDemanda'))}
-                className="ml-2 flex items-center justify-center w-10 h-10 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl transition-all shadow-md shrink-0"
-                title="Nova Demanda"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    const pubLink = `${window.location.origin}/public/demandas`;
+                    navigator.clipboard.writeText(pubLink);
+                    alert('Link público da aba Demandas copiado para a área de transferência!');
+                  }}
+                  className="ml-2 flex items-center justify-center w-10 h-10 bg-white/80 hover:bg-white text-[#1e3a8a] border border-gray-200 rounded-xl transition-all shadow-md shrink-0"
+                  title="Copiar Link Público"
+                >
+                  <Share2 className="h-4 w-4 drop-shadow-sm" />
+                </button>
+                <button
+                  onClick={() => document.dispatchEvent(new CustomEvent('openNovaDemanda'))}
+                  className="ml-2 flex items-center justify-center w-10 h-10 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl transition-all shadow-md shrink-0"
+                  title="Nova Demanda"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </>
             )}
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Search, Loader2, Trash2 } from 'lucide-react'
+import { Search, Loader2, Trash2, LayoutDashboard, Calendar, CalendarCheck } from 'lucide-react'
 import * as XLSX from 'xlsx' 
 import { supabase } from '../../../lib/supabase'
 import { DemandasTable } from './DemandasTable'
@@ -51,6 +51,33 @@ export function DemandasFamilia() {
       )
     })
   }, [demandas, searchTerm])
+
+  const kpis = useMemo(() => {
+    let abertas = 0;
+    let semana = 0;
+    let mes = 0;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    demandas.forEach(d => {
+      if (d.status !== 'Concluído') abertas++;
+      const dataStr = d.data_solicitacao;
+      if (dataStr) {
+        const [year, month, day] = dataStr.split('T')[0].split('-');
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        if (date >= startOfWeek) semana++;
+        if (date >= startOfMonth) mes++;
+      }
+    });
+
+    return { abertas, semana, mes };
+  }, [demandas]);
 
   const handleSaveData = async (formData: any) => {
     try {
@@ -110,13 +137,44 @@ export function DemandasFamilia() {
             placeholder="Buscar demandas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full pl-10 pr-4 py-2.5 bg-slate-50/50 border-slate-200/60 rounded-xl text-sm placeholder-slate-400 font-medium focus:bg-white focus:border-[#001D4A]/50 focus:ring-4 focus:ring-[#001D4A]/10 transition-all duration-300 shadow-sm outline-none"
+            className="block w-full pl-10 pr-4 py-2.5 bg-slate-50/50 border border-slate-200/60 rounded-xl text-sm placeholder-slate-400 font-medium focus:bg-white focus:border-[#001D4A]/50 focus:ring-4 focus:ring-[#001D4A]/10 transition-all duration-300 shadow-sm outline-none"
           />
         </div>
       </div>
 
+      {/* KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Demandas Abertas</p>
+            <p className="text-3xl font-black text-[#1e3a8a]">{kpis.abertas}</p>
+          </div>
+          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+            <LayoutDashboard className="w-5 h-5 text-blue-500" />
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Solicitações da Semana</p>
+            <p className="text-3xl font-black text-[#1e3a8a]">{kpis.semana}</p>
+          </div>
+          <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-indigo-500" />
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Solicitações do Mês</p>
+            <p className="text-3xl font-black text-[#1e3a8a]">{kpis.mes}</p>
+          </div>
+          <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
+            <CalendarCheck className="w-5 h-5 text-purple-500" />
+          </div>
+        </div>
+      </div>
+
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex-1 min-h-[400px]">
+      <div className="bg-white rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-slate-200 overflow-hidden flex-1 min-h-[400px]">
         <DemandasTable
           data={filteredData}
           onEditClick={handleEditItem}

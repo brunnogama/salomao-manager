@@ -75,7 +75,7 @@ export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTabl
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Data</th>
+              <th className="p-4 rounded-tl-xl text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Data</th>
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Solicitante</th>
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Unidade</th>
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Fornecedor</th>
@@ -83,7 +83,7 @@ export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTabl
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-center">Prioridade</th>
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-center">Status</th>
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Prazo</th>
-              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-right">Ações</th>
+              <th className="p-4 pr-6 rounded-tr-xl text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
