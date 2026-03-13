@@ -1130,9 +1130,9 @@ export function Proposals() {
                     }
                   }}
                   className={`px-3 py-3.5 text-xs font-bold border-r border-gray-200 hover:bg-gray-100 transition-colors ${clause.type === 'percent' ? 'text-blue-600' : 'text-green-600'}`}
-                  title={clause.type === 'currency' ? 'Mudar para %' : 'Mudar para R$'}
+                  title={clause.type === 'currency' ? 'Mudar para %' : (language === 'en' ? 'Mudar para U$$' : 'Mudar para R$')}
                 >
-                  {clause.type === 'currency' ? 'R$' : '%'}
+                  {clause.type === 'currency' ? (language === 'en' ? 'U$$' : 'R$') : '%'}
                 </button>
               )}
               <input
