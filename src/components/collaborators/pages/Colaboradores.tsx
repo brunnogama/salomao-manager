@@ -540,7 +540,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         termReasonsRes,
         atuacoesRes
       ] = await Promise.all([
-        supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name), oab_number(*)`).order('name'),
+        supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name), oab_number(*), education_history:collaborator_education_history(*)`).order('name'),
         supabase.from('roles').select('id, name'),
         supabase.from('locations').select('id, name'),
         supabase.from('teams').select('id, name'),
@@ -788,7 +788,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       const payload: any = {};
       Object.entries(dataToSave).forEach(([key, value]) => {
         // Skip metadata, joined objects, photo fields, and independent sections (Perfil manages its own data)
-        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs', 'oab_numero', 'oab_uf', 'oab_tipo', 'oab_emissao', 'original_role', 'role_change_date', 'perfil', 'competencias', 'resumo_cv', 'linkedin', 'atuacao_id', 'nome'].includes(key)) return;
+        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs', 'oab_numero', 'oab_uf', 'oab_tipo', 'oab_emissao', 'original_role', 'role_change_date', 'perfil', 'competencias', 'resumo_cv', 'linkedin', 'atuacao_id', 'nome', 'education_history'].includes(key)) return;
         if (value !== null && typeof value === 'object' && !Array.isArray(value)) return;
 
         // Map empty strings to null for better DB consistency
@@ -901,6 +901,20 @@ export function Colaboradores({ }: ColaboradoresProps) {
             const { error: oabError } = await supabase.from('oab_number').insert(oabPayload);
             if (oabError) console.error("Erro ao salvar OAB:", oabError);
           }
+        }
+
+        // Handle Education History (Relacional)
+        await supabase.from('collaborator_education_history').delete().eq('collaborator_id', savedColabId);
+        if (dataToSave.education_history && dataToSave.education_history.length > 0) {
+          const eduPayload = dataToSave.education_history.map((edu: any) => {
+            const { id, ...rest } = edu; // remove o id original (gerado localmente no form) para o postgres gerar um novo UUID limpo
+            return {
+              ...rest,
+              collaborator_id: savedColabId
+            };
+          });
+          const { error: eduError } = await supabase.from('collaborator_education_history').insert(eduPayload);
+          if (eduError) console.error("Erro ao salvar Escolaridade:", eduError);
         }
       }
 

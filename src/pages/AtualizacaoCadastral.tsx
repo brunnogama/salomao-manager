@@ -126,6 +126,14 @@ export default function AtualizacaoCadastral() {
                     throw new Error('Colaborador não encontrado ou link expirado.');
                 }
 
+                // Tenta buscar da nova tabela relacional (Se o script SQL já tiver sido rodado)
+                const { data: eduData, error: eduError } = await supabase.rpc('get_collaborator_education_by_token', {
+                    p_token: token
+                });
+                if (eduData && !eduError) {
+                    data.education_history = eduData;
+                }
+
                 // Corrigir formato de data para DD/MM/YYYY para exibição no form
                 const formatDateToDisplay = (isoDate: string | undefined | null) => {
                     if (!isoDate) return ''
