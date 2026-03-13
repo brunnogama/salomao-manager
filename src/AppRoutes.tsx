@@ -9,6 +9,7 @@ import ResetPassword from './ResetPassword';
 import AtualizacaoCadastral from './pages/AtualizacaoCadastral';
 import { CandidatoPublicProfile } from './components/collaborators/pages/CandidatoPublicProfile';
 import ReportControladoria from './pages/ReportControladoria';
+import { PublicDemandas } from './components/secretaria/demandas/PublicDemandas';
 import { Presentation } from './pages/presentation/Presentation';
 import { BackupService } from './lib/BackupService';
 import { useEffect } from 'react';
@@ -180,6 +181,7 @@ export function AppRoutes() {
             <Route path="/atualizacao-cadastral/:token" element={<AtualizacaoCadastral />} />
             <Route path="/candidato/perfil/:identifier" element={<CandidatoPublicProfile />} />
             <Route path="/report/controladoria" element={<ReportControladoria />} />
+            <Route path="/public/demandas" element={<PublicDemandas />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>

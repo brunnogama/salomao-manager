@@ -3,11 +3,12 @@ import { Edit2, Search, Trash2 } from 'lucide-react'
 
 interface DemandasTableProps {
   data: any[]
-  onEditClick: (item: any) => void
-  onDeleteClick: (item: any) => void
+  onEditClick?: (item: any) => void
+  onDeleteClick?: (item: any) => void
+  isPublic?: boolean
 }
 
-export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTableProps) {
+export function DemandasTable({ data, onEditClick, onDeleteClick, isPublic = false }: DemandasTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 100
 
@@ -82,8 +83,10 @@ export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTabl
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest min-w-[200px]">Demanda</th>
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-center">Prioridade</th>
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-center">Status</th>
-              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Prazo</th>
-              <th className="p-4 pr-6 rounded-tr-xl text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-right">Ações</th>
+              <th className={`p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap ${isPublic ? 'rounded-tr-xl pr-6' : ''}`}>Prazo</th>
+              {!isPublic && (
+                <th className="p-4 pr-6 rounded-tr-xl text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-right">Ações</th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -99,8 +102,8 @@ export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTabl
               return (
               <tr 
                 key={item.id || index} 
-                className={`transition-colors group cursor-pointer ${vencido ? 'bg-red-50/40 hover:bg-red-100/60' : 'hover:bg-blue-50/30'}`}
-                onClick={() => onEditClick(item)}
+                className={`transition-colors group ${!isPublic ? 'cursor-pointer' : ''} ${vencido ? 'bg-red-50/40 hover:bg-red-100/60' : 'hover:bg-blue-50/30'}`}
+                onClick={() => !isPublic && onEditClick && onEditClick(item)}
               >
                 <td className="p-4">
                   <span className={`text-xs font-bold px-2 py-1 rounded-md ${vencido ? 'text-red-700 bg-red-100' : 'text-[#112240] bg-gray-100'}`}>
@@ -141,17 +144,18 @@ export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTabl
                     {formatDate(item.prazo)}
                   </span>
                 </td>
+                {!isPublic && (
                 <td className="p-4">
                   <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={(e) => { e.stopPropagation(); onEditClick(item); }}
+                      onClick={(e) => { e.stopPropagation(); onEditClick && onEditClick(item); }}
                       className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                       title="Editar"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); onDeleteClick(item); }}
+                      onClick={(e) => { e.stopPropagation(); onDeleteClick && onDeleteClick(item); }}
                       className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                       title="Excluir"
                     >
@@ -159,6 +163,7 @@ export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTabl
                     </button>
                   </div>
                 </td>
+                )}
               </tr>
             )})}
           </tbody>

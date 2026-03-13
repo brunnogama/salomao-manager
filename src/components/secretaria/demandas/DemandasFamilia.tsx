@@ -56,6 +56,8 @@ export function DemandasFamilia() {
     let abertas = 0;
     let semana = 0;
     let mes = 0;
+    let concluidasSemana = 0;
+    let concluidasMes = 0;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -71,12 +73,18 @@ export function DemandasFamilia() {
       if (dataStr) {
         const [year, month, day] = dataStr.split('T')[0].split('-');
         const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-        if (date >= startOfWeek) semana++;
-        if (date >= startOfMonth) mes++;
+        if (date >= startOfWeek) {
+          semana++;
+          if (d.status === 'Concluído') concluidasSemana++;
+        }
+        if (date >= startOfMonth) {
+          mes++;
+          if (d.status === 'Concluído') concluidasMes++;
+        }
       }
     });
 
-    return { abertas, semana, mes };
+    return { abertas, semana, mes, concluidasSemana, concluidasMes };
   }, [demandas]);
 
   const handleSaveData = async (formData: any) => {
@@ -143,32 +151,55 @@ export function DemandasFamilia() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Demandas Abertas</p>
-            <p className="text-3xl font-black text-[#1e3a8a]">{kpis.abertas}</p>
-          </div>
-          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-            <LayoutDashboard className="w-5 h-5 text-blue-500" />
-          </div>
-        </div>
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Solicitações da Semana</p>
-            <p className="text-3xl font-black text-[#1e3a8a]">{kpis.semana}</p>
-          </div>
-          <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-indigo-500" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 shrink-0">
+        <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-[#1e3a8a]/10 flex flex-col hover:border-[#1e3a8a]/30 transition-all mx-1 my-1 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-16 h-16 bg-blue-50/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">Demandas Abertas</p>
+          <div className="flex items-end justify-between relative z-10">
+            <p className="text-3xl font-black text-[#1e3a8a] leading-none">{kpis.abertas}</p>
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+              <LayoutDashboard className="w-4 h-4 text-blue-500" />
+            </div>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Solicitações do Mês</p>
-            <p className="text-3xl font-black text-[#1e3a8a]">{kpis.mes}</p>
+        <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-[#1e3a8a]/10 flex flex-col hover:border-[#1e3a8a]/30 transition-all mx-1 my-1 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-16 h-16 bg-indigo-50/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">Solic. da Semana</p>
+          <div className="flex items-end justify-between relative z-10">
+            <p className="text-3xl font-black text-[#1e3a8a] leading-none">{kpis.semana}</p>
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+              <Calendar className="w-4 h-4 text-indigo-500" />
+            </div>
           </div>
-          <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
-            <CalendarCheck className="w-5 h-5 text-purple-500" />
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-green-500/10 flex flex-col hover:border-green-500/30 transition-all mx-1 my-1 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-16 h-16 bg-green-50/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">Concluídas na Semana</p>
+          <div className="flex items-end justify-between relative z-10">
+            <p className="text-3xl font-black text-green-600 leading-none">{kpis.concluidasSemana}</p>
+            <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+              <CalendarCheck className="w-4 h-4 text-green-500" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-[#1e3a8a]/10 flex flex-col hover:border-[#1e3a8a]/30 transition-all mx-1 my-1 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-16 h-16 bg-purple-50/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">Solic. do Mês</p>
+          <div className="flex items-end justify-between relative z-10">
+            <p className="text-3xl font-black text-[#1e3a8a] leading-none">{kpis.mes}</p>
+            <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+              <Calendar className="w-4 h-4 text-purple-500" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-emerald-500/10 flex flex-col hover:border-emerald-500/30 transition-all mx-1 my-1 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-16 h-16 bg-emerald-50/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">Concluídas no Mês</p>
+          <div className="flex items-end justify-between relative z-10">
+            <p className="text-3xl font-black text-emerald-600 leading-none">{kpis.concluidasMes}</p>
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <CalendarCheck className="w-4 h-4 text-emerald-500" />
+            </div>
           </div>
         </div>
       </div>
