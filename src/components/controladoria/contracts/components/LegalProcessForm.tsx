@@ -151,11 +151,11 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                             <div className="flex items-center mt-1"><input type="checkbox" id="no_cnpj_author" checked={authorHasNoCnpj} onChange={(e) => setAuthorHasNoCnpj(e.target.checked)} className="rounded text-salomao-blue w-3 h-3 mr-1" /><label htmlFor="no_cnpj_author" className="text-[10px] text-gray-500 cursor-pointer">Sem CNPJ</label></div>
                         </div>
                         <div className="md:col-span-4">
-                            <CustomSelect label="Autor" value={(currentProcess as any).author || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, author: val } as any)} options={authorOptions.map(o => ({ label: o, value: o }))} onAction={() => setActiveManager('author')} actionLabel="Gerenciar Autores" actionIcon={Settings} placeholder="Selecione ou adicione" />
+                            <CustomSelect label="Autor" value={(currentProcess as any).author || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, author: val } as any)} options={(Array.isArray(authorOptions) ? authorOptions : []).map(o => ({ label: o, value: o }))} onAction={() => setActiveManager('author')} actionLabel="Gerenciar Autores" actionIcon={Settings} placeholder="Selecione ou adicione" />
                             {duplicateAuthorCases.length > 0 && (
                                 <div className="mt-1 flex flex-wrap gap-1">
                                     <span className="text-[10px] text-blue-600 font-bold mr-1">Similar:</span>
-                                    {duplicateAuthorCases.map(c => (<a key={c.contract_id} href={`/contracts/${c.contracts?.id}`} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 hover:bg-blue-100 truncate max-w-[150px]">{c.contracts?.client_name}</a>))}
+                                    {(Array.isArray(duplicateAuthorCases) ? duplicateAuthorCases : []).map(c => (<a key={c.contract_id} href={`/contracts/${c.contracts?.id}`} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 hover:bg-blue-100 truncate max-w-[150px]">{c.contracts?.client_name}</a>))}
                                 </div>
                             )}
                         </div>
@@ -168,11 +168,11 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                             <div className="flex items-center mt-1"><input type="checkbox" id="no_cnpj_opponent" checked={opponentHasNoCnpj} onChange={(e) => setOpponentHasNoCnpj(e.target.checked)} className="rounded text-salomao-blue w-3 h-3 mr-1" /><label htmlFor="no_cnpj_opponent" className="text-[10px] text-gray-500 cursor-pointer">Sem CNPJ</label></div>
                         </div>
                         <div className="md:col-span-4">
-                            <CustomSelect label="Contrário" value={currentProcess.opponent || formData.company_name || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, opponent: val })} options={opponentOptions.map(o => ({ label: o, value: o }))} onAction={() => setActiveManager('opponent')} actionLabel="Gerenciar Contrário" actionIcon={Settings} placeholder="Selecione ou adicione" />
+                            <CustomSelect label="Contrário" value={currentProcess.opponent || formData.company_name || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, opponent: val })} options={(Array.isArray(opponentOptions) ? opponentOptions : []).map(o => ({ label: o, value: o }))} onAction={() => setActiveManager('opponent')} actionLabel="Gerenciar Contrário" actionIcon={Settings} placeholder="Selecione ou adicione" />
                             {duplicateOpponentCases.length > 0 && (
                                 <div className="mt-1 flex flex-wrap gap-1">
                                     <span className="text-[10px] text-blue-600 font-bold mr-1">Similar:</span>
-                                    {duplicateOpponentCases.map(c => (<a key={c.contract_id} href={`/contracts/${c.contracts?.id}`} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 hover:bg-blue-100 truncate max-w-[150px]">{c.contracts?.client_name}</a>))}
+                                    {(Array.isArray(duplicateOpponentCases) ? duplicateOpponentCases : []).map(c => (<a key={c.contract_id} href={`/contracts/${c.contracts?.id}`} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 hover:bg-blue-100 truncate max-w-[150px]">{c.contracts?.client_name}</a>))}
                                 </div>
                             )}
                         </div>
@@ -183,11 +183,11 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                             <label className="text-[10px] text-gray-500 uppercase font-bold">Magistrado</label>
                             <div className="flex gap-2">
                                 <div className="w-40"><CustomSelect value={newMagistrateTitle} onChange={(val: string) => setNewMagistrateTitle(val)} options={magistrateTypes} /></div>
-                                <div className="flex-1"><CustomSelect value={newMagistrateName} onChange={(val: string) => setNewMagistrateName(val)} options={magistrateOptions.map(m => ({ label: m, value: m }))} placeholder="Selecione magistrado" onAction={() => setActiveManager('magistrate')} actionLabel="Gerenciar Magistrados" actionIcon={Settings} /></div>
+                                <div className="flex-1"><CustomSelect value={newMagistrateName} onChange={(val: string) => setNewMagistrateName(val)} options={(Array.isArray(magistrateOptions) ? magistrateOptions : []).map(m => ({ label: m, value: m }))} placeholder="Selecione magistrado" onAction={() => setActiveManager('magistrate')} actionLabel="Gerenciar Magistrados" actionIcon={Settings} /></div>
                                 <button onClick={() => addMagistrate(newMagistrateName)} className="text-salomao-blue hover:text-blue-700 font-bold px-2 rounded-lg bg-blue-50">+</button>
                             </div>
                             <div className="flex flex-wrap gap-2 mt-2">
-                                {currentProcess.magistrates?.map((m, idx) => (
+                                {(Array.isArray(currentProcess.magistrates) ? currentProcess.magistrates : []).map((m, idx) => (
                                     <span key={idx} className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs flex items-center gap-1 border border-gray-200"><Gavel size={10} className="text-gray-400" /><b>{m.title}:</b> {m.name}<button onClick={() => removeMagistrate(idx)} className="ml-1 text-red-400 hover:text-red-600"><X size={10} /></button></span>
                                 ))}
                             </div>

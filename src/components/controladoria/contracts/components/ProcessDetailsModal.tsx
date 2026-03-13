@@ -46,7 +46,7 @@ export function ProcessDetailsModal({ process, onClose, onEdit }: ProcessDetails
 
           <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
             <span className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Magistrados</span>
-            {process.magistrates && process.magistrates.length > 0 ? (
+            {process.magistrates && Array.isArray(process.magistrates) && process.magistrates.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {process.magistrates.map((m, idx) => (
                   <span key={idx} className="inline-flex items-center px-2 py-1 rounded bg-white border border-gray-200 text-xs text-gray-700">

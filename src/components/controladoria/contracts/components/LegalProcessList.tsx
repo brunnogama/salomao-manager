@@ -11,7 +11,7 @@ interface LegalProcessListProps {
 }
 
 export function LegalProcessList({ processes, setViewProcess, setViewProcessIndex, editProcess, removeProcess }: LegalProcessListProps) {
-  if (processes.length === 0) return null;
+  if (!processes || !Array.isArray(processes) || processes.length === 0) return null;
 
   return (
     <div className="space-y-2 mt-4">

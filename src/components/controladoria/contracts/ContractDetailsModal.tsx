@@ -417,7 +417,7 @@ export function ContractDetailsModal({
             {/* Coluna 3: Processos */}
             <div className="space-y-6">
               <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2">Processos ({processes.length})</h3>
-              {processes.length === 0 ? (
+              {(!processes || !Array.isArray(processes) || processes.length === 0) ? (
                 <p className="text-sm text-gray-400 italic">Nenhum processo vinculado.</p>
               ) : (
                 <div className="space-y-3">

@@ -56,7 +56,7 @@ export function ContractDocuments({
       {hasFiles ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Arquivos Já Salvos */}
-          {documents.map((doc) => (
+          {(Array.isArray(documents) ? documents : []).map((doc) => (
             <div key={doc.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 group">
               <div className="flex items-center overflow-hidden">
                 <div className="bg-red-100 p-2 rounded text-red-600 mr-3">
@@ -88,7 +88,7 @@ export function ContractDocuments({
           ))}
 
           {/* Arquivos Temporários (Novos) */}
-          {tempFiles.map((item, idx) => (
+          {(Array.isArray(tempFiles) ? tempFiles : []).map((item, idx) => (
             <div key={`temp-${idx}`} className="flex items-center justify-between p-3 bg-blue-50/50 rounded-lg border border-blue-100 group">
               <div className="flex items-center overflow-hidden">
                 <div className="bg-blue-100 p-2 rounded text-blue-600 mr-3">

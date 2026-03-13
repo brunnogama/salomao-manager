@@ -78,7 +78,7 @@ export function ClientFormSection(props: ClientFormSectionProps) {
                         <AlertCircle className="w-3 h-3 mr-1" /> Já há casos para este cliente:
                     </span>
                     <div className="flex flex-wrap gap-2">
-                        {duplicateClientCases.map(c => (
+                        {(Array.isArray(duplicateClientCases) ? duplicateClientCases : []).map(c => (
                             <a key={c.id} href={`/contracts/${c.id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline bg-white px-2 py-0.5 rounded border border-blue-100 flex items-center">
                                 <LinkIcon className="w-2.5 h-2.5 mr-1"/> {c.hon_number || 'Sem HON'} ({getStatusLabel(c.status)})
                             </a>
