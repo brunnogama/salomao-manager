@@ -746,7 +746,7 @@ export function RHVagas() {
     const nameA = a.nome || ''
     const nameB = b.nome || ''
     return nameA.localeCompare(nameB)
-  }), [candidatos, searchTerm, filterLocal, filterCargo, filterArea])
+  }), [candidatos, searchTerm, filterLocal, filterCargo, filterArea, filterFaculdades, filterPeriodos])
 
   // Stats (memorizados)
   const vagasAbertas = useMemo(() => vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').length, [vagas])
