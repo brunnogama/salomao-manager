@@ -67,16 +67,16 @@ export function DemandasTable({ data, onEditClick, onDeleteClick }: DemandasTabl
       <div className="flex-1 overflow-auto custom-scrollbar">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/80">
-              <th className="p-4 text-[10px] font-black text-gray-500 uppercase tracking-widest whitespace-nowrap">Data</th>
-              <th className="p-4 text-[10px] font-black text-gray-500 uppercase tracking-widest whitespace-nowrap">Solicitante</th>
-              <th className="p-4 text-[10px] font-black text-gray-500 uppercase tracking-widest whitespace-nowrap">Unidade</th>
-              <th className="p-4 text-[10px] font-black text-gray-500 uppercase tracking-widest whitespace-nowrap">Fornecedor</th>
-              <th className="p-4 text-[10px] font-black text-gray-500 uppercase tracking-widest min-w-[200px]">Demanda</th>
-              <th className="p-4 text-[10px] font-black text-gray-500 uppercase tracking-widest whitespace-nowrap text-center">Prioridade</th>
-              <th className="p-4 text-[10px] font-black text-gray-500 uppercase tracking-widest whitespace-nowrap text-center">Status</th>
-              <th className="p-4 text-[10px] font-black text-gray-500 uppercase tracking-widest whitespace-nowrap">Prazo</th>
-              <th className="p-4 text-[10px] font-black text-gray-500 uppercase tracking-widest whitespace-nowrap text-right">Ações</th>
+            <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Data</th>
+              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Solicitante</th>
+              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Unidade</th>
+              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Fornecedor</th>
+              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest min-w-[200px]">Demanda</th>
+              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-center">Prioridade</th>
+              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-center">Status</th>
+              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Prazo</th>
+              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">

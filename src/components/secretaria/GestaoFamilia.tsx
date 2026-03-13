@@ -224,7 +224,13 @@ export function GestaoFamilia({
 
         {/* User Info & Actions */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-fit mr-4">
+          <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-fit">
+            <button
+              onClick={() => setActiveTab('demandas')}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'demandas' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Demandas
+            </button>
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
@@ -237,16 +243,16 @@ export function GestaoFamilia({
             >
               Dados
             </button>
-            <button
-              onClick={() => setActiveTab('demandas')}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'demandas' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              Demandas
-            </button>
-          </div>
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
+
+            {activeTab === 'demandas' && (
+              <button
+                onClick={() => document.dispatchEvent(new CustomEvent('openNovaDemanda'))}
+                className="ml-2 flex items-center justify-center w-10 h-10 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl transition-all shadow-md shrink-0"
+                title="Nova Demanda"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
