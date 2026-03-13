@@ -1272,83 +1272,52 @@ export function Proposals() {
               />
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5 ml-1">
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">CNPJ [da Empresa Cliente]</label>
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <div className="relative flex items-center">
-                    <input
-                      type="checkbox"
-                      name="isPerson"
-                      checked={proposalData.isPerson}
-                      onChange={handleChange}
-                      className="peer h-3 w-3 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all checked:bg-[#1e3a8a] checked:border-[#1e3a8a] hover:border-[#1e3a8a]"
-                    />
-                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-500 group-hover:text-[#1e3a8a] transition-colors select-none">Pessoa Física?</span>
-                </label>
+            {language === 'pt' && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5 ml-1">
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">CNPJ [da Empresa Cliente]</label>
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        name="isPerson"
+                        checked={proposalData.isPerson}
+                        onChange={handleChange}
+                        className="peer h-3 w-3 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all checked:bg-[#1e3a8a] checked:border-[#1e3a8a] hover:border-[#1e3a8a]"
+                      />
+                      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-500 group-hover:text-[#1e3a8a] transition-colors select-none">Pessoa Física?</span>
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="cnpj"
+                    value={proposalData.cnpj}
+                    onChange={handleChange}
+                    placeholder="00.000.000/0000-00"
+                    disabled={proposalData.isPerson}
+                    onFocus={() => jumpToFieldPage('cnpj')}
+                    className={`w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all ${proposalData.isPerson ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
+                  />
+                  <button
+                    onClick={handleCNPJSearch}
+                    disabled={!proposalData.cnpj || proposalData.isPerson}
+                    className="p-3.5 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    title="Buscar CNPJ"
+                  >
+                    <Search className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  name="cnpj"
-                  value={proposalData.cnpj}
-                  onChange={handleChange}
-                  placeholder="00.000.000/0000-00"
-                  disabled={proposalData.isPerson}
-                  onFocus={() => jumpToFieldPage('cnpj')}
-                  className={`w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all ${proposalData.isPerson ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
-                />
-                <button
-                  onClick={handleCNPJSearch}
-                  disabled={!proposalData.cnpj || proposalData.isPerson}
-                  className="p-3.5 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
-                  title="Buscar CNPJ"
-                >
-                  <Search className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
+            )}
 
-            {/* Language Toggle */}
-            <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Idioma da Proposta</label>
-              <div className="flex items-center gap-2 bg-gray-50/50 p-1.5 rounded-xl border border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLanguage('pt');
-                    if (!isEditingBody) setCustomBodyText("");
-                  }}
-                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                    language === 'pt' 
-                      ? 'bg-white text-[#1e3a8a] shadow-sm border border-gray-200' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Português
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLanguage('en');
-                    if (!isEditingBody) setCustomBodyText("");
-                  }}
-                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                    language === 'en' 
-                      ? 'bg-white text-[#1e3a8a] shadow-sm border border-gray-200' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Inglês
-                </button>
-              </div>
-            </div>
+
 
             <div>
               <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local do Contrato</label>
@@ -1502,8 +1471,46 @@ export function Proposals() {
           </div>
         </div>
 
-        {/* DIREITA: Preview Visual */}
-        <div className="bg-white p-4 sm:p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center relative min-h-[500px] sm:min-h-[900px] w-full">
+        {/* DIREITA: Preview Visual e Toggle de Idioma */}
+        <div className="flex flex-col gap-4">
+          {/* Language Toggle above Preview */}
+          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest flex items-center gap-2">
+              <FileSignature className="w-4 h-4" /> Configuração da Proposta
+            </span>
+            <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 w-[240px]">
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguage('pt');
+                  if (!isEditingBody) setCustomBodyText("");
+                }}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                  language === 'pt' 
+                    ? 'bg-white text-[#1e3a8a] shadow-sm border border-gray-200' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Português
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguage('en');
+                  if (!isEditingBody) setCustomBodyText("");
+                }}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                  language === 'en' 
+                    ? 'bg-white text-[#1e3a8a] shadow-sm border border-gray-200' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Inglês
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 sm:p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center relative min-h-[500px] sm:min-h-[900px] w-full">
           <p className="absolute top-4 right-6 text-[9px] font-black text-gray-300 uppercase tracking-widest hidden sm:flex items-center gap-1 z-20">
             <Eye className="w-3 h-3" /> Visualização em Tempo Real
           </p>
@@ -1601,6 +1608,7 @@ export function Proposals() {
           <div ref={previewContainerRef} className="w-full max-w-[850px] aspect-[21/29.7] absolute opacity-0 pointer-events-none"></div>
         </div>
       </div>
+    </div>
 
       {/* Hidden Modal to open after generation */}
       {
