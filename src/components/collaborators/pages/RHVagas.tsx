@@ -716,13 +716,21 @@ export function RHVagas() {
     // We already hid Lider and Socio for Talentos, and we hid them for Reprovados in the UI earlier. 
     // The filter variables used here are Local, Cargo, and Area.
 
+    // Parsing seguro do Histórico de Educação (pode vir como string JSON do Supabase)
+    let eduHistory: any[] = [];
+    if (typeof c.education_history === 'string') {
+      try { eduHistory = JSON.parse(c.education_history); } catch (e) {}
+    } else if (Array.isArray(c.education_history)) {
+      eduHistory = c.education_history;
+    }
+
     // Novos Filtros (Faculdade e Período Atual)
     const matchFaculdade = filterFaculdades.length > 0 
-      ? c.education_history?.some((edu: any) => filterFaculdades.includes(edu.instituicao))
+      ? eduHistory.some((edu: any) => filterFaculdades.includes(edu.instituicao))
       : true;
 
     const matchPeriodo = filterPeriodos.length > 0 
-      ? c.education_history?.some((edu: any) => filterPeriodos.includes(edu.semestre))
+      ? eduHistory.some((edu: any) => filterPeriodos.includes(edu.semestre))
       : true;
 
     return matchSearch && matchLocal && matchCargo && matchArea && matchFaculdade && matchPeriodo
