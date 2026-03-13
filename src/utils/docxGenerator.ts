@@ -30,8 +30,8 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         fetchImage('/rodape2.png')
     ]);
 
-    const standardFont = "Arial";
-    const boldFont = "Arial";
+    const standardFont = "Aptos";
+    const boldFont = "Aptos";
 
     // --- SECTIONS ---
 
@@ -62,18 +62,18 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                     new ImageRun({
                         data: footer1Buffer,
                         transformation: {
-                            width: 200,
-                            height: 35,
+                            width: 400,
+                            height: 70,
                         },
                     }),
                     new TextRun({
-                        text: " ".repeat(40), // Spacing between images
+                        text: " ".repeat(5), // Reduced spacing to accommodate larger images
                     }),
                     new ImageRun({
                         data: footer2Buffer,
                         transformation: {
-                            width: 200,
-                            height: 35,
+                            width: 400,
+                            height: 70,
                         },
                     }),
                 ],
@@ -86,7 +86,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
 
     const docChildren: any[] = processedText.split('\n').map(paragraphText => {
         if (!paragraphText.trim()) {
-            return new Paragraph({ spacing: { line: 288, after: 120 } });
+            return new Paragraph({ spacing: { line: 276, after: 0 } });
         }
 
         let align: any = AlignmentType.JUSTIFIED;
@@ -109,20 +109,20 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                 return new TextRun({
                     text: part.slice(2, -2),
                     font: boldFont,
-                    size: 20,
+                    size: 22,
                     bold: true
                 });
             }
             return new TextRun({
                 text: part,
                 font: standardFont,
-                size: 20
+                size: 22
             });
         });
 
         return new Paragraph({
             alignment: align,
-            spacing: { line: 288, after: 120 },
+            spacing: { line: 276, after: 0 },
             children
         });
     });

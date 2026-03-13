@@ -607,10 +607,10 @@ export function Proposals() {
     text += `, vem formular a presente proposta de honorários.\n\n`;
 
     text += `**1. OBJETO E ESCOPO DO SERVIÇO:**\n\n`;
-    text += `1.1. O objeto da presente proposta é a assessoria jurídica a ser realizada pelos advogados que compõem Salomão Advogados (“Escritório”), com vistas à representação judicial em favor do Cliente **${proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}** (“Cliente” ou “Contratante”) no **${proposalData.object || '[incluir objeto da disputa]'}**.\n\n`;
+    text += `1.1. O objeto da presente proposta é a assessoria jurídica a ser realizada pelos advogados que compõem Salomão Advogados (“Escritório”), com vistas à representação judicial em favor do Cliente **${proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}** (“Cliente” ou “Contratante”) **${proposalData.object || '[incluir objeto da disputa]'}**.\n\n`;
     text += `1.2. Os serviços previstos nesta proposta abrangem a defesa dos interesses do Contratante em toda e qualquer discussão relacionada ao tema tratado.\n\n`;
     text += `1.3. Além da análise do caso e definição da estratégia jurídica, o escopo dos serviços profissionais compreende a análise completa dos documentos e informações enviadas pelo Cliente, elaboração das peças processuais, acompanhamento processual, realização de sustentações orais, despachos, bem como todos os atos conexos necessários a atender os interesses do Cliente nos referidos processos.\n\n`;
-    text += `1.4. Os serviços aqui propostos compreende a participação em reuniões com o Cliente sempre que necessário para entendimentos, esclarecimentos e discussão de estratégias, sempre objetivando a melhor atuação possível do Escritório em defesa dos interesses do Cliente.\n\n`;
+    text += `1.4. Os serviços aqui propostos compreendem a participação em reuniões com o Cliente sempre que necessário para entendimentos, esclarecimentos e discussão de estratégias, sempre objetivando a melhor atuação possível do Escritório em defesa dos interesses do Cliente.\n\n`;
     text += `1.5. Também está incluída a assessoria jurídica na interlocução com a contraparte, para fins de autocomposição.\n\n`;
     text += `1.6. Os serviços aqui propostos não incluem consultoria geral ou outra que não possua correlação com o objeto da proposta.\n\n`;
     text += `**2. HONORÁRIOS E FORMA DE PAGAMENTO:**\n\n`;
@@ -619,14 +619,14 @@ export function Proposals() {
     let clauseIndex = 2;
     proposalData.pro_labore_clauses.forEach((c) => {
       if (c.value) {
-        text += `2.${clauseIndex}. Honorários pró-labore de ${c.value}, ${c.description || 'para engajamento no caso'}\n\n`;
+        text += `2.${clauseIndex}. Honorários pró-labore de ${c.value}, ${c.description || 'para engajamento no caso'}.\n\n`;
         clauseIndex++;
       }
     });
 
     proposalData.intermediate_fee_clauses.forEach((c) => {
       if (c.value) {
-        text += `2.${clauseIndex}. Êxito intermediário de ${c.value}, ${c.description || '[descrição]'}\n\n`;
+        text += `2.${clauseIndex}. Êxito intermediário de ${c.value}, ${c.description || '[descrição]'}.\n\n`;
         clauseIndex++;
       }
     });
@@ -634,7 +634,7 @@ export function Proposals() {
     proposalData.final_success_fee_clauses.forEach((c) => {
       if (c.value) {
         const valText = c.type === 'currency' ? c.value : `${c.value}%`;
-        text += `2.${clauseIndex}. Honorários finais de êxito de ${valText}, ${c.description || '[descrição]'}\n\n`;
+        text += `2.${clauseIndex}. Honorários finais de êxito de ${valText}, ${c.description || '[descrição]'}.\n\n`;
         clauseIndex++;
       }
     });
