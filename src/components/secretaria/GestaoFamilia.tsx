@@ -20,6 +20,7 @@ import { FamiliaFormModal } from './FamiliaFormModal'
 import { FamiliaViewModal } from './FamiliaViewModal'
 import { FamiliaStats } from './FamiliaStats'
 import { FamiliaFilters } from './FamiliaFilters'
+import { DemandasFamilia } from './demandas/DemandasFamilia'
 
 interface GestaoFamiliaProps {
   userName?: string;
@@ -32,7 +33,7 @@ export function GestaoFamilia({
   onModuleHome,
   onLogout
 }: GestaoFamiliaProps) {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'dados'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'dados' | 'demandas'>('dashboard')
   const [dadosFamilia, setDadosFamilia] = useState<any[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
@@ -262,10 +263,17 @@ export function GestaoFamilia({
           >
             <Database className="h-3.5 w-3.5" /> Dados
           </button>
+          <button
+            onClick={() => setActiveTab('demandas')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'demandas' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <Database className="h-3.5 w-3.5" /> Demandas
+          </button>
         </div>
       </div>
 
       {/* Barra de Filtros e Busca */}
+      {activeTab !== 'demandas' && (
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -306,6 +314,7 @@ export function GestaoFamilia({
           </div>
         </div>
       </div>
+      )}
 
       {/* Conteúdo Principal */}
       <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
@@ -317,16 +326,20 @@ export function GestaoFamilia({
                 <Home className="h-12 w-12 text-blue-200" />
               </div>
               <h3 className="text-xl font-black text-[#112240] tracking-tight">Dashboard de Gestão Familiar</h3>
-              <p className="text-gray-400 text-sm font-semibold mt-1">Selecione a aba Dados para gerenciar os lançamentos em detalhe.</p>
+              <p className="text-gray-400 text-sm font-semibold mt-1">Selecione as abas Dados ou Demandas para gerenciar em detalhe.</p>
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'dados' ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in zoom-in duration-300">
             <FamiliaTable
               data={filteredData}
               onEditClick={handleEditItem}
               onDeleteClick={(item) => setItemToDelete(item)}
             />
+          </div>
+        ) : (
+          <div className="animate-in fade-in zoom-in duration-300 h-full flex flex-col">
+             <DemandasFamilia />
           </div>
         )}
       </div>
