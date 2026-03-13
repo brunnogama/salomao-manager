@@ -211,7 +211,26 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                         <div>
                             <label className="text-[10px] text-gray-500 uppercase font-bold">Assunto</label>
                             <div className="flex gap-2">
-                                <div className="flex-1"><CustomSelect value={newSubject} onChange={(val: string) => setNewSubject(val)} options={subjectSelectOptions} placeholder="Selecione ou digite novo" onAction={() => setActiveManager('subject')} actionLabel="Gerenciar Assuntos" actionIcon={Settings} /></div>
+                                <div className="flex-1">
+                                    <CustomSelect 
+                                        allowCustomValue 
+                                        value={newSubject} 
+                                        onChange={(val: string) => {
+                                            const cleanSubject = toTitleCase(val.trim());
+                                            if (!cleanSubject) return;
+                                            
+                                            const currentSubjects = currentProcess.subject ? currentProcess.subject.split(';').map((s: string) => s.trim()).filter((s: string) => s !== '') : [];
+                                            if (!currentSubjects.includes(cleanSubject)) {
+                                                setCurrentProcess({ ...currentProcess, subject: [...currentSubjects, cleanSubject].join('; ') } as any);
+                                            }
+                                        }} 
+                                        options={subjectSelectOptions} 
+                                        placeholder="Selecione ou digite novo" 
+                                        onAction={() => setActiveManager('subject')} 
+                                        actionLabel="Gerenciar Assuntos" 
+                                        actionIcon={Settings} 
+                                    />
+                                </div>
                                 <button onClick={addSubjectToProcess} className="text-salomao-blue hover:text-blue-700 font-bold px-3 rounded-lg bg-blue-50">+</button>
                             </div>
                             <div className="flex flex-wrap gap-2 mt-2">
