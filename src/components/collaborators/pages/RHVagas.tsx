@@ -18,10 +18,13 @@ import {
   UserX,
   Share2,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  GraduationCap,
+  CalendarDays
 } from 'lucide-react'
 // date-fns importado acima do componente junto com as funções utilitárias
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
+import { FilterMultiSelect } from '../../controladoria/ui/FilterMultiSelect'
 import { VagaFormModal } from '../components/VagaFormModal'
 import { VagaViewModal } from '../components/VagaViewModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
@@ -185,12 +188,20 @@ export function RHVagas() {
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
   const [filterArea, setFilterArea] = useState('')
+  const [filterFaculdades, setFilterFaculdades] = useState<string[]>([])
+  const [filterPeriodos, setFilterPeriodos] = useState<string[]>([])
 
   // Opções de Filtro
   const [liderOptions, setLiderOptions] = useState<{ value: string; label: string }[]>([])
   const [partnerOptions, setPartnerOptions] = useState<{ value: string; label: string }[]>([])
   const [locationOptions, setLocationOptions] = useState<{ value: string; label: string }[]>([])
   const [roleOptions, setRoleOptions] = useState<{ value: string; label: string }[]>([])
+  const [faculdadesOptions, setFaculdadesOptions] = useState<{ value: string; label: string }[]>([])
+  
+  const periodosGlobais = [
+    '1º Período', '2º Período', '3º Período', '4º Período', '5º Período',
+    '6º Período', '7º Período', '8º Período', '9º Período', '10º Período'
+  ].map(p => ({ value: p, label: p }))
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -339,16 +350,18 @@ export function RHVagas() {
   }
 
   const fetchFilterOptions = async () => {
-    const [rolesRes, locsRes, partnersRes, leadersRes] = await Promise.all([
+    const [rolesRes, locsRes, partnersRes, leadersRes, instRes] = await Promise.all([
       supabase.from('roles').select('id, name').order('name'),
       supabase.from('locations').select('id, name').order('name'),
       supabase.from('partners').select('id, name').order('name'),
-      supabase.from('collaborators').select('id, name').order('name')
+      supabase.from('collaborators').select('id, name').order('name'),
+      supabase.rpc('get_education_institutions')
     ]);
     if (rolesRes.data) setRoleOptions(rolesRes.data.map(r => ({ value: String(r.id), label: r.name })));
     if (locsRes.data) setLocationOptions(locsRes.data.map(l => ({ value: String(l.id), label: l.name })));
     if (partnersRes.data) setPartnerOptions(partnersRes.data.map(p => ({ value: String(p.id), label: p.name })));
     if (leadersRes.data) setLiderOptions(leadersRes.data.map(c => ({ value: String(c.id), label: c.name })));
+    if (instRes.data) setFaculdadesOptions((instRes.data as any[]).map(i => ({ value: i.name, label: i.name })));
   }
 
   const fetchVagas = async () => {
@@ -375,7 +388,8 @@ export function RHVagas() {
       .from('candidatos')
       .select(`
         *,
-        candidato_historico ( tipo, data_registro, entrevista_data )
+        candidato_historico ( tipo, data_registro, entrevista_data ),
+        education_history ( instituicao, semestre, status )
       `)
       .order('created_at', { ascending: false })
 
@@ -703,7 +717,16 @@ export function RHVagas() {
     // We already hid Lider and Socio for Talentos, and we hid them for Reprovados in the UI earlier. 
     // The filter variables used here are Local, Cargo, and Area.
 
-    return matchSearch && matchLocal && matchCargo && matchArea
+    // Novos Filtros (Faculdade e Período Atual)
+    const matchFaculdade = filterFaculdades.length > 0 
+      ? c.education_history?.some((edu: any) => filterFaculdades.includes(edu.instituicao))
+      : true;
+
+    const matchPeriodo = filterPeriodos.length > 0 
+      ? c.education_history?.some((edu: any) => filterPeriodos.includes(edu.semestre))
+      : true;
+
+    return matchSearch && matchLocal && matchCargo && matchArea && matchFaculdade && matchPeriodo
   }).sort((a, b) => {
     // Priority: Candidatos com avaliação do lider recente vêm em primeiro
     if (a.data_avaliacao && !b.data_avaliacao) return -1;
@@ -916,6 +939,24 @@ export function RHVagas() {
                   ]}
                   placeholder="Área"
                 />
+                {(activeTab === 'talentos' || activeTab === 'reprovados') && (
+                  <>
+                    <FilterMultiSelect
+                      icon={GraduationCap}
+                      value={filterFaculdades}
+                      onChange={setFilterFaculdades}
+                      options={faculdadesOptions}
+                      placeholder="Faculdades"
+                    />
+                    <FilterMultiSelect
+                      icon={CalendarDays}
+                      value={filterPeriodos}
+                      onChange={setFilterPeriodos}
+                      options={periodosGlobais}
+                      placeholder="Período"
+                    />
+                  </>
+                )}
                 <FilterSelect
                   icon={Briefcase}
                   value={filterCargo}
