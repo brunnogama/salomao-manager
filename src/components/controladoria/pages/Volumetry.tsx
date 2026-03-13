@@ -88,6 +88,15 @@ export function Volumetry() {
 
   const uniqueClients = new Set(filteredProcesses.map(p => p.cliente_principal).filter(Boolean)).size;
 
+  // Calculo de processos duplicados pelo numero CNJ
+  const cnjCounts = filteredProcesses.reduce((acc: Record<string, number>, p: any) => {
+    if (p.numero_cnj) {
+      acc[p.numero_cnj] = (acc[p.numero_cnj] || 0) + 1;
+    }
+    return acc;
+  }, {});
+  const duplicadosCount = Object.values(cnjCounts).filter(count => (count as number) > 1).reduce((sum, count) => sum + ((count as number) - 1), 0);
+
   // Extrair lista de responsáveis únicos para o filtro
   const allPartners = Array.from(new Set(processes.map(p => toTitleCase(p.responsavel_principal || '')).filter(Boolean))).sort();
   // Extrair status únicos (Ativo, Arquivado, etc)
@@ -203,7 +212,7 @@ export function Volumetry() {
           </div>
 
           {/* Cards de Resumo */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
               <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
               <div>
@@ -237,14 +246,29 @@ export function Volumetry() {
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden group">
               <div className="absolute right-0 top-0 h-full w-1 bg-purple-600"></div>
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Clientes Únicos</p>
-                <p className="text-2xl font-black text-purple-900 mt-1">{uniqueClients.toLocaleString('pt-BR')}</p>
+              <div className="flex items-center justify-between w-full">
+                <div>
+                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Clientes Únicos</p>
+                   <p className="text-2xl font-black text-purple-900 mt-1">{uniqueClients.toLocaleString('pt-BR')}</p>
+                </div>
+                <div className="p-3 bg-purple-50 rounded-xl">
+                  <PieChart className="h-6 w-6 text-purple-600" />
+                </div>
               </div>
-              <div className="p-3 bg-purple-50 rounded-xl">
-                <PieChart className="h-6 w-6 text-purple-600" />
+            </div>
+            
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden group md:col-span-4 lg:col-span-1">
+              <div className="absolute right-0 top-0 h-full w-1 bg-rose-600"></div>
+              <div className="flex items-center justify-between w-full">
+                <div>
+                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos Duplicados</p>
+                   <p className="text-2xl font-black text-rose-900 mt-1">{(duplicadosCount as number).toLocaleString('pt-BR')}</p>
+                </div>
+                <div className="p-3 bg-rose-50 rounded-xl">
+                  <Layers className="h-6 w-6 text-rose-600" />
+                </div>
               </div>
             </div>
           </div>
