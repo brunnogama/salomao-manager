@@ -12,6 +12,7 @@ import {
 import XLSX from 'xlsx-js-style';
 
 import { VolumetryProcesses } from './VolumetryProcesses';
+import { SearchableSelect } from '../../SearchableSelect';
 
 export function Volumetry() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'processos'>('dashboard');
@@ -179,30 +180,22 @@ export function Volumetry() {
 
               <div className="w-full sm:w-48">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Líder Responsável</label>
-                <select
+                <SearchableSelect
                   value={partnerFilter}
-                  onChange={(e) => setPartnerFilter(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-600 font-medium appearance-none"
-                >
-                  <option value="">Todos</option>
-                  {allPartners.map((p, idx) => (
-                    <option key={idx} value={p as string}>{p as string}</option>
-                  ))}
-                </select>
+                  onChange={(v) => setPartnerFilter(v || '')}
+                  placeholder="Todos"
+                  options={allPartners.map(p => ({ id: p as string, name: p as string }))}
+                />
               </div>
 
               <div className="w-full sm:w-48">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
-                <select
+                <SearchableSelect
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-600 font-medium appearance-none"
-                >
-                  <option value="">Todos</option>
-                  {allStatuses.map((s, idx) => (
-                    <option key={idx} value={s as string}>{s as string}</option>
-                  ))}
-                </select>
+                  onChange={(v) => setStatusFilter(v || '')}
+                  placeholder="Todos"
+                  options={allStatuses.map(s => ({ id: s as string, name: s as string }))}
+                />
               </div>
           </div>
 
