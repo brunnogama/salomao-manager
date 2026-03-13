@@ -58,23 +58,28 @@ export function DemandasFormModal({ isOpen, onClose, onSave, initialData }: Dema
       for (const field of fields) {
         const { data } = await supabase.from('familia_salomao_demandas').select(field)
         if (data) {
-          // Normalize to capitalized strings and remove empty strings
-          const normalizedData = data
-            .map((item: any) => item[field])
-            .filter(Boolean)
-            .map(val => {
-              const str = String(val).trim();
-              if (!str) return '';
-              return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-            })
-            .filter(Boolean);
-
-          const uniqueValues = Array.from(new Set(normalizedData)) as string[]
+          const defaultFieldOptions = defaultOptions[field as keyof typeof defaultOptions] || [];
+          const caseMap = new Map<string, string>();
           
-          // Merge with default options to always have them available
-          const defaultFieldOptions = defaultOptions[field] || [];
-          const mergedSet = new Set([...defaultFieldOptions, ...uniqueValues])
-          newOptions[field] = Array.from(mergedSet).sort()
+          // 1. Adiciona as opções padrão primeiro
+          defaultFieldOptions.forEach(opt => {
+            caseMap.set(opt.toLowerCase(), opt);
+          });
+          
+          // 2. Processa os dados do banco
+          data.forEach((item: any) => {
+            const val = String(item[field] || '').trim();
+            if (val) {
+              const lowerVal = val.toLowerCase();
+              if (!caseMap.has(lowerVal)) {
+                 // Formata como Title Case se for um item novo
+                 const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+                 caseMap.set(lowerVal, formatted);
+              }
+            }
+          });
+
+          newOptions[field] = Array.from(caseMap.values()).sort((a, b) => a.localeCompare(b));
         }
       }
       setOptions(newOptions)
