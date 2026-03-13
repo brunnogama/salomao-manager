@@ -122,3 +122,89 @@ export function percentualPorExtenso(valor: number): string {
     ret += " por cento";
     return ret;
 }
+
+// --- ENGLISH CONVERSION FOR PROPOSALS ---
+
+const unitsEn = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+const tensEn = ["", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+const teensEn = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const scalesEn = ["", "thousand", "million", "billion", "trillion"];
+
+function convertGroupEn(group: number): string {
+    let s = "";
+    const h = Math.floor(group / 100);
+    const t = Math.floor((group % 100) / 10);
+    const u = group % 10;
+
+    if (h > 0) {
+        s += unitsEn[h] + " hundred";
+        if (t > 0 || u > 0) s += " and ";
+    }
+
+    if (t === 1) {
+        s += teensEn[u];
+    } else {
+        if (t > 0) {
+            s += tensEn[t];
+            if (u > 0) s += "-";
+        }
+        if (u > 0 && t !== 1) {
+            s += unitsEn[u];
+        }
+    }
+    return s;
+}
+
+export function numberToWordsEnglish(value: number): string {
+    if (value === 0) return "zero";
+
+    const strValue = value.toString();
+    const parts = strValue.split('.');
+    let integer = parseInt(parts[0]);
+
+    if (integer === 0) return "zero";
+
+    const groups = [];
+    while (integer > 0) {
+        groups.push(integer % 1000);
+        integer = Math.floor(integer / 1000);
+    }
+
+    let words = "";
+
+    for (let i = groups.length - 1; i >= 0; i--) {
+        const group = groups[i];
+        if (group > 0) {
+            if (words !== "") {
+                if (i === 0 && (group < 100)) words += " and ";
+                else words += ", ";
+            }
+            words += convertGroupEn(group);
+            if (i > 0) words += " " + scalesEn[i];
+        }
+    }
+
+    return words;
+}
+
+export function currencyToWordsEnglish(value: number): string {
+    if (value === 0) return "zero US dollars";
+
+    const integer = Math.floor(value);
+    const cents = Math.round((value - integer) * 100);
+
+    let ret = "";
+
+    if (integer > 0) {
+        ret += numberToWordsEnglish(integer);
+        ret += integer === 1 ? " US dollar" : " US dollars";
+    }
+
+    if (cents > 0) {
+        if (integer > 0) ret += " and ";
+        ret += numberToWordsEnglish(cents);
+        ret += cents === 1 ? " cent" : " cents";
+    }
+
+    return ret;
+}

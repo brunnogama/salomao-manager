@@ -9,7 +9,7 @@ import { generateProposalDocx } from '../../../utils/docxGenerator';
 import { maskMoney, maskCNPJ } from '../utils/masks';
 import { CustomSelect } from '../ui/CustomSelect';
 import { safeParseFloat } from '../utils/contractHelpers';
-import { moedaPorExtenso, percentualPorExtenso } from '../../../utils/extenso';
+import { moedaPorExtenso, percentualPorExtenso, currencyToWordsEnglish } from '../../../utils/extenso';
 
 const toTitleCase = (str: string) => {
   return str.replace(
@@ -64,6 +64,7 @@ export function Proposals() {
 
   const [isEditingBody, setIsEditingBody] = useState(false);
   const [customBodyText, setCustomBodyText] = useState("");
+  const [language, setLanguage] = useState<'pt' | 'en'>('pt');
 
   // Modal State (for after generation)
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -530,8 +531,164 @@ export function Proposals() {
       intermediate_fees_clauses: intermediateClauses,
 
       full_success_clauses: proposalData.final_success_fee_clauses,
-      custom_body_text: customBodyText || generateDefaultBodyText(),
+      custom_body_text: customBodyText || (language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText()),
+      language: language,
     };
+  };
+
+  const generateEnglishBodyText = () => {
+    const todayStr = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+    
+    let text = `<<RIGHT>>${proposalData.contractLocation || '[Cidade]'}, ${todayStr}\n\n`;
+    text += `**TO**\n**${proposalData.clientName ? proposalData.clientName.toUpperCase() : '[NOME DA EMPRESA]'}**\n\n`;
+    text += `**Ref:** ${proposalData.reference || '[REFERÊNCIA DA PROPOSTA]'}\n\n`;
+    text += `Dear Sirs,\n\n`;
+
+    text += `It is with great honor that **SALOMÃO ADVOGADOS**, herein duly represented by its partners `;
+
+    if (proposalData.selectedPartners.length > 0) {
+      const partnersList = proposalData.selectedPartners.map((p, idx) => {
+        const data = p.collaboratorData;
+        const gender = data?.gender || p.gender || 'M';
+        const isFem = ['F', 'Feminino', 'Female'].includes(gender);
+
+        let oab = (data as any)?.oab_numero || p.oab_number || 'XXXXXX';
+        let oabUf = (data as any)?.oab_uf || p.oab_state || 'RJ';
+
+        if (proposalData.contractLocation && data?.oabs && data.oabs.length > 0) {
+          const cityToUf: Record<string, string> = {
+            "Rio de Janeiro": "RJ", "São Paulo": "SP", "Brasília": "DF",
+            "Vitória": "ES", "Salvador": "BA", "Florianópolis": "SC",
+            "Belém": "PA", "Curitiba": "PR", "Belo Horizonte": "MG", "Porto Alegre": "RS"
+          };
+          const targetUf = cityToUf[proposalData.contractLocation] || proposalData.contractLocation;
+
+          const matchingOab = data.oabs.find((o: any) => o.uf === targetUf && o.tipo !== 'Inativa');
+          if (matchingOab) {
+            oab = matchingOab.numero;
+            oabUf = matchingOab.uf;
+          } else {
+            const principalOab = data.oabs.find((o: any) => o.tipo === 'Principal') || data.oabs[0];
+            if (principalOab) {
+              oab = principalOab.numero;
+              oabUf = principalOab.uf;
+            }
+          }
+        }
+
+        const cpf = data?.cpf || p.cpf || 'XXX.XXX.XXX-XX';
+        const civilEn = data?.civil_status ? (data.civil_status.toLowerCase().includes('casad') ? 'married' : 'single') : 'married';
+        const natEn = data?.nacionalidade ? (data.nacionalidade.toLowerCase().includes('brasil') ? 'Brazilian' : data.nacionalidade) : 'Brazilian';
+        
+        const lawyerStr = isFem ? 'lawyer' : 'lawyer';
+
+        let prefix = "";
+        if (proposalData.selectedPartners.length > 1 && idx === proposalData.selectedPartners.length - 1) {
+          prefix = " and ";
+        } else if (idx > 0) {
+          prefix = ", ";
+        }
+
+        return `${prefix}**${p.name.toUpperCase()}**, ${natEn}, ${civilEn}, ${lawyerStr}, enrolled with the Brazilian Bar Association (OAB/${oabUf}) under No. ${oab}, bearer of the Individual Taxpayers' Registry (CPF/MF) No. ${cpf}`;
+      }).join('');
+
+      text += partnersList;
+    } else {
+      text += `**[dados do sócio em ingês]**`;
+    }
+
+    text += ` (hereinafter referred to as the “Firm” or the “Contracted Party”), hereby submits this proposal for legal fees and provision of legal services under the following terms.\n\n`;
+
+    text += `**1. OBJECT AND SCOPE OF THE SERVICES:**\n\n`;
+    text += `1.1. The scope of this Agreement is to provide Client with legal service, to be carried out by Salomão Advogados ("Firm"), with the purpose of legal representation of the interests of **${proposalData.clientName || '[NOME DO CLIENTE]'}** (“Client” or the “Contracting Party”) **${proposalData.object || '[objeto da proposta]'}**.\n\n`;
+    text += `1.2. In addition to the analysis of the case and definition of the legal strategy, the scope of professional services comprises the complete analysis of the documents and information sent by the Client, drafting of extrajudicial notices, preparation and filing of procedural documents, case monitoring, presentation of oral arguments, chambers meeting (despacho), as well as all related acts necessary to safeguard the Client’s interests in the lawsuits.\n\n`;
+    text += `1.3. The services proposed herein include participation in meetings with the Client whenever necessary for understandings, clarifications and discussion of strategies, always aiming at the best possible performance of the Firm in defense of the Client's interests.\n\n`;
+    text += `1.4. The scope of services also includes legal advice and representation in negotiations with the opposing party aimed at reaching an amicable resolution to the dispute.\n\n`;
+    text += `1.5. The services proposed herein do not include general advice or other advice that does not have a correlation with the subject matter of this proposal.\n\n`;
+
+    text += `**2. FEES AND METHOD OF PAYMENT:**\n\n`;
+    text += `2.1. Considering the complexity and strategic relevance of the case, as well as the particularities of the case as to the procedural phases involved, we propose the following fee structure:\n\n`;
+
+    const formatValueWithExtensoEn = (val: string, type: 'currency' | 'percent') => {
+      if (!val) return '';
+      const numStr = val.replace(/[R$\s.%A-Za-z]/g, '').replace(',', '.');
+      const num = parseFloat(numStr);
+      if (isNaN(num)) return type === 'percent' ? `${val}%` : val;
+      if (type === 'currency') {
+        const valFormatted = val.replace('R$', '').trim(); // Remove R$ for USD
+        return `USD ${valFormatted} (${currencyToWordsEnglish(num)})`;
+      } else {
+        return `${val}%`; // Percents in English usually stay numerical, or spelled out. Template implies just values. 
+        // We'll leave it as format requested.
+      }
+    };
+
+    let clauseIndex = 2;
+    proposalData.pro_labore_clauses.forEach((c) => {
+      if (c.value) {
+        const ext = formatValueWithExtensoEn(c.value, 'currency');
+        // Based on template, we'll try to insert the value generic pro-labore clause as requested.
+        text += `2.${clauseIndex}. Pro-labore fixed fee on the amount of ${ext}, ${c.description || 'to be paid within 30 (thirty) days from the date of execution of this instrument.'}\n\n`;
+        // The user provided a complex mix for pro-labore in the template. If there's more than one, we'll just stack them.
+        clauseIndex++;
+      }
+    });
+
+    proposalData.intermediate_fee_clauses.forEach((c) => {
+      if (c.value) {
+        const ext = formatValueWithExtensoEn(c.value, 'currency');
+        text += `2.${clauseIndex}. Intermediate success fee on the amount of ${ext}, ${c.description || '[descrição]'}.\n\n`;
+        clauseIndex++;
+      }
+    });
+
+    proposalData.final_success_fee_clauses.forEach((c) => {
+      if (c.value) {
+        const typeToUse = c.type === 'currency' ? 'currency' : 'percent';
+        const ext = formatValueWithExtensoEn(c.value, typeToUse);
+        text += `2.${clauseIndex}. Success Fees on the amount of ${ext} ${c.description || 'on the economic benefit obtained by the Client'}.\n\n`;
+        clauseIndex++;
+      }
+    });
+
+    text += `2.${clauseIndex}. The final success fees shall be fully due and payable by the Client in the event of a settlement or unjustified termination of this Agreement.\n\n`;
+    text += `2.${clauseIndex + 1}. The Client acknowledges that, pursuant to applicable Brazilian law, the prevailing party in judicial proceedings may be awarded attorneys’ fees by the court, payable by the losing party (“Court-Awarded Fees” or “Honorários de Sucumbência”). Any such Court-Awarded Fees shall belong exclusively to the Firm’s attorneys and shall be received directly by them, in accordance with applicable law. These amounts shall not offset, reduce, replace, or otherwise impact the contractual fees agreed upon in this engagement, which remain due and payable in full irrespective of any court-awarded amounts.\n\n`;
+    text += `2.${clauseIndex + 2}. In the event of: (a) withdrawal and/or waiver resulting in the termination of the legal discussions; (b) subsequent loss of the subject matter; (c) dismissal of the Firm’s professionals without cause; and/or (d) assignments and/or transactions involving the Client’s rights and/or the Firm’s interests, the Parties hereby agree, in good faith and in accordance with applicable law, that all amounts set forth in this Agreement, without exception, shall become fully and automatically due and payable, regardless of whether the success events occur after the Firm’s disengagement and irrespective of the content of any judicial decisions rendered, in recognition by the Client that the strategy designed and implemented by the Firm was decisive in achieving a favorable outcome. Such amounts shall be paid within fifteen (15) days following the occurrence of any of the aforementioned events\n\n`;
+
+    text += `**3. GENERAL CONDITIONS:**\n\n`;
+    text += `3.1. The lawyer fees do not include expenses related to the case, such as judicial and extrajudicial costs, airfare, accommodation, and other expenses borne by the Client. These expenses may be advanced by the Firm and reimbursed by the Client. In the event that we engage other professionals, experts, inspectors, translators, or other service providers on behalf of the Client and with prior approval from Client, such engagement will be made in the capacity of the Client's agents, and Client will be responsible for the payment of the lawyer fees of the aforementioned.\n\n`;
+    text += `3.2. Late payment of fees will subject Client to the payment of a late payment penalty of 10% (ten percent), interest on late payment of 1% (one percent) per month and monetary adjustment for the positive variation of the IPCA. In the event of the need for judicial collection, fees will also be due at the rate of 20% (twenty percent) of the updated value of the debt.\n\n`;
+    text += `3.3. The amounts set forth in this proposal, including any cap on success fees, shall be adjusted for inflation based on the positive variation of the IPCA index from the present date until their effective settlement.\n\n`;
+    text += `3.4. This proposal has been prepared based on the information provided by the Client (or by a person designated by the Client) and within a short timeframe, seeking to ensure the best cost-benefit outcome for the Client. Should any discrepancy arise, during the course of the proceedings, between such information and the documents contained in the case file, or should the scope originally considered be expanded, the fees may be revised in order to restore the economic and financial balance of the engagement, which may be formalized through an addendum to this contract or by any other formal request submitted by the Firm.\n\n`;
+    text += `3.5. The retention of the Firm for the specific matter now agreed upon shall not, by itself, preclude the Firm from representing other clients in unrelated matters, even where such clients’ interests may potentially be adverse to those of the Client, provided that: (i) there is no direct adversity in any proceeding or matter in which the Firm represents the Client; (ii) no confidential information of the Client is used or put at risk; and (iii) appropriate ethical barriers (Chinese walls) and team segregation are implemented, where applicable.\n\n`;
+    text += `3.6. This proposal constitutes a binding agreement between the parties with respect to the subject matter herein and may only be amended or replaced by written authorization from both parties. In the event of any inconsistency between the provisions of this instrument and those of any other agreement submitted by the Client, including any subsequent agreement, the provisions of this instrument shall prevail.\n\n`;
+    text += `3.7. The acceptance in relation to this contract may be given expressly or tacitly, in the latter case it will take place from the beginning of the provision of services by the Contracted Party.\n\n`;
+    text += `3.8. In any case, the Contracted Party’s liability shall be limited to the amounts received by them. The court-awarded attorneys’ fees shall be exclusively owed to the Firm.\n\n`;
+    text += `3.9. Upon express authorization of the Client, the Contracted Party may appoint other lawyers to act in said claim at no additional cost to the Client.\n\n`;
+    text += `3.10. This proposal obliges the heirs and successors of the parties to faithfully fulfill their obligations.\n\n`;
+    text += `3.11. The Firm adopts appropriate measures, in accordance with the good practices of the legislation, to prevent any fraudulent activity by itself, its lawyers, interns, and/or by any suppliers, agents, contractors, subcontractors and/or employees\n\n`;
+    text += `3.12. The parties undertake to comply with all applicable legislation on information security, privacy and data protection, including the Federal Constitution, the Consumer Protection Code, the Civil Code, the Civil Rights Framework for the Internet (Federal Law No. 12,965/2014), its regulatory decree (Decree 8,771/2016), the General Data Protection Law (Federal Law No. 13,709/2018), and other sectoral or general rules on the subject, committing to process only the data mentioned and/or in the forms set forth herein upon express instructions from the data controller (the party that determines the purposes and means of processing personal data); or with due legal basis, without transferring them to any third party, except as expressly authorized by this or another instrument that binds them.\n\n`;
+    text += `3.13. The parties agree to treat and maintain any and all information (written or verbal) as confidential, being prohibited, by action or omission, the disclosure of any information, documents among others, obtained in the negotiations and/or in the execution of the Agreement, without the prior and express consent of the other party. This rule does not cover information that is in the public domain, nor does it prevent the mention of the Contracting Party as a client of the Firm.\n\n`;
+    text += `3.14. The parties elect the jurisdiction of the District of the Capital of the City of Rio de Janeiro to settle all controversies arising from this instrument, with express waiver of any other.\n\n`;
+    text += `The Client and the Law Firm agree that this proposal may be executed digitally by all of its signatories. To this end, services widely available in the market will be used to ensure the security of the digital signature through certification systems capable of validating the authenticity of the electronic signature and certifying its integrity, via a digital certificate issued under the ICP-Brazil standard, which authorizes its digital signature through digital platforms.\n\n`;
+    text += `Finally, we thank you for the opportunity to present this proposal and remain at your disposal for any further clarification. If accepted, kindly sign below and return an executed original copy to our Firm.\n\n`;
+
+    text += `<<CENTER>>Cordially\n\n\n`;
+
+    if (proposalData.selectedPartners.length > 0) {
+      text += proposalData.selectedPartners.map(p => {
+        return `<<CENTER>>____________________________________\n<<CENTER>>**${p.name.toUpperCase()}**\n<<CENTER>>**SALOMÃO ADVOGADOS**`;
+      }).join('\n\n\n');
+    } else {
+      text += `<<CENTER>>____________________________________\n<<CENTER>>**[NOME DO SÓCIO]**\n<<CENTER>>**SALOMÃO ADVOGADOS**`;
+    }
+
+    text += `\n\n\n<<CENTER>>____________________________________\n<<CENTER>>**${proposalData.clientName ? proposalData.clientName.toUpperCase() : '[NOME DO CLIENTE]'}**`;
+    text += `\n\n\n<<LEFT>>According to: ___/___/___`;
+    text += `\n<<LEFT>>Witness 01:`;
+    text += `\n<<LEFT>>Witness 02:`;
+
+    return text;
   };
 
   const generateDefaultBodyText = () => {
@@ -1154,6 +1311,41 @@ export function Proposals() {
                   title="Buscar CNPJ"
                 >
                   <Search className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Language Toggle */}
+            <div>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Idioma da Proposta</label>
+              <div className="flex items-center gap-2 bg-gray-50/50 p-1.5 rounded-xl border border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLanguage('pt');
+                    if (!isEditingBody) setCustomBodyText("");
+                  }}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                    language === 'pt' 
+                      ? 'bg-white text-[#1e3a8a] shadow-sm border border-gray-200' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Português
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLanguage('en');
+                    if (!isEditingBody) setCustomBodyText("");
+                  }}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                    language === 'en' 
+                      ? 'bg-white text-[#1e3a8a] shadow-sm border border-gray-200' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Inglês
                 </button>
               </div>
             </div>
