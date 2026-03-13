@@ -224,50 +224,54 @@ export function GestaoFamilia({
         </div>
 
         {/* User Info & Actions */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-fit">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex bg-slate-50 p-1 rounded-xl items-center">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
             >
-              Dashboard
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>Dashboard</span>
             </button>
             <button
               onClick={() => setActiveTab('demandas')}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'demandas' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'demandas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
             >
-              Demandas
+              <Briefcase className="w-3.5 h-3.5" />
+              <span>Demandas</span>
             </button>
             <button
               onClick={() => setActiveTab('dados')}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dados' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dados' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
             >
-              Dados
+              <Database className="w-3.5 h-3.5" />
+              <span>Dados</span>
             </button>
-
-            {activeTab === 'demandas' && (
-              <>
-                <button
-                  onClick={() => {
-                    const pubLink = `${window.location.origin}/public/demandas`;
-                    navigator.clipboard.writeText(pubLink);
-                    alert('Link público da aba Demandas copiado para a área de transferência!');
-                  }}
-                  className="ml-2 flex items-center justify-center w-10 h-10 bg-white/80 hover:bg-white text-[#1e3a8a] border border-gray-200 rounded-xl transition-all shadow-md shrink-0"
-                  title="Copiar Link Público"
-                >
-                  <Share2 className="h-4 w-4 drop-shadow-sm" />
-                </button>
-                <button
-                  onClick={() => document.dispatchEvent(new CustomEvent('openNovaDemanda'))}
-                  className="ml-2 flex items-center justify-center w-10 h-10 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl transition-all shadow-md shrink-0"
-                  title="Nova Demanda"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </>
-            )}
           </div>
+
+          {activeTab === 'demandas' && (
+            <>
+              <div className="w-px h-8 bg-slate-200 mx-1"></div>
+              <button
+                onClick={() => {
+                  const pubLink = `${window.location.origin}/public/demandas`;
+                  navigator.clipboard.writeText(pubLink);
+                  alert('Link público da aba Demandas copiado para a área de transferência!');
+                }}
+                className="flex items-center justify-center w-10 h-10 bg-white hover:bg-slate-50 text-[#1e3a8a] border border-slate-200 rounded-xl transition-all shadow-sm shrink-0"
+                title="Copiar Link Público"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => document.dispatchEvent(new CustomEvent('openNovaDemanda'))}
+                className="flex items-center justify-center w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+                title="Nova Demanda"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            </>
+          )}
         </div>
       </div>
 

@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Search, Loader2, Trash2, LayoutDashboard, Calendar, CalendarCheck } from 'lucide-react'
-import * as XLSX from 'xlsx' 
+import { Search, Trash2, LayoutDashboard, Calendar, CalendarCheck } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { DemandasTable } from './DemandasTable'
 import { DemandasFormModal } from './DemandasFormModal'
@@ -11,6 +10,12 @@ export function DemandasFamilia() {
   const [selectedItem, setSelectedItem] = useState<any | null>(null)
   const [itemToDelete, setItemToDelete] = useState<any | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+
+  // Filtros
+  const [filterStatus, setFilterStatus] = useState('Todos')
+  const [filterUnidade, setFilterUnidade] = useState('Todos')
+  const [filterFornecedor, setFilterFornecedor] = useState('Todos')
+  const [filterTipo, setFilterTipo] = useState('Todos')
 
   const fetchDados = async () => {
     const { data, error } = await supabase
@@ -41,6 +46,15 @@ export function DemandasFamilia() {
 
   const filteredData = useMemo(() => {
     return demandas.filter(item => {
+      // Filter Exact Matches
+      const statusMatch = filterStatus === 'Todos' || item.status === filterStatus;
+      const unidadeMatch = filterUnidade === 'Todos' || item.unidade === filterUnidade;
+      const fornecedorMatch = filterFornecedor === 'Todos' || item.fornecedor === filterFornecedor;
+      const tipoMatch = filterTipo === 'Todos' || item.tipo === filterTipo;
+
+      if (!statusMatch || !unidadeMatch || !fornecedorMatch || !tipoMatch) return false;
+
+      // Filter Search
       if (!searchTerm) return true;
       const term = searchTerm.toLowerCase();
       return (
@@ -50,7 +64,13 @@ export function DemandasFamilia() {
         item.fornecedor?.toLowerCase().includes(term)
       )
     })
-  }, [demandas, searchTerm])
+  }, [demandas, searchTerm, filterStatus, filterUnidade, filterFornecedor, filterTipo])
+
+  // Extract Unique Values for Selects
+  const uniqueStatus = useMemo(() => ['Todos', ...Array.from(new Set(demandas.map(d => d.status).filter(Boolean)))].sort(), [demandas]);
+  const uniqueUnidades = useMemo(() => ['Todos', ...Array.from(new Set(demandas.map(d => d.unidade).filter(Boolean)))].sort(), [demandas]);
+  const uniqueFornecedores = useMemo(() => ['Todos', ...Array.from(new Set(demandas.map(d => d.fornecedor).filter(Boolean)))].sort(), [demandas]);
+  const uniqueTipos = useMemo(() => ['Todos', ...Array.from(new Set(demandas.map(d => d.tipo).filter(Boolean)))].sort(), [demandas]);
 
   const kpis = useMemo(() => {
     let abertas = 0;
@@ -135,8 +155,24 @@ export function DemandasFamilia() {
       {/* Toolbar / Filtros */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-slate-200 shrink-0">
         
+        {/* Filtros Livres */}
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="bg-slate-50 border border-slate-200 text-[#1e3a8a] text-xs font-semibold rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 cursor-pointer min-w-[120px]">
+            {uniqueStatus.map(s => <option key={s} value={s}>{s === 'Todos' ? 'Status: Todos' : s}</option>)}
+          </select>
+          <select value={filterUnidade} onChange={(e) => setFilterUnidade(e.target.value)} className="bg-slate-50 border border-slate-200 text-[#1e3a8a] text-xs font-semibold rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 cursor-pointer min-w-[120px]">
+            {uniqueUnidades.map(u => <option key={u} value={u}>{u === 'Todos' ? 'Unidade: Todas' : u}</option>)}
+          </select>
+          <select value={filterFornecedor} onChange={(e) => setFilterFornecedor(e.target.value)} className="bg-slate-50 border border-slate-200 text-[#1e3a8a] text-xs font-semibold rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 cursor-pointer min-w-[120px]">
+            {uniqueFornecedores.map(f => <option key={f} value={f}>{f === 'Todos' ? 'Fornecedor: Todos' : f}</option>)}
+          </select>
+          <select value={filterTipo} onChange={(e) => setFilterTipo(e.target.value)} className="bg-slate-50 border border-slate-200 text-[#1e3a8a] text-xs font-semibold rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 cursor-pointer min-w-[120px]">
+            {uniqueTipos.map(t => <option key={t} value={t}>{t === 'Todos' ? 'Tipo: Todos' : t}</option>)}
+          </select>
+        </div>
+
         {/* Search */}
-        <div className="relative group/search w-full">
+        <div className="relative group/search w-full md:w-64 shrink-0">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-slate-400 group-focus-within/search:text-[#001D4A] transition-colors" />
           </div>
@@ -153,7 +189,6 @@ export function DemandasFamilia() {
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 shrink-0">
         <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-[#1e3a8a]/10 flex flex-col hover:border-[#1e3a8a]/30 transition-all mx-1 my-1 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-blue-50/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">Demandas Abertas</p>
           <div className="flex items-end justify-between relative z-10">
             <p className="text-3xl font-black text-[#1e3a8a] leading-none">{kpis.abertas}</p>
@@ -163,7 +198,6 @@ export function DemandasFamilia() {
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-[#1e3a8a]/10 flex flex-col hover:border-[#1e3a8a]/30 transition-all mx-1 my-1 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-indigo-50/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">Solic. da Semana</p>
           <div className="flex items-end justify-between relative z-10">
             <p className="text-3xl font-black text-[#1e3a8a] leading-none">{kpis.semana}</p>
@@ -173,7 +207,6 @@ export function DemandasFamilia() {
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-green-500/10 flex flex-col hover:border-green-500/30 transition-all mx-1 my-1 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-green-50/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">Concluídas na Semana</p>
           <div className="flex items-end justify-between relative z-10">
             <p className="text-3xl font-black text-green-600 leading-none">{kpis.concluidasSemana}</p>
@@ -183,7 +216,6 @@ export function DemandasFamilia() {
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-[#1e3a8a]/10 flex flex-col hover:border-[#1e3a8a]/30 transition-all mx-1 my-1 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-purple-50/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">Solic. do Mês</p>
           <div className="flex items-end justify-between relative z-10">
             <p className="text-3xl font-black text-[#1e3a8a] leading-none">{kpis.mes}</p>
@@ -193,7 +225,6 @@ export function DemandasFamilia() {
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-emerald-500/10 flex flex-col hover:border-emerald-500/30 transition-all mx-1 my-1 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-emerald-50/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">Concluídas no Mês</p>
           <div className="flex items-end justify-between relative z-10">
             <p className="text-3xl font-black text-emerald-600 leading-none">{kpis.concluidasMes}</p>
