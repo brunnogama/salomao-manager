@@ -1,4 +1,6 @@
+import { useState, useEffect, useMemo } from 'react'
 import { Search, LayoutDashboard, Calendar, CalendarCheck, Briefcase } from 'lucide-react'
+import { supabase } from '../../../lib/supabase'
 import { DemandasTable } from './DemandasTable'
 
 export function PublicDemandas() {
