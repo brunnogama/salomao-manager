@@ -663,7 +663,15 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
           <div style="font-family: Arial, sans-serif; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; max-width: 500px; background-color: #f8fafc;">
             <h3 style="margin: 0 0 8px 0; color: #1e3a8a; font-size: 18px;">${formData.nome}</h3>
             <p style="margin: 0 0 8px 0; color: #475569; font-size: 14px;"><strong>Área:</strong> ${area}</p>
-            <p style="margin: 0; font-size: 14px;"><strong>Perfil Completo:</strong> <a href="${profileUrl}" style="color: #1e3a8a; text-decoration: underline;">${profileUrl}</a></p>
+            <table border="0" cellspacing="0" cellpadding="0" style="margin-top: 12px;">
+              <tr>
+                <td align="center" style="border-radius: 6px;" bgcolor="#1e3a8a">
+                  <a href="${profileUrl}" target="_blank" style="font-size: 14px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; border-radius: 6px; padding: 10px 16px; border: 1px solid #1e3a8a; display: inline-block; font-weight: bold;">
+                    Acessar Perfil Completo
+                  </a>
+                </td>
+              </tr>
+            </table>
           </div>
         `;
 
