@@ -28,6 +28,7 @@ export function DemandasFormModal({ isOpen, onClose, onSave, initialData }: Dema
     status: 'Pendente', 
     proxima_acao: '', 
     prazo: '', 
+    data_conclusao: '',
     observacoes: ''
   })
 
@@ -106,6 +107,7 @@ export function DemandasFormModal({ isOpen, onClose, onSave, initialData }: Dema
         status: 'Pendente', 
         proxima_acao: '', 
         prazo: '', 
+        data_conclusao: '',
         observacoes: ''
       })
     }
@@ -124,6 +126,7 @@ export function DemandasFormModal({ isOpen, onClose, onSave, initialData }: Dema
       ...formData,
       data_solicitacao: formData.data_solicitacao || null,
       prazo: formData.prazo || null,
+      data_conclusao: formData.data_conclusao || null,
     };
 
     delete cleanedData.created_at;
@@ -264,12 +267,16 @@ export function DemandasFormModal({ isOpen, onClose, onSave, initialData }: Dema
 
           <div className="space-y-3">
             <h4 className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] border-b border-blue-50 pb-1">Acompanhamento e Status</h4>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               <ManagedSelect label="Prioridade" name="prioridade" value={formData.prioridade} optionsList={options.prioridade} />
               <ManagedSelect label="Status" name="status" value={formData.status} optionsList={options.status} />
               <div className="space-y-1 flex flex-col h-full">
                 <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Prazo</label>
                 <input type="date" name="prazo" value={formData.prazo} onChange={(e) => setFormData({ ...formData, prazo: e.target.value })} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" />
+              </div>
+              <div className="space-y-1 flex flex-col h-full col-span-1 md:col-span-2">
+                <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Data de Conclusão</label>
+                <input type="date" name="data_conclusao" value={formData.data_conclusao} onChange={(e) => setFormData({ ...formData, data_conclusao: e.target.value })} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

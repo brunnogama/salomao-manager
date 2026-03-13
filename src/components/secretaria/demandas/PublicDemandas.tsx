@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Search, LayoutDashboard, Calendar, CalendarCheck, Briefcase, X } from 'lucide-react'
+import { Search, LayoutDashboard, Calendar, CalendarCheck, Briefcase, Clock, X } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { DemandasTable } from './DemandasTable'
 import { SearchableSelect } from '../../SearchableSelect'
@@ -9,10 +9,10 @@ export function PublicDemandas() {
   const [searchTerm, setSearchTerm] = useState('')
 
   // Filtros
-  const [filterStatus, setFilterStatus] = useState('Todos')
-  const [filterUnidade, setFilterUnidade] = useState('Todos')
-  const [filterFornecedor, setFilterFornecedor] = useState('Todos')
-  const [filterTipo, setFilterTipo] = useState('Todos')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterUnidade, setFilterUnidade] = useState('')
+  const [filterFornecedor, setFilterFornecedor] = useState('')
+  const [filterTipo, setFilterTipo] = useState('')
 
   const fetchDados = async () => {
     const { data, error } = await supabase
@@ -32,10 +32,10 @@ export function PublicDemandas() {
   const filteredData = useMemo(() => {
     return demandas.filter(item => {
       // Filter Exact Matches
-      const statusMatch = filterStatus === 'Todos' || item.status === filterStatus;
-      const unidadeMatch = filterUnidade === 'Todos' || item.unidade === filterUnidade;
-      const fornecedorMatch = filterFornecedor === 'Todos' || item.fornecedor === filterFornecedor;
-      const tipoMatch = filterTipo === 'Todos' || item.tipo === filterTipo;
+      const statusMatch = !filterStatus || item.status === filterStatus;
+      const unidadeMatch = !filterUnidade || item.unidade === filterUnidade;
+      const fornecedorMatch = !filterFornecedor || item.fornecedor === filterFornecedor;
+      const tipoMatch = !filterTipo || item.tipo === filterTipo;
 
       if (!statusMatch || !unidadeMatch || !fornecedorMatch || !tipoMatch) return false;
 
@@ -52,10 +52,10 @@ export function PublicDemandas() {
   }, [demandas, searchTerm, filterStatus, filterUnidade, filterFornecedor, filterTipo])
 
   // Extract Unique Values for Selects
-  const uniqueStatus = useMemo(() => [{value: 'Todos', label: 'Status: Todos'}, ...Array.from(new Set(demandas.map(d => d.status).filter(Boolean))).sort().map(s => ({value: s, label: s}))], [demandas]);
-  const uniqueUnidades = useMemo(() => [{value: 'Todos', label: 'Unidade: Todas'}, ...Array.from(new Set(demandas.map(d => d.unidade).filter(Boolean))).sort().map(s => ({value: s, label: s}))], [demandas]);
-  const uniqueFornecedores = useMemo(() => [{value: 'Todos', label: 'Fornecedor: Todos'}, ...Array.from(new Set(demandas.map(d => d.fornecedor).filter(Boolean))).sort().map(s => ({value: s, label: s}))], [demandas]);
-  const uniqueTipos = useMemo(() => [{value: 'Todos', label: 'Tipo: Todos'}, ...Array.from(new Set(demandas.map(d => d.tipo).filter(Boolean))).sort().map(s => ({value: s, label: s}))], [demandas]);
+  const uniqueStatus = useMemo(() => Array.from(new Set(demandas.map(d => d.status).filter(Boolean))).sort().map(s => ({value: s, label: s})), [demandas]);
+  const uniqueUnidades = useMemo(() => Array.from(new Set(demandas.map(d => d.unidade).filter(Boolean))).sort().map(s => ({value: s, label: s})), [demandas]);
+  const uniqueFornecedores = useMemo(() => Array.from(new Set(demandas.map(d => d.fornecedor).filter(Boolean))).sort().map(s => ({value: s, label: s})), [demandas]);
+  const uniqueTipos = useMemo(() => Array.from(new Set(demandas.map(d => d.tipo).filter(Boolean))).sort().map(s => ({value: s, label: s})), [demandas]);
 
   const kpis = useMemo(() => {
     let abertas = 0;
@@ -63,6 +63,8 @@ export function PublicDemandas() {
     let mes = 0;
     let concluidasSemana = 0;
     let concluidasMes = 0;
+    let totalSlaDays = 0;
+    let countConcluidasSla = 0;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -87,9 +89,22 @@ export function PublicDemandas() {
           if (d.status === 'Concluído') concluidasMes++;
         }
       }
+      
+      if (d.status === 'Concluído' && d.data_solicitacao && d.data_conclusao) {
+        const dSolic = new Date(d.data_solicitacao.split('T')[0]);
+        const dConcl = new Date(d.data_conclusao.split('T')[0]);
+        const diffTime = dConcl.getTime() - dSolic.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays >= 0) {
+          totalSlaDays += diffDays;
+          countConcluidasSla++;
+        }
+      }
     });
 
-    return { abertas, semana, mes, concluidasSemana, concluidasMes };
+    const slaMedio = countConcluidasSla > 0 ? Math.round(totalSlaDays / countConcluidasSla) : 0;
+
+    return { abertas, semana, mes, concluidasSemana, concluidasMes, slaMedio };
   }, [demandas]);
 
   return (
@@ -113,7 +128,7 @@ export function PublicDemandas() {
 
       <div className="flex-1 overflow-y-auto space-y-4 pb-12 custom-scrollbar">
         {/* KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 shrink-0">
           <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-[#1e3a8a]/10 flex flex-col hover:border-[#1e3a8a]/30 transition-all mx-1 my-1 relative overflow-hidden group">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">Demandas Abertas</p>
             <div className="flex items-end justify-between relative z-10">
@@ -156,6 +171,15 @@ export function PublicDemandas() {
               <p className="text-3xl font-black text-emerald-600 leading-none">{kpis.concluidasMes}</p>
               <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
                 <CalendarCheck className="w-4 h-4 text-emerald-500" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.02)] border border-amber-500/10 flex flex-col hover:border-amber-500/30 transition-all mx-1 my-1 relative overflow-hidden group">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 relative z-10">SLA Médio (Dias)</p>
+            <div className="flex items-end justify-between relative z-10">
+              <p className="text-3xl font-black text-amber-600 leading-none">{kpis.slaMedio}</p>
+              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                <Clock className="w-4 h-4 text-amber-500" />
               </div>
             </div>
           </div>

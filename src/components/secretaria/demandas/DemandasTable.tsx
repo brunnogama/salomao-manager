@@ -83,7 +83,8 @@ export function DemandasTable({ data, onEditClick, onDeleteClick, isPublic = fal
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest min-w-[200px]">Demanda</th>
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-center">Prioridade</th>
               <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-center">Status</th>
-              <th className={`p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap ${isPublic ? 'rounded-tr-xl pr-6' : ''}`}>Prazo</th>
+              <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Prazo</th>
+              <th className={`p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap ${isPublic ? 'rounded-tr-xl pr-6' : ''}`}>Conclusão</th>
               {!isPublic && (
                 <th className="p-4 pr-6 rounded-tr-xl text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap text-right">Ações</th>
               )}
@@ -142,6 +143,11 @@ export function DemandasTable({ data, onEditClick, onDeleteClick, isPublic = fal
                 <td className="p-4">
                   <span className={`text-xs font-semibold ${vencido ? 'text-red-600' : 'text-gray-600'}`}>
                     {formatDate(item.prazo)}
+                  </span>
+                </td>
+                <td className="p-4">
+                  <span className="text-xs font-semibold text-gray-600">
+                    {formatDate(item.data_conclusao)}
                   </span>
                 </td>
                 {!isPublic && (
