@@ -190,6 +190,7 @@ export function RHVagas() {
   const [filterArea, setFilterArea] = useState('')
   const [filterFaculdades, setFilterFaculdades] = useState<string[]>([])
   const [filterPeriodos, setFilterPeriodos] = useState<string[]>([])
+  const [filterTurnos, setFilterTurnos] = useState<string[]>([])
 
   // Opções de Filtro
   const [liderOptions, setLiderOptions] = useState<{ value: string; label: string }[]>([])
@@ -202,6 +203,12 @@ export function RHVagas() {
     '1º Período', '2º Período', '3º Período', '4º Período', '5º Período',
     '6º Período', '7º Período', '8º Período', '9º Período', '10º Período'
   ].map(p => ({ value: p, label: p }))
+
+  const turnosGlobais = [
+    { value: 'Manhã', label: 'Manhã' },
+    { value: 'Tarde', label: 'Tarde' },
+    { value: 'Noite', label: 'Noite' }
+  ]
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -724,7 +731,7 @@ export function RHVagas() {
       eduHistory = c.education_history;
     }
 
-    // Novos Filtros (Faculdade e Período Atual)
+    // Novos Filtros (Faculdade, Período e Turno)
     const matchFaculdade = filterFaculdades.length > 0 
       ? eduHistory.some((edu: any) => filterFaculdades.includes(edu.instituicao))
       : true;
@@ -733,7 +740,11 @@ export function RHVagas() {
       ? eduHistory.some((edu: any) => filterPeriodos.includes(edu.semestre))
       : true;
 
-    return matchSearch && matchLocal && matchCargo && matchArea && matchFaculdade && matchPeriodo
+    const matchTurno = filterTurnos.length > 0
+      ? eduHistory.some((edu: any) => filterTurnos.includes(edu.turno))
+      : true;
+
+    return matchSearch && matchLocal && matchCargo && matchArea && matchFaculdade && matchPeriodo && matchTurno
   }).sort((a, b) => {
     // Priority: Candidatos com avaliação do lider recente vêm em primeiro
     if (a.data_avaliacao && !b.data_avaliacao) return -1;
@@ -746,7 +757,7 @@ export function RHVagas() {
     const nameA = a.nome || ''
     const nameB = b.nome || ''
     return nameA.localeCompare(nameB)
-  }), [candidatos, searchTerm, filterLocal, filterCargo, filterArea, filterFaculdades, filterPeriodos])
+  }), [candidatos, searchTerm, filterLocal, filterCargo, filterArea, filterFaculdades, filterPeriodos, filterTurnos])
 
   // Stats (memorizados)
   const vagasAbertas = useMemo(() => vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').length, [vagas])
@@ -961,6 +972,13 @@ export function RHVagas() {
                       onChange={setFilterPeriodos}
                       options={periodosGlobais}
                       placeholder="Período"
+                    />
+                    <FilterMultiSelect
+                      icon={Clock}
+                      value={filterTurnos}
+                      onChange={setFilterTurnos}
+                      options={turnosGlobais}
+                      placeholder="Turno"
                     />
                   </>
                 )}
