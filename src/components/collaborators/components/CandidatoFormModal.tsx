@@ -68,6 +68,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
     const [showReprovadoModal, setShowReprovadoModal] = useState(false)
     const [tempReprovadoMotivo, setTempReprovadoMotivo] = useState('')
+    const [tempReprovadoStatus, setTempReprovadoStatus] = useState('')
 
     // Aprovado Confirm State
     const [showAprovadoConfirm, setShowAprovadoConfirm] = useState(false)
@@ -736,7 +737,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             showAlert('Atenção', 'Por favor, informe o motivo da reprovação.', 'warning');
             return;
         }
-        setFormData(prev => ({ ...prev, motivo_reprovacao: tempReprovadoMotivo, status_selecao: 'Reprovado' }));
+        setFormData(prev => ({ ...prev, motivo_reprovacao: tempReprovadoMotivo, status_selecao: tempReprovadoStatus || 'Reprovado' }));
         setShowReprovadoModal(false);
     };
 
@@ -913,7 +914,11 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             formData={formData}
                             setFormData={setFormData}
                             isViewMode={false}
-                            onShowReprovadoModal={() => setShowReprovadoModal(true)}
+                            onShowReprovadoModal={(status) => {
+                                setTempReprovadoStatus(status);
+                                setTempReprovadoMotivo('');
+                                setShowReprovadoModal(true);
+                            }}
                         />
                     </div>
                 )}

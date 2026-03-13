@@ -10,7 +10,7 @@ interface CandidatoEntrevistaSectionProps {
     formData: any
     setFormData: (data: any) => void
     isViewMode?: boolean
-    onShowReprovadoModal?: () => void
+    onShowReprovadoModal?: (status: string) => void
 }
 
 export function CandidatoEntrevistaSection({
@@ -34,8 +34,8 @@ export function CandidatoEntrevistaSection({
 
     const handleStatusSelecaoChange = (value: string) => {
         setIsStatusMenuOpen(false);
-        if (value === 'Reprovado' && onShowReprovadoModal) {
-            onShowReprovadoModal();
+        if (value.startsWith('Reprovado') && onShowReprovadoModal) {
+            onShowReprovadoModal(value);
         } else {
             setFormData({ ...formData, status_selecao: value })
         }
@@ -549,9 +549,10 @@ export function CandidatoEntrevistaSection({
                             onChange={(val) => handleEntrevistaChange('recomendacao_final', val)}
                             disabled={isViewMode}
                             options={[
-                                { id: 'Recomendado para próxima etapa', name: 'Recomendado para próxima etapa' },
+                                { id: 'Não Recomendado pela Área', name: 'Não Recomendado pela Área' },
+                                { id: 'Não Recomendado pelo RH', name: 'Não Recomendado pelo RH' },
                                 { id: 'Recomendado com ressalvas', name: 'Recomendado com ressalvas' },
-                                { id: 'Não recomendado', name: 'Não recomendado' }
+                                { id: 'Recomendado para próxima etapa', name: 'Recomendado para próxima etapa' }
                             ]}
                         />
 
@@ -563,7 +564,7 @@ export function CandidatoEntrevistaSection({
                                     type="button"
                                     onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
                                     className={`flex items-center justify-between w-full text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl border transition-all ${formData.status_selecao === 'Aprovado em Vaga' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
-                                        formData.status_selecao === 'Reprovado' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
+                                        formData.status_selecao?.startsWith('Reprovado') ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
                                             formData.status_selecao === 'Reaproveitamento' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
                                                 'bg-blue-50 text-[#1e3a8a] border-blue-200 hover:bg-blue-100'
                                         }`}
@@ -575,7 +576,7 @@ export function CandidatoEntrevistaSection({
 
                                 {isStatusMenuOpen && (
                                     <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[60]">
-                                        {['Aberto', 'Aprovado em Vaga', 'Reprovado', 'Reaproveitamento'].map(status => (
+                                        {['Aberto', 'Aprovado em Vaga', 'Reaproveitamento', 'Reprovado pela Área', 'Reprovado pelo RH'].map(status => (
                                             <button
                                                 key={status}
                                                 type="button"

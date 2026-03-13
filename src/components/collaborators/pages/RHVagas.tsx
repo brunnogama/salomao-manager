@@ -775,7 +775,7 @@ export function RHVagas() {
   }, [vagas])
 
   const reprovadosNoMes = candidatos.filter(c => {
-    if (c.status_selecao !== 'Reprovado' || !c.data_reprovacao) return false
+    if (!c.status_selecao?.startsWith('Reprovado') || !c.data_reprovacao) return false
     const d = new Date(c.data_reprovacao)
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear
   }).length

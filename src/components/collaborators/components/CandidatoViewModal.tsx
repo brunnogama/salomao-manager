@@ -80,11 +80,12 @@ export function CandidatoViewModal({ isOpen, onClose, candidatoId, onEdit, roleO
     }
 
     const getStatusColor = (status?: string) => {
+        if (status?.startsWith('Reprovado')) return 'bg-red-50 text-red-700 border-red-200'
         switch (status) {
             case 'Aberto': return 'bg-blue-50 text-blue-700 border-blue-200'
             case 'Em Processo': return 'bg-amber-50 text-amber-700 border-amber-200'
             case 'Aprovado em Vaga': return 'bg-green-50 text-green-700 border-green-200'
-            case 'Reprovado': return 'bg-red-50 text-red-700 border-red-200'
+            case 'Reaproveitamento': return 'bg-amber-50 text-amber-700 border-amber-200'
             default: return 'bg-gray-50 text-gray-600 border-gray-200'
         }
     }
@@ -302,7 +303,7 @@ export function CandidatoViewModal({ isOpen, onClose, candidatoId, onEdit, roleO
                                 )}
 
                                 {/* Motivo Reprovação */}
-                                {candidato.status_selecao === 'Reprovado' && candidato.motivo_reprovacao && (
+                                {candidato.status_selecao?.startsWith('Reprovado') && candidato.motivo_reprovacao && (
                                     <section>
                                         <h3 className="text-[9px] font-black text-red-500 uppercase tracking-widest border-b border-red-100 pb-2 mb-4">⚠️ Motivo da Reprovação</h3>
                                         <div className="bg-red-50 p-4 rounded-xl border border-red-100 text-sm text-red-700 whitespace-pre-wrap leading-relaxed font-medium">
