@@ -30,6 +30,7 @@ interface ColaboradorCard {
     role: string;
     equipe: string;
     atuacao: string;
+    local: string;
     leader_id?: string;
     competencias?: string;
     photo_url?: string;
@@ -79,30 +80,39 @@ const OrganogramNode = React.memo(({
         roleStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
         colab.equipe.toLowerCase().includes(searchQuery.toLowerCase());
 
+    const getRank = (rStr: string) => {
+        const r = rStr.trim();
+        const index = JURIDICO_HIERARCHY.findIndex(h => h.toLowerCase() === r.toLowerCase());
+        return index === -1 ? 999 : index;
+    };
+
     const sortedSubordinates = [...subordinates]
         .filter(c => {
             if (activeTab === 'JURIDICO') return c.isJuridico;
             if (activeTab === 'ADMINISTRATIVO') return c.isAdministrativo;
             return true;
         })
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .sort((a, b) => getRank(a.role) - getRank(b.role));
 
-    // Group subordinates by Location
-    const subordinatesByLocation = new Map<string, ColaboradorCard[]>();
-    sortedSubordinates.forEach(sub => {
-        const locationName = sub.fullData?.locations?.name || sub.fullData?.local || 'Sem Local';
-        if (!subordinatesByLocation.has(locationName)) {
-            subordinatesByLocation.set(locationName, []);
+    // Conditional Layout Logic
+    const isJuridicoTab = activeTab === 'JURIDICO';
+    const roleGroups: ColaboradorCard[][] = [];
+
+    if (isJuridicoTab) {
+        let currentRole: string | null = null;
+        let currentGroup: ColaboradorCard[] = [];
+
+        for (const sub of sortedSubordinates) {
+            if (sub.role !== currentRole) {
+                if (currentGroup.length > 0) roleGroups.push(currentGroup);
+                currentRole = sub.role;
+                currentGroup = [sub];
+            } else {
+                currentGroup.push(sub);
+            }
         }
-        subordinatesByLocation.get(locationName)!.push(sub);
-    });
-
-    const locationEntries = Array.from(subordinatesByLocation.entries()).sort((a, b) => {
-        if (a[0] === 'Sem Local') return 1;
-        if (b[0] === 'Sem Local') return -1;
-        return a[0].localeCompare(b[0]);
-    });
-
+        if (currentGroup.length > 0) roleGroups.push(currentGroup);
+    }
     return (
         <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
             <Droppable droppableId={colab.id} type="COLAB">
@@ -168,44 +178,96 @@ const OrganogramNode = React.memo(({
             {sortedSubordinates.length > 0 && (
                 <div className="flex flex-col items-center mt-2 w-full">
                     <div className="w-[2px] h-8 bg-gray-300"></div>
-                    <div className="flex flex-col w-full relative z-10 px-8">
-                        
-                        {/* Location Groups */}
-                        <div className="flex justify-center relative flex-wrap gap-x-16 gap-y-12">
-                            {/* Horizontal Line Connecting Locations if > 1 */}
-                            {locationEntries.length > 1 && (
-                                <div className="absolute top-0 h-[2px] bg-gray-300 -z-10" style={{
-                                    left: `${100 / (locationEntries.length * 2)}%`,
-                                    right: `${100 / (locationEntries.length * 2)}%`
-                                }}></div>
-                            )}
+                    <div className="flex flex-col items-center w-full relative z-10">
+                        {isJuridicoTab && colab.isSocio ? (() => {
+                            // JURIDICO - Sócio: group subordinates by Local
+                            const localGroups = new Map<string, ColaboradorCard[]>();
+                            sortedSubordinates.forEach(sub => {
+                                const key = sub.local || 'Sem Local';
+                                if (!localGroups.has(key)) localGroups.set(key, []);
+                                localGroups.get(key)!.push(sub);
+                            });
+                            const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
-                            {locationEntries.map(([location, groupSubs]) => (
-                                <div key={location} className="flex flex-col items-center relative min-w-fit pt-4">
-                                    <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2 -z-10"></div>
-                                    
-                                    {/* Location Header */}
-                                    <div className="bg-white px-4 py-1.5 rounded-full border border-gray-200 mb-6 relative z-20 shadow-sm mt-1">
-                                        <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest">{location}</span>
-                                    </div>
-                                    
-                                    {/* Top bracket connecting Location Header to Subordinates */}
-                                    <div className="absolute top-[3.25rem] left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2 -z-10"></div>
-                                    
-                                    <div className="flex justify-center relative w-full pt-4">
-                                        {/* Horizontal Top Line connecting peers within the location */}
-                                        {groupSubs.length > 1 && (
-                                            <div className="absolute top-0 h-[2px] bg-gray-300 -z-10" style={{
-                                                left: `${100 / (groupSubs.length * 2)}%`,
-                                                right: `${100 / (groupSubs.length * 2)}%`
-                                            }}></div>
-                                        )}
+                            return (
+                                <div className="flex justify-center relative pt-4 w-full">
+                                    {localEntries.map(([localName, localColabs], locIdx) => (
+                                        <div key={localName} className={`relative flex flex-col items-center ${localEntries.length > 5 ? 'px-1' : 'px-6'}`}>
+                                            {/* Per-local horizontal segment */}
+                                            {localEntries.length > 1 && (
+                                                <div className="absolute h-[2px] bg-gray-300" style={{
+                                                    top: '-1rem',
+                                                    left: locIdx === 0 ? '50%' : '0',
+                                                    right: locIdx === localEntries.length - 1 ? '50%' : '0'
+                                                }}></div>
+                                            )}
+                                            {/* Vertical stub up */}
+                                            <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
 
-                                        {groupSubs.map((sub) => (
-                                            <div key={sub.id} className={`relative flex flex-col items-center ${groupSubs.length > 8 ? 'px-0' : groupSubs.length > 5 ? 'px-0.5' : 'px-4'}`}>
-                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2 -z-10"></div>
+                                            {/* Local Label */}
+                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-2">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.15em]">{localName}</span>
+                                            </div>
+
+                                            {/* Vertical line from Local label to collaborators */}
+                                            <div className="w-[2px] h-6 bg-gray-300"></div>
+
+                                            {/* Collaborators under this Local */}
+                                            <div className="flex justify-center relative pt-4">
+                                                {localColabs.map((sub, idx) => (
+                                                    <div key={sub.id} className={`relative flex flex-col items-center ${localColabs.length > 8 ? 'px-0' : localColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
+                                                        {/* Per-child horizontal segment */}
+                                                        {localColabs.length > 1 && (
+                                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                                top: '-1rem',
+                                                                left: idx === 0 ? '50%' : '0',
+                                                                right: idx === localColabs.length - 1 ? '50%' : '0'
+                                                            }}></div>
+                                                        )}
+                                                        {/* Vertical stub up */}
+                                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                                        <div style={{
+                                                            transform: localColabs.length > 12 ? 'scale(0.8)' : localColabs.length > 8 ? 'scale(0.85)' : localColabs.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                                            transformOrigin: 'top center'
+                                                        }}>
+                                                            <OrganogramNode
+                                                                colab={sub}
+                                                                context={context}
+                                                                visitedIds={nextVisited}
+                                                                level={level + 1}
+                                                                isDense={localColabs.length > 5 && localColabs.length <= 8}
+                                                                isSuperDense={localColabs.length > 8}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })() : isJuridicoTab ? (
+                            // JURIDICO - Sub-levels: group by role vertically
+                            roleGroups.map((group, groupIndex) => (
+                                <div key={groupIndex} className="flex flex-col items-center w-full relative pb-16">
+                                    {groupIndex < roleGroups.length - 1 && (
+                                        <div className="absolute top-0 left-1/2 w-[2px] h-full bg-gray-300 -translate-x-1/2 -z-10"></div>
+                                    )}
+                                    <div className="flex justify-center relative pt-4 w-full">
+                                        {group.map((sub, idx) => (
+                                            <div key={sub.id} className={`relative flex flex-col items-center ${group.length > 8 ? 'px-0' : group.length > 5 ? 'px-0.5' : 'px-4'}`}>
+                                                {/* Per-child horizontal segment */}
+                                                {group.length > 1 && (
+                                                    <div className="absolute h-[2px] bg-gray-300" style={{
+                                                        top: '-1rem',
+                                                        left: idx === 0 ? '50%' : '0',
+                                                        right: idx === group.length - 1 ? '50%' : '0'
+                                                    }}></div>
+                                                )}
+                                                {/* Vertical stub up */}
+                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
                                                 <div style={{
-                                                    transform: groupSubs.length > 12 ? 'scale(0.8)' : groupSubs.length > 8 ? 'scale(0.85)' : groupSubs.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                                    transform: group.length > 12 ? 'scale(0.8)' : group.length > 8 ? 'scale(0.85)' : group.length > 5 ? 'scale(0.95)' : 'scale(1)',
                                                     transformOrigin: 'top center'
                                                 }}>
                                                     <OrganogramNode
@@ -213,17 +275,47 @@ const OrganogramNode = React.memo(({
                                                         context={context}
                                                         visitedIds={nextVisited}
                                                         level={level + 1}
-                                                        isDense={groupSubs.length > 5 && groupSubs.length <= 8}
-                                                        isSuperDense={groupSubs.length > 8}
+                                                        isDense={group.length > 5 && group.length <= 8}
+                                                        isSuperDense={group.length > 8}
                                                     />
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-
+                            ))
+                        ) : (
+                            // ADMINISTRATIVO: Unified horizontal row (peers side-by-side)
+                            <div className="flex justify-center relative pt-4 w-full">
+                                {sortedSubordinates.map((sub, idx) => (
+                                    <div key={sub.id} className={`relative flex flex-col items-center ${sortedSubordinates.length > 8 ? 'px-0' : sortedSubordinates.length > 5 ? 'px-0.5' : 'px-4'}`}>
+                                        {/* Per-child horizontal segment */}
+                                        {sortedSubordinates.length > 1 && (
+                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                top: '-1rem',
+                                                left: idx === 0 ? '50%' : '0',
+                                                right: idx === sortedSubordinates.length - 1 ? '50%' : '0'
+                                            }}></div>
+                                        )}
+                                        {/* Vertical stub up */}
+                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                        <div style={{
+                                            transform: sortedSubordinates.length > 12 ? 'scale(0.8)' : sortedSubordinates.length > 8 ? 'scale(0.85)' : sortedSubordinates.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                            transformOrigin: 'top center'
+                                        }}>
+                                            <OrganogramNode
+                                                colab={sub}
+                                                context={context}
+                                                visitedIds={nextVisited}
+                                                level={level + 1}
+                                                isDense={sortedSubordinates.length > 5 && sortedSubordinates.length <= 8}
+                                                isSuperDense={sortedSubordinates.length > 8}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -231,7 +323,192 @@ const OrganogramNode = React.memo(({
     );
 });
 
-// Removed unused AdminOrganogramTree
+// Admin Organogram Tree: Each Atuação is its own vertical tree (divisional org chart)
+const AdminOrganogramTree = React.memo(({
+    diretorFinanceiro,
+    allAdminColabs,
+    context,
+    selectedAtuacao = 'ALL'
+}: {
+    diretorFinanceiro: ColaboradorCard,
+    allAdminColabs: ColaboradorCard[],
+    context: {
+        activeTab: 'JURIDICO' | 'ADMINISTRATIVO',
+        searchQuery: string,
+        setSelectedColabForModal: (data: any) => void,
+        setEditingPosition: (pos: { top: number, left: number } | null) => void,
+        setEditingCompetenciasId: (id: string | null) => void,
+        setEditingCompetenciasText: (text: string) => void,
+        subordinatesMap: Map<string | null, ColaboradorCard[]>,
+    },
+    selectedAtuacao?: string | 'ALL'
+}) => {
+    const { setSelectedColabForModal } = context;
+
+    // Group collaborators by Atuação
+    const atuacaoGroups = useMemo(() => {
+        const groups = new Map<string, ColaboradorCard[]>();
+        allAdminColabs.forEach(c => {
+            if (c.id === diretorFinanceiro.id) return;
+            const key = c.atuacao || 'Sem Atuação';
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key)!.push(c);
+        });
+        return groups;
+    }, [allAdminColabs, diretorFinanceiro.id]);
+
+    // For each Atuação group, find the top-level collaborators
+    const getTopLevelInGroup = useCallback((colabs: ColaboradorCard[]) => {
+        const groupIds = new Set(colabs.map(c => c.id));
+        return colabs.filter(c => {
+            if (c.leader_id === diretorFinanceiro.id) return true;
+            if (!c.leader_id) return true;
+            if (!groupIds.has(c.leader_id)) return true;
+            return false;
+        });
+    }, [diretorFinanceiro.id]);
+
+    const atuacaoEntriesAll = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    const atuacaoEntries = selectedAtuacao === 'ALL'
+        ? atuacaoEntriesAll
+        : atuacaoEntriesAll.filter(([name]) => name === selectedAtuacao);
+
+    // Reusable Diretor Financeiro mini-node (Droppable)
+    const DiretorSection = ({ atuacaoName }: { atuacaoName: string }) => (
+        <Droppable droppableId={`root:${diretorFinanceiro.id}:${atuacaoName}`} type="COLAB">
+            {(provided, snapshot) => (
+                <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={`flex flex-col items-center p-6 rounded-[2.5rem] transition-all duration-300 ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 scale-105 border-2 border-dashed border-[#1e3a8a]/20' : 'bg-transparent'}`}
+                >
+                    <div
+                        className="flex flex-col items-center cursor-pointer group"
+                        onClick={() => setSelectedColabForModal(diretorFinanceiro.fullData)}
+                    >
+                        <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/20 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                            {diretorFinanceiro.photo_url ? (
+                                <img src={diretorFinanceiro.photo_url} alt={diretorFinanceiro.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-[#1e3a8a]/50">
+                                    <UserIcon className="w-10 h-10" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="mt-3 text-center">
+                            <h4 className="text-[13px] font-black text-[#0a192f] tracking-tight">{diretorFinanceiro.name}</h4>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">{diretorFinanceiro.role}</span>
+                        </div>
+                    </div>
+
+                    {/* Vertical line from Director to Atuação label */}
+                    <div className="w-[2px] h-8 bg-gray-300 mt-4"></div>
+
+                    {/* Atuação Label */}
+                    <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-8 py-3 rounded-2xl shadow-lg">
+                        <span className="text-[12px] font-black uppercase tracking-[0.2em]">{atuacaoName}</span>
+                    </div>
+                    {provided.placeholder}
+                </div>
+            )}
+        </Droppable>
+    );
+
+    return (
+        <div className="flex flex-col items-center gap-16 w-full">
+            {atuacaoEntries.map(([atuacaoName, colabs], sectionIdx) => {
+                const topLevel = getTopLevelInGroup(colabs);
+
+                return (
+                    <div key={atuacaoName} className="relative flex flex-col items-center w-full">
+                        {/* Section divider between Atuações */}
+                        {sectionIdx > 0 && (
+                            <div className="w-full max-w-4xl h-[2px] bg-gray-200 mb-16"></div>
+                        )}
+
+                        {/* Diretor Financeiro & Atuação (repeated per section) */}
+                        <DiretorSection atuacaoName={atuacaoName} />
+
+                        {/* Vertical line from Atuação label down to locals */}
+                        {topLevel.length > 0 && (
+                            <div className="w-[2px] h-8 bg-gray-300"></div>
+                        )}
+
+                        {/* Group top-level collaborators by Local */}
+                        {(() => {
+                            const localGroups = new Map<string, ColaboradorCard[]>();
+                            topLevel.forEach(c => {
+                                const key = c.local || 'Sem Local';
+                                if (!localGroups.has(key)) localGroups.set(key, []);
+                                localGroups.get(key)!.push(c);
+                            });
+                            const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                            if (localEntries.length === 0) return null;
+
+                            return (
+                                <div className="flex justify-center relative pt-4 w-full">
+                                    {localEntries.map(([localName, localColabs], locIdx) => (
+                                        <div key={localName} className={`relative flex flex-col items-center ${localEntries.length > 5 ? 'px-1' : 'px-6'}`}>
+                                            {/* Per-local horizontal segment */}
+                                            {localEntries.length > 1 && (
+                                                <div className="absolute h-[2px] bg-gray-300" style={{
+                                                    top: '-1rem',
+                                                    left: locIdx === 0 ? '50%' : '0',
+                                                    right: locIdx === localEntries.length - 1 ? '50%' : '0'
+                                                }}></div>
+                                            )}
+                                            {/* Vertical stub up */}
+                                            <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+
+                                            {/* Local Label */}
+                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-2">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.15em]">{localName}</span>
+                                            </div>
+
+                                            {/* Vertical line from Local label to collaborators */}
+                                            <div className="w-[2px] h-6 bg-gray-300"></div>
+
+                                            {/* Collaborators under this Local */}
+                                            <div className="flex justify-center relative pt-4">
+                                                {localColabs.map((colab, idx) => (
+                                                    <div key={colab.id} className={`relative flex flex-col items-center ${localColabs.length > 8 ? 'px-0' : localColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
+                                                        {/* Per-child horizontal segment */}
+                                                        {localColabs.length > 1 && (
+                                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                                top: '-1rem',
+                                                                left: idx === 0 ? '50%' : '0',
+                                                                right: idx === localColabs.length - 1 ? '50%' : '0'
+                                                            }}></div>
+                                                        )}
+                                                        {/* Vertical stub up */}
+                                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                                        <div style={{
+                                                            transform: localColabs.length > 12 ? 'scale(0.8)' : localColabs.length > 7 ? 'scale(0.9)' : 'scale(1)',
+                                                            transformOrigin: 'top center'
+                                                        }}>
+                                                            <OrganogramNode
+                                                                colab={colab}
+                                                                context={context}
+                                                                visitedIds={new Set<string>([diretorFinanceiro.id])}
+                                                                isDense={localColabs.length > 5 && localColabs.length <= 8}
+                                                                isSuperDense={localColabs.length > 8}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
+                    </div>
+                );
+            })}
+        </div>
+    );
+});
 
 export function Organograma() {
     const { colaboradores, loading: colsLoading, fetchColaboradores } = useColaboradores();
@@ -241,11 +518,8 @@ export function Organograma() {
     const [zoomLevel, setZoomLevel] = useState(1);
     const [selectedColabForModal, setSelectedColabForModal] = useState<any | null>(null);
     const [activeTab, setActiveTab] = useState<'JURIDICO' | 'ADMINISTRATIVO'>('JURIDICO');
-    
-    // Sub-tab selection state
-    const [activeSocioId, setActiveSocioId] = useState<string | null>(null);
-    const [activeAtuacao, setActiveAtuacao] = useState<string | null>(null);
-
+    const [selectedPartner, setSelectedPartner] = useState<string | 'ALL'>('ALL');
+    const [selectedAtuacao, setSelectedAtuacao] = useState<string | 'ALL'>('ALL');
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
@@ -337,6 +611,7 @@ export function Organograma() {
                         role: roleStr || 'Sem Cargo',
                         equipe: (typeof c.teams === 'object' ? (c.teams as any)?.name : c.equipe) || 'Geral',
                         atuacao: atuacaoName,
+                        local: (typeof c.locations === 'object' ? (c.locations as any)?.name : c.local) || 'Sem Local',
                         leader_id: c.leader_id || undefined,
                         competencias: c.competencias || '',
                         photo_url: c.photo_url || c.foto_url,
@@ -521,13 +796,12 @@ export function Organograma() {
     const topLevelNodes = useMemo(() => {
         return data.filter(c => {
             const roleStr = String(c.role || '');
-            const isSocio = roleStr.toLowerCase().includes('sócio') || roleStr.toLowerCase().includes('partner');
+            const isSocio = roleStr.toLowerCase().includes('sócio');
             const isDiretorFinanceiro = roleStr.toLowerCase().includes('diretor financeiro');
 
-            // Find all unique teams/areas for admin top level nodes
             if (activeTab === 'ADMINISTRATIVO') {
-               // Only return root nodes if they are the designated roots (e.g., they don't have a leader, or have specific root roles)
-               return isDiretorFinanceiro || !c.leader_id;
+                // Only Diretor Financeiro is root in the Administrative tree
+                return isDiretorFinanceiro;
             }
 
             // Juridico tab
@@ -535,7 +809,6 @@ export function Organograma() {
             return !c.leader_id;
         });
     }, [data, activeTab]);
-    
     // Find pure top level nodes based on active tab
     // NOTE: These hooks MUST be before any early returns to comply with React Rules of Hooks
     const roots = useMemo(() => {
@@ -545,30 +818,6 @@ export function Organograma() {
             return false;
         });
     }, [topLevelNodes, activeTab]);
-
-    // Derived lists for Sub Tabs
-    const sociosList = useMemo(() => {
-        return data.filter(c => c.isSocio && c.isJuridico).sort((a, b) => a.name.localeCompare(b.name));
-    }, [data]);
-
-    const atuacoesList = useMemo(() => {
-        const labels = new Set<string>();
-        data.filter(c => c.isAdministrativo && c.atuacao).forEach(c => {
-            if (c.atuacao && c.atuacao !== 'Sem Atuação') {
-                labels.add(c.atuacao);
-            }
-        });
-        return Array.from(labels).sort();
-    }, [data]);
-
-    // Automatically select first sub-tab if none selected
-    useEffect(() => {
-        if (activeTab === 'JURIDICO' && !activeSocioId && sociosList.length > 0) {
-            setActiveSocioId(sociosList[0].id);
-        } else if (activeTab === 'ADMINISTRATIVO' && !activeAtuacao && atuacoesList.length > 0) {
-            setActiveAtuacao(atuacoesList[0]);
-        }
-    }, [activeTab, sociosList, atuacoesList, activeSocioId, activeAtuacao]);
 
     // For Admin tab: get all admin collaborators for grouping by Atuação
     const adminColabs = useMemo(() => {
@@ -683,42 +932,79 @@ export function Organograma() {
                 </div>
             </div>
 
-            {/* Sub-tabs for Sócio or Área */}
-            <div className="flex flex-col gap-4 animate-in slide-in-from-top-4 fade-in duration-300">
-                <div className="flex flex-wrap items-center gap-2 custom-scrollbar overflow-x-auto pb-2 border-b border-gray-100">
-                    {activeTab === 'JURIDICO' && sociosList.map(socio => (
+            {/* Sub-abas por Sócio (Jurídico) */}
+            {activeTab === 'JURIDICO' && roots.length > 0 && (
+                <div className="flex items-center gap-2 mt-2 mb-1 overflow-x-auto pb-2 custom-scrollbar">
+                    <button
+                        onClick={() => setSelectedPartner('ALL')}
+                        className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
+                            selectedPartner === 'ALL'
+                                ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
+                                : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
+                        }`}
+                    >
+                        Todos
+                    </button>
+                    {roots.map((root) => (
                         <button
-                            key={socio.id}
-                            onClick={() => setActiveSocioId(socio.id)}
-                            className={`px-4 py-2 rounded-t-lg border-b-2 transition-all text-xs font-bold whitespace-nowrap ${
-                                activeSocioId === socio.id 
-                                    ? 'border-[#1e3a8a] text-[#1e3a8a] bg-blue-50/50' 
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                            key={root.id}
+                            onClick={() => setSelectedPartner(root.id)}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border flex items-center gap-2 shrink-0 ${
+                                selectedPartner === root.id
+                                    ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
+                                    : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
                             }`}
                         >
-                            {socio.name}
-                        </button>
-                    ))}
-                    {activeTab === 'ADMINISTRATIVO' && atuacoesList.map(atuacao => (
-                        <button
-                            key={atuacao}
-                            onClick={() => setActiveAtuacao(atuacao)}
-                            className={`px-4 py-2 rounded-t-lg border-b-2 transition-all text-xs font-bold uppercase tracking-wider whitespace-nowrap ${
-                                activeAtuacao === atuacao 
-                                    ? 'border-[#1e3a8a] text-[#1e3a8a] bg-blue-50/50' 
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                            }`}
-                        >
-                            {atuacao}
+                            {root.photo_url && (
+                                <img src={root.photo_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                            )}
+                            {root.name}
                         </button>
                     ))}
                 </div>
+            )}
 
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 mb-2">
-                    <div className="text-[11px] font-bold text-gray-400 bg-white border border-gray-100 px-4 py-2 rounded-xl shadow-sm inline-flex items-center gap-2 max-w-fit">
-                        <AlertCircle className="w-4 h-4 text-[#1e3a8a]" />
-                        Arraste um colaborador para alterar sua subordinação. Alterações são imediatas.
+            {/* Sub-abas por Atuação (Administrativo) */}
+            {activeTab === 'ADMINISTRATIVO' && (() => {
+                const atuacaoSet = new Set<string>();
+                adminColabs.forEach(c => {
+                    if (c.atuacao) atuacaoSet.add(c.atuacao);
+                });
+                const atuacaoList = Array.from(atuacaoSet).sort((a, b) => a.localeCompare(b));
+                if (atuacaoList.length === 0) return null;
+                return (
+                    <div className="flex items-center gap-2 mt-2 mb-1 overflow-x-auto pb-2 custom-scrollbar">
+                        <button
+                            onClick={() => setSelectedAtuacao('ALL')}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
+                                selectedAtuacao === 'ALL'
+                                    ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
+                                    : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
+                            }`}
+                        >
+                            Todos
+                        </button>
+                        {atuacaoList.map((atuacao) => (
+                            <button
+                                key={atuacao}
+                                onClick={() => setSelectedAtuacao(atuacao)}
+                                className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
+                                    selectedAtuacao === atuacao
+                                        ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
+                                        : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
+                                }`}
+                            >
+                                {atuacao}
+                            </button>
+                        ))}
                     </div>
+                );
+            })()}
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 mb-2">
+                <div className="text-[11px] font-bold text-gray-400 bg-white border border-gray-100 px-4 py-2 rounded-xl shadow-sm inline-flex items-center gap-2 max-w-fit">
+                    <AlertCircle className="w-4 h-4 text-[#1e3a8a]" />
+                    Arraste um colaborador para alterar sua subordinação. Alterações são imediatas.
                 </div>
             </div>
 
@@ -735,46 +1021,32 @@ export function Organograma() {
                                 minWidth: '100%'
                             }}
                         >
-                            {activeTab === 'ADMINISTRATIVO' && activeAtuacao ? (
-                                (() => {
-                                    // Find all root level admins for this specific atuacao
-                                    // These could be anyone without a leader_id or those that report to roots of other atuacaos
-                                    const areaColabs = adminColabs.filter(c => c.atuacao === activeAtuacao);
-                                    
-                                    // Find true roots for this atuacao (no leader, or leader is not in this atuacao)
-                                    const areaRoots = areaColabs.filter(c => {
-                                        if (!c.leader_id) return true;
-                                        // Is leader outside this atuacao?
-                                        const leader = data.find(l => l.id === c.leader_id);
-                                        return !leader || leader.atuacao !== activeAtuacao;
-                                    });
-
-                                    if (areaRoots.length === 0) {
-                                        return (
-                                            <div className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest">
-                                                Nenhuma estrutura principal encontrada para esta área.
-                                            </div>
-                                        );
-                                    }
-
-                                    return areaRoots.map((root, index) => (
+                            {activeTab === 'ADMINISTRATIVO' && roots.length > 0 ? (
+                                <AdminOrganogramTree
+                                    diretorFinanceiro={roots[0]}
+                                    allAdminColabs={adminColabs}
+                                    context={nodeContext}
+                                    selectedAtuacao={selectedAtuacao}
+                                />
+                            ) : roots.length > 0 ? (
+                                selectedPartner === 'ALL' ? (
+                                    roots.map((root, index) => (
                                         <div key={root.id} className="relative flex flex-col items-center w-full">
                                             <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
-                                            {index < areaRoots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
+                                            {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
                                         </div>
-                                    ));
-                                })()
-                            ) : activeTab === 'JURIDICO' && activeSocioId ? (
-                                (() => {
-                                    const socioColab = sociosList.find(s => s.id === activeSocioId);
-                                    if (!socioColab) return null;
-                                    
-                                    return (
-                                        <div className="relative flex flex-col items-center w-full">
-                                            <OrganogramNode colab={socioColab} context={nodeContext} visitedIds={new Set<string>()} />
-                                        </div>
-                                    );
-                                })()
+                                    ))
+                                ) : (
+                                    (() => {
+                                        const selectedRoot = roots.find(r => r.id === selectedPartner);
+                                        if (!selectedRoot) return null;
+                                        return (
+                                            <div className="relative flex flex-col items-center w-full">
+                                                <OrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
+                                            </div>
+                                        );
+                                    })()
+                                )
                             ) : (
                                 <div className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest">
                                     Nenhuma estrutura principal encontrada.
@@ -784,7 +1056,7 @@ export function Organograma() {
 
                         {/* Unassigned or Orphan Nodes Pool */}
                         <div className="mt-16 pt-8 border-t border-gray-200">
-                            <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6">Colaboradores sem subordinação (ou raiz não-sócio)</h3>
+                            <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6">Colaboradores sem subordinação</h3>
                             <Droppable droppableId="unassigned" direction="horizontal" type="COLAB">
                                 {(provided, snapshot) => (
                                     <div
@@ -794,6 +1066,7 @@ export function Organograma() {
                       ${snapshot.isDraggingOver ? 'border-[#1e3a8a] bg-blue-50/50' : 'border-gray-200 bg-white'}`}
                                     >
                                         {data.filter(c => {
+                                            if (c.isSocio) return false;
                                             if (c.leader_id || roots.some(r => r.id === c.id)) return false;
                                             if (activeTab === 'JURIDICO' && !c.isJuridico) return false;
                                             if (activeTab === 'ADMINISTRATIVO' && !c.isAdministrativo) return false;
@@ -837,6 +1110,7 @@ export function Organograma() {
                                         ))}
                                         {provided.placeholder}
                                         {data.filter(c => {
+                                            if (c.isSocio) return false;
                                             if (c.leader_id || roots.some(r => r.id === c.id)) return false;
                                             if (activeTab === 'JURIDICO' && !c.isJuridico) return false;
                                             if (activeTab === 'ADMINISTRATIVO' && !c.isAdministrativo) return false;
