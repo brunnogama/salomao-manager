@@ -16,7 +16,9 @@ import {
     Trash2,
     CheckCircle2,
     XCircle,
-    AlertTriangle
+    AlertTriangle,
+    X,
+    Filter
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
@@ -135,6 +137,7 @@ export function Sucumbencias() {
     });
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterResponsavel, setFilterResponsavel] = useState('Todos');
     const [selectedItem, setSelectedItem] = useState<FilteredSucumbencia | null>(null);
     const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos'>('potenciais');
     const [activeModalTab, setActiveModalTab] = useState(0);
@@ -433,11 +436,18 @@ export function Sucumbencias() {
         return false;
     });
 
-    const displayedData = tabFilteredData.filter(item => 
-        item.cnj.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.responsavel.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.andamentos.some(and => and.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const displayedData = tabFilteredData.filter(item => {
+        const matchSearch = item.cnj.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            item.responsavel.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            item.andamentos.some(and => and.descricao.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        const matchResp = filterResponsavel === 'Todos' || item.responsavel === filterResponsavel;
+
+        return matchSearch && matchResp;
+    });
+
+    // Unique responsaveis list for dropdown from current tab explicitly (or all imported)
+    const uniqueResponsaveis = Array.from(new Set(importedData.map(d => d.responsavel))).sort();
 
     const handleMarkAsPrescrito = (item: FilteredSucumbencia) => {
         setImportedData(prev => prev.map(d => d.id === item.id ? { ...d, status: 'prescrito' } : d));
@@ -452,11 +462,11 @@ export function Sucumbencias() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in duration-500">
-            {/* Header */}
+        <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 animate-in fade-in duration-500">
+            {/* Header com Título, Abas e Botões de Ação Principais */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2 sm:p-3 shadow-lg shrink-0">
+                    <div className="rounded-xl bg-[#1e3a8a] p-2 sm:p-3 shadow-sm shrink-0">
                         <Award className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                     </div>
                     <div>
@@ -465,47 +475,116 @@ export function Sucumbencias() {
                     </div>
                 </div>
 
-                {/* Filtros */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full lg:w-auto relative">
+                <div className="flex items-center gap-3 shrink-0 w-full lg:w-auto relative justify-between lg:justify-end">
+                    {/* Tabs no Header Superior */}
                     <div className="flex bg-gray-100 p-1 rounded-lg">
                         <button
-                            onClick={() => handleQuickSelect('30_days')}
-                            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-colors hover:bg-gray-200 text-gray-600"
+                            onClick={() => setActiveTab('potenciais')}
+                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'potenciais' ? 'bg-white shadow-sm text-[#1e3a8a]' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            30 Dias
+                            <span className="hidden sm:inline">Potenciais</span>
+                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => (d.status || 'potencial') === 'potencial').length}</span>
                         </button>
                         <button
-                            onClick={() => handleQuickSelect('6_months')}
-                            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-colors hover:bg-gray-200 text-gray-600"
+                            onClick={() => setActiveTab('prescritos')}
+                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'prescritos' ? 'bg-white shadow-sm text-[#1e3a8a]' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            6 Meses
-                        </button>
-                        <button
-                            onClick={() => handleQuickSelect('this_year')}
-                            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-colors bg-white shadow-sm text-[#1e3a8a]"
-                        >
-                            Este Ano
+                            <span className="hidden sm:inline">Prescritos</span>
+                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'prescrito').length}</span>
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1 sm:ml-2">
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={() => setIsClearModalOpen(true)}
+                            className="w-10 h-10 bg-white hover:bg-gray-50 border border-gray-200 text-[#1e3a8a] rounded-xl flex items-center justify-center transition-all shadow-sm"
+                            title="Limpar Base"
+                        >
+                            <Trash2 className="w-5 h-5 text-red-500" />
+                        </button>
+                        <button 
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-10 h-10 bg-emerald-500 hover:bg-emerald-600 border border-emerald-600 text-white rounded-xl flex items-center justify-center transition-all shadow-sm shadow-emerald-500/20"
+                            title="Importar Relatório LegalOne"
+                        >
+                            <Upload className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Barra de Filtros Inferior Branca parecida com a de Colaboradores */}
+            {hasImported && (
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                    
+                    {/* Card de Quantidade (Pequeno) */}
+                    <div className="flex items-center gap-3 bg-[#f8fafc] px-4 py-2 rounded-lg border border-gray-100 shrink-0">
+                        <div className="p-1.5 bg-blue-100/50 rounded-md">
+                            <Award className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-blue-900 uppercase tracking-widest opacity-60">Processos Ativos</span>
+                            <span className="text-sm font-bold text-[#0a192f] leading-tight">{tabFilteredData.length}</span>
+                        </div>
+                    </div>
+
+                    {/* Barra de Pesquisa */}
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input 
+                            type="text" 
+                            placeholder="Buscar processo, palavra ou nome..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-xs font-medium focus:outline-none focus:border-blue-300 focus:bg-white transition-all focus:ring-2 focus:ring-blue-100"
+                        />
+                        {searchTerm && (
+                            <button 
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 bg-gray-200 text-gray-500 rounded-md hover:bg-gray-300 transition-colors"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Filtro de Período (Duração de Andamentos) */}
+                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 shrink-0">
                         <Calendar className="w-4 h-4 text-gray-400" />
                         <input
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="text-xs border-none outline-none text-gray-600 cursor-pointer bg-transparent w-28"
+                            className="text-xs font-medium border-none outline-none text-gray-600 bg-transparent cursor-pointer"
                         />
-                        <span className="text-gray-300">até</span>
+                        <span className="text-gray-300 text-xs">-</span>
                         <input
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="text-xs border-none outline-none text-gray-600 cursor-pointer bg-transparent w-28"
+                            className="text-xs font-medium border-none outline-none text-gray-600 bg-transparent cursor-pointer"
                         />
                     </div>
+
+                    {/* Filtro de Responsável */}
+                    <div className="relative shrink-0">
+                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                            <Filter className="w-4 h-4 text-gray-400" />
+                            <select
+                                value={filterResponsavel}
+                                onChange={(e) => setFilterResponsavel(e.target.value)}
+                                className="text-xs font-medium border-none outline-none text-gray-600 bg-transparent cursor-pointer appearance-none pr-4"
+                            >
+                                <option value="Todos">Todos os Responsáveis</option>
+                                {uniqueResponsaveis.map((resp, i) => (
+                                    <option key={i} value={resp}>{resp}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    
                 </div>
-            </div>
+            )}
 
             {loading ? (
                 <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center flex flex-col items-center justify-center">
@@ -514,52 +593,6 @@ export function Sucumbencias() {
                 </div>
             ) : (
                 <div className="space-y-4 sm:space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                    {/* Indicadores Principais (Placeholders) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-[#1e3a8a]/30 transition-all">
-                            <div className="flex items-center gap-3 mb-2 relative z-10">
-                                <div className="p-2 bg-blue-50 rounded-lg">
-                                    <Scale className="w-5 h-5 text-blue-600" />
-                                </div>
-                                <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Processos Ativos</h3>
-                            </div>
-                            <div className="flex items-baseline gap-2 mt-2 relative z-10">
-                                <span className="text-3xl font-black text-[#0a192f]">{hasImported ? importedData.length : 0}</span>
-                                <span className="text-[11px] font-bold text-gray-500">encontrados</span>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-[#1e3a8a]/30 transition-all opacity-50 grayscale">
-                            <div className="flex items-center gap-3 mb-2 relative z-10">
-                                <div className="p-2 bg-emerald-50 rounded-lg">
-                                    <DollarSign className="w-5 h-5 text-emerald-600" />
-                                </div>
-                                <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Valor Total Esperado</h3>
-                            </div>
-                            <p className="text-2xl font-black text-emerald-700 mt-2 relative z-10">Em Breve</p>
-                        </div>
-
-                        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-[#1e3a8a]/30 transition-all opacity-50 grayscale">
-                            <div className="flex items-center gap-3 mb-2 relative z-10">
-                                <div className="p-2 bg-amber-50 rounded-lg">
-                                    <TrendingUp className="w-5 h-5 text-amber-600" />
-                                </div>
-                                <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Valor Recebido</h3>
-                            </div>
-                            <p className="text-2xl font-black text-amber-700 mt-2 truncate relative z-10">Em Breve</p>
-                        </div>
-
-                        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-[#1e3a8a]/30 transition-all opacity-50 grayscale">
-                            <div className="flex items-center gap-3 mb-2 relative z-10">
-                                <div className="p-2 bg-purple-50 rounded-lg">
-                                    <FileSignature className="w-5 h-5 text-purple-600" />
-                                </div>
-                                <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Em Fase de Execução</h3>
-                            </div>
-                            <p className="text-3xl font-black text-purple-700 mt-2 truncate relative z-10">-</p>
-                        </div>
-                    </div>
-
                     {/* Area principal de conteúdo */}
                     <div className="grid grid-cols-1 gap-6 items-start">
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col min-h-[400px]">
@@ -603,77 +636,16 @@ export function Sucumbencias() {
                             ) : (
                                 /* Results Table State */
                                 <div className="flex flex-col flex-1 h-full min-h-[500px]">
-                                    {/* Table Header Controls */}
-                                    <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-emerald-50 rounded-lg">
-                                                    <Award className="w-5 h-5 text-emerald-600" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Gestão de Sucumbências</h3>
-                                                    <p className="text-xs text-gray-500 font-semibold mt-0.5">{tabFilteredData.length} registros nesta aba</p>
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Tabs */}
-                                            <div className="flex bg-gray-100 p-1 rounded-lg ml-0 sm:ml-4">
-                                                <button
-                                                    onClick={() => setActiveTab('potenciais')}
-                                                    className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded transition-all ${activeTab === 'potenciais' ? 'bg-white shadow-sm text-[#1e3a8a]' : 'text-gray-500 hover:text-gray-700'}`}
-                                                >
-                                                    Potenciais ({importedData.filter(d => (d.status || 'potencial') === 'potencial').length})
-                                                </button>
-                                                <button
-                                                    onClick={() => setActiveTab('prescritos')}
-                                                    className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded transition-all ${activeTab === 'prescritos' ? 'bg-white shadow-sm text-amber-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                                >
-                                                    Prescritos ({importedData.filter(d => d.status === 'prescrito').length})
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex items-center gap-2">
-                                            <div className="relative">
-                                                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="Buscar n°, resp. ou termo..." 
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                    className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] w-full sm:w-64 transition-all"
-                                                />
-                                            </div>
-                                            <button 
-                                                onClick={() => {
-                                                    setIsClearModalOpen(true);
-                                                }}
-                                                className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors border border-red-200"
-                                                title="Limpar Base Completa"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                <span className="hidden sm:inline">Limpar Base</span>
-                                            </button>
-                                            <button 
-                                                onClick={() => setHasImported(false)}
-                                                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors border border-gray-200"
-                                                title="Importar Nova Planilha (Adicionar)"
-                                            >
-                                                <Upload className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
                                     {/* Table Content */}
-                                    <div className="flex-1 overflow-x-auto">
+                                    <div className="flex-1 overflow-x-auto rounded-2xl">
                                         <table className="w-full text-left border-collapse">
                                             <thead className="sticky top-0 z-10">
-                                                <tr className="bg-gray-50/90 backdrop-blur-sm text-gray-500 text-[10px] font-black uppercase tracking-widest border-b border-gray-100">
-                                                    <th className="p-4">Processo (CNJ) / Responsável</th>
-                                                    <th className="p-4 text-center">UF</th>
-                                                    <th className="p-4 text-center">Data And.</th>
-                                                    <th className="p-4 w-[45%]">Descrição (Recorte)</th>
-                                                    <th className="p-4 text-center">Ações</th>
+                                                <tr className="bg-[#1e3a8a] text-white text-[10px] font-bold uppercase tracking-widest border-b border-[#112240]">
+                                                    <th className="p-4 rounded-tl-xl font-black">Processo (CNJ) / Responsável</th>
+                                                    <th className="p-4 text-center font-black">UF</th>
+                                                    <th className="p-4 text-center font-black">Data And.</th>
+                                                    <th className="p-4 w-[45%] font-black">Descrição (Recorte)</th>
+                                                    <th className="p-4 text-center rounded-tr-xl font-black">Ações</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
