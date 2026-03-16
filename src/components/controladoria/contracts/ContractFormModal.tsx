@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import {
-  X, Scale, MapPin, AlignLeft, Info, PlusCircle, CheckCircle, Clock, Save,
-  Trash2, FileText, Download, Briefcase, ChevronUp, ChevronDown, Loader2
+  X, Scale, Clock, Save,
+  FileText, Briefcase, Loader2
 } from 'lucide-react';
 import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst } from '../../../types/controladoria';
 import { maskCNPJ, maskMoney, maskHon, toTitleCase } from '../utils/masks';
-import { decodeCNJ } from '../utils/cnjDecoder';
 import { addDays } from 'date-fns';
 import { toast } from 'sonner';
 import { useEscKey } from '../../../hooks/useEscKey';
@@ -64,13 +63,10 @@ export function ContractFormModal(props: Props) {
   const [duplicateClientCases, setDuplicateClientCases] = useState<any[]>([]);
   const [tempFiles, setTempFiles] = useState<{ file: File, type: string }[]>([]);
 
-  const [authorHasNoCnpj, setAuthorHasNoCnpj] = useState(false);
   const [isStandardCNJ, setIsStandardCNJ] = useState(true);
   const [duplicateProcessData, setDuplicateProcessData] = useState<any | null>(null);
   const [duplicateOpponentCases, setDuplicateOpponentCases] = useState<any[]>([]);
-  const [searchingCNJ, setSearchingCNJ] = useState(false);
   const [opponentHasNoCnpj, setOpponentHasNoCnpj] = useState(false);
-
   const [otherProcessType, setOtherProcessType] = useState('');
   const [viewProcess, setViewProcess] = useState<ContractProcess | null>(null);
   const [viewProcessIndex, setViewProcessIndex] = useState<number | null>(null);
