@@ -146,7 +146,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
       // Construct payload explicitly to avoid sending joined/virtual fields
       const payload: any = {
         name: formData.name,
-        cnpj: formData.cnpj ? formData.cnpj.replace(/\D/g, '') : null,
+        cnpj: formData.cnpj ? maskCNPJ(formData.cnpj) : null,
         email: formData.email,
         phone: formData.phone,
         address: formData.address,
