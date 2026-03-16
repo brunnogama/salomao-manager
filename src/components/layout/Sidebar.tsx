@@ -12,6 +12,7 @@ import {
   Share2,
   ShieldCheck,
   TrendingUp,
+  Award,
   X
 } from 'lucide-react';
 
@@ -36,6 +37,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { label: 'Propostas', path: '/controladoria/propostas', icon: FileText },
     { label: 'Compliance', path: '/controladoria/compliance', icon: ShieldCheck },
     { label: 'Demandas Jurídicas', path: '/controladoria/demandas', icon: TrendingUp },
+    { label: 'Sucumbências', path: '/controladoria/sucumbencias', icon: Award },
     { label: 'Financeiro', path: '/controladoria/financeiro', icon: DollarSign },
     { label: 'Jurimetria', path: '/controladoria/jurimetria', icon: Share2 },
     { label: 'Volumetria', path: '/controladoria/volumetria', icon: BarChart3 },
