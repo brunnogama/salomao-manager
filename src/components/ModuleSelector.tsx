@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay, Sparkles, Gift } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { logAction } from '../lib/logger'
-import { APP_UPDATES } from '../config/updates'
-import { UpdateNotificationModal } from './UpdateNotificationModal'
+import { KanbanModal } from './WelcomeKanbanModal'
 
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -21,27 +20,8 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isPending, setIsPending] = useState(false)
 
-  // --- What's New Notification State ---
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [hasNewUpdate, setHasNewUpdate] = useState(false);
-  const currentUpdate = APP_UPDATES[0];
-
-  useEffect(() => {
-    if (currentUpdate) {
-      const lastSeenVersion = localStorage.getItem('lastSeenUpdateVersion');
-      if (lastSeenVersion !== currentUpdate.version) {
-        setHasNewUpdate(true);
-      }
-    }
-  }, [currentUpdate]);
-
-  const handleOpenUpdateModal = () => {
-    if (currentUpdate) {
-      localStorage.setItem('lastSeenUpdateVersion', currentUpdate.version);
-      setHasNewUpdate(false);
-    }
-    setShowUpdateModal(true);
-  };
+  // --- Kanban Modal State ---
+  const [showKanbanModal, setShowKanbanModal] = useState(false);
 
   useEffect(() => {
     async function fetchPermissions() {
@@ -275,47 +255,20 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             </div>
           </div>
 
-          {/* What's New Button */}
-          {hasNewUpdate && (
-            <div className="relative group/novidades flex items-center">
-              {/* Tooltip Animado */}
-              <div className="absolute top-14 right-0 w-max max-w-[200px] z-50 animate-in fade-in slide-in-from-top-2 duration-500 ease-out">
-                {/* Arrow up */}
-                <div className="absolute -top-2 right-4 w-4 h-4 bg-amber-50 border-t border-l border-amber-200/50 transform rotate-45 rounded-tl-sm"></div>
-                {/* Content */}
-                <div className="bg-amber-50 border border-amber-200/50 shadow-xl shadow-amber-900/10 rounded-xl p-3 relative flex items-start gap-3">
-                  <div className="p-1.5 bg-amber-100/80 rounded-lg text-amber-600 shrink-0">
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-800 mb-0.5">Novidades!</span>
-                    <span className="text-xs font-bold text-amber-900/70 leading-tight">Veja o que acabou de mudar no sistema.</span>
-                  </div>
-                </div>
+          {/* Kanban Button */}
+          <button
+            onClick={() => setShowKanbanModal(true)}
+            className="p-2.5 text-white/50 hover:text-[#d4af37] transition-all rounded-full hover:bg-white/10 active:scale-95 group relative"
+            title="Kanban Pessoal"
+          >
+            <div className="flex flex-col gap-1 items-center justify-center p-0.5">
+              <div className="flex gap-1">
+                <div className="w-1.5 h-3 bg-current rounded-sm opacity-80 group-hover:bg-[#d4af37]"></div>
+                <div className="w-1.5 h-4 bg-current rounded-sm opacity-100 group-hover:bg-[#d4af37]"></div>
+                <div className="w-1.5 h-2 bg-current rounded-sm opacity-60 group-hover:bg-[#d4af37]"></div>
               </div>
-
-              {/* Icon Button */}
-              <button
-                onClick={handleOpenUpdateModal}
-                className="p-2.5 text-amber-300 hover:text-amber-200 transition-all rounded-full hover:bg-white/10 active:scale-95 animate-pulse hover:animate-none flex items-center justify-center relative"
-                title="Novidades do Sistema"
-              >
-                <Gift className="h-5 w-5" />
-                <span className="absolute top-1.5 right-1.5 w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] border border-white animate-ping"></span>
-                <span className="absolute top-1.5 right-1.5 w-3 h-3 rounded-full bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)] border border-white"></span>
-              </button>
             </div>
-          )}
-
-          {!hasNewUpdate && (
-            <button
-              onClick={handleOpenUpdateModal}
-              className="p-2.5 text-white/50 hover:text-[#d4af37] transition-all rounded-full hover:bg-white/10 active:scale-95"
-              title="Novidades do Sistema"
-            >
-              <Gift className="h-5 w-5" />
-            </button>
-          )}
+          </button>
 
           {isAdmin && (
             <button
@@ -428,10 +381,10 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         </div>
       </footer>
 
-      {/* Modals */}
-      <UpdateNotificationModal
-        isOpen={showUpdateModal}
-        onClose={() => setShowUpdateModal(false)}
+      {/* Kanban Modal */}
+      <KanbanModal
+        isOpen={showKanbanModal}
+        onClose={() => setShowKanbanModal(false)}
       />
     </div>
   )
