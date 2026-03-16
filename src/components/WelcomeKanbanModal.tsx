@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Plus, GripVertical, AlertCircle, Calendar, Tag } from 'lucide-react';
+import { X, Plus, GripVertical, Calendar, Tag } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 // Tipos
@@ -16,10 +15,6 @@ export interface KanbanItem {
   columnId: ColumnId;
 }
 
-interface KanbanModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
 
 // Cores
 const PRIORITY_COLORS = {
@@ -40,7 +35,7 @@ const COLUMN_TITLES = {
   'concluido': 'CONCLUÍDOS',
 };
 
-export function KanbanModal({ isOpen, onClose }: KanbanModalProps) {
+export function KanbanModal() {
   const [items, setItems] = useState<KanbanItem[]>(() => {
     const saved = localStorage.getItem('moduleSelectorKanban');
     if (saved) {
@@ -65,19 +60,7 @@ export function KanbanModal({ isOpen, onClose }: KanbanModalProps) {
     localStorage.setItem('moduleSelectorKanban', JSON.stringify(items));
   }, [items]);
 
-  // Bloquear scroll
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+  // Removido bloqueio do scroll pois não é mais modal
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -161,9 +144,9 @@ export function KanbanModal({ isOpen, onClose }: KanbanModalProps) {
   const columns: ColumnId[] = ['fa-fazer', 'em-progresso', 'concluido'];
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pt-16 sm:p-6 bg-[#0a192f]/80 backdrop-blur-xl">
+    <div className="min-h-screen w-full flex bg-[#0a192f] p-4 sm:p-6 overflow-hidden">
       {/* Container Principal */}
-      <div className="bg-[#112240] w-full max-w-7xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-300">
+      <div className="bg-[#112240] w-full h-full rounded-3xl border border-white/10 shadow-2xl flex flex-col relative animate-in fade-in duration-300">
         
         {/* Header */}
         <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between bg-white/[0.02] shrink-0">
@@ -176,12 +159,6 @@ export function KanbanModal({ isOpen, onClose }: KanbanModalProps) {
               <p className="text-sm text-blue-200/50 font-medium">Gerencie suas tarefas pessoais</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2.5 rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition-all active:scale-95"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Board content */}
@@ -307,7 +284,7 @@ export function KanbanModal({ isOpen, onClose }: KanbanModalProps) {
 
       {/* Add Task Modal */}
       {isAdding && (
-        <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#112240] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl p-6 relative">
             <h3 className="text-lg font-bold text-white mb-6">Nova Tarefa</h3>
             

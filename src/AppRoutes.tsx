@@ -11,6 +11,7 @@ import { CandidatoPublicProfile } from './components/collaborators/pages/Candida
 import ReportControladoria from './pages/ReportControladoria';
 import { PublicDemandas } from './components/secretaria/demandas/PublicDemandas';
 import { Presentation } from './pages/presentation/Presentation';
+import { KanbanModal } from './components/WelcomeKanbanModal';
 import { BackupService } from './lib/BackupService';
 import { useEffect } from 'react';
 
@@ -203,6 +204,7 @@ export function AppRoutes() {
 
                 <Route path="/apresentacao" element={<WithProps Component={Presentation} />} />
                 <Route path="/configuracoes" element={<WithProps Component={Settings} />} />
+                <Route path="/kanban_pessoal" element={<WithProps Component={KanbanModal} />} />
 
                 {/* CRM */}
                 <Route path="/crm">

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay, Sparkles, Gift } from 'lucide-react'
+import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { logAction } from '../lib/logger'
-import { KanbanModal } from './WelcomeKanbanModal'
 
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -20,9 +19,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isPending, setIsPending] = useState(false)
 
-  // --- Kanban Modal State ---
-  const [showKanbanModal, setShowKanbanModal] = useState(false);
-
+  // --- State Setup ---
   useEffect(() => {
     async function fetchPermissions() {
       try {
@@ -257,7 +254,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
           {/* Kanban Button */}
           <button
-            onClick={() => setShowKanbanModal(true)}
+            onClick={() => window.open('/kanban_pessoal', '_blank', 'width=1200,height=800,menubar=no,toolbar=no')}
             className="p-2.5 text-white/50 hover:text-[#d4af37] transition-all rounded-full hover:bg-white/10 active:scale-95 group relative"
             title="Kanban Pessoal"
           >
@@ -380,12 +377,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           </p>
         </div>
       </footer>
-
-      {/* Kanban Modal */}
-      <KanbanModal
-        isOpen={showKanbanModal}
-        onClose={() => setShowKanbanModal(false)}
-      />
     </div>
   )
 }
