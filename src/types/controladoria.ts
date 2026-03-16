@@ -241,21 +241,11 @@ export interface ContractProcess {
   id?: string;
   contract_id?: string;
   process_number: string;
-  author?: string;
-  opponent?: string;
   court?: string;
-  vara?: string;
-  comarca?: string;
-  subject?: string;
-  magistrates?: Magistrate[];
-
+  opponent?: string;
+  
   // UI/Form fields
-  position?: string;
   uf?: string;
-  author_cnpj?: string;
-  opponent_cnpj?: string;
-  cause_value?: string;
-  value_of_cause?: number;
 }
 
 export interface ContractCase {

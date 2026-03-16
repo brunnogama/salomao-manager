@@ -2,36 +2,109 @@ import React, { useState } from 'react';
 import { X, Loader2, Check, Plus, Pencil, Trash2 } from 'lucide-react';
 
 interface OptionManagerProps {
-  title: string;
-  options: string[];
-  onAdd: (val: string) => Promise<boolean>;
+  type: string;
+  lists: {
+    legalAreas: string[];
+    billingLocations: string[];
+    courtOptions: string[];
+    classOptions: string[];
+    subjectOptions: string[];
+    positionsList: string[];
+    varaOptions: string[];
+    justiceOptions: string[];
+    comarcaOptions: string[];
+    magistrateOptions: string[];
+    opponentOptions: string[];
+    authorOptions: string[];
+    clientOptions: string[];
+  };
+  onAdd: (val: string, extra?: any) => Promise<boolean>;
   onRemove: (val: string) => void;
   onEdit: (oldVal: string, newVal: string) => Promise<boolean>;
   onClose: () => void;
+  isOpen: boolean;
+  editingValue: string | null;
+  setEditingValue: React.Dispatch<React.SetStateAction<string | null>>;
   placeholder?: string;
 }
 
-export const OptionManager = ({ 
-  title, 
-  options, 
-  onAdd, 
-  onRemove, 
+export const OptionManager = ({
+  type,
+  lists,
+  onAdd,
+  onRemove,
   onEdit,
   onClose,
+  isOpen,
+  editingValue,
+  setEditingValue,
   placeholder = "Digite o nome"
 }: OptionManagerProps) => {
     const [inputValue, setInputValue] = useState('');
     const [loading, setLoading] = useState(false);
-    const [editingItem, setEditingItem] = useState<string | null>(null);
+    
+    // Get the right list
+    const getOptionsList = () => {
+        switch (type) {
+            case 'area': return lists.legalAreas;
+            case 'location': return lists.billingLocations;
+            case 'court': return lists.courtOptions;
+            case 'class': return lists.classOptions;
+            case 'subject': return lists.subjectOptions;
+            case 'position': return lists.positionsList;
+            case 'vara': return lists.varaOptions;
+            case 'justice': return lists.justiceOptions;
+            case 'comarca': return lists.comarcaOptions;
+            case 'magistrate': return lists.magistrateOptions;
+            case 'opponent': return lists.opponentOptions;
+            case 'author': return lists.authorOptions;
+            case 'client': return lists.clientOptions;
+            default: return [];
+        }
+    };
+    
+    const getTitle = () => {
+        switch (type) {
+            case 'area': return 'Gerenciar Áreas';
+            case 'location': return 'Gerenciar Locais';
+            case 'court': return 'Gerenciar Tribunais';
+            case 'class': return 'Gerenciar Classes';
+            case 'subject': return 'Gerenciar Assuntos';
+            case 'position': return 'Gerenciar Posições';
+            case 'vara': return 'Gerenciar Varas';
+            case 'justice': return 'Gerenciar Justiças';
+            case 'comarca': return 'Gerenciar Comarcas';
+            case 'magistrate': return 'Gerenciar Magistrados';
+            case 'opponent': return 'Gerenciar Contrário';
+            case 'author': return 'Gerenciar Autores';
+            case 'client': return 'Gerenciar Clientes';
+            default: return 'Gerenciar';
+        }
+    };
+
+    const options = getOptionsList();
+    const title = getTitle();
+
+    React.useEffect(() => {
+        if (isOpen) {
+            if (editingValue) {
+                setInputValue(editingValue);
+            } else {
+                setInputValue('');
+            }
+        }
+    }, [isOpen, editingValue]);
+
+    if (!isOpen) return null;
 
     const handleSubmit = async () => {
         if (!inputValue.trim()) return;
         setLoading(true);
         let success = false;
         
-        if (editingItem) {
-            success = await onEdit(editingItem, inputValue.trim());
-            if (success) setEditingItem(null);
+        if (editingValue) {
+            success = await onEdit(editingValue, inputValue.trim());
+            if (success) setEditingValue(null);
         } else {
             success = await onAdd(inputValue.trim());
             if (success) onClose();
@@ -42,12 +115,12 @@ export const OptionManager = ({
     };
 
     const handleEditClick = (item: string) => {
-        setEditingItem(item);
+        setEditingValue(item);
         setInputValue(item);
     };
 
     const handleCancelEdit = () => {
-        setEditingItem(null);
+        setEditingValue(null);
         setInputValue('');
     };
 
@@ -69,7 +142,7 @@ export const OptionManager = ({
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
                 />
-                {editingItem && (
+                {editingValue && (
                     <button 
                         onClick={handleCancelEdit}
                         className="bg-gray-200 text-gray-600 p-2 rounded-lg hover:bg-gray-300"
@@ -81,15 +154,15 @@ export const OptionManager = ({
                 <button 
                   onClick={handleSubmit}
                   disabled={loading}
-                  className={`${editingItem ? 'bg-green-600 hover:bg-green-700' : 'bg-salomao-blue'} text-white p-2 rounded-lg disabled:opacity-50 transition-colors`}
+                  className={`${editingValue ? 'bg-green-600 hover:bg-green-700' : 'bg-salomao-blue'} text-white p-2 rounded-lg disabled:opacity-50 transition-colors`}
                 >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin"/> : (editingItem ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />)}
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin"/> : (editingValue ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />)}
                 </button>
               </div>
 
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {options.map((opt, idx) => (
-                  <div key={idx} className={`flex items-center justify-between p-2 rounded-lg group ${editingItem === opt ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'}`}>
+                  <div key={idx} className={`flex items-center justify-between p-2 rounded-lg group ${editingValue === opt ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'}`}>
                     <span className="text-sm text-gray-700 truncate flex-1 mr-2">{opt}</span>
                     <div className="flex items-center gap-1">
                         <button 

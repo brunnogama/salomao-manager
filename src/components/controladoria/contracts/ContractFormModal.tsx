@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import {
-  X, Save,
-  User, DollarSign, Gavel, Files, Loader2
+  X, Scale, MapPin, AlignLeft, Info, PlusCircle, CheckCircle, Clock, Save,
+  Trash2, FileText, Download, Briefcase, ChevronUp, ChevronDown, Loader2
 } from 'lucide-react';
 import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst } from '../../../types/controladoria';
 import { maskCNPJ, maskMoney, maskHon, toTitleCase } from '../utils/masks';
@@ -55,38 +55,60 @@ export function ContractFormModal(props: Props) {
   const [interimClause, setInterimClause] = useState('');
 
   const [activeManager, setActiveManager] = useState<string | null>(null);
+  const [isManagerOpen, setIsManagerOpen] = useState(false);
+  const [editingValue, setEditingValue] = useState<string | null>(null);
 
   const [initialFormData, setInitialFormData] = useState<Contract | null>(null);
 
-  const [duplicateClientCases, setDuplicateClientCases] = useState<any[]>([]);
-  const [duplicateOpponentCases, setDuplicateOpponentCases] = useState<any[]>([]);
-  const [duplicateAuthorCases, setDuplicateAuthorCases] = useState<any[]>([]);
   const [duplicateHonCase, setDuplicateHonCase] = useState<any | null>(null);
-  const [duplicateProcessData, setDuplicateProcessData] = useState<any | null>(null);
+  const [duplicateClientCases, setDuplicateClientCases] = useState<any[]>([]);
   const [tempFiles, setTempFiles] = useState<{ file: File, type: string }[]>([]);
 
   const [authorHasNoCnpj, setAuthorHasNoCnpj] = useState(false);
+  const [isStandardCNJ, setIsStandardCNJ] = useState(true);
+  const [duplicateProcessData, setDuplicateProcessData] = useState<any | null>(null);
+  const [duplicateOpponentCases, setDuplicateOpponentCases] = useState<any[]>([]);
+  const [searchingCNJ, setSearchingCNJ] = useState(false);
   const [opponentHasNoCnpj, setOpponentHasNoCnpj] = useState(false);
 
-  const [newMagistrateTitle, setNewMagistrateTitle] = useState('');
-  const [newMagistrateName, setNewMagistrateName] = useState('');
-  const [isStandardCNJ, setIsStandardCNJ] = useState(true);
   const [otherProcessType, setOtherProcessType] = useState('');
-  const [newSubject, setNewSubject] = useState('');
   const [viewProcess, setViewProcess] = useState<ContractProcess | null>(null);
   const [viewProcessIndex, setViewProcessIndex] = useState<number | null>(null);
-  const numeralOptions = Array.from({ length: 100 }, (_, i) => ({ label: `${i + 1}º`, value: `${i + 1}º` }));
 
   const [activeTab, setActiveTab] = useState(1);
+  const [expandedSections, setExpandedSections] = useState({
+    client: true,
+    status: true,
+    values: true,
+    processes: true,
+    others: true,
+    documents: true,
+  });
 
   const steps = [
-    { id: 1, label: 'Dados do Cliente', icon: User },
-    { id: 2, label: 'Status & Valores', icon: DollarSign },
-    { id: 3, label: 'Dados do Objeto', icon: Gavel },
-    { id: 4, label: 'GED (Arquivos)', icon: Files }
+    { id: 1, label: 'Dados do Cliente', icon: Briefcase },
+    { id: 2, label: 'Status & Valores', icon: Clock },
+    { id: 3, label: 'Dados do Objeto', icon: Scale },
+    { id: 4, label: 'GED (Arquivos)', icon: FileText }
   ];
 
-  const options = useContractOptions({ formData, setFormData, currentProcess, setCurrentProcess, activeManager });
+  // Options Hook
+  const {
+    legalAreas,
+    billingLocations,
+    clientOptions,
+    fetchAuxiliaryTables,
+    handleGenericRemove,
+    handleGenericAdd,
+    handleGenericEdit
+  } = useContractOptions({ formData, setFormData });
+
+  // Add dummy arrays to satisfy OptionManager since these aren't managed in this component anymore but OptionManager still expects them in props
+  const opponentOptions: string[] = [];
+  const authorOptions: string[] = [];
+  const courtOptions: string[] = [];
+  const classOptions: string[] = [];
+  const subjectOptions: string[] = [];
 
   const isLoading = parentLoading || localLoading;
 
@@ -96,7 +118,7 @@ export function ContractFormModal(props: Props) {
   useEffect(() => {
     if (isOpen) {
       fetchStatuses();
-      options.fetchAuxiliaryTables();
+      fetchAuxiliaryTables();
       if (formData.id) fetchDocuments();
       setInitialFormData(JSON.parse(JSON.stringify(formData)));
 
@@ -104,8 +126,6 @@ export function ContractFormModal(props: Props) {
       if (!formData.final_success_fee_installments) setFormData(prev => ({ ...prev, final_success_fee_installments: '1x' }));
       if (!formData.fixed_monthly_fee_installments) setFormData(prev => ({ ...prev, fixed_monthly_fee_installments: '1x' }));
       if (!formData.other_fees_installments) setFormData(prev => ({ ...prev, other_fees_installments: '1x' }));
-
-      setCurrentProcess(prev => ({ ...prev, position: prev.position || '' }));
 
       if (!formData.id) {
         setFormData(prev => ({ ...prev, physical_signature: undefined }));
@@ -116,17 +136,12 @@ export function ContractFormModal(props: Props) {
       setClientExtraData({ address: '', number: '', complement: '', city: '', email: '', is_person: false });
       setInterimInstallments('1x');
       setInterimClause('');
-      setIsStandardCNJ(true);
       setOtherProcessType('');
       setCurrentProcess(prev => ({ ...prev, process_number: '', uf: '', position: '', cause_value: '', subject: '' }));
-      setNewSubject('');
 
       setDuplicateClientCases([]);
-      setDuplicateOpponentCases([]);
-      setDuplicateAuthorCases([]);
+      // setDuplicateAuthorCases([]); // Removed as it's now a derived state
       setDuplicateHonCase(null);
-      setDuplicateProcessData(null);
-      setAuthorHasNoCnpj(false);
       setOpponentHasNoCnpj(false);
 
       setInitialFormData(null);
@@ -183,109 +198,6 @@ export function ContractFormModal(props: Props) {
     const timer = setTimeout(checkHonDuplicates, 800);
     return () => clearTimeout(timer);
   }, [formData.hon_number, formData.id]);
-
-  useEffect(() => {
-    const checkOpponentDuplicates = async () => {
-      if (!currentProcess.opponent || currentProcess.opponent.length < 3) return setDuplicateOpponentCases([]);
-      const { data } = await supabase.from('contract_processes').select('contract_id, contracts(id, client_name, hon_number, seq_id)').ilike('opponent', `%${currentProcess.opponent}%`).limit(5);
-      if (data) {
-        const uniqueCases = data.reduce((acc: any[], current: any) => {
-          const x = acc.find(item => item.contracts?.id === current.contracts?.id);
-          if (!x && current.contracts) {
-            const formatted = {
-              ...current,
-              contracts: {
-                ...current.contracts,
-                display_id: String(current.contracts.seq_id || 0).padStart(6, '0')
-              }
-            };
-            return acc.concat([formatted]);
-          }
-          return acc;
-        }, []);
-        setDuplicateOpponentCases(uniqueCases);
-      }
-    };
-    const timer = setTimeout(checkOpponentDuplicates, 800);
-    return () => clearTimeout(timer);
-  }, [currentProcess.opponent]);
-
-  useEffect(() => {
-    const checkAuthorDuplicates = async () => {
-      const authorName = (currentProcess as any).author;
-      if (!authorName || authorName.length < 3) return setDuplicateAuthorCases([]);
-
-      const { data } = await supabase.from('contract_processes').select('contract_id, contracts(id, client_name, hon_number, seq_id)').ilike('author', `%${authorName}%`).limit(5);
-
-      if (data) {
-        const uniqueCases = data.reduce((acc: any[], current: any) => {
-          const x = acc.find(item => item.contracts?.id === current.contracts?.id);
-          if (!x && current.contracts) {
-            const formatted = {
-              ...current,
-              contracts: {
-                ...current.contracts,
-                display_id: String(current.contracts.seq_id || 0).padStart(6, '0')
-              }
-            };
-            return acc.concat([formatted]);
-          }
-          return acc;
-        }, []);
-        setDuplicateAuthorCases(uniqueCases);
-      }
-    };
-    const timer = setTimeout(checkAuthorDuplicates, 800);
-    return () => clearTimeout(timer);
-  }, [(currentProcess as any).author]);
-
-  useEffect(() => {
-    const checkProcessNumber = async () => {
-      if (otherProcessType) return setDuplicateProcessData(null);
-      if (!currentProcess.process_number || currentProcess.process_number.length < 15 || ['CONSULTORIA', 'ASSESSORIA JURÍDICA', 'PROCESSO ADMINISTRATIVO', 'OUTROS'].includes(currentProcess.process_number)) return setDuplicateProcessData(null);
-
-      const { data } = await supabase.from('contract_processes')
-        .select('contract_id, contracts(id, client_name, hon_number, seq_id)')
-        .eq('process_number', currentProcess.process_number)
-        .neq('contract_id', formData.id || '00000000-0000-0000-0000-000000000000')
-        .limit(1);
-
-      if (data && data.length > 0) {
-        const firstMatch = data[0];
-        if (firstMatch.contracts) {
-          const contractInfo = Array.isArray(firstMatch.contracts) ? firstMatch.contracts[0] : firstMatch.contracts;
-          setDuplicateProcessData({
-            ...firstMatch,
-            contracts: {
-              ...contractInfo,
-              display_id: String(contractInfo.seq_id || 0).padStart(6, '0')
-            }
-          });
-        } else {
-          setDuplicateProcessData(null);
-        }
-      } else {
-        setDuplicateProcessData(null);
-      }
-    };
-    const timer = setTimeout(checkProcessNumber, 800);
-    return () => clearTimeout(timer);
-  }, [currentProcess.process_number, otherProcessType, formData.id]);
-
-  useEffect(() => {
-    if (authorHasNoCnpj) {
-      setCurrentProcess(prev => ({ ...prev, author_cnpj: '' }));
-      return;
-    }
-    const fetchAuthorCNPJ = async () => {
-      const authorName = (currentProcess as any).author;
-      if (!authorName || authorName.length < 3) return;
-      const { data, error } = await supabase.from('authors').select('cnpj').eq('name', authorName).maybeSingle();
-      if (!error && data && data.cnpj) setCurrentProcess(prev => ({ ...prev, author_cnpj: maskCNPJ(data.cnpj) }));
-    };
-    const timer = setTimeout(fetchAuthorCNPJ, 800);
-    return () => clearTimeout(timer);
-  }, [(currentProcess as any).author, authorHasNoCnpj]);
 
   useEffect(() => {
     if (opponentHasNoCnpj) {
@@ -467,62 +379,26 @@ export function ContractFormModal(props: Props) {
     setInterimInstallments('1x');
   };
 
-  const handleRemoveIntermediateFee = (idx: number) => {
-    removeIntermediateFee(idx);
-    const currentClauses = [...ensureArray((formData as any).intermediate_fees_clauses)]; currentClauses.splice(idx, 1);
-    const currentInst = [...ensureArray((formData as any).intermediate_fees_installments)]; currentInst.splice(idx, 1);
+  const handleRemoveIntermediateFee = (index: number) => {
+    const parsed = ensureArray((formData as any).intermediate_fees_installments);
+    if (!parsed || parsed.length <= index) return;
+    removeIntermediateFee(index);
+    const currentClauses = [...ensureArray((formData as any).intermediate_fees_clauses)]; currentClauses.splice(index, 1);
+    const currentInst = [...ensureArray((formData as any).intermediate_fees_installments)]; currentInst.splice(index, 1);
     setFormData(prev => ({ ...prev, intermediate_fees_clauses: currentClauses, intermediate_fees_installments: currentInst } as any));
   };
 
-  const addMagistrate = (magistrateName = newMagistrateName) => {
-    if (!magistrateName.trim()) return;
-    setCurrentProcess(prev => {
-      let currentMagistrates = prev.magistrates || [];
-      if (typeof currentMagistrates === 'string') {
-        currentMagistrates = [{ title: 'Anterior', name: currentMagistrates }];
-      } else if (!Array.isArray(currentMagistrates)) {
-        currentMagistrates = [];
-      }
-      return { ...prev, magistrates: [...currentMagistrates, { title: newMagistrateTitle, name: magistrateName }] };
-    });
-    setNewMagistrateName('');
-  };
-
-  const removeMagistrate = (index: number) => {
-    setCurrentProcess(prev => {
-      let currentMagistrates = prev.magistrates || [];
-      if (typeof currentMagistrates === 'string') {
-        currentMagistrates = [{ title: 'Anterior', name: currentMagistrates }];
-      } else if (!Array.isArray(currentMagistrates)) {
-        currentMagistrates = [];
-      }
-      const newList = [...currentMagistrates];
-      newList.splice(index, 1);
-      return { ...prev, magistrates: newList };
-    });
-  };
-
-  const addSubjectToProcess = () => {
-    if (!newSubject.trim()) return;
-    const cleanSubject = toTitleCase(newSubject.trim());
-    const currentSubjects = currentProcess.subject ? currentProcess.subject.split(';').map(s => s.trim()).filter(s => s !== '') : [];
-    if (!currentSubjects.includes(cleanSubject)) setCurrentProcess(prev => ({ ...prev, subject: [...currentSubjects, cleanSubject].join('; ') }));
-    setNewSubject('');
-  };
-
-  const removeSubject = (subjectToRemove: string) => {
-    if (!currentProcess.subject) return;
-    const updatedSubjects = currentProcess.subject.split(';').map(s => s.trim()).filter(s => s !== '' && s !== subjectToRemove);
-    setCurrentProcess(prev => ({ ...prev, subject: updatedSubjects.join('; ') }));
-  };
-
   const handleSaveWithIntegrations = async () => {
-    if (editingProcessIndex !== null) return alert('⚠️ Finalize a edição do processo (clique no check ✔️) antes de salvar o caso.');
-
-    // Permitir salvar se for um tipo "Outro" (nacional/administrativo) sem número, ou se o usuário explicitamente quiser ignorar
-    if (currentProcess.process_number || (currentProcess.court && !processes.some(p => p.court === currentProcess.court))) {
-      // Se tem dados mas não adicionou, avisa, mas não bloqueia se for apenas um rastro
-      // Original alert mantido mas relaxado
+    // 1) Se já tem processos adicionados (salvos no contrato), OK avançar sem avisar
+    if (processes.length === 0) {
+      if (!currentProcess.process_number && !otherProcessType && !currentProcess.court) {
+        // Se a pessoa não preencheu nada disso de fato, seguimos normal
+      } else {
+        // ... (resto do aviso original se quiser)
+      }
+    } else {
+      // Permitir salvar sem adicionar o atual, apenas avisando.
+      // E remover o currentProcess.
       if (currentProcess.process_number || otherProcessType) {
         const confirmSave = confirm('⚠️ Você inseriu dados de um processo mas não o adicionou.\n\nDeseja salvar o contrato assim mesmo (os dados não adicionados serão perdidos)?');
         if (!confirmSave) return;
@@ -591,13 +467,19 @@ export function ContractFormModal(props: Props) {
               author_cnpj,
               opponent_cnpj,
               cause_value,
+              value_of_cause,
+              author,
+              vara,
+              comarca,
+              subject,
+              magistrates,
+              position,
               ...rest
             } = p as any;
 
             return {
               ...rest,
-              contract_id: savedId,
-              value_of_cause: cause_value ? safeParseFloat(cause_value) : (p.value_of_cause || 0)
+              contract_id: savedId
             };
           });
 
@@ -669,74 +551,35 @@ export function ContractFormModal(props: Props) {
     } catch (error: any) { alert(`❌ ${error.message}\n\n💡 Você pode preencher manualmente.`); } finally { setLocalLoading(false); }
   };
 
-  const handlePartyCNPJSearch = async (type: 'author' | 'opponent') => {
-    if (type === 'author' && authorHasNoCnpj) return;
-    if (type === 'opponent' && opponentHasNoCnpj) return;
-
-    const cnpj = type === 'author' ? (currentProcess as any).author_cnpj : (currentProcess as any).opponent_cnpj;
-    if (!cnpj) return;
-    const cleanCNPJ = cnpj.replace(/\D/g, '');
-    if (cleanCNPJ.length !== 14) return alert('CNPJ inválido. Digite 14 dígitos.');
-
-    setLocalLoading(true);
-    try {
-      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCNPJ}`);
-      if (!response.ok) throw new Error('CNPJ não encontrado.');
-      const data = await response.json();
-      const name = toTitleCase(data.razao_social || data.nome_fantasia || '');
-      const table = type === 'author' ? 'authors' : 'opponents';
-
-      const { data: existing } = await supabase.from(table).select('id, name').ilike('name', name).maybeSingle();
-
-      if (!existing) {
-        const payload: any = { name };
-        payload.cnpj = cleanCNPJ;
-        const { error } = await supabase.from(table).insert(payload);
-        if (error && error.code !== '23505' && error.code !== '42703') {
-          await supabase.from(table).insert({ name });
-        }
-      }
-
-      if (type === 'author') {
-        if (!options.authorOptions.includes(name)) {
-          options.setAuthorOptions(prev => [...prev, name].sort((a, b) => a.localeCompare(b)));
-        }
-        setCurrentProcess(prev => ({ ...prev, author: name, author_cnpj: maskCNPJ(cleanCNPJ) } as any));
-      } else {
-        if (!options.opponentOptions.includes(name)) {
-          options.setOpponentOptions(prev => [...prev, name].sort((a, b) => a.localeCompare(b)));
-        }
-        setCurrentProcess(prev => ({ ...prev, opponent: name, opponent_cnpj: maskCNPJ(cleanCNPJ) }));
-      }
-
-    } catch (error: any) {
-      alert(`Erro ao buscar CNPJ: ${error.message}`);
-    } finally {
-      setLocalLoading(false);
-    }
-  };
-
   const handleCNJSearch = async () => {
     if (!currentProcess.process_number) return;
     const numeroLimpo = currentProcess.process_number.replace(/\D/g, '');
-    if (numeroLimpo.length !== 20) return alert('Número de processo inválido. Deve ter 20 dígitos.');
-    searchingCNJ && setSearchingCNJ(true);
+    if (numeroLimpo.length < 20) return;
+
+    setSearchingCNJ(true);
     try {
-      const decoded = decodeCNJ(numeroLimpo);
-      if (!decoded) throw new Error('Não foi possível decodificar o número do processo');
-      const uf = decoded.tribunal === 'STF' ? 'DF' : decoded.uf;
-      if (!options.courtOptions.includes(decoded.tribunal)) {
-        await supabase.from('courts').insert({ name: decoded.tribunal }).select();
-        options.setCourtOptions([...options.courtOptions, decoded.tribunal].sort((a, b) => a.localeCompare(b)));
+      const response = await fetch(`https://op.savpj.com.br/processos/cnj/${numeroLimpo}`);
+      if (!response.ok) throw new Error('Não foi possível obter dados automatizados.');
+      
+      const data = await response.json();
+      if (data && data.envolvidos) {
+         // Auto fill
+         const court_name = data.tribunal || '';
+         const firstOpponent = data.envolvidos.find((e: any) => e.tipo === 'Requerido' || e.tipo === 'Passivo' || e.tipo === 'Réu')?.nome || '';
+         setCurrentProcess(prev => ({ ...prev, court: court_name, opponent: toTitleCase(firstOpponent) }));
       }
-      setCurrentProcess(prev => ({ ...prev, court: decoded.tribunal, uf: uf }));
-    } catch (error: any) { alert(`❌ Erro ao decodificar CNJ: ${error.message}`); } finally { setSearchingCNJ(false); }
+    } catch (error: any) {
+      console.warn("Busca CNJ falhou ou incompleta:", error);
+    } finally {
+      setSearchingCNJ(false);
+    }
   };
 
   const handleOpenJusbrasil = () => {
-    if (currentProcess.process_number) window.open(`https://www.jusbrasil.com.br/processos/numero/${currentProcess.process_number.replace(/\D/g, '')}`, '_blank');
+    if (!currentProcess.process_number) return;
+    const numeroLimpo = currentProcess.process_number.replace(/\D/g, '');
+    window.open(`https://www.jusbrasil.com.br/processos/busca?q=${numeroLimpo}`, '_blank');
   };
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -794,28 +637,26 @@ export function ContractFormModal(props: Props) {
     if (data && data.cnpj) setFormData(prev => ({ ...prev, client_name: newName, client_id: data.id, cnpj: maskCNPJ(data.cnpj) }));
   };
 
-  const partnerSelectOptions = [{ label: 'Selecione', value: '' }, ...partners.map(p => ({ label: p.name, value: p.id }))];
-  const analystSelectOptions = [{ label: 'Selecione', value: '' }, ...(analysts ? analysts.map(a => ({ label: a.name, value: a.id })) : [])];
+  const partnerSelectOptions = [{ label: 'Selecione', value: '' }, ...partners.map((p: any) => ({ label: p.name, value: p.id }))];
+  const analystSelectOptions = [{ label: 'Selecione', value: '' }, ...(analysts ? analysts.map((a: any) => ({ label: a.name, value: a.id })) : [])];
   const ufOptions = [{ label: 'Selecione', value: '' }, ...UFS.map(uf => ({ label: uf.nome, value: uf.sigla }))];
-  const billingOptions = [{ label: 'Selecione', value: '' }, ...options.billingLocations.map(l => ({ label: l, value: l }))];
+  const billingOptions = [{ label: 'Selecione', value: '' }, ...billingLocations.map(l => ({ label: l, value: l }))];
   const signatureOptions = [{ label: 'Selecione', value: '' }, { label: 'Sim', value: 'true' }, { label: 'Não (Cobrar)', value: 'false' }];
   const rejectionByOptions = [{ label: 'Selecione', value: '' }, { label: 'Cliente', value: 'Cliente' }, { label: 'Escritório', value: 'Escritório' }];
   const rejectionReasonOptions = [{ label: 'Selecione', value: '' }, { label: 'Cliente declinou', value: 'Cliente declinou' }, { label: 'Cliente não retornou', value: 'Cliente não retornou' }, { label: 'Caso ruim', value: 'Caso ruim' }, { label: 'Conflito de interesses', value: 'Conflito de interesses' }];
-  const areaOptions = [{ label: 'Selecione', value: '' }, ...options.legalAreas.map(a => ({ label: a, value: a }))];
-  const positionOptions = [{ label: 'Selecione', value: '' }, ...options.positionsList.map(p => ({ label: p, value: p }))];
-  const magistrateTypes = [{ label: 'Selecione', value: '' }, { label: 'Juiz', value: 'Juiz' }, { label: 'Desembargador', value: 'Desembargador' }, { label: 'Ministro', value: 'Ministro' }];
+  const areaOptions = [{ label: 'Selecione', value: '' }, ...legalAreas.map(a => ({ label: a, value: a }))];
 
-  const justiceSelectOptions = [{ label: 'Selecione', value: '' }, ...options.justiceOptions.map(j => ({ label: j, value: j }))];
-  const varaSelectOptions = [{ label: 'Selecione', value: '' }, ...options.varaOptions.map(v => ({ label: v, value: v }))];
-  const courtSelectOptions = [{ label: 'Selecione', value: '' }, ...options.courtOptions.map(c => ({ label: c, value: c }))];
-  const comarcaSelectOptions = [{ label: 'Selecione', value: '' }, ...options.comarcaOptions.map(c => ({ label: c, value: c }))];
-  const classSelectOptions = [{ label: 'Selecione', value: '' }, ...options.classOptions.map(c => ({ label: c, value: c }))];
-  const subjectSelectOptions = [{ label: 'Selecione', value: '' }, ...options.subjectOptions.map(s => ({ label: s, value: s }))];
-  const clientSelectOptions = [{ label: 'Selecione', value: '' }, ...options.clientOptions.map(c => ({ label: c, value: c }))];
+  const courtSelectOptions = [{ label: 'Selecione', value: '' }, ...courtOptions.map((c: any) => ({ label: c, value: c }))];
+  const clientSelectOptions = [{ label: 'Selecione', value: '' }, ...clientOptions.map((c: any) => ({ label: c, value: c }))];
 
   const handleTypeChange = (type: string) => {
     setOtherProcessType(type);
     setCurrentProcess(prev => ({ ...prev, process_number: '' }));
+  };
+  const openOptionManager = (managerType: string, initialValue?: string | null) => {
+    setActiveManager(managerType);
+    setIsManagerOpen(true);
+    setEditingValue(initialValue || null);
   };
 
   if (!isOpen) return null;
@@ -824,7 +665,7 @@ export function ContractFormModal(props: Props) {
 
   return createPortal(
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
+      <div className="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-[95vw] xl:max-w-[1300px] h-[95vh] flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
 
         {/* Left Sidebar */}
         <div className="w-full md:w-72 bg-white border-b md:border-b-0 md:border-r border-gray-100 flex flex-col py-4 md:py-8 px-4 md:px-5 shrink-0 z-10">
@@ -962,42 +803,15 @@ export function ContractFormModal(props: Props) {
                     handleOpenJusbrasil={handleOpenJusbrasil}
                     courtSelectOptions={courtSelectOptions}
                     ufOptions={ufOptions}
-                    positionOptions={positionOptions}
-                    authorOptions={options.authorOptions}
-                    opponentOptions={options.opponentOptions}
+                    opponentOptions={opponentOptions}
                     duplicateOpponentCases={duplicateOpponentCases}
-                    magistrateTypes={magistrateTypes}
-                    magistrateOptions={options.magistrateOptions}
-                    newMagistrateTitle={newMagistrateTitle}
-                    setNewMagistrateTitle={setNewMagistrateTitle}
-                    newMagistrateName={newMagistrateName}
-                    setNewMagistrateName={setNewMagistrateName}
-                    addMagistrate={addMagistrate}
-                    removeMagistrate={removeMagistrate}
-                    numeralOptions={numeralOptions}
-                    varaSelectOptions={varaSelectOptions}
-                    comarcaSelectOptions={comarcaSelectOptions}
-                    justiceSelectOptions={justiceSelectOptions}
-                    classSelectOptions={classSelectOptions}
-                    subjectSelectOptions={subjectSelectOptions}
-                    newSubject={newSubject}
-                    setNewSubject={setNewSubject}
-                    addSubjectToProcess={addSubjectToProcess}
-                    removeSubject={removeSubject}
                     editingProcessIndex={editingProcessIndex}
                     handleProcessAction={handleProcessAction}
-                    handlePartyCNPJSearch={handlePartyCNPJSearch}
                     localMaskCNJ={localMaskCNJ}
-                    ensureDateValue={ensureDateValue}
                     setActiveManager={setActiveManager}
                     duplicateProcessData={duplicateProcessData}
-                    duplicateAuthorCases={duplicateAuthorCases}
-                    authorHasNoCnpj={authorHasNoCnpj}
-                    setAuthorHasNoCnpj={setAuthorHasNoCnpj}
-                    opponentHasNoCnpj={opponentHasNoCnpj}
-                    setOpponentHasNoCnpj={setOpponentHasNoCnpj}
                   />
-                  <LegalProcessList processes={processes} setViewProcess={setViewProcess} setViewProcessIndex={setViewProcessIndex} editProcess={editProcess} removeProcess={removeProcess} />
+                  <LegalProcessList processes={processes} clientName={formData.client_name || ''} setViewProcess={setViewProcess} setViewProcessIndex={setViewProcessIndex} editProcess={editProcess} removeProcess={removeProcess} />
                 </section>
                 {(formData.status === 'proposal' || formData.status === 'active') && (
                   <div>
@@ -1038,12 +852,33 @@ export function ContractFormModal(props: Props) {
       {/* Overlays / Modals */}
       {activeManager && (
         <OptionManager
-          title={activeManager === 'area' ? "Gerenciar Áreas" : activeManager === 'position' ? "Gerenciar Posições" : activeManager === 'court' ? "Gerenciar Tribunais" : activeManager === 'vara' ? "Gerenciar Varas" : activeManager === 'comarca' ? "Gerenciar Comarcas" : activeManager === 'class' ? "Gerenciar Classes" : activeManager === 'subject' ? "Gerenciar Assuntos" : activeManager === 'justice' ? "Gerenciar Justiças" : activeManager === 'magistrate' ? "Gerenciar Magistrados" : activeManager === 'opponent' ? "Gerenciar Contrário" : activeManager === 'author' ? "Gerenciar Autores" : activeManager === 'location' ? "Gerenciar Locais de Faturamento" : activeManager === 'client' ? "Gerenciar Clientes" : "Gerenciar"}
-          options={activeManager === 'area' ? options.legalAreas : activeManager === 'position' ? options.positionsList : activeManager === 'court' ? options.courtOptions : activeManager === 'vara' ? options.varaOptions : activeManager === 'comarca' ? options.comarcaOptions : activeManager === 'class' ? options.classOptions : activeManager === 'subject' ? options.subjectOptions : activeManager === 'justice' ? options.justiceOptions : activeManager === 'magistrate' ? options.magistrateOptions : activeManager === 'opponent' ? options.opponentOptions : activeManager === 'author' ? options.authorOptions : activeManager === 'location' ? options.billingLocations : activeManager === 'client' ? options.clientOptions : []}
-          onAdd={(v) => options.handleGenericAdd(v, { title: (formData as any).newMagistrateTitle, setNewSubject, setNewMagistrateName })}
-          onRemove={options.handleGenericRemove}
-          onEdit={options.handleGenericEdit}
-          onClose={() => setActiveManager(null)}
+          isOpen={isManagerOpen}
+          onClose={() => {
+            setIsManagerOpen(false);
+            setActiveManager(null);
+            setEditingValue(null);
+          }}
+          type={activeManager || 'area'}
+          lists={{
+            legalAreas,
+            billingLocations,
+            courtOptions: [],
+            classOptions: [],
+            subjectOptions: [],
+            positionsList: [],
+            varaOptions: [],
+            justiceOptions: [],
+            comarcaOptions: [],
+            magistrateOptions: [],
+            opponentOptions: [],
+            authorOptions: [],
+            clientOptions
+          }}
+          onAdd={(val: string) => handleGenericAdd(activeManager || '', val)}
+          onEdit={(oldVal: string, newVal: string) => handleGenericEdit(activeManager || '', oldVal, newVal)}
+          onRemove={(val: string) => handleGenericRemove(activeManager || '', val)}
+          editingValue={editingValue}
+          setEditingValue={setEditingValue}
           placeholder={activeManager === 'comarca' && !currentProcess.uf ? "Selecione a UF primeiro" : "Digite o nome"}
         />
       )}

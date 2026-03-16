@@ -1,3 +1,4 @@
+import React, { useState, useRef } from 'react';
 import { FileText, Upload, Download, Trash2 } from 'lucide-react';
 import { ContractDocument } from '../../../../types/controladoria';
 
@@ -26,34 +27,84 @@ export function ContractDocuments({
   onRemoveTemp
 }: ContractDocumentsProps) {
   const hasFiles = documents.length > 0 || tempFiles.length > 0;
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      if (fileInputRef.current) {
+         // Create a synthetic event
+         const syntheticEvent = {
+           target: { files: e.dataTransfer.files, value: '' }
+         } as unknown as React.ChangeEvent<HTMLInputElement>;
+         onUpload(syntheticEvent, status === 'active' ? 'contract' : 'proposal');
+      }
+    }
+  };
+
+  const handleClickToUpload = () => {
+     if(fileInputRef.current && !uploading){
+         fileInputRef.current.click();
+     }
+  }
 
   return (
     <div className="mb-8 mt-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-bold text-gray-500 uppercase flex items-center">
-          <FileText className="w-4 h-4 mr-2" />
+        <h3 className="text-sm font-bold text-gray-700 flex items-center">
+          <FileText className="w-5 h-5 mr-2 text-salomao-blue" />
           Arquivos & Documentos
         </h3>
-
-        <label className="cursor-pointer bg-white border border-dashed border-salomao-blue text-salomao-blue px-4 py-2 rounded-lg text-xs font-medium hover:bg-blue-50 transition-colors flex items-center">
-          {uploading ? (
-            'Enviando...'
-          ) : (
-            <>
-              <Upload className="w-3 h-3 mr-2" /> Anexar PDF
-            </>
-          )}
-          <input
-            type="file"
-            accept="application/pdf"
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => onUpload(e, status === 'active' ? 'contract' : 'proposal')}
-          />
-        </label>
       </div>
 
-      {hasFiles ? (
+       <div
+        className={`w-full border-2 border-dashed rounded-xl p-8 mb-6 transition-all flex flex-col items-center justify-center cursor-pointer text-center ${
+          isDragging 
+            ? 'border-salomao-blue bg-blue-50/50 scale-[1.02]' 
+            : 'border-gray-200 hover:border-salomao-blue hover:bg-gray-50'
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={handleClickToUpload}
+      >
+        <div className={`p-4 rounded-full mb-3 ${isDragging ? 'bg-salomao-blue text-white shadow-md' : 'bg-blue-50 text-salomao-blue'}`}>
+           <Upload className={`w-8 h-8 ${uploading ? 'animate-bounce' : ''}`} />
+        </div>
+        
+        {uploading ? (
+          <p className="text-sm font-medium text-salomao-blue">Enviando arquivo...</p>
+        ) : (
+          <>
+            <p className="text-sm font-semibold text-gray-700 mb-1">
+              Clique para fazer upload <span className="font-normal text-gray-500">ou arraste e solte</span>
+            </p>
+            <p className="text-xs text-gray-400">PDF, JPG, PNG ou DOCX (max. 10MB)</p>
+          </>
+        )}
+        
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          disabled={uploading}
+          onChange={(e) => onUpload(e, status === 'active' ? 'contract' : 'proposal')}
+        />
+      </div>
+
+      {hasFiles && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Arquivos Já Salvos */}
           {(Array.isArray(documents) ? documents : []).map((doc) => (
@@ -110,10 +161,6 @@ export function ContractDocuments({
               </div>
             </div>
           ))}
-        </div>
-      ) : (
-        <div className="text-center py-6 border-2 border-dashed border-gray-100 rounded-lg text-xs text-gray-400 font-medium">
-          Nenhum arquivo anexado.
         </div>
       )}
     </div>
