@@ -37,22 +37,29 @@ export function DashboardHeader({
     setIsExportingPDF(true);
     const loadingToast = toast.loading('Gerando PDF multipáginas... Isso pode levar alguns segundos.');
 
+    // Salvar scroll position
+    const originalScrollY = window.scrollY;
+    
+    // Rolar para o topo. Resolve bug crítico do html2canvas (1.4.1) cortar o topo dos elementos dentro de flexbox quando a página está rolada para baixo.
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
     try {
       const sections = ['pdf-section-1', 'pdf-section-2', 'pdf-section-3'];
       let pdf: jsPDF | null = null;
+      
+      // Delay pro navegador repintar no topo
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       for (let i = 0; i < sections.length; i++) {
         const targetElement = document.getElementById(sections[i]);
         if (!targetElement) continue;
 
-        // Adiciona um pequeno delay para garantir que a DOM esteja completamente em repouso
-        await new Promise(resolve => setTimeout(resolve, 100));
-
         const canvas = await html2canvas(targetElement, {
           scale: 2, // Double resolution for sharpness
           useCORS: true,
           backgroundColor: '#F8FAFC', // Background cor do dashboard
-          windowWidth: 1920, // fix desktop width
+          // IMPORTANT: não travar com windowWidth: 1920 senão força um reflow interno e causa corte superior nos childs
+          scrollY: 0, 
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -86,6 +93,8 @@ export function DashboardHeader({
       toast.error('Ocorreu um erro ao gerar o PDF.', { id: loadingToast });
     } finally {
       setIsExportingPDF(false);
+      // Restaurar o scroll pra onde o usuário estava
+      window.scrollTo({ top: originalScrollY, behavior: 'instant' });
     }
   };
 
