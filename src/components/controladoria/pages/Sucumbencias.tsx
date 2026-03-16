@@ -868,31 +868,23 @@ export function Sucumbencias() {
 
                         <div className="p-6 overflow-y-auto bg-gray-50 flex-1">
                             
-                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                            <div className="flex gap-4 mb-6">
+                                <div className="flex-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                     <span className="block text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">Data do Andamento</span>
                                     <span className="text-sm font-bold text-[#0a192f]">{selectedItem.andamentos[activeModalTab].dataAndamento}</span>
                                 </div>
-                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                <div className="flex-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                     <span className="block text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">UF</span>
                                     <span className="text-sm font-bold text-[#0a192f]">{selectedItem.uf || '-'}</span>
                                 </div>
-                                <div className="col-span-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                                    <span className="block text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">Tipo / Subtipo</span>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-bold">{selectedItem.andamentos[activeModalTab].tipoAndamento || 'N/A'}</span>
-                                        <span className="text-gray-400 font-black">/</span>
-                                        <span className="text-sm font-semibold text-gray-600">{selectedItem.andamentos[activeModalTab].subtipoAndamento || '-'}</span>
-                                    </div>
-                                </div>
                             </div>
 
-                            <div className="bg-white p-5 rounded-xl border border-blue-100 shadow-sm relative">
+                            <div className="bg-white p-5 rounded-xl border border-blue-100 shadow-sm relative flex flex-col flex-1">
                                 <span className="block text-[10px] uppercase font-black tracking-widest text-blue-500 mb-3 flex items-center gap-2">
                                     <FileText className="w-3 h-3" />
                                     Descrição Completa / Publicação
                                 </span>
-                                <div className="text-sm text-gray-700 leading-relaxed max-h-[250px] overflow-y-auto whitespace-pre-wrap">
+                                <div className="text-sm text-gray-700 leading-relaxed max-h-[400px] overflow-y-auto whitespace-pre-wrap">
                                     <HighlightText text={selectedItem.andamentos[activeModalTab].descricao} />
                                 </div>
                             </div>
