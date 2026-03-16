@@ -42,18 +42,8 @@ export function KanbanModal() {
   // Create a unique storage key for this user
   const storageKey = user?.email ? `moduleSelectorKanban_${user.email}` : 'moduleSelectorKanban';
 
-  const [items, setItems] = useState<KanbanItem[]>(() => {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
-  });
-
+  const [items, setItems] = useState<KanbanItem[]>([]);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [newItem, setNewItem] = useState<Partial<KanbanItem>>({
     title: '',
@@ -62,9 +52,27 @@ export function KanbanModal() {
     priority: 'MÉDIA'
   });
 
+  // Carregar dados quando o user email estiver disponivel / storageKey trocar
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(items));
-  }, [items, storageKey]);
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        setItems(JSON.parse(saved));
+      } catch (e) {
+        setItems([]);
+      }
+    } else {
+      setItems([]);
+    }
+    setHasLoaded(true);
+  }, [storageKey]);
+
+  // Salvar sempre que items mudar (apenas se já carregou a versão do usuário)
+  useEffect(() => {
+    if (hasLoaded) {
+      localStorage.setItem(storageKey, JSON.stringify(items));
+    }
+  }, [items, storageKey, hasLoaded]);
 
   // Removido bloqueio do scroll pois não é mais modal
 
