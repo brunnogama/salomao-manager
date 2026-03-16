@@ -5,10 +5,6 @@ import {
     Award, 
     Calendar,
     Loader2,
-    TrendingUp,
-    DollarSign,
-    Scale,
-    FileSignature,
     Upload,
     FileSpreadsheet,
     Search,
@@ -17,10 +13,11 @@ import {
     CheckCircle2,
     XCircle,
     AlertTriangle,
-    X,
-    Filter
+    Filter,
+    X
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import { SearchableSelect } from '../../crm/SearchableSelect';
 
 interface LegalOneRow {
     Tipo?: string;
@@ -51,7 +48,7 @@ interface FilteredSucumbencia {
     responsavel: string;
     cnj: string;
     uf: string;
-    status?: 'potencial' | 'prescrito';
+    status?: 'potencial' | 'prescrito' | 'descartado';
     andamentos: FiltragemAndamento[];
     // Legacy fields for backward compatibility with localStorage caching
     dataAndamento?: string;
@@ -139,7 +136,7 @@ export function Sucumbencias() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterResponsavel, setFilterResponsavel] = useState('Todos');
     const [selectedItem, setSelectedItem] = useState<FilteredSucumbencia | null>(null);
-    const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos'>('potenciais');
+    const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos' | 'descartados'>('potenciais');
     const [activeModalTab, setActiveModalTab] = useState(0);
 
     // Sync to localStorage when data changes
@@ -189,26 +186,6 @@ export function Sucumbencias() {
         }, 600);
         return () => clearTimeout(timer);
     }, [startDate, endDate]);
-
-    const handleQuickSelect = (type: '30_days' | '6_months' | 'this_year') => {
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
-
-        if (type === '30_days') {
-            const past30 = new Date();
-            past30.setDate(today.getDate() - 30);
-            setStartDate(past30.toISOString().split('T')[0]);
-            setEndDate(todayStr);
-        } else if (type === '6_months') {
-            const past6 = new Date();
-            past6.setMonth(today.getMonth() - 6);
-            setStartDate(past6.toISOString().split('T')[0]);
-            setEndDate(todayStr);
-        } else if (type === 'this_year') {
-            setStartDate(`${today.getFullYear()}-01-01`);
-            setEndDate(todayStr);
-        }
-    };
 
     // --- Supabase Actions ---
     const handleAction = async (item: FilteredSucumbencia, status: 'verificado' | 'descartado') => {
@@ -433,6 +410,7 @@ export function Sucumbencias() {
         const itemStatus = item.status || 'potencial';
         if (activeTab === 'potenciais') return itemStatus === 'potencial';
         if (activeTab === 'prescritos') return itemStatus === 'prescrito';
+        if (activeTab === 'descartados') return itemStatus === 'descartado';
         return false;
     });
 
@@ -487,10 +465,17 @@ export function Sucumbencias() {
                         </button>
                         <button
                             onClick={() => setActiveTab('prescritos')}
-                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'prescritos' ? 'bg-white shadow-sm text-[#1e3a8a]' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'prescritos' ? 'bg-white shadow-sm text-amber-600' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             <span className="hidden sm:inline">Prescritos</span>
                             <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'prescrito').length}</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('descartados')}
+                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'descartados' ? 'bg-white shadow-sm text-red-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <span className="hidden sm:inline">Descartados</span>
+                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'descartado').length}</span>
                         </button>
                     </div>
 
@@ -567,20 +552,16 @@ export function Sucumbencias() {
                     </div>
 
                     {/* Filtro de Responsável */}
-                    <div className="relative shrink-0">
-                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
-                            <Filter className="w-4 h-4 text-gray-400" />
-                            <select
-                                value={filterResponsavel}
-                                onChange={(e) => setFilterResponsavel(e.target.value)}
-                                className="text-xs font-medium border-none outline-none text-gray-600 bg-transparent cursor-pointer appearance-none pr-4"
-                            >
-                                <option value="Todos">Todos os Responsáveis</option>
-                                {uniqueResponsaveis.map((resp, i) => (
-                                    <option key={i} value={resp}>{resp}</option>
-                                ))}
-                            </select>
-                        </div>
+                    <div className="relative shrink-0 w-full sm:w-64 z-20">
+                        <SearchableSelect 
+                            value={filterResponsavel === 'Todos' ? '' : filterResponsavel}
+                            onChange={(val) => setFilterResponsavel(val || 'Todos')}
+                            options={uniqueResponsaveis.map(r => ({ value: r, label: r, name: r }))}
+                            placeholder="Todos os Responsáveis"
+                            icon={<Filter className="w-4 h-4 text-gray-400" />}
+                            className="[&>div]:py-2 [&>div]:bg-gray-50 [&>div]:border-gray-100 [&>div]:shadow-none"
+                            hideSearch={uniqueResponsaveis.length <= 10}
+                        />
                     </div>
                     
                 </div>
