@@ -37,7 +37,7 @@ const COLUMN_TITLES = {
 };
 
 export function KanbanModal() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   
   // Create a unique storage key for this user
   const storageKey = user?.email ? `moduleSelectorKanban_${user.email}` : 'moduleSelectorKanban';
@@ -54,6 +54,10 @@ export function KanbanModal() {
 
   // Carregar dados quando o user email estiver disponivel / storageKey trocar
   useEffect(() => {
+    // IMPORTANTE: Só carregamos e iniciamos os binds após o AuthContext confirmar que não está mais carregando a sessão
+    // Caso contrário, ele leria a chave base antes de ler o user.email, setaria items vazios e resalvaria.
+    if (loading) return;
+
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
@@ -65,14 +69,14 @@ export function KanbanModal() {
       setItems([]);
     }
     setHasLoaded(true);
-  }, [storageKey]);
+  }, [storageKey, loading]);
 
-  // Salvar sempre que items mudar (apenas se já carregou a versão do usuário)
+  // Salvar sempre que items mudar (apenas se já carregou a versão do usuário e loading auth acabou)
   useEffect(() => {
-    if (hasLoaded) {
+    if (hasLoaded && !loading) {
       localStorage.setItem(storageKey, JSON.stringify(items));
     }
-  }, [items, storageKey, hasLoaded]);
+  }, [items, storageKey, hasLoaded, loading]);
 
   // Removido bloqueio do scroll pois não é mais modal
 
