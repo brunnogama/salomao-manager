@@ -267,16 +267,19 @@ export function Sucumbencias() {
                     // 1. Testa se tem a palavra-chave primária
                     const hasPrimary = primaryKeywords.some(kw => searchString.includes(kw));
 
-                    let isMatch = false;
+                    // Se NÃO tiver a palavra-chave primária (honorários/sucumbência), descarta na hora
+                    if (!hasPrimary) {
+                        continue;
+                    }
 
-                    if (hasPrimary) {
-                        if (searchString.length < 100) {
-                            isMatch = true;
-                        } else {
-                            const hasContext = contextKeywords.some(kw => searchString.includes(kw));
-                            if (hasContext) {
-                                isMatch = true; 
-                            }
+                    let isMatch = true; // Já tem a palavra primária, então a princípio é match
+
+                    // Se a descrição for muito longa (textão), vamos exigir uma palavra de contexto 
+                    // para confirmar que é condenatório e não apenas uma menção alheia.
+                    if (searchString.length >= 100) {
+                        const hasContext = contextKeywords.some(kw => searchString.includes(kw));
+                        if (!hasContext) {
+                            isMatch = false; 
                         }
                     }
 
