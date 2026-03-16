@@ -24,6 +24,8 @@ interface LegalProcessFormProps {
     localMaskCNJ: (v: string) => string;
     setActiveManager: (v: string) => void;
     clientSelectOptions: { label: string; value: string }[];
+    clientCnpjMap: Record<string, string>;
+    opponentCnpjMap: Record<string, string>;
 }
 
 export function LegalProcessForm(props: LegalProcessFormProps) {
@@ -32,12 +34,17 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
         otherProcessType, setOtherProcessType, duplicateProcessData, searchingCNJ, handleCNJSearch, handleOpenJusbrasil,
         ufOptions, opponentOptions, duplicateOpponentCases,
         editingProcessIndex, handleProcessAction, localMaskCNJ, setActiveManager,
-        clientSelectOptions
+        clientSelectOptions, clientCnpjMap, opponentCnpjMap
     } = props;
 
     // Local state to hold the CNPJ being typed for search
     const [localCNPJ, setLocalCNPJ] = React.useState('');
     const [searchingClient, setSearchingClient] = React.useState(false);
+    const [hasNoClientCnpj, setHasNoClientCnpj] = React.useState(false);
+
+    const [localOpponentCNPJ, setLocalOpponentCNPJ] = React.useState('');
+    const [searchingOpponent, setSearchingOpponent] = React.useState(false);
+    const [hasNoOpponentCnpj, setHasNoOpponentCnpj] = React.useState(false);
 
     // Simple auto-fill for existing clients list when CNPJ is typed (as a simulated search, though we might not have CNPJ in clientSelectOptions directly unless we fetch it. Usually it fetches from public API)
     const handleClientCNPJSearch = async () => {
@@ -60,6 +67,26 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
         }
     };
 
+    const handleOpponentCNPJSearch = async () => {
+        if (!localOpponentCNPJ || hasNoOpponentCnpj) return;
+        setSearchingOpponent(true);
+        try {
+            const cleanCNPJ = localOpponentCNPJ.replace(/\D/g, '');
+            const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCNPJ}`);
+            if (response.ok) {
+                const data = await response.json();
+                const name = data.razao_social || data.nome_fantasia;
+                if (name) {
+                    setCurrentProcess(prev => ({ ...prev, opponent: name }));
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao buscar CNPJ do Contrário:', error);
+        } finally {
+            setSearchingOpponent(false);
+        }
+    };
+
     const maskCNPJ = (value: string) => {
         return value
             .replace(/\D/g, '')
@@ -69,6 +96,28 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
             .replace(/(\d{4})(\d{1,2})/, '$1-$2')
             .replace(/(-\d{2})\d+?$/, '$1');
     };
+
+    // Auto-fill CNPJ when Client is selected from the dropdown
+    React.useEffect(() => {
+        if (hasNoClientCnpj) {
+            setLocalCNPJ('');
+        } else if (currentProcess.client_name && clientCnpjMap[currentProcess.client_name]) {
+            setLocalCNPJ(maskCNPJ(clientCnpjMap[currentProcess.client_name]));
+        } else if (!currentProcess.client_name) {
+            setLocalCNPJ('');
+        }
+    }, [currentProcess.client_name, clientCnpjMap, hasNoClientCnpj]);
+
+    // Auto-fill CNPJ when Opponent is selected from the dropdown
+    React.useEffect(() => {
+        if (hasNoOpponentCnpj) {
+            setLocalOpponentCNPJ('');
+        } else if (currentProcess.opponent && opponentCnpjMap[currentProcess.opponent]) {
+            setLocalOpponentCNPJ(maskCNPJ(opponentCnpjMap[currentProcess.opponent]));
+        } else if (!currentProcess.opponent) {
+            setLocalOpponentCNPJ('');
+        }
+    }, [currentProcess.opponent, opponentCnpjMap, hasNoOpponentCnpj]);
 
     // Se nenhum tipo está preenchido, não mostra o form
     const isEditingMode = editingProcessIndex !== null;
@@ -164,17 +213,24 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                         {/* Linha 2: Cliente e UF */}
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                             <div className="col-span-12 md:col-span-4">
-                                <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between mb-1">Buscar por CNPJ</label>
+                                <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between items-center mb-1">
+                                    <span>Buscar Cliente por CNPJ</span>
+                                    <label className="flex items-center gap-1 cursor-pointer">
+                                        <input type="checkbox" checked={hasNoClientCnpj} onChange={(e) => setHasNoClientCnpj(e.target.checked)} className="rounded border-gray-300 text-salomao-blue focus:ring-salomao-blue" />
+                                        <span className="text-[9px] font-medium text-gray-500 normal-case">Sem CNPJ</span>
+                                    </label>
+                                </label>
                                 <div className="flex items-center relative">
                                     <input
                                         type="text"
-                                        className="w-full border-b border-gray-300 focus:border-salomao-blue outline-none py-2 text-sm font-medium pr-8 bg-white"
+                                        className="w-full border-b border-gray-300 focus:border-salomao-blue outline-none py-2 text-sm font-medium pr-8 bg-white disabled:bg-gray-50 disabled:text-gray-400"
                                         placeholder="00.000.000/0000-00"
                                         value={localCNPJ}
                                         onChange={(e) => setLocalCNPJ(maskCNPJ(e.target.value))}
                                         maxLength={18}
+                                        disabled={hasNoClientCnpj}
                                     />
-                                    <button onClick={handleClientCNPJSearch} disabled={searchingClient || localCNPJ.length < 14} className="absolute right-0 top-1/2 -translate-y-1/2 text-salomao-blue hover:text-salomao-gold disabled:opacity-30 p-2 transition-colors">
+                                    <button onClick={handleClientCNPJSearch} disabled={hasNoClientCnpj || searchingClient || localCNPJ.length < 14} className="absolute right-0 top-1/2 -translate-y-1/2 text-salomao-blue hover:text-salomao-gold disabled:opacity-30 p-2 transition-colors">
                                         {searchingClient ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                                     </button>
                                 </div>
@@ -188,14 +244,39 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                         </div>
 
                         {/* Linha 3: Contrário */}
-                        <div className="w-full">
-                            <CustomSelect label="Contrário" value={currentProcess.opponent || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, opponent: val })} options={(Array.isArray(opponentOptions) ? opponentOptions : []).map(o => ({ label: o, value: o }))} onAction={() => setActiveManager('opponent')} actionLabel="Gerenciar Contrário" placeholder="Selecione ou adicione novo..." />
-                            {duplicateOpponentCases.length > 0 && (
-                                <div className="mt-1 flex flex-wrap gap-1">
-                                    <span className="text-[10px] text-blue-600 font-bold mr-1">Similar:</span>
-                                    {(Array.isArray(duplicateOpponentCases) ? duplicateOpponentCases : []).map(c => (<a key={c.contract_id} href={`/contracts/${c.contracts?.id}`} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 hover:bg-blue-100 truncate max-w-[150px]">{c.contracts?.client_name}</a>))}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <div className="col-span-12 md:col-span-4">
+                                <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between items-center mb-1">
+                                    <span>Buscar Contrário por CNPJ</span>
+                                    <label className="flex items-center gap-1 cursor-pointer">
+                                        <input type="checkbox" checked={hasNoOpponentCnpj} onChange={(e) => setHasNoOpponentCnpj(e.target.checked)} className="rounded border-gray-300 text-salomao-blue focus:ring-salomao-blue" />
+                                        <span className="text-[9px] font-medium text-gray-500 normal-case">Sem CNPJ</span>
+                                    </label>
+                                </label>
+                                <div className="flex items-center relative">
+                                    <input
+                                        type="text"
+                                        className="w-full border-b border-gray-300 focus:border-salomao-blue outline-none py-2 text-sm font-medium pr-8 bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                                        placeholder="00.000.000/0000-00"
+                                        value={localOpponentCNPJ}
+                                        onChange={(e) => setLocalOpponentCNPJ(maskCNPJ(e.target.value))}
+                                        maxLength={18}
+                                        disabled={hasNoOpponentCnpj}
+                                    />
+                                    <button onClick={handleOpponentCNPJSearch} disabled={hasNoOpponentCnpj || searchingOpponent || localOpponentCNPJ.length < 14} className="absolute right-0 top-1/2 -translate-y-1/2 text-salomao-blue hover:text-salomao-gold disabled:opacity-30 p-2 transition-colors">
+                                        {searchingOpponent ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                                    </button>
                                 </div>
-                            )}
+                            </div>
+                            <div className="col-span-12 md:col-span-8">
+                                <CustomSelect label="Contrário" value={currentProcess.opponent || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, opponent: val })} options={(Array.isArray(opponentOptions) ? opponentOptions : []).map(o => ({ label: o, value: o }))} onAction={() => setActiveManager('opponent')} actionLabel="Gerenciar Contrário" placeholder="Selecione ou adicione novo..." />
+                                {duplicateOpponentCases.length > 0 && (
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                        <span className="text-[10px] text-blue-600 font-bold mr-1">Similar:</span>
+                                        {(Array.isArray(duplicateOpponentCases) ? duplicateOpponentCases : []).map(c => (<a key={c.contract_id} href={`/contracts/${c.contracts?.id}`} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 hover:bg-blue-100 truncate max-w-[150px]">{c.contracts?.client_name}</a>))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Ações */}

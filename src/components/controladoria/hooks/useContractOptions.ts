@@ -14,6 +14,10 @@ export function useContractOptions({ formData, setFormData }: UseContractOptions
     const [billingLocations, setBillingLocations] = useState<string[]>([]);
 
     const [clientOptions, setClientOptions] = useState<string[]>([]);
+    const [clientCnpjMap, setClientCnpjMap] = useState<Record<string, string>>({});
+
+    const [opponentOptions, setOpponentOptions] = useState<string[]>([]);
+    const [opponentCnpjMap, setOpponentCnpjMap] = useState<Record<string, string>>({});
     
     // Carregar dados iniciais
     const fetchAuxiliaryTables = async () => {
@@ -21,12 +25,38 @@ export function useContractOptions({ formData, setFormData }: UseContractOptions
         // const { data: courts } = await supabase.from('courts').select('name').order('name');
         // if (courts) setCourtOptions(Array.from(new Set([...DEFAULT_COURTS, ...courts.map(c => c.name)])).sort((a, b) => a.localeCompare(b)));
 
-        // Removed opponentOptions fetch as it's no longer a state managed here.
-        // const { data: opps } = await supabase.from('opponents').select('name').order('name');
-        // if (opps) {
-        //     const uniqueOpponents = Array.from(new Set(opps.map(o => o.name))).sort((a, b) => a.localeCompare(b));
-        //     setOpponentOptions(uniqueOpponents);
-        // }
+        // Buscando Opponents e seus CNPJs
+        const { data: opps } = await supabase.from('opponents').select('name, cnpj').order('name');
+        if (opps) {
+            const cnpjSeen = new Set<string>();
+            const nameSeen = new Set<string>();
+            const uniqueNames: string[] = [];
+            const nameToCnpj: Record<string, string> = {};
+
+            opps.forEach(o => {
+                if (!o.name || o.name.trim() === '') return;
+                const cnpjClean = o.cnpj?.replace(/\D/g, '') || '';
+                if (o.cnpj && o.name) nameToCnpj[o.name] = o.cnpj;
+
+                if (cnpjClean.length > 0) {
+                    if (!cnpjSeen.has(cnpjClean)) {
+                        cnpjSeen.add(cnpjClean);
+                        if (!nameSeen.has(o.name)) {
+                            nameSeen.add(o.name);
+                            uniqueNames.push(o.name);
+                        }
+                    }
+                } else {
+                    if (!nameSeen.has(o.name)) {
+                        nameSeen.add(o.name);
+                        uniqueNames.push(o.name);
+                    }
+                }
+            });
+
+            setOpponentOptions(uniqueNames.sort((a, b) => a.localeCompare(b)));
+            setOpponentCnpjMap(nameToCnpj);
+        }
 
         // 🔧 CORREÇÃO PRINCIPAL: Remover duplicatas de clientes por CNPJ
         const { data: clients } = await supabase.from('clients').select('name, cnpj').order('name');
@@ -34,10 +64,16 @@ export function useContractOptions({ formData, setFormData }: UseContractOptions
             const cnpjSeen = new Set<string>();
             const nameSeen = new Set<string>();
             const uniqueNames: string[] = [];
+            const nameToCnpj: Record<string, string> = {};
 
             clients.forEach(c => {
                 if (!c.name || c.name.trim() === '') return;
                 const cnpjClean = c.cnpj?.replace(/\D/g, '') || '';
+                
+                if (c.cnpj && c.name) {
+                    nameToCnpj[c.name] = c.cnpj;
+                }
+
                 if (cnpjClean.length > 0) {
                     // Agrupar por CNPJ — manter o primeiro nome encontrado
                     if (!cnpjSeen.has(cnpjClean)) {
@@ -57,6 +93,7 @@ export function useContractOptions({ formData, setFormData }: UseContractOptions
             });
 
             setClientOptions(uniqueNames.sort((a, b) => a.localeCompare(b)));
+            setClientCnpjMap(nameToCnpj);
         }
 
         // 🔧 Buscar locais de faturamento únicos
@@ -99,6 +136,15 @@ export function useContractOptions({ formData, setFormData }: UseContractOptions
                         }
                     }
                     break;
+                case 'opponent':
+                    if (!opponentOptions.includes(cleanValue)) {
+                        const { error: err } = await supabase.from('opponents').insert({ name: cleanValue });
+                        error = err;
+                        if (!err) {
+                            setOpponentOptions(prev => [...prev, cleanValue].sort((a, b) => a.localeCompare(b)));
+                        }
+                    }
+                    break;
                 default:
                     console.warn(`handleGenericAdd: Unhandled type "${type}"`);
                     return false;
@@ -138,6 +184,13 @@ export function useContractOptions({ formData, setFormData }: UseContractOptions
                         if (formData.client_name === cleanOld) setFormData(prev => ({ ...prev, client_name: cleanNew }));
                     }
                     break;
+                case 'opponent':
+                    const { error: errOpp } = await supabase.from('opponents').update({ name: cleanNew }).eq('name', cleanOld);
+                    error = errOpp;
+                    if (!errOpp) {
+                        setOpponentOptions(prev => prev.map(i => i === cleanOld ? cleanNew : i).sort((a, b) => a.localeCompare(b)));
+                    }
+                    break;
                 default:
                     console.warn(`handleGenericEdit: Unhandled type "${type}"`);
                     return false;
@@ -160,6 +213,9 @@ export function useContractOptions({ formData, setFormData }: UseContractOptions
         legalAreas,
         billingLocations,
         clientOptions,
+        clientCnpjMap,
+        opponentOptions,
+        opponentCnpjMap,
         fetchAuxiliaryTables,
         handleGenericAdd,
         handleGenericEdit,

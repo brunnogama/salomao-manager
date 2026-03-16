@@ -93,6 +93,9 @@ export function ContractFormModal(props: Props) {
     legalAreas,
     billingLocations,
     clientOptions,
+    clientCnpjMap,
+    opponentOptions,
+    opponentCnpjMap,
     fetchAuxiliaryTables,
     handleGenericRemove,
     handleGenericAdd,
@@ -100,7 +103,6 @@ export function ContractFormModal(props: Props) {
   } = useContractOptions({ formData, setFormData });
 
   // Add dummy arrays to satisfy OptionManager since these aren't managed in this component anymore but OptionManager still expects them in props
-  const opponentOptions: string[] = [];
   const authorOptions: string[] = [];
   const courtOptions: string[] = [];
   const classOptions: string[] = [];
@@ -798,6 +800,8 @@ export function ContractFormModal(props: Props) {
                     setActiveManager={setActiveManager}
                     duplicateProcessData={duplicateProcessData}
                     clientSelectOptions={clientSelectOptions}
+                    clientCnpjMap={clientCnpjMap}
+                    opponentCnpjMap={opponentCnpjMap}
                   />
                   <LegalProcessList processes={processes} clientName={formData.client_name || ''} setViewProcess={setViewProcess} setViewProcessIndex={setViewProcessIndex} editProcess={editProcess} removeProcess={removeProcess} />
                 </section>
