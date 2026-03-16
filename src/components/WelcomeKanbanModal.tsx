@@ -160,7 +160,7 @@ export function KanbanModal({ isOpen, onClose }: KanbanModalProps) {
 
   const columns: ColumnId[] = ['fa-fazer', 'em-progresso', 'concluido'];
 
-  return createPortal(
+  return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pt-16 sm:p-6 bg-[#0a192f]/80 backdrop-blur-xl">
       {/* Container Principal */}
       <div className="bg-[#112240] w-full max-w-7xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-300">
