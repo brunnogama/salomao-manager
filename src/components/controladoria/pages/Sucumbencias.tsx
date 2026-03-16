@@ -36,16 +36,21 @@ interface LegalOneRow {
     [key: string]: any; // Allow other columns
 }
 
+interface FiltragemAndamento {
+    id: string;
+    dataAndamento: string;
+    descricao: string;
+    tipoAndamento: string;
+    subtipoAndamento: string;
+}
+
 interface FilteredSucumbencia {
     id: string;
     responsavel: string;
     cnj: string;
     uf: string;
-    dataAndamento: string;
-    descricao: string;
-    tipoAndamento: string;
-    subtipoAndamento: string;
     status?: 'potencial' | 'prescrito';
+    andamentos: FiltragemAndamento[];
 }
 
 const HighlightText = ({ text, snippet = false }: { text: string; snippet?: boolean }) => {
@@ -127,6 +132,7 @@ export function Sucumbencias() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedItem, setSelectedItem] = useState<FilteredSucumbencia | null>(null);
     const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos'>('potenciais');
+    const [activeModalTab, setActiveModalTab] = useState(0);
 
     // Sync to localStorage when data changes
     useEffect(() => {
@@ -140,9 +146,12 @@ export function Sucumbencias() {
                 // The in-memory state remains intact so the user can still read the full text during the active session.
                 const truncatedForStorage = importedData.map(item => ({
                     ...item,
-                    descricao: item.descricao.length > 1500 
-                        ? item.descricao.substring(0, 1500) + '\n\n... [Texto truncado devido ao limite de memória local do navegador. Para ler a versão completa, importe a planilha novamente na próxima sessão.]' 
-                        : item.descricao
+                    andamentos: item.andamentos.map(and => ({
+                        ...and,
+                        descricao: and.descricao.length > 1500 
+                            ? and.descricao.substring(0, 1500) + '\n\n... [Texto truncado devido ao limite de memória local do navegador. Para ler a versão completa, importe a planilha novamente na próxima sessão.]' 
+                            : and.descricao
+                    }))
                 }));
                 localStorage.setItem('@salomao:sucumbenciasData', JSON.stringify(truncatedForStorage));
             } catch (fallbackError) {
@@ -201,21 +210,21 @@ export function Sucumbencias() {
             setImportedData(newList);
             if (newList.length === 0) setHasImported(false);
 
-            // Generate a simple hash to prevent re-importing the exactly same text for that process
-            const hash_id = `${item.cnj}-${item.descricao.substring(0, 50).replace(/\s/g, '')}`.toLowerCase();
-
-            // Insert into Supabase
-            const { error } = await supabase.from('sucumbencias').insert({
+            // Insert into Supabase (all andamentos for this CNJ)
+            const payload = item.andamentos.map(and => ({
                 processo_cnj: item.cnj,
                 responsavel: item.responsavel,
                 uf: item.uf,
-                data_andamento: item.dataAndamento,
-                tipo_andamento: item.tipoAndamento,
-                subtipo_andamento: item.subtipoAndamento,
-                descricao: item.descricao,
+                data_andamento: and.dataAndamento,
+                tipo_andamento: and.tipoAndamento,
+                subtipo_andamento: and.subtipoAndamento,
+                descricao: and.descricao,
                 status: status,
-                hash_id: hash_id
-            });
+                // Generate a simple hash to prevent re-importing the exactly same text for that process
+                hash_id: `${item.cnj}-${and.descricao.substring(0, 50).replace(/\s/g, '')}`.toLowerCase()
+            }));
+
+            const { error } = await supabase.from('sucumbencias').insert(payload);
 
             if (error) {
                 // If it fails (e.g., duplicate hash), it's fine, we already removed it from view anyway
@@ -241,8 +250,8 @@ export function Sucumbencias() {
             // Convert to JSON
             const jsonData = XLSX.utils.sheet_to_json<LegalOneRow>(worksheet, { defval: '' });
             
-            // Filter and map logic
-            const filteredResults: FilteredSucumbencia[] = [];
+            // Map for aggregation by CNJ
+            const groupedMap = new Map<string, FilteredSucumbencia>();
             
             // Definição de palavras-chave baseadas na orientação "A sentença deve explicitamente condenar a parte contrária ao pagamento de honorários..."
             const primaryKeywords = ['honorários de sucumbência', 'honorários advocatícios', 'honorarios de sucumbencia', 'honorarios advocaticios', 'sucumbência', 'sucumbencia'];
@@ -339,20 +348,29 @@ export function Sucumbencias() {
                         // NO TRUNCATION to allow full reading on click. The stricter filter prevents QuotaExceeded by resulting in very few matches.
                         const finalDesc = desc || fieldDescricao;
 
-                        filteredResults.push({
-                            id: `import-${index}-${i}`,
-                            responsavel: row['Responsável principal'] || 'Não Informado',
-                            cnj: cnjLabel,
-                            uf: row['UF'] || '-',
+                        if (!groupedMap.has(cnjLabel)) {
+                            groupedMap.set(cnjLabel, {
+                                id: `import-cnj-${index}`,
+                                responsavel: row['Responsável principal'] || 'Não Informado',
+                                cnj: cnjLabel,
+                                uf: row['UF'] || '-',
+                                status: 'potencial',
+                                andamentos: []
+                            });
+                        }
+
+                        groupedMap.get(cnjLabel)!.andamentos.push({
+                            id: `and-${index}-${i}`,
                             dataAndamento: dataAnd || '-',
                             descricao: finalDesc,
                             tipoAndamento: tipo || fieldTipo,
                             subtipoAndamento: subtipo || fieldSubtipo,
-                            status: 'potencial'
                         });
                     }
                 }
             });
+
+            const filteredResults = Array.from(groupedMap.values());
 
             if (filteredResults.length === 0) {
                 alert('Todos os andamentos de sucumbência desta planilha já foram verificados ou descartados anteriormente (ou nenhum foi encontrado).');
@@ -413,7 +431,7 @@ export function Sucumbencias() {
     const displayedData = tabFilteredData.filter(item => 
         item.cnj.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.responsavel.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+        item.andamentos.some(and => and.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     const handleMarkAsPrescrito = (item: FilteredSucumbencia) => {
@@ -667,6 +685,7 @@ export function Sucumbencias() {
                                                             onClick={(e) => {
                                                                 // Se clicar em um botão das ações, não abre o modal
                                                                 if ((e.target as HTMLElement).closest('button')) return;
+                                                                setActiveModalTab(0);
                                                                 setSelectedItem(row);
                                                             }}
                                                             className="border-b border-gray-50 hover:bg-blue-50/50 transition-colors group cursor-pointer"
@@ -683,11 +702,13 @@ export function Sucumbencias() {
                                                                 </span>
                                                             </td>
                                                             <td className="p-4 text-center text-xs text-gray-500 font-semibold">
-                                                                {row.dataAndamento}
+                                                                {row.andamentos.length > 1 ? (
+                                                                    <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md border border-blue-100 font-bold">{row.andamentos.length} andamentos</span>
+                                                                ) : row.andamentos[0].dataAndamento}
                                                             </td>
                                                             <td className="p-4">
                                                                 <div className="text-xs text-gray-600 line-clamp-2 max-w-lg leading-relaxed" title="Clique para ler a decisão completa">
-                                                                    <HighlightText text={row.descricao} snippet={true} />
+                                                                    <HighlightText text={row.andamentos[0].descricao} snippet={true} />
                                                                 </div>
                                                             </td>
                                                             <td className="p-4 text-center">
@@ -801,7 +822,7 @@ export function Sucumbencias() {
             </Transition.Root>
 
             {/* Modal de Detalhes (Simples) */}
-            {selectedItem && (
+            {selectedItem && selectedItem.andamentos[activeModalTab] && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedItem(null)} />
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
@@ -821,12 +842,31 @@ export function Sucumbencias() {
                             </button>
                         </div>
                         
+                        {/* Tabs para Andamentos se houver mais de um */}
+                        {selectedItem.andamentos.length > 1 && (
+                            <div className="flex overflow-x-auto bg-white border-b border-gray-100 px-6 pt-4 gap-2 no-scrollbar">
+                                {selectedItem.andamentos.map((and, idx) => (
+                                    <button
+                                        key={and.id}
+                                        onClick={() => setActiveModalTab(idx)}
+                                        className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${
+                                            activeModalTab === idx 
+                                                ? 'border-[#1e3a8a] text-[#1e3a8a]' 
+                                                : 'border-transparent text-gray-400 hover:text-gray-600'
+                                        }`}
+                                    >
+                                        {and.dataAndamento}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
                         <div className="p-6 overflow-y-auto bg-gray-50 flex-1">
                             
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                     <span className="block text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">Data do Andamento</span>
-                                    <span className="text-sm font-bold text-[#0a192f]">{selectedItem.dataAndamento}</span>
+                                    <span className="text-sm font-bold text-[#0a192f]">{selectedItem.andamentos[activeModalTab].dataAndamento}</span>
                                 </div>
                                 <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                     <span className="block text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">UF</span>
@@ -835,9 +875,9 @@ export function Sucumbencias() {
                                 <div className="col-span-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                     <span className="block text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">Tipo / Subtipo</span>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-bold">{selectedItem.tipoAndamento || 'N/A'}</span>
+                                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-bold">{selectedItem.andamentos[activeModalTab].tipoAndamento || 'N/A'}</span>
                                         <span className="text-gray-400 font-black">/</span>
-                                        <span className="text-sm font-semibold text-gray-600">{selectedItem.subtipoAndamento || '-'}</span>
+                                        <span className="text-sm font-semibold text-gray-600">{selectedItem.andamentos[activeModalTab].subtipoAndamento || '-'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -848,7 +888,7 @@ export function Sucumbencias() {
                                     Descrição Completa / Publicação
                                 </span>
                                 <div className="text-sm text-gray-700 leading-relaxed max-h-[250px] overflow-y-auto whitespace-pre-wrap">
-                                    <HighlightText text={selectedItem.descricao} />
+                                    <HighlightText text={selectedItem.andamentos[activeModalTab].descricao} />
                                 </div>
                             </div>
 
