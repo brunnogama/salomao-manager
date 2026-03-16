@@ -14,7 +14,8 @@ import {
     XCircle,
     AlertTriangle,
     Filter,
-    X
+    X,
+    Download
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { SearchableSelect } from '../../crm/SearchableSelect';
@@ -48,7 +49,7 @@ interface FilteredSucumbencia {
     responsavel: string;
     cnj: string;
     uf: string;
-    status?: 'potencial' | 'prescrito' | 'descartado';
+    status?: 'potencial' | 'prescrito' | 'descartado' | 'recebido' | 'verificado';
     andamentos: FiltragemAndamento[];
     // Legacy fields for backward compatibility with localStorage caching
     dataAndamento?: string;
@@ -179,7 +180,7 @@ export function Sucumbencias() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterResponsavel, setFilterResponsavel] = useState('Todos');
     const [selectedItem, setSelectedItem] = useState<FilteredSucumbencia | null>(null);
-    const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos' | 'descartados'>('potenciais');
+    const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos' | 'descartados' | 'recebidos'>('potenciais');
     const [activeModalTab, setActiveModalTab] = useState(0);
 
     // Sync from IndexedDB or migrate from LocalStorage on mount
@@ -236,12 +237,17 @@ export function Sucumbencias() {
     }, [startDate, endDate]);
 
     // --- Supabase Actions ---
-    const handleAction = async (item: FilteredSucumbencia, status: 'verificado' | 'descartado') => {
+    const handleAction = async (item: FilteredSucumbencia, status: 'verificado' | 'descartado' | 'recebido') => {
         try {
-            // Optimistically remove from list
-            const newList = importedData.filter(d => d.id !== item.id);
+            // Optimistically update the status instead of removing, so that the tabs (Descartados, Recebidos) can display them.
+            // Items with 'verificado' will just not match any tab filter and disappear from the UI unless we add a tab for them later.
+            const newList = importedData.map(d => {
+                if (d.id === item.id) {
+                    return { ...d, status };
+                }
+                return d;
+            });
             setImportedData(newList);
-            if (newList.length === 0) setHasImported(false);
 
             // Insert into Supabase (all andamentos for this CNJ)
             const payload = item.andamentos.map(and => ({
@@ -459,6 +465,7 @@ export function Sucumbencias() {
         if (activeTab === 'potenciais') return itemStatus === 'potencial';
         if (activeTab === 'prescritos') return itemStatus === 'prescrito';
         if (activeTab === 'descartados') return itemStatus === 'descartado';
+        if (activeTab === 'recebidos') return itemStatus === 'recebido';
         return false;
     });
 
@@ -482,7 +489,7 @@ export function Sucumbencias() {
         }
     };
 
-    const handleActionFromModal = (item: FilteredSucumbencia, status: 'verificado' | 'descartado') => {
+    const handleActionFromModal = (item: FilteredSucumbencia, status: 'verificado' | 'descartado' | 'recebido') => {
         handleAction(item, status);
         setSelectedItem(null);
     };
@@ -524,6 +531,13 @@ export function Sucumbencias() {
                         >
                             <span className="hidden sm:inline">Descartados</span>
                             <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'descartado').length}</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('recebidos')}
+                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'recebidos' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <span className="hidden sm:inline">Recebidos</span>
+                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'recebido').length}</span>
                         </button>
                     </div>
 
@@ -727,6 +741,13 @@ export function Sucumbencias() {
                                                                         Prescrito
                                                                     </button>
                                                                     <button 
+                                                                        onClick={(e) => { e.stopPropagation(); handleAction(row, 'recebido'); }}
+                                                                        className="p-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded transition-colors border border-indigo-200"
+                                                                        title="Marcar como Recebido"
+                                                                    >
+                                                                        <Download className="w-4 h-4" />
+                                                                    </button>
+                                                                    <button 
                                                                         onClick={(e) => { e.stopPropagation(); handleAction(row, 'verificado'); }}
                                                                         className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded transition-colors border border-emerald-200"
                                                                         title="Verificar (Salvar para enviar)"
@@ -908,6 +929,13 @@ export function Sucumbencias() {
                                 >
                                     <XCircle className="w-4 h-4" />
                                     Descartar
+                                </button>
+                                <button 
+                                    onClick={() => handleActionFromModal(selectedItem, 'recebido')}
+                                    className="px-4 py-2 bg-indigo-50 hover:bg-indigo-600 border border-indigo-200 hover:border-indigo-600 text-indigo-700 hover:text-white font-bold tracking-wide rounded-xl transition-all text-xs flex items-center gap-2 shadow-sm"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Recebido
                                 </button>
                                 <button 
                                     onClick={() => handleActionFromModal(selectedItem, 'verificado')}
