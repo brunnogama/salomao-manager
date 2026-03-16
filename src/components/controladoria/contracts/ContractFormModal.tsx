@@ -866,8 +866,12 @@ export function ContractFormModal(props: Props) {
             authorOptions: [],
             clientOptions
           }}
-          onAdd={(val: string) => handleGenericAdd(activeManager || '', val)}
-          onEdit={(oldVal: string, newVal: string) => handleGenericEdit(activeManager || '', oldVal, newVal)}
+          maps={{
+            clientCnpjMap,
+            opponentCnpjMap
+          }}
+          onAdd={(val: string, extra?: any) => handleGenericAdd(activeManager || '', val, extra)}
+          onEdit={(oldVal: string, newVal: string, extra?: any) => handleGenericEdit(activeManager || '', oldVal, newVal, extra)}
           onRemove={(val: string) => handleGenericRemove(activeManager || '', val)}
           editingValue={editingValue}
           setEditingValue={setEditingValue}

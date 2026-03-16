@@ -106,7 +106,7 @@ export function useContractOptions({ formData, setFormData }: UseContractOptions
     };
 
     // Generic add handler
-    const handleGenericAdd = async (type: string, newValue: string) => {
+    const handleGenericAdd = async (type: string, newValue: string, extra?: any) => {
         const cleanValue = toTitleCase(newValue.trim());
         if (!cleanValue) return false;
 
@@ -128,21 +128,36 @@ export function useContractOptions({ formData, setFormData }: UseContractOptions
                     break;
                 case 'client':
                     if (!clientOptions.includes(cleanValue)) {
-                        const { error: err } = await supabase.from('clients').insert({ name: cleanValue });
+                        const cnpjClean = extra?.cnpj?.replace(/\D/g, '') || null;
+                        const { error: err } = await supabase.from('clients').insert({ name: cleanValue, cnpj: cnpjClean });
                         error = err;
                         if (!err) {
                             setClientOptions(prev => [...prev, cleanValue].sort((a, b) => a.localeCompare(b)));
+                            if (cnpjClean) setClientCnpjMap(prev => ({ ...prev, [cleanValue]: cnpjClean }));
                             if (!formData.client_name) setFormData(prev => ({ ...prev, client_name: cleanValue }));
                         }
+                    } else if (extra?.cnpj) {
+                        // User trying to add CNPJ to an existing client via Add instead of Edit
+                         const cnpjClean = extra?.cnpj?.replace(/\D/g, '') || null;
+                         const { error: err } = await supabase.from('clients').update({ cnpj: cnpjClean }).eq('name', cleanValue);
+                         error = err;
+                         if (!err) setClientCnpjMap(prev => ({ ...prev, [cleanValue]: cnpjClean }));
                     }
                     break;
                 case 'opponent':
                     if (!opponentOptions.includes(cleanValue)) {
-                        const { error: err } = await supabase.from('opponents').insert({ name: cleanValue });
+                        const cnpjClean = extra?.cnpj?.replace(/\D/g, '') || null;
+                        const { error: err } = await supabase.from('opponents').insert({ name: cleanValue, cnpj: cnpjClean });
                         error = err;
                         if (!err) {
                             setOpponentOptions(prev => [...prev, cleanValue].sort((a, b) => a.localeCompare(b)));
+                            if (cnpjClean) setOpponentCnpjMap(prev => ({ ...prev, [cleanValue]: cnpjClean }));
                         }
+                    } else if (extra?.cnpj) {
+                        const cnpjClean = extra?.cnpj?.replace(/\D/g, '') || null;
+                        const { error: err } = await supabase.from('opponents').update({ cnpj: cnpjClean }).eq('name', cleanValue);
+                        error = err;
+                        if (!err) setOpponentCnpjMap(prev => ({ ...prev, [cleanValue]: cnpjClean }));
                     }
                     break;
                 default:
@@ -158,10 +173,12 @@ export function useContractOptions({ formData, setFormData }: UseContractOptions
     };
 
     // Lógica de Editar
-    const handleGenericEdit = async (type: string, oldValue: string, newValue: string) => {
+    const handleGenericEdit = async (type: string, oldValue: string, newValue: string, extra?: any) => {
         const cleanOld = oldValue.trim();
         const cleanNew = toTitleCase(newValue.trim());
-        if (!cleanNew || cleanNew === cleanOld) return false;
+        const hasNewCnpj = extra?.cnpj !== undefined;
+        // Permite salvar se o CNPJ mudou, mesmo que o nome(cleanNew) seja igual ao(cleanOld)
+        if (!cleanNew || (cleanNew === cleanOld && !hasNewCnpj)) return false;
 
         let error = null;
 
@@ -177,18 +194,52 @@ export function useContractOptions({ formData, setFormData }: UseContractOptions
                     break;
                     break;
                 case 'client':
-                    const { error: errCli } = await supabase.from('clients').update({ name: cleanNew }).eq('name', cleanOld);
-                    error = errCli;
-                    if (!errCli) {
-                        setClientOptions(prev => prev.map(i => i === cleanOld ? cleanNew : i).sort((a, b) => a.localeCompare(b)));
-                        if (formData.client_name === cleanOld) setFormData(prev => ({ ...prev, client_name: cleanNew }));
+                    {
+                        const cnpjClean = extra?.cnpj !== undefined ? extra.cnpj.replace(/\D/g, '') : undefined;
+                        const updatePayload: any = { name: cleanNew };
+                        if (cnpjClean !== undefined) updatePayload.cnpj = cnpjClean || null;
+
+                        const { error: errCli } = await supabase.from('clients').update(updatePayload).eq('name', cleanOld);
+                        error = errCli;
+                        if (!errCli) {
+                            if (cleanNew !== cleanOld) {
+                                setClientOptions(prev => prev.map(i => i === cleanOld ? cleanNew : i).sort((a, b) => a.localeCompare(b)));
+                                setClientCnpjMap(prev => {
+                                    const newMap = { ...prev };
+                                    const oldCnpj = newMap[cleanOld];
+                                    delete newMap[cleanOld];
+                                    newMap[cleanNew] = cnpjClean !== undefined ? (cnpjClean || '') : (oldCnpj || '');
+                                    return newMap;
+                                });
+                                if (formData.client_name === cleanOld) setFormData(prev => ({ ...prev, client_name: cleanNew }));
+                            } else if (cnpjClean !== undefined) {
+                                setClientCnpjMap(prev => ({ ...prev, [cleanOld]: cnpjClean }));
+                            }
+                        }
                     }
                     break;
                 case 'opponent':
-                    const { error: errOpp } = await supabase.from('opponents').update({ name: cleanNew }).eq('name', cleanOld);
-                    error = errOpp;
-                    if (!errOpp) {
-                        setOpponentOptions(prev => prev.map(i => i === cleanOld ? cleanNew : i).sort((a, b) => a.localeCompare(b)));
+                    {
+                        const cnpjClean = extra?.cnpj !== undefined ? extra.cnpj.replace(/\D/g, '') : undefined;
+                        const updatePayload: any = { name: cleanNew };
+                        if (cnpjClean !== undefined) updatePayload.cnpj = cnpjClean || null;
+                        
+                        const { error: errOpp } = await supabase.from('opponents').update(updatePayload).eq('name', cleanOld);
+                        error = errOpp;
+                        if (!errOpp) {
+                            if (cleanNew !== cleanOld) {
+                                setOpponentOptions(prev => prev.map(i => i === cleanOld ? cleanNew : i).sort((a, b) => a.localeCompare(b)));
+                                setOpponentCnpjMap(prev => {
+                                    const newMap = { ...prev };
+                                    const oldCnpj = newMap[cleanOld];
+                                    delete newMap[cleanOld];
+                                    newMap[cleanNew] = cnpjClean !== undefined ? (cnpjClean || '') : (oldCnpj || '');
+                                    return newMap;
+                                });
+                            } else if (cnpjClean !== undefined) {
+                                setOpponentCnpjMap(prev => ({ ...prev, [cleanOld]: cnpjClean }));
+                            }
+                        }
                     }
                     break;
                 default:

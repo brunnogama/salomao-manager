@@ -18,9 +18,13 @@ interface OptionManagerProps {
     authorOptions: string[];
     clientOptions: string[];
   };
+  maps?: {
+    clientCnpjMap?: Record<string, string>;
+    opponentCnpjMap?: Record<string, string>;
+  };
   onAdd: (val: string, extra?: any) => Promise<boolean>;
   onRemove: (val: string) => void;
-  onEdit: (oldVal: string, newVal: string) => Promise<boolean>;
+  onEdit: (oldVal: string, newVal: string, extra?: any) => Promise<boolean>;
   onClose: () => void;
   isOpen: boolean;
   editingValue: string | null;
@@ -31,6 +35,7 @@ interface OptionManagerProps {
 export const OptionManager = ({
   type,
   lists,
+  maps,
   onAdd,
   onRemove,
   onEdit,
@@ -41,7 +46,26 @@ export const OptionManager = ({
   placeholder = "Digite o nome"
 }: OptionManagerProps) => {
     const [inputValue, setInputValue] = useState('');
+    const [inputCnpj, setInputCnpj] = useState('');
     const [loading, setLoading] = useState(false);
+    
+    const isCnpjEnabled = type === 'client' || type === 'opponent';
+
+    const getCnpjMap = () => {
+        if (type === 'client') return maps?.clientCnpjMap || {};
+        if (type === 'opponent') return maps?.opponentCnpjMap || {};
+        return {};
+    };
+
+    const maskCNPJ = (value: string) => {
+        return value
+            .replace(/\D/g, '')
+            .replace(/(\d{2})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d{1,4})/, '$1/$2')
+            .replace(/(\d{4})(\d{1,2})/, '$1-$2')
+            .replace(/(-\d{2})\d+?$/, '$1');
+    };
     
     // Get the right list
     const getOptionsList = () => {
@@ -89,11 +113,16 @@ export const OptionManager = ({
         if (isOpen) {
             if (editingValue) {
                 setInputValue(editingValue);
+                if (isCnpjEnabled) {
+                    const cnpjMap = getCnpjMap();
+                    setInputCnpj(maskCNPJ(cnpjMap[editingValue] || ''));
+                }
             } else {
                 setInputValue('');
+                setInputCnpj('');
             }
         }
-    }, [isOpen, editingValue]);
+    }, [isOpen, editingValue, type, maps]);
 
     if (!isOpen) return null;
 
@@ -102,26 +131,36 @@ export const OptionManager = ({
         setLoading(true);
         let success = false;
         
+        const extraArgs = isCnpjEnabled ? { cnpj: inputCnpj } : undefined;
+
         if (editingValue) {
-            success = await onEdit(editingValue, inputValue.trim());
+            success = await onEdit(editingValue, inputValue.trim(), extraArgs);
             if (success) setEditingValue(null);
         } else {
-            success = await onAdd(inputValue.trim());
+            success = await onAdd(inputValue.trim(), extraArgs);
             if (success) onClose();
         }
         
         setLoading(false);
-        if (success) setInputValue('');
+        if (success) {
+            setInputValue('');
+            setInputCnpj('');
+        }
     };
 
     const handleEditClick = (item: string) => {
         setEditingValue(item);
         setInputValue(item);
+        if (isCnpjEnabled) {
+             const cnpjMap = getCnpjMap();
+             setInputCnpj(maskCNPJ(cnpjMap[item] || ''));
+        }
     };
 
     const handleCancelEdit = () => {
         setEditingValue(null);
         setInputValue('');
+        setInputCnpj('');
     };
 
     return (
@@ -133,7 +172,7 @@ export const OptionManager = ({
             </div>
             
             <div className="p-4">
-              <div className="flex gap-2 mb-4">
+              <div className={`flex gap-2 mb-4 ${isCnpjEnabled ? 'flex-col sm:flex-row' : ''}`}>
                 <input 
                   type="text" 
                   className="flex-1 border border-gray-300 rounded-lg p-2 text-sm"
@@ -142,29 +181,47 @@ export const OptionManager = ({
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
                 />
-                {editingValue && (
-                    <button 
-                        onClick={handleCancelEdit}
-                        className="bg-gray-200 text-gray-600 p-2 rounded-lg hover:bg-gray-300"
-                        title="Cancelar edição"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+                {isCnpjEnabled && (
+                  <input 
+                    type="text" 
+                    className="w-full sm:w-48 border border-gray-300 rounded-lg p-2 text-sm"
+                    placeholder="CNPJ (opcional)"
+                    value={inputCnpj}
+                    onChange={(e) => setInputCnpj(maskCNPJ(e.target.value))}
+                    maxLength={18}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
+                  />
                 )}
-                <button 
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className={`${editingValue ? 'bg-green-600 hover:bg-green-700' : 'bg-salomao-blue'} text-white p-2 rounded-lg disabled:opacity-50 transition-colors`}
-                >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin"/> : (editingValue ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />)}
-                </button>
+                <div className="flex gap-2 shrink-0">
+                    {editingValue && (
+                        <button 
+                            onClick={handleCancelEdit}
+                            className="bg-gray-200 text-gray-600 p-2 rounded-lg hover:bg-gray-300 flex-1 sm:flex-none justify-center"
+                            title="Cancelar edição"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    )}
+                    <button 
+                      onClick={handleSubmit}
+                      disabled={loading}
+                      className={`${editingValue ? 'bg-green-600 hover:bg-green-700' : 'bg-salomao-blue'} flex-1 sm:flex-none justify-center text-white p-2 rounded-lg disabled:opacity-50 transition-colors flex items-center`}
+                    >
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin"/> : (editingValue ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />)}
+                    </button>
+                </div>
               </div>
 
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {options.map((opt, idx) => (
                   <div key={idx} className={`flex items-center justify-between p-2 rounded-lg group ${editingValue === opt ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'}`}>
-                    <span className="text-sm text-gray-700 truncate flex-1 mr-2">{opt}</span>
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-col flex-1 truncate mr-2">
+                        <span className="text-sm font-medium text-gray-800 truncate">{opt}</span>
+                        {isCnpjEnabled && getCnpjMap()[opt] && (
+                            <span className="text-[10px] text-gray-500 font-mono mt-0.5">{maskCNPJ(getCnpjMap()[opt])}</span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
                         <button 
                             onClick={() => handleEditClick(opt)} 
                             className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-blue-100 rounded"
