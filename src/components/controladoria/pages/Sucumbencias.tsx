@@ -45,6 +45,7 @@ interface FilteredSucumbencia {
     descricao: string;
     tipoAndamento: string;
     subtipoAndamento: string;
+    status?: 'potencial' | 'prescrito';
 }
 
 const HighlightText = ({ text }: { text: string }) => {
@@ -105,6 +106,7 @@ export function Sucumbencias() {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedItem, setSelectedItem] = useState<FilteredSucumbencia | null>(null);
+    const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos'>('potenciais');
 
     // Sync to localStorage when data changes
     useEffect(() => {
@@ -296,10 +298,8 @@ export function Sucumbencias() {
 
                         if (existingHashes.has(hash_id)) continue; // Already reviewed!
 
-                        // TRUNCATION TO AVOID LOCALSTORAGE QUOTA EXCEEDED
-                        // We store up to 500 characters max for the description preview to keep JSON small
+                        // NO TRUNCATION to allow full reading on click. The stricter filter prevents QuotaExceeded by resulting in very few matches.
                         const finalDesc = desc || fieldDescricao;
-                        const truncatedDesc = finalDesc.length > 500 ? finalDesc.substring(0, 500) + '...' : finalDesc;
 
                         filteredResults.push({
                             id: `import-${index}-${i}`,
@@ -307,9 +307,10 @@ export function Sucumbencias() {
                             cnj: cnjLabel,
                             uf: row['UF'] || '-',
                             dataAndamento: dataAnd || '-',
-                            descricao: truncatedDesc,
+                            descricao: finalDesc,
                             tipoAndamento: tipo || fieldTipo,
-                            subtipoAndamento: subtipo || fieldSubtipo
+                            subtipoAndamento: subtipo || fieldSubtipo,
+                            status: 'potencial'
                         });
                     }
                 }
@@ -363,12 +364,29 @@ export function Sucumbencias() {
         }
     };
 
-    // Filtered data for display
-    const displayedData = importedData.filter(item => 
+    // Filtered data for display based on tab
+    const tabFilteredData = importedData.filter(item => {
+        const itemStatus = item.status || 'potencial';
+        return itemStatus === activeTab;
+    });
+
+    const displayedData = tabFilteredData.filter(item => 
         item.cnj.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.responsavel.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.descricao.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const handleMarkAsPrescrito = (item: FilteredSucumbencia) => {
+        setImportedData(prev => prev.map(d => d.id === item.id ? { ...d, status: 'prescrito' } : d));
+        if (selectedItem?.id === item.id) {
+            setSelectedItem(null);
+        }
+    };
+
+    const handleActionFromModal = (item: FilteredSucumbencia, status: 'verificado' | 'descartado') => {
+        handleAction(item, status);
+        setSelectedItem(null);
+    };
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in duration-500">
@@ -524,13 +542,31 @@ export function Sucumbencias() {
                                 <div className="flex flex-col flex-1 h-full min-h-[500px]">
                                     {/* Table Header Controls */}
                                     <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-emerald-50 rounded-lg">
-                                                <Award className="w-5 h-5 text-emerald-600" />
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-emerald-50 rounded-lg">
+                                                    <Award className="w-5 h-5 text-emerald-600" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Gestão de Sucumbências</h3>
+                                                    <p className="text-xs text-gray-500 font-semibold mt-0.5">{tabFilteredData.length} registros nesta aba</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Potenciais Sucumbências</h3>
-                                                <p className="text-xs text-gray-500 font-semibold mt-0.5">{importedData.length} registros identificados na planilha</p>
+                                            
+                                            {/* Tabs */}
+                                            <div className="flex bg-gray-100 p-1 rounded-lg ml-0 sm:ml-4">
+                                                <button
+                                                    onClick={() => setActiveTab('potenciais')}
+                                                    className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded transition-all ${activeTab === 'potenciais' ? 'bg-white shadow-sm text-[#1e3a8a]' : 'text-gray-500 hover:text-gray-700'}`}
+                                                >
+                                                    Potenciais ({importedData.filter(d => (d.status || 'potencial') === 'potencial').length})
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveTab('prescritos')}
+                                                    className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded transition-all ${activeTab === 'prescritos' ? 'bg-white shadow-sm text-amber-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                                >
+                                                    Prescritos ({importedData.filter(d => d.status === 'prescrito').length})
+                                                </button>
                                             </div>
                                         </div>
                                         
@@ -597,7 +633,7 @@ export function Sucumbencias() {
                                                                     <span className="text-xs text-gray-500 font-semibold mt-0.5">{row.responsavel}</span>
                                                                 </div>
                                                             </td>
-                                                            <td className="p-4 text-center">
+                                                            <td className="p-4 text-center whitespace-nowrap">
                                                                 <span className="inline-flex items-center justify-center px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-black uppercase border border-gray-200">
                                                                     {row.uf || '-'}
                                                                 </span>
@@ -619,9 +655,16 @@ export function Sucumbencias() {
                                                             <td className="p-4 text-center">
                                                                 <div className="flex items-center justify-center gap-2">
                                                                     <button 
+                                                                        onClick={(e) => { e.stopPropagation(); handleMarkAsPrescrito(row); }}
+                                                                        className="px-2 py-1.5 text-[10px] font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded transition-colors border border-amber-200 uppercase tracking-widest"
+                                                                        title="Marcar como Prescrito"
+                                                                    >
+                                                                        Prescrito
+                                                                    </button>
+                                                                    <button 
                                                                         onClick={(e) => { e.stopPropagation(); handleAction(row, 'verificado'); }}
                                                                         className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded transition-colors border border-emerald-200"
-                                                                        title="Verificar (Salvar)"
+                                                                        title="Verificar (Salvar para enviar)"
                                                                     >
                                                                         <CheckCircle2 className="w-4 h-4" />
                                                                     </button>
@@ -773,10 +816,35 @@ export function Sucumbencias() {
 
                         </div>
                         
-                        <div className="p-4 bg-white border-t border-gray-100 flex justify-end">
+                        <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center rounded-b-2xl">
+                            <div className="flex gap-2">
+                                {activeTab === 'potenciais' && (
+                                    <button 
+                                        onClick={() => handleMarkAsPrescrito(selectedItem)}
+                                        className="px-4 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 font-bold tracking-wide rounded-xl transition-colors text-xs flex items-center gap-2"
+                                    >
+                                        Prescrito
+                                    </button>
+                                )}
+                                <button 
+                                    onClick={() => handleActionFromModal(selectedItem, 'descartado')}
+                                    className="px-4 py-2 bg-white hover:bg-red-50 hover:text-red-600 border border-gray-200 text-gray-600 font-bold tracking-wide rounded-xl transition-all text-xs flex items-center gap-2 shadow-sm"
+                                >
+                                    <XCircle className="w-4 h-4" />
+                                    Descartar
+                                </button>
+                                <button 
+                                    onClick={() => handleActionFromModal(selectedItem, 'verificado')}
+                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 border border-emerald-600 text-white font-bold tracking-wide rounded-xl transition-all text-xs flex items-center gap-2 shadow-md shadow-emerald-600/20"
+                                >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Verificar
+                                </button>
+                            </div>
+
                             <button 
                                 onClick={() => setSelectedItem(null)}
-                                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors text-sm"
+                                className="px-5 py-2.5 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-bold rounded-xl transition-colors text-xs shadow-sm"
                             >
                                 Fechar Detalhes
                             </button>
