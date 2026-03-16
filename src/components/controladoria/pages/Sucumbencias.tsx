@@ -215,15 +215,20 @@ export function Sucumbencias() {
             let existingHashes = new Set<string>();
             try {
                 if (rawCnjs.length > 0) {
-                    const { data: existingRecords, error } = await supabase
-                        .from('sucumbencias')
-                        .select('hash_id')
-                        .in('processo_cnj', rawCnjs);
+                    // Chunk the array into sizes of 50 to prevent "URL Too Long" / QuotaExceeded errors
+                    const chunkSize = 50;
+                    for (let i = 0; i < rawCnjs.length; i += chunkSize) {
+                        const chunk = rawCnjs.slice(i, i + chunkSize);
+                        const { data: existingRecords, error } = await supabase
+                            .from('sucumbencias')
+                            .select('hash_id')
+                            .in('processo_cnj', chunk);
 
-                    if (!error && existingRecords) {
-                        existingRecords.forEach(r => {
-                            if (r.hash_id) existingHashes.add(r.hash_id);
-                        });
+                        if (!error && existingRecords) {
+                            existingRecords.forEach(r => {
+                                if (r.hash_id) existingHashes.add(r.hash_id);
+                            });
+                        }
                     }
                 }
             } catch (err) {
@@ -283,13 +288,18 @@ export function Sucumbencias() {
 
                         if (existingHashes.has(hash_id)) continue; // Already reviewed!
 
+                        // TRUNCATION TO AVOID LOCALSTORAGE QUOTA EXCEEDED
+                        // We store up to 500 characters max for the description preview to keep JSON small
+                        const finalDesc = desc || fieldDescricao;
+                        const truncatedDesc = finalDesc.length > 500 ? finalDesc.substring(0, 500) + '...' : finalDesc;
+
                         filteredResults.push({
                             id: `import-${index}-${i}`,
                             responsavel: row['Responsável principal'] || 'Não Informado',
                             cnj: cnjLabel,
                             uf: row['UF'] || '-',
                             dataAndamento: dataAnd || '-',
-                            descricao: desc || fieldDescricao, // Fallback to full field if parsed empty
+                            descricao: truncatedDesc,
                             tipoAndamento: tipo || fieldTipo,
                             subtipoAndamento: subtipo || fieldSubtipo
                         });
