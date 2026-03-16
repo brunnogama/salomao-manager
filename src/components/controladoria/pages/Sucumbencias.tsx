@@ -48,9 +48,29 @@ interface FilteredSucumbencia {
     status?: 'potencial' | 'prescrito';
 }
 
-const HighlightText = ({ text }: { text: string }) => {
+const HighlightText = ({ text, snippet = false }: { text: string; snippet?: boolean }) => {
     if (!text) return null;
     
+    let displayText = text;
+    
+    // Se for modo snippet, tenta centralizar o texto em volta da palavra-chave primária
+    if (snippet) {
+        const primaryRegex = /(honorários de sucumbência|honorários advocatícios|honorarios de sucumbencia|honorarios advocaticios|sucumbência|sucumbencia)/i;
+        const match = text.match(primaryRegex);
+        if (match && match.index !== undefined) {
+            const contextRadius = 80; // caracteres antes e depois
+            const start = Math.max(0, match.index - contextRadius);
+            const end = Math.min(text.length, match.index + match[0].length + contextRadius);
+            
+            displayText = (start > 0 ? '... ' : '') + 
+                          text.substring(start, end) + 
+                          (end < text.length ? ' ...' : '');
+        } else {
+            // Se por acaso não achar a primária, pega o começo apenas
+            displayText = text.length > 150 ? text.substring(0, 150) + '...' : text;
+        }
+    }
+
     const keywords = [
         'honorários de sucumbência', 'honorários advocatícios', 'honorarios de sucumbencia', 'honorarios advocaticios', 'sucumbência', 'sucumbencia',
         'condenar', 'condeno', 'condenou', 'condenação', 'condenacao', 'sentença', 'sentenca', 'pagamento', 'sucumbente', 'parte contrária', 'parte contraria', 'vencido'
@@ -60,7 +80,7 @@ const HighlightText = ({ text }: { text: string }) => {
     const sortedKeywords = [...keywords].sort((a, b) => b.length - a.length);
     const regex = new RegExp(`(${sortedKeywords.join('|')})`, 'gi');
     
-    const parts = text.split(regex);
+    const parts = displayText.split(regex);
     
     return (
         <>
@@ -629,8 +649,7 @@ export function Sucumbencias() {
                                                     <th className="p-4">Processo (CNJ) / Responsável</th>
                                                     <th className="p-4 text-center">UF</th>
                                                     <th className="p-4 text-center">Data And.</th>
-                                                    <th className="p-4">Tipo / Subtipo</th>
-                                                    <th className="p-4 w-1/3">Descrição / Publicação</th>
+                                                    <th className="p-4 w-[45%]">Descrição (Recorte)</th>
                                                     <th className="p-4 text-center">Ações</th>
                                                 </tr>
                                             </thead>
@@ -645,9 +664,14 @@ export function Sucumbencias() {
                                                     displayedData.map((row) => (
                                                         <tr 
                                                             key={row.id} 
+                                                            onClick={(e) => {
+                                                                // Se clicar em um botão das ações, não abre o modal
+                                                                if ((e.target as HTMLElement).closest('button')) return;
+                                                                setSelectedItem(row);
+                                                            }}
                                                             className="border-b border-gray-50 hover:bg-blue-50/50 transition-colors group cursor-pointer"
                                                         >
-                                                            <td className="p-4" onClick={() => setSelectedItem(row)}>
+                                                            <td className="p-4">
                                                                 <div className="flex flex-col">
                                                                     <span className="font-bold text-[#0a192f] text-sm group-hover:text-[#1e3a8a] transition-colors whitespace-nowrap">{row.cnj}</span>
                                                                     <span className="text-xs text-gray-500 font-semibold mt-0.5">{row.responsavel}</span>
@@ -662,14 +686,8 @@ export function Sucumbencias() {
                                                                 {row.dataAndamento}
                                                             </td>
                                                             <td className="p-4">
-                                                                <div className="flex flex-col space-y-1">
-                                                                    <span className="text-[11px] font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded w-max border border-gray-200">{row.tipoAndamento || 'N/A'}</span>
-                                                                    <span className="text-[10px] text-gray-500 truncate max-w-[150px]" title={row.subtipoAndamento}>{row.subtipoAndamento || '-'}</span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="p-4" onClick={() => setSelectedItem(row)}>
-                                                                <div className="text-xs text-gray-600 line-clamp-3 max-w-lg leading-relaxed" title={row.descricao}>
-                                                                    <HighlightText text={row.descricao} />
+                                                                <div className="text-xs text-gray-600 line-clamp-2 max-w-lg leading-relaxed" title="Clique para ler a decisão completa">
+                                                                    <HighlightText text={row.descricao} snippet={true} />
                                                                 </div>
                                                             </td>
                                                             <td className="p-4 text-center">
