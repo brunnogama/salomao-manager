@@ -108,23 +108,51 @@ export function Sucumbencias() {
             // Filter and map logic
             const filteredResults: FilteredSucumbencia[] = [];
             
-            // Define keywords indicative of Sucumbência
-            const keywords = ['sucumbência', 'sucumbencia', 'honorários advocatícios', 'honorários de sucumbência', 'sucumbenciais', 'honorarios sucumbenciais'];
-            const excludeKeywords = ['orientação', 'orientações gerais']; // Basic exclusions, add more if needed
+            // Definição de palavras-chave baseadas na orientação "A sentença deve explicitamente condenar a parte contrária ao pagamento de honorários..."
+            const primaryKeywords = ['honorários de sucumbência', 'honorários advocatícios', 'honorarios de sucumbencia', 'honorarios advocaticios', 'sucumbência', 'sucumbencia'];
+            
+            // Fatores de peso (para refinar e evitar falsos positivos)
+            // Se tiver essas palavras, é muito provável que seja uma condenação real
+            const contextKeywords = ['condenar', 'condeno', 'condenou', 'condenação', 'condenacao', 'sentença', 'sentenca', 'pagamento', 'sucumbente', 'parte contrária', 'parte contraria', 'vencido'];
+            
+            const excludeKeywords = ['orientação', 'orientações gerais'];
 
             jsonData.forEach((row, index) => {
                 const descricao = (row['Descrição'] || '').toLowerCase();
                 const tipoAndamento = (row['Tipo Andamento'] || '').toLowerCase();
                 const subtipoAndamento = (row['Subtipo Andamentos'] || '').toLowerCase();
                 
-                // Construct a search string for the row to simplify matching
+                // Construct search strings
                 const searchString = `${descricao} ${tipoAndamento} ${subtipoAndamento}`;
-                
-                // Check if it contains matching keywords
-                const hasMatch = keywords.some(kw => searchString.includes(kw));
                 const hasExclude = excludeKeywords.some(kw => searchString.includes(kw));
+                
+                if (hasExclude) return;
 
-                if (hasMatch && !hasExclude) {
+                // 1. Testa se tem a palavra-chave primária
+                const hasPrimary = primaryKeywords.some(kw => searchString.includes(kw));
+
+                // 2. Testa se tem contexto de condenação (para não pegar petições aleatórias que só mencionam a palavra)
+                // Se a descrição for muito curta (ex: título de andamento), consideramos apenas o primary. 
+                // Se for um texto longo de publicação, exigimos um contexto de condenação para maior assertividade.
+                let isMatch = false;
+
+                if (hasPrimary) {
+                    if (searchString.length < 100) {
+                        // É um título curto, se tem a palavra chave, aceita.
+                        isMatch = true;
+                    } else {
+                        // É um texto longo (ex: publicação). Verifica se possui contexto de condenação.
+                        const hasContext = contextKeywords.some(kw => searchString.includes(kw));
+                        
+                        // Exige o contexto para textos longos, garantindo que seja uma condenação real
+                        // e não apenas uma citação genérica a honorários.
+                        if (hasContext) {
+                            isMatch = true; 
+                        }
+                    }
+                }
+
+                if (isMatch) {
                     filteredResults.push({
                         id: `import-${index}`,
                         responsavel: row['Responsável principal'] || 'Não Informado',
