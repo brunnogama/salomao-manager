@@ -12,8 +12,11 @@ import {
     FileSpreadsheet,
     Search,
     FileText,
-    Trash2
+    Trash2,
+    CheckCircle2,
+    XCircle
 } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
 
 interface LegalOneRow {
     Tipo?: string;
@@ -145,6 +148,40 @@ export function Sucumbencias() {
         }
     };
 
+    // --- Supabase Actions ---
+    const handleAction = async (item: FilteredSucumbencia, status: 'verificado' | 'descartado') => {
+        try {
+            // Optimistically remove from list
+            const newList = importedData.filter(d => d.id !== item.id);
+            setImportedData(newList);
+            if (newList.length === 0) setHasImported(false);
+
+            // Generate a simple hash to prevent re-importing the exactly same text for that process
+            const hash_id = `${item.cnj}-${item.descricao.substring(0, 50).replace(/\s/g, '')}`.toLowerCase();
+
+            // Insert into Supabase
+            const { error } = await supabase.from('sucumbencias').insert({
+                processo_cnj: item.cnj,
+                responsavel: item.responsavel,
+                uf: item.uf,
+                data_andamento: item.dataAndamento,
+                tipo_andamento: item.tipoAndamento,
+                subtipo_andamento: item.subtipoAndamento,
+                descricao: item.descricao,
+                status: status,
+                hash_id: hash_id
+            });
+
+            if (error) {
+                // If it fails (e.g., duplicate hash), it's fine, we already removed it from view anyway
+                console.warn('Supabase Insert Warning:', error.message);
+            }
+        } catch (error) {
+            console.error('Action error:', error);
+            alert('Erro ao salvar no banco de dados.');
+        }
+    };
+
     // --- Import and Parsing Logic ---
     const processFile = async (file: File) => {
         setLoading(true);
@@ -171,6 +208,29 @@ export function Sucumbencias() {
             
             const excludeKeywords = ['orientação', 'orientações gerais'];
 
+            // --- Deduplication Strategy ---
+            // Extract CNJs directly from the raw data first to bulk-query
+            const rawCnjs = Array.from(new Set(jsonData.map(r => String(r['Número de CNJ'] || r['Pasta'] || '').trim()).filter(Boolean)));
+            
+            let existingHashes = new Set<string>();
+            try {
+                if (rawCnjs.length > 0) {
+                    const { data: existingRecords, error } = await supabase
+                        .from('sucumbencias')
+                        .select('hash_id')
+                        .in('processo_cnj', rawCnjs);
+
+                    if (!error && existingRecords) {
+                        existingRecords.forEach(r => {
+                            if (r.hash_id) existingHashes.add(r.hash_id);
+                        });
+                    }
+                }
+            } catch (err) {
+                console.warn("Deduplication error:", err);
+            }
+
+            // Agora realiza a filtragem
             jsonData.forEach((row, index) => {
                 const fieldDataAndamento = String(row['Data Andamento'] || '');
                 const fieldDescricao = String(row['Descrição'] || '');
@@ -216,10 +276,17 @@ export function Sucumbencias() {
                     }
 
                     if (isMatch) {
+                        // Check deduplication
+                        const cnjLabel = row['Número de CNJ'] || row['Pasta'] || 'Sem Número';
+                        const descSubstring = desc.substring(0, 50).replace(/\s/g, '').toLowerCase();
+                        const hash_id = `${cnjLabel}-${descSubstring}`;
+
+                        if (existingHashes.has(hash_id)) continue; // Already reviewed!
+
                         filteredResults.push({
                             id: `import-${index}-${i}`,
                             responsavel: row['Responsável principal'] || 'Não Informado',
-                            cnj: row['Número de CNJ'] || row['Pasta'] || 'Sem Número',
+                            cnj: cnjLabel,
                             uf: row['UF'] || '-',
                             dataAndamento: dataAnd || '-',
                             descricao: desc || fieldDescricao, // Fallback to full field if parsed empty
@@ -229,6 +296,12 @@ export function Sucumbencias() {
                     }
                 }
             });
+
+            if (filteredResults.length === 0) {
+                alert('Todos os andamentos de sucumbência desta planilha já foram verificados ou descartados anteriormente (ou nenhum foi encontrado).');
+                setLoading(false);
+                return;
+            }
 
             setImportedData(filteredResults);
             setHasImported(true);
@@ -486,6 +559,7 @@ export function Sucumbencias() {
                                                     <th className="p-4 text-center">Data And.</th>
                                                     <th className="p-4">Tipo / Subtipo</th>
                                                     <th className="p-4 w-1/3">Descrição / Publicação</th>
+                                                    <th className="p-4 text-center">Ações</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -499,10 +573,9 @@ export function Sucumbencias() {
                                                     displayedData.map((row) => (
                                                         <tr 
                                                             key={row.id} 
-                                                            onClick={() => setSelectedItem(row)}
                                                             className="border-b border-gray-50 hover:bg-blue-50/50 transition-colors group cursor-pointer"
                                                         >
-                                                            <td className="p-4">
+                                                            <td className="p-4" onClick={() => setSelectedItem(row)}>
                                                                 <div className="flex flex-col">
                                                                     <span className="font-bold text-[#0a192f] text-sm group-hover:text-[#1e3a8a] transition-colors whitespace-nowrap">{row.cnj}</span>
                                                                     <span className="text-xs text-gray-500 font-semibold mt-0.5">{row.responsavel}</span>
@@ -522,9 +595,27 @@ export function Sucumbencias() {
                                                                     <span className="text-[10px] text-gray-500 truncate max-w-[150px]" title={row.subtipoAndamento}>{row.subtipoAndamento || '-'}</span>
                                                                 </div>
                                                             </td>
-                                                            <td className="p-4">
+                                                            <td className="p-4" onClick={() => setSelectedItem(row)}>
                                                                 <div className="text-xs text-gray-600 line-clamp-3 max-w-lg leading-relaxed" title={row.descricao}>
                                                                     <HighlightText text={row.descricao} />
+                                                                </div>
+                                                            </td>
+                                                            <td className="p-4 text-center">
+                                                                <div className="flex items-center justify-center gap-2">
+                                                                    <button 
+                                                                        onClick={(e) => { e.stopPropagation(); handleAction(row, 'verificado'); }}
+                                                                        className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded transition-colors border border-emerald-200"
+                                                                        title="Verificar (Salvar)"
+                                                                    >
+                                                                        <CheckCircle2 className="w-4 h-4" />
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={(e) => { e.stopPropagation(); handleAction(row, 'descartado'); }}
+                                                                        className="p-1.5 text-gray-400 bg-gray-50 hover:bg-gray-200 hover:text-red-500 rounded transition-colors border border-gray-200"
+                                                                        title="Descartar Falso Positivo"
+                                                                    >
+                                                                        <XCircle className="w-4 h-4" />
+                                                                    </button>
                                                                 </div>
                                                             </td>
                                                         </tr>

@@ -29,13 +29,16 @@ CREATE POLICY "Enable delete for all users" ON public.sucumbencias FOR DELETE US
 CREATE INDEX IF NOT EXISTS idx_sucumbencias_processo_status ON public.sucumbencias(processo_cnj, status);
 CREATE INDEX IF NOT EXISTS idx_sucumbencias_hash ON public.sucumbencias(hash_id);
 
--- Update timestamp trigger (assuming handle_updated_at exists in the DB)
-DO $$ 
+-- Create trigger for updated_at
+CREATE OR REPLACE FUNCTION update_sucumbencias_updated_at_column()
+RETURNS TRIGGER AS $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at_sucumbencias') THEN
-    CREATE TRIGGER set_updated_at_sucumbencias
-      BEFORE UPDATE ON public.sucumbencias
-      FOR EACH ROW
-      EXECUTE FUNCTION public.handle_updated_at();
-  END IF;
-END $$;
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_sucumbencias_updated_at
+    BEFORE UPDATE ON public.sucumbencias
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_sucumbencias_updated_at_column();
