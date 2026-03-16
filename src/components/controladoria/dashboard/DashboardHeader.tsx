@@ -34,36 +34,53 @@ export function DashboardHeader({
   const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   const handleExportPDF = async () => {
-    const targetElement = document.getElementById('dashboard-content-to-capture');
-    if (!targetElement) {
-      toast.error('Conteúdo do dashboard não encontrado para exportação.');
-      return;
-    }
-
     setIsExportingPDF(true);
-    const loadingToast = toast.loading('Gerando PDF em alta resolução... Isso pode levar alguns segundos.');
+    const loadingToast = toast.loading('Gerando PDF multipáginas... Isso pode levar alguns segundos.');
 
     try {
-      const canvas = await html2canvas(targetElement, {
-        scale: 2, // Double resolution for sharpness
-        useCORS: true,
-        backgroundColor: '#F8FAFC', // Background cor do dashboard
-        windowWidth: 1920,
-      });
+      const sections = ['pdf-section-1', 'pdf-section-2', 'pdf-section-3'];
+      let pdf: jsPDF | null = null;
 
-      const imgData = canvas.toDataURL('image/png');
-      
-      // Customize PDF to map canvas dimensions exactly to prevent squeezing or cutting
-      const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? 'l' : 'p',
-        unit: 'px',
-        format: [canvas.width, canvas.height]
-      });
+      for (let i = 0; i < sections.length; i++) {
+        const targetElement = document.getElementById(sections[i]);
+        if (!targetElement) continue;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save('Dashboard_Controladoria.pdf');
+        // Adiciona um pequeno delay para garantir que a DOM esteja completamente em repouso
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        const canvas = await html2canvas(targetElement, {
+          scale: 2, // Double resolution for sharpness
+          useCORS: true,
+          backgroundColor: '#F8FAFC', // Background cor do dashboard
+          windowWidth: 1920, // fix desktop width
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        
+        if (!pdf) {
+          // Primeira página dita o formado inicial
+          pdf = new jsPDF({
+            orientation: canvasWidth > canvasHeight ? 'l' : 'p',
+            unit: 'px',
+            format: [canvasWidth, canvasHeight]
+          });
+          pdf.addImage(imgData, 'PNG', 0, 0, canvasWidth, canvasHeight);
+        } else {
+          // Adiciona nova página com dimensões personalizadas para esta seção
+          pdf.addPage([canvasWidth, canvasHeight], canvasWidth > canvasHeight ? 'l' : 'p');
+          pdf.setPage(i + 1);
+          pdf.addImage(imgData, 'PNG', 0, 0, canvasWidth, canvasHeight);
+        }
+      }
       
-      toast.success('PDF do Dashboard gerado com sucesso!', { id: loadingToast });
+      if (pdf) {
+        pdf.save('Dashboard_Controladoria.pdf');
+        toast.success('PDF do Dashboard gerado com sucesso!', { id: loadingToast });
+      } else {
+        toast.error('Conteúdo do dashboard não encontrado para exportação.', { id: loadingToast });
+      }
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
       toast.error('Ocorreu um erro ao gerar o PDF.', { id: loadingToast });

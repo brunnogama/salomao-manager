@@ -105,28 +105,34 @@ export function Dashboard({ }: Props) {
       {/* 4. GRÁFICOS E FUNCIONALIDADES DA CONTROLADORIA */}
       <div id="dashboard-content-to-capture" className="space-y-6 pb-12">
         {/* Visão Geral */}
-        <EfficiencyFunnel funil={funil} evolucaoMensal={evolucaoMensal} />
-        <PortfolioFinancialOverview metrics={metrics} />
-        <div className="grid grid-cols-1 gap-6">
-          <WeeklySummary metrics={metrics} />
-          <MonthlySummary metrics={metrics} />
+        <div id="pdf-section-1" className="flex flex-col gap-6 bg-gray-50 pb-2">
+          <EfficiencyFunnel funil={funil} evolucaoMensal={evolucaoMensal} />
+          <PortfolioFinancialOverview metrics={metrics} />
+          <div className="grid grid-cols-1 gap-6">
+            <WeeklySummary metrics={metrics} />
+            <MonthlySummary metrics={metrics} />
+          </div>
         </div>
 
         {/* Financeiro & Evolução */}
-        <EvolutionCharts
-          evolucaoMensal={evolucaoMensal}
-          propostas12Meses={propostas12Meses}
-          financeiro12Meses={financeiro12Meses}
-          mediasPropostas={mediasPropostas}
-          mediasFinanceiras={mediasFinanceiras}
-          statsPropostas={statsPropostas}
-          statsFinanceiro={statsFinanceiro}
-          funilTotalEntrada={funil.totalEntrada}
-        />
+        <div id="pdf-section-2" className="flex flex-col gap-6 bg-gray-50 pb-2">
+          <EvolutionCharts
+            evolucaoMensal={evolucaoMensal}
+            propostas12Meses={propostas12Meses}
+            financeiro12Meses={financeiro12Meses}
+            mediasPropostas={mediasPropostas}
+            mediasFinanceiras={mediasFinanceiras}
+            statsPropostas={statsPropostas}
+            statsFinanceiro={statsFinanceiro}
+            funilTotalEntrada={funil.totalEntrada}
+          />
+        </div>
 
         {/* Operacional & Sócios */}
-        <PartnerStats contractsByPartner={contractsByPartner} />
-        <OperationalStats rejectionData={rejectionData} metrics={metrics} />
+        <div id="pdf-section-3" className="flex flex-col gap-6 bg-gray-50 pb-2">
+          <PartnerStats contractsByPartner={contractsByPartner} />
+          <OperationalStats rejectionData={rejectionData} metrics={metrics} />
+        </div>
       </div>
 
     </div>
