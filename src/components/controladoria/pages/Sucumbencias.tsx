@@ -57,6 +57,68 @@ interface FilteredSucumbencia {
     subtipoAndamento?: string;
 }
 
+// --- IndexedDB Helper for Large Data Storage ---
+const DB_NAME = 'SalomaoStorageDB';
+const STORE_NAME = 'largeStateStore';
+
+// Tipagem para auxiliar o Typescript no handler do onupgradeneeded
+interface IDBVersionChangeEventTarget extends EventTarget {
+    result: IDBDatabase;
+}
+
+const initDB = (): Promise<IDBDatabase> => {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onupgradeneeded = (e) => {
+            const db = (e.target as IDBVersionChangeEventTarget).result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME);
+            }
+        };
+    });
+};
+
+const saveToIDB = async (key: string, data: any) => {
+    try {
+        const db = await initDB();
+        return new Promise<void>((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.put(data, key);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    } catch(e) { console.error('IDB Save Error:', e); }
+};
+
+const loadFromIDB = async (key: string): Promise<any> => {
+    try {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.get(key);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    } catch(e) { console.error('IDB Load Error:', e); return null; }
+};
+
+const clearFromIDB = async (key: string) => {
+    try {
+        const db = await initDB();
+        return new Promise<void>((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.delete(key);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    } catch(e) { console.error('IDB Clear Error:', e); }
+};
+
 const HighlightText = ({ text, snippet = false }: { text: string; snippet?: boolean }) => {
     if (!text) return null;
     
@@ -110,28 +172,9 @@ export function Sucumbencias() {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
-    // Data states - Initialize from localStorage
-    const [importedData, setImportedData] = useState<FilteredSucumbencia[]>(() => {
-        try {
-            const savedData = localStorage.getItem('@salomao:sucumbenciasData');
-            return savedData ? JSON.parse(savedData) : [];
-        } catch {
-            return [];
-        }
-    });
-    
-    const [hasImported, setHasImported] = useState(() => {
-        try {
-            const savedData = localStorage.getItem('@salomao:sucumbenciasData');
-            if (savedData) {
-                const parsed = JSON.parse(savedData);
-                return parsed && parsed.length > 0;
-            }
-            return false;
-        } catch {
-            return false;
-        }
-    });
+    // Data states - Initialize empty, IndexedDB will fill them
+    const [importedData, setImportedData] = useState<FilteredSucumbencia[]>([]);
+    const [hasImported, setHasImported] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterResponsavel, setFilterResponsavel] = useState('Todos');
@@ -139,31 +182,36 @@ export function Sucumbencias() {
     const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos' | 'descartados'>('potenciais');
     const [activeModalTab, setActiveModalTab] = useState(0);
 
-    // Sync to localStorage when data changes
+    // Sync from IndexedDB or migrate from LocalStorage on mount
     useEffect(() => {
-        try {
-            localStorage.setItem('@salomao:sucumbenciasData', JSON.stringify(importedData));
-        } catch (error) {
-            console.warn('LocalStorage quota exceeded, attempting to save a truncated version.', error);
+        const legacyData = localStorage.getItem('@salomao:sucumbenciasData');
+        if (legacyData) {
             try {
-                // Fallback: If the JSON is too large for the 5MB browser quota, 
-                // we truncate the description ONLY for localStorage persistence.
-                // The in-memory state remains intact so the user can still read the full text during the active session.
-                const truncatedForStorage = importedData.map(item => ({
-                    ...item,
-                    andamentos: (item.andamentos || []).map(and => ({
-                        ...and,
-                        descricao: and?.descricao && and.descricao.length > 1500 
-                            ? and.descricao.substring(0, 1500) + '\n\n... [Texto truncado devido ao limite de memória local do navegador. Para ler a versão completa, importe a planilha novamente na próxima sessão.]' 
-                            : and?.descricao || ''
-                    }))
-                }));
-                localStorage.setItem('@salomao:sucumbenciasData', JSON.stringify(truncatedForStorage));
-            } catch (fallbackError) {
-                console.error('Failed to save to LocalStorage even with truncation.', fallbackError);
+                const parsed = JSON.parse(legacyData);
+                setImportedData(parsed);
+                if (parsed.length > 0) setHasImported(true);
+            } catch (error) {
+                console.error("Failed to parse legacy data from localStorage:", error);
             }
+            localStorage.removeItem('@salomao:sucumbenciasData');
+        } else {
+            loadFromIDB('@salomao:sucumbenciasData').then(parsed => {
+                if (parsed && Array.isArray(parsed)) {
+                    setImportedData(parsed);
+                    if (parsed.length > 0) setHasImported(true);
+                }
+            });
         }
-    }, [importedData]);
+    }, []);
+
+    // Sync to IndexedDB when data changes
+    useEffect(() => {
+        if (importedData.length > 0) {
+            saveToIDB('@salomao:sucumbenciasData', importedData);
+        } else if (hasImported === false && importedData.length === 0) {
+            clearFromIDB('@salomao:sucumbenciasData');
+        }
+    }, [importedData, hasImported]);
 
     // State that controls "Clear Data" confirmation modal
     const [isClearModalOpen, setIsClearModalOpen] = useState(false);
