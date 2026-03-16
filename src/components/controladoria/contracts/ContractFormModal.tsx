@@ -582,8 +582,8 @@ export function ContractFormModal(props: Props) {
       if (savedId) {
         await forceUpdateFinancials(savedId, formData);
         await generateFinancialInstallments(savedId, formData);
+        await supabase.from('contract_processes').delete().eq('contract_id', savedId);
         if (processes.length > 0) {
-          await supabase.from('contract_processes').delete().eq('contract_id', savedId);
           const processesToInsert = processes.map(p => {
             const {
               id,
