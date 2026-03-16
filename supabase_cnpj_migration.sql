@@ -7,7 +7,6 @@ BEGIN
     RETURN NULL;
   END IF;
 
-  -- Remove all non-numeric characters
   clean_cnpj := regexp_replace(cnpj_input, '\D', '', 'g');
 
   IF length(clean_cnpj) = 14 THEN
@@ -17,7 +16,7 @@ BEGIN
            substring(clean_cnpj, 9, 4) || '-' || 
            substring(clean_cnpj, 13, 2);
   ELSE
-    RETURN cnpj_input; -- Return original if not 14 digits (might be CPF or invalid)
+    RETURN cnpj_input;
   END IF;
 END;
 $$ LANGUAGE plpgsql;
@@ -31,18 +30,46 @@ WHERE
   AND cnpj <> ''
   AND cnpj NOT LIKE '__.___.___/____-__';
 
--- 3. Unify client names that share the exact same CNPJ
--- We'll pick the most recently updated name or oldest created name.
--- Using earliest created name as the source of truth.
-WITH ranked_clients AS (
-  SELECT 
-    cnpj,
-    name,
-    ROW_NUMBER() OVER (PARTITION BY cnpj ORDER BY created_at ASC) as rn
-  FROM public.clients
-  WHERE cnpj IS NOT NULL AND cnpj <> ''
-)
-UPDATE public.clients c
-SET name = r.name
-FROM ranked_clients r
-WHERE c.cnpj = r.cnpj AND r.rn = 1 AND c.name <> r.name;
+-- 3. CÓDIGO MELHORADO: Unificar e fundir os registros com CNPJ duplicado (mantendo só o mais antigo)
+DO $$
+DECLARE
+    r RECORD;
+    primary_id UUID;
+    primary_name TEXT;
+BEGIN
+    -- Itera sobre cada CNPJ que tem mais de 1 registro associado
+    FOR r IN (
+        SELECT cnpj, count(*) as c
+        FROM public.clients
+        WHERE cnpj IS NOT NULL AND cnpj <> ''
+        GROUP BY cnpj
+        HAVING count(*) > 1
+    ) LOOP
+        
+        -- Pegar o ID principal (o registro criado primeiro) para esse CNPJ
+        SELECT id, name INTO primary_id, primary_name
+        FROM public.clients
+        WHERE cnpj = r.cnpj
+        ORDER BY created_at ASC
+        LIMIT 1;
+
+        -- 1. Atualizar CONTRATOS com o ID do cliente principal (+ ajustar o nome do cliente no contrato)
+        UPDATE public.contracts
+        SET client_id = primary_id, client_name = primary_name
+        WHERE client_id IN (
+            SELECT id FROM public.clients WHERE cnpj = r.cnpj AND id <> primary_id
+        );
+
+        -- 2. Atualizar CONTATOS com o ID do cliente principal
+        UPDATE public.client_contacts
+        SET client_id = primary_id
+        WHERE client_id IN (
+            SELECT id FROM public.clients WHERE cnpj = r.cnpj AND id <> primary_id
+        );
+
+        -- 3. Deletar as duplicatas!
+        DELETE FROM public.clients
+        WHERE cnpj = r.cnpj AND id <> primary_id;
+        
+    END LOOP;
+END $$;
