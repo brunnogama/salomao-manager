@@ -61,7 +61,7 @@ const calculateTotalSuccess = (c: Contract) => {
 
 
 export function Contracts() {
-  const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
+
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -101,9 +101,6 @@ export function Contracts() {
   const [timelineData, setTimelineData] = useState<TimelineEvent[]>([]);
   const [isEditing, setIsEditing] = useState(false);
 
-  useEffect(() => {
-    checkUserRole();
-  }, []);
 
   useEffect(() => {
     fetchData();
@@ -125,20 +122,7 @@ export function Contracts() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [searchRef, searchTerm]);
 
-  const checkUserRole = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-      if (profile) {
-        const role = profile.role === 'readonly' ? 'viewer' : profile.role;
-        setUserRole(role as 'admin' | 'editor' | 'viewer');
-      }
-    }
-  };
+
 
   const fetchData = async () => {
     setLoading(true);
@@ -194,7 +178,6 @@ export function Contracts() {
 
 
   const handleNew = () => {
-    if (userRole === 'viewer') return toast.error("Sem permissão para criar.");
     setFormData(emptyContract);
     setProcesses([]);
     setCurrentProcess({ process_number: '' });
@@ -221,14 +204,12 @@ export function Contracts() {
   };
 
   const handleEdit = () => {
-    if (userRole === 'viewer') return toast.error("Sem permissão para editar.");
     setIsDetailsModalOpen(false);
     setIsEditing(true);
     setIsModalOpen(true);
   };
 
   const triggerDelete = (id: string) => {
-    if (userRole !== 'admin') return toast.error("Apenas administradores podem excluir.");
     setDeleteTargetId(id);
     setIsConfirmModalOpen(true);
   };
@@ -583,14 +564,12 @@ export function Contracts() {
           </button>
 
           {/* Novo Caso (Azul Royal) */}
-          {userRole !== 'viewer' && (
-            <button
-              onClick={handleNew}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 flex-1 sm:flex-none"
-            >
-              <Plus className="h-4 w-4 shrink-0" /> Novo Caso
-            </button>
-          )}
+          <button
+            onClick={handleNew}
+            className="flex items-center justify-center gap-2 px-6 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 flex-1 sm:flex-none"
+          >
+            <Plus className="h-4 w-4 shrink-0" /> Novo Caso
+          </button>
 
           {/* Notificações */}
           <div className="relative shrink-0">
@@ -758,12 +737,8 @@ export function Contracts() {
                       <td className="p-4">
                         <div className="flex justify-end gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>
-                          {userRole !== 'viewer' && (
-                            <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 hover:text-blue-700 transition-all"><Edit className="w-4 h-4" /></button>
-                          )}
-                          {userRole === 'admin' && (
-                            <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all"><Trash2 className="w-4 h-4" /></button>
-                          )}
+                          <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 hover:text-blue-700 transition-all"><Edit className="w-4 h-4" /></button>
+                          <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
                     </tr>
@@ -791,8 +766,8 @@ export function Contracts() {
         onDelete={handleDelete}
         processes={processes}
         documents={(formData as any).documents}
-        canEdit={userRole !== 'viewer'}
-        canDelete={userRole === 'admin'}
+        canEdit={true}
+        canDelete={true}
       />
 
       <ContractFormModal
