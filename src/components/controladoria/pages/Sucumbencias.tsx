@@ -51,6 +51,11 @@ interface FilteredSucumbencia {
     uf: string;
     status?: 'potencial' | 'prescrito';
     andamentos: FiltragemAndamento[];
+    // Legacy fields for backward compatibility with localStorage caching
+    dataAndamento?: string;
+    descricao?: string;
+    tipoAndamento?: string;
+    subtipoAndamento?: string;
 }
 
 const HighlightText = ({ text, snippet = false }: { text: string; snippet?: boolean }) => {
@@ -146,11 +151,11 @@ export function Sucumbencias() {
                 // The in-memory state remains intact so the user can still read the full text during the active session.
                 const truncatedForStorage = importedData.map(item => ({
                     ...item,
-                    andamentos: item.andamentos.map(and => ({
+                    andamentos: (item.andamentos || []).map(and => ({
                         ...and,
-                        descricao: and.descricao.length > 1500 
+                        descricao: and?.descricao && and.descricao.length > 1500 
                             ? and.descricao.substring(0, 1500) + '\n\n... [Texto truncado devido ao limite de memória local do navegador. Para ler a versão completa, importe a planilha novamente na próxima sessão.]' 
-                            : and.descricao
+                            : and?.descricao || ''
                     }))
                 }));
                 localStorage.setItem('@salomao:sucumbenciasData', JSON.stringify(truncatedForStorage));
@@ -702,13 +707,13 @@ export function Sucumbencias() {
                                                                 </span>
                                                             </td>
                                                             <td className="p-4 text-center text-xs text-gray-500 font-semibold">
-                                                                {row.andamentos.length > 1 ? (
+                                                                {row.andamentos?.length > 1 ? (
                                                                     <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md border border-blue-100 font-bold">{row.andamentos.length} andamentos</span>
-                                                                ) : row.andamentos[0].dataAndamento}
+                                                                ) : row.andamentos?.[0]?.dataAndamento || row.dataAndamento || '-'}
                                                             </td>
                                                             <td className="p-4">
                                                                 <div className="text-xs text-gray-600 line-clamp-2 max-w-lg leading-relaxed" title="Clique para ler a decisão completa">
-                                                                    <HighlightText text={row.andamentos[0].descricao} snippet={true} />
+                                                                    <HighlightText text={row.andamentos?.[0]?.descricao || row.descricao || ''} snippet={true} />
                                                                 </div>
                                                             </td>
                                                             <td className="p-4 text-center">
