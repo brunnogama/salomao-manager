@@ -110,7 +110,25 @@ export function Sucumbencias() {
 
     // Sync to localStorage when data changes
     useEffect(() => {
-        localStorage.setItem('@salomao:sucumbenciasData', JSON.stringify(importedData));
+        try {
+            localStorage.setItem('@salomao:sucumbenciasData', JSON.stringify(importedData));
+        } catch (error) {
+            console.warn('LocalStorage quota exceeded, attempting to save a truncated version.', error);
+            try {
+                // Fallback: If the JSON is too large for the 5MB browser quota, 
+                // we truncate the description ONLY for localStorage persistence.
+                // The in-memory state remains intact so the user can still read the full text during the active session.
+                const truncatedForStorage = importedData.map(item => ({
+                    ...item,
+                    descricao: item.descricao.length > 1500 
+                        ? item.descricao.substring(0, 1500) + '\n\n... [Texto truncado devido ao limite de memória local do navegador. Para ler a versão completa, importe a planilha novamente na próxima sessão.]' 
+                        : item.descricao
+                }));
+                localStorage.setItem('@salomao:sucumbenciasData', JSON.stringify(truncatedForStorage));
+            } catch (fallbackError) {
+                console.error('Failed to save to LocalStorage even with truncation.', fallbackError);
+            }
+        }
     }, [importedData]);
 
     // State that controls "Clear Data" confirmation modal
@@ -367,7 +385,9 @@ export function Sucumbencias() {
     // Filtered data for display based on tab
     const tabFilteredData = importedData.filter(item => {
         const itemStatus = item.status || 'potencial';
-        return itemStatus === activeTab;
+        if (activeTab === 'potenciais') return itemStatus === 'potencial';
+        if (activeTab === 'prescritos') return itemStatus === 'prescrito';
+        return false;
     });
 
     const displayedData = tabFilteredData.filter(item => 
