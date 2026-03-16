@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Plus, GripVertical, Calendar, Tag } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { useAuth } from '../contexts/AuthContext';
 
 // Tipos
 export type Priority = 'ALTA' | 'MÉDIA' | 'BAIXA';
@@ -36,8 +37,13 @@ const COLUMN_TITLES = {
 };
 
 export function KanbanModal() {
+  const { user } = useAuth();
+  
+  // Create a unique storage key for this user
+  const storageKey = user?.email ? `moduleSelectorKanban_${user.email}` : 'moduleSelectorKanban';
+
   const [items, setItems] = useState<KanbanItem[]>(() => {
-    const saved = localStorage.getItem('moduleSelectorKanban');
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -57,8 +63,8 @@ export function KanbanModal() {
   });
 
   useEffect(() => {
-    localStorage.setItem('moduleSelectorKanban', JSON.stringify(items));
-  }, [items]);
+    localStorage.setItem(storageKey, JSON.stringify(items));
+  }, [items, storageKey]);
 
   // Removido bloqueio do scroll pois não é mais modal
 
