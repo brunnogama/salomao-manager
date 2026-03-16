@@ -42,6 +42,34 @@ interface FilteredSucumbencia {
     subtipoAndamento: string;
 }
 
+const HighlightText = ({ text }: { text: string }) => {
+    if (!text) return null;
+    
+    const keywords = [
+        'honorários de sucumbência', 'honorários advocatícios', 'honorarios de sucumbencia', 'honorarios advocaticios', 'sucumbência', 'sucumbencia',
+        'condenar', 'condeno', 'condenou', 'condenação', 'condenacao', 'sentença', 'sentenca', 'pagamento', 'sucumbente', 'parte contrária', 'parte contraria', 'vencido'
+    ];
+    
+    // Sort by length so longer phrases match first
+    const sortedKeywords = [...keywords].sort((a, b) => b.length - a.length);
+    const regex = new RegExp(`(${sortedKeywords.join('|')})`, 'gi');
+    
+    const parts = text.split(regex);
+    
+    return (
+        <>
+            {parts.map((part, i) => {
+                const isMatch = sortedKeywords.some(kw => kw.toLowerCase() === part.toLowerCase());
+                return isMatch ? (
+                    <mark key={i} className="bg-yellow-200 text-yellow-900 font-bold px-1 rounded mx-0.5">{part}</mark>
+                ) : (
+                    <span key={i}>{part}</span>
+                );
+            })}
+        </>
+    );
+};
+
 export function Sucumbencias() {
     const [loading, setLoading] = useState(false); // Initially false, only true when parsing
     const [isDragging, setIsDragging] = useState(false);
@@ -432,22 +460,25 @@ export function Sucumbencias() {
                                                     <th className="p-4 text-center">Data And.</th>
                                                     <th className="p-4">Tipo / Subtipo</th>
                                                     <th className="p-4 w-1/3">Descrição / Publicação</th>
-                                                    <th className="p-4 text-center">Ações</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {displayedData.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan={6} className="p-12 text-center text-gray-400">
+                                                        <td colSpan={5} className="p-12 text-center text-gray-400">
                                                             Nenhum registro encontrado para a busca atual.
                                                         </td>
                                                     </tr>
                                                 ) : (
                                                     displayedData.map((row) => (
-                                                        <tr key={row.id} className="border-b border-gray-50 hover:bg-blue-50/50 transition-colors group">
+                                                        <tr 
+                                                            key={row.id} 
+                                                            onClick={() => setSelectedItem(row)}
+                                                            className="border-b border-gray-50 hover:bg-blue-50/50 transition-colors group cursor-pointer"
+                                                        >
                                                             <td className="p-4">
                                                                 <div className="flex flex-col">
-                                                                    <span className="font-bold text-[#0a192f] text-sm group-hover:text-[#1e3a8a] transition-colors">{row.cnj}</span>
+                                                                    <span className="font-bold text-[#0a192f] text-sm group-hover:text-[#1e3a8a] transition-colors whitespace-nowrap">{row.cnj}</span>
                                                                     <span className="text-xs text-gray-500 font-semibold mt-0.5">{row.responsavel}</span>
                                                                 </div>
                                                             </td>
@@ -466,18 +497,9 @@ export function Sucumbencias() {
                                                                 </div>
                                                             </td>
                                                             <td className="p-4">
-                                                                <div className="text-xs text-gray-600 line-clamp-2 max-w-sm leading-relaxed" title={row.descricao}>
-                                                                    {row.descricao}
+                                                                <div className="text-xs text-gray-600 line-clamp-3 max-w-lg leading-relaxed" title={row.descricao}>
+                                                                    <HighlightText text={row.descricao} />
                                                                 </div>
-                                                            </td>
-                                                            <td className="p-4 text-center">
-                                                                <button 
-                                                                    onClick={() => setSelectedItem(row)}
-                                                                    className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200 inline-flex"
-                                                                    title="Ver Detalhes"
-                                                                >
-                                                                    <FileText className="w-4 h-4" />
-                                                                </button>
                                                             </td>
                                                         </tr>
                                                     ))
@@ -540,7 +562,7 @@ export function Sucumbencias() {
                                     Descrição Completa / Publicação
                                 </span>
                                 <div className="text-sm text-gray-700 leading-relaxed max-h-[250px] overflow-y-auto whitespace-pre-wrap">
-                                    {selectedItem.descricao}
+                                    <HighlightText text={selectedItem.descricao} />
                                 </div>
                             </div>
 
