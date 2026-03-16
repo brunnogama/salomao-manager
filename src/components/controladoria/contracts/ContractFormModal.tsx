@@ -476,13 +476,27 @@ export function ContractFormModal(props: Props) {
 
   const addMagistrate = (magistrateName = newMagistrateName) => {
     if (!magistrateName.trim()) return;
-    setCurrentProcess(prev => ({ ...prev, magistrates: [...(prev.magistrates || []), { title: newMagistrateTitle, name: magistrateName }] }));
+    setCurrentProcess(prev => {
+      let currentMagistrates = prev.magistrates || [];
+      if (typeof currentMagistrates === 'string') {
+        currentMagistrates = [{ title: 'Anterior', name: currentMagistrates }];
+      } else if (!Array.isArray(currentMagistrates)) {
+        currentMagistrates = [];
+      }
+      return { ...prev, magistrates: [...currentMagistrates, { title: newMagistrateTitle, name: magistrateName }] };
+    });
     setNewMagistrateName('');
   };
 
   const removeMagistrate = (index: number) => {
     setCurrentProcess(prev => {
-      const newList = [...(prev.magistrates || [])];
+      let currentMagistrates = prev.magistrates || [];
+      if (typeof currentMagistrates === 'string') {
+        currentMagistrates = [{ title: 'Anterior', name: currentMagistrates }];
+      } else if (!Array.isArray(currentMagistrates)) {
+        currentMagistrates = [];
+      }
+      const newList = [...currentMagistrates];
       newList.splice(index, 1);
       return { ...prev, magistrates: newList };
     });

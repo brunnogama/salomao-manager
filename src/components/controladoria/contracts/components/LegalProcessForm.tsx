@@ -187,7 +187,12 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                                 <button onClick={() => addMagistrate(newMagistrateName)} className="text-salomao-blue hover:text-blue-700 font-bold px-2 rounded-lg bg-blue-50">+</button>
                             </div>
                             <div className="flex flex-wrap gap-2 mt-2">
-                                {(Array.isArray(currentProcess.magistrates) ? currentProcess.magistrates : []).map((m, idx) => (
+                                {(typeof currentProcess.magistrates === 'string'
+                                    ? [{ title: 'Anterior', name: currentProcess.magistrates }]
+                                    : Array.isArray(currentProcess.magistrates)
+                                        ? currentProcess.magistrates
+                                        : []
+                                ).map((m, idx) => (
                                     <span key={idx} className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs flex items-center gap-1 border border-gray-200"><Gavel size={10} className="text-gray-400" /><b>{m.title}:</b> {m.name}<button onClick={() => removeMagistrate(idx)} className="ml-1 text-red-400 hover:text-red-600"><X size={10} /></button></span>
                                 ))}
                             </div>

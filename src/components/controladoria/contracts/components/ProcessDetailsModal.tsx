@@ -46,9 +46,12 @@ export function ProcessDetailsModal({ process, onClose, onEdit }: ProcessDetails
 
           <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
             <span className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Magistrados</span>
-            {process.magistrates && Array.isArray(process.magistrates) && process.magistrates.length > 0 ? (
+            {process.magistrates && (typeof process.magistrates === 'string' || (Array.isArray(process.magistrates) && process.magistrates.length > 0)) ? (
               <div className="flex flex-wrap gap-2">
-                {process.magistrates.map((m, idx) => (
+                {(typeof process.magistrates === 'string' 
+                    ? [{ title: 'Anterior', name: process.magistrates }] 
+                    : Array.isArray(process.magistrates) ? process.magistrates : []
+                ).map((m, idx) => (
                   <span key={idx} className="inline-flex items-center px-2 py-1 rounded bg-white border border-gray-200 text-xs text-gray-700">
                     <Gavel size={10} className="mr-1 text-gray-400" />
                     <span className="font-semibold mr-1">{m.title}:</span> {m.name}
