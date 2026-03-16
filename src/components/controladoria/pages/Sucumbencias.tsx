@@ -11,7 +11,8 @@ import {
     Upload,
     FileSpreadsheet,
     Search,
-    FileText
+    FileText,
+    Trash2
 } from 'lucide-react';
 
 interface LegalOneRow {
@@ -118,51 +119,61 @@ export function Sucumbencias() {
             const excludeKeywords = ['orientação', 'orientações gerais'];
 
             jsonData.forEach((row, index) => {
-                const descricao = (row['Descrição'] || '').toLowerCase();
-                const tipoAndamento = (row['Tipo Andamento'] || '').toLowerCase();
-                const subtipoAndamento = (row['Subtipo Andamentos'] || '').toLowerCase();
-                
-                // Construct search strings
-                const searchString = `${descricao} ${tipoAndamento} ${subtipoAndamento}`;
-                const hasExclude = excludeKeywords.some(kw => searchString.includes(kw));
-                
-                if (hasExclude) return;
+                const fieldDataAndamento = String(row['Data Andamento'] || '');
+                const fieldDescricao = String(row['Descrição'] || '');
+                const fieldTipo = String(row['Tipo Andamento'] || '');
+                const fieldSubtipo = String(row['Subtipo Andamentos'] || '');
 
-                // 1. Testa se tem a palavra-chave primária
-                const hasPrimary = primaryKeywords.some(kw => searchString.includes(kw));
+                // Split them by newline, typical of LegalOne grouped cells
+                const dates = fieldDataAndamento.split(/\r?\n/);
+                const descricoes = fieldDescricao.split(/\r?\n/);
+                const tipos = fieldTipo.split(/\r?\n/);
+                const subtipos = fieldSubtipo.split(/\r?\n/);
 
-                // 2. Testa se tem contexto de condenação (para não pegar petições aleatórias que só mencionam a palavra)
-                // Se a descrição for muito curta (ex: título de andamento), consideramos apenas o primary. 
-                // Se for um texto longo de publicação, exigimos um contexto de condenação para maior assertividade.
-                let isMatch = false;
+                const maxLen = Math.max(dates.length, descricoes.length, tipos.length, subtipos.length);
 
-                if (hasPrimary) {
-                    if (searchString.length < 100) {
-                        // É um título curto, se tem a palavra chave, aceita.
-                        isMatch = true;
-                    } else {
-                        // É um texto longo (ex: publicação). Verifica se possui contexto de condenação.
-                        const hasContext = contextKeywords.some(kw => searchString.includes(kw));
-                        
-                        // Exige o contexto para textos longos, garantindo que seja uma condenação real
-                        // e não apenas uma citação genérica a honorários.
-                        if (hasContext) {
-                            isMatch = true; 
+                for (let i = 0; i < maxLen; i++) {
+                    const dataAnd = (dates[i] || '').trim().replace(/;$/, '');
+                    const desc = (descricoes[i] || '').trim().replace(/;$/, '');
+                    const tipo = (tipos[i] || '').trim().replace(/;$/, '');
+                    const subtipo = (subtipos[i] || '').trim().replace(/;$/, '');
+
+                    if (!desc && !tipo && !subtipo) continue;
+
+                    // Construct search strings
+                    const searchString = `${desc} ${tipo} ${subtipo}`.toLowerCase();
+                    const hasExclude = excludeKeywords.some(kw => searchString.includes(kw));
+                    
+                    if (hasExclude) continue;
+
+                    // 1. Testa se tem a palavra-chave primária
+                    const hasPrimary = primaryKeywords.some(kw => searchString.includes(kw));
+
+                    let isMatch = false;
+
+                    if (hasPrimary) {
+                        if (searchString.length < 100) {
+                            isMatch = true;
+                        } else {
+                            const hasContext = contextKeywords.some(kw => searchString.includes(kw));
+                            if (hasContext) {
+                                isMatch = true; 
+                            }
                         }
                     }
-                }
 
-                if (isMatch) {
-                    filteredResults.push({
-                        id: `import-${index}`,
-                        responsavel: row['Responsável principal'] || 'Não Informado',
-                        cnj: row['Número de CNJ'] || row['Pasta'] || 'Sem Número',
-                        uf: row['UF'] || '-',
-                        dataAndamento: row['Data Andamento'] || '-',
-                        descricao: row['Descrição'] || '',
-                        tipoAndamento: row['Tipo Andamento'] || '',
-                        subtipoAndamento: row['Subtipo Andamentos'] || ''
-                    });
+                    if (isMatch) {
+                        filteredResults.push({
+                            id: `import-${index}-${i}`,
+                            responsavel: row['Responsável principal'] || 'Não Informado',
+                            cnj: row['Número de CNJ'] || row['Pasta'] || 'Sem Número',
+                            uf: row['UF'] || '-',
+                            dataAndamento: dataAnd || '-',
+                            descricao: desc || fieldDescricao, // Fallback to full field if parsed empty
+                            tipoAndamento: tipo || fieldTipo,
+                            subtipoAndamento: subtipo || fieldSubtipo
+                        });
+                    }
                 }
             });
 
@@ -391,9 +402,20 @@ export function Sucumbencias() {
                                                 />
                                             </div>
                                             <button 
+                                                onClick={() => {
+                                                    setHasImported(false);
+                                                    setImportedData([]);
+                                                }}
+                                                className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors border border-red-200"
+                                                title="Limpar Base Completa"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                <span className="hidden sm:inline">Limpar Base</span>
+                                            </button>
+                                            <button 
                                                 onClick={() => setHasImported(false)}
                                                 className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors border border-gray-200"
-                                                title="Importar Nova Planilha"
+                                                title="Importar Nova Planilha (Adicionar)"
                                             >
                                                 <Upload className="w-4 h-4" />
                                             </button>
