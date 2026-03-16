@@ -797,6 +797,7 @@ export function ContractFormModal(props: Props) {
                     localMaskCNJ={localMaskCNJ}
                     setActiveManager={setActiveManager}
                     duplicateProcessData={duplicateProcessData}
+                    clientSelectOptions={clientSelectOptions}
                   />
                   <LegalProcessList processes={processes} clientName={formData.client_name || ''} setViewProcess={setViewProcess} setViewProcessIndex={setViewProcessIndex} editProcess={editProcess} removeProcess={removeProcess} />
                 </section>

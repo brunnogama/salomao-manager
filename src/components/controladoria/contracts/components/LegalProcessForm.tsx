@@ -23,6 +23,7 @@ interface LegalProcessFormProps {
     handleProcessAction: () => void;
     localMaskCNJ: (v: string) => string;
     setActiveManager: (v: string) => void;
+    clientSelectOptions: { label: string; value: string }[];
 }
 
 export function LegalProcessForm(props: LegalProcessFormProps) {
@@ -30,8 +31,44 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
         currentProcess, setCurrentProcess, isStandardCNJ, setIsStandardCNJ,
         otherProcessType, setOtherProcessType, duplicateProcessData, searchingCNJ, handleCNJSearch, handleOpenJusbrasil,
         ufOptions, opponentOptions, duplicateOpponentCases,
-        editingProcessIndex, handleProcessAction, localMaskCNJ, setActiveManager
+        editingProcessIndex, handleProcessAction, localMaskCNJ, setActiveManager,
+        clientSelectOptions
     } = props;
+
+    // Local state to hold the CNPJ being typed for search
+    const [localCNPJ, setLocalCNPJ] = React.useState('');
+    const [searchingClient, setSearchingClient] = React.useState(false);
+
+    // Simple auto-fill for existing clients list when CNPJ is typed (as a simulated search, though we might not have CNPJ in clientSelectOptions directly unless we fetch it. Usually it fetches from public API)
+    const handleClientCNPJSearch = async () => {
+        if (!localCNPJ) return;
+        setSearchingClient(true);
+        try {
+            const cleanCNPJ = localCNPJ.replace(/\D/g, '');
+            const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCNPJ}`);
+            if (response.ok) {
+                const data = await response.json();
+                const name = data.razao_social || data.nome_fantasia;
+                if (name) {
+                    setCurrentProcess(prev => ({ ...prev, client_name: name }));
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao buscar CNPJ:', error);
+        } finally {
+            setSearchingClient(false);
+        }
+    };
+
+    const maskCNPJ = (value: string) => {
+        return value
+            .replace(/\D/g, '')
+            .replace(/(\d{2})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d{1,4})/, '$1/$2')
+            .replace(/(\d{4})(\d{1,2})/, '$1-$2')
+            .replace(/(-\d{2})\d+?$/, '$1');
+    };
 
     // Se nenhum tipo está preenchido, não mostra o form
     const isEditingMode = editingProcessIndex !== null;
@@ -125,18 +162,29 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                         )}
 
                         {/* Linha 2: Cliente e UF */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="w-full">
-                                <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between mb-1">Cliente *</label>
-                                <input
-                                    type="text"
-                                    className="w-full border-b border-gray-300 focus:border-salomao-blue outline-none py-2 text-sm font-medium bg-white"
-                                    placeholder="Nome do Cliente..."
-                                    value={currentProcess.client_name || ''}
-                                    onChange={(e) => setCurrentProcess({ ...currentProcess, client_name: e.target.value })}
-                                />
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <div className="col-span-12 md:col-span-4">
+                                <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between mb-1">Buscar por CNPJ</label>
+                                <div className="flex items-center relative">
+                                    <input
+                                        type="text"
+                                        className="w-full border-b border-gray-300 focus:border-salomao-blue outline-none py-2 text-sm font-medium pr-8 bg-white"
+                                        placeholder="00.000.000/0000-00"
+                                        value={localCNPJ}
+                                        onChange={(e) => setLocalCNPJ(maskCNPJ(e.target.value))}
+                                        maxLength={18}
+                                    />
+                                    <button onClick={handleClientCNPJSearch} disabled={searchingClient || localCNPJ.length < 14} className="absolute right-0 top-1/2 -translate-y-1/2 text-salomao-blue hover:text-salomao-gold disabled:opacity-30 p-2 transition-colors">
+                                        {searchingClient ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                                    </button>
+                                </div>
                             </div>
-                            <CustomSelect label="Estado (UF) *" value={currentProcess.uf || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, uf: val })} options={ufOptions} placeholder="UF" />
+                            <div className="col-span-12 md:col-span-5">
+                                <CustomSelect label="Cliente *" value={currentProcess.client_name || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, client_name: val })} options={clientSelectOptions} onAction={() => setActiveManager('client')} actionLabel="Gerenciar Clientes" placeholder="Selecione o Cliente..." />
+                            </div>
+                            <div className="col-span-12 md:col-span-3">
+                                <CustomSelect label="Estado (UF) *" value={currentProcess.uf || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, uf: val })} options={ufOptions} placeholder="UF" />
+                            </div>
                         </div>
 
                         {/* Linha 3: Contrário */}
