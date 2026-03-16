@@ -75,11 +75,36 @@ export function Sucumbencias() {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
-    // Data states
-    const [importedData, setImportedData] = useState<FilteredSucumbencia[]>([]);
-    const [hasImported, setHasImported] = useState(false);
+    // Data states - Initialize from localStorage
+    const [importedData, setImportedData] = useState<FilteredSucumbencia[]>(() => {
+        try {
+            const savedData = localStorage.getItem('@salomao:sucumbenciasData');
+            return savedData ? JSON.parse(savedData) : [];
+        } catch {
+            return [];
+        }
+    });
+    
+    const [hasImported, setHasImported] = useState(() => {
+        try {
+            const savedData = localStorage.getItem('@salomao:sucumbenciasData');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                return parsed && parsed.length > 0;
+            }
+            return false;
+        } catch {
+            return false;
+        }
+    });
+
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedItem, setSelectedItem] = useState<FilteredSucumbencia | null>(null);
+
+    // Sync to localStorage when data changes
+    useEffect(() => {
+        localStorage.setItem('@salomao:sucumbenciasData', JSON.stringify(importedData));
+    }, [importedData]);
 
     // Filtros de Data. Default: 1 de Janeiro deste ano até hoje.
     const [startDate, setStartDate] = useState(() => {
@@ -433,6 +458,7 @@ export function Sucumbencias() {
                                                 onClick={() => {
                                                     setHasImported(false);
                                                     setImportedData([]);
+                                                    localStorage.removeItem('@salomao:sucumbenciasData');
                                                 }}
                                                 className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors border border-red-200"
                                                 title="Limpar Base Completa"

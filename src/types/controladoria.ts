@@ -518,3 +518,18 @@ export interface Vaga {
   candidato?: { id?: string; nome: string };
   aprovador?: { id: string; name: string };
 }
+
+export interface Sucumbencia {
+  id?: string;
+  processo_cnj: string;
+  responsavel: string;
+  uf: string;
+  data_andamento: string;
+  tipo_andamento: string;
+  subtipo_andamento: string;
+  descricao: string;
+  status: 'verificado' | 'descartado';
+  hash_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
