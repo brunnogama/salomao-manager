@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Plus, GripVertical, Calendar, Tag } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 // Tipos
 export type Priority = 'ALTA' | 'MÉDIA' | 'BAIXA';
@@ -39,9 +40,6 @@ const COLUMN_TITLES = {
 export function KanbanModal() {
   const { user, loading } = useAuth();
   
-  // Create a unique storage key for this user
-  const storageKey = user?.email ? `moduleSelectorKanban_${user.email}` : 'moduleSelectorKanban';
-
   const [items, setItems] = useState<KanbanItem[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
@@ -52,31 +50,62 @@ export function KanbanModal() {
     priority: 'MÉDIA'
   });
 
-  // Carregar dados quando o user email estiver disponivel / storageKey trocar
+  // Carregar dados via Supabase
   useEffect(() => {
-    // IMPORTANTE: Só carregamos e iniciamos os binds após o AuthContext confirmar que não está mais carregando a sessão
-    // Caso contrário, ele leria a chave base antes de ler o user.email, setaria items vazios e resalvaria.
     if (loading) return;
 
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        setItems(JSON.parse(saved));
-      } catch (e) {
-        setItems([]);
-      }
-    } else {
+    if (!user?.email) {
       setItems([]);
+      setHasLoaded(true);
+      return;
     }
-    setHasLoaded(true);
-  }, [storageKey, loading]);
 
-  // Salvar sempre que items mudar (apenas se já carregou a versão do usuário e loading auth acabou)
-  useEffect(() => {
-    if (hasLoaded && !loading) {
-      localStorage.setItem(storageKey, JSON.stringify(items));
+    async function loadTasks() {
+      try {
+        const { data, error } = await supabase
+          .from('user_kanban_settings')
+          .select('tasks')
+          .eq('user_email', user?.email)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Supabase load error:", error);
+          setItems([]);
+          return;
+        }
+
+        if (data && data.tasks) {
+          setItems(data.tasks);
+        } else {
+          setItems([]);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar kanban:', err);
+        setItems([]);
+      } finally {
+        setHasLoaded(true);
+      }
     }
-  }, [items, storageKey, hasLoaded, loading]);
+
+    loadTasks();
+  }, [user?.email, loading]);
+
+  // Salvar no Supabase sempre que items mudar (apenas se já carregou a versão do usuário)
+  useEffect(() => {
+    if (hasLoaded && !loading && user?.email) {
+      const timer = setTimeout(async () => {
+        try {
+          await supabase
+            .from('user_kanban_settings')
+            .upsert({ user_email: user.email, tasks: items });
+        } catch (err) {
+          console.error('Erro ao salvar kanban no banco:', err);
+        }
+      }, 500); // 500ms debounce
+
+      return () => clearTimeout(timer);
+    }
+  }, [items, hasLoaded, loading, user?.email]);
 
   // Removido bloqueio do scroll pois não é mais modal
 
