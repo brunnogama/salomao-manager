@@ -387,7 +387,7 @@ export function ContractFormModal(props: Props) {
   const handleSaveWithIntegrations = async () => {
     // 1) Se já tem processos adicionados (salvos no contrato), OK avançar sem avisar
     if (processes.length === 0) {
-      if (!currentProcess.process_number && !otherProcessType && !currentProcess.court) {
+      if (!currentProcess.process_number && !otherProcessType && !currentProcess.client_name) {
         // Se a pessoa não preencheu nada disso de fato, seguimos normal
       } else {
         // ... (resto do aviso original se quiser)
@@ -777,14 +777,6 @@ export function ContractFormModal(props: Props) {
                 <section className="space-y-4 bg-white/60 p-5 rounded-xl border border-white/40 shadow-sm backdrop-blur-sm relative z-30 overflow-visible">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Casos</h3>
 
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <button onClick={() => { handleTypeChange(''); setIsStandardCNJ(true); }} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${!otherProcessType ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Processos Judiciais</button>
-                    <button onClick={() => handleTypeChange('Processo Administrativo')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Processo Administrativo' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Processo Administrativo</button>
-                    <button onClick={() => handleTypeChange('Consultoria')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Consultoria' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Consultoria</button>
-                    <button onClick={() => handleTypeChange('Assessoria Jurídica')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Assessoria Jurídica' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Assessoria Jurídica</button>
-                    <button onClick={() => handleTypeChange('Outros')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Outros' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Outros</button>
-                  </div>
-
                   <LegalProcessForm
                     formData={formData}
                     setFormData={setFormData}
@@ -797,7 +789,6 @@ export function ContractFormModal(props: Props) {
                     searchingCNJ={searchingCNJ}
                     handleCNJSearch={handleCNJSearch}
                     handleOpenJusbrasil={handleOpenJusbrasil}
-                    courtSelectOptions={courtSelectOptions}
                     ufOptions={ufOptions}
                     opponentOptions={opponentOptions}
                     duplicateOpponentCases={duplicateOpponentCases}

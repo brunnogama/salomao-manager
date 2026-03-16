@@ -30,14 +30,14 @@ export function LegalProcessList({ processes, clientName, setViewProcess, setVie
                     {p.process_number || 'Sem Número'}
                 </span>
                 <span className="text-gray-300 hidden sm:inline">|</span>
-                <span className="font-medium text-gray-700 truncate">{clientName || 'Cliente não informado'}</span>
+                <span className="font-medium text-gray-700 truncate">{p.client_name || clientName || 'Cliente não informado'}</span>
             </div>
             
             {/* Linha 2: Contrário | Estado */}
             <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 font-medium">
                 <span className="truncate max-w-[200px] sm:max-w-xs">{p.opponent || 'Contrário não informado'}</span>
                 <span className="text-gray-300 hidden sm:inline">|</span>
-                <span className="bg-gray-100 px-2 py-0.5 rounded-md text-gray-600">{p.uf || 'UF'} - {p.court || 'Tribunal'}</span>
+                <span className="bg-gray-100 px-2 py-0.5 rounded-md text-gray-600">{p.uf || 'UF'}</span>
             </div>
           </div>
 

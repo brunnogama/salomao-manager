@@ -241,7 +241,8 @@ export interface ContractProcess {
   id?: string;
   contract_id?: string;
   process_number: string;
-  court?: string;
+  client_name?: string;
+  client_id?: string;
   opponent?: string;
   
   // UI/Form fields

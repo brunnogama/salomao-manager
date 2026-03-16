@@ -16,7 +16,6 @@ interface LegalProcessFormProps {
     searchingCNJ: boolean;
     handleCNJSearch: () => void;
     handleOpenJusbrasil: () => void;
-    courtSelectOptions: { label: string; value: string }[];
     ufOptions: { label: string; value: string }[];
     opponentOptions: string[];
     duplicateOpponentCases: any[];
@@ -30,7 +29,7 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
     const {
         currentProcess, setCurrentProcess, isStandardCNJ, setIsStandardCNJ,
         otherProcessType, setOtherProcessType, duplicateProcessData, searchingCNJ, handleCNJSearch, handleOpenJusbrasil,
-        courtSelectOptions, ufOptions, opponentOptions, duplicateOpponentCases,
+        ufOptions, opponentOptions, duplicateOpponentCases,
         editingProcessIndex, handleProcessAction, localMaskCNJ, setActiveManager
     } = props;
 
@@ -64,7 +63,7 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                             <button
                                 onClick={() => {
                                     setOtherProcessType('');
-                                    setCurrentProcess({ process_number: '', court: '', uf: '', opponent: '' });
+                                    setCurrentProcess({ process_number: '', uf: '', opponent: '', client_name: '' });
                                 }}
                                 className="text-gray-400 hover:text-red-500 transition-colors p-1"
                                 title="Cancelar"
@@ -125,9 +124,18 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                             </div>
                         )}
 
-                        {/* Linha 2: Tribunal e UF */}
+                        {/* Linha 2: Cliente e UF */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <CustomSelect label="Tribunal *" value={currentProcess.court || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, court: val })} options={courtSelectOptions} onAction={() => setActiveManager('court')} actionLabel="Gerenciar Tribunais" placeholder="Selecione..." />
+                            <div className="w-full">
+                                <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between mb-1">Cliente *</label>
+                                <input
+                                    type="text"
+                                    className="w-full border-b border-gray-300 focus:border-salomao-blue outline-none py-2 text-sm font-medium bg-white"
+                                    placeholder="Nome do Cliente..."
+                                    value={currentProcess.client_name || ''}
+                                    onChange={(e) => setCurrentProcess({ ...currentProcess, client_name: e.target.value })}
+                                />
+                            </div>
                             <CustomSelect label="Estado (UF) *" value={currentProcess.uf || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, uf: val })} options={ufOptions} placeholder="UF" />
                         </div>
 
