@@ -143,12 +143,35 @@ export function Sucumbencias() {
     const fetchSucumbencias = async () => {
         try {
             setLoading(true);
-            const { data, error } = await supabase.from('sucumbencias').select('*');
-            if (error) throw error;
+            
+            let allData: any[] = [];
+            let hasMore = true;
+            let page = 0;
+            const pageSize = 1000; // Limite padrão seguro da API do Supabase PostgREST
+            
+            while (hasMore) {
+                const { data, error } = await supabase
+                    .from('sucumbencias')
+                    .select('*')
+                    .range(page * pageSize, (page + 1) * pageSize - 1);
+                    
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    allData = [...allData, ...data];
+                    if (data.length < pageSize) {
+                        hasMore = false; // Se a página não veio cheia, acabou os dados do banco
+                    } else {
+                        page++;
+                    }
+                } else {
+                    hasMore = false; // Vazio, acabou
+                }
+            }
             
             const groupedMap = new Map<string, FilteredSucumbencia>();
             
-            (data || []).forEach((row: any) => {
+            allData.forEach((row: any) => {
                 if (!groupedMap.has(row.processo_cnj)) {
                     groupedMap.set(row.processo_cnj, {
                         id: `db-${row.processo_cnj}`,
