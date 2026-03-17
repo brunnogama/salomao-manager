@@ -350,15 +350,15 @@ export function Sucumbencias() {
             // Generate payload filtering out existing hashes
             const rawPayload = filteredResults.flatMap(item => 
                 item.andamentos.map(and => ({
-                    processo_cnj: item.cnj,
-                    responsavel: item.responsavel,
-                    uf: item.uf,
-                    data_andamento: and.dataAndamento,
-                    tipo_andamento: and.tipoAndamento,
-                    subtipo_andamento: and.subtipoAndamento,
-                    descricao: and.descricao,
+                    processo_cnj: item.cnj || 'Sem Número',
+                    responsavel: item.responsavel || 'Não Informado',
+                    uf: item.uf || '-',
+                    data_andamento: and.dataAndamento || '-',
+                    tipo_andamento: and.tipoAndamento || '',
+                    subtipo_andamento: and.subtipoAndamento || '',
+                    descricao: and.descricao || '',
                     status: 'potencial',
-                    hash_id: `${item.cnj}-${and.descricao.substring(0, 50).replace(/\s/g, '')}`.toLowerCase()
+                    hash_id: `${item.cnj || 'sem-cnj'}-${(and.descricao || '').substring(0, 50).replace(/\s/g, '')}`.toLowerCase()
                 }))
             ).filter(item => !existingHashes.has(item.hash_id));
 
