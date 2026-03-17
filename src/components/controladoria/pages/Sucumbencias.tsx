@@ -131,7 +131,7 @@ const getUfInitials = (stateName: string): string => {
 };
 
 export function Sucumbencias() {
-    const [loading, setLoading] = useState(false); // Initially false, only true when parsing
+    const [loading, setLoading] = useState(true); // Loading starts as true to prevent FOUC / empty state flash
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
@@ -231,14 +231,6 @@ export function Sucumbencias() {
         const today = new Date();
         return today.toISOString().split('T')[0];
     });
-
-    useEffect(() => {
-        // Simulando carregamento inicial
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 600);
-        return () => clearTimeout(timer);
-    }, [startDate, endDate]);
 
     // --- Supabase Actions ---
     const handleAction = async (item: FilteredSucumbencia, status: 'verificado' | 'descartado' | 'recebido' | 'prescrito') => {
