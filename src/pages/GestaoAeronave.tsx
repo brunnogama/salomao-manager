@@ -4,11 +4,11 @@ import {
   Plus,
   Search,
   Download,
+  Upload,
   Calendar,
   XCircle,
   LayoutDashboard,
   Table2,
-  FileSpreadsheet,
   Wallet,
   Receipt,
   DollarSign,
@@ -576,11 +576,75 @@ export function GestaoAeronave() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Abas */}
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl">
+            <button
+              onClick={() => {
+                setActiveTab('dashboard')
+                setFilterOrigem('todos')
+                setSearchTerm('')
+                setStartDate('')
+                setEndDate('')
+              }}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('comparativo')
+                setSearchTerm('')
+                setStartDate('')
+                setEndDate('')
+              }}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'comparativo' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              <TrendingUp className="h-3.5 w-3.5" /> Comparativo
+            </button>
+            <button
+              onClick={() => setActiveTab('faturas')}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'faturas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              <FileText className="h-3.5 w-3.5" /> Faturas
+            </button>
+            <button
+              onClick={() => setActiveTab('dados')}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dados' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              <Table2 className="h-3.5 w-3.5" /> Dados
+            </button>
+          </div>
+
+          {/* Botões de ação */}
+          {activeTab === 'dados' && (
+            <>
+              <button
+                onClick={handleExportExcel}
+                className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-gray-600 rounded-full hover:bg-gray-50 hover:border-green-400 transition-all shadow-sm"
+                title="Exportar Excel"
+              >
+                <Download className="h-4 w-4" />
+              </button>
+              <label
+                className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-gray-600 rounded-full hover:bg-gray-50 hover:border-blue-400 transition-all shadow-sm cursor-pointer"
+                title="Importar Excel"
+              >
+                {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                <input type="file" accept=".xlsx" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
+              </label>
+            </>
+          )}
+
           <button
             onClick={() => setIsTipoModalOpen(true)}
-            className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all shadow-md active:scale-95 text-xs font-black uppercase tracking-widest"
+            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+            title="Novo Lançamento"
           >
-            <Plus className="h-4 w-4" /> Novo Lançamento
+            <Plus className="h-5 w-5" />
           </button>
         </div>
       </div>
@@ -660,53 +724,11 @@ export function GestaoAeronave() {
       )}
 
       {/* 3. Toolbar Principal */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex gap-2 bg-gray-100/50 p-1 rounded-xl">
-            <button
-              onClick={() => {
-                setActiveTab('dashboard')
-                setFilterOrigem('todos')
-                setSearchTerm('')
-                setStartDate('')
-                setEndDate('')
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
-                }`}
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('comparativo')
-                setSearchTerm('')
-                setStartDate('')
-                setEndDate('')
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'comparativo' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
-                }`}
-            >
-              <TrendingUp className="h-3.5 w-3.5" /> Comparativo
-            </button>
-            <button
-              onClick={() => setActiveTab('faturas')}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'faturas' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
-                }`}
-            >
-              <FileText className="h-3.5 w-3.5" /> Faturas
-            </button>
-            <button
-              onClick={() => setActiveTab('dados')}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dados' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
-                }`}
-            >
-              <Table2 className="h-3.5 w-3.5" /> Dados
-            </button>
-          </div>
-
           {/* Esconder botões nas abas Faturas e Comparativo */}
           {activeTab !== 'faturas' && activeTab !== 'comparativo' && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setFilterOrigem('todos')}
                 className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
@@ -728,6 +750,20 @@ export function GestaoAeronave() {
               >
                 Despesas Fixas
               </button>
+
+              {/* Barra de pesquisa ao lado dos filtros (aba Dados) */}
+              {activeTab === 'dados' && (
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por ID, Missão, Fornecedor ou Descrição..."
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -759,38 +795,6 @@ export function GestaoAeronave() {
             </div>
           </div>
         </div>
-
-        {activeTab === 'dados' && (
-          <>
-            <div className="h-px bg-gray-100 w-full my-2"></div>
-            <div className="flex flex-col md:flex-row justify-between gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar por ID, Missão, Fornecedor ou Descrição..."
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleExportExcel}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-green-400 transition-all text-xs font-bold uppercase tracking-wide"
-                >
-                  <Download className="h-4 w-4" /> Exportar
-                </button>
-                <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-blue-400 transition-all text-xs font-bold uppercase tracking-wide cursor-pointer">
-                  {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
-                  Importar
-                  <input type="file" accept=".xlsx" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
-                </label>
-                {/* Button moved to header */}
-              </div>
-            </div>
-          </>
-        )}
       </div>
 
       {/* 4. Área de Conteúdo */}
