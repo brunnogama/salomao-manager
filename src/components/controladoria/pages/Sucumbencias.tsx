@@ -674,14 +674,14 @@ export function Sucumbencias() {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-[9px] font-black text-blue-900 uppercase tracking-widest opacity-60">Processos Ativos</span>
-                                <span className="text-sm font-bold text-[#0a192f] leading-tight">{tabFilteredData.length}</span>
+                                <span className="text-sm font-bold text-[#0a192f] leading-tight">{displayedData.length}</span>
                             </div>
                         </div>
                         <div className="w-px h-8 bg-gray-200"></div>
                         <div className="flex flex-col">
                             <span className="text-[9px] font-black text-blue-900 uppercase tracking-widest opacity-60">Andamentos</span>
                             <span className="text-sm font-bold text-[#0a192f] leading-tight flex items-baseline gap-1">
-                                {tabFilteredData.reduce((acc, curr) => acc + curr.andamentos.length, 0)}
+                                {displayedData.reduce((acc, curr) => acc + curr.andamentos.length, 0)}
                                 <span className="text-[9px] font-normal text-gray-400">eventos agrupados</span>
                             </span>
                         </div>
