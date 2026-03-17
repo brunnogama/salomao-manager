@@ -144,6 +144,10 @@ export function Sucumbencias() {
     const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos' | 'descartados' | 'recebidos' | 'verificados'>('potenciais');
     const [activeModalTab, setActiveModalTab] = useState(0);
 
+    // Paginação
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 200;
+
     const fetchSucumbencias = async () => {
         try {
             setLoading(true);
@@ -570,6 +574,16 @@ export function Sucumbencias() {
         setSelectedItem(null);
     };
 
+    // Reseta a paginação ao mudar qualquer filtro
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab, searchTerm, filterResponsavel, startDate, endDate]);
+
+    // Aplica a paginação sobre os dados já filtrados
+    const totalPages = Math.ceil(displayedData.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const finalPaginatedData = displayedData.slice(startIndex, startIndex + itemsPerPage);
+
     return (
         <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 animate-in fade-in duration-500">
             {/* Input de Arquivo Global (Oculto) mantido na raiz do dom para que os botões de upload sempre tenham acesso ao ref, independente do estado da tela */}
@@ -786,14 +800,14 @@ export function Sucumbencias() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {displayedData.length === 0 ? (
+                                                {finalPaginatedData.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={5} className="p-12 text-center text-gray-400">
                                                             Nenhum registro encontrado para a busca atual.
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    displayedData.map((row) => (
+                                                    finalPaginatedData.map((row) => (
                                                         <tr 
                                                             key={row.id} 
                                                             onClick={(e) => {
@@ -863,6 +877,50 @@ export function Sucumbencias() {
                                             </tbody>
                                         </table>
                                     </div>
+                                    
+                                    {/* Pagination Controls */}
+                                    {displayedData.length > 0 && (
+                                        <div className="flex items-center justify-between border-t border-gray-100 bg-white px-4 py-3 sm:px-6 rounded-b-2xl shrink-0">
+                                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                                <div>
+                                                    <p className="text-sm text-gray-700">
+                                                        Mostrando <span className="font-medium">{startIndex + 1}</span> a <span className="font-medium">{Math.min(startIndex + itemsPerPage, displayedData.length)}</span> de{' '}
+                                                        <span className="font-medium">{displayedData.length}</span> resultados
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                                        <button
+                                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                            disabled={currentPage === 1}
+                                                            className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            <span className="sr-only">Anterior</span>
+                                                            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                                <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </button>
+                                                        
+                                                        {/* Simple Page Indicator */}
+                                                        <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0">
+                                                            Página {currentPage} de {totalPages}
+                                                        </span>
+
+                                                        <button
+                                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                                            disabled={currentPage === totalPages}
+                                                            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            <span className="sr-only">Próxima</span>
+                                                            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                                <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </button>
+                                                    </nav>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
