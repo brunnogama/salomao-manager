@@ -141,7 +141,7 @@ export function Sucumbencias() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterResponsavel, setFilterResponsavel] = useState('Todos');
     const [selectedItem, setSelectedItem] = useState<FilteredSucumbencia | null>(null);
-    const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos' | 'descartados' | 'recebidos'>('potenciais');
+    const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos' | 'descartados' | 'recebidos' | 'verificados'>('potenciais');
     const [activeModalTab, setActiveModalTab] = useState(0);
 
     const fetchSucumbencias = async () => {
@@ -541,6 +541,7 @@ export function Sucumbencias() {
         if (activeTab === 'prescritos') return itemStatus === 'prescrito';
         if (activeTab === 'descartados') return itemStatus === 'descartado';
         if (activeTab === 'recebidos') return itemStatus === 'recebido';
+        if (activeTab === 'verificados') return itemStatus === 'verificado';
         return false;
     });
 
@@ -610,18 +611,25 @@ export function Sucumbencias() {
                             <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'prescrito').length}</span>
                         </button>
                         <button
-                            onClick={() => setActiveTab('descartados')}
-                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'descartados' ? 'bg-white shadow-sm text-red-600' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <span className="hidden sm:inline">Descartados</span>
-                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'descartado').length}</span>
-                        </button>
-                        <button
                             onClick={() => setActiveTab('recebidos')}
                             className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'recebidos' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             <span className="hidden sm:inline">Recebidos</span>
                             <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'recebido').length}</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('verificados')}
+                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'verificados' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <span className="hidden sm:inline">Verificados</span>
+                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'verificado').length}</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('descartados')}
+                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'descartados' ? 'bg-white shadow-sm text-red-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <span className="hidden sm:inline">Descartados</span>
+                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'descartado').length}</span>
                         </button>
                     </div>
 
@@ -943,8 +951,8 @@ export function Sucumbencias() {
             {selectedItem && selectedItem.andamentos[activeModalTab] && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedItem(null)} />
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl min-h-[500px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-6 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white flex justify-between items-start">
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] min-h-[500px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white flex justify-between items-start shrink-0">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-white/10 rounded-xl border border-white/20">
                                     <Award className="w-6 h-6 text-blue-200" />
