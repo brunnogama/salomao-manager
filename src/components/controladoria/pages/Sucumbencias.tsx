@@ -15,7 +15,8 @@ import {
     AlertTriangle,
     Filter,
     X,
-    Download
+    Wallet,
+    Hourglass
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { SearchableSelect } from '../../crm/SearchableSelect';
@@ -730,17 +731,17 @@ export function Sucumbencias() {
                                                                 <div className="flex items-center justify-center gap-2">
                                                                     <button 
                                                                         onClick={(e) => { e.stopPropagation(); handleMarkAsPrescrito(row); }}
-                                                                        className="px-2 py-1.5 text-[10px] font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded transition-colors border border-amber-200 uppercase tracking-widest"
+                                                                        className="p-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 rounded transition-colors border border-orange-200"
                                                                         title="Marcar como Prescrito"
                                                                     >
-                                                                        Prescrito
+                                                                        <Hourglass className="w-4 h-4" />
                                                                     </button>
                                                                     <button 
                                                                         onClick={(e) => { e.stopPropagation(); handleAction(row, 'recebido'); }}
-                                                                        className="p-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded transition-colors border border-indigo-200"
+                                                                        className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded transition-colors border border-emerald-200"
                                                                         title="Marcar como Recebido"
                                                                     >
-                                                                        <Download className="w-4 h-4" />
+                                                                        <Wallet className="w-4 h-4" />
                                                                     </button>
                                                                     <button 
                                                                         onClick={(e) => { e.stopPropagation(); handleAction(row, 'verificado'); }}
@@ -852,7 +853,7 @@ export function Sucumbencias() {
             {selectedItem && selectedItem.andamentos[activeModalTab] && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedItem(null)} />
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl min-h-[500px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-6 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white flex justify-between items-start">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-white/10 rounded-xl border border-white/20">
@@ -918,8 +919,9 @@ export function Sucumbencias() {
                                 {activeTab === 'potenciais' && (
                                     <button 
                                         onClick={() => handleMarkAsPrescrito(selectedItem)}
-                                        className="px-4 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 font-bold tracking-wide rounded-xl transition-colors text-xs flex items-center gap-2"
+                                        className="px-4 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 font-bold tracking-wide rounded-xl transition-colors text-xs flex items-center gap-2 shadow-sm"
                                     >
+                                        <Hourglass className="w-4 h-4" />
                                         Prescrito
                                     </button>
                                 )}
@@ -932,9 +934,9 @@ export function Sucumbencias() {
                                 </button>
                                 <button 
                                     onClick={() => handleActionFromModal(selectedItem, 'recebido')}
-                                    className="px-4 py-2 bg-indigo-50 hover:bg-indigo-600 border border-indigo-200 hover:border-indigo-600 text-indigo-700 hover:text-white font-bold tracking-wide rounded-xl transition-all text-xs flex items-center gap-2 shadow-sm"
+                                    className="px-4 py-2 bg-emerald-50 hover:bg-emerald-600 border border-emerald-200 hover:border-emerald-600 text-emerald-700 hover:text-white font-bold tracking-wide rounded-xl transition-all text-xs flex items-center gap-2 shadow-sm"
                                 >
-                                    <Download className="w-4 h-4" />
+                                    <Wallet className="w-4 h-4" />
                                     Recebido
                                 </button>
                                 <button 
