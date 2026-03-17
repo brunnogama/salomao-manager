@@ -374,9 +374,20 @@ export function Sucumbencias() {
             if (payload.length > 0) {
                 // Use chunking for insert
                 const chunkSize = 100;
+                let hasError = false;
                 for (let i = 0; i < payload.length; i += chunkSize) {
                     const chunk = payload.slice(i, i + chunkSize);
-                    await supabase.from('sucumbencias').insert(chunk);
+                    const { error: insertError } = await supabase.from('sucumbencias').insert(chunk);
+                    if (insertError) {
+                        console.error('SUPABASE INSERT ERROR DETAILS:', insertError);
+                        alert(`Erro do Banco de Dados: ${insertError.message}\nDetalhes: ${insertError.details || insertError.hint || 'Veja o console (F12) para info completa.'}`);
+                        hasError = true;
+                        break; 
+                    }
+                }
+                if(hasError) {
+                   setLoading(false);
+                   return;
                 }
             }
 
