@@ -106,19 +106,21 @@ const OrganogramNode = React.memo(({
     // Conditional Layout Logic
     const roleGroups: ColaboradorCard[][] = [];
 
-    let currentRole: string | null = null;
-    let currentGroup: ColaboradorCard[] = [];
+    if (activeTab === 'JURIDICO') {
+        let currentRole: string | null = null;
+        let currentGroup: ColaboradorCard[] = [];
 
-    for (const sub of sortedSubordinates) {
-        if (sub.role !== currentRole) {
-            if (currentGroup.length > 0) roleGroups.push(currentGroup);
-            currentRole = sub.role;
-            currentGroup = [sub];
-        } else {
-            currentGroup.push(sub);
+        for (const sub of sortedSubordinates) {
+            if (sub.role !== currentRole) {
+                if (currentGroup.length > 0) roleGroups.push(currentGroup);
+                currentRole = sub.role;
+                currentGroup = [sub];
+            } else {
+                currentGroup.push(sub);
+            }
         }
+        if (currentGroup.length > 0) roleGroups.push(currentGroup);
     }
-    if (currentGroup.length > 0) roleGroups.push(currentGroup);
     return (
         <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
             <Droppable droppableId={colab.id} type="COLAB">
@@ -185,7 +187,7 @@ const OrganogramNode = React.memo(({
                 <div className="flex flex-col items-center mt-2 w-full">
                     <div className="w-[2px] h-8 bg-gray-300"></div>
                     <div className="flex flex-col items-center w-full relative z-10">
-                        {colab.isSocio ? (() => {
+                        {colab.isSocio && activeTab === 'JURIDICO' ? (() => {
                             // Sócio: group subordinates by Local
                             const localGroups = new Map<string, ColaboradorCard[]>();
                             sortedSubordinates.forEach(sub => {
@@ -252,8 +254,76 @@ const OrganogramNode = React.memo(({
                                     ))}
                                 </div>
                             );
+                        })() : activeTab === 'ADMINISTRATIVO' ? (() => {
+                            // ADMINISTRATIVO: Group subordinates by Atuação
+                            const atuacaoGroups = new Map<string, ColaboradorCard[]>();
+                            sortedSubordinates.forEach(sub => {
+                                const key = sub.atuacao || 'Sem Atuação';
+                                if (!atuacaoGroups.has(key)) atuacaoGroups.set(key, []);
+                                atuacaoGroups.get(key)!.push(sub);
+                            });
+                            const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                            return (
+                                <div className="flex justify-center relative pt-4 w-full">
+                                    {atuacaoEntries.map(([atuacaoName, atuacaoColabs], locIdx) => (
+                                        <div key={atuacaoName} className={`relative flex flex-col items-center ${atuacaoEntries.length > 5 ? 'px-1' : 'px-6'}`}>
+                                            {/* Per-Atuação horizontal segment */}
+                                            {atuacaoEntries.length > 1 && (
+                                                <div className="absolute h-[2px] bg-gray-300" style={{
+                                                    top: '-1rem',
+                                                    left: locIdx === 0 ? '50%' : '0',
+                                                    right: locIdx === atuacaoEntries.length - 1 ? '50%' : '0'
+                                                }}></div>
+                                            )}
+                                            {/* Vertical stub up */}
+                                            <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+
+                                            {/* Atuação Label */}
+                                            <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-gray-700 font-black px-6 py-2.5 rounded-[1.25rem] shadow-sm mb-2 flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#1e3a8a]"></div>
+                                                <span className="text-[11px] uppercase tracking-[0.2em]">{atuacaoName}</span>
+                                            </div>
+
+                                            {/* Vertical line from Atuação label to collaborators */}
+                                            <div className="w-[2px] h-6 bg-gray-300"></div>
+
+                                            {/* Collaborators under this Atuação */}
+                                            <div className="flex justify-center relative pt-4">
+                                                {atuacaoColabs.map((sub, idx) => (
+                                                    <div key={sub.id} className={`relative flex flex-col items-center ${atuacaoColabs.length > 8 ? 'px-0' : atuacaoColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
+                                                        {/* Per-child horizontal segment */}
+                                                        {atuacaoColabs.length > 1 && (
+                                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                                top: '-1rem',
+                                                                left: idx === 0 ? '50%' : '0',
+                                                                right: idx === atuacaoColabs.length - 1 ? '50%' : '0'
+                                                            }}></div>
+                                                        )}
+                                                        {/* Vertical stub up */}
+                                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                                        <div style={{
+                                                            transform: atuacaoColabs.length > 12 ? 'scale(0.8)' : atuacaoColabs.length > 8 ? 'scale(0.85)' : atuacaoColabs.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                                            transformOrigin: 'top center'
+                                                        }}>
+                                                            <OrganogramNode
+                                                                colab={sub}
+                                                                context={context}
+                                                                visitedIds={nextVisited}
+                                                                level={level + 1}
+                                                                isDense={atuacaoColabs.length > 5 && atuacaoColabs.length <= 8}
+                                                                isSuperDense={atuacaoColabs.length > 8}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
                         })() : (
-                            // Sub-levels: group by role vertically
+                            // Sub-levels: group by role vertically (Jurídico fallback)
                             roleGroups.map((group, groupIndex) => (
                                 <div key={groupIndex} className="flex flex-col items-center w-full relative pb-16">
                                     {groupIndex < roleGroups.length - 1 && (
@@ -600,10 +670,10 @@ export function Organograma() {
     const roots = useMemo(() => {
         return topLevelNodes.filter(c => {
             if (activeTab === 'JURIDICO') return c.isJuridico;
-            if (activeTab === 'ADMINISTRATIVO') return c.isAdministrativo;
+            if (activeTab === 'ADMINISTRATIVO') return (c.isAdministrativo || hasAdministrativeSubordinates(c.id));
             return false;
         });
-    }, [topLevelNodes, activeTab]);
+    }, [topLevelNodes, activeTab, hasAdministrativeSubordinates]);
 
     // For Admin tab: get all admin collaborators for grouping by Atuação
     const adminColabs = useMemo(() => {
