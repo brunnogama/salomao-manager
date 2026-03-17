@@ -331,8 +331,12 @@ export function Sucumbencias() {
                     if (isMatch) {
                         // Check deduplication
                         const cnjLabel = row['Número de CNJ'] || row['Pasta'] || 'Sem Número';
+                        
+                        // Cria um hash mais preciso com data e tipo para não aglutinar andamentos vazios do mesmo processo
+                        const dataAndClean = (dataAnd || '').substring(0, 10);
+                        const tipoClean = (tipo || '').substring(0, 20).replace(/\s/g, '').toLowerCase();
                         const descSubstring = desc.substring(0, 50).replace(/\s/g, '').toLowerCase();
-                        const hash_id = `${cnjLabel}-${descSubstring}`;
+                        const hash_id = `${cnjLabel}-${dataAndClean}-${tipoClean}-${descSubstring}`.substring(0, 254);
 
                         if (existingHashes.has(hash_id)) continue; // Already reviewed!
 
@@ -382,7 +386,7 @@ export function Sucumbencias() {
                     subtipo_andamento: String(and.subtipoAndamento || '').substring(0, 254),
                     descricao: and.descricao || '',
                     status: 'potencial',
-                    hash_id: `${item.cnj || 'sem-cnj'}-${(and.descricao || '').substring(0, 50).replace(/\s/g, '')}`.toLowerCase().substring(0, 254)
+                    hash_id: `${item.cnj || 'Sem Número'}-${String(and.dataAndamento || '').substring(0, 10)}-${String(and.tipoAndamento || '').substring(0, 20).replace(/\s/g, '').toLowerCase()}-${(and.descricao || '').substring(0, 50).replace(/\s/g, '').toLowerCase()}`.substring(0, 254)
                 }))
             ).filter(item => !existingHashes.has(item.hash_id));
 
