@@ -235,13 +235,16 @@ export function Sucumbencias() {
     // --- Supabase Actions ---
     const handleAction = async (item: FilteredSucumbencia, status: 'verificado' | 'descartado' | 'recebido' | 'prescrito') => {
         try {
+            // Se o usuário clicar na mesma ação atual, reverta para potencial (Toggle switch)
+            const targetStatus = item.status === status ? 'potencial' : status;
+
             // Optimistically update the status
-            setImportedData(prev => prev.map(d => d.id === item.id ? { ...d, status } : d));
+            setImportedData(prev => prev.map(d => d.id === item.id ? { ...d, status: targetStatus } : d));
 
             // Update in Supabase
             const { error } = await supabase
                 .from('sucumbencias')
-                .update({ status })
+                .update({ status: targetStatus })
                 .eq('processo_cnj', item.cnj);
 
             if (error) {
