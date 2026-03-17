@@ -97,6 +97,7 @@ const OrganogramNode = React.memo(({
 
     const sortedSubordinates = [...subordinates]
         .filter(c => {
+            if (c.isSocio) return false; // Sócios are always roots, never subordinates visualised under another leader in the tree flow.
             if (activeTab === 'JURIDICO') return c.isJuridico;
             if (activeTab === 'ADMINISTRATIVO') return (c.isAdministrativo || hasAdministrativeSubordinates(c.id));
             return true;
@@ -449,7 +450,7 @@ export function Organograma() {
                 .map(c => {
                     const roleStr = typeof c.roles === 'object' ? (c.roles as any)?.name : (c.role as string);
                     const roleLower = String(roleStr || '').toLowerCase();
-                    const isSocio = roleLower.includes('sócio') || roleLower.includes('socio');
+                    const isSocio = roleLower.includes('sócio') || roleLower.includes('socio') || roleLower.includes('diretor financeiro');
                     const isJuridico = JURIDICO_HIERARCHY.some(h => roleLower.includes(h.toLowerCase())) ||
                         isSocio ||
                         roleLower.includes('advogado') ||
@@ -477,7 +478,7 @@ export function Organograma() {
                         photo_url: c.photo_url || c.foto_url,
                         foto_url: c.foto_url,
                         isJuridico: isJuridico && !explicitlyAdmin,
-                        isAdministrativo: !isJuridico || isSocio || explicitlyAdmin,
+                        isAdministrativo: !isJuridico || explicitlyAdmin,
                         isSocio,
                         fullData: c
                     };
@@ -643,10 +644,10 @@ export function Organograma() {
 
         const subs = subordinatesMap.get(leaderId) || [];
         for (const sub of subs) {
-            // If a direct subordinate is admin and not a socio, consider it
-            if (sub.isAdministrativo && !sub.isSocio) return true;
+            // Stop traversal if the subordinate is also a Sócio. They are their own root.
+            if (sub.isSocio) continue;
 
-            // Recursively check
+            if (sub.isAdministrativo) return true;
             if (hasAdministrativeSubordinates(sub.id, visited)) return true;
         }
         return false;
