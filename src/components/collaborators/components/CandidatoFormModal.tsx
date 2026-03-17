@@ -81,6 +81,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(initialFile || null)
 
     const [gedCategories] = useState([
+        { id: 'Cartão CNPJ', name: 'Cartão CNPJ' },
         { id: 'Certificado', name: 'Certificado' },
         { id: 'Currículo', name: 'Currículo' },
         { id: 'Entrevista', name: 'Entrevista' },

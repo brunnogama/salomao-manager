@@ -80,6 +80,7 @@ export default function AtualizacaoCadastral() {
     const [atestadoDatas, setAtestadoDatas] = useState({ inicio: '', fim: '' });
     const gedCategories = [
         { id: 'Atestado Médico', name: 'Atestado Médico' },
+        { id: 'Cartão CNPJ', name: 'Cartão CNPJ' },
         { id: 'Carteira de Trabalho (CTPS)', name: 'Carteira de Trabalho (CTPS)' },
         { id: 'Certidão de Nascimento/Casamento', name: 'Certidão de Nascimento/Casamento' },
         { id: 'Certificado de Escolaridade/Diploma', name: 'Certificado de Escolaridade/Diploma' },
