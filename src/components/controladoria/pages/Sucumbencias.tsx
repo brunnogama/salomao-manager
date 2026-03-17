@@ -345,23 +345,8 @@ export function Sucumbencias() {
                 return;
             }
 
-            // Manual Deduplication to avoid 400 Bad Request on Upsert
-            let existingHashes = new Set<string>();
-            try {
-                // Fetch all existing hashes to prevent duplicates without requiring a UNIQUE constraint
-                const { data: existingRecords, error } = await supabase
-                    .from('sucumbencias')
-                    .select('hash_id');
-                
-                if (!error && existingRecords) {
-                    existingRecords.forEach(r => {
-                        if (r.hash_id) existingHashes.add(r.hash_id);
-                    });
-                }
-            } catch (err) {
-                console.warn('Deduplication check error:', err);
-            }
-
+            // Usaremos a existingHashes (do bloco de cima da varredura principal)
+            
             // Generate payload filtering out existing hashes
             const payload = filteredResults.flatMap(item => 
                 item.andamentos.map(and => ({
