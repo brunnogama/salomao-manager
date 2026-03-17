@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, GripVertical, Calendar, Tag } from 'lucide-react';
+import { X, Plus, GripVertical, Calendar, Tag, Pencil } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -43,6 +43,7 @@ export function KanbanModal() {
   const [items, setItems] = useState<KanbanItem[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [newItem, setNewItem] = useState<Partial<KanbanItem>>({
     title: '',
     description: '',
@@ -109,6 +110,12 @@ export function KanbanModal() {
 
   // Removido bloqueio do scroll pois não é mais modal
 
+  const PRIORITY_WEIGHT: Record<Priority, number> = {
+    'ALTA': 3,
+    'MÉDIA': 2,
+    'BAIXA': 1,
+  };
+
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -120,10 +127,14 @@ export function KanbanModal() {
     // Duplicar os items
     const newItems = Array.from(items);
 
-    // Encontrar os index gerais dos items da lista baseada na coluna de origem
-    const sourceItems = newItems.filter(item => item.columnId === sourceCol);
+    // Encontrar os index gerais dos items da lista baseada na coluna de origem reordenada por prioridade
+    const sourceItems = newItems
+      .filter(item => item.columnId === sourceCol)
+      .sort((a, b) => PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority]);
     const draggedItem = sourceItems[sourceIndex];
     
+    if (!draggedItem) return;
+
     // Atualizar
     const realIndex = newItems.findIndex(i => i.id === draggedItem.id);
     
@@ -135,7 +146,9 @@ export function KanbanModal() {
       const [removed] = newItems.splice(realIndex, 1);
       
       // Encontrar a posição na nova lista geral
-      const destItems = newItems.filter(i => i.columnId === destCol);
+      const destItems = newItems
+        .filter(i => i.columnId === destCol)
+        .sort((a, b) => PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority]);
       
       if (destIndex >= destItems.length) {
          newItems.push(removed);
@@ -148,7 +161,10 @@ export function KanbanModal() {
       // Re-ordenar na mesma coluna
       const [removed] = newItems.splice(realIndex, 1);
       
-      const destItems = newItems.filter(i => i.columnId === destCol);
+      const destItems = newItems
+        .filter(i => i.columnId === destCol)
+        .sort((a, b) => PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority]);
+        
       if (destIndex >= destItems.length) {
          newItems.push(removed);
       } else {
@@ -165,16 +181,27 @@ export function KanbanModal() {
     e.preventDefault();
     if (!newItem.title) return;
 
-    const item: KanbanItem = {
-      id: crypto.randomUUID(),
-      title: newItem.title,
-      description: newItem.description || '',
-      date: newItem.date || new Date().toISOString().split('T')[0],
-      priority: newItem.priority as Priority,
-      columnId: newItem.columnId as ColumnId,
-    };
+    if (editingItemId) {
+      setItems(items.map(item => item.id === editingItemId ? {
+        ...item,
+        title: newItem.title!,
+        description: newItem.description || '',
+        date: newItem.date || '',
+        priority: newItem.priority as Priority,
+        columnId: newItem.columnId as ColumnId,
+      } : item));
+    } else {
+      const item: KanbanItem = {
+        id: crypto.randomUUID(),
+        title: newItem.title,
+        description: newItem.description || '',
+        date: newItem.date || new Date().toISOString().split('T')[0],
+        priority: newItem.priority as Priority,
+        columnId: newItem.columnId as ColumnId,
+      };
+      setItems([...items, item]);
+    }
 
-    setItems([...items, item]);
     setNewItem({
       title: '',
       description: '',
@@ -182,6 +209,7 @@ export function KanbanModal() {
       priority: 'MÉDIA'
     });
     setIsAdding(false);
+    setEditingItemId(null);
   };
 
   const deleteItem = (id: string) => {
@@ -191,7 +219,7 @@ export function KanbanModal() {
   const columns: ColumnId[] = ['fa-fazer', 'em-progresso', 'concluido'];
 
   return (
-    <div className="min-h-screen w-full flex bg-[#0a192f] p-4 sm:p-6 overflow-hidden">
+    <div className="h-full w-full flex flex-col bg-[#0a192f] p-4 sm:p-6 overflow-hidden min-h-0">
       {/* Container Principal */}
       <div className="bg-[#112240] w-full h-full rounded-3xl border border-white/10 shadow-2xl flex flex-col relative animate-in fade-in duration-300">
         
@@ -214,7 +242,9 @@ export function KanbanModal() {
             <div className="flex flex-col md:flex-row gap-6 h-full min-w-max md:min-w-0">
               
               {columns.map((colId) => {
-                const columnItems = items.filter(item => item.columnId === colId);
+                const columnItems = items
+                  .filter(item => item.columnId === colId)
+                  .sort((a, b) => PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority]);
                 const style = COLUMN_COLORS[colId];
 
                 return (
@@ -268,12 +298,26 @@ export function KanbanModal() {
                                       <h4 className="text-white font-bold text-sm leading-tight">
                                         {item.title}
                                       </h4>
-                                      <button
-                                        onClick={() => deleteItem(item.id)}
-                                        className="opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md transition-all shrink-0"
-                                      >
-                                        <X className="w-3.5 h-3.5" />
-                                      </button>
+                                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                          onClick={() => {
+                                            setNewItem(item);
+                                            setEditingItemId(item.id);
+                                            setIsAdding(true);
+                                          }}
+                                          className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-md transition-colors shrink-0 mr-1"
+                                          title="Editar"
+                                        >
+                                          <Pencil className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          onClick={() => deleteItem(item.id)}
+                                          className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md transition-colors shrink-0"
+                                          title="Excluir"
+                                        >
+                                          <X className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
                                     </div>
 
                                     {item.description && (
@@ -332,8 +376,10 @@ export function KanbanModal() {
       {/* Add Task Modal */}
       {isAdding && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[#112240] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl p-6 relative">
-            <h3 className="text-lg font-bold text-white mb-6">Nova Tarefa</h3>
+          <div className="bg-[#112240] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold text-white mb-6">
+              {editingItemId ? 'Editar Tarefa' : 'Nova Tarefa'}
+            </h3>
             
             <form onSubmit={handleAddItem} className="space-y-4">
               <div>
@@ -394,7 +440,10 @@ export function KanbanModal() {
               <div className="flex items-center justify-end gap-3 pt-4 mt-6 border-t border-white/5">
                 <button
                   type="button"
-                  onClick={() => setIsAdding(false)}
+                  onClick={() => {
+                    setIsAdding(false);
+                    setEditingItemId(null);
+                  }}
                   className="px-5 py-2.5 rounded-xl font-bold text-white/50 hover:text-white hover:bg-white/5 transition-colors"
                 >
                   Cancelar
@@ -404,8 +453,8 @@ export function KanbanModal() {
                   disabled={!newItem.title}
                   className="px-6 py-2.5 rounded-xl font-bold bg-[#d4af37] text-white hover:bg-amber-500 hover:shadow-lg hover:shadow-amber-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
                 >
-                  <Plus className="w-4 h-4" />
-                  Criar Tarefa
+                  {editingItemId ? null : <Plus className="w-4 h-4" />}
+                  {editingItemId ? 'Salvar Alterações' : 'Criar Tarefa'}
                 </button>
               </div>
             </form>

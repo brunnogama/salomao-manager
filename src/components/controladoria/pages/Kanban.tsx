@@ -32,6 +32,12 @@ const columns: Record<string, { id: string; title: string; color: string; accent
   done: { id: 'done', title: 'Concluído', color: 'bg-green-50', accent: 'bg-emerald-600' }
 };
 
+const PRIORITY_WEIGHT: Record<string, number> = {
+  'Alta': 3,
+  'Média': 2,
+  'Baixa': 1
+};
+
 export function Kanban() {
 
 
@@ -195,7 +201,7 @@ export function Kanban() {
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
+    <div className="flex flex-col h-full bg-gray-50 p-6 space-y-6 overflow-hidden min-h-0">
 
       {/* 1. Header - Salomão Design System */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
@@ -246,7 +252,16 @@ export function Kanban() {
           <div className="flex-1 overflow-x-auto overflow-y-hidden pb-4 custom-scrollbar">
             <div className="flex gap-6 h-full min-w-max">
               {Object.entries(columns).map(([columnId, column]) => {
-                const columnTasks = filteredTasks.filter(t => t.status === columnId);
+                const columnTasks = filteredTasks
+                  .filter(t => t.status === columnId)
+                  .sort((a, b) => {
+                    const wA = PRIORITY_WEIGHT[a.priority] || 0;
+                    const wB = PRIORITY_WEIGHT[b.priority] || 0;
+                    // Sort by priority descending
+                    if (wA !== wB) return wB - wA;
+                    // Fallback to original order/position
+                    return 0;
+                  });
 
                 return (
                   <div key={columnId} className="w-80 flex flex-col bg-gray-100/30 rounded-2xl border border-gray-200/60 max-h-full overflow-hidden">
