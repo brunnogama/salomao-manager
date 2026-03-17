@@ -51,74 +51,7 @@ interface FilteredSucumbencia {
     uf: string;
     status?: 'potencial' | 'prescrito' | 'descartado' | 'recebido' | 'verificado';
     andamentos: FiltragemAndamento[];
-    // Legacy fields for backward compatibility with localStorage caching
-    dataAndamento?: string;
-    descricao?: string;
-    tipoAndamento?: string;
-    subtipoAndamento?: string;
 }
-
-// --- IndexedDB Helper for Large Data Storage ---
-const DB_NAME = 'SalomaoStorageDB';
-const STORE_NAME = 'largeStateStore';
-
-// Tipagem para auxiliar o Typescript no handler do onupgradeneeded
-interface IDBVersionChangeEventTarget extends EventTarget {
-    result: IDBDatabase;
-}
-
-const initDB = (): Promise<IDBDatabase> => {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 1);
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result);
-        request.onupgradeneeded = (e) => {
-            const db = (e.target as IDBVersionChangeEventTarget).result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME);
-            }
-        };
-    });
-};
-
-const saveToIDB = async (key: string, data: any) => {
-    try {
-        const db = await initDB();
-        return new Promise<void>((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            const request = store.put(data, key);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-    } catch(e) { console.error('IDB Save Error:', e); }
-};
-
-const loadFromIDB = async (key: string): Promise<any> => {
-    try {
-        const db = await initDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const store = tx.objectStore(STORE_NAME);
-            const request = store.get(key);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    } catch(e) { console.error('IDB Load Error:', e); return null; }
-};
-
-const clearFromIDB = async (key: string) => {
-    try {
-        const db = await initDB();
-        return new Promise<void>((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            const request = store.delete(key);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-    } catch(e) { console.error('IDB Clear Error:', e); }
-};
 
 const HighlightText = ({ text, snippet = false }: { text: string; snippet?: boolean }) => {
     if (!text) return null;
@@ -183,36 +116,47 @@ export function Sucumbencias() {
     const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos' | 'descartados' | 'recebidos'>('potenciais');
     const [activeModalTab, setActiveModalTab] = useState(0);
 
-    // Sync from IndexedDB or migrate from LocalStorage on mount
-    useEffect(() => {
-        const legacyData = localStorage.getItem('@salomao:sucumbenciasData');
-        if (legacyData) {
-            try {
-                const parsed = JSON.parse(legacyData);
-                setImportedData(parsed);
-                if (parsed.length > 0) setHasImported(true);
-            } catch (error) {
-                console.error("Failed to parse legacy data from localStorage:", error);
-            }
-            localStorage.removeItem('@salomao:sucumbenciasData');
-        } else {
-            loadFromIDB('@salomao:sucumbenciasData').then(parsed => {
-                if (parsed && Array.isArray(parsed)) {
-                    setImportedData(parsed);
-                    if (parsed.length > 0) setHasImported(true);
+    const fetchSucumbencias = async () => {
+        try {
+            setLoading(true);
+            const { data, error } = await supabase.from('sucumbencias').select('*');
+            if (error) throw error;
+            
+            const groupedMap = new Map<string, FilteredSucumbencia>();
+            
+            (data || []).forEach((row: any) => {
+                if (!groupedMap.has(row.processo_cnj)) {
+                    groupedMap.set(row.processo_cnj, {
+                        id: `db-${row.processo_cnj}`,
+                        responsavel: row.responsavel || 'Não Informado',
+                        cnj: row.processo_cnj,
+                        uf: row.uf || '-',
+                        status: row.status as any,
+                        andamentos: []
+                    });
                 }
+                groupedMap.get(row.processo_cnj)!.andamentos.push({
+                    id: row.id,
+                    dataAndamento: row.data_andamento || '-',
+                    descricao: row.descricao || '',
+                    tipoAndamento: row.tipo_andamento || '',
+                    subtipoAndamento: row.subtipo_andamento || '',
+                });
             });
+            
+            const results = Array.from(groupedMap.values());
+            setImportedData(results);
+            setHasImported(results.length > 0);
+        } catch (error) {
+            console.error('Error fetching sucumbencias:', error);
+        } finally {
+            setLoading(false);
         }
-    }, []);
+    };
 
-    // Sync to IndexedDB when data changes
     useEffect(() => {
-        if (importedData.length > 0) {
-            saveToIDB('@salomao:sucumbenciasData', importedData);
-        } else if (hasImported === false && importedData.length === 0) {
-            clearFromIDB('@salomao:sucumbenciasData');
-        }
-    }, [importedData, hasImported]);
+        fetchSucumbencias();
+    }, []);
 
     // State that controls "Clear Data" confirmation modal
     const [isClearModalOpen, setIsClearModalOpen] = useState(false);
@@ -237,41 +181,25 @@ export function Sucumbencias() {
     }, [startDate, endDate]);
 
     // --- Supabase Actions ---
-    const handleAction = async (item: FilteredSucumbencia, status: 'verificado' | 'descartado' | 'recebido') => {
+    const handleAction = async (item: FilteredSucumbencia, status: 'verificado' | 'descartado' | 'recebido' | 'prescrito') => {
         try {
-            // Optimistically update the status instead of removing, so that the tabs (Descartados, Recebidos) can display them.
-            // Items with 'verificado' will just not match any tab filter and disappear from the UI unless we add a tab for them later.
-            const newList = importedData.map(d => {
-                if (d.id === item.id) {
-                    return { ...d, status };
-                }
-                return d;
-            });
-            setImportedData(newList);
+            // Optimistically update the status
+            setImportedData(prev => prev.map(d => d.id === item.id ? { ...d, status } : d));
 
-            // Insert into Supabase (all andamentos for this CNJ)
-            const payload = item.andamentos.map(and => ({
-                processo_cnj: item.cnj,
-                responsavel: item.responsavel,
-                uf: item.uf,
-                data_andamento: and.dataAndamento,
-                tipo_andamento: and.tipoAndamento,
-                subtipo_andamento: and.subtipoAndamento,
-                descricao: and.descricao,
-                status: status,
-                // Generate a simple hash to prevent re-importing the exactly same text for that process
-                hash_id: `${item.cnj}-${and.descricao.substring(0, 50).replace(/\s/g, '')}`.toLowerCase()
-            }));
-
-            const { error } = await supabase.from('sucumbencias').insert(payload);
+            // Update in Supabase
+            const { error } = await supabase
+                .from('sucumbencias')
+                .update({ status })
+                .eq('processo_cnj', item.cnj);
 
             if (error) {
-                // If it fails (e.g., duplicate hash), it's fine, we already removed it from view anyway
-                console.warn('Supabase Insert Warning:', error.message);
+                console.warn('Supabase Update Warning:', error.message);
+                alert('Aviso: Erro ao salvar alteração no banco.');
+                fetchSucumbencias(); // Revert on failure
             }
         } catch (error) {
             console.error('Action error:', error);
-            alert('Erro ao salvar no banco de dados.');
+            alert('Erro ao atualizar no banco de dados.');
         }
     };
 
@@ -417,12 +345,32 @@ export function Sucumbencias() {
                 return;
             }
 
-            setImportedData(filteredResults);
-            setHasImported(true);
+            // Insert potentials to Supabase
+            const payload = filteredResults.flatMap(item => 
+                item.andamentos.map(and => ({
+                    processo_cnj: item.cnj,
+                    responsavel: item.responsavel,
+                    uf: item.uf,
+                    data_andamento: and.dataAndamento,
+                    tipo_andamento: and.tipoAndamento,
+                    subtipo_andamento: and.subtipoAndamento,
+                    descricao: and.descricao,
+                    status: 'potencial',
+                    hash_id: `${item.cnj}-${and.descricao.substring(0, 50).replace(/\s/g, '')}`.toLowerCase()
+                }))
+            );
+
+            // Use chunking for insert
+            const chunkSize = 100;
+            for (let i = 0; i < payload.length; i += chunkSize) {
+                const chunk = payload.slice(i, i + chunkSize);
+                await supabase.from('sucumbencias').upsert(chunk, { onConflict: 'hash_id', ignoreDuplicates: true });
+            }
+
+            await fetchSucumbencias();
         } catch (error) {
             console.error('Error parsing file:', error);
             alert('Erro ao processar o arquivo. Verifique se é uma planilha válida do LegalOne.');
-        } finally {
             setLoading(false);
         }
     };
@@ -483,7 +431,7 @@ export function Sucumbencias() {
     const uniqueResponsaveis = Array.from(new Set(importedData.map(d => d.responsavel))).sort();
 
     const handleMarkAsPrescrito = (item: FilteredSucumbencia) => {
-        setImportedData(prev => prev.map(d => d.id === item.id ? { ...d, status: 'prescrito' } : d));
+        handleAction(item, 'prescrito');
         if (selectedItem?.id === item.id) {
             setSelectedItem(null);
         }
@@ -724,11 +672,11 @@ export function Sucumbencias() {
                                                             <td className="p-4 text-center text-xs text-gray-500 font-semibold">
                                                                 {row.andamentos?.length > 1 ? (
                                                                     <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md border border-blue-100 font-bold">{row.andamentos.length} andamentos</span>
-                                                                ) : row.andamentos?.[0]?.dataAndamento || row.dataAndamento || '-'}
+                                                                ) : row.andamentos?.[0]?.dataAndamento || '-'}
                                                             </td>
                                                             <td className="p-4">
                                                                 <div className="text-xs text-gray-600 line-clamp-2 max-w-lg leading-relaxed" title="Clique para ler a decisão completa">
-                                                                    <HighlightText text={row.andamentos?.[0]?.descricao || row.descricao || ''} snippet={true} />
+                                                                    <HighlightText text={row.andamentos?.[0]?.descricao || ''} snippet={true} />
                                                                 </div>
                                                             </td>
                                                             <td className="p-4 text-center">
@@ -824,11 +772,16 @@ export function Sucumbencias() {
                                         <button
                                             type="button"
                                             className="inline-flex w-full justify-center rounded-xl bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 text-sm font-semibold text-white shadow-md hover:from-red-500 hover:to-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 sm:w-auto transition-all"
-                                            onClick={() => {
-                                                setHasImported(false);
-                                                setImportedData([]);
-                                                localStorage.removeItem('@salomao:sucumbenciasData');
+                                            onClick={async () => {
                                                 setIsClearModalOpen(false);
+                                                setLoading(true);
+                                                try {
+                                                    await supabase.from('sucumbencias').delete().eq('status', 'potencial');
+                                                    await fetchSucumbencias();
+                                                } catch(e) {
+                                                    console.error('Error clearing base:', e);
+                                                    setLoading(false);
+                                                }
                                             }}
                                         >
                                             Sim, Limpar Tudo
