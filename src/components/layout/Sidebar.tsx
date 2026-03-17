@@ -7,7 +7,6 @@ import {
   DollarSign,
   BarChart3,
   Users,
-  KanbanSquare,
   FolderOpen,
   Share2,
   ShieldCheck,
@@ -42,7 +41,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { label: 'Jurimetria', path: '/controladoria/jurimetria', icon: Share2 },
     { label: 'Volumetria', path: '/controladoria/volumetria', icon: BarChart3 },
     { label: 'Clientes', path: '/controladoria/clientes', icon: Users },
-    { label: 'Kanban', path: '/controladoria/kanban', icon: KanbanSquare },
     { label: 'GED', path: '/controladoria/ged', icon: FolderOpen },
   ];
 
