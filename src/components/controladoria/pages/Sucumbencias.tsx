@@ -624,7 +624,7 @@ export function Sucumbencias() {
                             onClick={() => setActiveTab('recebidos')}
                             className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'recebidos' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <span className="hidden sm:inline">Recebidos</span>
+                            <span className="hidden sm:inline">Já Pagos</span>
                             <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'recebido').length}</span>
                         </button>
                         <button
@@ -847,7 +847,7 @@ export function Sucumbencias() {
                                                                     <button 
                                                                         onClick={(e) => { e.stopPropagation(); handleAction(row, 'recebido'); }}
                                                                         className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded transition-colors border border-emerald-200"
-                                                                        title="Marcar como Recebido"
+                                                                        title="Marcar como Pago"
                                                                     >
                                                                         <Wallet className="w-4 h-4" />
                                                                     </button>
@@ -1118,7 +1118,7 @@ export function Sucumbencias() {
                                     className="px-4 py-2 bg-emerald-50 hover:bg-emerald-600 border border-emerald-200 hover:border-emerald-600 text-emerald-700 hover:text-white font-bold tracking-wide rounded-xl transition-all text-xs flex items-center gap-2 shadow-sm"
                                 >
                                     <Wallet className="w-4 h-4" />
-                                    Recebido
+                                    Pago
                                 </button>
                                 <button 
                                     onClick={() => handleActionFromModal(selectedItem, 'aguardando')}
