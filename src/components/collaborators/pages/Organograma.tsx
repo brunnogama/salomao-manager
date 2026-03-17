@@ -789,7 +789,7 @@ export function Organograma() {
     }, []);
 
     // Optimized lookups: Map of LeaderId -> List of Subordinates
-    const subordinatesMap = useMemo(() => {
+    const rawSubordinatesMap = useMemo(() => {
         const map = new Map<string | null, ColaboradorCard[]>();
         data.forEach(c => {
             const lid = c.leader_id || null;
@@ -799,27 +799,55 @@ export function Organograma() {
         return map;
     }, [data]);
 
-
-
     // Helper to check if a node or any of its descendants have administrative subordinates
+    // Also respects the `selectedAtuacao` filter if active.
     const hasAdministrativeSubordinates = useCallback((leaderId: string, visited = new Set<string>()): boolean => {
         if (visited.has(leaderId)) return false; // Cycle protection
         visited.add(leaderId);
 
-        const subs = subordinatesMap.get(leaderId) || [];
+        const subs = rawSubordinatesMap.get(leaderId) || [];
         for (const sub of subs) {
-            // Stop traversal if the subordinate is also a Sócio. They are their own root.
             if (sub.isSocio) continue;
 
-            // Only count as true administrative subordinate if they explicitly have an Atuação or are explicitly known as Admin,
-            // avoiding false positives from people with blank roles that default to "not juridico = admin".
              const isTrulyAdmin = sub.isAdministrativo && (sub.atuacao.trim().length > 0 || sub.role.trim().length > 0);
+             
+             // Check Atuacao filter match
+             const matchesAtuacao = activeTab === 'ADMINISTRATIVO' && selectedAtuacao !== 'ALL' 
+                                    ? sub.atuacao === selectedAtuacao 
+                                    : true;
 
-            if (isTrulyAdmin) return true;
+            if (isTrulyAdmin && matchesAtuacao) return true;
             if (hasAdministrativeSubordinates(sub.id, visited)) return true;
         }
         return false;
-    }, [subordinatesMap]);
+    }, [rawSubordinatesMap, activeTab, selectedAtuacao]);
+
+    // Create the final subordinates map used by the render tree.
+    // If in Admin tab with an Atuação selected, we only keep subordinates that EITHER match the Atuação OR have descendants that match it.
+    const subordinatesMap = useMemo(() => {
+        if (activeTab !== 'ADMINISTRATIVO' || selectedAtuacao === 'ALL') {
+            return rawSubordinatesMap;
+        }
+
+        const filteredMap = new Map<string | null, ColaboradorCard[]>();
+        
+        // Helper to check if a specific node should be kept
+        const shouldKeepNode = (colab: ColaboradorCard): boolean => {
+            if (colab.isSocio) return true; // Keep partners
+            if (colab.atuacao === selectedAtuacao) return true; // Direct match
+            // Check if any descendants match
+            return hasAdministrativeSubordinates(colab.id);
+        };
+
+        rawSubordinatesMap.forEach((subs, leaderId) => {
+            const keptSubs = subs.filter(shouldKeepNode);
+            if (keptSubs.length > 0) {
+                filteredMap.set(leaderId, keptSubs);
+            }
+        });
+
+        return filteredMap;
+    }, [rawSubordinatesMap, activeTab, selectedAtuacao, hasAdministrativeSubordinates]);
 
     // Get Top Level Nodes (Partners or those explicitly set as top)
     const topLevelNodes = useMemo(() => {
