@@ -50,6 +50,9 @@ interface FilteredSucumbencia {
     responsavel: string;
     cnj: string;
     uf: string;
+    cliente?: string;
+    posicao_cliente?: string;
+    contrario?: string;
     status?: 'potencial' | 'prescrito' | 'descartado' | 'recebido' | 'verificado';
     andamentos: FiltragemAndamento[];
 }
@@ -178,6 +181,9 @@ export function Sucumbencias() {
                         responsavel: row.responsavel || 'Não Informado',
                         cnj: row.processo_cnj,
                         uf: row.uf || '-',
+                        cliente: row.cliente || '',
+                        posicao_cliente: row.posicao_cliente || '',
+                        contrario: row.contrario || '',
                         status: row.status as any,
                         andamentos: []
                     });
@@ -380,6 +386,9 @@ export function Sucumbencias() {
                                 responsavel: row['Responsável principal'] || 'Não Informado',
                                 cnj: cnjLabel,
                                 uf: row['UF'] || '-',
+                                cliente: String(row['Cliente principal'] || '').substring(0, 254),
+                                posicao_cliente: String(row['Posição do cliente principal'] || '').substring(0, 254),
+                                contrario: String(row['Contrário(s) principal(is)'] || '').substring(0, 254),
                                 status: 'potencial',
                                 andamentos: []
                             });
@@ -412,6 +421,9 @@ export function Sucumbencias() {
                     processo_cnj: String(item.cnj || 'Sem Número').substring(0, 254),
                     responsavel: String(item.responsavel || 'Não Informado').substring(0, 254),
                     uf: getUfInitials(item.uf),
+                    cliente: item.cliente,
+                    posicao_cliente: item.posicao_cliente,
+                    contrario: item.contrario,
                     data_andamento: String(and.dataAndamento || '-').substring(0, 49),
                     tipo_andamento: String(and.tipoAndamento || '').substring(0, 254),
                     subtipo_andamento: String(and.subtipoAndamento || '').substring(0, 254),
@@ -936,6 +948,20 @@ export function Sucumbencias() {
                         )}
 
                         <div className="p-6 overflow-y-auto bg-gray-50 flex-1">
+                            
+                            <div className="flex gap-4 mb-3">
+                                <div className="flex-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center text-center">
+                                    <span className="block text-[10px] uppercase font-black tracking-widest text-[#1e3a8a] opacity-80 mb-1">Cliente ({selectedItem.posicao_cliente || '-'})</span>
+                                    <span className="text-sm font-bold text-[#0a192f]">{selectedItem.cliente || '-'}</span>
+                                </div>
+                                <div className="flex-[0.2] flex items-center justify-center">
+                                    <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 border border-red-100 flex items-center justify-center font-black italic shadow-inner">VS</div>
+                                </div>
+                                <div className="flex-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center text-center">
+                                    <span className="block text-[10px] uppercase font-black tracking-widest text-red-700 opacity-80 mb-1">Parte Contrária</span>
+                                    <span className="text-sm font-bold text-[#0a192f]">{selectedItem.contrario || '-'}</span>
+                                </div>
+                            </div>
                             
                             <div className="flex gap-4 mb-6">
                                 <div className="flex-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
