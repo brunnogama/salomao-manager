@@ -345,7 +345,24 @@ export function Sucumbencias() {
                 return;
             }
 
-            // Insert potentials to Supabase
+            // Manual Deduplication to avoid 400 Bad Request on Upsert
+            let existingHashes = new Set<string>();
+            try {
+                // Fetch all existing hashes to prevent duplicates without requiring a UNIQUE constraint
+                const { data: existingRecords, error } = await supabase
+                    .from('sucumbencias')
+                    .select('hash_id');
+                
+                if (!error && existingRecords) {
+                    existingRecords.forEach(r => {
+                        if (r.hash_id) existingHashes.add(r.hash_id);
+                    });
+                }
+            } catch (err) {
+                console.warn('Deduplication check error:', err);
+            }
+
+            // Generate payload filtering out existing hashes
             const payload = filteredResults.flatMap(item => 
                 item.andamentos.map(and => ({
                     processo_cnj: item.cnj,
@@ -358,13 +375,15 @@ export function Sucumbencias() {
                     status: 'potencial',
                     hash_id: `${item.cnj}-${and.descricao.substring(0, 50).replace(/\s/g, '')}`.toLowerCase()
                 }))
-            );
+            ).filter(item => !existingHashes.has(item.hash_id));
 
-            // Use chunking for insert
-            const chunkSize = 100;
-            for (let i = 0; i < payload.length; i += chunkSize) {
-                const chunk = payload.slice(i, i + chunkSize);
-                await supabase.from('sucumbencias').upsert(chunk, { onConflict: 'hash_id', ignoreDuplicates: true });
+            if (payload.length > 0) {
+                // Use chunking for insert
+                const chunkSize = 100;
+                for (let i = 0; i < payload.length; i += chunkSize) {
+                    const chunk = payload.slice(i, i + chunkSize);
+                    await supabase.from('sucumbencias').insert(chunk);
+                }
             }
 
             await fetchSucumbencias();
