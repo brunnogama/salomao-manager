@@ -255,72 +255,109 @@ const OrganogramNode = React.memo(({
                                     ))}
                                 </div>
                             );
-                        })() : activeTab === 'ADMINISTRATIVO' ? (() => {
-                            // ADMINISTRATIVO: Group subordinates by Atuação
-                            const atuacaoGroups = new Map<string, ColaboradorCard[]>();
+                        })() : colab.isSocio && activeTab === 'ADMINISTRATIVO' ? (() => {
+                            // ADMINISTRATIVO Sócio: Group subordinates by Local, then by Atuação
+                            const localGroups = new Map<string, ColaboradorCard[]>();
                             sortedSubordinates.forEach(sub => {
-                                const key = sub.atuacao || 'Sem Atuação';
-                                if (!atuacaoGroups.has(key)) atuacaoGroups.set(key, []);
-                                atuacaoGroups.get(key)!.push(sub);
+                                const key = sub.local || 'Sem Local';
+                                if (!localGroups.has(key)) localGroups.set(key, []);
+                                localGroups.get(key)!.push(sub);
                             });
-                            const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+                            const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
                             return (
-                                <div className="flex justify-center relative pt-4 w-full">
-                                    {atuacaoEntries.map(([atuacaoName, atuacaoColabs], locIdx) => (
-                                        <div key={atuacaoName} className={`relative flex flex-col items-center ${atuacaoEntries.length > 5 ? 'px-1' : 'px-6'}`}>
-                                            {/* Per-Atuação horizontal segment */}
-                                            {atuacaoEntries.length > 1 && (
-                                                <div className="absolute h-[2px] bg-gray-300" style={{
-                                                    top: '-1rem',
-                                                    left: locIdx === 0 ? '50%' : '0',
-                                                    right: locIdx === atuacaoEntries.length - 1 ? '50%' : '0'
-                                                }}></div>
-                                            )}
-                                            {/* Vertical stub up */}
-                                            <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                <div className="flex justify-center relative pt-4 w-full gap-x-8">
+                                    {localEntries.map(([localName, localColabs], locIdx) => {
+                                        // Then group by Atuacao
+                                        const atuacaoGroups = new Map<string, ColaboradorCard[]>();
+                                        localColabs.forEach(sub => {
+                                            const key = sub.atuacao || 'Sem Atuação';
+                                            if (!atuacaoGroups.has(key)) atuacaoGroups.set(key, []);
+                                            atuacaoGroups.get(key)!.push(sub);
+                                        });
+                                        const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
-                                            {/* Atuação Label */}
-                                            <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-gray-700 font-black px-6 py-2.5 rounded-[1.25rem] shadow-sm mb-2 flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-[#1e3a8a]"></div>
-                                                <span className="text-[11px] uppercase tracking-[0.2em]">{atuacaoName}</span>
-                                            </div>
-
-                                            {/* Vertical line from Atuação label to collaborators */}
-                                            <div className="w-[2px] h-6 bg-gray-300"></div>
-
-                                            {/* Collaborators under this Atuação */}
-                                            <div className="flex justify-center relative pt-4">
-                                                {atuacaoColabs.map((sub, idx) => (
-                                                    <div key={sub.id} className={`relative flex flex-col items-center ${atuacaoColabs.length > 8 ? 'px-0' : atuacaoColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
-                                                        {/* Per-child horizontal segment */}
-                                                        {atuacaoColabs.length > 1 && (
-                                                            <div className="absolute h-[2px] bg-gray-300" style={{
-                                                                top: '-1rem',
-                                                                left: idx === 0 ? '50%' : '0',
-                                                                right: idx === atuacaoColabs.length - 1 ? '50%' : '0'
-                                                            }}></div>
-                                                        )}
-                                                        {/* Vertical stub up */}
-                                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
-                                                        <div style={{
-                                                            transform: atuacaoColabs.length > 12 ? 'scale(0.8)' : atuacaoColabs.length > 8 ? 'scale(0.85)' : atuacaoColabs.length > 5 ? 'scale(0.95)' : 'scale(1)',
-                                                            transformOrigin: 'top center'
-                                                        }}>
-                                                            <OrganogramNode
-                                                                colab={sub}
-                                                                context={context}
-                                                                visitedIds={nextVisited}
-                                                                level={level + 1}
-                                                                isDense={atuacaoColabs.length > 5 && atuacaoColabs.length <= 8}
-                                                                isSuperDense={atuacaoColabs.length > 8}
-                                                            />
+                                        return (
+                                            <div key={localName} className={`relative flex flex-col items-center ${localEntries.length > 5 ? 'px-1' : 'px-6'}`}>
+                                                {/* Per-local horizontal segment */}
+                                                {localEntries.length > 1 && (
+                                                    <div className="absolute h-[2px] bg-gray-300" style={{
+                                                        top: '-1rem',
+                                                        left: locIdx === 0 ? '50%' : '0',
+                                                        right: locIdx === localEntries.length - 1 ? '50%' : '0'
+                                                    }}></div>
+                                                )}
+                                                {/* Vertical stub up */}
+                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+    
+                                                {/* Local Label */}
+                                                <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-6 relative z-10 w-max">
+                                                    <span className="text-[10px] font-black uppercase tracking-[0.15em]">{localName}</span>
+                                                </div>
+    
+                                                {/* Atuação Level */}
+                                                <div className="flex justify-center relative pt-4 w-full">
+                                                    {/* Central drop line from Local Label down to the Atuação horizontal branch */}
+                                                    <div className="absolute top-[-1.5rem] left-1/2 w-[2px] h-6 bg-gray-300 -translate-x-1/2"></div>
+                                                    
+                                                    {atuacaoEntries.map(([atuacaoName, atuacaoColabs], atuIdx) => (
+                                                        <div key={atuacaoName} className={`relative flex flex-col items-center ${atuacaoEntries.length > 5 ? 'px-1' : 'px-6'}`}>
+                                                            {/* Per-Atuação horizontal segment */}
+                                                            {atuacaoEntries.length > 1 && (
+                                                                <div className="absolute h-[2px] bg-gray-300" style={{
+                                                                    top: '-1rem',
+                                                                    left: atuIdx === 0 ? '50%' : '0',
+                                                                    right: atuIdx === atuacaoEntries.length - 1 ? '50%' : '0'
+                                                                }}></div>
+                                                            )}
+                                                            {/* Vertical stub up for Atuacao */}
+                                                            <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                
+                                                            {/* Atuação Label */}
+                                                            <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-gray-700 font-black px-6 py-2.5 rounded-[1.25rem] shadow-sm mb-2 flex items-center gap-2 relative z-10 w-max">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-[#1e3a8a]"></div>
+                                                                <span className="text-[11px] uppercase tracking-[0.2em]">{atuacaoName}</span>
+                                                            </div>
+                
+                                                            {/* Vertical line from Atuação label to collaborators */}
+                                                            <div className="w-[2px] h-6 bg-gray-300"></div>
+                
+                                                            {/* Collaborators under this Atuação */}
+                                                            <div className="flex justify-center relative pt-4">
+                                                                {atuacaoColabs.map((sub, idx) => (
+                                                                    <div key={sub.id} className={`relative flex flex-col items-center ${atuacaoColabs.length > 8 ? 'px-0' : atuacaoColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
+                                                                        {/* Per-child horizontal segment */}
+                                                                        {atuacaoColabs.length > 1 && (
+                                                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                                                top: '-1rem',
+                                                                                left: idx === 0 ? '50%' : '0',
+                                                                                right: idx === atuacaoColabs.length - 1 ? '50%' : '0'
+                                                                            }}></div>
+                                                                        )}
+                                                                        {/* Vertical stub up */}
+                                                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                                                        <div style={{
+                                                                            transform: atuacaoColabs.length > 12 ? 'scale(0.8)' : atuacaoColabs.length > 8 ? 'scale(0.85)' : atuacaoColabs.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                                                            transformOrigin: 'top center'
+                                                                        }}>
+                                                                            <OrganogramNode
+                                                                                colab={sub}
+                                                                                context={context}
+                                                                                visitedIds={nextVisited}
+                                                                                level={level + 1}
+                                                                                isDense={atuacaoColabs.length > 5 && atuacaoColabs.length <= 8}
+                                                                                isSuperDense={atuacaoColabs.length > 8}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             );
                         })() : (
