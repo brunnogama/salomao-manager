@@ -647,7 +647,11 @@ export function Organograma() {
             // Stop traversal if the subordinate is also a Sócio. They are their own root.
             if (sub.isSocio) continue;
 
-            if (sub.isAdministrativo) return true;
+            // Only count as true administrative subordinate if they explicitly have an Atuação or are explicitly known as Admin,
+            // avoiding false positives from people with blank roles that default to "not juridico = admin".
+             const isTrulyAdmin = sub.isAdministrativo && (sub.atuacao.trim().length > 0 || sub.role.trim().length > 0);
+
+            if (isTrulyAdmin) return true;
             if (hasAdministrativeSubordinates(sub.id, visited)) return true;
         }
         return false;
@@ -656,11 +660,8 @@ export function Organograma() {
     // Get Top Level Nodes (Partners or those explicitly set as top)
     const topLevelNodes = useMemo(() => {
         return data.filter(c => {
-            const roleStr = String(c.role || '');
-            const isSocio = roleStr.toLowerCase().includes('sócio');
-
-            // Sócios are always top level
-            if (isSocio) return true;
+            // Use the globally constructed isSocio mapping, which already considers Diretor Financeiro (Felipe)
+            if (c.isSocio) return true;
             
             // Otherwise, they're top level if they have no leader
             return !c.leader_id;
@@ -671,7 +672,13 @@ export function Organograma() {
     const roots = useMemo(() => {
         return topLevelNodes.filter(c => {
             if (activeTab === 'JURIDICO') return c.isJuridico;
-            if (activeTab === 'ADMINISTRATIVO') return (c.isAdministrativo || hasAdministrativeSubordinates(c.id));
+            if (activeTab === 'ADMINISTRATIVO') {
+                // Felipe (Diretor Financeiro) is explicitly the primary Sócio for Administrativo
+                if (c.id === 'COL - 0002' || c.name.toLowerCase().includes('felipe dornelas')) return true;
+                
+                // Allow Jurídico partners to appear ONLY if they verifiably hold administrative subordinates down their specific chain
+                return hasAdministrativeSubordinates(c.id);
+            }
             return false;
         });
     }, [topLevelNodes, activeTab, hasAdministrativeSubordinates]);
