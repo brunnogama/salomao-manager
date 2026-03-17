@@ -504,6 +504,15 @@ export function Sucumbencias() {
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 animate-in fade-in duration-500">
+            {/* Input de Arquivo Global (Oculto) mantido na raiz do dom para que os botões de upload sempre tenham acesso ao ref, independente do estado da tela */}
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                accept=".xlsx, .xls, .csv" 
+                className="hidden" 
+            />
+
             {/* Header com Título, Abas e Botões de Ação Principais */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center gap-3 sm:gap-4">
@@ -673,14 +682,6 @@ export function Sucumbencias() {
                                     <p className="text-sm text-gray-500 max-w-md mb-8 leading-relaxed">
                                         Para identificar as sucumbências a receber, envie a planilha exportada do <strong className="text-gray-700">LegalOne</strong> (Andamentos / Publicações). O sistema irá filtrar automaticamente os registros pertinentes.
                                     </p>
-                                    
-                                    <input 
-                                        type="file" 
-                                        ref={fileInputRef} 
-                                        onChange={handleFileUpload} 
-                                        accept=".xlsx, .xls, .csv" 
-                                        className="hidden" 
-                                    />
                                     
                                     <button 
                                         onClick={() => fileInputRef.current?.click()}
