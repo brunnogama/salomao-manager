@@ -11,7 +11,12 @@ Quando `transition-all` do Tailwind inclui `transform` ou `filter` nas `transiti
 
 Mesmo com a correção do `transition-all` já aplicada, **todo modal DEVE usar `createPortal`** como proteção contra regressões futuras.
 
-## Regra
+## Regra Principal Absoluta
+
+> "Salve essa instrução abaixo na memória e SEMPRE adote quando criarmos janelas modais:
+> 1. Importei a função createPortal nativa do React.
+> 2. Envolvi todo o XML da Janela de Detalhes com ela e conectei ao document.body invés de renderizar em árvore."
+— *Diretiva do Fundador*
 
 **Todo modal que use `position: fixed` (ou `fixed inset-0`) DEVE ser renderizado via `createPortal(jsx, document.body)`.**
 
