@@ -348,7 +348,7 @@ export function Sucumbencias() {
             // Usaremos a existingHashes (do bloco de cima da varredura principal)
             
             // Generate payload filtering out existing hashes
-            const payload = filteredResults.flatMap(item => 
+            const rawPayload = filteredResults.flatMap(item => 
                 item.andamentos.map(and => ({
                     processo_cnj: item.cnj,
                     responsavel: item.responsavel,
@@ -361,6 +361,15 @@ export function Sucumbencias() {
                     hash_id: `${item.cnj}-${and.descricao.substring(0, 50).replace(/\s/g, '')}`.toLowerCase()
                 }))
             ).filter(item => !existingHashes.has(item.hash_id));
+
+            // Deduplicate within the payload itself to prevent 409/400 conflicts
+            const uniquePayloadMap = new Map();
+            rawPayload.forEach(item => {
+                if (!uniquePayloadMap.has(item.hash_id)) {
+                    uniquePayloadMap.set(item.hash_id, item);
+                }
+            });
+            const payload = Array.from(uniquePayloadMap.values());
 
             if (payload.length > 0) {
                 // Use chunking for insert
