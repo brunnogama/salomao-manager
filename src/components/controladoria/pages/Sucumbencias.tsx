@@ -573,13 +573,23 @@ export function Sucumbencias() {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
                     
                     {/* Card de Quantidade (Pequeno) */}
-                    <div className="flex items-center gap-3 bg-[#f8fafc] px-4 py-2 rounded-lg border border-gray-100 shrink-0">
-                        <div className="p-1.5 bg-blue-100/50 rounded-md">
-                            <Award className="w-4 h-4 text-blue-600" />
+                    <div className="flex items-center gap-4 bg-[#f8fafc] px-4 py-2 rounded-lg border border-gray-100 shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="p-1.5 bg-blue-100/50 rounded-md">
+                                <Award className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-blue-900 uppercase tracking-widest opacity-60">Processos Ativos</span>
+                                <span className="text-sm font-bold text-[#0a192f] leading-tight">{tabFilteredData.length}</span>
+                            </div>
                         </div>
+                        <div className="w-px h-8 bg-gray-200"></div>
                         <div className="flex flex-col">
-                            <span className="text-[9px] font-black text-blue-900 uppercase tracking-widest opacity-60">Processos Ativos</span>
-                            <span className="text-sm font-bold text-[#0a192f] leading-tight">{tabFilteredData.length}</span>
+                            <span className="text-[9px] font-black text-blue-900 uppercase tracking-widest opacity-60">Andamentos</span>
+                            <span className="text-sm font-bold text-[#0a192f] leading-tight flex items-baseline gap-1">
+                                {tabFilteredData.reduce((acc, curr) => acc + curr.andamentos.length, 0)}
+                                <span className="text-[9px] font-normal text-gray-400">eventos agrupados</span>
+                            </span>
                         </div>
                     </div>
 
