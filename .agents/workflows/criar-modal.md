@@ -19,6 +19,7 @@ Mesmo com a correção do `transition-all` já aplicada, **todo modal DEVE usar 
 — *Diretiva do Fundador*
 
 **Todo modal que use `position: fixed` (ou `fixed inset-0`) DEVE ser renderizado via `createPortal(jsx, document.body)`.**
+Além disso, **todo modal DEVE poder ser fechado pelo usuário ao pressionar a tecla `ESC` (Escape)** nativamente.
 
 Isso garante que o modal é inserido diretamente no `<body>`, fora da árvore de componentes do React e fora de qualquer containing block CSS.
 
@@ -70,3 +71,4 @@ return createPortal(
 - [ ] Usou `fixed inset-0` no backdrop
 - [ ] Definiu `z-index` apropriado
 - [ ] Testou que o backdrop cobre 100% do viewport (sem barra branca no topo)
+- [ ] **Modal pode ser fechado pressionando a tecla `ESC` (Escape)**
