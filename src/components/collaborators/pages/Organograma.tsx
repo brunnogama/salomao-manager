@@ -122,122 +122,139 @@ const OrganogramNode = React.memo(({
         }
     }
 
-    // INTERCEPT: If rendering Felipe Dornelas for the Administrativo tab, spawn multiple Virtual Roots side-by-side (one for each Atuação)
+    // INTERCEPT: If rendering Felipe Dornelas for the Administrativo tab, spawn a single root and filter by Active Atuação
     const isFelipe = colab.id === 'COL - 0002' || colab.name.toLowerCase().includes('felipe dornelas');
     if (colab.isSocio && context.activeTab === 'ADMINISTRATIVO' && isFelipe) {
-        const atuacaoGroups = new Map<string, ColaboradorCard[]>();
-        sortedSubordinates.forEach(sub => {
-            const key = sub.atuacao || 'Sem Atuação';
-            if (!atuacaoGroups.has(key)) atuacaoGroups.set(key, []);
-            atuacaoGroups.get(key)!.push(sub);
+        
+        // 1. Filter Subordinates by Selected Atuação
+        const filteredSubs = sortedSubordinates.filter(sub => {
+            if (context.selectedAtuacao === 'ALL') return true;
+            return sub.atuacao === context.selectedAtuacao;
         });
-        const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+        // 2. Group by Local
+        const localGroups = new Map<string, ColaboradorCard[]>();
+        filteredSubs.forEach(sub => {
+            const key = sub.local || 'Sem Local';
+            if (!localGroups.has(key)) localGroups.set(key, []);
+            localGroups.get(key)!.push(sub);
+        });
+        const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
         return (
-            <div className={`flex justify-center gap-x-16 w-full transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
-                {atuacaoEntries.map(([atuName, atuColabs], atuIdx) => {
-                    const localGroups = new Map<string, ColaboradorCard[]>();
-                    atuColabs.forEach(sub => {
-                        const key = sub.local || 'Sem Local';
-                        if (!localGroups.has(key)) localGroups.set(key, []);
-                        localGroups.get(key)!.push(sub);
-                    });
-                    const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-
-                    const virtualDropId = `root:${colab.id}:${atuName}`;
-
-                    return (
-                        <div key={atuName} className="relative flex flex-col items-center">
-                            
-                            {/* 1. Cloned Sócio Card for this Atuação */}
-                            <div className="flex flex-col items-center z-20">
-                                <Droppable droppableId={virtualDropId} type="COLAB">
-                                    {(provided, snapshot) => (
-                                        <div ref={provided.innerRef} {...provided.droppableProps} className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[190px]' : isDense ? 'w-[220px]' : 'w-[240px]'}`}>
-                                            <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
-                                            <Draggable draggableId={virtualDropId} index={0} isDragDisabled={true}>
-                                                {(dragProvided) => (
-                                                    <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className="flex flex-col items-center w-full" onClick={() => context.setSelectedColabForModal(colab.fullData)}>
-                                                        <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-[#1e3a8a]/30 cursor-pointer`}>
-                                                            {colab.photo_url ? (
-                                                                <img src={colab.photo_url} alt={colab.name} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
-                                                                    <UserIcon className={isSuperDense ? 'w-6 h-6' : isDense ? 'w-8 h-8' : 'w-10 h-10'} />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
-                                                            <div>
-                                                                <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{colab.name}</h4>
-                                                                <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{roleStr}</span>
-                                                            </div>
-                                                        </div>
+            <div className={`flex flex-col items-center w-full transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
+               
+                {/* 1. Single Sócio Card for Felipe */}
+                <div className="flex flex-col items-center z-20">
+                    <Droppable droppableId={colab.id} type="COLAB">
+                        {(provided, snapshot) => (
+                            <div ref={provided.innerRef} {...provided.droppableProps} className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[190px]' : isDense ? 'w-[220px]' : 'w-[240px]'}`}>
+                                <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
+                                <Draggable draggableId={colab.id} index={0} isDragDisabled={true}>
+                                    {(dragProvided) => (
+                                        <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className="flex flex-col items-center w-full" onClick={() => context.setSelectedColabForModal(colab.fullData)}>
+                                            <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-[#1e3a8a]/30 cursor-pointer`}>
+                                                {colab.photo_url ? (
+                                                    <img src={colab.photo_url} alt={colab.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                        <UserIcon className={isSuperDense ? 'w-6 h-6' : isDense ? 'w-8 h-8' : 'w-10 h-10'} />
                                                     </div>
                                                 )}
-                                            </Draggable>
-                                            {provided.placeholder}
+                                            </div>
+                                            <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
+                                                <div>
+                                                    <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{colab.name}</h4>
+                                                    <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{roleStr}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
-                                </Droppable>
+                                </Draggable>
+                                {provided.placeholder}
                             </div>
+                        )}
+                    </Droppable>
+                </div>
 
-                            {/* 2. Standard Subordinate Tree under this Virtual Sócio */}
-                            <div className="flex flex-col items-center mt-2 w-full">
-                                <div className="w-[2px] h-8 bg-gray-300"></div>
-                                
-                                {/* Atuação Group Header */}
-                                <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-gray-700 font-black px-6 py-2.5 rounded-[1.25rem] shadow-sm mb-2 flex items-center gap-2 relative z-10 w-max">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-[#1e3a8a]"></div>
-                                    <span className="text-[11px] uppercase tracking-[0.2em]">{atuName}</span>
-                                </div>
+                {/* 2. Vertical Line dropping from Sócio */}
+                {localEntries.length > 0 && (
+                    <div className="flex flex-col items-center mt-2 w-full">
+                        <div className="w-[2px] h-8 bg-gray-300"></div>
 
-                                {/* Local Branches Stacked Vertically */}
-                                <div className="flex flex-col relative w-full">
-                                    
-                                    {localEntries.map(([localName, localColabs], locIdx) => (
-                                        <div key={localName} className={`relative flex flex-col items-center w-full ${locIdx !== localEntries.length - 1 ? 'pb-12' : ''}`}>
-                                            
-                                            {/* Elegant Local Separator */}
-                                            <div className="w-full flex items-center justify-center mb-0 mt-2 px-4">
-                                                <div className="flex-1 h-px bg-gray-300"></div>
-                                                <div className="bg-white text-[#1e3a8a] px-5 py-1.5 rounded-full shadow-sm text-[9px] font-black uppercase tracking-[0.2em] border border-gray-200 mx-3 relative z-10 w-max">
-                                                    {localName}
-                                                </div>
-                                                <div className="flex-1 h-px bg-gray-300"></div>
-                                            </div>
-                                            
-                                            {/* Stem down to the horizontal line */}
-                                            {localColabs.length > 0 && <div className="w-[2px] h-4 bg-gray-300 relative z-0"></div>}
-                                            
-                                            <div className="flex justify-center relative w-full pt-0">
-                                                {localColabs.map((sub, idx) => (
-                                                    <div key={sub.id} className={`relative flex flex-col items-center ${localColabs.length > 8 ? 'px-0' : localColabs.length > 5 ? 'px-0.5' : 'px-3'} pt-4`}>
-                                                        {localColabs.length > 1 && (
-                                                            <div className="absolute h-[2px] bg-gray-300 -z-10" style={{
-                                                                top: '0',
-                                                                left: idx === 0 ? '50%' : '0',
-                                                                right: idx === localColabs.length - 1 ? '50%' : '0'
-                                                            }}></div>
-                                                        )}
-                                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2 -z-10"></div>
-                                                        <div style={{
-                                                            transform: localColabs.length > 12 ? 'scale(0.8)' : localColabs.length > 8 ? 'scale(0.85)' : localColabs.length > 5 ? 'scale(0.95)' : 'scale(1)',
-                                                            transformOrigin: 'top center'
-                                                        }}>
-                                                            <OrganogramNode colab={sub} context={context} visitedIds={nextVisited} level={level + 1} isDense={localColabs.length > 5 && localColabs.length <= 8} isSuperDense={localColabs.length > 8} />
-                                                        </div>
-                                                    </div>
-                                                ))}
+
+
+                        {/* Local Branches Stacked Vertically */}
+                        <div className="flex flex-col relative w-full items-center">
+                            {localEntries.map(([localName, localColabs], locIdx) => {
+                                // 3. Group by Atuação within Local (so we get Local -> Atuação)
+                                const atuacaoGroups = new Map<string, ColaboradorCard[]>();
+                                localColabs.forEach(sub => {
+                                    const key = sub.atuacao || 'Sem Atuação';
+                                    if (!atuacaoGroups.has(key)) atuacaoGroups.set(key, []);
+                                    atuacaoGroups.get(key)!.push(sub);
+                                });
+                                const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                                return (
+                                    <div key={localName} className={`relative flex flex-col items-center w-full ${locIdx !== localEntries.length - 1 ? 'pb-12' : ''}`}>
+                                        
+                                        {/* Local Separator Label */}
+                                        <div className="w-full flex items-center justify-center mb-0 mt-0 px-4">
+                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md z-10 w-max">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.15em]">{localName}</span>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+                                        
+                                        {/* Stem down from Local Label */}
+                                        {atuacaoEntries.length > 0 && <div className="w-[2px] h-6 bg-gray-300 relative z-0"></div>}
+                                        
+                                        {/* Atuação Branches inside Local */}
+                                        <div className="flex flex-col relative w-full items-center">
+                                            {atuacaoEntries.map(([atuName, atuColabs], atuIdx) => (
+                                                <div key={atuName} className={`relative flex flex-col items-center w-full ${atuIdx !== atuacaoEntries.length - 1 ? 'pb-8' : ''}`}>
+                                                    
+                                                    {/* Elegant Atuação Separator Label */}
+                                                    <div className="w-full flex items-center justify-center mb-0 mt-0 px-4">
+                                                        <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-gray-700 font-black px-6 py-2.5 rounded-[1.25rem] shadow-sm flex items-center gap-2 relative z-10 w-max">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-[#1e3a8a]"></div>
+                                                            <span className="text-[11px] uppercase tracking-[0.2em]">{atuName}</span>
+                                                        </div>
+                                                    </div>
 
+                                                    {/* Stem down from Atuação */}
+                                                    {atuColabs.length > 0 && <div className="w-[2px] h-6 bg-gray-300 relative z-0"></div>}
+                                                    
+                                                    {/* Subordinates Grid (Líderes / Colab) */}
+                                                    <div className="flex justify-center relative w-full pt-0">
+                                                        {atuColabs.map((sub, idx) => (
+                                                            <div key={sub.id} className={`relative flex flex-col items-center ${atuColabs.length > 8 ? 'px-0' : atuColabs.length > 5 ? 'px-0.5' : 'px-3'} pt-4`}>
+                                                                {atuColabs.length > 1 && (
+                                                                    <div className="absolute h-[2px] bg-gray-300 -z-10" style={{
+                                                                        top: '0',
+                                                                        left: idx === 0 ? '50%' : '0',
+                                                                        right: idx === atuColabs.length - 1 ? '50%' : '0'
+                                                                    }}></div>
+                                                                )}
+                                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2 -z-10"></div>
+                                                                <div style={{
+                                                                    transform: atuColabs.length > 12 ? 'scale(0.8)' : atuColabs.length > 8 ? 'scale(0.85)' : atuColabs.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                                                    transformOrigin: 'top center'
+                                                                }}>
+                                                                    <OrganogramNode colab={sub} context={context} visitedIds={nextVisited} level={level + 1} isDense={atuColabs.length > 5 && atuColabs.length <= 8} isSuperDense={atuColabs.length > 8} />
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
-                    );
-                })}
+                    </div>
+                )}
             </div>
         );
     }
