@@ -311,10 +311,10 @@ export function Sucumbencias() {
 
             // Agora realiza a filtragem
             jsonData.forEach((row, index) => {
-                const fieldDataAndamento = String(row['Data Andamento'] || '');
-                const fieldDescricao = String(row['Descrição'] || '');
-                const fieldTipo = String(row['Tipo Andamento'] || '');
-                const fieldSubtipo = String(row['Subtipo Andamentos'] || '');
+                const fieldDataAndamento = String(row['Data do Andamento'] || row['Data Andamento'] || row['Data da Movimentação'] || row['Data'] || '');
+                const fieldDescricao = String(row['Descrição'] || row['Descricao'] || row['Andamento'] || '');
+                const fieldTipo = String(row['Tipo do Andamento'] || row['Tipo Andamento'] || row['Tipo'] || '');
+                const fieldSubtipo = String(row['Subtipo Andamentos'] || row['Subtipo do Andamento'] || row['Subtipo'] || '');
 
                 // Split them by newline, typical of LegalOne grouped cells
                 const dates = fieldDataAndamento.split(/\r?\n/);
@@ -383,12 +383,12 @@ export function Sucumbencias() {
                         if (!groupedMap.has(cnjLabel)) {
                             groupedMap.set(cnjLabel, {
                                 id: `import-cnj-${index}`,
-                                responsavel: row['Responsável principal'] || 'Não Informado',
+                                responsavel: row['Responsável principal'] || row['Responsável'] || 'Não Informado',
                                 cnj: cnjLabel,
-                                uf: row['UF'] || '-',
-                                cliente: String(row['Cliente principal'] || '').substring(0, 254),
-                                posicao_cliente: String(row['Posição do cliente principal'] || '').substring(0, 254),
-                                contrario: String(row['Contrário(s) principal(is)'] || '').substring(0, 254),
+                                uf: row['UF'] || row['Estado'] || '-',
+                                cliente: String(row['Cliente'] || row['Cliente principal'] || row['Clientes'] || '').substring(0, 254),
+                                posicao_cliente: String(row['Posição do Cliente'] || row['Posição do cliente'] || row['Posição do cliente principal'] || '').substring(0, 254),
+                                contrario: String(row['Contrário'] || row['Contrário(s) principal(is)'] || row['Parte contrária'] || row['Adverso'] || '').substring(0, 254),
                                 status: 'potencial',
                                 andamentos: []
                             });
