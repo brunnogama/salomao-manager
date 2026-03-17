@@ -60,21 +60,23 @@ const OrganogramNode = React.memo(({
         setEditingCompetenciasText: (text: string) => void,
         subordinatesMap: Map<string | null, ColaboradorCard[]>,
         selectedAtuacao: string,
+        hasAdministrativeSubordinates: (id: string, visited?: Set<string>) => boolean,
     },
     visitedIds: Set<string>,
     level?: number,
     isDense?: boolean,
     isSuperDense?: boolean
 }) => {
-    const { activeTab, searchQuery, setSelectedColabForModal, setEditingPosition, setEditingCompetenciasId, setEditingCompetenciasText, subordinatesMap, selectedAtuacao } = context;
+    const { activeTab, searchQuery, setSelectedColabForModal, setEditingPosition, setEditingCompetenciasId, setEditingCompetenciasText, subordinatesMap, selectedAtuacao, hasAdministrativeSubordinates } = context;
     const subordinates = subordinatesMap.get(colab.id) || [];
     const roleStr = colab.role;
 
     if (visitedIds.has(colab.id)) return null;
     const nextVisited = new Set<string>(visitedIds).add(colab.id);
 
+    // Visibility logic
     if (activeTab === 'JURIDICO' && !colab.isJuridico) return null;
-    if (activeTab === 'ADMINISTRATIVO' && !colab.isAdministrativo) return null;
+    if (activeTab === 'ADMINISTRATIVO' && !colab.isAdministrativo && !hasAdministrativeSubordinates(colab.id)) return null;
 
     const matchesSearch = !searchQuery ||
         colab.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -96,30 +98,27 @@ const OrganogramNode = React.memo(({
     const sortedSubordinates = [...subordinates]
         .filter(c => {
             if (activeTab === 'JURIDICO') return c.isJuridico;
-            if (activeTab === 'ADMINISTRATIVO') return c.isAdministrativo;
+            if (activeTab === 'ADMINISTRATIVO') return (c.isAdministrativo || hasAdministrativeSubordinates(c.id));
             return true;
         })
         .sort((a, b) => getRank(a.role) - getRank(b.role));
 
     // Conditional Layout Logic
-    const isJuridicoTab = activeTab === 'JURIDICO';
     const roleGroups: ColaboradorCard[][] = [];
 
-    if (isJuridicoTab) {
-        let currentRole: string | null = null;
-        let currentGroup: ColaboradorCard[] = [];
+    let currentRole: string | null = null;
+    let currentGroup: ColaboradorCard[] = [];
 
-        for (const sub of sortedSubordinates) {
-            if (sub.role !== currentRole) {
-                if (currentGroup.length > 0) roleGroups.push(currentGroup);
-                currentRole = sub.role;
-                currentGroup = [sub];
-            } else {
-                currentGroup.push(sub);
-            }
+    for (const sub of sortedSubordinates) {
+        if (sub.role !== currentRole) {
+            if (currentGroup.length > 0) roleGroups.push(currentGroup);
+            currentRole = sub.role;
+            currentGroup = [sub];
+        } else {
+            currentGroup.push(sub);
         }
-        if (currentGroup.length > 0) roleGroups.push(currentGroup);
     }
+    if (currentGroup.length > 0) roleGroups.push(currentGroup);
     return (
         <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
             <Droppable droppableId={colab.id} type="COLAB">
@@ -186,8 +185,8 @@ const OrganogramNode = React.memo(({
                 <div className="flex flex-col items-center mt-2 w-full">
                     <div className="w-[2px] h-8 bg-gray-300"></div>
                     <div className="flex flex-col items-center w-full relative z-10">
-                        {isJuridicoTab && colab.isSocio ? (() => {
-                            // JURIDICO - Sócio: group subordinates by Local
+                        {colab.isSocio ? (() => {
+                            // Sócio: group subordinates by Local
                             const localGroups = new Map<string, ColaboradorCard[]>();
                             sortedSubordinates.forEach(sub => {
                                 const key = sub.local || 'Sem Local';
@@ -253,8 +252,8 @@ const OrganogramNode = React.memo(({
                                     ))}
                                 </div>
                             );
-                        })() : isJuridicoTab ? (
-                            // JURIDICO - Sub-levels: group by role vertically
+                        })() : (
+                            // Sub-levels: group by role vertically
                             roleGroups.map((group, groupIndex) => (
                                 <div key={groupIndex} className="flex flex-col items-center w-full relative pb-16">
                                     {groupIndex < roleGroups.length - 1 && (
@@ -291,37 +290,6 @@ const OrganogramNode = React.memo(({
                                     </div>
                                 </div>
                             ))
-                        ) : (
-                            // ADMINISTRATIVO: Unified horizontal row (peers side-by-side)
-                            <div className="flex justify-center relative pt-4 w-full">
-                                {sortedSubordinates.map((sub, idx) => (
-                                    <div key={sub.id} className={`relative flex flex-col items-center ${sortedSubordinates.length > 8 ? 'px-0' : sortedSubordinates.length > 5 ? 'px-0.5' : 'px-4'}`}>
-                                        {/* Per-child horizontal segment */}
-                                        {sortedSubordinates.length > 1 && (
-                                            <div className="absolute h-[2px] bg-gray-300" style={{
-                                                top: '-1rem',
-                                                left: idx === 0 ? '50%' : '0',
-                                                right: idx === sortedSubordinates.length - 1 ? '50%' : '0'
-                                            }}></div>
-                                        )}
-                                        {/* Vertical stub up */}
-                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
-                                        <div style={{
-                                            transform: sortedSubordinates.length > 12 ? 'scale(0.8)' : sortedSubordinates.length > 8 ? 'scale(0.85)' : sortedSubordinates.length > 5 ? 'scale(0.95)' : 'scale(1)',
-                                            transformOrigin: 'top center'
-                                        }}>
-                                            <OrganogramNode
-                                                colab={sub}
-                                                context={context}
-                                                visitedIds={nextVisited}
-                                                level={level + 1}
-                                                isDense={sortedSubordinates.length > 5 && sortedSubordinates.length <= 8}
-                                                isSuperDense={sortedSubordinates.length > 8}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
                         )}
                     </div>
                 </div>
@@ -651,8 +619,9 @@ export function Organograma() {
         setEditingCompetenciasId,
         setEditingCompetenciasText,
         subordinatesMap,
-        selectedAtuacao
-    }), [activeTab, searchQuery, subordinatesMap, selectedAtuacao]);
+        selectedAtuacao,
+        hasAdministrativeSubordinates
+    }), [activeTab, searchQuery, subordinatesMap, selectedAtuacao, hasAdministrativeSubordinates]);
 
     if (colsLoading && data.length === 0) {
         return (
