@@ -53,6 +53,7 @@ interface FilteredSucumbencia {
     cliente?: string;
     posicao_cliente?: string;
     contrario?: string;
+    obs?: string;
     status?: 'potencial' | 'prescrito' | 'descartado' | 'recebido' | 'verificado';
     andamentos: FiltragemAndamento[];
 }
@@ -184,6 +185,7 @@ export function Sucumbencias() {
                         cliente: row.cliente || '',
                         posicao_cliente: row.posicao_cliente || '',
                         contrario: row.contrario || '',
+                        obs: row.obs || '',
                         status: row.status as any,
                         andamentos: []
                     });
@@ -254,6 +256,36 @@ export function Sucumbencias() {
             console.error('Action error:', error);
             alert('Erro ao atualizar no banco de dados.');
         }
+    };
+
+    const debounceSaveObs = useRef<NodeJS.Timeout>();
+
+    const handleObsChange = (item: FilteredSucumbencia, newObs: string) => {
+        // Atualiza localmente imediato para a UI não travar a digitação
+        setImportedData(prev => prev.map(d => d.id === item.id ? { ...d, obs: newObs } : d));
+        if (selectedItem?.id === item.id) {
+            setSelectedItem(prev => prev ? { ...prev, obs: newObs } : null);
+        }
+
+        // Debounce para não bombardear o Supabase a cada tecla digitada
+        if (debounceSaveObs.current) {
+            clearTimeout(debounceSaveObs.current);
+        }
+
+        debounceSaveObs.current = setTimeout(async () => {
+            try {
+                const { error } = await supabase
+                    .from('sucumbencias')
+                    .update({ obs: newObs })
+                    .eq('processo_cnj', item.cnj);
+
+                if (error) {
+                    console.error('Supabase Obs Update Error:', error.message);
+                }
+            } catch (err) {
+                console.error('Erro ao salvar observação:', err);
+            }
+        }, 800);
     };
 
     // --- Import and Parsing Logic ---
@@ -966,12 +998,25 @@ export function Sucumbencias() {
                             <div className="flex gap-4 mb-6">
                                 <div className="flex-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                     <span className="block text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">Data do Andamento</span>
-                                    <span className="text-sm font-bold text-[#0a192f]">{selectedItem.andamentos[activeModalTab].dataAndamento}</span>
+                                    <span className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                        <Calendar size={14} className="text-gray-400" />
+                                        {selectedItem.andamentos[0]?.dataAndamento || '-'}
+                                    </span>
                                 </div>
-                                <div className="flex-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                <div className="flex-[0.5] bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                     <span className="block text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">UF</span>
-                                    <span className="text-sm font-bold text-[#0a192f]">{selectedItem.uf || '-'}</span>
+                                    <span className="text-sm font-bold text-gray-800">{selectedItem.uf}</span>
                                 </div>
+                            </div>
+                            
+                            <div className="mb-6">
+                                <span className="block text-[10px] uppercase font-black tracking-widest text-gray-400 mb-2">Observações / Controle Interno</span>
+                                <textarea
+                                    className="w-full bg-white border border-gray-200 rounded-xl p-4 text-sm text-gray-700 shadow-sm focus:ring-2 focus:ring-[#0a192f] focus:border-[#0a192f] transition-all resize-y min-h-[100px]"
+                                    placeholder="Adicione anotações livres sobre este caso (ex: Feito contato em 12/03, aguardando financeiro...)"
+                                    value={selectedItem.obs || ''}
+                                    onChange={(e) => handleObsChange(selectedItem, e.target.value)}
+                                />
                             </div>
 
                             <div className="bg-white p-5 rounded-xl border border-blue-100 shadow-sm relative flex flex-col flex-1">
