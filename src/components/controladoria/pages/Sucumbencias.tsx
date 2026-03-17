@@ -11,13 +11,13 @@ import {
     Search,
     FileText,
     Trash2,
-    CheckCircle2,
     XCircle,
     AlertTriangle,
     Filter,
     X,
     Wallet,
-    Hourglass
+    Hourglass,
+    Clock
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { SearchableSelect } from '../../crm/SearchableSelect';
@@ -55,7 +55,7 @@ interface FilteredSucumbencia {
     posicao_cliente?: string;
     contrario?: string;
     obs?: string;
-    status?: 'potencial' | 'prescrito' | 'descartado' | 'recebido' | 'verificado';
+    status?: 'potencial' | 'prescrito' | 'descartado' | 'recebido' | 'aguardando';
     andamentos: FiltragemAndamento[];
 }
 
@@ -142,7 +142,7 @@ export function Sucumbencias() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterResponsavel, setFilterResponsavel] = useState('Todos');
     const [selectedItem, setSelectedItem] = useState<FilteredSucumbencia | null>(null);
-    const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos' | 'descartados' | 'recebidos' | 'verificados'>('potenciais');
+    const [activeTab, setActiveTab] = useState<'potenciais' | 'prescritos' | 'descartados' | 'recebidos' | 'aguardando'>('potenciais');
     const [activeModalTab, setActiveModalTab] = useState(0);
 
     // Paginação
@@ -233,7 +233,7 @@ export function Sucumbencias() {
     });
 
     // --- Supabase Actions ---
-    const handleAction = async (item: FilteredSucumbencia, status: 'verificado' | 'descartado' | 'recebido' | 'prescrito') => {
+    const handleAction = async (item: FilteredSucumbencia, status: 'aguardando' | 'descartado' | 'recebido' | 'prescrito') => {
         try {
             // Se o usuário clicar na mesma ação atual, reverta para potencial (Toggle switch)
             const targetStatus = item.status === status ? 'potencial' : status;
@@ -541,7 +541,7 @@ export function Sucumbencias() {
         if (activeTab === 'prescritos') return itemStatus === 'prescrito';
         if (activeTab === 'descartados') return itemStatus === 'descartado';
         if (activeTab === 'recebidos') return itemStatus === 'recebido';
-        if (activeTab === 'verificados') return itemStatus === 'verificado';
+        if (activeTab === 'aguardando') return itemStatus === 'aguardando';
         return false;
     });
 
@@ -565,7 +565,7 @@ export function Sucumbencias() {
         }
     };
 
-    const handleActionFromModal = (item: FilteredSucumbencia, status: 'verificado' | 'descartado' | 'recebido') => {
+    const handleActionFromModal = (item: FilteredSucumbencia, status: 'aguardando' | 'descartado' | 'recebido') => {
         handleAction(item, status);
         setSelectedItem(null);
     };
@@ -628,11 +628,11 @@ export function Sucumbencias() {
                             <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'recebido').length}</span>
                         </button>
                         <button
-                            onClick={() => setActiveTab('verificados')}
-                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'verificados' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            onClick={() => setActiveTab('aguardando')}
+                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'aguardando' ? 'bg-white shadow-sm text-amber-600' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <span className="hidden sm:inline">Verificados</span>
-                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'verificado').length}</span>
+                            <span className="hidden sm:inline">Aguardando</span>
+                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'aguardando').length}</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('descartados')}
@@ -852,11 +852,11 @@ export function Sucumbencias() {
                                                                         <Wallet className="w-4 h-4" />
                                                                     </button>
                                                                     <button 
-                                                                        onClick={(e) => { e.stopPropagation(); handleAction(row, 'verificado'); }}
-                                                                        className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded transition-colors border border-emerald-200"
-                                                                        title="Verificar (Salvar para enviar)"
+                                                                        onClick={(e) => { e.stopPropagation(); handleAction(row, 'aguardando'); }}
+                                                                        className="p-1.5 text-amber-600 bg-amber-50 hover:bg-amber-100 rounded transition-colors border border-amber-200"
+                                                                        title="Aguardar (Salvar para enviar)"
                                                                     >
-                                                                        <CheckCircle2 className="w-4 h-4" />
+                                                                        <Clock className="w-4 h-4" />
                                                                     </button>
                                                                     <button 
                                                                         onClick={(e) => { e.stopPropagation(); handleAction(row, 'descartado'); }}
@@ -1121,11 +1121,11 @@ export function Sucumbencias() {
                                     Recebido
                                 </button>
                                 <button 
-                                    onClick={() => handleActionFromModal(selectedItem, 'verificado')}
-                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 border border-emerald-600 text-white font-bold tracking-wide rounded-xl transition-all text-xs flex items-center gap-2 shadow-md shadow-emerald-600/20"
+                                    onClick={() => handleActionFromModal(selectedItem, 'aguardando')}
+                                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 border border-amber-600 text-white font-bold tracking-wide rounded-xl transition-all text-xs flex items-center gap-2 shadow-md shadow-amber-600/20"
                                 >
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    Verificar
+                                    <Clock className="w-4 h-4" />
+                                    Aguardar
                                 </button>
                             </div>
 
