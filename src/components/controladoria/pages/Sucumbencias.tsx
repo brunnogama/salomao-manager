@@ -317,14 +317,21 @@ export function Sucumbencias() {
                         continue;
                     }
 
-                    let isMatch = true; // Já tem a palavra primária, então a princípio é match
+                    let isMatch = false; // Já tem a palavra primária, então a princípio é match
 
-                    // Se a descrição for muito longa (textão), vamos exigir uma palavra de contexto 
-                    // para confirmar que é condenatório e não apenas uma menção alheia.
-                    if (searchString.length >= 100) {
-                        const hasContext = contextKeywords.some(kw => searchString.includes(kw));
-                        if (!hasContext) {
-                            isMatch = false; 
+                    if (hasPrimary) {
+                        if (searchString.length < 100) {
+                            // É um título curto, se tem a palavra chave de sucumbência, aceita.
+                            isMatch = true;
+                        } else {
+                            // É um texto longo (ex: publicação). Verifica se possui contexto de condenação.
+                            const hasContext = contextKeywords.some(kw => searchString.includes(kw));
+                            
+                            // Exige o contexto para textos longos, garantindo que seja uma condenação real
+                            // e não apenas uma citação genérica a honorários.
+                            if (hasContext) {
+                                isMatch = true; 
+                            }
                         }
                     }
 
