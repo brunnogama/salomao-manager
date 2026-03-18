@@ -309,6 +309,7 @@ export function Volumetry() {
     const originalScrollY = window.scrollY;
     window.scrollTo({ top: 0, behavior: 'instant' });
 
+    // Dá tempo ao React e ao navegador para desenharem o novo cabeçalho elegante antes de capturar
     setTimeout(async () => {
       try {
         const canvas = await html2canvas(targetElement, {
@@ -657,7 +658,7 @@ export function Volumetry() {
                                     {parseFloat(partner.percentage) > 0 ? (
                                       <div
                                         className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] h-full rounded-full transition-all duration-500"
-                                        style={{ width: `${partner.percentage}%` }}
+                                        style={{ width: `${Math.max(0.6, parseFloat(partner.percentage))}%` }}
                                       ></div>
                                     ) : null}
                                   </div>
