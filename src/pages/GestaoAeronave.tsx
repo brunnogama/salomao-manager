@@ -725,32 +725,35 @@ export function GestaoAeronave() {
 
       {/* 3. Toolbar Principal */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          {/* Esconder botões nas abas Faturas e Comparativo */}
-          {activeTab !== 'faturas' && activeTab !== 'comparativo' && (
-            <div className="flex items-center gap-2 w-full">
-              {/* Barra de pesquisa (aba Dados) */}
-              {activeTab === 'dados' && (
-                <div className="relative flex-1 min-w-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Buscar por ID, Missão, Fornecedor ou Descrição..."
-                    className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      <XCircle className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
+        <div className="flex flex-col md:flex-row items-center gap-4">
+          {/* Barra de pesquisa (aba Dados) - empurra tudo pra direita */}
+          {activeTab === 'dados' && (
+            <div className="relative flex-1 min-w-0 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por ID, Missão, Fornecedor ou Descrição..."
+                className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <XCircle className="h-4 w-4" />
+                </button>
               )}
+            </div>
+          )}
 
+          {/* Spacer para empurrar filtros à direita quando não há pesquisa */}
+          {activeTab !== 'dados' && <div className="flex-1" />}
+
+          {/* Botões de filtro - visíveis em Dashboard e Dados */}
+          {activeTab !== 'faturas' && activeTab !== 'comparativo' && (
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setFilterOrigem('todos')}
                 className={`shrink-0 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
@@ -775,8 +778,8 @@ export function GestaoAeronave() {
             </div>
           )}
 
-          {/* Filtro de Data (Visível em todas as abas conforme solicitado) */}
-          <div className="flex flex-col gap-1">
+          {/* Filtro de Data */}
+          <div className="flex flex-col gap-1 shrink-0">
             <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
               {activeTab === 'dashboard' ? 'Período de Missões' : 'Período de Pagamento'}
             </span>
