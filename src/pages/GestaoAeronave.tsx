@@ -729,6 +729,28 @@ export function GestaoAeronave() {
           {/* Esconder botões nas abas Faturas e Comparativo */}
           {activeTab !== 'faturas' && activeTab !== 'comparativo' && (
             <div className="flex flex-wrap items-center gap-2">
+              {/* Barra de pesquisa (aba Dados) */}
+              {activeTab === 'dados' && (
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por ID, Missão, Fornecedor ou Descrição..."
+                    className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+
               <button
                 onClick={() => setFilterOrigem('todos')}
                 className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
@@ -750,20 +772,6 @@ export function GestaoAeronave() {
               >
                 Despesas Fixas
               </button>
-
-              {/* Barra de pesquisa ao lado dos filtros (aba Dados) */}
-              {activeTab === 'dados' && (
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Buscar por ID, Missão, Fornecedor ou Descrição..."
-                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              )}
             </div>
           )}
 
