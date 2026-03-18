@@ -7,6 +7,7 @@ import {
   Upload,
   Calendar,
   XCircle,
+  ChevronDown,
   LayoutDashboard,
   Table2,
   Wallet,
@@ -142,6 +143,10 @@ export function GestaoAeronave() {
   const [faturaSearchTerm, setFaturaSearchTerm] = useState('')
   const [filterDocFiscal, setFilterDocFiscal] = useState('todos')
   const [filterStatusFatura, setFilterStatusFatura] = useState<'todos' | 'pago' | 'pendente'>('todos')
+  const [isDocFiscalOpen, setIsDocFiscalOpen] = useState(false)
+  const [isStatusOpen, setIsStatusOpen] = useState(false)
+  const docFiscalRef = useRef<HTMLDivElement>(null)
+  const statusRef = useRef<HTMLDivElement>(null)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isImporting, setIsImporting] = useState(false)
@@ -183,6 +188,20 @@ export function GestaoAeronave() {
 
   useEffect(() => {
     fetchDados()
+  }, [])
+
+  // Fechar dropdowns ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (docFiscalRef.current && !docFiscalRef.current.contains(event.target as Node)) {
+        setIsDocFiscalOpen(false)
+      }
+      if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
+        setIsStatusOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   // Lista de Centros de Custo únicos para o filtro
@@ -813,30 +832,63 @@ export function GestaoAeronave() {
           {/* Filtros de Faturas - Doc Fiscal e Status */}
           {activeTab === 'faturas' && (
             <div className="flex items-center gap-3 shrink-0">
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Doc. Fiscal</span>
-                <select
-                  value={filterDocFiscal}
-                  onChange={e => setFilterDocFiscal(e.target.value)}
-                  className="text-xs font-semibold text-gray-700 outline-none bg-transparent cursor-pointer"
+              {/* Dropdown Doc Fiscal */}
+              <div ref={docFiscalRef} className="relative">
+                <button
+                  onClick={() => { setIsDocFiscalOpen(!isDocFiscalOpen); setIsStatusOpen(false) }}
+                  className={`flex items-center gap-2 bg-white border rounded-lg px-3 py-2 transition-all cursor-pointer ${isDocFiscalOpen ? 'border-[#1e3a8a] ring-2 ring-[#1e3a8a]/10' : 'border-gray-200 hover:border-gray-300'}`}
                 >
-                  <option value="todos">Todos</option>
-                  {docFiscalTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Doc. Fiscal</span>
+                  <span className="text-xs font-semibold text-gray-700">{filterDocFiscal === 'todos' ? 'Todos' : filterDocFiscal}</span>
+                  <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${isDocFiscalOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {isDocFiscalOpen && (
+                  <div className="absolute left-0 top-full mt-2 min-w-[160px] bg-white border border-gray-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[9999]">
+                    <div className="p-2 space-y-1">
+                      <button
+                        onClick={() => { setFilterDocFiscal('todos'); setIsDocFiscalOpen(false) }}
+                        className={`w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all ${filterDocFiscal === 'todos' ? 'bg-[#1e3a8a] text-white' : 'text-gray-600 hover:bg-blue-50 hover:text-[#1e3a8a]'}`}
+                      >
+                        Todos
+                      </button>
+                      {docFiscalTypes.map(type => (
+                        <button
+                          key={type}
+                          onClick={() => { setFilterDocFiscal(type); setIsDocFiscalOpen(false) }}
+                          className={`w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all ${filterDocFiscal === type ? 'bg-[#1e3a8a] text-white' : 'text-gray-600 hover:bg-blue-50 hover:text-[#1e3a8a]'}`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Status</span>
-                <select
-                  value={filterStatusFatura}
-                  onChange={e => setFilterStatusFatura(e.target.value as any)}
-                  className="text-xs font-semibold text-gray-700 outline-none bg-transparent cursor-pointer"
+              {/* Dropdown Status */}
+              <div ref={statusRef} className="relative">
+                <button
+                  onClick={() => { setIsStatusOpen(!isStatusOpen); setIsDocFiscalOpen(false) }}
+                  className={`flex items-center gap-2 bg-white border rounded-lg px-3 py-2 transition-all cursor-pointer ${isStatusOpen ? 'border-[#1e3a8a] ring-2 ring-[#1e3a8a]/10' : 'border-gray-200 hover:border-gray-300'}`}
                 >
-                  <option value="todos">Todos</option>
-                  <option value="pago">Pago</option>
-                  <option value="pendente">Pendente</option>
-                </select>
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Status</span>
+                  <span className="text-xs font-semibold text-gray-700">{filterStatusFatura === 'todos' ? 'Todos' : filterStatusFatura === 'pago' ? 'Pago' : 'Pendente'}</span>
+                  <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${isStatusOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {isStatusOpen && (
+                  <div className="absolute left-0 top-full mt-2 min-w-[160px] bg-white border border-gray-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[9999]">
+                    <div className="p-2 space-y-1">
+                      {(['todos', 'pago', 'pendente'] as const).map(st => (
+                        <button
+                          key={st}
+                          onClick={() => { setFilterStatusFatura(st); setIsStatusOpen(false) }}
+                          className={`w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all ${filterStatusFatura === st ? 'bg-[#1e3a8a] text-white' : 'text-gray-600 hover:bg-blue-50 hover:text-[#1e3a8a]'}`}
+                        >
+                          {st === 'todos' ? 'Todos' : st === 'pago' ? 'Pago' : 'Pendente'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
