@@ -849,7 +849,7 @@ export function RHVagas() {
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Abertas</p>
-                    <p className="text-xl font-black text-[#0a192f] leading-none">{filteredVagas.filter(v => v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização').length}</p>
+                    <p className="text-xl font-black text-[#0a192f] leading-none">{filteredVagas.filter(v => v.status === 'Aberta').length}</p>
                   </div>
                 </div>
               )}
