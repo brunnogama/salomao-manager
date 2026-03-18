@@ -1,4 +1,5 @@
-import { X, Edit3, Trash2, CreditCard, FileText, Printer, AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
+import { X, Edit3, Trash2, CreditCard, FileText, Printer, AlertTriangle, CheckCircle, Calendar, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
@@ -8,7 +9,7 @@ interface AeronaveViewModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: AeronaveLancamento | null;
-  itemsGroup?: AeronaveLancamento[]; // Novo: Lista de itens caso seja agrupado
+  itemsGroup?: AeronaveLancamento[];
   onEdit: (item: AeronaveLancamento) => void;
   onDelete: () => void;
 }
@@ -21,6 +22,10 @@ export function AeronaveViewModal({
   onEdit,
   onDelete
 }: AeronaveViewModalProps) {
+  const [showBaixaModal, setShowBaixaModal] = useState(false)
+  const [baixaDate, setBaixaDate] = useState('')
+  const [isProcessingBaixa, setIsProcessingBaixa] = useState(false)
+
   useEscKey(isOpen, onClose);
   if (!isOpen || !item) return null
 
@@ -45,6 +50,32 @@ export function AeronaveViewModal({
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handleBaixaLote = async () => {
+    if (!baixaDate || !isGroup) return
+    setIsProcessingBaixa(true)
+    try {
+      const updates = itemsGroup.map(subItem => {
+        const valorPago = subItem.valor_previsto || subItem.valor_pago || 0
+        return supabase
+          .from('aeronave_lancamentos')
+          .update({
+            valor_pago: valorPago,
+            data_pagamento: baixaDate
+          })
+          .eq('id', subItem.id)
+      })
+      await Promise.all(updates)
+      await logAction('BAIXA_LOTE', 'FINANCEIRO', `Baixa em lote: ${itemsGroup.length} itens da fatura ${item.doc_fiscal || ''} Nº ${item.numero_doc || ''}`, 'Patrimônio')
+      setShowBaixaModal(false)
+      setBaixaDate('')
+      onDelete() // reusa callback para fechar modal e recarregar dados
+    } catch (error) {
+      console.error('Erro na baixa em lote:', error)
+    } finally {
+      setIsProcessingBaixa(false)
+    }
   }
 
   const handleDelete = async () => {
@@ -238,15 +269,79 @@ export function AeronaveViewModal({
             <Trash2 className="h-4 w-4" /> Excluir
           </button>
 
-          {!isGroup && (
-            <button
-              onClick={() => onEdit(item)}
-              className="flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-3 sm:py-2 bg-[#1e3a8a] text-white hover:bg-[#112240] rounded-lg text-xs font-bold uppercase tracking-widest shadow-md transition-all active:scale-95"
-            >
-              <Edit3 className="h-4 w-4" /> Editar
-            </button>
-          )}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {isGroup && (
+              <button
+                onClick={() => setShowBaixaModal(true)}
+                className="flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-3 sm:py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg text-xs font-bold uppercase tracking-widest shadow-md transition-all active:scale-95"
+              >
+                <CheckCircle className="h-4 w-4" /> Baixa
+              </button>
+            )}
+
+            {!isGroup && (
+              <button
+                onClick={() => onEdit(item)}
+                className="flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-3 sm:py-2 bg-[#1e3a8a] text-white hover:bg-[#112240] rounded-lg text-xs font-bold uppercase tracking-widest shadow-md transition-all active:scale-95"
+              >
+                <Edit3 className="h-4 w-4" /> Editar
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Modal de Baixa em Lote */}
+        {showBaixaModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
+              <div className="px-6 py-5 border-b border-gray-100 bg-emerald-50/50">
+                <h3 className="text-lg font-black text-[#112240] flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  Baixa em Lote
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Todos os <span className="font-bold">{itemsGroup.length} itens</span> desta fatura serão marcados como pagos.
+                </p>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Data de Pagamento</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="date"
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 outline-none focus:border-emerald-500 transition-all"
+                      value={baixaDate}
+                      onChange={(e) => setBaixaDate(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Resumo da Operação</p>
+                  <p className="text-xs text-gray-600">Cada item terá seu <span className="font-bold">valor previsto</span> como valor pago e a data informada como data de pagamento.</p>
+                </div>
+              </div>
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
+                <button
+                  onClick={() => { setShowBaixaModal(false); setBaixaDate('') }}
+                  className="px-4 py-2 text-gray-600 bg-white border border-gray-200 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-gray-50 transition-all"
+                  disabled={isProcessingBaixa}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleBaixaLote}
+                  disabled={!baixaDate || isProcessingBaixa}
+                  className="px-6 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isProcessingBaixa ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                  {isProcessingBaixa ? 'Processando...' : 'Confirmar Baixa'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
 
