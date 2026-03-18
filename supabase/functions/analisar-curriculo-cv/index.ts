@@ -114,7 +114,9 @@ serve(async (req) => {
         throw new Error("Falha ao ler o conteúdo do PDF. O arquivo pode estar corrompido ou protegido.");
     }
     
-    if (typeof cvText !== 'string' || !cvText || cvText.trim().length === 0) {
+    cvText = String(cvText);
+
+    if (!cvText || cvText.trim().length === 0) {
        throw new Error("O PDF baixado não contém texto selecionável (pode ser uma imagem escaneada).");
     }
     
