@@ -32,27 +32,29 @@ export function FilterSelect({ icon: Icon, value, onChange, options, placeholder
         opt.label.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const isActive = value !== '' && value !== clearValue;
+
     return (
         <div className="relative min-w-[200px]" ref={wrapperRef}>
             <div
-                className="flex items-center bg-white px-3 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors select-none shadow-sm h-[42px]"
+                className={`flex items-center px-3 py-2 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors select-none shadow-sm h-[42px] ${isActive ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}
                 onClick={() => setIsOpen(!isOpen)}
             >
-                {Icon && <Icon className="w-4 h-4 text-gray-400 mr-2 shrink-0" />}
-                <span className="text-xs font-bold text-gray-600 flex-1 truncate uppercase tracking-wider">{displayValue}</span>
-                {value && value !== clearValue && (
+                {Icon && <Icon className={`w-4 h-4 mr-2 shrink-0 ${isActive ? 'text-[#1e3a8a]' : 'text-gray-400'}`} />}
+                <span className={`text-xs font-bold flex-1 truncate uppercase tracking-wider ${isActive ? 'text-[#1e3a8a]' : 'text-gray-600'}`}>{displayValue}</span>
+                {isActive && (
                     <div
                         role="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             onChange(clearValue);
                         }}
-                        className="mr-2 p-0.5 hover:bg-gray-100 rounded-full transition-colors"
+                        className="mr-2 p-0.5 hover:bg-blue-100 rounded-full transition-colors"
                     >
-                        <X className="w-3 h-3 text-gray-400 hover:text-red-500" />
+                        <X className="w-3 h-3 text-blue-400 hover:text-blue-600" />
                     </div>
                 )}
-                <ChevronDown className={`w-3 h-3 text-gray-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${isActive ? 'text-[#1e3a8a]' : 'text-gray-400'} ${isOpen ? 'rotate-180' : ''}`} />
             </div>
 
             {isOpen && (
