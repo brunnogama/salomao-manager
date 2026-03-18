@@ -602,9 +602,11 @@ export function Sucumbencias() {
                         <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gestão e acompanhamento de valores sucumbenciais</p>
                     </div>
                 </div>
+            </div>
 
-                <div className="flex items-center gap-3 shrink-0 w-full lg:w-auto relative justify-between lg:justify-end">
-                    {/* Tabs no Header Superior */}
+            {/* Barra de Abas e Ações */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                    {/* Tabs */}
                     <div className="flex bg-gray-100 p-1 rounded-lg">
                         <button
                             onClick={() => setActiveTab('potenciais')}
@@ -659,7 +661,6 @@ export function Sucumbencias() {
                             <Upload className="w-5 h-5" />
                         </button>
                     </div>
-                </div>
             </div>
 
             {/* Barra de Filtros Inferior Branca parecida com a de Colaboradores */}
