@@ -1,0 +1,10 @@
+{
+  "title": "Padrão de Destaque Visual em Filtros Ativos",
+  "summary": "Quando um filtro (FilterSelect ou FilterMultiSelect) tem um valor selecionado, ele DEVE ter destaque visual com bg-blue-50, border-blue-200, texto e ícone em text-[#1e3a8a]. Isso se aplica a TODOS os filtros do sistema Salomão Manager. O componente FilterSelect foi atualizado para incluir esse comportamento automaticamente. O FilterMultiSelect já tinha esse padrão. Sempre que criar novos filtros, garantir que o estado ativo tenha destaque visual claro.",
+  "created_at": "2026-03-18T20:22:33-03:00",
+  "updated_at": "2026-03-18T20:22:33-03:00",
+  "references": [
+    "src/components/controladoria/ui/FilterSelect.tsx",
+    "src/components/controladoria/ui/FilterMultiSelect.tsx"
+  ]
+}
