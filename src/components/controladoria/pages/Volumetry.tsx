@@ -279,9 +279,9 @@ export function Volumetry() {
             </div>
           </div>
 
-          {/* Qualidade da Base */}
+          {/* Distribuição de Tipos */}
           {!loading && processes.length > 0 && (
-            <DataQualitySection processes={filteredProcesses} />
+            <ProcessTypeDistributionSection processes={filteredProcesses} />
           )}
 
           {/* Lista de Volumetria por Responsável */}
@@ -363,6 +363,11 @@ export function Volumetry() {
               </div>
             )}
           </div>
+
+          {/* Qualidade da Base */}
+          {!loading && processes.length > 0 && (
+            <DataQualitySection processes={filteredProcesses} />
+          )}
 
         </div>
       ) : (
@@ -468,19 +473,56 @@ function DataQualitySection({ processes }: { processes: any[] }) {
           })}
         </div>
 
-        <div className="mt-6 pt-4 border-t border-gray-100 flex flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Bom (&ge; 80%)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Regular (50-79%)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Crítico (&lt; 50%)</span>
-          </div>
+      </div>
+    </div>
+  );
+}
+
+function ProcessTypeDistributionSection({ processes }: { processes: any[] }) {
+  const total = processes.length;
+  if (total === 0) return null;
+
+  const getCount = (type: string) => processes.filter(p => String(p.tipo || '').toLowerCase().includes(type.toLowerCase())).length;
+
+  const adminCount = getCount('administrativo');
+  const judCount = getCount('judicial');
+  const arbCount = getCount('arbitr');
+
+  const stats = [
+    { label: 'Administrativo', count: adminCount, color: 'bg-indigo-500', text: 'text-indigo-700' },
+    { label: 'Judicial', count: judCount, color: 'bg-cyan-500', text: 'text-cyan-700' },
+    { label: 'Arbitral', count: arbCount, color: 'bg-fuchsia-500', text: 'text-fuchsia-700' },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+        <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
+          <PieChart className="w-4 h-4 text-[#1e3a8a]" /> Processos por Tipo
+        </h2>
+      </div>
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {stats.map(s => {
+            const pct = total > 0 ? ((s.count / total) * 100).toFixed(1) : "0";
+            return (
+              <div key={s.label} className="flex flex-col gap-2 p-4 rounded-xl border border-gray-50 bg-gray-50/30">
+                <div className="flex justify-between items-end">
+                   <p className="text-[11px] font-black text-[#0a192f] uppercase tracking-tight">{s.label}</p>
+                   <div className="flex items-baseline gap-1">
+                     <span className={`text-lg font-black ${s.text}`}>{s.count.toLocaleString('pt-BR')}</span>
+                     <span className="text-[10px] font-bold text-gray-400">({pct}%)</span>
+                   </div>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden border border-gray-200/50 shadow-inner">
+                  <div
+                    className={`${s.color} h-full rounded-full transition-all duration-700`}
+                    style={{ width: `${pct}%` }}
+                  ></div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
