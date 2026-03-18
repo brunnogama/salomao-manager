@@ -67,7 +67,7 @@ export function Volumetry() {
       while (true) {
         const { data, error } = await supabase
           .from('processos')
-          .select('cliente_principal,numero_cnj,pasta,status,responsavel_principal,data_cadastro,data_encerramento,uf,tipo,instancia')
+          .select('cliente_principal,numero_cnj,pasta,status,responsavel_principal,data_cadastro,data_encerramento,data_baixa,uf,tipo,instancia')
           .range(from, from + step - 1);
 
         if (error) throw error;
@@ -236,13 +236,14 @@ export function Volumetry() {
       'Fase': p.fase || '-',
       'Instância': p.instancia || '-',
       'Data de Cadastro': p.data_cadastro || '-',
+      'Data da Baixa': p.data_baixa || '-',
     }));
     
     if (exportProcesses.length > 0) {
       const wsProcesses = XLSX.utils.json_to_sheet(exportProcesses);
       wsProcesses['!cols'] = [
         { wch: 20 }, { wch: 35 }, { wch: 35 }, { wch: 35 }, { wch: 35 },
-        { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 20 }
+        { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 20 }
       ];
       XLSX.utils.book_append_sheet(wb, wsProcesses, "Processos Relacionados");
     }

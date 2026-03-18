@@ -244,6 +244,7 @@ export function VolumetryProcesses() {
             uf: row['UF']?.toString() || null,
             status: row['Status']?.toString() || null,
             data_encerramento: parseExcelDate(row['Data do encerramento']),
+            data_baixa: parseExcelDate(row['Data da baixa'] || row['Data Baixa']),
             instancia: row['Fase']?.toString() || row['Tipo_1']?.toString() || row['Instância']?.toString() || null
           };
         });
