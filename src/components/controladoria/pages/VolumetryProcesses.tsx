@@ -153,18 +153,24 @@ export function VolumetryProcesses() {
 
         setImportProgress({ current: 0, total: rawData.length });
 
-        const formattedData = rawData.map((row: any) => ({
-          pasta: row['Pasta']?.toString() || null,
-          tipo: row['Tipo']?.toString() || row['Tipo de Processo']?.toString() || null,
-          data_cadastro: parseExcelDate(row['Data da distribuição'] || row['Data Cadastro']),
-          responsavel_principal: row['Responsável principal']?.toString() || null,
-          cliente_principal: row['Cliente']?.toString() || row['Cliente principal']?.toString() || null,
-          numero_cnj: row['Número de CNJ']?.toString() || null,
-          uf: row['UF']?.toString() || null,
-          status: row['Status']?.toString() || null,
-          data_encerramento: parseExcelDate(row['Data do encerramento']),
-          instancia: row['Fase']?.toString() || row['Tipo_1']?.toString() || row['Instância']?.toString() || null
-        }));
+        const formattedData = rawData.map((row: any) => {
+          const tipoRaw = row['Tipo']?.toString() || '';
+          const tipoProcessoRaw = row['Tipo de Processo']?.toString() || '';
+          const combinedTipo = [tipoRaw, tipoProcessoRaw].filter(Boolean).join(' - ');
+
+          return {
+            pasta: row['Pasta']?.toString() || null,
+            tipo: combinedTipo || null,
+            data_cadastro: parseExcelDate(row['Data da distribuição'] || row['Data Cadastro']),
+            responsavel_principal: row['Responsável principal']?.toString() || null,
+            cliente_principal: row['Cliente']?.toString() || row['Cliente principal']?.toString() || null,
+            numero_cnj: row['Número de CNJ']?.toString() || null,
+            uf: row['UF']?.toString() || null,
+            status: row['Status']?.toString() || null,
+            data_encerramento: parseExcelDate(row['Data do encerramento']),
+            instancia: row['Fase']?.toString() || row['Tipo_1']?.toString() || row['Instância']?.toString() || null
+          };
+        });
 
         // Em vez de inserir tudo de uma vez, divide em lotes para atualizar o progresso
         const batchSize = 100;
