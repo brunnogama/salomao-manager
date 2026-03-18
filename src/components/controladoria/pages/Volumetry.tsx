@@ -277,7 +277,22 @@ export function Volumetry() {
       XLSX.utils.book_append_sheet(wb, wsDuplicates, "Processos Duplicados");
     }
 
-    XLSX.writeFile(wb, "Volumetria_LegalOne.xlsx");
+    const parts = ['Volumetria'];
+    if (socioFilter.length > 0) parts.push(socioFilter.join(', '));
+    if (partnerFilter.length > 0) parts.push(partnerFilter.join(', '));
+    if (statusFilter.length > 0) parts.push(statusFilter.join(', '));
+
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const dateStr = `${dd}.${mm}.${yyyy}`;
+    
+    // Fallback if no specific filter other than Status=Ativo is used, to avoid overly long names
+    const filterStr = parts.length > 1 ? parts.join(' - ') : 'Geral';
+    const filename = `${filterStr} - ${dateStr}.xlsx`;
+
+    XLSX.writeFile(wb, filename);
     toast.success('Relatório Excel gerado com sucesso!', {
       description: duplicateRowsRaw.length > 0 ? 'Exportou 3 abas: Volumetria, Relacionados e Duplicados.' : 'Exportou 2 abas: Volumetria e Processos Relacionados.'
     });
