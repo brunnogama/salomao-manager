@@ -19,8 +19,8 @@ export const menuItems = [
   { label: 'Compliance', path: '/compliance', icon: ShieldCheck },
   { label: 'Demandas Jurídicas', path: '/demandas', icon: TrendingUp },
   { label: 'Financeiro', path: '/financeiro', icon: DollarSign },
-  { label: 'Jurimetria', path: '/jurimetria', icon: Share2 }, // <--- Adicionado
   { label: 'Volumetria', path: '/volumetria', icon: BarChart3 },
+  { label: 'Jurimetria', path: '/jurimetria', icon: Share2 }, // <--- Adicionado
   { label: 'Clientes', path: '/clientes', icon: Users },
   { label: 'Kanban', path: '/kanban', icon: KanbanSquare },
   { label: 'GED', path: '/ged', icon: FolderOpen },

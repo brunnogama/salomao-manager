@@ -581,7 +581,7 @@ export function Sucumbencias() {
     const finalPaginatedData = displayedData.slice(startIndex, startIndex + itemsPerPage);
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 animate-in fade-in duration-500">
+        <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 animate-in fade-in duration-500">
             {/* Input de Arquivo Global (Oculto) mantido na raiz do dom para que os botões de upload sempre tenham acesso ao ref, independente do estado da tela */}
             <input 
                 type="file" 

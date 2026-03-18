@@ -38,8 +38,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { label: 'Demandas Jurídicas', path: '/controladoria/demandas', icon: TrendingUp },
     { label: 'Sucumbências', path: '/controladoria/sucumbencias', icon: Award },
     { label: 'Financeiro', path: '/controladoria/financeiro', icon: DollarSign },
-    { label: 'Jurimetria', path: '/controladoria/jurimetria', icon: Share2 },
     { label: 'Volumetria', path: '/controladoria/volumetria', icon: BarChart3 },
+    { label: 'Jurimetria', path: '/controladoria/jurimetria', icon: Share2 },
     { label: 'Clientes', path: '/controladoria/clientes', icon: Users },
     { label: 'GED', path: '/controladoria/ged', icon: FolderOpen },
   ];
