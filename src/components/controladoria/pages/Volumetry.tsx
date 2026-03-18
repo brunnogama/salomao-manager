@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
   BarChart3,
@@ -18,6 +18,12 @@ import { toast } from 'sonner';
 import { VolumetryProcesses } from './VolumetryProcesses';
 import { MultiFilterSelect } from '../ui/MultiFilterSelect';
 
+const toTitleCase = (str: string) => {
+  let n = str.trim().toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
+  if (n === 'Luiz Henrique Pavan') n = 'Luiz Henrique Miguel Pavan';
+  return n;
+};
+
 export function Volumetry() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'processos'>('dashboard');
   const [processes, setProcesses] = useState<any[]>([]);
@@ -28,10 +34,25 @@ export function Volumetry() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo']);
   const [partnerFilter, setPartnerFilter] = useState<string[]>([]); // Responsável Principal
+  const [leaderPartners, setLeaderPartners] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchProcesses();
+    fetchCollaboratorsMapping();
   }, [activeTab]); // Recarrega quando muda de aba, caso a pessoa importe novos
+
+  const fetchCollaboratorsMapping = async () => {
+    const { data } = await supabase.from('collaborators').select('name, partner:partner_id(name)');
+    if (data) {
+        const map: Record<string, string> = {};
+        data.forEach((c: any) => {
+             const cName = toTitleCase(c.name);
+             const pName = c.partner?.name ? toTitleCase(c.partner.name) : 'Sem Sócio Definido';
+             map[cName] = pName;
+        });
+        setLeaderPartners(map);
+    }
+  };
 
   const fetchProcesses = async () => {
     if (activeTab === 'processos') return; // A aba de processos cuida do seu próprio fetch
@@ -62,13 +83,6 @@ export function Volumetry() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Normalizar nome para Title Case e corrigir Luiz Henrique Pavan
-  const toTitleCase = (str: string) => {
-    let n = str.trim().toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
-    if (n === 'Luiz Henrique Pavan') n = 'Luiz Henrique Miguel Pavan';
-    return n;
   };
 
   // --------------- Lógica de Filtragem no Dashboard ---------------
@@ -131,9 +145,11 @@ export function Volumetry() {
 
   const volumetryByPartner = allPartners.map(partnerName => {
     const partnerProcs = filteredProcesses.filter(p => toTitleCase(p.responsavel_principal || '') === partnerName);
-    
+    const socioName = leaderPartners[partnerName] || 'Sem Sócio Definido';
+
     return {
       name: partnerName || 'Sem Responsável',
+      socio: socioName,
       count: partnerProcs.length,
       percentage: baseForPercentage > 0 ? ((partnerProcs.length / baseForPercentage) * 100).toFixed(1) : "0",
       ativos: partnerProcs.filter(p => p.status?.toLowerCase() === 'ativo').length,
@@ -141,6 +157,22 @@ export function Volumetry() {
     };
   }).filter(p => p.count > 0).sort((a, b) => b.count - a.count); // Remove quem zerou no filtro e ordena desc
 
+  const volumetryBySocio = useMemo(() => {
+     const grouped = volumetryByPartner.reduce((acc, curr) => {
+         const socio = curr.socio;
+         if (!acc[socio]) acc[socio] = [];
+         acc[socio].push(curr);
+         return acc;
+     }, {} as Record<string, typeof volumetryByPartner>);
+
+     return Object.entries(grouped).sort((a, b) => {
+         const sumA = a[1].reduce((sum, p) => sum + p.count, 0);
+         const sumB = b[1].reduce((sum, p) => sum + p.count, 0);
+         if (a[0] === 'Sem Sócio Definido') return 1;
+         if (b[0] === 'Sem Sócio Definido') return -1;
+         return sumB - sumA;
+     });
+  }, [volumetryByPartner]);
 
   const handleExportDashboard = () => {
     const exportData = volumetryByPartner.map((m: any) => ({
@@ -425,45 +457,62 @@ export function Volumetry() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {volumetryByPartner.map((partner, idx) => (
-                        <tr key={idx} className="hover:bg-blue-50/30 transition-colors group">
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-blue-100">
-                                {partner.name.charAt(0).toUpperCase()}
+                      {volumetryBySocio.map(([socioName, lideres]) => (
+                        <Fragment key={socioName}>
+                          <tr className="bg-gray-50/80">
+                            <td colSpan={5} className="p-4 border-b border-gray-100">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-xl bg-blue-100 text-[#1e3a8a] flex items-center justify-center font-black text-xs">
+                                  {socioName === 'Sem Sócio Definido' ? '?' : socioName.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-xs font-black text-[#0a192f] uppercase tracking-widest">{socioName}</span>
+                                <span className="text-[10px] font-bold text-gray-500 ml-2">
+                                  ({lideres.reduce((sum, l) => sum + l.count, 0).toLocaleString('pt-BR')} processos)
+                                </span>
                               </div>
-                              <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{partner.name}</span>
-                            </div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className="bg-blue-50 text-[#1e3a8a] px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-blue-100">
-                              {partner.count.toLocaleString('pt-BR')}
-                            </span>
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-emerald-100">
-                              {partner.ativos.toLocaleString('pt-BR')}
-                            </span>
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
-                              {partner.arquivados.toLocaleString('pt-BR')}
-                            </span>
-                          </td>
-                          <td className="p-4 align-middle">
-                            <div className="flex items-center gap-4">
-                              <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden max-w-[200px] border border-gray-200/50 shadow-inner">
-                                {parseFloat(partner.percentage) > 0 ? (
-                                  <div
-                                    className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] h-full rounded-full transition-all duration-500"
-                                    style={{ width: `${partner.percentage}%` }}
-                                  ></div>
-                                ) : null}
-                              </div>
-                              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest w-12">{partner.percentage}%</span>
-                            </div>
-                          </td>
-                        </tr>
+                            </td>
+                          </tr>
+                          {lideres.map((partner, idx) => (
+                            <tr key={`${socioName}-${idx}`} className="hover:bg-blue-50/30 transition-colors group">
+                              <td className="p-4 pl-12 border-l-[3px] border-transparent group-hover:border-blue-400">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-xl bg-white text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-gray-100 shadow-sm">
+                                    {partner.name.charAt(0).toUpperCase()}
+                                  </div>
+                                  <span className="text-xs font-bold text-gray-700 uppercase tracking-tight">{partner.name}</span>
+                                </div>
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className="bg-blue-50 text-[#1e3a8a] px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-blue-100">
+                                  {partner.count.toLocaleString('pt-BR')}
+                                </span>
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-emerald-100">
+                                  {partner.ativos.toLocaleString('pt-BR')}
+                                </span>
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
+                                  {partner.arquivados.toLocaleString('pt-BR')}
+                                </span>
+                              </td>
+                              <td className="p-4 align-middle">
+                                <div className="flex items-center gap-4">
+                                  <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden max-w-[200px] border border-gray-200/50 shadow-inner">
+                                    {parseFloat(partner.percentage) > 0 ? (
+                                      <div
+                                        className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] h-full rounded-full transition-all duration-500"
+                                        style={{ width: `${partner.percentage}%` }}
+                                      ></div>
+                                    ) : null}
+                                  </div>
+                                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest w-12">{partner.percentage}%</span>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </Fragment>
                       ))}
                     </tbody>
                   </table>

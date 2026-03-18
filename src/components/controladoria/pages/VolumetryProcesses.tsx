@@ -280,6 +280,7 @@ export function VolumetryProcesses() {
           type: 'success'
         });
         
+        setImporting(false);
         fetchProcesses(); // Recarrega a tabela
         };
         reader.readAsBinaryString(file);
@@ -354,6 +355,18 @@ export function VolumetryProcesses() {
 
     return (searchTerm ? matchesSearch : true) && matchesStatus && matchesPartner;
   });
+
+  // --- Paginação ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 200;
+  
+  // Reseta a página para 1 quando qualquer filtro for alterado
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, partnerFilter]);
+
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const paginatedData = filteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <div className="flex flex-col space-y-6 relative">
@@ -496,7 +509,7 @@ export function VolumetryProcesses() {
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((row, index) => (
+                  paginatedData.map((row, index) => (
                     <tr key={row.id || index} className="hover:bg-blue-50/30 transition-colors">
                       <td className="p-4 text-xs font-bold text-[#0a192f]">{row.pasta || '-'}</td>
                       <td className="p-4 text-xs font-semibold text-gray-800">{row.responsavel_principal || '-'}</td>
@@ -520,6 +533,35 @@ export function VolumetryProcesses() {
             </table>
           </div>
         </div>
+
+        {/* Controles de Paginação */}
+        {!loading && filteredData.length > 0 && (
+          <div className="flex items-center justify-between p-4 border-t border-gray-100 bg-gray-50/50">
+            <span className="text-xs font-bold text-gray-500">
+              Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1} até {Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)} de {filteredData.length} processos
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-xs font-black uppercase tracking-widest text-[#1e3a8a] bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Anterior
+              </button>
+              <div className="flex items-center justify-center min-w-[32px] h-8 bg-[#1e3a8a] text-white rounded-lg text-xs font-bold">
+                {currentPage} / {totalPages}
+              </div>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 text-xs font-black uppercase tracking-widest text-[#1e3a8a] bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Próxima
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
