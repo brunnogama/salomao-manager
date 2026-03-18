@@ -188,6 +188,7 @@ export function RHVagas() {
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
   const [filterArea, setFilterArea] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
   const [filterFaculdades, setFilterFaculdades] = useState<string[]>([])
   const [filterPeriodos, setFilterPeriodos] = useState<string[]>([])
   const [filterTurnos, setFilterTurnos] = useState<string[]>([])
@@ -698,13 +699,14 @@ export function RHVagas() {
     const matchLocal = filterLocal ? String(v.location_id) === filterLocal : true
     const matchCargo = filterCargo ? String(v.role_id) === filterCargo : true
     const matchArea = filterArea ? String(v.area) === filterArea : true
+    const matchStatus = filterStatus ? v.status === filterStatus : true
 
-    return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchArea
+    return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchArea && matchStatus
   }).sort((a, b) => {
     const nameA = a.role?.name || ''
     const nameB = b.role?.name || ''
     return nameA.localeCompare(nameB)
-  }), [vagas, searchTerm, filterLider, filterPartner, filterLocal, filterCargo, filterArea])
+  }), [vagas, searchTerm, filterLider, filterPartner, filterLocal, filterCargo, filterArea, filterStatus])
 
   const filteredCandidatos = useMemo(() => candidatos.filter(c => {
     const term = searchTerm.toLowerCase()
@@ -996,6 +998,20 @@ export function RHVagas() {
                   options={locationOptions}
                   placeholder="Local"
                 />
+                {(activeTab === 'abertas' || activeTab === 'fechadas') && (
+                  <FilterSelect
+                    icon={AlertCircle}
+                    value={filterStatus}
+                    onChange={setFilterStatus}
+                    options={[
+                      { value: 'Aberta', label: 'Aberta' },
+                      { value: 'Congelada', label: 'Congelada' },
+                      { value: 'Aguardando Autorização', label: 'Aguardando Autorização' },
+                      { value: 'Fechada', label: 'Fechada' }
+                    ]}
+                    placeholder="Status"
+                  />
+                )}
               </div>
             </div>
           </div>

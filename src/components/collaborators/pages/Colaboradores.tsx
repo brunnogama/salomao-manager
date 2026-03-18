@@ -1882,13 +1882,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
 
                 {/* Active Count Card */}
-                <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0 animate-in fade-in slide-in-from-left-4 duration-700">
-                  <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
-                    <Users className="h-4 w-4" />
+                <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100 shrink-0 animate-in fade-in slide-in-from-left-4 duration-700">
+                  <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
+                    <Users className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Ativos</p>
-                    <p className="text-sm font-bold text-[#1e3a8a] leading-none">{activeCount}</p>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Ativos</p>
+                    <p className="text-xl font-black text-[#0a192f] leading-none">{filtered.filter(c => c.status === 'active').length}</p>
                   </div>
                 </div>
 
