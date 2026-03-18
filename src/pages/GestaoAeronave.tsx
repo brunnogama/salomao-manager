@@ -141,6 +141,7 @@ export function GestaoAeronave() {
   const [searchTerm, setSearchTerm] = useState('')
   const [faturaSearchTerm, setFaturaSearchTerm] = useState('')
   const [filterDocFiscal, setFilterDocFiscal] = useState('todos')
+  const [filterStatusFatura, setFilterStatusFatura] = useState<'todos' | 'pago' | 'pendente'>('todos')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isImporting, setIsImporting] = useState(false)
@@ -258,11 +259,18 @@ export function GestaoAeronave() {
     return Array.from(types).sort()
   }, [faturasAgrupadas])
 
-  // --- Faturas filtradas por pesquisa e tipo ---
+  // --- Faturas filtradas por pesquisa, tipo e status ---
   const faturasFiltradas = useMemo(() => {
     let result = faturasAgrupadas
     if (filterDocFiscal !== 'todos') {
       result = result.filter(g => g.doc_fiscal === filterDocFiscal)
+    }
+    if (filterStatusFatura !== 'todos') {
+      result = result.filter(g => {
+        const items = (g as any)._items || [g]
+        const allPaid = items.every((i: any) => i.data_pagamento)
+        return filterStatusFatura === 'pago' ? allPaid : !allPaid
+      })
     }
     if (faturaSearchTerm.trim()) {
       const term = faturaSearchTerm.toLowerCase()
@@ -274,7 +282,7 @@ export function GestaoAeronave() {
       )
     }
     return result
-  }, [faturasAgrupadas, filterDocFiscal, faturaSearchTerm])
+  }, [faturasAgrupadas, filterDocFiscal, filterStatusFatura, faturaSearchTerm])
 
   // --- Totais (Cards) ---
   const totals = useMemo(() => {
@@ -802,24 +810,36 @@ export function GestaoAeronave() {
           {/* Spacer para empurrar filtros à direita quando não há pesquisa */}
           {activeTab !== 'dados' && activeTab !== 'faturas' && <div className="flex-1" />}
 
-          {/* Filtro de Doc Fiscal - visível em Faturas */}
+          {/* Filtros de Faturas - Doc Fiscal e Status */}
           {activeTab === 'faturas' && (
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => setFilterDocFiscal('todos')}
-                className={`shrink-0 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterDocFiscal === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}
-              >
-                Todos
-              </button>
-              {docFiscalTypes.map(type => (
-                <button
-                  key={type}
-                  onClick={() => setFilterDocFiscal(type)}
-                  className={`shrink-0 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterDocFiscal === type ? 'bg-[#1e3a8a] text-white border-[#1e3a8a]' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-400'}`}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Doc. Fiscal</span>
+                <select
+                  value={filterDocFiscal}
+                  onChange={e => setFilterDocFiscal(e.target.value)}
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 outline-none focus:border-[#1e3a8a] transition-all cursor-pointer appearance-none pr-8 min-w-[140px]"
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
                 >
-                  {type}
-                </button>
-              ))}
+                  <option value="todos">Todos os Tipos</option>
+                  {docFiscalTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Status</span>
+                <select
+                  value={filterStatusFatura}
+                  onChange={e => setFilterStatusFatura(e.target.value as any)}
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 outline-none focus:border-[#1e3a8a] transition-all cursor-pointer appearance-none pr-8 min-w-[140px]"
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
+                >
+                  <option value="todos">Todos</option>
+                  <option value="pago">Pago</option>
+                  <option value="pendente">Pendente</option>
+                </select>
+              </div>
             </div>
           )}
 
