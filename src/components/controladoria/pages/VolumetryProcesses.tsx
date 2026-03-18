@@ -544,17 +544,17 @@ export function VolumetryProcesses() {
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 text-xs font-black uppercase tracking-widest text-[#1e3a8a] bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="px-4 h-9 flex items-center justify-center text-[10px] font-black uppercase tracking-widest text-[#1e3a8a] bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
               >
                 Anterior
               </button>
-              <div className="flex items-center justify-center min-w-[32px] h-8 bg-[#1e3a8a] text-white rounded-lg text-xs font-bold">
-                {currentPage} / {totalPages}
+              <div className="flex items-center justify-center px-4 h-9 min-w-[80px] bg-[#1e3a8a] text-white rounded-lg text-[11px] font-black tracking-widest shadow-sm">
+                {currentPage} <span className="text-blue-300 mx-1">/</span> {totalPages}
               </div>
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 text-xs font-black uppercase tracking-widest text-[#1e3a8a] bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="px-4 h-9 flex items-center justify-center text-[10px] font-black uppercase tracking-widest text-[#1e3a8a] bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
               >
                 Próxima
               </button>
