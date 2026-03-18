@@ -728,10 +728,10 @@ export function GestaoAeronave() {
         <div className="flex flex-col md:flex-row justify-between gap-4">
           {/* Esconder botões nas abas Faturas e Comparativo */}
           {activeTab !== 'faturas' && activeTab !== 'comparativo' && (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 w-full">
               {/* Barra de pesquisa (aba Dados) */}
               {activeTab === 'dados' && (
-                <div className="relative flex-1 min-w-[200px]">
+                <div className="relative flex-1 min-w-0">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
@@ -753,21 +753,21 @@ export function GestaoAeronave() {
 
               <button
                 onClick={() => setFilterOrigem('todos')}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                className={`shrink-0 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                   }`}
               >
                 Todos Pagamentos
               </button>
               <button
                 onClick={() => setFilterOrigem('missao')}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'missao' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-400'
+                className={`shrink-0 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'missao' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-400'
                   }`}
               >
                 Custo Missões
               </button>
               <button
                 onClick={() => setFilterOrigem('fixa')}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'fixa' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-500 border-gray-200 hover:border-emerald-400'
+                className={`shrink-0 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'fixa' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-500 border-gray-200 hover:border-emerald-400'
                   }`}
               >
                 Despesas Fixas
