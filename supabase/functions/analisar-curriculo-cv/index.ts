@@ -90,14 +90,31 @@ serve(async (req) => {
     
     let cvText = "";
     try {
-        const { text } = await extractText(arrayBuffer);
-        cvText = text;
+        const result = await extractText(arrayBuffer);
+        
+        // Dependendo da versão, extractText pode retornar uma string diretamente ou um objeto { text: string }
+        if (typeof result === "string") {
+            cvText = result;
+        } else if (result && typeof result === "object" && 'text' in result) {
+            
+            // @ts-ignore
+            if (Array.isArray(result.text)) {
+                // @ts-ignore
+                cvText = result.text.join('\n');
+            } else {
+                // @ts-ignore
+                cvText = result.text;
+            }
+            
+        } else {
+            cvText = String(result);
+        }
     } catch (err: any) {
         console.error("Erro no unpdf extraindo texto:", err.message);
         throw new Error("Falha ao ler o conteúdo do PDF. O arquivo pode estar corrompido ou protegido.");
     }
     
-    if (!cvText || cvText.trim().length === 0) {
+    if (typeof cvText !== 'string' || !cvText || cvText.trim().length === 0) {
        throw new Error("O PDF baixado não contém texto selecionável (pode ser uma imagem escaneada).");
     }
     
