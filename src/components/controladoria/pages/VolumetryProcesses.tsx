@@ -194,7 +194,17 @@ export function VolumetryProcesses() {
           const tipoProcessoRaw = row['Tipo de Processo']?.toString() || '';
           const combinedTipo = [tipoRaw, tipoProcessoRaw].filter(Boolean).join(' - ');
 
-          const originalLeader = row['Responsável principal']?.toString() || '';
+          const originalLeaderRaw = row['Responsável principal']?.toString() || '';
+          
+          // Alias fix para nomes divergentes da planilha
+          const applyAliases = (name: string) => {
+             const clean = normalize(name);
+             if (clean === 'giovanni giuseppe vital') return 'Giovanni Giuseppe Vital Chimenti';
+             if (clean === 'luiz henrique pavan') return 'Luiz Henrique Miguel Pavan';
+             return name;
+          };
+
+          const originalLeader = applyAliases(originalLeaderRaw);
           let finalLeader = originalLeader;
           const cleanName = normalize(originalLeader);
 
