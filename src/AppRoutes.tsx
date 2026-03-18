@@ -44,6 +44,7 @@ import { FinanceContasReceber } from './components/finance/contasareceber/pages/
 import { ListaOAB } from './components/finance/pages/ListaOAB';
 import { GestaoAeronave } from './pages/GestaoAeronave';
 import { GED as FinanceGED } from './components/finance/pages/GED';
+import { Calendario as CalendarioFinanceiro } from './components/finance/pages/Calendario';
 
 // Executivo Components
 import { SecretariaExecutivaDashboard } from './components/secretaria/pages/SecretariaExecutivaDashboard';
@@ -236,7 +237,7 @@ export function AppRoutes() {
                 {/* Financeiro */}
                 <Route path="/financeiro">
                     <Route path="dashboard" element={<WithProps Component={FinanceDashboard} />} />
-                    <Route path="calendario" element={<WithProps Component={CalendarioRH} />} />
+                    <Route path="calendario" element={<WithProps Component={CalendarioFinanceiro} />} />
                     <Route path="contas-pagar" element={<WithProps Component={FinanceContasPagar} />} />
                     <Route path="contas-receber" element={<WithProps Component={FinanceContasReceber} />} />
                     <Route path="oab" element={<WithProps Component={ListaOAB} />} />
