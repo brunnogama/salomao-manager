@@ -103,7 +103,9 @@ Por favor, analise o currículo anexo e retorne EXATAMENTE UM JSON válido segui
   "data_nascimento": "YYYY-MM-DD (Seje inteligente na busca. Exemplos: 'Nascimento: 08/04/2004' -> '2004-04-08', 'Data de Nascimento: 10 de maio de 1990' -> '1990-05-10'. Se não houver, retorne null)",
   "endereco": {
     "cep": "CEP se houver",
-    "logradouro": "Rua/Avenida",
+    "logradouro": "Apenas o nome da Rua/Avenida, sem o número",
+    "numero": "Apenas o número do endereço",
+    "complemento": "Apenas o complemento (apto, bloco, casa, etc) se houver",
     "bairro": "Bairro",
     "cidade": "Cidade",
     "estado": "Sigla do Estado (Ex: RJ, SP)"
@@ -111,7 +113,16 @@ Por favor, analise o currículo anexo e retorne EXATAMENTE UM JSON válido segui
   "resumoProfissional": "Resumo em 1 ou no máximo 2 parágrafos potentes relatando o quem é o profissional, histórico, qualificações e seniority.",
   "sugestaoCargo": "Um nome curto de um cargo focado na experiência detectada.",
   "perfilTags": ["Habilidade 1", "Habilidade 2", "Tecnologia", "Ferramenta", "Soft Skill 1"],
-  "atividades_academicas": "Extraia informações sobre atividades acadêmicas relevantes, publicações, monitorias, extensões universitárias, ligas, etc. Se não houver, null. Importante: Formate como uma lista separada EXCLUSIVAMENTE por uma quebra de linha ('\\n') se houver mais de uma. NENHUMA vírgula.",
+  "education_history": [
+    {
+      "instituicao": "Nome curto da Instituição de Ensino (Ex: UFRJ, Estácio, IBMEC)",
+      "curso": "Nome do Curso (Ex: Direito, Administração, Ciência da Computação)",
+      "nivel": "Deve ser estritamente um destes: Ensino Fundamental, Ensino Médio, Graduação, Pós-Graduação",
+      "status": "Deve ser estritamente um destes: Cursando, Formado(a), Trancado",
+      "ano_conclusao": "Ano de conclusão (Ex: 2024). Se estiver Cursando, colocar a previsão de conclusão"
+    }
+  ],
+  "atividades_academicas": "Extraia outras informações esparsas sobre atividades acadêmicas relevantes, qualificações, cursos livres, monitorias, extensões universitárias, etc. Se não houver, null. Importante: Formate como uma lista separada EXCLUSIVAMENTE por uma quebra de linha ('\\n') se houver mais de uma.",
   "idiomas": "Extraia SOMENTE o Idioma e o Nível, omitindo explicações extensas sobre certificados. Exemplo: 'Inglês Fluente\\nEspanhol Intermediário'. Formate como uma lista separada EXCLUSIVAMENTE por uma quebra de linha ('\\n') se houver mais de um. NENHUMA vírgula. Se não houver, null.",
   "experiencias": [
     {
@@ -202,7 +213,7 @@ Retorne null para propriedades do tipo primitivo que não achar (como string ou 
       if (parsedData.nome === parsedData.nome.toUpperCase()) {
         parsedData.nome = parsedData.nome.replace(
           /\w\S*/g,
-          (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
+          (txt: string) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
         );
       }
     }

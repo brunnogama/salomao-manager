@@ -126,6 +126,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     birth_date: initialData.data_nascimento || '',
                     zip_code: initialData.endereco?.cep || '',
                     address: initialData.endereco?.logradouro || '',
+                    address_number: initialData.endereco?.numero || '',
+                    address_complement: initialData.endereco?.complemento || '',
                     neighborhood: initialData.endereco?.bairro || '',
                     city: initialData.endereco?.cidade || '',
                     state: initialData.endereco?.estado || '',
@@ -137,7 +139,15 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     atividades_academicas: initialData.atividades_academicas || '',
                     status_selecao: initialData.status_selecao || 'Aberto',
                     motivo_reprovacao: initialData.motivo_reprovacao || '',
-                    entrevista_dados: initialData.entrevista_dados || {}
+                    entrevista_dados: initialData.entrevista_dados || {},
+                    education_history: initialData.education_history?.map((e: any) => ({
+                        id: Math.random().toString(36).substring(7),
+                        instituicao: e.instituicao || '',
+                        curso: e.curso || '',
+                        nivel: e.nivel || 'Graduação',
+                        status: e.status || 'Formado(a)',
+                        ano_conclusao: e.ano_conclusao || ''
+                    })) || []
                 };
                 setFormData(mappedData);
 
