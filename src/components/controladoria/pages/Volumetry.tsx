@@ -8,7 +8,9 @@ import {
   Activity,
   Layers,
   ShieldCheck,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 import html2canvas from 'html2canvas';
@@ -17,6 +19,97 @@ import { toast } from 'sonner';
 
 import { VolumetryProcesses } from './VolumetryProcesses';
 import { MultiFilterSelect } from '../ui/MultiFilterSelect';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+function LifeCycleSection({ processes }: { processes: any[] }) {
+  const { valid, invalid, avgText, chartData } = useMemo(() => {
+     let validCount = 0, invalidCount = 0, totalDays = 0;
+     const buckets = [ {name:'< 1 ano',v:0}, {name:'1 a 3 anos',v:0}, {name:'3 a 5 anos',v:0}, {name:'5 a 10 anos',v:0}, {name:'> 10 anos',v:0} ];
+     
+     processes.forEach(p => {
+       if (!p.data_cadastro || (!p.data_encerramento && !p.data_baixa)) {
+         invalidCount++;
+         return;
+       }
+       const start = new Date(p.data_cadastro).getTime();
+       const end = new Date(p.data_encerramento || p.data_baixa).getTime();
+       if (end < start || isNaN(start) || isNaN(end)) { invalidCount++; return; }
+       
+       const days = (end - start) / 86400000;
+       validCount++;
+       totalDays += days;
+       const years = days / 365.25;
+       if (years < 1) buckets[0].v++;
+       else if (years <= 3) buckets[1].v++;
+       else if (years <= 5) buckets[2].v++;
+       else if (years <= 10) buckets[3].v++;
+       else buckets[4].v++;
+     });
+     
+     const avgDays = validCount > 0 ? (totalDays / validCount) : 0;
+     const avgYears = Math.floor(avgDays / 365.25);
+     const avgMonths = Math.floor((avgDays % 365.25) / 30.4);
+     return {
+       valid: validCount, invalid: invalidCount,
+       avgText: validCount > 0 ? `${avgYears} ano${avgYears !== 1 ? 's' : ''} e ${avgMonths} mês${avgMonths !== 1 ? 'es' : ''}` : '-',
+       chartData: buckets
+     };
+  }, [processes]);
+
+  return (
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col lg:flex-row gap-8 items-center">
+       <div className="w-full lg:w-1/3 flex flex-col gap-4">
+         <div>
+           <div className="flex items-center gap-2 mb-2">
+             <div className="p-2 bg-blue-50 rounded-lg">
+                <Clock className="w-4 h-4 text-blue-600" />
+             </div>
+             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Tempo Médio de Tramitação</h3>
+           </div>
+           <p className="text-3xl font-black text-blue-900 tracking-tight leading-none mt-2">{avgText}</p>
+           <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Calculado da data de distribuição até o encerramento/baixa</p>
+         </div>
+
+         {invalid > 0 && (
+           <div className="flex items-start gap-3 bg-amber-50 p-4 rounded-xl border border-amber-100 mt-2">
+             <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+             <p className="text-[10px] font-bold text-amber-800 uppercase tracking-tight leading-relaxed">
+               <span className="font-black text-amber-900">{invalid.toLocaleString('pt-BR')} processos ativos ou incompletos</span> não foram contabilizados por não possuírem as duas datas.
+             </p>
+           </div>
+         )}
+       </div>
+       
+       <div className="w-full lg:w-2/3 h-[220px]">
+         {valid > 0 ? (
+           <ResponsiveContainer width="100%" height="100%">
+             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
+               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
+               <Tooltip 
+                 cursor={{ fill: '#f8fafc' }}
+                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                 labelStyle={{ fontSize: '10px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}
+                 itemStyle={{ fontSize: '16px', fontWeight: '900', color: '#1e3a8a' }}
+                 formatter={(value: number) => [`${value} processos`, "Finalizados neste período"]}
+               />
+               <Bar dataKey="v" radius={[6, 6, 6, 6]} maxBarSize={50} animationDuration={1500}>
+                 {chartData.map((_, index) => (
+                   <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : index === 4 ? '#ef4444' : '#3b82f6'} />
+                 ))}
+               </Bar>
+             </BarChart>
+           </ResponsiveContainer>
+         ) : (
+           <div className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/50">
+             <Clock className="w-8 h-8 text-gray-300 mb-3" />
+             <p className="text-xs font-black text-gray-400 uppercase tracking-widest text-center px-4">Filtragem não contém dados com início e fim para gerar o histórico</p>
+           </div>
+         )}
+       </div>
+    </div>
+  )
+}
 
 const toTitleCase = (str: string) => {
   let n = str.trim().toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
@@ -562,6 +655,13 @@ export function Volumetry() {
           </div>
 
           {/* Distribuição de Tipos Ocultada - Passou para colunas */}
+
+          {/* Qualidade da Base */}
+          {!loading && processes.length > 0 && (
+            <DataQualitySection processes={filteredProcesses} />
+          )}
+
+          <LifeCycleSection processes={filteredProcesses} />
 
           {/* Lista de Volumetria por Responsável */}
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
