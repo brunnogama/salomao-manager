@@ -23,7 +23,6 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const [userName, setUserName] = useState('Carregando...')
-  const [vencidosCount, setVencidosCount] = useState(0)
   const [radarCount, setRadarCount] = useState(0)
   const location = useLocation()
   const activePage = location.pathname
@@ -48,51 +47,10 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
 
   useEffect(() => {
     fetchUserProfile()
-    // 1. Busca Vencidos OAB
-    const fetchVencidosOAB = async () => {
-      try {
-        const [{ data: collabs }, { data: roles }] = await Promise.all([
-          supabase.from('collaborators').select('role, hire_date'),
-          supabase.from('roles').select('id, name')
-        ])
 
-        if (collabs) {
-          const rolesMap = new Map((roles || []).map(r => [String(r.id), r.name]))
-          const hoje = new Date()
-          hoje.setHours(0, 0, 0, 0)
-
-          const count = collabs.filter((v: any) => {
-            if (!v.hire_date) return false
-            const roleStr = rolesMap.get(String(v.role)) || String(v.role || '')
-            const cargoLimpo = roleStr.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-            const ehCargoValido = cargoLimpo === 'advogado' || cargoLimpo === 'socio'
-            if (!ehCargoValido) return false
-
-            let dia, mes, ano
-            if (v.hire_date.includes('/')) {
-              [dia, mes, ano] = v.hire_date.split('/').map(Number)
-            } else {
-              [ano, mes, dia] = v.hire_date.split('-').map(Number)
-            }
-
-            const dataVenc = new Date(ano, (mes - 1) + 6, dia)
-            dataVenc.setDate(dataVenc.getDate() - 1)
-
-            return dataVenc < hoje
-          }).length
-
-          setVencidosCount(count)
-        }
-      } catch (error) {
-        console.error('Erro ao contar OAB vencidas:', error)
-      }
-    }
-
-    // 2. Busca Faturas no Radar (Contas a Receber)
+    // Busca Faturas no Radar (Contas a Receber)
     const fetchRadarCount = async () => {
       try {
-        // Nota: A lógica de tempo 2d+2d é processada no Hook, 
-        // mas aqui buscamos os que já foram marcados ou processados como radar/contato_direto
         const { count, error } = await supabase
           .from('finance_faturas')
           .select('*', { count: 'exact', head: true })
@@ -106,7 +64,6 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
       }
     }
 
-    fetchVencidosOAB()
     fetchRadarCount()
   }, [])
 
@@ -182,12 +139,7 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
                 <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-blue-400 opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 md:group-hover/sidebar:delay-300 transition-opacity duration-300" />
               )}
 
-              {/* Badge OAB Vencida */}
-              {item.path.includes('oab') && vencidosCount > 0 && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white animate-pulse shadow-lg shadow-red-900/20">
-                  {vencidosCount}
-                </span>
-              )}
+
 
               {/* Badge Contas a Receber (Radar/Atenção) */}
               {item.path.includes('contas-receber') && radarCount > 0 && (
