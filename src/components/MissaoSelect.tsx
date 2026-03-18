@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, Settings, ChevronDown, X, Plus, Pencil, Trash2, Save, Calendar } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -250,7 +251,7 @@ export function MissaoSelect({ value, onSelect, disabled = false, showManageButt
       </div>
 
       {/* MODAL GERENCIAMENTO */}
-      {isManaging && (
+      {isManaging && createPortal(
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100000] flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setIsManaging(false)}
@@ -412,7 +413,7 @@ export function MissaoSelect({ value, onSelect, disabled = false, showManageButt
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </>
   )
 }

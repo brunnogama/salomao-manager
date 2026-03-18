@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Save, Plus, DollarSign, FileText, Plane, Settings, Search, ChevronDown, Check } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
@@ -321,9 +322,9 @@ export function AeronaveFormModal({
 
   if (!isOpen) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
+      <div className="bg-white w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 border border-gray-100">
 
         {/* Header */}
         <div className={`flex items-center justify-between px-6 py-4 border-b border-gray-100 ${origem === 'missao' ? 'bg-blue-50/50' : 'bg-emerald-50/50'}`}>
@@ -348,7 +349,7 @@ export function AeronaveFormModal({
         </div>
 
         {/* Form Body */}
-        <div className="flex-1 p-4 sm:p-6 bg-white max-h-[85vh] overflow-y-auto custom-scrollbar">
+        <div className="flex-1 p-4 sm:p-6 bg-white overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-6">
 
             {/* COLUNA 1: Dados Principais e Operacionais */}
@@ -381,35 +382,23 @@ export function AeronaveFormModal({
                 </div>
 
                 {origem === 'missao' && (
-                  <>
-                    <div className="col-span-2 flex flex-col gap-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Tripulação</label>
-                      <input
-                        type="text" className="input-base"
-                        value={formData.tripulacao || ''}
-                        onChange={e => handleChange('tripulacao', e.target.value)}
-                        placeholder="Ex: Cmte. Silva, Cop. João"
-                      />
-                    </div>
-
-                    <div className="col-span-2 flex flex-col gap-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Missão</label>
-                      <MissaoSelect
-                        value={formData.id_missao}
-                        onSelect={(missao) => {
-                          if (missao) {
-                            handleChange('id_missao', missao.id_missao)
-                            handleChange('nome_missao', missao.nome_missao)
-                            handleChange('data_missao', missao.data_inicio || '')
-                          } else {
-                            handleChange('id_missao', undefined)
-                            handleChange('nome_missao', '')
-                            handleChange('data_missao', '')
-                          }
-                        }}
-                      />
-                    </div>
-                  </>
+                  <div className="col-span-2 flex flex-col gap-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Missão</label>
+                    <MissaoSelect
+                      value={formData.id_missao}
+                      onSelect={(missao) => {
+                        if (missao) {
+                          handleChange('id_missao', missao.id_missao)
+                          handleChange('nome_missao', missao.nome_missao)
+                          handleChange('data_missao', missao.data_inicio || '')
+                        } else {
+                          handleChange('id_missao', undefined)
+                          handleChange('nome_missao', '')
+                          handleChange('data_missao', '')
+                        }
+                      }}
+                    />
+                  </div>
                 )}
 
                 <div className="col-span-2 grid grid-cols-2 gap-3">
@@ -464,11 +453,11 @@ export function AeronaveFormModal({
                   </div>
                 </div>
 
-                {origem === 'missao' && (
-                  <div className="col-span-2">
-                    <CurrencyInput label="Faturado CNPJ Salomão" value={formData.faturado_cnpj || 0} onChange={(val: number) => handleChange('faturado_cnpj', val)} />
-                  </div>
-                )}
+                <div className="col-span-2 flex flex-col gap-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Centro de Custo</label>
+                  <input type="text" className="input-base" value={formData.centro_custo || ''} onChange={e => handleChange('centro_custo', e.target.value)} placeholder="Ex: Administrativo, Jurídico..." />
+                </div>
+
               </div>
             </div>
 
@@ -537,11 +526,6 @@ export function AeronaveFormModal({
                     <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Observação</label>
                     <textarea rows={2} className="input-base py-2 resize-none" value={formData.observacao || ''} onChange={e => handleChange('observacao', e.target.value)} />
                   </div>
-
-                  <div className="col-span-2 flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Centro de Custo</label>
-                    <input type="text" className="input-base" value={formData.centro_custo || ''} onChange={e => handleChange('centro_custo', e.target.value)} placeholder="Ex: Administrativo, Jurídico..." />
-                  </div>
                 </div>
               </div>
 
@@ -589,6 +573,7 @@ export function AeronaveFormModal({
         titulo={configModal.tipo}
         tabela={configModal.tabela}
       />
-    </div>
+    </div>,
+    document.body
   )
 }

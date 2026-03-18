@@ -4,11 +4,12 @@ import {
   Plus,
   Search,
   Download,
+  Upload,
   Calendar,
   XCircle,
+  ChevronDown,
   LayoutDashboard,
   Table2,
-  FileSpreadsheet,
   Wallet,
   Receipt,
   DollarSign,
@@ -139,6 +140,13 @@ export function GestaoAeronave() {
   const [data, setData] = useState<AeronaveLancamento[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [faturaSearchTerm, setFaturaSearchTerm] = useState('')
+  const [filterDocFiscal, setFilterDocFiscal] = useState('todos')
+  const [filterStatusFatura, setFilterStatusFatura] = useState<'todos' | 'pago' | 'pendente'>('todos')
+  const [isDocFiscalOpen, setIsDocFiscalOpen] = useState(false)
+  const [isStatusOpen, setIsStatusOpen] = useState(false)
+  const docFiscalRef = useRef<HTMLDivElement>(null)
+  const statusRef = useRef<HTMLDivElement>(null)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isImporting, setIsImporting] = useState(false)
@@ -180,6 +188,20 @@ export function GestaoAeronave() {
 
   useEffect(() => {
     fetchDados()
+  }, [])
+
+  // Fechar dropdowns ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (docFiscalRef.current && !docFiscalRef.current.contains(event.target as Node)) {
+        setIsDocFiscalOpen(false)
+      }
+      if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
+        setIsStatusOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   // Lista de Centros de Custo únicos para o filtro
@@ -246,6 +268,40 @@ export function GestaoAeronave() {
       }
     })
   }, [filteredData])
+
+  // --- Tipos únicos de Doc Fiscal para filtro ---
+  const docFiscalTypes = useMemo(() => {
+    const types = new Set<string>()
+    faturasAgrupadas.forEach(g => {
+      if (g.doc_fiscal) types.add(g.doc_fiscal)
+    })
+    return Array.from(types).sort()
+  }, [faturasAgrupadas])
+
+  // --- Faturas filtradas por pesquisa, tipo e status ---
+  const faturasFiltradas = useMemo(() => {
+    let result = faturasAgrupadas
+    if (filterDocFiscal !== 'todos') {
+      result = result.filter(g => g.doc_fiscal === filterDocFiscal)
+    }
+    if (filterStatusFatura !== 'todos') {
+      result = result.filter(g => {
+        const items = (g as any)._items || [g]
+        const allPaid = items.every((i: any) => i.data_pagamento)
+        return filterStatusFatura === 'pago' ? allPaid : !allPaid
+      })
+    }
+    if (faturaSearchTerm.trim()) {
+      const term = faturaSearchTerm.toLowerCase()
+      result = result.filter(g =>
+        (g.doc_fiscal || '').toLowerCase().includes(term) ||
+        (g.numero_doc || '').toLowerCase().includes(term) ||
+        (g.observacao || '').toLowerCase().includes(term) ||
+        (g.fornecedor || '').toLowerCase().includes(term)
+      )
+    }
+    return result
+  }, [faturasAgrupadas, filterDocFiscal, filterStatusFatura, faturaSearchTerm])
 
   // --- Totais (Cards) ---
   const totals = useMemo(() => {
@@ -576,11 +632,75 @@ export function GestaoAeronave() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Abas */}
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl">
+            <button
+              onClick={() => {
+                setActiveTab('dashboard')
+                setFilterOrigem('todos')
+                setSearchTerm('')
+                setStartDate('')
+                setEndDate('')
+              }}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('comparativo')
+                setSearchTerm('')
+                setStartDate('')
+                setEndDate('')
+              }}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'comparativo' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              <TrendingUp className="h-3.5 w-3.5" /> Comparativo
+            </button>
+            <button
+              onClick={() => setActiveTab('faturas')}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'faturas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              <FileText className="h-3.5 w-3.5" /> Faturas
+            </button>
+            <button
+              onClick={() => setActiveTab('dados')}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dados' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              <Table2 className="h-3.5 w-3.5" /> Dados
+            </button>
+          </div>
+
+          {/* Botões de ação */}
+          {activeTab === 'dados' && (
+            <>
+              <button
+                onClick={handleExportExcel}
+                className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-gray-600 rounded-full hover:bg-gray-50 hover:border-green-400 transition-all shadow-sm"
+                title="Exportar Excel"
+              >
+                <Download className="h-4 w-4" />
+              </button>
+              <label
+                className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-gray-600 rounded-full hover:bg-gray-50 hover:border-blue-400 transition-all shadow-sm cursor-pointer"
+                title="Importar Excel"
+              >
+                {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                <input type="file" accept=".xlsx" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
+              </label>
+            </>
+          )}
+
           <button
             onClick={() => setIsTipoModalOpen(true)}
-            className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all shadow-md active:scale-95 text-xs font-black uppercase tracking-widest"
+            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+            title="Novo Lançamento"
           >
-            <Plus className="h-4 w-4" /> Novo Lançamento
+            <Plus className="h-5 w-5" />
           </button>
         </div>
       </div>
@@ -660,70 +780,157 @@ export function GestaoAeronave() {
       )}
 
       {/* 3. Toolbar Principal */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex gap-2 bg-gray-100/50 p-1 rounded-xl">
-            <button
-              onClick={() => {
-                setActiveTab('dashboard')
-                setFilterOrigem('todos')
-                setSearchTerm('')
-                setStartDate('')
-                setEndDate('')
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
-                }`}
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('comparativo')
-                setSearchTerm('')
-                setStartDate('')
-                setEndDate('')
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'comparativo' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
-                }`}
-            >
-              <TrendingUp className="h-3.5 w-3.5" /> Comparativo
-            </button>
-            <button
-              onClick={() => setActiveTab('faturas')}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'faturas' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
-                }`}
-            >
-              <FileText className="h-3.5 w-3.5" /> Faturas
-            </button>
-            <button
-              onClick={() => setActiveTab('dados')}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dados' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
-                }`}
-            >
-              <Table2 className="h-3.5 w-3.5" /> Dados
-            </button>
-          </div>
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex flex-col md:flex-row items-center gap-4">
+          {/* Barra de pesquisa (aba Dados) - empurra tudo pra direita */}
+          {activeTab === 'dados' && (
+            <div className="relative flex-1 min-w-0 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por ID, Missão, Fornecedor ou Descrição..."
+                className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <XCircle className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
 
-          {/* Esconder botões nas abas Faturas e Comparativo */}
+          {/* Barra de pesquisa (aba Faturas) */}
+          {activeTab === 'faturas' && (
+            <div className="relative flex-1 min-w-0 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por tipo, número, fornecedor ou observação..."
+                className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                value={faturaSearchTerm}
+                onChange={(e) => setFaturaSearchTerm(e.target.value)}
+              />
+              {faturaSearchTerm && (
+                <button
+                  onClick={() => setFaturaSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <XCircle className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Spacer para empurrar filtros à direita quando não há pesquisa */}
+          {activeTab !== 'dados' && activeTab !== 'faturas' && <div className="flex-1" />}
+
+          {/* Filtros de Faturas - Doc Fiscal e Status */}
+          {activeTab === 'faturas' && (
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Dropdown Doc Fiscal */}
+              <div ref={docFiscalRef} className="relative">
+                <button
+                  onClick={() => { setIsDocFiscalOpen(!isDocFiscalOpen); setIsStatusOpen(false) }}
+                  className={`flex items-center gap-2 border rounded-lg px-3 py-2 transition-all cursor-pointer ${isDocFiscalOpen ? 'bg-white border-[#1e3a8a] ring-2 ring-[#1e3a8a]/10' : filterDocFiscal !== 'todos' ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200 hover:border-gray-300'}`}
+                >
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Doc. Fiscal</span>
+                  <span className={`text-xs font-semibold ${filterDocFiscal !== 'todos' ? 'text-[#1e3a8a]' : 'text-gray-700'}`}>{filterDocFiscal === 'todos' ? 'Todos' : filterDocFiscal}</span>
+                  {filterDocFiscal !== 'todos' ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setFilterDocFiscal('todos') }}
+                      className="p-0.5 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                    </button>
+                  ) : (
+                    <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${isDocFiscalOpen ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+                {isDocFiscalOpen && (
+                  <div className="absolute left-0 top-full mt-2 min-w-[160px] bg-white border border-gray-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[9999]">
+                    <div className="p-2 space-y-1">
+                      <button
+                        onClick={() => { setFilterDocFiscal('todos'); setIsDocFiscalOpen(false) }}
+                        className={`w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all ${filterDocFiscal === 'todos' ? 'bg-[#1e3a8a] text-white' : 'text-gray-600 hover:bg-blue-50 hover:text-[#1e3a8a]'}`}
+                      >
+                        Todos
+                      </button>
+                      {docFiscalTypes.map(type => (
+                        <button
+                          key={type}
+                          onClick={() => { setFilterDocFiscal(type); setIsDocFiscalOpen(false) }}
+                          className={`w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all ${filterDocFiscal === type ? 'bg-[#1e3a8a] text-white' : 'text-gray-600 hover:bg-blue-50 hover:text-[#1e3a8a]'}`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Dropdown Status */}
+              <div ref={statusRef} className="relative">
+                <button
+                  onClick={() => { setIsStatusOpen(!isStatusOpen); setIsDocFiscalOpen(false) }}
+                  className={`flex items-center gap-2 border rounded-lg px-3 py-2 transition-all cursor-pointer ${isStatusOpen ? 'bg-white border-[#1e3a8a] ring-2 ring-[#1e3a8a]/10' : filterStatusFatura !== 'todos' ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200 hover:border-gray-300'}`}
+                >
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Status</span>
+                  <span className={`text-xs font-semibold ${filterStatusFatura !== 'todos' ? 'text-[#1e3a8a]' : 'text-gray-700'}`}>{filterStatusFatura === 'todos' ? 'Todos' : filterStatusFatura === 'pago' ? 'Pago' : 'Pendente'}</span>
+                  {filterStatusFatura !== 'todos' ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setFilterStatusFatura('todos') }}
+                      className="p-0.5 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                    </button>
+                  ) : (
+                    <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${isStatusOpen ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+                {isStatusOpen && (
+                  <div className="absolute left-0 top-full mt-2 min-w-[160px] bg-white border border-gray-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[9999]">
+                    <div className="p-2 space-y-1">
+                      {(['todos', 'pago', 'pendente'] as const).map(st => (
+                        <button
+                          key={st}
+                          onClick={() => { setFilterStatusFatura(st); setIsStatusOpen(false) }}
+                          className={`w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all ${filterStatusFatura === st ? 'bg-[#1e3a8a] text-white' : 'text-gray-600 hover:bg-blue-50 hover:text-[#1e3a8a]'}`}
+                        >
+                          {st === 'todos' ? 'Todos' : st === 'pago' ? 'Pago' : 'Pendente'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Botões de filtro - visíveis em Dashboard e Dados */}
           {activeTab !== 'faturas' && activeTab !== 'comparativo' && (
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setFilterOrigem('todos')}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                className={`shrink-0 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                   }`}
               >
                 Todos Pagamentos
               </button>
               <button
                 onClick={() => setFilterOrigem('missao')}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'missao' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-400'
+                className={`shrink-0 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'missao' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-400'
                   }`}
               >
                 Custo Missões
               </button>
               <button
                 onClick={() => setFilterOrigem('fixa')}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'fixa' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-500 border-gray-200 hover:border-emerald-400'
+                className={`shrink-0 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterOrigem === 'fixa' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-500 border-gray-200 hover:border-emerald-400'
                   }`}
               >
                 Despesas Fixas
@@ -731,66 +938,32 @@ export function GestaoAeronave() {
             </div>
           )}
 
-          {/* Filtro de Data (Visível em todas as abas conforme solicitado) */}
-          <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-              {activeTab === 'dashboard' ? 'Período de Missões' : 'Período de Pagamento'}
+          {/* Filtro de Data */}
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 shrink-0">
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">
+              {activeTab === 'dashboard' ? 'Período' : 'Período'}
             </span>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <input
-                type="date"
-                className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-              <span className="text-gray-300">|</span>
-              <input
-                type="date"
-                className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-              {(startDate || endDate) && (
-                <button onClick={() => { setStartDate(''); setEndDate('') }} className="text-red-400 hover:text-red-600">
-                  <XCircle className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
+            <Calendar className="h-4 w-4 text-gray-400" />
+            <input
+              type="date"
+              className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <span className="text-gray-300">|</span>
+            <input
+              type="date"
+              className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+            {(startDate || endDate) && (
+              <button onClick={() => { setStartDate(''); setEndDate('') }} className="text-red-400 hover:text-red-600">
+                <XCircle className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
-
-        {activeTab === 'dados' && (
-          <>
-            <div className="h-px bg-gray-100 w-full my-2"></div>
-            <div className="flex flex-col md:flex-row justify-between gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar por ID, Missão, Fornecedor ou Descrição..."
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleExportExcel}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-green-400 transition-all text-xs font-bold uppercase tracking-wide"
-                >
-                  <Download className="h-4 w-4" /> Exportar
-                </button>
-                <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-blue-400 transition-all text-xs font-bold uppercase tracking-wide cursor-pointer">
-                  {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
-                  Importar
-                  <input type="file" accept=".xlsx" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
-                </label>
-                {/* Button moved to header */}
-              </div>
-            </div>
-          </>
-        )}
       </div>
 
       {/* 4. Área de Conteúdo */}
@@ -811,14 +984,22 @@ export function GestaoAeronave() {
               <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[15%]">Doc. Fiscal</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[15%]">Número</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[20%] text-right">Valor Total Doc</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[50%]">Observação</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[12%]">Número</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[15%] text-right">Valor Total Doc</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[13%] text-center">Data da Baixa</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[45%]">Observação</th>
                 </tr>
               </thead>
               <tbody>
-                {faturasAgrupadas.length > 0 ? (
-                  faturasAgrupadas.map((group, idx) => (
+                {faturasFiltradas.length > 0 ? (
+                  faturasFiltradas.map((group, idx) => {
+                    const items = (group as any)._items || [group]
+                    const allPaid = items.every((i: any) => i.data_pagamento)
+                    const dataBaixa = allPaid
+                      ? items.reduce((latest: string, i: any) => i.data_pagamento > latest ? i.data_pagamento : latest, items[0].data_pagamento)
+                      : null
+
+                    return (
                     <tr
                       key={idx}
                       onClick={() => handleFaturaClick(group)}
@@ -837,14 +1018,26 @@ export function GestaoAeronave() {
                           <span className="text-gray-300">-</span>
                         )}
                       </td>
+                      <td className="px-4 py-4 text-sm text-center whitespace-nowrap">
+                        {dataBaixa ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-xs">
+                            {new Date(dataBaixa + 'T00:00:00').toLocaleDateString('pt-BR')}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 text-amber-600 font-bold text-[10px] uppercase tracking-wider">
+                            Pendente
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-4 text-sm text-gray-500 last:rounded-r-xl overflow-hidden text-ellipsis" title={group.observacao || ''}>
                         {group.observacao || '-'}
                       </td>
                     </tr>
-                  ))
+                    )
+                  })
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-4 py-12 text-center">
+                    <td colSpan={5} className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center justify-center text-gray-300 gap-2">
                         <FileText className="h-8 w-8" />
                         <p className="text-xs font-bold uppercase tracking-widest">Nenhuma fatura encontrada</p>
