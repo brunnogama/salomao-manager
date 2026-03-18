@@ -87,12 +87,28 @@ serve(async (req) => {
     }
 
     // Extrair texto do PDF usando pdf-parse
-    console.log("📄 Extraindo texto do PDF com pdf-parse...");
+    console.log("📄 Lendo ArrayBuffer do arquivo baixado...");
     const buffer = await fileData.arrayBuffer();
-    const nodeBuffer = Buffer.from(buffer);
-    const pdfData = await pdf(nodeBuffer);
-    const extractedText = pdfData.text;
-    console.log("✅ PDF extraído com sucesso. Caracteres:", extractedText.length);
+    const u8 = new Uint8Array(buffer);
+
+    // Validação de segurança: verificar se é realmente um PDF (magic bytes %PDF-)
+    if (u8.length < 5 || u8[0] !== 37 || u8[1] !== 80 || u8[2] !== 68 || u8[3] !== 70) {
+      const textPreview = new TextDecoder().decode(u8.slice(0, 100));
+      throw new Error(`O arquivo baixado não é um PDF válido. [Preview: ${textPreview}]`);
+    }
+
+    console.log("📄 Extraindo texto do PDF com pdf-parse...");
+    const nodeBuffer = Buffer.from(u8);
+    let extractedText = "";
+    
+    try {
+      const pdfData = await pdf(nodeBuffer);
+      extractedText = pdfData.text;
+      console.log("✅ PDF extraído com sucesso. Caracteres:", extractedText.length);
+    } catch (parseError: any) {
+      console.error("Erro interno do pdf-parse:", parseError);
+      throw new Error("Falha ao extrair texto do PDF: " + parseError.message);
+    }
 
     // 4. Prompt para a IA
     const systemInstruction = `Você é um Assistente de RH altamente especializado em Recrutamento e Seleção ATS (Applicant Tracking System).
