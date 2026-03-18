@@ -761,26 +761,6 @@ export function RHVagas() {
     return nameA.localeCompare(nameB)
   }), [candidatos, searchTerm, filterLocal, filterCargo, filterArea, filterFaculdades, filterPeriodos, filterTurnos])
 
-  // Stats (memorizados)
-  const vagasAbertas = useMemo(() => vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').length, [vagas])
-  const totalTalentosCount = candidatos.length
-
-  const currentMonth = new Date().getMonth()
-  const currentYear = new Date().getFullYear()
-
-  const vagasFechadasNoMes = useMemo(() => {
-    return vagas.filter(v => {
-      if (v.status !== 'Fechada' || !v.data_fechamento) return false
-      const d = new Date(v.data_fechamento)
-      return d.getMonth() === currentMonth && d.getFullYear() === currentYear
-    }).length
-  }, [vagas])
-
-  const reprovadosNoMes = candidatos.filter(c => {
-    if (!c.status_selecao?.startsWith('Reprovado') || !c.data_reprovacao) return false
-    const d = new Date(c.data_reprovacao)
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
-  }).length
 
   return (
     <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24">
@@ -863,46 +843,46 @@ export function RHVagas() {
 
               {/* Active Count Card */}
               {activeTab === 'abertas' && (
-                <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0">
-                  <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
-                    <Clock className="h-4 w-4" />
+                <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100 shrink-0">
+                  <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
+                    <Clock className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Abertas</p>
-                    <p className="text-sm font-bold text-[#1e3a8a] leading-none">{vagasAbertas}</p>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Abertas</p>
+                    <p className="text-xl font-black text-[#0a192f] leading-none">{filteredVagas.filter(v => v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização').length}</p>
                   </div>
                 </div>
               )}
               {activeTab === 'talentos' && (
-                <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0">
-                  <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
-                    <Users className="h-4 w-4" />
+                <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100 shrink-0">
+                  <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
+                    <Users className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Total Talentos</p>
-                    <p className="text-sm font-bold text-[#1e3a8a] leading-none">{totalTalentosCount}</p>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Total Talentos</p>
+                    <p className="text-xl font-black text-[#0a192f] leading-none">{filteredCandidatos.length}</p>
                   </div>
                 </div>
               )}
               {activeTab === 'fechadas' && (
-                <div className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-100 rounded-xl px-4 py-2.5 shrink-0">
-                  <div className="p-1.5 bg-emerald-100 rounded-lg text-emerald-700">
-                    <CheckCircle2 className="h-4 w-4" />
+                <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100 shrink-0">
+                  <div className="p-2 bg-emerald-100/80 text-emerald-700 rounded-lg">
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-emerald-900/40 uppercase tracking-widest leading-none mb-1">Fechadas no Mês</p>
-                    <p className="text-sm font-bold text-emerald-700 leading-none">{vagasFechadasNoMes}</p>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Fechadas</p>
+                    <p className="text-xl font-black text-[#0a192f] leading-none">{filteredVagas.filter(v => v.status === 'Fechada').length}</p>
                   </div>
                 </div>
               )}
               {activeTab === 'reprovados' && (
-                <div className="flex items-center gap-3 bg-red-50/50 border border-red-100 rounded-xl px-4 py-2.5 shrink-0">
-                  <div className="p-1.5 bg-red-100 rounded-lg text-red-700">
-                    <UserX className="h-4 w-4" />
+                <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100 shrink-0">
+                  <div className="p-2 bg-red-100/80 text-red-700 rounded-lg">
+                    <UserX className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-red-900/40 uppercase tracking-widest leading-none mb-1">Reprovados no Mês</p>
-                    <p className="text-sm font-bold text-red-700 leading-none">{reprovadosNoMes}</p>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Reprovados</p>
+                    <p className="text-xl font-black text-[#0a192f] leading-none">{filteredCandidatos.filter(c => c.status_selecao?.startsWith('Reprovado')).length}</p>
                   </div>
                 </div>
               )}
