@@ -21,10 +21,10 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
-    if (!GEMINI_API_KEY) {
-      throw new Error("A chave GEMINI_API_KEY não está configurada nos Secrets da Edge Function.");
+    if (!OPENAI_API_KEY) {
+      throw new Error("A chave OPENAI_API_KEY não está configurada nos Secrets da Edge Function.");
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -50,7 +50,7 @@ serve(async (req) => {
 
     if (vagaError || !vaga) throw new Error(`Vaga não encontrada. Erro: ${vagaError?.message}`);
 
-    // 3. Montar prompt otimizado para a Gemini analisar aderência
+    // 3. Montar prompt otimizado para a OpenAI analisar aderência
     const roleVaga = vaga.role ? (vaga.role as any).name : 'Cargo não especificado';
 
     // Tratativa para os dados não ficarem enormes:
@@ -88,52 +88,46 @@ Retorne SOMENTE UM JSON válido, com a estrutura:
     const promptText = `== CANDIDATO ==\n${candidatoProfile}\n\n== VAGA ==\n${vagaProfile}`;
 
     const requestBody = {
-      contents: [{
-        parts: [
-          { text: systemInstruction },
-          { text: promptText }
-        ]
-      }],
-      generationConfig: {
-        temperature: 0.1, // temperatura muito baixa p/ garantir consistência matemática e de formatação do json
-        responseMimeType: "application/json",
-      }
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: promptText }
+      ],
+      temperature: 0.1, // temperatura muito baixa p/ garantir consistência matemática e de formatação do json
+      response_format: { type: "json_object" }
     };
 
-    // 4. Chamada via API REST Gemini 1.5 Flash
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+    // 4. Chamada via API REST OpenAI
+    const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify(requestBody)
     });
 
-    const geminiData = await response.json();
+    const openaiData = await response.json();
 
     if (!response.ok) {
-      throw new Error(`Gemini API Error: ${geminiData.error?.message || 'Unknown'}`);
+      throw new Error(`OpenAI API Error: ${openaiData.error?.message || 'Unknown'}`);
     }
 
     let rawText = "";
 
-    if (geminiData.candidates && geminiData.candidates.length > 0) {
-      const candidate = geminiData.candidates[0];
-      if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-        rawText = candidate.content.parts[0].text;
-      }
+    if (openaiData.choices && openaiData.choices.length > 0) {
+      rawText = openaiData.choices[0].message.content;
     }
 
     if (!rawText) {
-      throw new Error("Resposta vazia da IA Gemini. \n" + JSON.stringify(geminiData));
+      throw new Error("Resposta vazia da IA OpenAI. \n" + JSON.stringify(openaiData));
     }
 
     // 5. Parse Safely
     let parsedData;
     let jsonErrorMsg = "";
     try {
-      const cleanedText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-      parsedData = JSON.parse(cleanedText);
+      parsedData = JSON.parse(rawText);
     } catch (e: any) {
       console.error("JSON PARSE ERROR:", e.message);
       console.error("RAW TEXT:", rawText);
