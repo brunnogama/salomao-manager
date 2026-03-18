@@ -4,13 +4,16 @@ import {
   BarChart3,
   Scale,
   FileText,
-  Download,
   PieChart,
   Activity,
   Layers,
-  ShieldCheck
+  ShieldCheck,
+  FileSpreadsheet
 } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { toast } from 'sonner';
 
 import { VolumetryProcesses } from './VolumetryProcesses';
 import { MultiFilterSelect } from '../ui/MultiFilterSelect';
@@ -19,6 +22,7 @@ export function Volumetry() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'processos'>('dashboard');
   const [processes, setProcesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   // Filtros Globais para o Dashboard
   const [searchTerm, setSearchTerm] = useState('');
@@ -153,6 +157,77 @@ export function Volumetry() {
     XLSX.writeFile(wb, "Volumetria_LegalOne.xlsx");
   };
 
+  const handleExportPDF = async () => {
+    const targetElement = document.getElementById('volumetry-dashboard-content');
+    if (!targetElement) return;
+
+    setIsExportingPDF(true);
+    const loadingToast = toast.loading('Gerando PDF do Dashboard... Isso pode levar alguns segundos.');
+
+    // Save scroll pos and jump to top to avoid html2canvas bug
+    const originalScrollY = window.scrollY;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
+    setTimeout(async () => {
+      try {
+        const canvas = await html2canvas(targetElement, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#f8fafc', // Tailwind gray-50
+          scrollY: 0,
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdfWidth = 210; // A4 width in mm
+        const expectedHeight = (canvas.height * pdfWidth) / canvas.width;
+        const pdfHeight = Math.max(297, expectedHeight + 45);
+        const pdf = new jsPDF('p', 'mm', [pdfWidth, pdfHeight]);
+
+        try {
+          const logoImg = new Image();
+          logoImg.src = '/logo-salomao.png';
+          await new Promise((resolve) => {
+            logoImg.onload = resolve;
+            logoImg.onerror = resolve;
+          });
+
+          if (logoImg.width && logoImg.height) {
+            const logoWidth = 40;
+            const logoHeight = (logoImg.height * logoWidth) / logoImg.width;
+            pdf.addImage(logoImg, 'PNG', 10, 10, logoWidth, logoHeight);
+          } else {
+            pdf.addImage('/logo-salomao.png', 'PNG', 10, 10, 40, 15);
+          }
+        } catch (e) {
+          console.warn('Could not load logo for PDF', e);
+        }
+
+        pdf.setFontSize(14);
+        pdf.setTextColor(30, 58, 138); // #1e3a8a
+        pdf.setFont("helvetica", "bold");
+        pdf.text("Dashboard Analítico de Volumetria", 60, 20);
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 60, 25);
+
+        pdf.addImage(imgData, 'PNG', 10, 35, pdfWidth - 20, expectedHeight);
+
+        const d = new Date();
+        const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
+        pdf.save(`Dashboard_Volumetria_${fd}.pdf`);
+        toast.success('PDF gerado com sucesso!', { id: loadingToast });
+      } catch (error) {
+        console.error('Erro ao gerar PDF', error);
+        toast.error('Erro ao gerar PDF do dashboard.', { id: loadingToast });
+      } finally {
+        setIsExportingPDF(false);
+        window.scrollTo({ top: originalScrollY, behavior: 'instant' });
+      }
+    }, 300);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
 
@@ -189,16 +264,31 @@ export function Volumetry() {
 
           {/* Botões de Ação */}
           {activeTab === 'dashboard' && volumetryByPartner.length > 0 && (
-            <button onClick={handleExportDashboard} className="flex-1 md:flex-none flex justify-center items-center gap-2 px-6 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[10px] font-black uppercase tracking-[0.1em] shadow-sm active:scale-95">
-              <Download className="h-4 w-4" /> Exportar Dashboard
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleExportDashboard} 
+                className="w-10 h-10 flex items-center justify-center bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-sm active:scale-95"
+                title="Exportar em XLSX"
+              >
+                <FileSpreadsheet className="h-5 w-5" />
+              </button>
+              
+              <button 
+                onClick={handleExportPDF} 
+                disabled={isExportingPDF}
+                className="w-10 h-10 flex items-center justify-center bg-red-600 text-white rounded-full hover:bg-red-700 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                title="Exportar Dashboard em PDF"
+              >
+                {isExportingPDF ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileText className="h-5 w-5" />}
+              </button>
+            </div>
           )}
           <div id="volumetry-actions" className="flex items-center gap-2 empty:hidden"></div>
         </div>
       </div>
 
       {activeTab === 'dashboard' ? (
-        <div className="flex flex-col space-y-6">
+        <div className="flex flex-col space-y-6" id="volumetry-dashboard-content">
           {/* Dashboard Filters */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
              <div className="flex-1 min-w-[200px]">
