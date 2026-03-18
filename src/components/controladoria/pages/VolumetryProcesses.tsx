@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Upload, FileText, Database, Loader2, Trash2, CheckCircle2, AlertCircle, Search } from 'lucide-react';
+import { Upload, FileText, Loader2, Trash2, CheckCircle2, AlertCircle, Search } from 'lucide-react';
 import { ConfirmModal } from '../../controladoria/ui/ConfirmModal';
 import { MultiFilterSelect } from '../ui/MultiFilterSelect';
 import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx';
+import { toast } from 'sonner';
 
 // Custom AlertDialog (Design System Salomão)
 function AlertDialog({ isOpen, title, message, type = 'success', onClose }: { isOpen: boolean; title: string; message: string; type?: 'success' | 'warning' | 'error'; onClose: () => void }) {
@@ -160,16 +161,71 @@ export function VolumetryProcesses() {
 
         setImportProgress({ current: 0, total: rawData.length });
 
+        // --- INÍCIO DA IDENTIFICAÇÃO DE LÍDERES ---
+        const { data: collabData } = await supabase
+          .from('collaborators')
+          .select('name, role, leader:leader_id(name)');
+
+        const normalize = (str: string) => {
+          if (!str) return '';
+          return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        };
+
+        const leaderMap = new Map<string, string>();
+        const validLeaders = new Set<string>();
+
+        if (collabData) {
+          collabData.forEach((c: any) => {
+            if (c.leader?.name) {
+              leaderMap.set(normalize(c.name), c.leader.name);
+              validLeaders.add(normalize(c.leader.name));
+            }
+            if (c.role?.toLowerCase().includes('sócio') || c.role?.toLowerCase().includes('socio')) {
+               validLeaders.add(normalize(c.name));
+            }
+          });
+        }
+
+        const unmappedProcesses: any[] = [];
+        // --- FIM DA IDENTIFICAÇÃO DE LÍDERES ---
+
         const formattedData = rawData.map((row: any) => {
           const tipoRaw = row['Tipo']?.toString() || '';
           const tipoProcessoRaw = row['Tipo de Processo']?.toString() || '';
           const combinedTipo = [tipoRaw, tipoProcessoRaw].filter(Boolean).join(' - ');
 
+          const originalLeader = row['Responsável principal']?.toString() || '';
+          let finalLeader = originalLeader;
+          const cleanName = normalize(originalLeader);
+
+          // Substituição pelo Líder Mapeado
+          if (leaderMap.has(cleanName)) {
+            finalLeader = leaderMap.get(cleanName) as string;
+          }
+
+          // Verificação de Inconsistência
+          if (finalLeader) {
+             const cleanFinal = normalize(finalLeader);
+             if (!validLeaders.has(cleanFinal)) {
+                unmappedProcesses.push({
+                   ...row,
+                   'Motivo do Alerta': leaderMap.has(cleanName) 
+                       ? `Substituído por ${finalLeader}, mas este não é reconhecido como Sócio ou Líder.` 
+                       : 'Responsável não encontrado na base de RH ou sem líder vinculado.'
+                });
+             }
+          } else {
+             unmappedProcesses.push({
+                 ...row,
+                 'Motivo do Alerta': 'Processo sem Responsável Principal definido no Excel.'
+             });
+          }
+
           return {
             pasta: row['Pasta']?.toString() || null,
             tipo: combinedTipo || null,
             data_cadastro: parseExcelDate(row['Data da distribuição'] || row['Data Cadastro']),
-            responsavel_principal: row['Responsável principal']?.toString() || null,
+            responsavel_principal: finalLeader || null,
             cliente_principal: row['Cliente']?.toString() || row['Cliente principal']?.toString() || null,
             numero_cnj: row['Número de CNJ']?.toString() || null,
             uf: row['UF']?.toString() || null,
@@ -178,6 +234,15 @@ export function VolumetryProcesses() {
             instancia: row['Fase']?.toString() || row['Tipo_1']?.toString() || row['Instância']?.toString() || null
           };
         });
+
+        // Se houver inconsistências de liderança, exportamos o relatório extra
+        if (unmappedProcesses.length > 0) {
+            const wsUnmapped = XLSX.utils.json_to_sheet(unmappedProcesses);
+            const wbUnmapped = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wbUnmapped, wsUnmapped, "Inconsistencias");
+            XLSX.writeFile(wbUnmapped, "Relatorio_Processos_Sem_Lider_Mapeado.xlsx");
+            toast.warning(`${unmappedProcesses.length} processos ficaram sem um Líder válido. Um relatório foi baixado automaticamente.`, { duration: 10000 });
+        }
 
         // Em vez de inserir tudo de uma vez, divide em lotes para atualizar o progresso
         const batchSize = 100;
