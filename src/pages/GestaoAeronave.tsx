@@ -139,6 +139,8 @@ export function GestaoAeronave() {
   const [data, setData] = useState<AeronaveLancamento[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [faturaSearchTerm, setFaturaSearchTerm] = useState('')
+  const [filterDocFiscal, setFilterDocFiscal] = useState('todos')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isImporting, setIsImporting] = useState(false)
@@ -246,6 +248,33 @@ export function GestaoAeronave() {
       }
     })
   }, [filteredData])
+
+  // --- Tipos únicos de Doc Fiscal para filtro ---
+  const docFiscalTypes = useMemo(() => {
+    const types = new Set<string>()
+    faturasAgrupadas.forEach(g => {
+      if (g.doc_fiscal) types.add(g.doc_fiscal)
+    })
+    return Array.from(types).sort()
+  }, [faturasAgrupadas])
+
+  // --- Faturas filtradas por pesquisa e tipo ---
+  const faturasFiltradas = useMemo(() => {
+    let result = faturasAgrupadas
+    if (filterDocFiscal !== 'todos') {
+      result = result.filter(g => g.doc_fiscal === filterDocFiscal)
+    }
+    if (faturaSearchTerm.trim()) {
+      const term = faturaSearchTerm.toLowerCase()
+      result = result.filter(g =>
+        (g.doc_fiscal || '').toLowerCase().includes(term) ||
+        (g.numero_doc || '').toLowerCase().includes(term) ||
+        (g.observacao || '').toLowerCase().includes(term) ||
+        (g.fornecedor || '').toLowerCase().includes(term)
+      )
+    }
+    return result
+  }, [faturasAgrupadas, filterDocFiscal, faturaSearchTerm])
 
   // --- Totais (Cards) ---
   const totals = useMemo(() => {
@@ -748,8 +777,51 @@ export function GestaoAeronave() {
             </div>
           )}
 
+          {/* Barra de pesquisa (aba Faturas) */}
+          {activeTab === 'faturas' && (
+            <div className="relative flex-1 min-w-0 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por tipo, número, fornecedor ou observação..."
+                className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                value={faturaSearchTerm}
+                onChange={(e) => setFaturaSearchTerm(e.target.value)}
+              />
+              {faturaSearchTerm && (
+                <button
+                  onClick={() => setFaturaSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <XCircle className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Spacer para empurrar filtros à direita quando não há pesquisa */}
-          {activeTab !== 'dados' && <div className="flex-1" />}
+          {activeTab !== 'dados' && activeTab !== 'faturas' && <div className="flex-1" />}
+
+          {/* Filtro de Doc Fiscal - visível em Faturas */}
+          {activeTab === 'faturas' && (
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setFilterDocFiscal('todos')}
+                className={`shrink-0 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterDocFiscal === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}
+              >
+                Todos
+              </button>
+              {docFiscalTypes.map(type => (
+                <button
+                  key={type}
+                  onClick={() => setFilterDocFiscal(type)}
+                  className={`shrink-0 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterDocFiscal === type ? 'bg-[#1e3a8a] text-white border-[#1e3a8a]' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-400'}`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Botões de filtro - visíveis em Dashboard e Dados */}
           {activeTab !== 'faturas' && activeTab !== 'comparativo' && (
@@ -830,8 +902,8 @@ export function GestaoAeronave() {
                 </tr>
               </thead>
               <tbody>
-                {faturasAgrupadas.length > 0 ? (
-                  faturasAgrupadas.map((group, idx) => (
+                {faturasFiltradas.length > 0 ? (
+                  faturasFiltradas.map((group, idx) => (
                     <tr
                       key={idx}
                       onClick={() => handleFaturaClick(group)}
