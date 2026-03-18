@@ -453,10 +453,12 @@ export function Volumetry() {
                           <td className="p-4 align-middle">
                             <div className="flex items-center gap-4">
                               <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden max-w-[200px] border border-gray-200/50 shadow-inner">
-                                <div
-                                  className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] h-full rounded-full transition-all duration-500"
-                                  style={{ width: `${partner.percentage}%` }}
-                                ></div>
+                                {parseFloat(partner.percentage) > 0 ? (
+                                  <div
+                                    className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] h-full rounded-full transition-all duration-500"
+                                    style={{ width: `${partner.percentage}%` }}
+                                  ></div>
+                                ) : null}
                               </div>
                               <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest w-12">{partner.percentage}%</span>
                             </div>
