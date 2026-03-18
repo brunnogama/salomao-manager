@@ -312,9 +312,9 @@ export function Volumetry() {
     setTimeout(async () => {
       try {
         const canvas = await html2canvas(targetElement, {
-          scale: 2,
+          scale: 4, // Aumentado para altíssima resolução
           useCORS: true,
-          backgroundColor: '#f8fafc', // Tailwind gray-50
+          backgroundColor: '#f8fafc',
           scrollY: 0,
         });
 
@@ -430,49 +430,72 @@ export function Volumetry() {
 
       {activeTab === 'dashboard' ? (
         <div className="flex flex-col space-y-6" id="volumetry-dashboard-content">
-          {/* Dashboard Filters */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
-             <div className="flex-1 min-w-[200px]">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Busca (Cliente, CNJ ou Pasta)</label>
-                <input
-                  type="text"
-                  placeholder="Pesquisar..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-600 font-medium placeholder:text-gray-400"
-                />
-              </div>
+          {/* Dashboard Filters ou Cabeçalho Elegante de Relatório PDF */}
+          {!isExportingPDF ? (
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end" data-html2canvas-ignore>
+               <div className="flex-1 min-w-[200px]">
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Busca (Cliente, CNJ ou Pasta)</label>
+                  <input
+                    type="text"
+                    placeholder="Pesquisar..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-600 font-medium placeholder:text-gray-400"
+                  />
+                </div>
 
-              <div className="w-full sm:w-48">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Líder Responsável</label>
-                <MultiFilterSelect
-                  value={partnerFilter}
-                  onChange={setPartnerFilter}
-                  placeholder="Todos"
-                  options={allPartners.map(p => ({ value: p as string, label: p as string }))}
-                />
-              </div>
+                <div className="w-full sm:w-48">
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Líder Responsável</label>
+                  <MultiFilterSelect
+                    value={partnerFilter}
+                    onChange={setPartnerFilter}
+                    placeholder="Todos"
+                    options={allPartners.map(p => ({ value: p as string, label: p as string }))}
+                  />
+                </div>
 
-              <div className="w-full sm:w-48">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Sócio</label>
-                <MultiFilterSelect
-                  value={socioFilter}
-                  onChange={setSocioFilter}
-                  placeholder="Todos"
-                  options={allSocios.map(s => ({ value: s as string, label: s as string }))}
-                />
-              </div>
+                <div className="w-full sm:w-48">
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Sócio</label>
+                  <MultiFilterSelect
+                    value={socioFilter}
+                    onChange={setSocioFilter}
+                    placeholder="Todos"
+                    options={allSocios.map(s => ({ value: s as string, label: s as string }))}
+                  />
+                </div>
 
-              <div className="w-full sm:w-48">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
-                <MultiFilterSelect
-                  value={statusFilter}
-                  onChange={setStatusFilter}
-                  placeholder="Todos"
-                  options={allStatuses.map(s => ({ value: s as string, label: s as string }))}
-                />
+                <div className="w-full sm:w-48">
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
+                  <MultiFilterSelect
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                    placeholder="Todos"
+                    options={allStatuses.map(s => ({ value: s as string, label: s as string }))}
+                  />
+                </div>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] p-6 rounded-2xl shadow-sm text-white flex flex-col gap-4 border border-[#ffffff10]">
+              <div className="border-b border-[#ffffff20] pb-4">
+                <h2 className="text-xl font-black uppercase tracking-widest">Relatório de Volumetria Analítica</h2>
+                <p className="text-xs font-bold text-blue-200 mt-1 uppercase tracking-widest">Posição em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
               </div>
-          </div>
+              <div className="flex gap-10">
+                 <div>
+                   <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-1">Sócio(s)</p>
+                   <p className="text-sm font-black uppercase tracking-tight">{socioFilter.length > 0 ? socioFilter.join(', ') : 'Todos os Sócios Gerais'}</p>
+                 </div>
+                 <div>
+                   <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-1">Líder(es)</p>
+                   <p className="text-sm font-black uppercase tracking-tight">{partnerFilter.length > 0 ? partnerFilter.join(', ') : 'Todos os Líderes'}</p>
+                 </div>
+                 <div>
+                   <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-1">Status</p>
+                   <p className="text-sm font-black uppercase tracking-tight">{statusFilter.length > 0 ? statusFilter.join(', ') : 'Geral / Base Total'}</p>
+                 </div>
+              </div>
+            </div>
+          )}
 
           {/* Cards de Resumo */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -604,27 +627,27 @@ export function Volumetry() {
                                 </div>
                               </td>
                               <td className="p-4 text-center border-x border-gray-50">
-                                <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-emerald-100">
+                                <span className="inline-flex items-center justify-center min-w-[48px] bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-emerald-100">
                                   {partner.ativos.toLocaleString('pt-BR')}
                                 </span>
                               </td>
                               <td className="p-4 text-center">
-                                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
+                                <span className="inline-flex items-center justify-center min-w-[48px] bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
                                   {partner.administrativo.toLocaleString('pt-BR')}
                                 </span>
                               </td>
                               <td className="p-4 text-center">
-                                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
+                                <span className="inline-flex items-center justify-center min-w-[48px] bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
                                   {partner.judicial.toLocaleString('pt-BR')}
                                 </span>
                               </td>
                               <td className="p-4 text-center border-r border-gray-50">
-                                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
+                                <span className="inline-flex items-center justify-center min-w-[48px] bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
                                   {partner.arbitral.toLocaleString('pt-BR')}
                                 </span>
                               </td>
                               <td className="p-4 text-center border-r border-gray-50">
-                                <span className="bg-amber-50 text-amber-900 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-amber-200">
+                                <span className="inline-flex items-center justify-center min-w-[48px] bg-amber-50 text-amber-900 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-amber-200">
                                   {partner.arquivados.toLocaleString('pt-BR')}
                                 </span>
                               </td>
