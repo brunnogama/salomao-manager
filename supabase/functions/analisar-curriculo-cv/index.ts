@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts"
+import { Buffer } from "node:buffer"
+import pdf from "npm:pdf-parse@1.1.1"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,10 +22,10 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
-    if (!GEMINI_API_KEY) {
-      throw new Error("A chave GEMINI_API_KEY não está configurada nos Secrets do Supabase.");
+    if (!OPENAI_API_KEY) {
+      throw new Error("A chave OPENAI_API_KEY não está configurada nos Secrets do Supabase.");
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -85,15 +86,18 @@ serve(async (req) => {
       throw new Error("Erro ao baixar PDF do bucket interno: " + downloadError.message);
     }
 
-    // Converter blob para Uint8Array
+    // Extrair texto do PDF usando pdf-parse
+    console.log("📄 Extraindo texto do PDF com pdf-parse...");
     const buffer = await fileData.arrayBuffer();
-    const base64Data = encodeBase64(new Uint8Array(buffer));
-    console.log("✅ PDF convertido para Base64 com sucesso. Tamanho:", base64Data.length);
+    const nodeBuffer = Buffer.from(buffer);
+    const pdfData = await pdf(nodeBuffer);
+    const extractedText = pdfData.text;
+    console.log("✅ PDF extraído com sucesso. Caracteres:", extractedText.length);
 
     // 4. Prompt para a IA
     const systemInstruction = `Você é um Assistente de RH altamente especializado em Recrutamento e Seleção ATS (Applicant Tracking System).
-Seu objetivo é extrair o MÁXIMO de informações cruciais de currículos em formato PDF para pré-preencher um cadastro completo.
-Por favor, analise o currículo anexo e retorne EXATAMENTE UM JSON válido seguindo a estrutura abaixo, sem marcações markdown extra ou blocos \`\`\`json:
+Seu objetivo é extrair o MÁXIMO de informações cruciais de currículos para pré-preencher um cadastro completo.
+Por favor, analise o texto extraído do currículo abaixo e retorne EXATAMENTE UM JSON válido seguindo a estrutura abaixo, sem marcações markdown extra ou blocos \`\`\`json:
 
 {
   "nome": "Nome completo real",
@@ -130,55 +134,43 @@ Para 'perfilTags', concentre-se em extrair no mínimo 5 e no máximo 15 tags rea
 ATENÇÃO REDOBRADA: A maioria dos currículos possui email e telefone no topo (cabeçalho) ou na lateral. Não deixe de extrair esses dados de contato.
 Retorne null para propriedades do tipo primitivo que não achar (como string ou número).`;
 
+    const promptText = `== TEXTO DO CURRÍCULO ==\n${extractedText.substring(0, 15000)}`;
+
     const requestBody = {
-      contents: [{
-        parts: [
-          { text: systemInstruction },
-          {
-            inlineData: {
-              mimeType: "application/pdf",
-              data: base64Data
-            }
-          }
-        ]
-      }],
-      generationConfig: {
-        temperature: 0.2,
-        responseMimeType: "application/json",
-      }
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: promptText }
+      ],
+      temperature: 0.1,
+      response_format: { type: "json_object" }
     };
 
-    // 5. Chamar a Gemini REST API diretamente (Usando Gemini 2.5 Flash - rápido, barato e processa Docs/PDF nativamente)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    // 5. Chamar a API REST da OpenAI
+    const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify(requestBody)
     });
 
-    const geminiData = await response.json();
+    const openaiData = await response.json();
 
     if (!response.ok) {
-      console.error("GEMINI API ERROR PAYLOAD:", geminiData);
-      throw new Error(`Gemini API Error: ${geminiData.error?.message || 'Unknown'}`);
+      console.error("OPENAI API ERROR PAYLOAD:", openaiData);
+      throw new Error(`OpenAI API Error: ${openaiData.error?.message || 'Unknown'}`);
     }
 
     let rawText = "";
 
-    if (geminiData.candidates && geminiData.candidates.length > 0) {
-      const candidate = geminiData.candidates[0];
-      if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-        rawText = candidate.content.parts[0].text;
-      } else if (candidate.finishReason) {
-        throw new Error(`Gemini não retornou conteúdo. Motivo: ${candidate.finishReason}`);
-      }
-    } else if (geminiData.promptFeedback) {
-      throw new Error(`Prompt bloqueado por filtros de segurança: ${JSON.stringify(geminiData.promptFeedback)}`);
+    if (openaiData.choices && openaiData.choices.length > 0) {
+      rawText = openaiData.choices[0].message.content;
     }
 
     if (!rawText) {
-      throw new Error("Resposta vazia da IA Gemini. " + JSON.stringify(geminiData));
+      throw new Error("Resposta vazia da IA OpenAI. " + JSON.stringify(openaiData));
     }
 
     // 6. Limpeza caso ainda devolva markdown "```json\n...\n```" (Fallback)
