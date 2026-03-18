@@ -160,7 +160,7 @@ Retorne null para propriedades do tipo primitivo que não achar (como string ou 
     };
 
     // 5. Chamar a Gemini REST API diretamente (Usando Gemini 1.5 Flash - rápido, barato e 1500 req/dia gratis)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
