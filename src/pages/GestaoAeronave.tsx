@@ -813,27 +813,25 @@ export function GestaoAeronave() {
           {/* Filtros de Faturas - Doc Fiscal e Status */}
           {activeTab === 'faturas' && (
             <div className="flex items-center gap-3 shrink-0">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Doc. Fiscal</span>
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Doc. Fiscal</span>
                 <select
                   value={filterDocFiscal}
                   onChange={e => setFilterDocFiscal(e.target.value)}
-                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 outline-none focus:border-[#1e3a8a] transition-all cursor-pointer appearance-none pr-8 min-w-[140px]"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
+                  className="text-xs font-semibold text-gray-700 outline-none bg-transparent cursor-pointer"
                 >
-                  <option value="todos">Todos os Tipos</option>
+                  <option value="todos">Todos</option>
                   {docFiscalTypes.map(type => (
                     <option key={type} value={type}>{type}</option>
                   ))}
                 </select>
               </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Status</span>
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Status</span>
                 <select
                   value={filterStatusFatura}
                   onChange={e => setFilterStatusFatura(e.target.value as any)}
-                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 outline-none focus:border-[#1e3a8a] transition-all cursor-pointer appearance-none pr-8 min-w-[140px]"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
+                  className="text-xs font-semibold text-gray-700 outline-none bg-transparent cursor-pointer"
                 >
                   <option value="todos">Todos</option>
                   <option value="pago">Pago</option>
