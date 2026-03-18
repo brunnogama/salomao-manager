@@ -758,27 +758,27 @@ export function Volumetry() {
                                 </div>
                               </td>
                               <td className="p-4 text-center border-x border-gray-50 align-middle">
-                                <div className="inline-block text-center min-w-[48px] bg-emerald-50 text-emerald-700 px-3 pt-1.5 pb-1 rounded-lg font-black text-[10px] leading-none uppercase tracking-widest border border-emerald-100">
+                                <div className="w-[52px] h-[24px] leading-[24px] text-center inline-block bg-emerald-50 text-emerald-700 rounded-lg font-black text-[10px] uppercase tracking-widest border border-emerald-100">
                                   {partner.ativos.toLocaleString('pt-BR')}
                                 </div>
                               </td>
                               <td className="p-4 text-center align-middle">
-                                <div className="inline-block text-center min-w-[48px] bg-gray-100 text-gray-600 px-3 pt-1.5 pb-1 rounded-lg font-black text-[10px] leading-none uppercase tracking-widest border border-gray-200">
+                                <div className="w-[52px] h-[24px] leading-[24px] text-center inline-block bg-gray-100 text-gray-600 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
                                   {partner.administrativo.toLocaleString('pt-BR')}
                                 </div>
                               </td>
                               <td className="p-4 text-center align-middle">
-                                <div className="inline-block text-center min-w-[48px] bg-gray-100 text-gray-600 px-3 pt-1.5 pb-1 rounded-lg font-black text-[10px] leading-none uppercase tracking-widest border border-gray-200">
+                                <div className="w-[52px] h-[24px] leading-[24px] text-center inline-block bg-gray-100 text-gray-600 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
                                   {partner.judicial.toLocaleString('pt-BR')}
                                 </div>
                               </td>
                               <td className="p-4 text-center border-r border-gray-50 align-middle">
-                                <div className="inline-block text-center min-w-[48px] bg-gray-100 text-gray-600 px-3 pt-1.5 pb-1 rounded-lg font-black text-[10px] leading-none uppercase tracking-widest border border-gray-200">
+                                <div className="w-[52px] h-[24px] leading-[24px] text-center inline-block bg-gray-100 text-gray-600 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
                                   {partner.arbitral.toLocaleString('pt-BR')}
                                 </div>
                               </td>
                               <td className="p-4 text-center border-r border-gray-50 align-middle">
-                                <div className="inline-block text-center min-w-[48px] bg-amber-50 text-amber-900 px-3 pt-1.5 pb-1 rounded-lg font-black text-[10px] leading-none uppercase tracking-widest border border-amber-200">
+                                <div className="w-[52px] h-[24px] leading-[24px] text-center inline-block bg-amber-50 text-amber-900 rounded-lg font-black text-[10px] uppercase tracking-widest border border-amber-200">
                                   {partner.arquivados.toLocaleString('pt-BR')}
                                 </div>
                               </td>
