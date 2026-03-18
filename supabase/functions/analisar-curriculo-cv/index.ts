@@ -149,7 +149,7 @@ Por favor, analise o currículo e retorne EXATAMENTE UM JSON válido seguindo a 
 Retorne null para propriedades que não achar.`;
 
     const requestBody = {
-      model: "gpt-4o-mini",
+      model: "gpt-5.4-nano",
       messages: [
         { role: "system", content: systemInstruction },
         { role: "user", content: "Aqui está o conteúdo extraído do currículo em formato de texto. Extraia os dados e devolva seguindo estritamente a estrutura JSON especificada:\n\n" + cvText }

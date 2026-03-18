@@ -88,7 +88,7 @@ Retorne SOMENTE UM JSON válido, com a estrutura:
     const promptText = `== CANDIDATO ==\n${candidatoProfile}\n\n== VAGA ==\n${vagaProfile}`;
 
     const requestBody = {
-      model: "gpt-4o-mini",
+      model: "gpt-5.4-nano",
       messages: [
         { role: "system", content: systemInstruction },
         { role: "user", content: promptText }
