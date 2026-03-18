@@ -474,8 +474,8 @@ export function VolumetryProcesses() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-1">
-        <div className="overflow-x-auto custom-scrollbar">
-          <div className="max-h-[600px] overflow-y-auto min-w-[1200px]">
+        <div className="overflow-x-auto custom-scrollbar p-0 sm:p-4">
+          <div className="max-h-[600px] overflow-y-auto min-w-[1200px] rounded-t-xl overflow-hidden border border-[#ffffff10]">
             <table className="w-full text-left border-collapse relative">
               <thead className="sticky top-0 bg-white shadow-sm z-10">
                 <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">

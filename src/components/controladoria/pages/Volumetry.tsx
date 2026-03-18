@@ -446,8 +446,8 @@ export function Volumetry() {
                 />
               </div>
             ) : (
-              <div className="overflow-x-auto custom-scrollbar">
-                <div className="min-w-[800px]">
+              <div className="overflow-x-auto custom-scrollbar p-0 sm:p-5">
+                <div className="min-w-[800px] rounded-t-2xl overflow-hidden border border-[#ffffff10] shadow-sm">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
