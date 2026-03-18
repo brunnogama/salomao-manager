@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { Upload, FileText, Database, Loader2, Trash2, CheckCircle2, AlertCircle, Search } from 'lucide-react';
 import { ConfirmModal } from '../../controladoria/ui/ConfirmModal';
 import { MultiFilterSelect } from '../ui/MultiFilterSelect';
+import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx';
 
 // Custom AlertDialog (Design System Salomão)
@@ -297,19 +298,19 @@ export function VolumetryProcesses() {
         variant="danger"
       />
 
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
-        
-        {/* Barra de Progresso no Topo do Header */}
-        {importing && importProgress.total > 0 && (
-          <div className="absolute top-0 left-0 w-full h-1 bg-gray-100">
-             <div 
-               className="h-full bg-blue-600 transition-all duration-300 ease-out"
-               style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
-             />
-          </div>
-        )}
-
-        <div className="flex items-center gap-4">
+      {/* Portal de Ações no Header */}
+      {document.getElementById('volumetry-actions') && createPortal(
+        <div className="flex items-center gap-2">
+          {data.length > 0 && (
+            <button 
+              onClick={() => setIsConfirmModalOpen(true)}
+              className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 border border-red-100 rounded-full hover:bg-red-100 transition-all shadow-sm"
+              title="Limpar Base"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+          
           <input 
             type="file" 
             accept=".xlsx, .xls" 
@@ -320,30 +321,32 @@ export function VolumetryProcesses() {
           <button 
             onClick={() => fileInputRef.current?.click()}
             disabled={importing}
-            className="w-12 h-12 flex items-center justify-center bg-[#1e3a8a] text-white rounded-full hover:bg-blue-800 transition-all shadow-sm disabled:opacity-50 shrink-0"
+            className="w-10 h-10 flex items-center justify-center bg-[#1e3a8a] text-white rounded-full hover:bg-blue-800 transition-all shadow-sm disabled:opacity-50 relative"
             title="Importar Planilha"
           >
             {importing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
           </button>
-          <div>
-            <h2 className="text-lg font-black text-[#0a192f] uppercase tracking-tight">Base de Processos</h2>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{filteredData.length} registros encontrados</p>
-          </div>
+        </div>,
+        document.getElementById('volumetry-actions')!
+      )}
+
+      {/* Barra de Progresso no Topo se estiver importando */}
+      {importing && importProgress.total > 0 && (
+        <div className="absolute top-0 left-0 w-full h-1 bg-gray-100 z-50 rounded-full overflow-hidden">
+           <div 
+             className="h-full bg-blue-600 transition-all duration-300 ease-out"
+             style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+           />
+        </div>
+      )}
+
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center mt-2">
+        {/* Mini Card Total */}
+        <div className="bg-[#1e3a8a]/5 border border-[#1e3a8a]/10 rounded-xl px-4 py-2.5 flex flex-col justify-center min-w-[120px] text-center shadow-sm h-[66px]">
+           <span className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest">Total</span>
+           <span className="text-xl font-black text-[#0a192f] leading-none mt-1">{filteredData.length}</span>
         </div>
 
-        <div className="flex items-center gap-3">
-          {data.length > 0 && (
-            <button 
-              onClick={() => setIsConfirmModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 border border-red-100 rounded-xl hover:bg-red-100 transition-all text-[10px] font-black uppercase tracking-[0.2em] shadow-sm"
-            >
-              <Trash2 className="w-4 h-4" /> Limpar Base
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
         <div className="flex-1 min-w-[200px]">
           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Buscar Processos</label>
           <div className="relative">

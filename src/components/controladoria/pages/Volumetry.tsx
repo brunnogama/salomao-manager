@@ -193,12 +193,12 @@ export function Volumetry() {
               <Download className="h-4 w-4" /> Exportar Dashboard
             </button>
           )}
+          <div id="volumetry-actions" className="flex items-center gap-2 empty:hidden"></div>
         </div>
       </div>
 
       {activeTab === 'dashboard' ? (
         <div className="flex flex-col space-y-6">
-          
           {/* Dashboard Filters */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
              <div className="flex-1 min-w-[200px]">
