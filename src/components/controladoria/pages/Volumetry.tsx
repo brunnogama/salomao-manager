@@ -35,6 +35,7 @@ export function Volumetry() {
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo']);
   const [partnerFilter, setPartnerFilter] = useState<string[]>([]); // Responsável Principal
   const [leaderPartners, setLeaderPartners] = useState<Record<string, string>>({});
+  const [socioFilter, setSocioFilter] = useState<string[]>([]); // Sócio
 
   useEffect(() => {
     fetchProcesses();
@@ -103,18 +104,30 @@ export function Volumetry() {
   });
 
   const filteredProcesses = baseProcesses.filter((proc: any) => {
-    const matchesPartner = partnerFilter.length > 0 ? partnerFilter.includes(toTitleCase(proc.responsavel_principal || '')) : true;
-    return matchesPartner;
+    const leaderName = toTitleCase(proc.responsavel_principal || '');
+    const procSocio = leaderPartners[leaderName] || 'Sem Sócio Definido';
+    
+    const matchesPartner = partnerFilter.length > 0 ? partnerFilter.includes(leaderName) : true;
+    const matchesSocio = socioFilter.length > 0 ? socioFilter.includes(procSocio) : true;
+    
+    return matchesPartner && matchesSocio;
   });
 
   // Métricas (independentes do statusFilter para os cards do topo)
   const topCardsProcesses = processes.filter((proc: any) => {
+    const searchLow = searchTerm.toLowerCase();
     const matchesSearch =
-      (proc.cliente_principal && proc.cliente_principal.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (proc.cliente_principal && proc.cliente_principal.toLowerCase().includes(searchLow)) ||
       (proc.numero_cnj && proc.numero_cnj.includes(searchTerm)) ||
-      (proc.pasta && proc.pasta.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesPartner = partnerFilter.length > 0 ? partnerFilter.includes(toTitleCase(proc.responsavel_principal || '')) : true;
-    return matchesSearch && matchesPartner;
+      (proc.pasta && proc.pasta.toLowerCase().includes(searchLow));
+    
+    const leaderName = toTitleCase(proc.responsavel_principal || '');
+    const procSocio = leaderPartners[leaderName] || 'Sem Sócio Definido';
+    
+    const matchesPartner = partnerFilter.length > 0 ? partnerFilter.includes(leaderName) : true;
+    const matchesSocio = socioFilter.length > 0 ? socioFilter.includes(procSocio) : true;
+    
+    return matchesSearch && matchesPartner && matchesSocio;
   });
 
   const totalProcesses = topCardsProcesses.length;
@@ -139,6 +152,8 @@ export function Volumetry() {
   const allPartners = Array.from(new Set(processes.map(p => toTitleCase(p.responsavel_principal || '')).filter(Boolean))).sort();
   // Extrair status únicos (Ativo, Arquivado, etc)
   const allStatuses = Array.from(new Set(processes.map(p => p.status).filter(Boolean))).sort();
+  // Extrair lista de Sócios dinamicamente
+  const allSocios = Array.from(new Set(allPartners.map(p => leaderPartners[p] || 'Sem Sócio Definido'))).sort();
 
   // --------------- Agrupamento por Responsável ---------------
   const baseForPercentage = baseProcesses.length;
@@ -350,6 +365,16 @@ export function Volumetry() {
               </div>
 
               <div className="w-full sm:w-48">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Sócio</label>
+                <MultiFilterSelect
+                  value={socioFilter}
+                  onChange={setSocioFilter}
+                  placeholder="Todos"
+                  options={allSocios.map(s => ({ value: s as string, label: s as string }))}
+                />
+              </div>
+
+              <div className="w-full sm:w-48">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
                 <MultiFilterSelect
                   value={statusFilter}
@@ -451,7 +476,7 @@ export function Volumetry() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Líder Responsável</th>
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Sócio / Líder Responsável</th>
                         <th className="p-4 text-center border-x border-[#ffffff10] align-middle">
                            <div className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Ativos</div>
                            <div className="text-[8px] font-bold text-blue-200 mt-1 uppercase tracking-tight">(Soma: Admin + Judic + Arb)</div>
