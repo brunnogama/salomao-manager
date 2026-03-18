@@ -513,15 +513,15 @@ export function Volumetry() {
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
 
       {/* 1. Header - Salomão Design System (Padrão Colaboradores) */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         {/* Left: Título e Ícone */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
             <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
             <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Volumetria</h1>
-            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">Visão Analítica LegalOne</p>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Visão Analítica LegalOne</p>
           </div>
         </div>
 

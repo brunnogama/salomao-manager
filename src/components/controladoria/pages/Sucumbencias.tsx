@@ -594,7 +594,7 @@ export function Sucumbencias() {
             {/* Header com Título, Abas e Botões de Ação Principais */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="rounded-xl bg-[#1e3a8a] p-2 sm:p-3 shadow-sm shrink-0">
+                    <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
                         <Award className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                     </div>
                     <div>
