@@ -171,17 +171,28 @@ export function VolumetryProcesses() {
           return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         };
 
+        const applyAliases = (name: string) => {
+             if (!name) return '';
+             const clean = normalize(name);
+             if (clean === 'giovanni giuseppe vital' || clean === 'giovanni giuseppe vital chimenti') return 'Giovanni Giuseppe Vital Chimenti';
+             if (clean === 'luiz henrique pavan' || clean === 'luiz henrique miguel pavan') return 'Luiz Henrique Miguel Pavan';
+             return name;
+        };
+
         const leaderMap = new Map<string, string>();
         const validLeaders = new Set<string>();
 
         if (collabData) {
           collabData.forEach((c: any) => {
-            if (c.leader?.name) {
-              leaderMap.set(normalize(c.name), c.leader.name);
-              validLeaders.add(normalize(c.leader.name));
+            const myNameAlias = applyAliases(c.name);
+            const leaderNameAlias = c.leader?.name ? applyAliases(c.leader.name) : null;
+
+            if (leaderNameAlias) {
+              leaderMap.set(normalize(myNameAlias), leaderNameAlias);
+              validLeaders.add(normalize(leaderNameAlias));
             }
             if (c.role?.toLowerCase().includes('sócio') || c.role?.toLowerCase().includes('socio')) {
-               validLeaders.add(normalize(c.name));
+               validLeaders.add(normalize(myNameAlias));
             }
           });
         }
@@ -196,14 +207,6 @@ export function VolumetryProcesses() {
 
           const originalLeaderRaw = row['Responsável principal']?.toString() || '';
           
-          // Alias fix para nomes divergentes da planilha
-          const applyAliases = (name: string) => {
-             const clean = normalize(name);
-             if (clean === 'giovanni giuseppe vital') return 'Giovanni Giuseppe Vital Chimenti';
-             if (clean === 'luiz henrique pavan') return 'Luiz Henrique Miguel Pavan';
-             return name;
-          };
-
           const originalLeader = applyAliases(originalLeaderRaw);
           let finalLeader = originalLeader;
           const cleanName = normalize(originalLeader);
