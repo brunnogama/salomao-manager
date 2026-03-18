@@ -469,7 +469,7 @@ export function VolumetryProcesses() {
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Pasta</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável Principal</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Número de CNJ</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Número de CNJ</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">UF</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Fase</th>
@@ -501,7 +501,7 @@ export function VolumetryProcesses() {
                       <td className="p-4 text-xs font-bold text-[#0a192f]">{row.pasta || '-'}</td>
                       <td className="p-4 text-xs font-semibold text-gray-800">{row.responsavel_principal || '-'}</td>
                       <td className="p-4 text-xs text-gray-600">{row.cliente_principal || '-'}</td>
-                      <td className="p-4 text-xs font-mono text-gray-500">{row.numero_cnj || '-'}</td>
+                      <td className="p-4 text-xs font-mono text-gray-500 whitespace-nowrap">{row.numero_cnj || '-'}</td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border ${
                           row.status?.toLowerCase() === 'ativo' 
