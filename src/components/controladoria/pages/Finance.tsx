@@ -401,8 +401,8 @@ export function Finance() {
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
 
       {/* 1. Header - Salomão Design System */}
-      <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
             <DollarSign className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
