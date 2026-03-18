@@ -779,31 +779,29 @@ export function GestaoAeronave() {
           )}
 
           {/* Filtro de Data */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-              {activeTab === 'dashboard' ? 'Período de Missões' : 'Período de Pagamento'}
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 shrink-0">
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">
+              {activeTab === 'dashboard' ? 'Período' : 'Período'}
             </span>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <input
-                type="date"
-                className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-              <span className="text-gray-300">|</span>
-              <input
-                type="date"
-                className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-              {(startDate || endDate) && (
-                <button onClick={() => { setStartDate(''); setEndDate('') }} className="text-red-400 hover:text-red-600">
-                  <XCircle className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
+            <Calendar className="h-4 w-4 text-gray-400" />
+            <input
+              type="date"
+              className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <span className="text-gray-300">|</span>
+            <input
+              type="date"
+              className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+            {(startDate || endDate) && (
+              <button onClick={() => { setStartDate(''); setEndDate('') }} className="text-red-400 hover:text-red-600">
+                <XCircle className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
       </div>
