@@ -196,18 +196,91 @@ export function Volumetry() {
   }, [volumetryByPartner]);
 
   const handleExportDashboard = () => {
+    const wb = XLSX.utils.book_new();
+
+    // 1. Aba Volumetria (Dashboard)
     const exportData = volumetryByPartner.map((m: any) => ({
       'Líder Responsável': m.name,
-      'Total de Processos': m.count,
+      'Sócio (Grupo)': m.socio,
       'Ativos': m.ativos,
+      'Administrativo': m.administrativo,
+      'Judicial': m.judicial,
+      'Arbitral': m.arbitral,
       'Arquivados': m.arquivados,
       '% Representatividade': `${m.percentage}%`
     }));
+    const wsVolumetry = XLSX.utils.json_to_sheet(exportData);
+    
+    // Formatando larguras de colunas elegantemente
+    wsVolumetry['!cols'] = [
+      { wch: 40 }, // Líder
+      { wch: 40 }, // Sócio
+      { wch: 15 }, // Ativos
+      { wch: 20 }, // Admin
+      { wch: 15 }, // Judic
+      { wch: 15 }, // Arb
+      { wch: 15 }, // Arq
+      { wch: 25 }, // Representatividade
+    ];
+    XLSX.utils.book_append_sheet(wb, wsVolumetry, "Volumetria");
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Volumetria");
+    // 2. Aba Processos Relacionados
+    const exportProcesses = filteredProcesses.map((p: any) => ({
+      'Pasta': p.pasta || '-',
+      'Responsável Principal': p.responsavel_principal || '-',
+      'Cliente Principal': p.cliente_principal || '-',
+      'Adverso Principal': p.adverso_principal || '-',
+      'Número de CNJ': p.numero_cnj || '-',
+      'Status': p.status || '-',
+      'Tipo': p.tipo || '-',
+      'Fase': p.fase || '-',
+      'Instância': p.instancia || '-',
+      'Data de Cadastro': p.data_cadastro || '-',
+    }));
+    
+    if (exportProcesses.length > 0) {
+      const wsProcesses = XLSX.utils.json_to_sheet(exportProcesses);
+      wsProcesses['!cols'] = [
+        { wch: 20 }, { wch: 35 }, { wch: 35 }, { wch: 35 }, { wch: 35 },
+        { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 20 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsProcesses, "Processos Relacionados");
+    }
+
+    // 3. Aba Duplicados (se houver)
+    const duplicatasCnjObj = processosParaDuplicatas.reduce((acc: Record<string, any[]>, p: any) => {
+      if (p.numero_cnj) {
+        if (!acc[p.numero_cnj]) acc[p.numero_cnj] = [];
+        acc[p.numero_cnj].push(p);
+      }
+      return acc;
+    }, {});
+    
+    const duplicateRowsRaw = Object.values(duplicatasCnjObj).filter(arr => arr.length > 1).flat();
+    
+    if (duplicateRowsRaw.length > 0) {
+      const exportDuplicates = duplicateRowsRaw.map((p: any) => ({
+        'Número de CNJ Duplicado': p.numero_cnj || '-',
+        'Pasta Conflitante': p.pasta || '-',
+        'Responsável': p.responsavel_principal || '-',
+        'Cliente': p.cliente_principal || '-',
+        'Adverso': p.adverso_principal || '-',
+        'Status Atual': p.status || '-',
+        'Data de Cadastro': p.data_cadastro || '-',
+      }));
+      
+      const wsDuplicates = XLSX.utils.json_to_sheet(exportDuplicates);
+      wsDuplicates['!cols'] = [
+        { wch: 35 }, { wch: 20 }, { wch: 35 }, { wch: 35 },
+        { wch: 35 }, { wch: 15 }, { wch: 20 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsDuplicates, "Processos Duplicados");
+    }
+
     XLSX.writeFile(wb, "Volumetria_LegalOne.xlsx");
+    toast.success('Relatório Excel gerado com sucesso!', {
+      description: duplicateRowsRaw.length > 0 ? 'Exportou 3 abas: Volumetria, Relacionados e Duplicados.' : 'Exportou 2 abas: Volumetria e Processos Relacionados.'
+    });
   };
 
   const handleExportPDF = async () => {
