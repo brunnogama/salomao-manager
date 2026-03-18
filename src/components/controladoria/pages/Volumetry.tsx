@@ -235,6 +235,22 @@ export function Volumetry() {
     return matchesPartner && matchesSocio;
   });
 
+  const lifeCycleProcesses = processes.filter((proc: any) => {
+    const searchLow = searchTerm.toLowerCase();
+    const matchesSearch =
+      (proc.cliente_principal && proc.cliente_principal.toLowerCase().includes(searchLow)) ||
+      (proc.numero_cnj && proc.numero_cnj.includes(searchTerm)) ||
+      (proc.pasta && proc.pasta.toLowerCase().includes(searchLow));
+
+    const leaderName = toTitleCase(proc.responsavel_principal || '');
+    const procSocio = leaderPartners[leaderName] || 'Sem Sócio Definido';
+    
+    const matchesPartner = partnerFilter.length > 0 ? partnerFilter.includes(leaderName) : true;
+    const matchesSocio = socioFilter.length > 0 ? socioFilter.includes(procSocio) : true;
+    
+    return matchesSearch && matchesPartner && matchesSocio;
+  });
+
   // Métricas (independentes do statusFilter para os cards do topo)
   const topCardsProcesses = processes.filter((proc: any) => {
     const searchLow = searchTerm.toLowerCase();
@@ -690,7 +706,7 @@ export function Volumetry() {
             <DataQualitySection processes={filteredProcesses} />
           )}
 
-          <LifeCycleSection processes={filteredProcesses} />
+          <LifeCycleSection processes={lifeCycleProcesses} />
 
           {/* Lista de Volumetria por Responsável */}
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
