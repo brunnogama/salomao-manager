@@ -13,7 +13,7 @@ import {
 import XLSX from 'xlsx-js-style';
 
 import { VolumetryProcesses } from './VolumetryProcesses';
-import { FilterSelect } from '../ui/FilterSelect';
+import { MultiFilterSelect } from '../ui/MultiFilterSelect';
 
 export function Volumetry() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'processos'>('dashboard');
@@ -22,8 +22,8 @@ export function Volumetry() {
 
   // Filtros Globais para o Dashboard
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [partnerFilter, setPartnerFilter] = useState(''); // Responsável Principal
+  const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo']);
+  const [partnerFilter, setPartnerFilter] = useState<string[]>([]); // Responsável Principal
 
   useEffect(() => {
     fetchProcesses();
@@ -68,32 +68,46 @@ export function Volumetry() {
   };
 
   // --------------- Lógica de Filtragem no Dashboard ---------------
+  const matchesStatusFilter = (procStatus: string, filters: string[]) => {
+    if (filters.length === 0) return true;
+    return filters.some(f => procStatus?.toLowerCase() === f.toLowerCase());
+  };
+
   const baseProcesses = processes.filter((proc: any) => {
     const matchesSearch =
       (proc.cliente_principal && proc.cliente_principal.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (proc.numero_cnj && proc.numero_cnj.includes(searchTerm)) ||
       (proc.pasta && proc.pasta.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesStatus = statusFilter ? proc.status?.toLowerCase() === statusFilter.toLowerCase() : true;
+    const matchesStatus = matchesStatusFilter(proc.status || '', statusFilter);
 
     return matchesSearch && matchesStatus;
   });
 
   const filteredProcesses = baseProcesses.filter((proc: any) => {
-    const matchesPartner = partnerFilter ? toTitleCase(proc.responsavel_principal || '') === partnerFilter : true;
+    const matchesPartner = partnerFilter.length > 0 ? partnerFilter.includes(toTitleCase(proc.responsavel_principal || '')) : true;
     return matchesPartner;
   });
 
-  // Métricas
-  const totalProcesses = filteredProcesses.length;
-  
-  const ativosCount = filteredProcesses.filter(p => p.status?.toLowerCase() === 'ativo').length;
-  const arquivadosCount = filteredProcesses.filter(p => p.status?.toLowerCase() === 'arquivado').length;
+  // Métricas (independentes do statusFilter para os cards do topo)
+  const topCardsProcesses = processes.filter((proc: any) => {
+    const matchesSearch =
+      (proc.cliente_principal && proc.cliente_principal.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (proc.numero_cnj && proc.numero_cnj.includes(searchTerm)) ||
+      (proc.pasta && proc.pasta.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesPartner = partnerFilter.length > 0 ? partnerFilter.includes(toTitleCase(proc.responsavel_principal || '')) : true;
+    return matchesSearch && matchesPartner;
+  });
 
-  const uniqueClients = new Set(filteredProcesses.map(p => p.cliente_principal).filter(Boolean)).size;
+  const totalProcesses = topCardsProcesses.length;
+  
+  const ativosCount = topCardsProcesses.filter(p => p.status?.toLowerCase() === 'ativo').length;
+  const arquivadosCount = topCardsProcesses.filter(p => p.status?.toLowerCase() === 'arquivado').length;
+
+  const uniqueClients = new Set(topCardsProcesses.map(p => p.cliente_principal).filter(Boolean)).size;
 
   // Calculo de processos duplicados pelo numero CNJ (Apenas tipo "Processo", ignorando "Recurso" e "Incidente")
-  const processosParaDuplicatas = filteredProcesses.filter(p => p.tipo?.trim().toLowerCase() === 'processo');
+  const processosParaDuplicatas = topCardsProcesses.filter(p => p.tipo?.trim().toLowerCase() === 'processo');
 
   const cnjCounts = processosParaDuplicatas.reduce((acc: Record<string, number>, p: any) => {
     if (p.numero_cnj) {
@@ -200,9 +214,9 @@ export function Volumetry() {
 
               <div className="w-full sm:w-48">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Líder Responsável</label>
-                <FilterSelect
+                <MultiFilterSelect
                   value={partnerFilter}
-                  onChange={(v) => setPartnerFilter(v || '')}
+                  onChange={setPartnerFilter}
                   placeholder="Todos"
                   options={allPartners.map(p => ({ value: p as string, label: p as string }))}
                 />
@@ -210,9 +224,9 @@ export function Volumetry() {
 
               <div className="w-full sm:w-48">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
-                <FilterSelect
+                <MultiFilterSelect
                   value={statusFilter}
-                  onChange={(v) => setStatusFilter(v || '')}
+                  onChange={setStatusFilter}
                   placeholder="Todos"
                   options={allStatuses.map(s => ({ value: s as string, label: s as string }))}
                 />
