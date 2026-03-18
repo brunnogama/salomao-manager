@@ -2,9 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // You must use npm:pdf-parse in Deno since we need to extract from PDF
-// But wait, Deno's native Buffer access needs node:buffer
-import { Buffer } from "node:buffer"
-import pdf from "npm:pdf-parse"
+import { extractText, getDocumentProxy } from 'https://esm.sh/unpdf@0.10.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -86,13 +84,18 @@ serve(async (req) => {
       throw new Error("Erro ao baixar PDF do bucket interno: " + downloadError.message);
     }
 
-    // Converter blob para buffer do Node e extrair texto via pdf-parse
+    // Converter blob para buffer e extrair texto via unpdf (Deno native)
     console.log("📄 Lendo o PDF e extraindo texto...");
     const arrayBuffer = await fileData.arrayBuffer();
-    // Use Buffer to pass into pdf-parse
-    const buffer = Buffer.from(arrayBuffer);
-    const pdfData = await pdf(buffer);
-    const cvText = pdfData.text;
+    
+    let cvText = "";
+    try {
+        const { text } = await extractText(arrayBuffer);
+        cvText = text;
+    } catch (err: any) {
+        console.error("Erro no unpdf extraindo texto:", err.message);
+        throw new Error("Falha ao ler o conteúdo do PDF. O arquivo pode estar corrompido ou protegido.");
+    }
     
     if (!cvText || cvText.trim().length === 0) {
        throw new Error("O PDF baixado não contém texto selecionável (pode ser uma imagem escaneada).");
