@@ -382,35 +382,23 @@ export function AeronaveFormModal({
                 </div>
 
                 {origem === 'missao' && (
-                  <>
-                    <div className="col-span-2 flex flex-col gap-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Tripulação</label>
-                      <input
-                        type="text" className="input-base"
-                        value={formData.tripulacao || ''}
-                        onChange={e => handleChange('tripulacao', e.target.value)}
-                        placeholder="Ex: Cmte. Silva, Cop. João"
-                      />
-                    </div>
-
-                    <div className="col-span-2 flex flex-col gap-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Missão</label>
-                      <MissaoSelect
-                        value={formData.id_missao}
-                        onSelect={(missao) => {
-                          if (missao) {
-                            handleChange('id_missao', missao.id_missao)
-                            handleChange('nome_missao', missao.nome_missao)
-                            handleChange('data_missao', missao.data_inicio || '')
-                          } else {
-                            handleChange('id_missao', undefined)
-                            handleChange('nome_missao', '')
-                            handleChange('data_missao', '')
-                          }
-                        }}
-                      />
-                    </div>
-                  </>
+                  <div className="col-span-2 flex flex-col gap-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Missão</label>
+                    <MissaoSelect
+                      value={formData.id_missao}
+                      onSelect={(missao) => {
+                        if (missao) {
+                          handleChange('id_missao', missao.id_missao)
+                          handleChange('nome_missao', missao.nome_missao)
+                          handleChange('data_missao', missao.data_inicio || '')
+                        } else {
+                          handleChange('id_missao', undefined)
+                          handleChange('nome_missao', '')
+                          handleChange('data_missao', '')
+                        }
+                      }}
+                    />
+                  </div>
                 )}
 
                 <div className="col-span-2 grid grid-cols-2 gap-3">
@@ -465,11 +453,6 @@ export function AeronaveFormModal({
                   </div>
                 </div>
 
-                {origem === 'missao' && (
-                  <div className="col-span-2">
-                    <CurrencyInput label="Faturado CNPJ Salomão" value={formData.faturado_cnpj || 0} onChange={(val: number) => handleChange('faturado_cnpj', val)} />
-                  </div>
-                )}
               </div>
             </div>
 
