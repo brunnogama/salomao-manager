@@ -1,4 +1,5 @@
 import { X, Plane, DollarSign } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { useEscKey } from '../hooks/useEscKey'
 import { OrigemLancamento } from '../types/AeronaveTypes'
 
@@ -13,7 +14,7 @@ export function TipoLancamentoModal({ isOpen, onClose, onSelect }: TipoLancament
 
   if (!isOpen) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
 
@@ -50,6 +51,7 @@ export function TipoLancamentoModal({ isOpen, onClose, onSelect }: TipoLancament
           <p className="text-[10px] text-gray-400 font-medium">Escolha a categoria para iniciar o lançamento</p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

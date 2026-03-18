@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Plus, Trash2, Edit3, Search, Save, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useEscKey } from '../hooks/useEscKey'
@@ -87,7 +88,7 @@ export function GerenciadorOpcoesModal({ isOpen, onClose, titulo, tabela }: Gere
 
   if (!isOpen) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl flex flex-col animate-in fade-in zoom-in duration-200">
 
@@ -189,6 +190,7 @@ export function GerenciadorOpcoesModal({ isOpen, onClose, titulo, tabela }: Gere
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

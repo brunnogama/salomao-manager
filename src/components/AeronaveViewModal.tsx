@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Edit3, Trash2, CreditCard, FileText, Printer, AlertTriangle, CheckCircle, Calendar, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
@@ -100,7 +101,7 @@ export function AeronaveViewModal({
     </div>
   )
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 print:p-0 print:bg-white">
       <div id="printable-modal" className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300 print:shadow-none print:max-h-none print:rounded-none">
 
@@ -354,6 +355,7 @@ export function AeronaveViewModal({
           .custom-scrollbar { overflow: visible !important; }
         }
       `}} />
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Save, Plus, DollarSign, FileText, Plane, Settings, Search, ChevronDown, Check } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
@@ -321,7 +322,7 @@ export function AeronaveFormModal({
 
   if (!isOpen) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
 
@@ -589,6 +590,7 @@ export function AeronaveFormModal({
         titulo={configModal.tipo}
         tabela={configModal.tabela}
       />
-    </div>
+    </div>,
+    document.body
   )
 }
