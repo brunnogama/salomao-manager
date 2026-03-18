@@ -324,7 +324,7 @@ export function AeronaveFormModal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
+      <div className="bg-white w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 border border-gray-100">
 
         {/* Header */}
         <div className={`flex items-center justify-between px-6 py-4 border-b border-gray-100 ${origem === 'missao' ? 'bg-blue-50/50' : 'bg-emerald-50/50'}`}>
@@ -349,7 +349,7 @@ export function AeronaveFormModal({
         </div>
 
         {/* Form Body */}
-        <div className="flex-1 p-4 sm:p-6 bg-white max-h-[85vh] overflow-y-auto custom-scrollbar">
+        <div className="flex-1 p-4 sm:p-6 bg-white overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-6">
 
             {/* COLUNA 1: Dados Principais e Operacionais */}
