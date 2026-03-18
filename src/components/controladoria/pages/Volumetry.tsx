@@ -78,7 +78,7 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
     return {
       valid: validCount,
       invalid: invalidCount,
-      avgText: validCount > 0 ? `${avgYears} ano${avgYears !== 1 ? 's' : ''} e ${avgMonths === 1 ? 'mês' : 'meses'}` : '-',
+      avgText: validCount > 0 ? `${avgYears} ano${avgYears !== 1 ? 's' : ''} e ${avgMonths} ${avgMonths === 1 ? 'mês' : 'meses'}` : '-',
       chartData: buckets
     };
   }, [processes]);
