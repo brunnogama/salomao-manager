@@ -92,8 +92,10 @@ export function Volumetry() {
 
   const uniqueClients = new Set(filteredProcesses.map(p => p.cliente_principal).filter(Boolean)).size;
 
-  // Calculo de processos duplicados pelo numero CNJ
-  const cnjCounts = filteredProcesses.reduce((acc: Record<string, number>, p: any) => {
+  // Calculo de processos duplicados pelo numero CNJ (Apenas tipo "Processo", ignorando "Recurso" e "Incidente")
+  const processosParaDuplicatas = filteredProcesses.filter(p => p.tipo?.trim().toLowerCase() === 'processo');
+
+  const cnjCounts = processosParaDuplicatas.reduce((acc: Record<string, number>, p: any) => {
     if (p.numero_cnj) {
       acc[p.numero_cnj] = (acc[p.numero_cnj] || 0) + 1;
     }
