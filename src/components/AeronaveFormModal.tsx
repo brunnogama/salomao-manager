@@ -517,14 +517,14 @@ export function AeronaveFormModal({
 
                   <CurrencyInput label="Valor Total Doc" value={formData.valor_total_doc || 0} onChange={(val: number) => handleChange('valor_total_doc', val)} />
 
-                  <div className="col-span-2 flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Observação</label>
-                    <textarea rows={2} className="input-base py-2 resize-none" value={formData.observacao || ''} onChange={e => handleChange('observacao', e.target.value)} />
-                  </div>
-
-                  <div className="col-span-2 flex flex-col gap-1">
+                  <div className="flex flex-col gap-1">
                     <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Centro de Custo</label>
                     <input type="text" className="input-base" value={formData.centro_custo || ''} onChange={e => handleChange('centro_custo', e.target.value)} placeholder="Ex: Administrativo, Jurídico..." />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Observação</label>
+                    <textarea rows={2} className="input-base py-2 resize-none" value={formData.observacao || ''} onChange={e => handleChange('observacao', e.target.value)} />
                   </div>
                 </div>
               </div>
