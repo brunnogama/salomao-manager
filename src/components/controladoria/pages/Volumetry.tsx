@@ -145,7 +145,7 @@ export function Volumetry() {
 
   const volumetryByPartner = allPartners.map(partnerName => {
     const partnerProcs = filteredProcesses.filter(p => toTitleCase(p.responsavel_principal || '') === partnerName);
-    const rawPartnerProcs = baseProcesses.filter(p => toTitleCase(p.responsavel_principal || '') === partnerName);
+    const rawPartnerProcs = topCardsProcesses.filter(p => toTitleCase(p.responsavel_principal || '') === partnerName);
     
     const socioName = leaderPartners[partnerName] || 'Sem Sócio Definido';
 
