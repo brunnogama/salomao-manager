@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Upload, FileText, Database, Loader2, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Database, Loader2, Trash2, CheckCircle2, AlertCircle, Search } from 'lucide-react';
 import { ConfirmModal } from '../../controladoria/ui/ConfirmModal';
+import { MultiFilterSelect } from '../ui/MultiFilterSelect';
 import * as XLSX from 'xlsx';
 
 // Custom AlertDialog (Design System Salomão)
@@ -61,6 +62,11 @@ export function VolumetryProcesses() {
 
   // State para ConfirmModal de Exclusão
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+  // Filtros Globais
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [partnerFilter, setPartnerFilter] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -243,6 +249,32 @@ export function VolumetryProcesses() {
     }
   };
 
+  // Logica de Filtros
+  const toTitleCase = (str: string) => {
+    let n = str.trim().toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
+    if (n === 'Luiz Henrique Pavan') n = 'Luiz Henrique Miguel Pavan';
+    return n;
+  };
+  const allPartners = Array.from(new Set(data.map(p => toTitleCase(p.responsavel_principal || '')).filter(Boolean))).sort();
+  const allStatuses = Array.from(new Set(data.map(p => p.status).filter(Boolean))).sort();
+
+  const matchesStatusFilter = (procStatus: string, filters: string[]) => {
+    if (filters.length === 0) return true;
+    return filters.some(f => procStatus?.toLowerCase() === f.toLowerCase());
+  };
+
+  const filteredData = data.filter((row: any) => {
+    const searchLow = searchTerm.toLowerCase();
+    const matchesSearch =
+      (row.cliente_principal && row.cliente_principal.toLowerCase().includes(searchLow)) ||
+      (row.numero_cnj && row.numero_cnj.includes(searchTerm)) ||
+      (row.pasta && row.pasta.toLowerCase().includes(searchLow));
+
+    const matchesStatus = matchesStatusFilter(row.status || '', statusFilter);
+    const matchesPartner = partnerFilter.length > 0 ? partnerFilter.includes(toTitleCase(row.responsavel_principal || '')) : true;
+
+    return (searchTerm ? matchesSearch : true) && matchesStatus && matchesPartner;
+  });
 
   return (
     <div className="flex flex-col space-y-6 relative">
@@ -277,13 +309,25 @@ export function VolumetryProcesses() {
           </div>
         )}
 
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-            <Database className="w-6 h-6" />
-          </div>
+        <div className="flex items-center gap-4">
+          <input 
+            type="file" 
+            accept=".xlsx, .xls" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            className="hidden" 
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            className="w-12 h-12 flex items-center justify-center bg-[#1e3a8a] text-white rounded-full hover:bg-blue-800 transition-all shadow-sm disabled:opacity-50 shrink-0"
+            title="Importar Planilha"
+          >
+            {importing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+          </button>
           <div>
             <h2 className="text-lg font-black text-[#0a192f] uppercase tracking-tight">Base de Processos</h2>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{data.length} registros encontrados</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{filteredData.length} registros encontrados</p>
           </div>
         </div>
 
@@ -296,25 +340,42 @@ export function VolumetryProcesses() {
               <Trash2 className="w-4 h-4" /> Limpar Base
             </button>
           )}
-          
-          <input 
-            type="file" 
-            accept=".xlsx, .xls" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-            className="hidden" 
+        </div>
+      </div>
+
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
+        <div className="flex-1 min-w-[200px]">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Buscar Processos</label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar por cliente, CNJ ou pasta..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="w-full sm:w-48">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Líder Responsável</label>
+          <MultiFilterSelect
+            value={partnerFilter}
+            onChange={setPartnerFilter}
+            placeholder="Todos"
+            options={allPartners.map(p => ({ value: p as string, label: p as string }))}
           />
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl hover:bg-blue-800 transition-all text-[10px] font-black uppercase tracking-[0.2em] shadow-sm disabled:opacity-50 min-w-[180px]"
-          >
-            {importing ? (
-               <><Loader2 className="w-4 h-4 animate-spin" /> {importProgress.current > 0 ? `${importProgress.current} / ${importProgress.total}` : 'Lendo arquivo...'}</>
-            ) : (
-               <><Upload className="w-4 h-4" /> Importar Planilha</>
-            )}
-          </button>
+        </div>
+
+        <div className="w-full sm:w-48">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
+          <MultiFilterSelect
+            value={statusFilter}
+            onChange={setStatusFilter}
+            placeholder="Todos"
+            options={allStatuses.map(s => ({ value: s as string, label: s as string }))}
+          />
         </div>
       </div>
 
@@ -341,7 +402,7 @@ export function VolumetryProcesses() {
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando dados...</p>
                     </td>
                   </tr>
-                ) : data.length === 0 ? (
+                ) : filteredData.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="p-20 text-center bg-gray-50/50">
                       <div className="flex flex-col items-center justify-center">
@@ -354,7 +415,7 @@ export function VolumetryProcesses() {
                     </td>
                   </tr>
                 ) : (
-                  data.map((row, index) => (
+                  filteredData.map((row, index) => (
                     <tr key={row.id || index} className="hover:bg-blue-50/30 transition-colors">
                       <td className="p-4 text-xs font-bold text-[#0a192f]">{row.pasta || '-'}</td>
                       <td className="p-4 text-xs font-semibold text-gray-800">{row.responsavel_principal || '-'}</td>
