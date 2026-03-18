@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -7,10 +7,9 @@ import {
   FileWarning,
   X,
   Gavel,
-  Truck,
-  Briefcase
+  Truck
 } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
+
 import { useAuth } from '../../contexts/AuthContext'
 
 interface SidebarProps {
@@ -21,7 +20,6 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { signOut } = useAuth()
   const navigate = useNavigate()
-  const [incompleteCount, setIncompleteCount] = useState(0)
   const location = useLocation()
   const activePage = location.pathname
 
@@ -29,70 +27,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     await signOut()
   }
 
-  const fetchCount = async () => {
-    try {
-      const { data: contacts } = await supabase
-        .from('client_contacts')
-        .select(`
-          *,
-          client:clients(
-            id, name,
-            partner:partners(id, name),
-            contracts(status)
-          )
-        `)
-
-      if (contacts) {
-        // Filter contacts from clients with active contracts (active, proposal, probono)
-        const contactsWithActiveContracts = contacts.filter((c: any) => {
-          const contractsByClient = c.client?.contracts || []
-          return contractsByClient.some((contract: any) =>
-            ['active', 'proposal', 'probono'].includes(contract.status)
-          )
-        })
-
-        const REQUIRED_FIELDS = [
-          'email', 'phone', 'zip_code', 'address', 'address_number',
-          'neighborhood', 'city', 'uf', 'gift_type'
-        ]
-
-        const count = contactsWithActiveContracts.filter((c: any) => {
-          const ignored = c.ignored_fields || []
-          return REQUIRED_FIELDS.some(field => {
-            const value = c[field]
-            const isEmpty = !value || value.toString().trim() === '' || (field === 'uf' && value === 'Selecione')
-            const fieldLabel = field === 'zip_code' ? 'CEP' :
-              field === 'address' ? 'Logradouro' :
-                field === 'address_number' ? 'Número' :
-                  field === 'neighborhood' ? 'Bairro' :
-                    field === 'city' ? 'Cidade' :
-                      field === 'uf' ? 'Estado' :
-                        field === 'gift_type' ? 'Tipo de Brinde' :
-                          field.charAt(0).toUpperCase() + field.slice(1)
-
-            const isIgnored = ignored.includes(fieldLabel)
-            return isEmpty && !isIgnored
-          })
-        }).length
-
-        setIncompleteCount(count)
-      }
-    } catch (error) {
-      console.error('Error fetching incomplete count:', error)
-    }
-  }
-
-  useEffect(() => {
-    fetchCount()
-    const interval = setInterval(fetchCount, 5000)
-    return () => clearInterval(interval)
-  }, [])
-
   const mainItems = [
     { path: '/crm/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/crm/clientes', label: 'Clientes', icon: Users },
     { path: '/crm/magistrados', label: 'Autoridades', icon: Gavel },
-    { path: '/crm/incompletos', label: 'Incompletos', icon: FileWarning, badge: incompleteCount },
+    { path: '/crm/incompletos', label: 'Incompletos', icon: FileWarning },
     { path: '/crm/logistica', label: 'Logística', icon: Truck },
     { path: '/crm/kanban', label: 'Kanban', icon: KanbanSquare },
   ]
@@ -155,13 +94,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <span className="text-sm font-medium flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 md:group-hover/sidebar:delay-300 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
                 {item.label}
               </span>
-
-              {/* Badge para Incompletos */}
-              {item.badge !== undefined && item.badge > 0 && (
-                <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse">
-                  {item.badge}
-                </span>
-              )}
 
               {isActive(item.path) && (
                 <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-blue-400 opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 md:group-hover/sidebar:delay-300 transition-opacity duration-300" />
