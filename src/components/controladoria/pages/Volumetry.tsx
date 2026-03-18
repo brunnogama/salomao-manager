@@ -145,6 +145,8 @@ export function Volumetry() {
 
   const volumetryByPartner = allPartners.map(partnerName => {
     const partnerProcs = filteredProcesses.filter(p => toTitleCase(p.responsavel_principal || '') === partnerName);
+    const rawPartnerProcs = baseProcesses.filter(p => toTitleCase(p.responsavel_principal || '') === partnerName);
+    
     const socioName = leaderPartners[partnerName] || 'Sem Sócio Definido';
 
     return {
@@ -153,9 +155,12 @@ export function Volumetry() {
       count: partnerProcs.length,
       percentage: baseForPercentage > 0 ? ((partnerProcs.length / baseForPercentage) * 100).toFixed(1) : "0",
       ativos: partnerProcs.filter(p => p.status?.toLowerCase() === 'ativo').length,
-      arquivados: partnerProcs.filter(p => p.status?.toLowerCase() === 'arquivado').length,
+      arquivados: rawPartnerProcs.filter(p => p.status?.toLowerCase() === 'arquivado').length,
+      administrativo: partnerProcs.filter(p => p.tipo?.toLowerCase().includes('administrativo')).length,
+      judicial: partnerProcs.filter(p => p.tipo?.toLowerCase().includes('judicia')).length,
+      arbitral: partnerProcs.filter(p => p.tipo?.toLowerCase().includes('arbitral')).length,
     };
-  }).filter(p => p.count > 0).sort((a, b) => b.count - a.count); // Remove quem zerou no filtro e ordena desc
+  }).filter(p => p.count > 0 || p.arquivados > 0).sort((a, b) => b.count - a.count); // Mostra também se tiver arquivados fixos
 
   const volumetryBySocio = useMemo(() => {
      const grouped = volumetryByPartner.reduce((acc, curr) => {
@@ -417,10 +422,7 @@ export function Volumetry() {
             </div>
           </div>
 
-          {/* Distribuição de Tipos */}
-          {!loading && processes.length > 0 && (
-            <ProcessTypeDistributionSection processes={filteredProcesses} />
-          )}
+          {/* Distribuição de Tipos Ocultada - Passou para colunas */}
 
           {/* Lista de Volumetria por Responsável */}
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -450,9 +452,12 @@ export function Volumetry() {
                     <thead>
                       <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
                         <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Líder Responsável</th>
-                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Total de Processos</th>
+                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest border-x border-[#ffffff10]">Total</th>
                         <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Ativos</th>
-                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Arquivados</th>
+                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest border-r border-[#ffffff10]">Arquivados</th>
+                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Admin.</th>
+                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Judic.</th>
+                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest border-r border-[#ffffff10]">Arb.</th>
                         <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Representatividade na Base</th>
                       </tr>
                     </thead>
@@ -460,7 +465,7 @@ export function Volumetry() {
                       {volumetryBySocio.map(([socioName, lideres]) => (
                         <Fragment key={socioName}>
                           <tr className="bg-gray-50/80">
-                            <td colSpan={5} className="p-4 border-b border-gray-100">
+                            <td colSpan={8} className="p-4 border-b border-gray-100">
                               <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-xl bg-blue-100 text-[#1e3a8a] flex items-center justify-center font-black text-xs">
                                   {socioName === 'Sem Sócio Definido' ? '?' : socioName.charAt(0).toUpperCase()}
@@ -482,7 +487,7 @@ export function Volumetry() {
                                   <span className="text-xs font-bold text-gray-700 uppercase tracking-tight">{partner.name}</span>
                                 </div>
                               </td>
-                              <td className="p-4 text-center">
+                              <td className="p-4 text-center border-x border-gray-50">
                                 <span className="bg-blue-50 text-[#1e3a8a] px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-blue-100">
                                   {partner.count.toLocaleString('pt-BR')}
                                 </span>
@@ -492,9 +497,24 @@ export function Volumetry() {
                                   {partner.ativos.toLocaleString('pt-BR')}
                                 </span>
                               </td>
+                              <td className="p-4 text-center border-r border-gray-50">
+                                <span className="bg-amber-50 text-amber-900 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-amber-200">
+                                  {partner.arquivados.toLocaleString('pt-BR')}
+                                </span>
+                              </td>
                               <td className="p-4 text-center">
                                 <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
-                                  {partner.arquivados.toLocaleString('pt-BR')}
+                                  {partner.administrativo.toLocaleString('pt-BR')}
+                                </span>
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
+                                  {partner.judicial.toLocaleString('pt-BR')}
+                                </span>
+                              </td>
+                              <td className="p-4 text-center border-r border-gray-50">
+                                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
+                                  {partner.arbitral.toLocaleString('pt-BR')}
                                 </span>
                               </td>
                               <td className="p-4 align-middle">
@@ -633,55 +653,4 @@ function DataQualitySection({ processes }: { processes: any[] }) {
       </div>
     </div>
   );
-}
-
-function ProcessTypeDistributionSection({ processes }: { processes: any[] }) {
-  const total = processes.length;
-  if (total === 0) return null;
-
-  const getCount = (type: string) => processes.filter(p => String(p.tipo || '').toLowerCase().includes(type.toLowerCase())).length;
-
-  const adminCount = getCount('administrativo');
-  const judCount = getCount('judicial');
-  const arbCount = getCount('arbitr');
-
-  const stats = [
-    { label: 'Administrativo', count: adminCount, color: 'bg-indigo-500', text: 'text-indigo-700' },
-    { label: 'Judicial', count: judCount, color: 'bg-cyan-500', text: 'text-cyan-700' },
-    { label: 'Arbitral', count: arbCount, color: 'bg-fuchsia-500', text: 'text-fuchsia-700' },
-  ];
-
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-        <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
-          <PieChart className="w-4 h-4 text-[#1e3a8a]" /> Processos por Tipo
-        </h2>
-      </div>
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {stats.map(s => {
-            const pct = total > 0 ? ((s.count / total) * 100).toFixed(1) : "0";
-            return (
-              <div key={s.label} className="flex flex-col gap-2 p-4 rounded-xl border border-gray-50 bg-gray-50/30">
-                <div className="flex justify-between items-end">
-                   <p className="text-[11px] font-black text-[#0a192f] uppercase tracking-tight">{s.label}</p>
-                   <div className="flex items-baseline gap-1">
-                     <span className={`text-lg font-black ${s.text}`}>{s.count.toLocaleString('pt-BR')}</span>
-                     <span className="text-[10px] font-bold text-gray-400">({pct}%)</span>
-                   </div>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden border border-gray-200/50 shadow-inner">
-                  <div
-                    className={`${s.color} h-full rounded-full transition-all duration-700`}
-                    style={{ width: `${pct}%` }}
-                  ></div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
+}
