@@ -452,12 +452,14 @@ export function Volumetry() {
                     <thead>
                       <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
                         <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Líder Responsável</th>
-                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest border-x border-[#ffffff10]">Total</th>
-                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Ativos</th>
-                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest border-r border-[#ffffff10]">Arquivados</th>
+                        <th className="p-4 text-center border-x border-[#ffffff10] align-middle">
+                           <div className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Ativos</div>
+                           <div className="text-[8px] font-bold text-blue-200 mt-1 uppercase tracking-tight">(Soma: Admin + Judic + Arb)</div>
+                        </th>
                         <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Admin.</th>
                         <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Judic.</th>
                         <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest border-r border-[#ffffff10]">Arb.</th>
+                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest border-r border-[#ffffff10]">Arquivados</th>
                         <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Representatividade na Base</th>
                       </tr>
                     </thead>
@@ -465,7 +467,7 @@ export function Volumetry() {
                       {volumetryBySocio.map(([socioName, lideres]) => (
                         <Fragment key={socioName}>
                           <tr className="bg-gray-50/80">
-                            <td colSpan={8} className="p-4 border-b border-gray-100">
+                            <td colSpan={7} className="p-4 border-b border-gray-100">
                               <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-xl bg-blue-100 text-[#1e3a8a] flex items-center justify-center font-black text-xs">
                                   {socioName === 'Sem Sócio Definido' ? '?' : socioName.charAt(0).toUpperCase()}
@@ -488,18 +490,8 @@ export function Volumetry() {
                                 </div>
                               </td>
                               <td className="p-4 text-center border-x border-gray-50">
-                                <span className="bg-blue-50 text-[#1e3a8a] px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-blue-100">
-                                  {partner.count.toLocaleString('pt-BR')}
-                                </span>
-                              </td>
-                              <td className="p-4 text-center">
                                 <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-emerald-100">
                                   {partner.ativos.toLocaleString('pt-BR')}
-                                </span>
-                              </td>
-                              <td className="p-4 text-center border-r border-gray-50">
-                                <span className="bg-amber-50 text-amber-900 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-amber-200">
-                                  {partner.arquivados.toLocaleString('pt-BR')}
                                 </span>
                               </td>
                               <td className="p-4 text-center">
@@ -515,6 +507,11 @@ export function Volumetry() {
                               <td className="p-4 text-center border-r border-gray-50">
                                 <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
                                   {partner.arbitral.toLocaleString('pt-BR')}
+                                </span>
+                              </td>
+                              <td className="p-4 text-center border-r border-gray-50">
+                                <span className="bg-amber-50 text-amber-900 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-amber-200">
+                                  {partner.arquivados.toLocaleString('pt-BR')}
                                 </span>
                               </td>
                               <td className="p-4 align-middle">
