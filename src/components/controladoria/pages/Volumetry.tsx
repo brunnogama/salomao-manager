@@ -68,16 +68,20 @@ export function Volumetry() {
   };
 
   // --------------- Lógica de Filtragem no Dashboard ---------------
-  const filteredProcesses = processes.filter((proc: any) => {
+  const baseProcesses = processes.filter((proc: any) => {
     const matchesSearch =
       (proc.cliente_principal && proc.cliente_principal.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (proc.numero_cnj && proc.numero_cnj.includes(searchTerm)) ||
       (proc.pasta && proc.pasta.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus = statusFilter ? proc.status?.toLowerCase() === statusFilter.toLowerCase() : true;
-    const matchesPartner = partnerFilter ? toTitleCase(proc.responsavel_principal || '') === partnerFilter : true;
 
-    return matchesSearch && matchesStatus && matchesPartner;
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredProcesses = baseProcesses.filter((proc: any) => {
+    const matchesPartner = partnerFilter ? toTitleCase(proc.responsavel_principal || '') === partnerFilter : true;
+    return matchesPartner;
   });
 
   // Métricas
@@ -103,13 +107,15 @@ export function Volumetry() {
   const allStatuses = Array.from(new Set(processes.map(p => p.status).filter(Boolean))).sort();
 
   // --------------- Agrupamento por Responsável ---------------
+  const baseForPercentage = baseProcesses.length;
+
   const volumetryByPartner = allPartners.map(partnerName => {
     const partnerProcs = filteredProcesses.filter(p => toTitleCase(p.responsavel_principal || '') === partnerName);
     
     return {
       name: partnerName || 'Sem Responsável',
       count: partnerProcs.length,
-      percentage: totalProcesses > 0 ? ((partnerProcs.length / totalProcesses) * 100).toFixed(1) : "0",
+      percentage: baseForPercentage > 0 ? ((partnerProcs.length / baseForPercentage) * 100).toFixed(1) : "0",
       ativos: partnerProcs.filter(p => p.status?.toLowerCase() === 'ativo').length,
       arquivados: partnerProcs.filter(p => p.status?.toLowerCase() === 'arquivado').length,
     };

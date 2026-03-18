@@ -155,15 +155,15 @@ export function VolumetryProcesses() {
 
         const formattedData = rawData.map((row: any) => ({
           pasta: row['Pasta']?.toString() || null,
-          tipo: row['Tipo']?.toString() || null,
-          data_cadastro: parseExcelDate(row['Data Cadastro']),
+          tipo: row['Tipo']?.toString() || row['Tipo de Processo']?.toString() || null,
+          data_cadastro: parseExcelDate(row['Data da distribuição'] || row['Data Cadastro']),
           responsavel_principal: row['Responsável principal']?.toString() || null,
-          cliente_principal: row['Cliente principal']?.toString() || null,
+          cliente_principal: row['Cliente']?.toString() || row['Cliente principal']?.toString() || null,
           numero_cnj: row['Número de CNJ']?.toString() || null,
           uf: row['UF']?.toString() || null,
           status: row['Status']?.toString() || null,
           data_encerramento: parseExcelDate(row['Data do encerramento']),
-          instancia: row['Tipo_1']?.toString() || row['Instância']?.toString() || null // Excel pode nomear colunas duplicadas com _1
+          instancia: row['Fase']?.toString() || row['Tipo_1']?.toString() || row['Instância']?.toString() || null
         }));
 
         // Em vez de inserir tudo de uma vez, divide em lotes para atualizar o progresso
@@ -319,28 +319,25 @@ export function VolumetryProcesses() {
               <thead className="sticky top-0 bg-white shadow-sm z-10">
                 <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Pasta</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest min-w-[120px]">Data Cadastro</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável Principal</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente Principal</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Número de CNJ</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">UF</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest min-w-[150px]">Data do Encerramento</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Instância/Recurso</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">UF</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Fase</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
                     <tr>
-                    <td colSpan={10} className="p-20 text-center">
+                    <td colSpan={7} className="p-20 text-center">
                       <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando dados...</p>
                     </td>
                   </tr>
                 ) : data.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="p-20 text-center bg-gray-50/50">
+                    <td colSpan={7} className="p-20 text-center bg-gray-50/50">
                       <div className="flex flex-col items-center justify-center">
                         <div className="bg-gray-100 p-4 rounded-full mb-4">
                           <FileText className="w-8 h-8 text-gray-400" />
@@ -354,12 +351,9 @@ export function VolumetryProcesses() {
                   data.map((row, index) => (
                     <tr key={row.id || index} className="hover:bg-blue-50/30 transition-colors">
                       <td className="p-4 text-xs font-bold text-[#0a192f]">{row.pasta || '-'}</td>
-                      <td className="p-4 text-xs text-gray-600">{row.tipo || '-'}</td>
-                      <td className="p-4 text-xs text-gray-600">{row.data_cadastro ? new Date(row.data_cadastro).toLocaleDateString('pt-BR') : '-'}</td>
                       <td className="p-4 text-xs font-semibold text-gray-800">{row.responsavel_principal || '-'}</td>
                       <td className="p-4 text-xs text-gray-600">{row.cliente_principal || '-'}</td>
                       <td className="p-4 text-xs font-mono text-gray-500">{row.numero_cnj || '-'}</td>
-                      <td className="p-4 text-xs font-bold text-gray-600">{row.uf || '-'}</td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border ${
                           row.status?.toLowerCase() === 'ativo' 
@@ -369,7 +363,7 @@ export function VolumetryProcesses() {
                             {row.status || '-'}
                         </span>
                       </td>
-                      <td className="p-4 text-xs text-gray-600">{row.data_encerramento ? new Date(row.data_encerramento).toLocaleDateString('pt-BR') : '-'}</td>
+                      <td className="p-4 text-xs font-bold text-gray-600">{row.uf || '-'}</td>
                       <td className="p-4 text-xs text-gray-600">{row.instancia || '-'}</td>
                     </tr>
                   ))
