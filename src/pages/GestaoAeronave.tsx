@@ -896,14 +896,22 @@ export function GestaoAeronave() {
               <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[15%]">Doc. Fiscal</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[15%]">Número</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[20%] text-right">Valor Total Doc</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[50%]">Observação</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[12%]">Número</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[15%] text-right">Valor Total Doc</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[13%] text-center">Data da Baixa</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[45%]">Observação</th>
                 </tr>
               </thead>
               <tbody>
                 {faturasFiltradas.length > 0 ? (
-                  faturasFiltradas.map((group, idx) => (
+                  faturasFiltradas.map((group, idx) => {
+                    const items = (group as any)._items || [group]
+                    const allPaid = items.every((i: any) => i.data_pagamento)
+                    const dataBaixa = allPaid
+                      ? items.reduce((latest: string, i: any) => i.data_pagamento > latest ? i.data_pagamento : latest, items[0].data_pagamento)
+                      : null
+
+                    return (
                     <tr
                       key={idx}
                       onClick={() => handleFaturaClick(group)}
@@ -922,14 +930,26 @@ export function GestaoAeronave() {
                           <span className="text-gray-300">-</span>
                         )}
                       </td>
+                      <td className="px-4 py-4 text-sm text-center whitespace-nowrap">
+                        {dataBaixa ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-xs">
+                            {new Date(dataBaixa + 'T00:00:00').toLocaleDateString('pt-BR')}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 text-amber-600 font-bold text-[10px] uppercase tracking-wider">
+                            Pendente
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-4 text-sm text-gray-500 last:rounded-r-xl overflow-hidden text-ellipsis" title={group.observacao || ''}>
                         {group.observacao || '-'}
                       </td>
                     </tr>
-                  ))
+                    )
+                  })
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-4 py-12 text-center">
+                    <td colSpan={5} className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center justify-center text-gray-300 gap-2">
                         <FileText className="h-8 w-8" />
                         <p className="text-xs font-bold uppercase tracking-widest">Nenhuma fatura encontrada</p>
