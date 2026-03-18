@@ -728,30 +728,30 @@ export function Volumetry() {
                                   <span className="text-xs font-bold text-gray-700 uppercase tracking-tight">{partner.name}</span>
                                 </div>
                               </td>
-                              <td className="p-4 text-center border-x border-gray-50">
-                                <span className="inline-flex items-center justify-center min-w-[48px] bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-emerald-100">
+                              <td className="p-4 text-center border-x border-gray-50 align-middle">
+                                <div className="inline-block text-center min-w-[48px] bg-emerald-50 text-emerald-700 px-3 pt-1.5 pb-1 rounded-lg font-black text-[10px] leading-none uppercase tracking-widest border border-emerald-100">
                                   {partner.ativos.toLocaleString('pt-BR')}
-                                </span>
+                                </div>
                               </td>
-                              <td className="p-4 text-center">
-                                <span className="inline-flex items-center justify-center min-w-[48px] bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
+                              <td className="p-4 text-center align-middle">
+                                <div className="inline-block text-center min-w-[48px] bg-gray-100 text-gray-600 px-3 pt-1.5 pb-1 rounded-lg font-black text-[10px] leading-none uppercase tracking-widest border border-gray-200">
                                   {partner.administrativo.toLocaleString('pt-BR')}
-                                </span>
+                                </div>
                               </td>
-                              <td className="p-4 text-center">
-                                <span className="inline-flex items-center justify-center min-w-[48px] bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
+                              <td className="p-4 text-center align-middle">
+                                <div className="inline-block text-center min-w-[48px] bg-gray-100 text-gray-600 px-3 pt-1.5 pb-1 rounded-lg font-black text-[10px] leading-none uppercase tracking-widest border border-gray-200">
                                   {partner.judicial.toLocaleString('pt-BR')}
-                                </span>
+                                </div>
                               </td>
-                              <td className="p-4 text-center border-r border-gray-50">
-                                <span className="inline-flex items-center justify-center min-w-[48px] bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-gray-200">
+                              <td className="p-4 text-center border-r border-gray-50 align-middle">
+                                <div className="inline-block text-center min-w-[48px] bg-gray-100 text-gray-600 px-3 pt-1.5 pb-1 rounded-lg font-black text-[10px] leading-none uppercase tracking-widest border border-gray-200">
                                   {partner.arbitral.toLocaleString('pt-BR')}
-                                </span>
+                                </div>
                               </td>
-                              <td className="p-4 text-center border-r border-gray-50">
-                                <span className="inline-flex items-center justify-center min-w-[48px] bg-amber-50 text-amber-900 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-amber-200">
+                              <td className="p-4 text-center border-r border-gray-50 align-middle">
+                                <div className="inline-block text-center min-w-[48px] bg-amber-50 text-amber-900 px-3 pt-1.5 pb-1 rounded-lg font-black text-[10px] leading-none uppercase tracking-widest border border-amber-200">
                                   {partner.arquivados.toLocaleString('pt-BR')}
-                                </span>
+                                </div>
                               </td>
                               <td className="p-4 align-middle">
                                 <div className="flex items-center gap-4">
@@ -865,7 +865,7 @@ function DataQualitySection({ processes }: { processes: any[] }) {
             return (
               <div key={s.key} className="flex items-center gap-4">
                 <div className="w-[140px] shrink-0">
-                  <p className="text-[11px] font-black text-[#0a192f] uppercase tracking-tight truncate" title={s.label}>{s.label}</p>
+                  <p className="text-[11px] font-black text-[#0a192f] uppercase tracking-tight leading-normal" title={s.label}>{s.label}</p>
                 </div>
                 <div className="flex-1 flex items-center gap-3">
                   <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200/50 shadow-inner">
