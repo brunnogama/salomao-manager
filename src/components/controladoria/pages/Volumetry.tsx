@@ -922,20 +922,7 @@ export function Volumetry() {
               <div className="overflow-x-auto custom-scrollbar p-0 sm:p-5">
                 <div className="min-w-[800px] rounded-t-2xl overflow-hidden border border-[#ffffff10] shadow-sm">
                   <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Sócio / Líder Responsável</th>
-                        <th className="p-4 text-center border-x border-[#ffffff10] align-middle">
-                           <div className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Ativos</div>
-                           <div className="text-[8px] font-bold text-blue-200 mt-1 uppercase tracking-tight">(Soma: Admin + Judic + Arb)</div>
-                        </th>
-                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Admin.</th>
-                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Judic.</th>
-                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest border-r border-[#ffffff10]">Arb.</th>
-                        <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest border-r border-[#ffffff10]">Arquivados</th>
-                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Representatividade na Base</th>
-                      </tr>
-                    </thead>
+
                     <tbody className="divide-y divide-gray-50">
                       {volumetryBySocio.map(([socioName, lideres]) => {
                         const totalProcessosSocio = lideres.reduce((sum, l) => sum + l.count, 0);
@@ -958,7 +945,7 @@ export function Volumetry() {
                                     {socioName === 'Sem Sócio Definido' && <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">Líderes sem sócio atrelado</span>}
                                   </div>
                                   
-                                  <div className="ml-4 px-3 py-1 bg-gradient-to-r from-blue-600 to-[#112240] text-white rounded-lg shadow-sm border border-blue-800 flex items-center gap-2 transform group-hover:scale-105 transition-all">
+                                  <div className="ml-4 px-3 py-1 bg-[#1e3a8a] text-white rounded-lg shadow-sm flex items-center gap-2 transform group-hover:scale-105 transition-all">
                                     <Layers className="w-3.5 h-3.5 text-blue-200" />
                                     <span className="text-xs font-black tracking-widest">{totalProcessosSocio.toLocaleString('pt-BR')} PROCS.</span>
                                   </div>
@@ -970,8 +957,22 @@ export function Volumetry() {
                             </td>
                           </tr>
                           
-                          {isExpanded && lideres.map((partner, idx) => (
-                            <tr key={`${socioName}-${idx}`} className="hover:bg-blue-50/30 transition-colors group">
+                          {isExpanded && (
+                            <>
+                              <tr className="bg-gradient-to-r from-[#1e3a8a]/5 to-transparent border-b border-gray-100">
+                                <th className="py-3 px-4 pl-12 text-[10px] font-black text-blue-900 uppercase tracking-widest text-left">Líder Responsável</th>
+                                <th className="py-3 px-4 text-center border-x border-gray-100 align-middle">
+                                   <div className="text-[10px] font-black text-blue-900 uppercase tracking-widest leading-none">Ativos</div>
+                                   <div className="text-[8px] font-bold text-gray-500 mt-0.5 uppercase tracking-tight">(Admin + Judic + Arb)</div>
+                                </th>
+                                <th className="py-3 px-4 text-center text-[10px] font-black text-blue-900 uppercase tracking-widest">Admin.</th>
+                                <th className="py-3 px-4 text-center text-[10px] font-black text-blue-900 uppercase tracking-widest">Judic.</th>
+                                <th className="py-3 px-4 text-center text-[10px] font-black text-blue-900 uppercase tracking-widest border-r border-gray-100">Arb.</th>
+                                <th className="py-3 px-4 text-center text-[10px] font-black text-blue-900 uppercase tracking-widest border-r border-gray-100">Arquivados</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-blue-900 uppercase tracking-widest text-left">Representatividade na Base</th>
+                              </tr>
+                              {lideres.map((partner, idx) => (
+                                <tr key={`${socioName}-${idx}`} className="hover:bg-blue-50/30 transition-colors group">
                               <td className="p-4 pl-12 border-l-[3px] border-transparent group-hover:border-blue-400">
                                 <div className="flex items-center gap-3">
                                   <div className="w-9 h-9 rounded-xl bg-white text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-gray-100 shadow-sm">
@@ -1018,8 +1019,10 @@ export function Volumetry() {
                                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest w-12">{partner.percentage}%</span>
                                 </div>
                               </td>
-                            </tr>
-                          ))}
+                                </tr>
+                              ))}
+                            </>
+                          )}
                         </Fragment>
                       )})}
                     </tbody>
