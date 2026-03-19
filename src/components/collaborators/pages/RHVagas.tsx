@@ -761,6 +761,10 @@ export function RHVagas() {
     return nameA.localeCompare(nameB)
   }), [candidatos, searchTerm, filterLocal, filterCargo, filterArea, filterFaculdades, filterPeriodos, filterTurnos])
 
+  const countAbertas = filteredVagas.filter(v => v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização').length;
+  const countFechadas = filteredVagas.filter(v => v.status === 'Fechada').length;
+  const countTalentos = filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado').length;
+  const countReprovados = filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado').length;
 
   return (
     <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24">
@@ -792,24 +796,36 @@ export function RHVagas() {
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'abertas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <Briefcase className="h-4 w-4" /> Vagas Abertas
+              <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black transition-colors ${activeTab === 'abertas' ? 'bg-blue-50 text-blue-700' : 'bg-gray-200/60 text-gray-500'}`}>
+                {countAbertas}
+              </span>
             </button>
             <button
               onClick={() => setActiveTab('talentos')}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'talentos' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <Users className="h-4 w-4" /> Talentos
+              <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black transition-colors ${activeTab === 'talentos' ? 'bg-blue-50 text-blue-700' : 'bg-gray-200/60 text-gray-500'}`}>
+                {countTalentos}
+              </span>
             </button>
             <button
               onClick={() => setActiveTab('fechadas')}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'fechadas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <CheckCircle2 className="h-4 w-4" /> Vagas Fechadas
+              <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black transition-colors ${activeTab === 'fechadas' ? 'bg-blue-50 text-blue-700' : 'bg-gray-200/60 text-gray-500'}`}>
+                {countFechadas}
+              </span>
             </button>
             <button
               onClick={() => setActiveTab('reprovados')}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'reprovados' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-red-700'}`}
             >
               <UserX className="h-4 w-4" /> Reprovados
+              <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black transition-colors ${activeTab === 'reprovados' ? 'bg-red-50 text-red-600' : 'bg-gray-200/60 text-gray-500'}`}>
+                {countReprovados}
+              </span>
             </button>
           </div>
 
