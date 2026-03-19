@@ -52,7 +52,7 @@ export function ManagedSelect({
     // Management States
     const [newItemName, setNewItemName] = useState('')
     const [editingItem, setEditingItem] = useState<Item | null>(null)
-    const [openUpwards, setOpenUpwards] = useState(false)
+    const [coords, setCoords] = useState({ top: 0 as number | undefined, bottom: undefined as number | undefined, left: 0, width: 0 })
 
     const dropdownRef = useRef<HTMLDivElement>(null)
     const managingRef = useRef<HTMLDivElement>(null)
@@ -98,8 +98,10 @@ export function ManagedSelect({
                 return
             }
 
+            const menuPortal = document.getElementById('managed-select-portal-root')
+
             // If dropdown is open (and not managing), close if clicking outside dropdown
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) && (!menuPortal || !menuPortal.contains(event.target as Node))) {
                 if (!isManaging) {
                     setIsOpen(false)
                     setSearchTerm('')
@@ -109,19 +111,6 @@ export function ManagedSelect({
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [isManaging])
-
-    // Calculate dropdown direction
-    useEffect(() => {
-        if (isOpen && dropdownRef.current) {
-            const rect = dropdownRef.current.getBoundingClientRect();
-            const spaceBelow = window.innerHeight - rect.bottom;
-            if (spaceBelow < 250 && rect.top > 250) {
-                setOpenUpwards(true);
-            } else {
-                setOpenUpwards(false);
-            }
-        }
-    }, [isOpen]);
 
     const selectedItem = items.find(i => value && String(i.id) === String(value))
 
@@ -197,7 +186,32 @@ export function ManagedSelect({
                 <div ref={dropdownRef} className="relative flex-1">
                     {/* TRIGGER */}
                     <div
-                        onClick={() => !disabled && setIsOpen(!isOpen)}
+                        onClick={() => {
+                            if (!disabled) {
+                                if (!isOpen && dropdownRef.current) {
+                                    const rect = dropdownRef.current.getBoundingClientRect()
+                                    let top: number | undefined = rect.bottom
+                                    let bottom: number | undefined = undefined
+
+                                    const spaceBelow = window.innerHeight - rect.bottom
+                                    const spaceAbove = rect.top
+                                    const dropdownMaxHeight = 250
+
+                                    if (spaceBelow < dropdownMaxHeight && spaceAbove > spaceBelow) {
+                                        top = undefined
+                                        bottom = window.innerHeight - rect.top
+                                    }
+
+                                    setCoords({
+                                        top,
+                                        bottom,
+                                        left: rect.left,
+                                        width: rect.width
+                                    })
+                                }
+                                setIsOpen(!isOpen)
+                            }
+                        }}
                         className={`
               w-full px-3 py-2.5 bg-[#f9fafb] border border-gray-200 rounded-xl text-sm font-medium 
               flex items-center justify-between transition-all outline-none
@@ -225,8 +239,17 @@ export function ManagedSelect({
                     </div>
 
                     {/* DROPDOWN */}
-                    {isOpen && (
-                        <div className={`absolute left-0 w-full bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[50] ${openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
+                    {isOpen && createPortal(
+                        <div 
+                          id="managed-select-portal-root"
+                          className="fixed bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[10000]"
+                          style={{
+                                top: coords.top !== undefined ? `${coords.top + 4}px` : undefined,
+                                bottom: coords.bottom !== undefined ? `${coords.bottom + 4}px` : undefined,
+                                left: `${coords.left}px`,
+                                width: `${coords.width}px`,
+                          }}
+                        >
                             <div className="p-2 border-b border-gray-100 bg-gray-50">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
@@ -268,7 +291,8 @@ export function ManagedSelect({
                                     <div className="p-4 text-center text-xs text-gray-400 italic">Nenhum item encontrado</div>
                                 )}
                             </div>
-                        </div>
+                        </div>,
+                        document.body
                     )}
                 </div>
 
