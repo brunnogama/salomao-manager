@@ -739,7 +739,7 @@ export function Organograma() {
         for (const sub of subs) {
             if (sub.isSocio) continue;
 
-             const isTrulyAdmin = sub.isAdministrativo && (sub.atuacao.trim().length > 0 || sub.role.trim().length > 0);
+             const isTrulyAdmin = sub.isAdministrativo && (sub.atuacao.trim().length > 0 || (sub.role.trim().length > 0 && sub.role !== 'Sem Cargo'));
              
              // Check Atuacao filter match
              const matchesAtuacao = activeTab === 'ADMINISTRATIVO' && selectedAtuacao !== 'ALL' 
