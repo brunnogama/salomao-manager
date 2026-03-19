@@ -11,7 +11,9 @@ import {
   FileSpreadsheet,
   Clock,
   AlertTriangle,
-  MapPin
+  MapPin,
+  Plus,
+  Minus
 } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 import html2canvas from 'html2canvas';
@@ -317,6 +319,13 @@ export function Volumetry() {
   const [processes, setProcesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+
+  // Controle de Expansão dos Sócios
+  const [expandedSocios, setExpandedSocios] = useState<Record<string, boolean>>({});
+
+  const toggleSocio = (socioName: string) => {
+    setExpandedSocios(prev => ({ ...prev, [socioName]: !prev[socioName] }));
+  };
 
   // Filtros Globais para o Dashboard
   const [searchTerm, setSearchTerm] = useState('');
@@ -905,22 +914,40 @@ export function Volumetry() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {volumetryBySocio.map(([socioName, lideres]) => (
+                      {volumetryBySocio.map(([socioName, lideres]) => {
+                        const totalProcessosSocio = lideres.reduce((sum, l) => sum + l.count, 0);
+                        const isExpanded = expandedSocios[socioName] || false;
+                        
+                        return (
                         <Fragment key={socioName}>
-                          <tr className="bg-gray-50/80">
+                          <tr 
+                            className="bg-gray-50/80 cursor-pointer hover:bg-gray-100 transition-colors group"
+                            onClick={() => toggleSocio(socioName)}
+                          >
                             <td colSpan={7} className="p-4 border-b border-gray-100">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-xl bg-blue-100 text-[#1e3a8a] flex items-center justify-center font-black text-xs">
-                                  {socioName === 'Sem Sócio Definido' ? '?' : socioName.charAt(0).toUpperCase()}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shadow-sm transition-colors ${isExpanded ? 'bg-[#1e3a8a] text-white' : 'bg-blue-100 text-[#1e3a8a]'}`}>
+                                    {socioName === 'Sem Sócio Definido' ? '?' : socioName.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-black text-[#0a192f] uppercase tracking-widest">{socioName}</span>
+                                    {socioName === 'Sem Sócio Definido' && <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">Líderes sem sócio atrelado</span>}
+                                  </div>
+                                  
+                                  <div className="ml-4 px-3 py-1 bg-gradient-to-r from-blue-600 to-[#112240] text-white rounded-lg shadow-sm border border-blue-800 flex items-center gap-2 transform group-hover:scale-105 transition-all">
+                                    <Layers className="w-3.5 h-3.5 text-blue-200" />
+                                    <span className="text-xs font-black tracking-widest">{totalProcessosSocio.toLocaleString('pt-BR')} PROCS.</span>
+                                  </div>
                                 </div>
-                                <span className="text-xs font-black text-[#0a192f] uppercase tracking-widest">{socioName}</span>
-                                <span className="text-[10px] font-bold text-gray-500 ml-2">
-                                  ({lideres.reduce((sum, l) => sum + l.count, 0).toLocaleString('pt-BR')} processos)
-                                </span>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center border shadow-sm transition-all ${isExpanded ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-gray-200 text-gray-400 group-hover:text-blue-500 group-hover:border-blue-300'}`}>
+                                  {isExpanded ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                                </div>
                               </div>
                             </td>
                           </tr>
-                          {lideres.map((partner, idx) => (
+                          
+                          {isExpanded && lideres.map((partner, idx) => (
                             <tr key={`${socioName}-${idx}`} className="hover:bg-blue-50/30 transition-colors group">
                               <td className="p-4 pl-12 border-l-[3px] border-transparent group-hover:border-blue-400">
                                 <div className="flex items-center gap-3">
@@ -971,7 +998,7 @@ export function Volumetry() {
                             </tr>
                           ))}
                         </Fragment>
-                      ))}
+                      )})}
                     </tbody>
                   </table>
                 </div>
