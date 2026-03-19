@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCloseOnEscape } from '../../../hooks/useCloseOnEscape'
 import { supabase } from '../../../lib/supabase'
+import { logAction } from '../../../lib/logger'
 import { CollaboratorModalLayout } from './CollaboratorLayouts'
 import { DadosPessoaisSection } from './DadosPessoaisSection'
 import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
@@ -444,6 +445,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     console.error('Erro no update do candidato:', error);
                     throw error;
                 }
+                await logAction('EDITAR', 'RH', `Editou talento/candidato: ${cleanPayload.nome}`, 'Recrutamento')
             } else {
                 const { data: insertedData, error: insertError } = await supabase.from('candidatos').insert([cleanPayload]).select('id').single()
                 if (insertError) {
@@ -451,6 +453,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     throw insertError;
                 }
                 finalCandidatoId = insertedData?.id || null;
+                await logAction('CRIAR', 'RH', `Adicionou novo talento/candidato: ${cleanPayload.nome}`, 'Recrutamento')
             }
 
             console.log('Candidato salvo com sucesso!');
