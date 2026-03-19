@@ -34,7 +34,6 @@ import {
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 import { FilterMultiSelect } from '../../controladoria/ui/FilterMultiSelect'
 import { VagaFormModal } from '../components/VagaFormModal'
-import { VagaViewModal } from '../components/VagaViewModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
 import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelectionModal'
 import { formatDateToDisplay } from '../utils/colaboradoresUtils'
@@ -1722,7 +1721,7 @@ export function RHVagas() {
                                   const colorClass = isAberta ? appearance.colorClass : 'bg-gray-50 text-gray-400 border-gray-200';
                                   
                                   return (
-                                    <div className={`flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden flex items-center justify-center border shadow-sm ring-2 ring-white ${colorClass}`}>
+                                    <div className={`flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-2xl overflow-hidden flex items-center justify-center border shadow-sm ring-2 ring-white ${colorClass}`}>
                                       <IconComponent className="w-5 h-5 stroke-[2.5px] drop-shadow-sm" />
                                     </div>
                                   );
@@ -1810,11 +1809,15 @@ export function RHVagas() {
         }}
       />
 
-      <VagaViewModal
+      <VagaFormModal
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
-        vaga={vagas.find(v => String(v.id) === String(selectedVagaId)) || null}
-        onEdit={(id) => handleOpenModal(id)}
+        vagaId={selectedVagaId}
+        viewMode={true}
+        onEdit={(id: string) => {
+          handleCloseViewModal()
+          handleOpenModal(id)
+        }}
       />
 
       <CandidatoFormModal

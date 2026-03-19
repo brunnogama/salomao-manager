@@ -34,6 +34,14 @@ export const CollaboratorModalLayout = ({
         }
     }, [activeTab])
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onClose]);
+
     return createPortal(
         <div className="fixed inset-0 bg-[#0a192f]/90 backdrop-blur-xl z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-300" style={{ WebkitBackdropFilter: 'blur(24px)', backdropFilter: 'blur(24px)' }}>
             <div className="bg-white rounded-[2rem] w-full max-w-7xl max-h-[95vh] flex overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200 relative">

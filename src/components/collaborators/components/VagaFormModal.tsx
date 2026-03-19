@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Vaga } from '../../../types/controladoria'
 import {
-    X,
+    Edit2,
     Briefcase,
     AlertCircle,
     Save,
@@ -34,6 +34,8 @@ interface VagaFormModalProps {
     onClose: () => void;
     vagaId?: string | null;
     onSuccess?: () => void;
+    viewMode?: boolean;
+    onEdit?: (id: string) => void;
 }
 
 const getRoleAppearance = (roleName: string, atuacaoStr?: string) => {
@@ -73,7 +75,7 @@ const getRoleAppearance = (roleName: string, atuacaoStr?: string) => {
     return { Icon: Briefcase, colorClass: 'bg-slate-50 text-slate-600 border-slate-200' };
 }
 
-export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormModalProps) {
+export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, onEdit }: VagaFormModalProps) {
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -437,30 +439,52 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
             }
             footer={
                 <div className="flex justify-end gap-3 w-full">
-                    <button
-                        onClick={onClose}
-                        className="px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.1em] text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
-                        disabled={saving}
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={saving || loading}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30 transition-all disabled:opacity-50"
-                    >
-                        {saving ? (
-                            <span className="flex items-center gap-2">
-                                <div className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Salvando...
-                            </span>
-                        ) : (
-                            <>
-                                <Save className="h-4 w-4" />
-                                {vagaId ? 'Salvar Alterações' : 'Criar Vaga'}
-                            </>
-                        )}
-                    </button>
+                    {viewMode ? (
+                        <>
+                            <button
+                                onClick={onClose}
+                                className="px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.1em] text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
+                            >
+                                Fechar
+                            </button>
+                            {onEdit && vagaId && (
+                                <button
+                                    onClick={() => { onClose(); onEdit(vagaId); }}
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30 transition-all font-bold"
+                                >
+                                    <Edit2 className="h-4 w-4" />
+                                    Editar Vaga
+                                </button>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={onClose}
+                                className="px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.1em] text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
+                                disabled={saving}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={saving || loading}
+                                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30 transition-all disabled:opacity-50"
+                            >
+                                {saving ? (
+                                    <span className="flex items-center gap-2">
+                                        <div className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Salvando...
+                                    </span>
+                                ) : (
+                                    <>
+                                        <Save className="h-4 w-4" />
+                                        {vagaId ? 'Salvar Alterações' : 'Criar Vaga'}
+                                    </>
+                                )}
+                            </button>
+                        </>
+                    )}
                 </div>
             }
         >
@@ -600,7 +624,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                         }
                                                     }}
                                                     tableName="roles"
-                                                    disabled={!formData.area}
+                                                    disabled={viewMode || !formData.area}
                                                     clientFilter={(item: any) => {
                                                         const roleName = item.name;
                                                         if (formData.area === 'Jurídica') return CARGOS_JURIDICA.includes(roleName);
@@ -615,7 +639,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                     onChange={v => setFormData({ ...formData, atuacao_id: v })}
                                                     table="atuacoes"
                                                     allowCustom={true}
-                                                    disabled={!formData.area || !formData.role_id}
+                                                    disabled={viewMode || !formData.area || !formData.role_id}
                                                     clientFilter={(item: any) => {
                                                         const name = item.name || item;
                                                         if (formData.area === 'Jurídica') return ATUACOES_JURIDICA.includes(name);
@@ -629,6 +653,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                     value={formData.location_id?.toString() || ''}
                                                     onChange={v => setFormData({ ...formData, location_id: v })}
                                                     tableName="locations"
+                                                    disabled={viewMode}
                                                 />
 
                                                 <div>
@@ -638,7 +663,8 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                         min="1"
                                                         value={formData.quantidade || 1}
                                                         onChange={e => setFormData({ ...formData, quantidade: parseInt(e.target.value) || 1 })}
-                                                        className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none font-medium transition-all shadow-sm"
+                                                        className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none font-medium transition-all shadow-sm ${viewMode ? 'bg-gray-50' : ''}`}
+                                                        disabled={viewMode}
                                                     />
                                                 </div>
 
@@ -649,7 +675,8 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                         value={maskCurrency(formData.remuneracao)}
                                                         onChange={handleCurrencyChange}
                                                         placeholder="R$ 0,00"
-                                                        className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none font-medium transition-all shadow-sm"
+                                                        className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none font-medium transition-all shadow-sm ${viewMode ? 'bg-gray-50' : ''}`}
+                                                        disabled={viewMode}
                                                     />
                                                 </div>
 
@@ -658,6 +685,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                     value={formData.hiring_reason_id?.toString() || ''}
                                                     onChange={v => setFormData({ ...formData, hiring_reason_id: v })}
                                                     tableName="hiring_reasons"
+                                                    disabled={viewMode}
                                                 />
 
                                                 <SearchableSelect
@@ -666,6 +694,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                     onChange={(v) => setFormData({ ...formData, tipo: v as any })}
                                                     options={tipoOptions}
                                                     uppercase={false}
+                                                    disabled={viewMode}
                                                 />
 
                                                 {isSubstituicao && (
@@ -674,6 +703,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                         value={formData.replaced_collaborator_id || ''}
                                                         onChange={v => setFormData({ ...formData, replaced_collaborator_id: v })}
                                                         tableName="collaborators"
+                                                        disabled={viewMode}
                                                     />
                                                 )}
 
@@ -693,6 +723,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                     value={formData.partner_id || ''}
                                                     onChange={v => setFormData({ ...formData, partner_id: v })}
                                                     tableName="partners"
+                                                    disabled={viewMode}
                                                 />
 
                                                 <ManagedSelect
@@ -700,7 +731,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                     value={formData.leader_id || ''}
                                                     onChange={v => setFormData({ ...formData, leader_id: v })}
                                                     tableName="collaborators"
-                                                    disabled={!formData.partner_id}
+                                                    disabled={viewMode || !formData.partner_id}
                                                 />
 
                                                 <SearchableSelect
@@ -709,6 +740,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                     onChange={(v) => setFormData({ ...formData, recrutadora: v })}
                                                     options={recrutadorasOptions}
                                                     uppercase={false}
+                                                    disabled={viewMode}
                                                 />
 
                                                 <div>
@@ -717,7 +749,8 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                         type="date"
                                                         value={formData.data_abertura || ''}
                                                         onChange={e => setFormData({ ...formData, data_abertura: e.target.value || null as any })}
-                                                        className="w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+                                                        className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${viewMode ? 'bg-gray-50' : ''}`}
+                                                        disabled={viewMode}
                                                     />
                                                 </div>
 
@@ -727,7 +760,8 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                         type="date"
                                                         value={formData.data_prazo || ''}
                                                         onChange={e => setFormData({ ...formData, data_prazo: e.target.value || null as any })}
-                                                        className="w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+                                                        className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${viewMode ? 'bg-gray-50' : ''}`}
+                                                        disabled={viewMode}
                                                     />
                                                 </div>
                                             </div>
@@ -752,7 +786,8 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                             value={formData.perfil || ''}
                                                             onChange={handlePerfilChange}
                                                             placeholder="Descreva o perfil (cada linha salva vira uma tag)&#10;Ex:&#10;Experiência no contencioso cível&#10;Legalone&#10;&#10;Dica: Use @ para buscar na nuvem de talentos"
-                                                            className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm h-32 resize-none"
+                                                            className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm h-32 resize-none ${viewMode ? 'bg-gray-50' : ''}`}
+                                                            disabled={viewMode}
                                                         />
 
                                                         {isTagging && (
@@ -805,7 +840,8 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                     <textarea
                                                         value={formData.observacoes || ''}
                                                         onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
-                                                        className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm h-32 resize-none"
+                                                        className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm h-32 resize-none ${viewMode ? 'bg-gray-50' : ''}`}
+                                                        disabled={viewMode}
                                                     />
                                                 </div>
                                             </div>
@@ -828,19 +864,22 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                         orderBy="nome"
                                                         nameColumn="nome"
                                                         placeholder="Busque pelo nome..."
+                                                        disabled={viewMode}
                                                     />
                                                 </div>
-                                                <button 
-                                                    onClick={() => {
-                                                        if(selectedCandidateToAdd && (!formData.entrevistados || !formData.entrevistados.includes(selectedCandidateToAdd))) {
-                                                            setFormData({...formData, entrevistados: [...(formData.entrevistados || []), selectedCandidateToAdd]})
-                                                            setSelectedCandidateToAdd('')
-                                                        }
-                                                    }}
-                                                    className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold whitespace-nowrap h-[42px] hover:bg-[#1e3a8a]/90 transition-colors shadow-sm"
-                                                >
-                                                    Adicionar
-                                                </button>
+                                                {!viewMode && (
+                                                    <button 
+                                                        onClick={() => {
+                                                            if(selectedCandidateToAdd && (!formData.entrevistados || !formData.entrevistados.includes(selectedCandidateToAdd))) {
+                                                                setFormData({...formData, entrevistados: [...(formData.entrevistados || []), selectedCandidateToAdd]})
+                                                                setSelectedCandidateToAdd('')
+                                                            }
+                                                        }}
+                                                        className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold whitespace-nowrap h-[42px] hover:bg-[#1e3a8a]/90 transition-colors shadow-sm"
+                                                    >
+                                                        Adicionar
+                                                    </button>
+                                                )}
                                             </div>
 
                                             <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm bg-white">
@@ -862,15 +901,17 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                                     <td className="px-4 py-3 font-medium text-gray-900">{cand.nome}</td>
                                                                     <td className="px-4 py-3 text-xs">{cand.role || '-'}</td>
                                                                     <td className="px-4 py-3 text-right">
-                                                                        <button 
-                                                                            onClick={() => {
-                                                                                const newIds = (formData.entrevistados || []).filter(id => id !== cand.id)
-                                                                                setFormData({...formData, entrevistados: newIds})
-                                                                            }}
-                                                                            className="text-red-500 hover:text-red-700 text-xs font-bold uppercase tracking-wider"
-                                                                        >
-                                                                            Remover
-                                                                        </button>
+                                                                        {!viewMode && (
+                                                                            <button 
+                                                                                onClick={() => {
+                                                                                    const newIds = (formData.entrevistados || []).filter(id => id !== cand.id)
+                                                                                    setFormData({...formData, entrevistados: newIds})
+                                                                                }}
+                                                                                className="text-red-500 hover:text-red-700 text-xs font-bold uppercase tracking-wider"
+                                                                            >
+                                                                                Remover
+                                                                            </button>
+                                                                        )}
                                                                     </td>
                                                                 </tr>
                                                             )
