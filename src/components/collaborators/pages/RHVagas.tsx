@@ -761,9 +761,9 @@ export function RHVagas() {
     return nameA.localeCompare(nameB)
   }), [candidatos, searchTerm, filterLocal, filterCargo, filterArea, filterFaculdades, filterPeriodos, filterTurnos])
 
-  const countAbertas = filteredVagas.filter(v => v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização').length;
+  const countAbertas = filteredVagas.filter(v => v.status === 'Aberta').length;
   const countFechadas = filteredVagas.filter(v => v.status === 'Fechada').length;
-  const countTalentos = filteredCandidatos.length;
+  const countTalentos = filteredCandidatos.filter((c: any) => !(c.status_selecao && c.status_selecao.startsWith('Reprovado'))).length;
   const countReprovados = filteredCandidatos.filter((c: any) => c.status_selecao?.startsWith('Reprovado')).length;
 
   return (
@@ -1830,4 +1830,5 @@ export function RHVagas() {
 }
 
 export default RHVagas
+
 
