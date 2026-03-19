@@ -24,7 +24,8 @@ import {
     maskCEP,
     formatPhoneDisplay,
     formatNameDisplay,
-    formatDateFieldToDisplay
+    formatDateFieldToDisplay,
+    toTitleCase
 } from '../utils/colaboradoresUtils'
 
 interface CandidatoFormModalProps {
@@ -132,11 +133,11 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     gender: initialData.genero || '',
                     birth_date: formattedBirthDate,
                     zip_code: initialData.endereco?.cep || '',
-                    address: initialData.endereco?.logradouro || '',
+                    address: toTitleCase(initialData.endereco?.logradouro) || '',
                     address_number: initialData.endereco?.numero || '',
-                    address_complement: initialData.endereco?.complemento || '',
-                    neighborhood: initialData.endereco?.bairro || '',
-                    city: initialData.endereco?.cidade || '',
+                    address_complement: toTitleCase(initialData.endereco?.complemento) || '',
+                    neighborhood: toTitleCase(initialData.endereco?.bairro) || '',
+                    city: toTitleCase(initialData.endereco?.cidade) || '',
                     state: initialData.endereco?.estado || '',
                     resumo_cv: initialData.resumoProfissional || '',
                     role: initialData.sugestaoCargo || '',
@@ -161,8 +162,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 if (initialData.experiencias && Array.isArray(initialData.experiencias)) {
                     const mappedExp = initialData.experiencias.map((e: any) => ({
                         temp_id: Math.random().toString(36).substring(7),
-                        empresa: e.empresa || '',
-                        cargo: e.cargo || '',
+                        empresa: toTitleCase(e.empresa) || '',
+                        cargo: toTitleCase(e.cargo) || '',
                         data_inicio: e.inicio || '',
                         data_fim: e.fim || '',
                         perfil: e.descricao || ''
@@ -231,6 +232,11 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 }
                 if (data.telefone) data.telefone = formatPhoneDisplay(data.telefone);
                 if (data.birthday) data.birthday = formatDateFieldToDisplay(data.birthday);
+                if (data.address) data.address = toTitleCase(data.address);
+                if (data.neighborhood) data.neighborhood = toTitleCase(data.neighborhood);
+                if (data.city) data.city = toTitleCase(data.city);
+                if (data.address_complement) data.address_complement = toTitleCase(data.address_complement);
+                if (data.indicado_por) data.indicado_por = toTitleCase(data.indicado_por);
             }
             setFormData(data)
         } catch (error) {
@@ -259,9 +265,9 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 if (!data.erro) {
                     setFormData(prev => ({
                         ...prev,
-                        address: data.logradouro,
-                        neighborhood: data.bairro,
-                        city: data.localidade,
+                        address: toTitleCase(data.logradouro),
+                        neighborhood: toTitleCase(data.bairro),
+                        city: toTitleCase(data.localidade),
                         state: data.uf
                     }))
                 }
@@ -424,6 +430,12 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             } else if (payload.nome) {
                 payload.nome = formatNameDisplay(payload.nome);
             }
+            // Apply toTitleCase to all text fields before saving
+            if (payload.address) payload.address = toTitleCase(payload.address);
+            if (payload.neighborhood) payload.neighborhood = toTitleCase(payload.neighborhood);
+            if (payload.city) payload.city = toTitleCase(payload.city);
+            if (payload.address_complement) payload.address_complement = toTitleCase(payload.address_complement);
+            if (payload.indicado_por) payload.indicado_por = toTitleCase(payload.indicado_por);
             // Remove relationship arrays that might be in formData
             delete payload.candidato_historico;
             delete payload.candidato_experiencias;
