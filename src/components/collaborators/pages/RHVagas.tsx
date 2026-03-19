@@ -1738,7 +1738,13 @@ export function RHVagas() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).map(vaga => (
+                        {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).sort((a, b) => {
+                          if (activeTab === 'abertas') {
+                            const order: Record<string, number> = { 'Aberta': 0, 'Aguardando Autorização': 1, 'Congelada': 2 };
+                            return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+                          }
+                          return 0;
+                        }).map(vaga => (
                           <tr key={vaga.id} onClick={() => handleOpenViewModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
                             <td className="px-3 py-3 whitespace-nowrap">
                               <span className="inline-block px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-black tracking-widest uppercase">{vaga.vaga_id_text || 'Sem ID'}</span>
