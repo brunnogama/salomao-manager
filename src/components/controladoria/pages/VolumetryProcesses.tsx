@@ -436,7 +436,7 @@ export function VolumetryProcesses() {
         {/* Mini Card Total */}
         <div className="bg-[#1e3a8a]/5 border border-[#1e3a8a]/10 rounded-xl px-4 py-2.5 flex flex-col justify-center min-w-[120px] text-center shadow-sm h-[66px]">
            <span className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest">Total</span>
-           <span className="text-xl font-black text-[#0a192f] leading-none mt-1">{filteredData.length}</span>
+           <span className="text-xl font-black text-[#0a192f] leading-none mt-1">{filteredData.length.toLocaleString('pt-BR')}</span>
         </div>
 
         <div className="flex-1 min-w-[200px]">
@@ -539,7 +539,7 @@ export function VolumetryProcesses() {
         {!loading && filteredData.length > 0 && (
           <div className="flex items-center justify-between p-4 border-t border-gray-100 bg-gray-50/50">
             <span className="text-xs font-bold text-gray-500">
-              Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1} até {Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)} de {filteredData.length} processos
+              Mostrando {(((currentPage - 1) * ITEMS_PER_PAGE) + 1).toLocaleString('pt-BR')} até {Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length).toLocaleString('pt-BR')} de {filteredData.length.toLocaleString('pt-BR')} processos
             </span>
             <div className="flex items-center gap-2">
               <button

@@ -12,6 +12,7 @@ import {
   Clock,
   AlertTriangle,
   MapPin,
+  Briefcase,
 
   ChevronDown,
   ChevronUp
@@ -255,12 +256,12 @@ const UfTooltip = ({ active, payload, label }: any) => {
 };
 
 function UfChartSection({ processes }: { processes: any[] }) {
-  const { valid, missingUf, chartData, validAtivos, validArquivados } = useMemo(() => {
+  const { valid, missingUf, chartData, validAtivos, validArquivados, mainUfsWithSocios } = useMemo(() => {
     let missingUfCount = 0;
     let validAtivosCount = 0;
     let validArquivadosCount = 0;
 
-    const ufMap: Record<string, {ativos: number, arquivados: number, originalNames: Set<string>}> = {};
+    const ufMap: Record<string, {ativos: number, arquivados: number, originalNames: Set<string>, bySocio: Record<string, number>}> = {};
 
     processes.forEach(p => {
       let rawUf = p.uf?.toUpperCase().trim();
@@ -271,12 +272,14 @@ function UfChartSection({ processes }: { processes: any[] }) {
       
       const sigla = getUfSigla(rawUf);
       const isAtivo = p.status?.toLowerCase() === 'ativo';
+      const socioStr = p["Sócio"] || "Sem Sócio Definido";
 
       if (!ufMap[sigla]) {
-        ufMap[sigla] = { ativos: 0, arquivados: 0, originalNames: new Set() };
+        ufMap[sigla] = { ativos: 0, arquivados: 0, originalNames: new Set(), bySocio: {} };
       }
 
       ufMap[sigla].originalNames.add(p.uf.trim());
+      ufMap[sigla].bySocio[socioStr] = (ufMap[sigla].bySocio[socioStr] || 0) + 1;
 
       if (isAtivo) {
         ufMap[sigla].ativos++;
@@ -294,12 +297,13 @@ function UfChartSection({ processes }: { processes: any[] }) {
         ativos: data.ativos,
         arquivados: data.arquivados,
         total: data.ativos + data.arquivados,
-        isOthers: false
+        isOthers: false,
+        bySocio: data.bySocio
       }))
       .sort((a, b) => b.total - a.total);
 
-    // Agrupar itens com total < 50 em "Outros" para não embolar
-    const THRESHOLD = 50;
+    // Agrupar itens com total < 200 em "Outros" para não embolar
+    const THRESHOLD = 200;
     const mainData = sortedData.filter(d => d.total >= THRESHOLD);
     const smallData = sortedData.filter(d => d.total < THRESHOLD);
 
@@ -315,7 +319,8 @@ function UfChartSection({ processes }: { processes: any[] }) {
         arquivados: sumArquivados,
         total: sumAtivos + sumArquivados,
         isOthers: true,
-        ufsList // pass inside payload for tooltip
+        ufsList,
+        bySocio: {} 
       } as any);
     }
 
@@ -324,7 +329,8 @@ function UfChartSection({ processes }: { processes: any[] }) {
       validAtivos: validAtivosCount,
       validArquivados: validArquivadosCount,
       missingUf: missingUfCount,
-      chartData: mainData
+      chartData: mainData,
+      mainUfsWithSocios: mainData.filter(d => !d.isOthers)
     };
   }, [processes]);
 
@@ -391,6 +397,40 @@ function UfChartSection({ processes }: { processes: any[] }) {
             <p className="text-xs font-black text-gray-400 uppercase tracking-widest text-center px-4">Nenhum dado de UF disponível para gerar o gráfico</p>
           </div>
         )}
+      </div>
+
+      <div className="w-full xl:w-[280px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch">
+        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200/60 shrink-0">
+           <div className="p-1.5 bg-indigo-100 rounded-md">
+             <Briefcase className="w-3.5 h-3.5 text-indigo-700" />
+           </div>
+           <h3 className="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-none">Sócios por UF ({'>'}200)</h3>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto pr-1 space-y-3 styled-scrollbar custom-scrollbar max-h-[300px]">
+          {mainUfsWithSocios.map((uf: any) => (
+            <div key={uf.name} className="flex flex-col bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm transition-colors hover:border-indigo-200">
+              <div className="flex items-center justify-between border-b border-gray-50 pb-1.5 mb-2">
+                <span className="text-xs font-black text-[#0a192f]">{uf.name}</span>
+                <span className="text-[9px] font-bold text-gray-400">{uf.total.toLocaleString('pt-BR')} procs</span>
+              </div>
+              
+              <div className="flex flex-col gap-1.5">
+                {Object.entries(uf.bySocio).sort((a: any, b: any) => b[1] - a[1]).map(([socio, count]: any) => (
+                  <div key={socio} className="flex items-center justify-between group">
+                     <span className="text-[9px] font-black text-gray-500 group-hover:text-indigo-600 truncate max-w-[150px] transition-colors" title={socio}>{socio}</span>
+                     <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100/50">{count.toLocaleString('pt-BR')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          {mainUfsWithSocios.length === 0 && (
+             <div className="text-center p-4">
+                <p className="text-[10px] font-bold text-gray-400 uppercase">Nenhuma UF com {'>'}200</p>
+             </div>
+          )}
+        </div>
       </div>
     </div>
   )
