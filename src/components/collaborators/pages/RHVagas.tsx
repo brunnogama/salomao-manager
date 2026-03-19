@@ -763,8 +763,8 @@ export function RHVagas() {
 
   const countAbertas = filteredVagas.filter(v => v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização').length;
   const countFechadas = filteredVagas.filter(v => v.status === 'Fechada').length;
-  const countTalentos = filteredCandidatos.filter((c: any) => c.status_selecao !== 'Reprovado').length;
-  const countReprovados = filteredCandidatos.filter((c: any) => c.status_selecao === 'Reprovado').length;
+  const countTalentos = filteredCandidatos.length;
+  const countReprovados = filteredCandidatos.filter((c: any) => c.status_selecao?.startsWith('Reprovado')).length;
 
   return (
     <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24">
@@ -1830,3 +1830,4 @@ export function RHVagas() {
 }
 
 export default RHVagas
+
