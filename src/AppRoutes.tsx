@@ -41,6 +41,7 @@ import { Organograma } from './components/collaborators/pages/Organograma';
 import { FinanceDashboard } from './components/finance/pages/FinanceDashboard';
 import { FinanceContasPagar } from './components/finance/pages/FinanceContasPagar';
 import { FinanceContasReceber } from './components/finance/contasareceber/pages/FinanceContasReceber';
+import { EmissaoNF } from './components/finance/pages/EmissaoNF';
 import { ListaOAB } from './components/finance/pages/ListaOAB';
 import { GestaoAeronave } from './pages/GestaoAeronave';
 import { GED as FinanceGED } from './components/finance/pages/GED';
@@ -239,6 +240,7 @@ export function AppRoutes() {
                     <Route path="dashboard" element={<WithProps Component={FinanceDashboard} />} />
                     <Route path="calendario" element={<WithProps Component={CalendarioFinanceiro} />} />
                     <Route path="contas-pagar" element={<WithProps Component={FinanceContasPagar} />} />
+                    <Route path="emissao-nf" element={<WithProps Component={EmissaoNF} />} />
                     <Route path="contas-receber" element={<WithProps Component={FinanceContasReceber} />} />
                     <Route path="oab" element={<WithProps Component={ListaOAB} />} />
                     <Route path="gestao-aeronave" element={<WithProps Component={GestaoAeronave} />} />
