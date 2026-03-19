@@ -436,8 +436,32 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 }
             });
 
+            // Truncate bounded text fields to avoid Postgres 'value too long for type character varying(X)'
+            const varcharLimits: Record<string, number> = {
+                telefone: 20,
+                cpf: 20,
+                rg: 20,
+                zip_code: 20,
+                gender: 20,
+                civil_status: 50
+            };
+
+            Object.entries(varcharLimits).forEach(([field, limit]) => {
+                if (cleanPayload[field] && typeof cleanPayload[field] === 'string' && cleanPayload[field].length > limit) {
+                    const originalText = cleanPayload[field];
+                    cleanPayload[field] = originalText.substring(0, limit);
+                    
+                    // Preserve the extra/original info in the tags to avoid losing data (like a second phone number)
+                    if (field === 'telefone' || field === 'gender') {
+                        const currentTags = (cleanPayload.perfil || '').split('\n').filter(Boolean);
+                        currentTags.push(`Extra ${field}: ${originalText}`);
+                        cleanPayload.perfil = currentTags.join('\n');
+                    }
+                }
+            });
+
             console.log('--- ENVIANDO CANDIDATO PARA O BANCO ---');
-            console.log('Payload limpo:', cleanPayload);
+            console.log('Payload final:', cleanPayload);
             console.log('ID do Candidato:', candidatoId);
 
             let finalCandidatoId = candidatoId;
