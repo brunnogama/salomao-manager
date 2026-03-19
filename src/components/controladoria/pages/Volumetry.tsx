@@ -986,7 +986,7 @@ export function Volumetry() {
                                    </div>
                                 </div>
 
-                                <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center border shadow-sm transition-all ${isExpanded ? 'bg-blue-800 border-blue-900 text-white' : 'bg-[#1e3a8a] border-blue-900 text-white group-hover:bg-blue-700 group-hover:border-blue-800 group-hover:scale-110'}`} title={isExpanded ? "Recolher" : "Expandir"}>
+                                <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center border-2 shadow-sm transition-all ${isExpanded ? 'bg-blue-50 border-blue-200 text-[#1e3a8a]' : 'bg-white border-blue-100 text-[#1e3a8a] group-hover:bg-blue-50 group-hover:border-blue-300 group-hover:scale-110'}`} title={isExpanded ? "Recolher" : "Expandir"}>
                                   {isExpanded ? <ChevronUp className="w-5 h-5 stroke-[3]" /> : <ChevronDown className="w-5 h-5 stroke-[3]" />}
                                 </div>
                               </div>
