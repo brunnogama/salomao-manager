@@ -378,10 +378,10 @@ function UfChartSection({ processes }: { processes: any[] }) {
               <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '10px' }} iconType="circle" iconSize={6} />
               
               <Bar dataKey="ativos" stackId="a" name="Ativos" fill="#10b981" maxBarSize={55} animationDuration={1000}>
-                <LabelList dataKey="ativos" position="center" formatter={(v: number) => v > 0 ? v.toLocaleString('pt-BR') : ''} style={{ fill: '#ffffff', textShadow: '0px 1px 2px rgba(0,0,0,0.5)', fontSize: 11, fontWeight: 'bold' }} />
+                <LabelList dataKey="ativos" position="center" formatter={(v: number) => v >= 300 ? v.toLocaleString('pt-BR') : ''} style={{ fill: '#ffffff', textShadow: '0px 1px 2px rgba(0,0,0,0.5)', fontSize: 11, fontWeight: 'bold' }} />
               </Bar>
               <Bar dataKey="arquivados" stackId="a" name="Encerrados" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={55} animationDuration={1000}>
-                <LabelList dataKey="arquivados" position="center" formatter={(v: number) => v > 0 ? v.toLocaleString('pt-BR') : ''} style={{ fill: '#ffffff', textShadow: '0px 1px 2px rgba(0,0,0,0.5)', fontSize: 11, fontWeight: 'bold' }} />
+                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v >= 100 ? v.toLocaleString('pt-BR') : ''} style={{ fill: '#d97706', fontSize: 11, fontWeight: 'black' }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
