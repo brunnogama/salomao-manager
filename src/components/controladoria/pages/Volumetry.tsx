@@ -940,8 +940,8 @@ export function Volumetry() {
                                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shadow-sm transition-colors ${isExpanded ? 'bg-[#1e3a8a] text-white' : 'bg-blue-100 text-[#1e3a8a]'}`}>
                                     {socioName === 'Sem Sócio Definido' ? '?' : socioName.charAt(0).toUpperCase()}
                                   </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-sm font-black text-[#0a192f] uppercase tracking-widest">{socioName}</span>
+                                  <div className="flex flex-col w-[480px]">
+                                    <span className="text-[13px] font-black text-[#0a192f] uppercase tracking-widest truncate" title={socioName}>{socioName}</span>
                                     {socioName === 'Sem Sócio Definido' && <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">Líderes sem sócio atrelado</span>}
                                   </div>
                                   
