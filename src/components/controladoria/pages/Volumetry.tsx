@@ -141,40 +141,116 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
   )
 }
 
+// Helper para converter nome de Estado para Sigla UF
+const stateToUf: Record<string, string> = {
+  'ACRE': 'AC', 'ALAGOAS': 'AL', 'AMAPÁ': 'AP', 'AMAPA': 'AP', 'AMAZONAS': 'AM',
+  'BAHIA': 'BA', 'CEARÁ': 'CE', 'CEARA': 'CE', 'DISTRITO FEDERAL': 'DF',
+  'ESPÍRITO SANTO': 'ES', 'ESPIRITO SANTO': 'ES', 'GOIÁS': 'GO', 'GOIAS': 'GO',
+  'MARANHÃO': 'MA', 'MARANHAO': 'MA', 'MATO GROSSO': 'MT', 'MATO GROSSO DO SUL': 'MS',
+  'MINAS GERAIS': 'MG', 'PARÁ': 'PA', 'PARA': 'PA', 'PARAÍBA': 'PB', 'PARAIBA': 'PB',
+  'PARANÁ': 'PR', 'PARANA': 'PR', 'PERNAMBUCO': 'PE', 'PIAUÍ': 'PI', 'PIAUI': 'PI',
+  'RIO DE JANEIRO': 'RJ', 'RIO GRANDE DO NORTE': 'RN', 'RIO GRANDE DO SUL': 'RS',
+  'RONDÔNIA': 'RO', 'RONDONIA': 'RO', 'RORAIMA': 'RR', 'SANTA CATARINA': 'SC',
+  'SÃO PAULO': 'SP', 'SAO PAULO': 'SP', 'SERGIPE': 'SE', 'TOCANTINS': 'TO'
+};
+
+const getUfSigla = (name: string) => {
+  const norm = name.toUpperCase().trim();
+  if (norm.length === 2) return norm;
+  return stateToUf[norm] || norm.substring(0, 2);
+};
+
+const UfTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-3 rounded-xl shadow-lg border border-gray-100 min-w-[150px]">
+        <p className="text-xs font-black text-gray-700 uppercase mb-2">
+          {data.isOthers ? 'Outras UFs' : data.originalName} ({label})
+        </p>
+        {data.isOthers && (
+          <p className="text-[9px] font-bold text-gray-400 uppercase leading-snug mb-3 max-w-[200px]">
+            Agrupa: {data.ufsList}
+          </p>
+        )}
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center gap-2 mb-1">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }}></div>
+            <p className="text-[10px] font-bold text-gray-500 uppercase">
+              {entry.name}: <span className="text-gray-900 font-black">{entry.value.toLocaleString('pt-BR')}</span>
+            </p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 function UfChartSection({ processes }: { processes: any[] }) {
   const { valid, missingUf, chartData } = useMemo(() => {
     let missingUfCount = 0;
-    const ufMap: Record<string, {ativos: number, arquivados: number}> = {};
+    const ufMap: Record<string, {ativos: number, arquivados: number, originalNames: Set<string>}> = {};
 
     processes.forEach(p => {
-      let uf = p.uf?.toUpperCase().trim();
-      if (!uf || uf === '' || uf === '-' || uf === 'N/I') {
+      let rawUf = p.uf?.toUpperCase().trim();
+      if (!rawUf || rawUf === '' || rawUf === '-' || rawUf === 'N/I') {
         missingUfCount++;
         return;
       }
       
+      const sigla = getUfSigla(rawUf);
       const isAtivo = p.status?.toLowerCase() === 'ativo';
 
-      if (!ufMap[uf]) {
-        ufMap[uf] = { ativos: 0, arquivados: 0 };
+      if (!ufMap[sigla]) {
+        ufMap[sigla] = { ativos: 0, arquivados: 0, originalNames: new Set() };
       }
 
+      ufMap[sigla].originalNames.add(p.uf.trim());
+
       if (isAtivo) {
-        ufMap[uf].ativos++;
+        ufMap[sigla].ativos++;
       } else {
-        ufMap[uf].arquivados++;
+        ufMap[sigla].arquivados++;
       }
     });
 
-    // Convert map to array and sort by total descending
     const sortedData = Object.entries(ufMap)
-      .map(([name, data]) => ({ name, ...data, total: data.ativos + data.arquivados }))
+      .map(([sigla, data]) => ({
+        name: sigla,
+        originalName: Array.from(data.originalNames)[0],
+        ativos: data.ativos,
+        arquivados: data.arquivados,
+        total: data.ativos + data.arquivados,
+        isOthers: false
+      }))
       .sort((a, b) => b.total - a.total);
+
+    // Agrupar itens com total < 50 em "Outros" para não embolar
+    const THRESHOLD = 50;
+    const mainData = sortedData.filter(d => d.total >= THRESHOLD);
+    const smallData = sortedData.filter(d => d.total < THRESHOLD);
+
+    if (smallData.length > 0) {
+      const ufsList = smallData.map(d => d.name).join(', ');
+      const sumAtivos = smallData.reduce((acc, d) => acc + d.ativos, 0);
+      const sumArquivados = smallData.reduce((acc, d) => acc + d.arquivados, 0);
+      
+      mainData.push({
+        name: `Outros`,
+        originalName: 'Outros',
+        ativos: sumAtivos,
+        arquivados: sumArquivados,
+        total: sumAtivos + sumArquivados,
+        isOthers: true,
+        ufsList // pass inside payload for tooltip
+      } as any);
+    }
 
     return {
       valid: processes.length - missingUfCount,
       missingUf: missingUfCount,
-      chartData: sortedData
+      chartData: mainData
     };
   }, [processes]);
 
@@ -205,22 +281,17 @@ function UfChartSection({ processes }: { processes: any[] }) {
       <div className="w-full lg:w-2/3 h-[250px]">
         {valid > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+            <BarChart data={chartData} margin={{ top: 25, right: 10, left: -20, bottom: 5 }}>
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} interval={0} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
-              <Tooltip
-                cursor={{ fill: '#f8fafc' }}
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                labelStyle={{ fontSize: '10px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}
-                itemStyle={{ fontSize: '12px', fontWeight: '900' }}
-              />
+              <Tooltip content={<UfTooltip />} cursor={{ fill: '#f8fafc' }} />
               <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '10px' }} iconType="circle" iconSize={6} />
               
               <Bar dataKey="ativos" name="Ativos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
-                <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#059669', fontSize: 10, fontWeight: 'bold' }} />
+                <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#059669', fontSize: 10, fontWeight: 'black' }} />
               </Bar>
-              <Bar dataKey="arquivados" name="Arquivados / Baixados / Suspensos" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
-                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#d97706', fontSize: 10, fontWeight: 'bold' }} />
+              <Bar dataKey="arquivados" name="Arqv. / Baix. / Susp." fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
+                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#d97706', fontSize: 10, fontWeight: 'black' }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
