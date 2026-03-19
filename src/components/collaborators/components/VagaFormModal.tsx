@@ -443,25 +443,33 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                 {/* CONTENT */}
                 <div className="flex flex-1 overflow-hidden min-h-0 bg-white">
                     {/* SIDEBAR TABS */}
-                    <div className="w-64 bg-gray-50/50 border-r border-gray-100 flex flex-col shrink-0">
-                        <div className="p-4 border-b border-gray-100">
-                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Navegação</h3>
+                    <div className="w-80 bg-gray-50/50 border-r border-gray-100 flex flex-col py-6 px-6 shrink-0 overflow-y-auto no-scrollbar">
+                        <div className="mb-6 flex justify-center">
+                            {/* Header or space if needed */}
                         </div>
-                        <div className="flex-1 overflow-y-auto p-3 space-y-1">
-                            {steps.map(step => (
-                                <button
-                                    key={step.id}
-                                    onClick={() => setActiveTab(step.id)}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                                        activeTab === step.id 
-                                            ? 'bg-[#1e3a8a] text-white shadow-md' 
-                                            : 'text-gray-500 hover:bg-white hover:text-gray-900 border border-transparent hover:border-gray-200'
-                                    }`}
-                                >
-                                    <step.icon className={`h-4 w-4 ${activeTab === step.id ? 'text-white' : 'text-gray-400'}`} />
-                                    {step.label}
-                                </button>
-                            ))}
+
+                        {/* Vertical Tabs */}
+                        <div className="space-y-0.5 w-full">
+                            {steps.map((step: any) => {
+                                const Icon = step.icon
+                                const isActive = activeTab === step.id
+                                return (
+                                    <button
+                                        key={step.id}
+                                        onClick={() => setActiveTab(step.id)}
+                                        className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left relative group ${isActive
+                                            ? 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm border border-blue-100/50'
+                                            : 'text-gray-500 hover:bg-white hover:shadow-sm hover:border-gray-100 border border-transparent'
+                                            }`}
+                                    >
+                                        <div className={`p-1.5 rounded-lg transition-colors ${isActive ? 'text-white bg-[#1e3a8a]' : 'text-gray-400 group-hover:text-gray-600 bg-gray-100 group-hover:bg-gray-200'}`}>
+                                            <Icon className="h-4 w-4" />
+                                        </div>
+                                        <span className="text-[10px] uppercase tracking-[0.2em]">{step.label}</span>
+                                        {isActive && <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#1e3a8a] rounded-r-full`} />}
+                                    </button>
+                                )
+                            })}
                         </div>
                     </div>
 
