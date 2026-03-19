@@ -162,7 +162,7 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
         )}
       </div>
 
-      <div className="flex-1 w-full h-[250px] min-w-0 overflow-hidden">
+      <div className="flex-1 w-full h-[250px] min-w-0 overflow-hidden self-center">
         {valid > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
@@ -368,7 +368,7 @@ function UfChartSection({ processes }: { processes: any[] }) {
         )}
       </div>
 
-    <div className="flex-1 w-full h-[250px] min-w-0 overflow-hidden">
+    <div className="flex-1 w-full h-[250px] min-w-0 overflow-hidden self-center">
       {valid > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 25, right: 10, left: -20, bottom: 5 }}>
@@ -1259,3 +1259,4 @@ function DataQualitySection({ processes }: { processes: any[] }) {
     </div>
   );
 }
+
