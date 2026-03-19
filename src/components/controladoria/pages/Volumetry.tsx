@@ -148,14 +148,14 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
             </div>
             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Tempo Médio de Tramitação</h3>
           </div>
-          <p className="text-4xl xl:text-[42px] font-black text-blue-900 tracking-tight leading-none mt-3">{avgText}</p>
-          <p className="text-[10px] font-bold text-gray-400 mt-3 uppercase tracking-wide">Calculado da data de distribuição até o encerramento (ou data atual, se ativo)</p>
+          <p className="text-3xl font-black text-blue-900 tracking-tight leading-none mt-2">{avgText}</p>
+          <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Calculado da data de distribuição até o encerramento (ou data atual, se ativo)</p>
         </div>
 
         {invalid > 0 && (
           <div className="flex items-start gap-3 bg-red-50 p-4 rounded-xl border border-red-100 mt-auto min-h-[84px]">
-            <AlertTriangle className="w-6 h-6 text-red-500 shrink-0" />
-            <p className="text-xs font-bold text-red-800 uppercase tracking-tight leading-relaxed">
+            <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+            <p className="text-[10px] font-bold text-red-800 uppercase tracking-tight leading-relaxed">
               <span className="font-black text-red-900">{invalid.toLocaleString('pt-BR')} processos</span> não puderam ser calculados por falta de datas base.
             </p>
           </div>
@@ -177,10 +177,10 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
               <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '10px' }} iconType="circle" iconSize={6} />
               
               <Bar dataKey="ativos" name="Ativos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
-                <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#059669', fontSize: 10, fontWeight: 'bold' }} />
+                <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#059669', fontSize: 13, fontWeight: 'black' }} />
               </Bar>
               <Bar dataKey="arquivados" name="Encerrados" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
-                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#d97706', fontSize: 10, fontWeight: 'bold' }} />
+                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#d97706', fontSize: 13, fontWeight: 'black' }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -340,8 +340,8 @@ function UfChartSection({ processes }: { processes: any[] }) {
           </div>
           
           <div className="mt-3">
-            <p className="text-4xl xl:text-[42px] font-black text-[#0a192f] tracking-tight leading-none">{valid.toLocaleString('pt-BR')}</p>
-            <p className="text-[10px] font-bold text-gray-400 mt-3 uppercase tracking-wide">Total Identificado</p>
+            <p className="text-3xl font-black text-[#0a192f] tracking-tight leading-none">{valid.toLocaleString('pt-BR')}</p>
+            <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Total Identificado</p>
           </div>
 
           <div className="flex items-center gap-2 xl:gap-3 mt-4 flex-wrap">
@@ -360,8 +360,8 @@ function UfChartSection({ processes }: { processes: any[] }) {
 
         {missingUf > 0 && (
           <div className="flex items-start gap-3 bg-red-50 p-4 rounded-xl border border-red-100 mt-auto min-h-[84px]">
-            <AlertTriangle className="w-6 h-6 text-red-500 shrink-0" />
-            <p className="text-xs font-bold text-red-800 uppercase tracking-tight leading-relaxed">
+            <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+            <p className="text-[10px] font-bold text-red-800 uppercase tracking-tight leading-relaxed">
               <span className="font-black text-red-900">{missingUf.toLocaleString('pt-BR')} processos</span> não possuem UF preenchida.
             </p>
           </div>
@@ -378,10 +378,10 @@ function UfChartSection({ processes }: { processes: any[] }) {
               <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '10px' }} iconType="circle" iconSize={6} />
               
               <Bar dataKey="ativos" name="Ativos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
-                <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#059669', fontSize: 10, fontWeight: 'black' }} />
+                <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#059669', fontSize: 13, fontWeight: 'black' }} />
               </Bar>
               <Bar dataKey="arquivados" name="Encerrados" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
-                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#d97706', fontSize: 10, fontWeight: 'black' }} />
+                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#d97706', fontSize: 13, fontWeight: 'black' }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
