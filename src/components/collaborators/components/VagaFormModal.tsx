@@ -888,7 +888,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         </section>
                                     </div>
                                 )}
-                            </>
+                            </div>
                         )}
         </CollaboratorModalLayout>
     )
