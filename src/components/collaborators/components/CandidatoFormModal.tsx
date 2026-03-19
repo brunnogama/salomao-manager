@@ -21,7 +21,10 @@ import {
     maskRG,
     maskPhone,
     maskCNPJ,
-    maskCEP
+    maskCEP,
+    formatPhoneDisplay,
+    formatNameDisplay,
+    formatDateFieldToDisplay
 } from '../utils/colaboradoresUtils'
 
 interface CandidatoFormModalProps {
@@ -117,14 +120,17 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 fetchCandidato(candidatoId)
                 fetchGedDocs(candidatoId)
             } else if (initialData) {
+                const formattedNome = formatNameDisplay(initialData.nome) || '';
+                const formattedTelefone = formatPhoneDisplay(initialData.telefone) || '';
+                const formattedBirthDate = formatDateFieldToDisplay(initialData.data_nascimento) || '';
                 const mappedData: any = {
-                    nome: initialData.nome || '',
-                    name: initialData.nome || '',
+                    nome: formattedNome,
+                    name: formattedNome,
                     email: initialData.email || '',
                     email_pessoal: initialData.email || '',
-                    telefone: initialData.telefone || '',
+                    telefone: formattedTelefone,
                     gender: initialData.genero || '',
-                    birth_date: initialData.data_nascimento || '',
+                    birth_date: formattedBirthDate,
                     zip_code: initialData.endereco?.cep || '',
                     address: initialData.endereco?.logradouro || '',
                     address_number: initialData.endereco?.numero || '',
@@ -218,8 +224,13 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 .single()
             if (error) throw error
             // Map DB 'nome' to 'name' for DadosPessoaisSection compatibility
-            if (data && data.nome) {
-                data.name = data.nome;
+            if (data) {
+                if (data.nome) {
+                    data.nome = formatNameDisplay(data.nome);
+                    data.name = data.nome;
+                }
+                if (data.telefone) data.telefone = formatPhoneDisplay(data.telefone);
+                if (data.birthday) data.birthday = formatDateFieldToDisplay(data.birthday);
             }
             setFormData(data)
         } catch (error) {
@@ -395,6 +406,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             showAlert('Atenção', 'Nome do candidato é obrigatório.', 'warning')
             return
         }
+        if (!formData.gender) {
+            showAlert('Atenção', 'O campo Gênero é obrigatório.', 'warning')
+            return
+        }
 
         try {
             setLoading(true)
@@ -404,8 +419,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
             // Map 'name' back to 'nome' for DB compatibility and clean up non-DB fields
             if (payload.name) {
-                payload.nome = payload.name;
+                payload.nome = formatNameDisplay(payload.name);
                 delete payload.name;
+            } else if (payload.nome) {
+                payload.nome = formatNameDisplay(payload.nome);
             }
             // Remove relationship arrays that might be in formData
             delete payload.candidato_historico;

@@ -45,7 +45,7 @@ import { FilterMultiSelect } from '../../controladoria/ui/FilterMultiSelect'
 import { VagaFormModal } from '../components/VagaFormModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
 import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelectionModal'
-import { formatDateToDisplay } from '../utils/colaboradoresUtils'
+import { formatDateToDisplay, toTitleCase } from '../utils/colaboradoresUtils'
 import { AlertModal } from '../../../components/ui/AlertModal'
 import { isValid, addDays, getDay, isSameDay } from 'date-fns'
 
@@ -1600,7 +1600,7 @@ export function RHVagas() {
                                     )}
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
+                                    <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{toTitleCase(c.nome)}</p>
                                     {(c.email || c.telefone) && (
                                       <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
                                     )}

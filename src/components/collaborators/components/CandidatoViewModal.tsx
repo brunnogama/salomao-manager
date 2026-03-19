@@ -18,6 +18,7 @@ import {
     Clock
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { formatPhoneDisplay, formatNameDisplay } from '../utils/colaboradoresUtils'
 
 interface CandidatoViewModalProps {
     isOpen: boolean;
@@ -144,7 +145,7 @@ export function CandidatoViewModal({ isOpen, onClose, candidatoId, onEdit, roleO
                                             <span className="text-2xl font-black text-emerald-700">{candidato.nome?.charAt(0) || '?'}</span>
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-bold text-[#0a192f]">{candidato.nome || 'Sem nome'}</h3>
+                                            <h3 className="text-xl font-bold text-[#0a192f]">{formatNameDisplay(candidato.nome) || 'Sem nome'}</h3>
                                             <p className="text-sm text-gray-500 flex items-center gap-2 mt-0.5">
                                                 <Briefcase className="w-3.5 h-3.5" /> {roleName}
                                             </p>
@@ -163,7 +164,7 @@ export function CandidatoViewModal({ isOpen, onClose, candidatoId, onEdit, roleO
                                     </div>
                                     <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
                                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> Telefone</span>
-                                        <span className="text-sm font-semibold text-gray-700">{candidato.telefone || '-'}</span>
+                                        <span className="text-sm font-semibold text-gray-700">{formatPhoneDisplay(candidato.telefone) || '-'}</span>
                                     </div>
                                     <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
                                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Local</span>
