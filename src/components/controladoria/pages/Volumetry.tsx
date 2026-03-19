@@ -787,7 +787,10 @@ export function Volumetry() {
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Líder Responsável</label>
                   <MultiFilterSelect
                     value={partnerFilter}
-                    onChange={setPartnerFilter}
+                    onChange={(val: string[]) => {
+                      setPartnerFilter(val);
+                      if (val.length > 0) setExpandedSocios({});
+                    }}
                     placeholder="Todos"
                     options={allPartners.map(p => ({ value: p as string, label: p as string }))}
                   />
@@ -797,7 +800,10 @@ export function Volumetry() {
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Sócio</label>
                   <MultiFilterSelect
                     value={socioFilter}
-                    onChange={setSocioFilter}
+                    onChange={(val: string[]) => {
+                      setSocioFilter(val);
+                      if (val.length > 0) setExpandedSocios({});
+                    }}
                     placeholder="Todos"
                     options={allSocios.map(s => ({ value: s as string, label: s as string }))}
                   />
@@ -932,7 +938,7 @@ export function Volumetry() {
                         const totalAdmin = lideres.reduce((sum, l) => sum + l.administrativo, 0);
                         const totalJudic = lideres.reduce((sum, l) => sum + l.judicial, 0);
                         const totalArb = lideres.reduce((sum, l) => sum + l.arbitral, 0);
-                        const isExpanded = expandedSocios[socioName] || false;
+                        const isExpanded = expandedSocios[socioName] ?? (partnerFilter.length > 0 || socioFilter.length > 0);
                         
                         return (
                         <Fragment key={socioName}>
