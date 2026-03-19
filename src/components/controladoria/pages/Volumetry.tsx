@@ -139,7 +139,7 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
   }, [processes]);
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col xl:flex-row gap-8 items-center mt-2">
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col xl:flex-row gap-8 items-stretch mt-2">
       <div className="w-full xl:w-1/4 flex flex-col gap-4 shrink-0">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -148,14 +148,14 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
             </div>
             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Tempo Médio de Tramitação</h3>
           </div>
-          <p className="text-3xl font-black text-blue-900 tracking-tight leading-none mt-2">{avgText}</p>
-          <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Calculado da data de distribuição até o encerramento/baixa (ou data atual, se ativo)</p>
+          <p className="text-4xl xl:text-[42px] font-black text-blue-900 tracking-tight leading-none mt-3">{avgText}</p>
+          <p className="text-[10px] font-bold text-gray-400 mt-3 uppercase tracking-wide">Calculado da data de distribuição até o encerramento (ou data atual, se ativo)</p>
         </div>
 
         {invalid > 0 && (
-          <div className="flex items-start gap-3 bg-red-50 p-4 rounded-xl border border-red-100 mt-2">
-            <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
-            <p className="text-[10px] font-bold text-red-800 uppercase tracking-tight leading-relaxed">
+          <div className="flex items-start gap-3 bg-red-50 p-4 rounded-xl border border-red-100 mt-auto min-h-[84px]">
+            <AlertTriangle className="w-6 h-6 text-red-500 shrink-0" />
+            <p className="text-xs font-bold text-red-800 uppercase tracking-tight leading-relaxed">
               <span className="font-black text-red-900">{invalid.toLocaleString('pt-BR')} processos</span> não puderam ser calculados por falta de datas base.
             </p>
           </div>
@@ -329,8 +329,8 @@ function UfChartSection({ processes }: { processes: any[] }) {
   }, [processes]);
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col lg:flex-row gap-8 items-center mt-2">
-      <div className="w-full lg:w-1/3 flex flex-col gap-4">
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col xl:flex-row gap-8 items-stretch mt-2">
+      <div className="w-full xl:w-1/4 flex flex-col gap-4 shrink-0 h-full">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 bg-indigo-50 rounded-lg">
@@ -340,35 +340,35 @@ function UfChartSection({ processes }: { processes: any[] }) {
           </div>
           
           <div className="mt-3">
-            <p className="text-3xl font-black text-[#0a192f] tracking-tight leading-none">{valid.toLocaleString('pt-BR')}</p>
-            <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Total Identificado</p>
+            <p className="text-4xl xl:text-[42px] font-black text-[#0a192f] tracking-tight leading-none">{valid.toLocaleString('pt-BR')}</p>
+            <p className="text-[10px] font-bold text-gray-400 mt-3 uppercase tracking-wide">Total Identificado</p>
           </div>
 
-          <div className="flex items-center gap-3 mt-4 flex-wrap">
-            <div className="flex items-center gap-2 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-100/50">
+          <div className="flex items-center gap-2 xl:gap-3 mt-4 flex-wrap">
+            <div className="flex items-center gap-1.5 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-100/50">
                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                <span className="text-sm font-black text-emerald-700">{validAtivos.toLocaleString('pt-BR')}</span>
                <span className="text-[9px] font-bold text-emerald-600/80 uppercase tracking-widest">Ativos</span>
             </div>
-            <div className="flex items-center gap-2 bg-amber-50 px-3 py-2 rounded-xl border border-amber-100/50">
+            <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-2 rounded-xl border border-amber-100/50">
                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                <span className="text-sm font-black text-amber-700">{validArquivados.toLocaleString('pt-BR')}</span>
-               <span className="text-[9px] font-bold text-amber-600/80 uppercase tracking-widest">Inativos</span>
+               <span className="text-[9px] font-bold text-amber-600/80 uppercase tracking-widest">Encerrados</span>
             </div>
           </div>
         </div>
 
         {missingUf > 0 && (
-          <div className="flex items-start gap-3 bg-amber-50 p-4 rounded-xl border border-amber-100 mt-2">
-            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
-            <p className="text-[10px] font-bold text-amber-800 uppercase tracking-tight leading-relaxed">
-              <span className="font-black text-amber-900">{missingUf.toLocaleString('pt-BR')} processos</span> não possuem UF preenchida no sistema.
+          <div className="flex items-start gap-3 bg-red-50 p-4 rounded-xl border border-red-100 mt-auto min-h-[84px]">
+            <AlertTriangle className="w-6 h-6 text-red-500 shrink-0" />
+            <p className="text-xs font-bold text-red-800 uppercase tracking-tight leading-relaxed">
+              <span className="font-black text-red-900">{missingUf.toLocaleString('pt-BR')} processos</span> não possuem UF preenchida.
             </p>
           </div>
         )}
       </div>
 
-      <div className="w-full lg:w-2/3 h-[250px]">
+      <div className="w-full xl:w-3/4 h-[250px] min-w-0">
         {valid > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 25, right: 10, left: -20, bottom: 5 }}>
