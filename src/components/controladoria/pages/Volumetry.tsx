@@ -255,8 +255,8 @@ const UfTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-function UfChartSection({ processes }: { processes: any[] }) {
-  const { valid, missingUf, chartData, validAtivos, validArquivados, mainUfsWithSocios } = useMemo(() => {
+function UfChartSection({ processes, isPartnerFiltered }: { processes: any[], isPartnerFiltered: boolean }) {
+  const { valid, missingUf, chartData, validAtivos, validArquivados, socioMatrix, mainUfNames, hasSmallUfs } = useMemo(() => {
     let missingUfCount = 0;
     let validAtivosCount = 0;
     let validArquivadosCount = 0;
@@ -302,10 +302,42 @@ function UfChartSection({ processes }: { processes: any[] }) {
       }))
       .sort((a, b) => b.total - a.total);
 
-    // Agrupar itens com total < 200 em "Outros" para não embolar
-    const THRESHOLD = 200;
+    // Se estiver filtrado por líder, NÃO agrupa em Outros
+    const THRESHOLD = isPartnerFiltered ? 0 : 200;
     const mainData = sortedData.filter(d => d.total >= THRESHOLD);
     const smallData = sortedData.filter(d => d.total < THRESHOLD);
+
+    let socioMatrix: any[] = [];
+    let mainUfNames: string[] = [];
+    let hasSmallUfs = false;
+
+    if (!isPartnerFiltered) {
+       mainUfNames = mainData.map(d => d.name);
+       hasSmallUfs = smallData.length > 0;
+       
+       const socioTotals: Record<string, any> = {};
+       
+       mainData.forEach(d => {
+          Object.entries(d.bySocio || {}).forEach(([socio, count]) => {
+             if (!socioTotals[socio]) socioTotals[socio] = { total: 0 };
+             socioTotals[socio][d.name] = Number(count);
+             socioTotals[socio].total += Number(count);
+          });
+       });
+       
+       smallData.forEach(d => {
+          Object.entries(d.bySocio || {}).forEach(([socio, count]) => {
+             if (!socioTotals[socio]) socioTotals[socio] = { total: 0 };
+             socioTotals[socio]['Outros'] = (socioTotals[socio]['Outros'] || 0) + Number(count);
+             socioTotals[socio].total += Number(count);
+          });
+       });
+
+       socioMatrix = Object.entries(socioTotals).map(([socio, counts]) => ({
+          socio,
+          ...counts
+       })).sort((a, b) => b.total - a.total);
+    }
 
     if (smallData.length > 0) {
       const ufsList = smallData.map(d => d.name).join(', ');
@@ -330,7 +362,9 @@ function UfChartSection({ processes }: { processes: any[] }) {
       validArquivados: validArquivadosCount,
       missingUf: missingUfCount,
       chartData: mainData,
-      mainUfsWithSocios: mainData.filter(d => !d.isOthers)
+      socioMatrix,
+      mainUfNames,
+      hasSmallUfs
     };
   }, [processes]);
 
@@ -399,39 +433,56 @@ function UfChartSection({ processes }: { processes: any[] }) {
         )}
       </div>
 
-      <div className="w-full xl:w-[280px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch">
+      {!isPartnerFiltered && (
+      <div className="w-full xl:w-[480px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch overflow-hidden">
         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200/60 shrink-0">
            <div className="p-1.5 bg-indigo-100 rounded-md">
              <Briefcase className="w-3.5 h-3.5 text-indigo-700" />
            </div>
-           <h3 className="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-none">Sócios por UF ({'>'}200)</h3>
+           <h3 className="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-none">Distribuição de Sócios {'>'} UFs</h3>
         </div>
         
-        <div className="flex-1 overflow-y-auto pr-1 space-y-3 styled-scrollbar custom-scrollbar max-h-[300px]">
-          {mainUfsWithSocios.map((uf: any) => (
-            <div key={uf.name} className="flex flex-col bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm transition-colors hover:border-indigo-200">
-              <div className="flex items-center justify-between border-b border-gray-50 pb-1.5 mb-2">
-                <span className="text-xs font-black text-[#0a192f]">{uf.name}</span>
-                <span className="text-[9px] font-bold text-gray-400">{uf.total.toLocaleString('pt-BR')} procs</span>
-              </div>
-              
-              <div className="flex flex-col gap-1.5">
-                {Object.entries(uf.bySocio).sort((a: any, b: any) => b[1] - a[1]).map(([socio, count]: any) => (
-                  <div key={socio} className="flex items-center justify-between group">
-                     <span className="text-[9px] font-black text-gray-500 group-hover:text-indigo-600 truncate max-w-[150px] transition-colors" title={socio}>{socio}</span>
-                     <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100/50">{count.toLocaleString('pt-BR')}</span>
-                  </div>
+        <div className="flex-1 overflow-auto styled-scrollbar custom-scrollbar max-h-[300px]">
+          <table className="w-full text-left border-collapse min-w-[350px]">
+            <thead className="sticky top-0 bg-gray-50/95 backdrop-blur-sm z-10 shadow-sm border-b border-gray-100/50">
+              <tr>
+                <th className="py-2.5 px-2 text-[9px] font-black text-gray-400 uppercase tracking-widest border-r border-gray-100/30">Sócio</th>
+                {mainUfNames.map((uf: string) => (
+                  <th key={uf} className="py-2.5 px-2 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center border-r border-gray-100/30">{uf}</th>
                 ))}
-              </div>
-            </div>
-          ))}
-          {mainUfsWithSocios.length === 0 && (
+                {hasSmallUfs && <th className="py-2.5 px-2 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center border-r border-gray-100/30">Outros</th>}
+                <th className="py-2.5 px-2 text-[9px] font-black text-indigo-500 uppercase tracking-widest text-center">Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100/60">
+              {socioMatrix.map((row: any) => (
+                <tr key={row.socio} className="hover:bg-white transition-colors group">
+                  <td className="py-2 px-2 text-[10px] font-black text-[#0a192f] whitespace-nowrap max-w-[140px] truncate border-r border-gray-50" title={row.socio}>{row.socio}</td>
+                  {mainUfNames.map((uf: string) => (
+                    <td key={uf} className="py-2 px-2 text-[10px] font-bold text-gray-600 text-center border-r border-gray-50 group-hover:text-amber-600 transition-colors">
+                      {row[uf] ? row[uf].toLocaleString('pt-BR') : '-'}
+                    </td>
+                  ))}
+                  {hasSmallUfs && (
+                    <td className="py-2 px-2 text-[10px] font-bold text-gray-500 text-center border-r border-gray-50">
+                       {row['Outros'] ? row['Outros'].toLocaleString('pt-BR') : '-'}
+                    </td>
+                  )}
+                  <td className="py-2 px-2 text-[10px] font-black text-indigo-700 text-center">
+                     {row.total.toLocaleString('pt-BR')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {socioMatrix.length === 0 && (
              <div className="text-center p-4">
-                <p className="text-[10px] font-bold text-gray-400 uppercase">Nenhuma UF com {'>'}200</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase">Sem dados de sócios</p>
              </div>
           )}
         </div>
       </div>
+      )}
     </div>
   )
 }
@@ -1184,7 +1235,7 @@ export function Volumetry() {
           <LifeCycleSection processes={lifeCycleProcesses} />
 
           {/* Distribuição por UF */}
-          <UfChartSection processes={lifeCycleProcesses} />
+          <UfChartSection processes={lifeCycleProcesses} isPartnerFiltered={partnerFilter.length > 0} />
 
           {/* Qualidade da Base */}
           {!loading && processes.length > 0 && (
