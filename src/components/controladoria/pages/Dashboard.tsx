@@ -72,7 +72,7 @@ export function Dashboard({ }: Props) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
 
       {/* 1. Header - Salomão Design System */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
