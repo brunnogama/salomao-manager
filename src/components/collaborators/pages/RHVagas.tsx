@@ -165,8 +165,8 @@ const calculateTempoAberto = (data_abertura?: string, data_fechamento?: string) 
 
 // ==== FIM FUNÇÕES UTILITÁRIAS ====
 
-const getRoleAppearance = (roleName: string) => {
-  const norm = (roleName || '').toLowerCase();
+const getRoleAppearance = (roleName: string, atuacaoStr?: string) => {
+  const norm = ((roleName || '') + ' ' + (atuacaoStr || '')).toLowerCase();
   
   if (norm.includes('advogad') || norm.includes('paralegal') || norm.includes('jurídic') || norm.includes('juridic') || norm.includes('sócio') || norm.includes('socio')) {
     return { Icon: Scale, bg: 'from-blue-600 to-[#1e3a8a]', border: 'border-blue-200' };
@@ -1703,7 +1703,16 @@ export function RHVagas() {
                             </td>
                             <td className="px-3 py-3">
                               <div className="flex items-center gap-3">
-                                {(() => { const appearance = getRoleAppearance(vaga.role?.name || ''); const IconComponent = appearance.Icon; return ( <div className={`flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden bg-gradient-to-br ${appearance.bg} flex items-center justify-center border-2 border-white shadow-sm ring-1 ring-offset-1 ring-gray-100 ${appearance.border}`}> <IconComponent className="w-5 h-5 text-white stroke-[2.5px] drop-shadow-sm" /> </div> ); })()}
+                                {(() => {
+                                  const atuacaoStr = typeof vaga.atuacao === 'string' ? vaga.atuacao : (vaga.atuacao?.name || '');
+                                  const appearance = getRoleAppearance(vaga.role?.name || '', atuacaoStr);
+                                  const IconComponent = appearance.Icon;
+                                  return (
+                                    <div className={`flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden bg-gradient-to-br ${appearance.bg} flex items-center justify-center border-2 border-white shadow-sm ring-1 ring-offset-1 ring-gray-100 ${appearance.border}`}>
+                                      <IconComponent className="w-5 h-5 text-white stroke-[2.5px] drop-shadow-sm" />
+                                    </div>
+                                  );
+                                })()}
                                 <div className="flex flex-col gap-1.5 max-w-[200px]">
                                   <div className="flex items-center gap-2 truncate">
                                     <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
