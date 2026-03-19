@@ -27,6 +27,8 @@ export function History() {
     const [logs, setLogs] = useState<LogItem[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'activities' | 'access'>('activities')
+    const [currentPage, setCurrentPage] = useState(1)
+    const ITEMS_PER_PAGE = 200
 
     // Estados de Filtro
     const [filter, setFilter] = useState('')
@@ -99,7 +101,7 @@ export function History() {
             query = query.eq('action', actionFilter)
         }
 
-        const { data: logsData, error: logsError } = await query.limit(500)
+        const { data: logsData, error: logsError } = await query.limit(2000)
 
         let combinedLogs: any[] = logsData || []
 
@@ -134,7 +136,7 @@ export function History() {
                 auditQuery = auditQuery.eq('action', dbAction)
             }
 
-            const { data: auditData, error: auditError } = await auditQuery.limit(500)
+            const { data: auditData, error: auditError } = await auditQuery.limit(2000)
             if (auditError) console.error('Erro ao buscar audit_logs:', auditError)
 
             if (auditData) {
@@ -170,6 +172,7 @@ export function History() {
 
     useEffect(() => {
         fetchLogs()
+        setCurrentPage(1)
     }, [startDate, endDate, activeTab, debouncedFilter, moduleFilter, actionFilter])
 
     const clearFilters = () => {
@@ -213,6 +216,9 @@ export function History() {
 
         return matchesText && matchesModule && matchesAction
     })
+
+    const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE)
+    const paginatedLogs = filteredLogs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
     const getActionColor = (action: string) => {
         switch (action) {
@@ -409,7 +415,7 @@ export function History() {
                                         </div>
                                     </td>
                                 </tr>
-                            ) : filteredLogs.length === 0 ? (
+                            ) : paginatedLogs.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center justify-center gap-2 opacity-30">
@@ -418,7 +424,7 @@ export function History() {
                                         </div>
                                     </td>
                                 </tr>
-                            ) : filteredLogs.map((log) => {
+                            ) : paginatedLogs.map((log) => {
                                 const parsed = parseLogDetails(log.details)
 
                                 return (
@@ -482,6 +488,38 @@ export function History() {
                         </tbody>
                     </table>
                 </div>
+
+                {totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-gray-50/80 border-t border-gray-100 gap-4 mt-auto">
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1} a {Math.min(currentPage * ITEMS_PER_PAGE, filteredLogs.length)} de {filteredLogs.length}
+                        </span>
+                        
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-4 py-2 rounded-xl border border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-white hover:text-[#0a192f] hover:border-gray-300 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            >
+                                Anterior
+                            </button>
+                            
+                            <div className="flex items-center justify-center min-w-[100px]">
+                                <span className="text-[11px] font-black text-[#1e3a8a] uppercase tracking-widest">
+                                    Página <span className="text-[13px] ml-1">{currentPage}</span> <span className="text-gray-400 mix-blend-multiply mx-1">/</span> {totalPages}
+                                </span>
+                            </div>
+
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-4 py-2 rounded-xl border border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-white hover:text-[#0a192f] hover:border-gray-300 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            >
+                                Próxima
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )
