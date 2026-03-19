@@ -1004,7 +1004,6 @@ export function Volumetry() {
 
                     <tbody className="divide-y divide-gray-50">
                       {volumetryBySocio.map(([socioName, lideres]) => {
-                        const totalProcessosSocio = lideres.reduce((sum, l) => sum + l.count, 0);
                         const totalAtivos = lideres.reduce((sum, l) => sum + l.ativos, 0);
                         const totalArquivados = lideres.reduce((sum, l) => sum + l.arquivados, 0);
                         const totalAdmin = lideres.reduce((sum, l) => sum + l.administrativo, 0);
@@ -1031,16 +1030,11 @@ export function Volumetry() {
                                   
                                   <div className="ml-4 w-[140px] px-3 py-1 bg-[#1e3a8a] text-white rounded-lg shadow-sm flex items-center justify-center gap-2 transform group-hover:scale-105 transition-all hidden md:flex">
                                     <Layers className="w-3.5 h-3.5 text-blue-200 shrink-0" />
-                                    <span className="text-xs font-black tracking-widest truncate">{totalProcessosSocio.toLocaleString('pt-BR')} PROCS.</span>
+                                    <span className="text-xs font-black tracking-widest truncate">{totalAtivos.toLocaleString('pt-BR')} ATIVOS</span>
                                   </div>
                                 </div>
                                 {/* Badges de Resumo (Centro-Direita) */}
                                 <div className="flex items-center justify-end gap-3 flex-1 pr-4 hidden lg:flex">
-                                   <div className="flex items-center justify-between w-[130px] bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-200 shadow-sm transition-transform hover:scale-105">
-                                       <span className="text-[10px] uppercase font-black tracking-widest">Ativos</span>
-                                       <span className="text-xs font-black bg-emerald-100/80 px-2 py-0.5 rounded-md">{totalAtivos.toLocaleString('pt-BR')}</span>
-                                   </div>
-                                   
                                    <div className="flex items-center justify-center gap-3 w-[250px] bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm transition-transform hover:scale-105">
                                        <div className="flex items-center gap-1.5">
                                            <span className="text-[10px] uppercase font-black tracking-widest text-gray-400">Jud.</span>
