@@ -472,11 +472,11 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                         )}
 
                         {loading ? (
-                            <div className="flex justify-center items-center py-20">
+                            <div className="flex justify-center items-center py-20 min-h-[650px]">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1e3a8a]"></div>
                             </div>
                         ) : (
-                            <>
+                            <div className="min-h-[650px]">
                                 {/* TAB 1 */}
                                 {activeTab === 1 && (
                                     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -491,6 +491,19 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                         options={statusOptions}
                                                         uppercase={false}
                                                     />
+                                                </div>
+                                                <div className="flex flex-col justify-end pb-[2px]">
+                                                    <label className="flex items-center gap-2 cursor-pointer mt-1 ml-1 w-max bg-red-50 px-4 py-2.5 rounded-xl border border-red-100 hover:bg-red-100 transition-colors shadow-sm focus-within:ring-2 focus-within:ring-red-200">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={formData.sigilosa || false}
+                                                            onChange={e => setFormData({ ...formData, sigilosa: e.target.checked })}
+                                                            className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-600 cursor-pointer"
+                                                        />
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-red-600 pt-[1px]">
+                                                            Vaga Sigilosa
+                                                        </span>
+                                                    </label>
                                                 </div>
                                             </div>
                                             
@@ -663,20 +676,6 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                         tableName="collaborators"
                                                     />
                                                 )}
-
-                                                <div className="flex flex-col justify-center">
-                                                    <label className="flex items-center gap-2 cursor-pointer mt-1 ml-1 w-max bg-red-50 px-3 py-2 rounded-lg border border-red-100 hover:bg-red-100 transition-colors">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={formData.sigilosa || false}
-                                                            onChange={e => setFormData({ ...formData, sigilosa: e.target.checked })}
-                                                            className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-600"
-                                                        />
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-red-600">
-                                                            Vaga Sigilosa
-                                                        </span>
-                                                    </label>
-                                                </div>
 
                                             </div>
                                         </section>
