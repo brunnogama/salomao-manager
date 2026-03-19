@@ -148,7 +148,7 @@ function UfChartSection({ processes }: { processes: any[] }) {
 
     processes.forEach(p => {
       let uf = p.uf?.toUpperCase().trim();
-      if (!uf || uf === '' || uf === '-' || uf === 'N/I' || uf.length > 2) {
+      if (!uf || uf === '' || uf === '-' || uf === 'N/I') {
         missingUfCount++;
         return;
       }
