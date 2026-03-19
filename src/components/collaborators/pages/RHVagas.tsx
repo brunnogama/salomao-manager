@@ -20,7 +20,15 @@ import {
   ThumbsUp,
   ThumbsDown,
   GraduationCap,
-  CalendarDays
+  CalendarDays,
+  Scale,
+  Monitor,
+  Calculator,
+  Landmark,
+  Coffee,
+  Folder,
+  Globe,
+  Headphones
 } from 'lucide-react'
 // date-fns importado acima do componente junto com as funções utilitárias
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
@@ -156,6 +164,43 @@ const calculateTempoAberto = (data_abertura?: string, data_fechamento?: string) 
 };
 
 // ==== FIM FUNÇÕES UTILITÁRIAS ====
+
+const getRoleAppearance = (roleName: string) => {
+  const norm = (roleName || '').toLowerCase();
+  
+  if (norm.includes('advogad') || norm.includes('paralegal') || norm.includes('jurídic') || norm.includes('juridic') || norm.includes('sócio') || norm.includes('socio')) {
+    return { Icon: Scale, bg: 'from-blue-600 to-[#1e3a8a]', border: 'border-blue-200' };
+  }
+  if (norm.includes('estagiário') || norm.includes('estagiario') || norm.includes('trainee')) {
+    return { Icon: GraduationCap, bg: 'from-emerald-500 to-emerald-700', border: 'border-emerald-200' };
+  }
+  if (norm.includes('ti ') || norm.includes('tecnologia') || norm.startsWith('ti') || norm.includes('dados') || norm.includes('desenvolvedor') || norm.includes('dev') || norm.includes('suporte')) {
+    return { Icon: Monitor, bg: 'from-purple-500 to-purple-700', border: 'border-purple-200' };
+  }
+  if (norm.includes('fiscal') || norm.includes('tributário') || norm.includes('tributario') || norm.includes('imposto')) {
+    return { Icon: Calculator, bg: 'from-amber-500 to-amber-600', border: 'border-amber-200' };
+  }
+  if (norm.includes('financeiro') || norm.includes('faturamento') || norm.includes('cobrança') || norm.includes('contabil') || norm.includes('contábil')) {
+    return { Icon: Landmark, bg: 'from-teal-500 to-teal-700', border: 'border-teal-200' };
+  }
+  if (norm.includes('rh') || norm.includes('gente') || norm.includes('departamento pessoal') || norm.includes('dp') || norm.includes('recrutamento')) {
+    return { Icon: Users, bg: 'from-pink-500 to-pink-700', border: 'border-pink-200' };
+  }
+  if (norm.includes('recepção') || norm.includes('recepcionista') || norm.includes('telefonista') || norm.includes('atendente')) {
+    return { Icon: Headphones, bg: 'from-sky-400 to-sky-600', border: 'border-sky-200' };
+  }
+  if (norm.includes('copeira') || norm.includes('limpeza') || norm.includes('serviços gerais')) {
+    return { Icon: Coffee, bg: 'from-stone-500 to-stone-700', border: 'border-stone-200' };
+  }
+  if (norm.includes('arquivo') || norm.includes('administrativo') || norm.includes('auxiliar') || norm.includes('assistente') || norm.includes('secretária') || norm.includes('secretaria') || norm.includes('mensageiro')) {
+    return { Icon: Folder, bg: 'from-indigo-500 to-indigo-700', border: 'border-indigo-200' };
+  }
+  if (norm.includes('marketing') || norm.includes('comunicação') || norm.includes('designer')) {
+    return { Icon: Globe, bg: 'from-rose-500 to-rose-700', border: 'border-rose-200' };
+  }
+  
+  return { Icon: Briefcase, bg: 'from-gray-500 to-gray-700', border: 'border-gray-200' };
+}
 
 export function RHVagas() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -1658,11 +1703,7 @@ export function RHVagas() {
                             </td>
                             <td className="px-3 py-3">
                               <div className="flex items-center gap-3">
-                                <div className={`flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden bg-gradient-to-br ${vaga.area === 'Administrativa' ? 'from-orange-500 to-orange-600' : vaga.area === 'Jurídica' ? 'from-[#1e3a8a] to-[#112240]' : 'from-gray-400 to-gray-500'} flex items-center justify-center border-2 border-white shadow-sm`}>
-                                  <span className="text-sm font-black text-white">
-                                    {(vaga.role?.name || 'V').split(' ').length > 1 ? (vaga.role?.name || 'V').split(' ').map((w: string) => w[0]).join('').substring(0, 2).toUpperCase() : (vaga.role?.name || 'V').substring(0, 2).toUpperCase()}
-                                  </span>
-                                </div>
+                                {(() => { const appearance = getRoleAppearance(vaga.role?.name || ''); const IconComponent = appearance.Icon; return ( <div className={`flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden bg-gradient-to-br ${appearance.bg} flex items-center justify-center border-2 border-white shadow-sm ring-1 ring-offset-1 ring-gray-100 ${appearance.border}`}> <IconComponent className="w-5 h-5 text-white stroke-[2.5px] drop-shadow-sm" /> </div> ); })()}
                                 <div className="flex flex-col gap-1.5 max-w-[200px]">
                                   <div className="flex items-center gap-2 truncate">
                                     <p className={`font-bold text-[13px] truncate ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
@@ -1830,5 +1871,7 @@ export function RHVagas() {
 }
 
 export default RHVagas
+
+
 
 
