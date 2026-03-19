@@ -926,6 +926,11 @@ export function Volumetry() {
                     <tbody className="divide-y divide-gray-50">
                       {volumetryBySocio.map(([socioName, lideres]) => {
                         const totalProcessosSocio = lideres.reduce((sum, l) => sum + l.count, 0);
+                        const totalAtivos = lideres.reduce((sum, l) => sum + l.ativos, 0);
+                        const totalArquivados = lideres.reduce((sum, l) => sum + l.arquivados, 0);
+                        const totalAdmin = lideres.reduce((sum, l) => sum + l.administrativo, 0);
+                        const totalJudic = lideres.reduce((sum, l) => sum + l.judicial, 0);
+                        const totalArb = lideres.reduce((sum, l) => sum + l.arbitral, 0);
                         const isExpanded = expandedSocios[socioName] || false;
                         
                         return (
@@ -935,8 +940,8 @@ export function Volumetry() {
                             onClick={() => toggleSocio(socioName)}
                           >
                             <td colSpan={7} className="p-4 border-b border-gray-100">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
+                              <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-4 shrink-0">
                                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shadow-sm transition-colors ${isExpanded ? 'bg-[#1e3a8a] text-white' : 'bg-blue-100 text-[#1e3a8a]'}`}>
                                     {socioName === 'Sem Sócio Definido' ? '?' : socioName.charAt(0).toUpperCase()}
                                   </div>
@@ -945,13 +950,44 @@ export function Volumetry() {
                                     {socioName === 'Sem Sócio Definido' && <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">Líderes sem sócio atrelado</span>}
                                   </div>
                                   
-                                  <div className="ml-4 px-3 py-1 bg-[#1e3a8a] text-white rounded-lg shadow-sm flex items-center gap-2 transform group-hover:scale-105 transition-all">
+                                  <div className="ml-4 px-3 py-1 bg-[#1e3a8a] text-white rounded-lg shadow-sm flex items-center gap-2 transform group-hover:scale-105 transition-all hidden md:flex">
                                     <Layers className="w-3.5 h-3.5 text-blue-200" />
                                     <span className="text-xs font-black tracking-widest">{totalProcessosSocio.toLocaleString('pt-BR')} PROCS.</span>
                                   </div>
                                 </div>
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center border shadow-sm transition-all ${isExpanded ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-gray-200 text-gray-400 group-hover:text-blue-500 group-hover:border-blue-300'}`}>
-                                  {isExpanded ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                                
+                                {/* Badges de Resumo (Centro-Direita) */}
+                                <div className="flex flex-wrap items-center justify-end gap-2 md:gap-4 flex-1 pr-4 hidden lg:flex">
+                                   <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-200 shadow-sm transition-transform hover:scale-105">
+                                       <span className="text-[9px] xl:text-[10px] uppercase font-black tracking-widest">Ativos</span>
+                                       <span className="text-xs font-black bg-emerald-100/80 px-2 py-0.5 rounded-md">{totalAtivos.toLocaleString('pt-BR')}</span>
+                                   </div>
+                                   
+                                   <div className="flex items-center gap-2 xl:gap-3 bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm transition-transform hover:scale-105">
+                                       <div className="flex items-center gap-1">
+                                           <span className="text-[9px] xl:text-[10px] uppercase font-black tracking-widest text-gray-400">Jud.</span>
+                                           <span className="text-xs font-black">{totalJudic.toLocaleString('pt-BR')}</span>
+                                       </div>
+                                       <div className="w-px h-3 bg-gray-300"></div>
+                                       <div className="flex items-center gap-1">
+                                           <span className="text-[9px] xl:text-[10px] uppercase font-black tracking-widest text-gray-400">Adm.</span>
+                                           <span className="text-xs font-black">{totalAdmin.toLocaleString('pt-BR')}</span>
+                                       </div>
+                                       <div className="w-px h-3 bg-gray-300"></div>
+                                       <div className="flex items-center gap-1">
+                                           <span className="text-[9px] xl:text-[10px] uppercase font-black tracking-widest text-gray-400">Arb.</span>
+                                           <span className="text-xs font-black">{totalArb.toLocaleString('pt-BR')}</span>
+                                       </div>
+                                   </div>
+
+                                   <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200 shadow-sm transition-transform hover:scale-105">
+                                       <span className="text-[9px] xl:text-[10px] uppercase font-black tracking-widest">Encerrados</span>
+                                       <span className="text-xs font-black bg-amber-100/80 px-2 py-0.5 rounded-md">{totalArquivados.toLocaleString('pt-BR')}</span>
+                                   </div>
+                                </div>
+
+                                <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center border-2 shadow-sm transition-all ${isExpanded ? 'bg-blue-100 border-blue-300 text-blue-700' : 'bg-white border-blue-200 text-blue-600 group-hover:bg-blue-50 group-hover:border-blue-400 group-hover:scale-110'}`}>
+                                  {isExpanded ? <Minus className="w-5 h-5 font-black" /> : <Plus className="w-5 h-5 font-black" />}
                                 </div>
                               </div>
                             </td>
