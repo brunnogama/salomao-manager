@@ -41,7 +41,7 @@ import { Organograma } from './components/collaborators/pages/Organograma';
 import { FinanceDashboard } from './components/finance/pages/FinanceDashboard';
 import { FinanceContasPagar } from './components/finance/pages/FinanceContasPagar';
 import { FinanceContasReceber } from './components/finance/contasareceber/pages/FinanceContasReceber';
-import { EmissaoNF } from './components/finance/pages/EmissaoNF';
+import EmissaoNF from './components/finance/pages/EmissaoNF';
 import { ListaOAB } from './components/finance/pages/ListaOAB';
 import { GestaoAeronave } from './pages/GestaoAeronave';
 import { GED as FinanceGED } from './components/finance/pages/GED';
