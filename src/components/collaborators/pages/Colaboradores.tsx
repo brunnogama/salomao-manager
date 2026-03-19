@@ -2019,16 +2019,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
                                   {c.matricula_interna && <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-200">{c.matricula_interna}</span>}
                                   <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
                                 </div>
-                                {c.perfil && (
+                                {c.perfil && c.perfil.split('\n').filter((l: string) => l.trim()).length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-1.5">
-                                    {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                      <span key={i} className="px-1.5 py-0.5 bg-amber-100/50 text-amber-700 border border-amber-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                        {tag.trim()}
-                                      </span>
-                                    ))}
-                                    {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                      <span className="text-[8px] font-bold text-amber-500 ml-0.5">...</span>
-                                    )}
+                                    <span className="px-1.5 py-0.5 bg-amber-100/50 text-amber-700 border border-amber-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                      {c.perfil.split('\n').filter((l: string) => l.trim()).length} tag{c.perfil.split('\n').filter((l: string) => l.trim()).length !== 1 ? 's' : ''}
+                                    </span>
                                   </div>
                                 )}
                               </div>
@@ -2090,16 +2085,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
                                   {c.matricula_interna && <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-50 text-blue-600 border border-blue-100">{c.matricula_interna}</span>}
                                   <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
                                 </div>
-                                {c.perfil && (
+                                {c.perfil && c.perfil.split('\n').filter((l: string) => l.trim()).length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-1.5">
-                                    {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                      <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                        {tag.trim()}
-                                      </span>
-                                    ))}
-                                    {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                      <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
-                                    )}
+                                    <span className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                      {c.perfil.split('\n').filter((l: string) => l.trim()).length} tag{c.perfil.split('\n').filter((l: string) => l.trim()).length !== 1 ? 's' : ''}
+                                    </span>
                                   </div>
                                 )}
                               </div>
