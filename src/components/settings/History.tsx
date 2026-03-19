@@ -30,8 +30,15 @@ export function History() {
 
     // Estados de Filtro
     const [filter, setFilter] = useState('')
+    const [debouncedFilter, setDebouncedFilter] = useState('')
     const [moduleFilter, setModuleFilter] = useState('TODOS')
     const [actionFilter, setActionFilter] = useState('TODOS')
+
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedFilter(filter), 500)
+        return () => clearTimeout(timer)
+    }, [filter])
+
     const [startDate, setStartDate] = useState('')
     const [endDate, setEndDate] = useState('')
 
@@ -80,6 +87,18 @@ export function History() {
             query = query.lte('created_at', `${endDate}T23:59:59`)
         }
 
+        if (debouncedFilter) {
+            query = query.or(`user_email.ilike.%${debouncedFilter}%,action.ilike.%${debouncedFilter}%,module.ilike.%${debouncedFilter}%,details.ilike.%${debouncedFilter}%`)
+        }
+
+        if (moduleFilter !== 'TODOS') {
+            query = query.or(`module.eq.${moduleFilter},details.ilike.%${moduleFilter}%`)
+        }
+
+        if (actionFilter !== 'TODOS') {
+            query = query.eq('action', actionFilter)
+        }
+
         const { data: logsData, error: logsError } = await query.limit(500)
 
         let combinedLogs: any[] = logsData || []
@@ -96,6 +115,23 @@ export function History() {
             }
             if (endDate) {
                 auditQuery = auditQuery.lte('changed_at', `${endDate}T23:59:59`)
+            }
+
+            if (debouncedFilter) {
+                auditQuery = auditQuery.or(`user_email.ilike.%${debouncedFilter}%,action.ilike.%${debouncedFilter}%,table_name.ilike.%${debouncedFilter}%`)
+            }
+
+            if (moduleFilter !== 'TODOS') {
+                auditQuery = auditQuery.eq('table_name', moduleFilter)
+            }
+
+            if (actionFilter !== 'TODOS') {
+                // Map the frontend action to DB action for audit_logs
+                let dbAction = actionFilter
+                if (actionFilter === 'CRIAR') dbAction = 'INSERT'
+                if (actionFilter === 'EDITAR') dbAction = 'UPDATE'
+                if (actionFilter === 'EXCLUIR') dbAction = 'DELETE'
+                auditQuery = auditQuery.eq('action', dbAction)
             }
 
             const { data: auditData, error: auditError } = await auditQuery.limit(500)
@@ -134,7 +170,7 @@ export function History() {
 
     useEffect(() => {
         fetchLogs()
-    }, [startDate, endDate, activeTab])
+    }, [startDate, endDate, activeTab, debouncedFilter, moduleFilter, actionFilter])
 
     const clearFilters = () => {
         setFilter('')
