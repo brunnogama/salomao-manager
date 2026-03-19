@@ -140,7 +140,7 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
 
   return (
     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col xl:flex-row gap-8 items-stretch mt-2">
-      <div className="w-full xl:w-1/4 flex flex-col gap-4 shrink-0">
+      <div className="w-full xl:w-[280px] flex flex-col gap-4 shrink-0">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 bg-blue-50 rounded-lg">
@@ -162,7 +162,7 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
         )}
       </div>
 
-      <div className="w-full xl:w-2/4 h-[250px] min-w-0">
+      <div className="flex-1 w-full h-[250px] min-w-0 overflow-hidden">
         {valid > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
@@ -177,10 +177,10 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
               <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '10px' }} iconType="circle" iconSize={6} />
               
               <Bar dataKey="ativos" name="Ativos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
-                <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#059669', fontSize: 13, fontWeight: 'black' }} />
+                <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v.toLocaleString('pt-BR') : ''} style={{ fill: '#059669', fontSize: 13, fontWeight: 'black' }} />
               </Bar>
               <Bar dataKey="arquivados" name="Encerrados" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
-                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#d97706', fontSize: 13, fontWeight: 'black' }} />
+                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v.toLocaleString('pt-BR') : ''} style={{ fill: '#d97706', fontSize: 13, fontWeight: 'black' }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -192,7 +192,7 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
         )}
       </div>
 
-      <div className="w-full xl:w-1/4 flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch">
+      <div className="w-full xl:w-[280px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch">
         <div className="flex items-center gap-2 mb-1">
            <div className="p-1.5 bg-blue-100 rounded-md">
              <MapPin className="w-3.5 h-3.5 text-blue-700" />
@@ -207,7 +207,7 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
                 <span className="text-[10px] font-black text-gray-400 w-3">{idx + 1}º</span>
                 <div className="flex flex-col">
                   <span className="text-xs font-black text-[#0a192f] leading-none">{uf.sigla}</span>
-                  <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{uf.count} procs.</span>
+                  <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{uf.count.toLocaleString('pt-BR')} procs.</span>
                 </div>
               </div>
               <div className="flex items-center justify-center gap-1.5 w-[80px] shrink-0 bg-blue-50/50 px-2.5 py-1 rounded border border-blue-100/50 group-hover:bg-blue-100 transition-colors">
@@ -330,7 +330,7 @@ function UfChartSection({ processes }: { processes: any[] }) {
 
   return (
     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col xl:flex-row gap-8 items-stretch mt-2">
-      <div className="w-full xl:w-1/4 flex flex-col gap-4 shrink-0 h-full">
+      <div className="w-full xl:w-[280px] flex flex-col gap-4 shrink-0 h-full">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 bg-indigo-50 rounded-lg">
@@ -368,8 +368,8 @@ function UfChartSection({ processes }: { processes: any[] }) {
         )}
       </div>
 
-      <div className="w-full xl:w-3/4 h-[250px] min-w-0">
-        {valid > 0 ? (
+    <div className="flex-1 w-full h-[250px] min-w-0 overflow-hidden">
+      {valid > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 25, right: 10, left: -20, bottom: 5 }}>
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} interval={0} />
@@ -378,10 +378,10 @@ function UfChartSection({ processes }: { processes: any[] }) {
               <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '10px' }} iconType="circle" iconSize={6} />
               
               <Bar dataKey="ativos" name="Ativos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
-                <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#059669', fontSize: 13, fontWeight: 'black' }} />
+                <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v.toLocaleString('pt-BR') : ''} style={{ fill: '#059669', fontSize: 13, fontWeight: 'black' }} />
               </Bar>
               <Bar dataKey="arquivados" name="Encerrados" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
-                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#d97706', fontSize: 13, fontWeight: 'black' }} />
+                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v.toLocaleString('pt-BR') : ''} style={{ fill: '#d97706', fontSize: 13, fontWeight: 'black' }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
