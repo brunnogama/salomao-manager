@@ -27,6 +27,7 @@ import { SearchableSelect } from '../../crm/SearchableSelect'
 import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { differenceInDays, differenceInMonths, isValid } from 'date-fns'
 import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA } from '../utils/cargosAtuacoesUtils'
+import { CollaboratorModalLayout } from './CollaboratorLayouts'
 
 interface VagaFormModalProps {
     isOpen: boolean;
@@ -407,74 +408,62 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
     const { Icon: HeaderIcon, colorClass: headerColorClass } = getRoleAppearance(currentRoleName, currentAtuacaoName)
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
-
-                {/* HEADER */}
-                <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-2.5 rounded-xl ${headerColorClass}`}>
-                            <HeaderIcon className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h2 className="text-[16px] font-black text-[#0a192f] uppercase tracking-tight">
-                                {vagaId ? 'Editar Vaga' : 'Nova Vaga'}
-                            </h2>
-                            <div className="flex items-center gap-2 mt-0.5">
-                                <p className={`text-[10px] font-bold uppercase tracking-widest ${formData.sigilosa ? 'text-red-600' : 'text-gray-400'}`}>
-                                    {formData.vaga_id_text || 'ID Automático'}
-                                </p>
-                                {formData.sigilosa && (
-                                    <span className="text-[8px] bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">
-                                        Sigilosa
-                                    </span>
-                                )}
-                            </div>
+        <CollaboratorModalLayout
+            title={vagaId ? "Editar Vaga" : "Nova Vaga"}
+            onClose={onClose}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            currentSteps={steps}
+            isEditMode={!!vagaId}
+            sidebarContent={
+                <div className="flex flex-col items-center gap-4">
+                    <div className={`p-6 rounded-3xl ${headerColorClass} shadow-inner flex items-center justify-center`}>
+                        <HeaderIcon className="w-16 h-16" />
+                    </div>
+                    <div className="text-center w-full px-2">
+                        <h3 className="font-black text-[#0a192f] text-sm uppercase tracking-[0.1em] text-center w-full overflow-hidden text-ellipsis px-1">{currentRoleName || 'Vaga'}</h3>
+                        <div className="flex flex-col items-center justify-center gap-2 mt-2">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                                {formData.vaga_id_text || 'ID AUTOMÁTICO'}
+                            </p>
+                            {formData.sigilosa && (
+                                <span className="text-[8px] bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">
+                                    Sigilosa
+                                </span>
+                            )}
                         </div>
                     </div>
+                </div>
+            }
+            footer={
+                <div className="flex justify-end gap-3 w-full">
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                        className="px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.1em] text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
+                        disabled={saving}
                     >
-                        <X className="h-5 w-5" />
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving || loading}
+                        className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30 transition-all disabled:opacity-50"
+                    >
+                        {saving ? (
+                            <span className="flex items-center gap-2">
+                                <div className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Salvando...
+                            </span>
+                        ) : (
+                            <>
+                                <Save className="h-4 w-4" />
+                                {vagaId ? 'Salvar Alterações' : 'Criar Vaga'}
+                            </>
+                        )}
                     </button>
                 </div>
-
-                {/* CONTENT */}
-                <div className="flex flex-1 overflow-hidden min-h-0 bg-white">
-                    {/* SIDEBAR TABS */}
-                    <div className="w-80 bg-gray-50/50 border-r border-gray-100 flex flex-col py-6 px-6 shrink-0 overflow-y-auto no-scrollbar">
-                        <div className="mb-6 flex justify-center">
-                            {/* Header or space if needed */}
-                        </div>
-
-                        {/* Vertical Tabs */}
-                        <div className="space-y-0.5 w-full">
-                            {steps.map((step: any) => {
-                                const Icon = step.icon
-                                const isActive = activeTab === step.id
-                                return (
-                                    <button
-                                        key={step.id}
-                                        onClick={() => setActiveTab(step.id)}
-                                        className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left relative group ${isActive
-                                            ? 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm border border-blue-100/50'
-                                            : 'text-gray-500 hover:bg-white hover:shadow-sm hover:border-gray-100 border border-transparent'
-                                            }`}
-                                    >
-                                        <div className={`p-1.5 rounded-lg transition-colors ${isActive ? 'text-white bg-[#1e3a8a]' : 'text-gray-400 group-hover:text-gray-600 bg-gray-100 group-hover:bg-gray-200'}`}>
-                                            <Icon className="h-4 w-4" />
-                                        </div>
-                                        <span className="text-[10px] uppercase tracking-[0.2em]">{step.label}</span>
-                                        {isActive && <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#1e3a8a] rounded-r-full`} />}
-                                    </button>
-                                )
-                            })}
-                        </div>
-                    </div>
-
-                    {/* TAB CONTENT */}
-                    <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent bg-white relative">
+            }
+        >
                         {error && (
                             <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex gap-3 text-red-600">
                                 <AlertCircle className="h-5 w-5 shrink-0" />
@@ -902,38 +891,6 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                 )}
                             </>
                         )}
-                    </div>
-                </div>
-
-                {/* FOOTER */}
-                <div className="flex items-center justify-end px-6 py-4 bg-gray-50/50 border-t border-gray-100 shrink-0 gap-3">
-                    <button
-                        onClick={onClose}
-                        className="px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.1em] text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
-                        disabled={saving}
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={saving || loading}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30 transition-all disabled:opacity-50"
-                    >
-                        {saving ? (
-                            <span className="flex items-center gap-2">
-                                <div className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Salvando...
-                            </span>
-                        ) : (
-                            <>
-                                <Save className="h-4 w-4" />
-                                {vagaId ? 'Salvar Alterações' : 'Criar Vaga'}
-                            </>
-                        )}
-                    </button>
-                </div>
-
-            </div>
-        </div>
+        </CollaboratorModalLayout>
     )
 }
