@@ -128,7 +128,7 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
               <Bar dataKey="ativos" name="Ativos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
                 <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#059669', fontSize: 10, fontWeight: 'bold' }} />
               </Bar>
-              <Bar dataKey="arquivados" name="Arquivados / Baixados / Suspensos" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
+              <Bar dataKey="arquivados" name="Encerrados" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
                 <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#d97706', fontSize: 10, fontWeight: 'bold' }} />
               </Bar>
             </BarChart>
@@ -316,7 +316,7 @@ function UfChartSection({ processes }: { processes: any[] }) {
               <Bar dataKey="ativos" name="Ativos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
                 <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#059669', fontSize: 10, fontWeight: 'black' }} />
               </Bar>
-              <Bar dataKey="arquivados" name="Arqv. / Baix. / Susp." fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
+              <Bar dataKey="arquivados" name="Encerrados" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
                 <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#d97706', fontSize: 10, fontWeight: 'black' }} />
               </Bar>
             </BarChart>
@@ -394,7 +394,15 @@ export function Volumetry() {
         if (error) throw error;
         if (!data || data.length === 0) break;
         
-        allData = [...allData, ...data];
+        const normalizedData = data.map(p => {
+          let st = p.status || '';
+          if (['arquivado', 'baixado', 'suspenso'].includes(st.toLowerCase())) {
+            st = 'Encerrado';
+          }
+          return { ...p, status: st };
+        });
+        
+        allData = [...allData, ...normalizedData];
         if (data.length < step) break;
         from += step;
       }
@@ -470,7 +478,7 @@ export function Volumetry() {
   const totalProcesses = topCardsProcesses.length;
   
   const ativosCount = topCardsProcesses.filter(p => p.status?.toLowerCase() === 'ativo').length;
-  const arquivadosCount = topCardsProcesses.filter(p => p.status?.toLowerCase() === 'arquivado').length;
+  const arquivadosCount = topCardsProcesses.filter(p => p.status?.toLowerCase() === 'encerrado').length;
 
   const uniqueClients = new Set(topCardsProcesses.map(p => p.cliente_principal).filter(Boolean)).size;
 
@@ -508,7 +516,7 @@ export function Volumetry() {
       count: partnerProcs.length,
       percentage: baseForPercentage > 0 ? ((partnerProcs.length / baseForPercentage) * 100).toFixed(1) : "0",
       ativos: partnerProcs.filter(p => p.status?.toLowerCase() === 'ativo').length,
-      arquivados: rawPartnerProcs.filter(p => p.status?.toLowerCase() === 'arquivado').length,
+      arquivados: rawPartnerProcs.filter(p => p.status?.toLowerCase() === 'encerrado').length,
       administrativo: partnerProcs.filter(p => p.tipo?.toLowerCase().includes('administrativo')).length,
       judicial: partnerProcs.filter(p => p.tipo?.toLowerCase().includes('judicia')).length,
       arbitral: partnerProcs.filter(p => p.tipo?.toLowerCase().includes('arbitral')).length,
@@ -543,7 +551,7 @@ export function Volumetry() {
       'Administrativo': m.administrativo,
       'Judicial': m.judicial,
       'Arbitral': m.arbitral,
-      'Arquivados': m.arquivados,
+      'Encerrados': m.arquivados,
       '% Representatividade': `${m.percentage}%`
     }));
     const wsVolumetry = XLSX.utils.json_to_sheet(exportData);
@@ -869,7 +877,7 @@ export function Volumetry() {
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
               <div className="absolute right-0 top-0 h-full w-1 bg-amber-500"></div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos Arquivados</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos Encerrados</p>
                 <p className="text-2xl font-black text-amber-900 mt-1">{arquivadosCount.toLocaleString('pt-BR')}</p>
               </div>
               <div className="p-3 bg-amber-50 rounded-xl">
@@ -1010,7 +1018,7 @@ export function Volumetry() {
                                 <th className="py-3 px-4 text-center text-[10px] font-black text-blue-900 uppercase tracking-widest">Admin.</th>
                                 <th className="py-3 px-4 text-center text-[10px] font-black text-blue-900 uppercase tracking-widest">Judic.</th>
                                 <th className="py-3 px-4 text-center text-[10px] font-black text-blue-900 uppercase tracking-widest border-r border-gray-100">Arb.</th>
-                                <th className="py-3 px-4 text-center text-[10px] font-black text-blue-900 uppercase tracking-widest border-r border-gray-100">Arquivados</th>
+                                <th className="py-3 px-4 text-center text-[10px] font-black text-blue-900 uppercase tracking-widest border-r border-gray-100">Encerrados</th>
                                 <th className="py-3 px-4 text-[10px] font-black text-blue-900 uppercase tracking-widest text-left">Representatividade na Base</th>
                               </tr>
                               {lideres.map((partner, idx) => (
@@ -1129,7 +1137,7 @@ function DataQualitySection({ processes }: { processes: any[] }) {
   const stats = fields.map(f => {
     let relevantProcesses = processes;
     if (f.key === 'data_encerramento') {
-      relevantProcesses = processes.filter(p => p.status?.toLowerCase() === 'arquivado');
+      relevantProcesses = processes.filter(p => p.status?.toLowerCase() === 'encerrado');
     }
     const fieldTotal = relevantProcesses.length;
     const filled = relevantProcesses.filter(p => p[f.key] != null && String(p[f.key]).trim() !== '').length;
