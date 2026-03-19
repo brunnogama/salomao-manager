@@ -865,7 +865,7 @@ export function RHVagas() {
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Abertas</p>
-                    <p className="text-xl font-black text-[#0a192f] leading-none">{filteredVagas.filter(v => v.status === 'Aberta').length}</p>
+                    <p className="text-xl font-black text-[#0a192f] leading-none">{countAbertas}</p>
                   </div>
                 </div>
               )}
@@ -876,7 +876,7 @@ export function RHVagas() {
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Total Talentos</p>
-                    <p className="text-xl font-black text-[#0a192f] leading-none">{filteredCandidatos.length}</p>
+                    <p className="text-xl font-black text-[#0a192f] leading-none">{countTalentos}</p>
                   </div>
                 </div>
               )}
@@ -887,7 +887,7 @@ export function RHVagas() {
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Fechadas</p>
-                    <p className="text-xl font-black text-[#0a192f] leading-none">{filteredVagas.filter(v => v.status === 'Fechada').length}</p>
+                    <p className="text-xl font-black text-[#0a192f] leading-none">{countFechadas}</p>
                   </div>
                 </div>
               )}
@@ -898,7 +898,7 @@ export function RHVagas() {
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Reprovados</p>
-                    <p className="text-xl font-black text-[#0a192f] leading-none">{filteredCandidatos.filter(c => c.status_selecao?.startsWith('Reprovado')).length}</p>
+                    <p className="text-xl font-black text-[#0a192f] leading-none">{countReprovados}</p>
                   </div>
                 </div>
               )}
