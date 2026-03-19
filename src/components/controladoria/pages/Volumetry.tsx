@@ -1068,7 +1068,7 @@ export function Volumetry() {
                                     {socioName === 'Sem Sócio Definido' && <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">Líderes sem sócio atrelado</span>}
                                   </div>
                                   
-                                  <div className="ml-4 w-[140px] px-3 py-1 bg-[#1e3a8a] text-white rounded-lg shadow-sm flex items-center justify-center gap-2 transform group-hover:scale-105 transition-all hidden md:flex">
+                                  <div className="ml-4 w-[160px] px-3 py-1 bg-[#1e3a8a] text-white rounded-lg shadow-sm flex items-center justify-center gap-2 transform group-hover:scale-105 transition-all hidden md:flex">
                                     <Layers className="w-3.5 h-3.5 text-blue-200 shrink-0" />
                                     <span className="text-xs font-black tracking-widest truncate">{totalAtivos.toLocaleString('pt-BR')} ATIVOS</span>
                                   </div>
@@ -1299,4 +1299,5 @@ function DataQualitySection({ processes }: { processes: any[] }) {
     </div>
   );
 }
+
 
