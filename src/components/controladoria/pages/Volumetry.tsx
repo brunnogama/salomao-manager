@@ -210,9 +210,9 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
                   <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{uf.count} procs.</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 bg-blue-50/50 px-2.5 py-1 rounded border border-blue-100/50 group-hover:bg-blue-100 transition-colors">
-                <Clock className="w-3 h-3 text-blue-500" />
-                <span className="text-[10px] font-black text-blue-700 tracking-wider tooltip" title={`Média de ${Math.floor(uf.avgDays)} dias`}>{uf.timeStr}</span>
+              <div className="flex items-center justify-center gap-1.5 w-[80px] shrink-0 bg-blue-50/50 px-2.5 py-1 rounded border border-blue-100/50 group-hover:bg-blue-100 transition-colors">
+                <Clock className="w-3 h-3 text-blue-500 shrink-0" />
+                <span className="text-[10px] font-black text-blue-700 tracking-wider tooltip truncate" title={`Média de ${Math.floor(uf.avgDays)} dias`}>{uf.timeStr}</span>
               </div>
             </div>
           ))}
@@ -1029,9 +1029,9 @@ export function Volumetry() {
                                     {socioName === 'Sem Sócio Definido' && <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">Líderes sem sócio atrelado</span>}
                                   </div>
                                   
-                                  <div className="ml-4 px-3 py-1 bg-[#1e3a8a] text-white rounded-lg shadow-sm flex items-center gap-2 transform group-hover:scale-105 transition-all hidden md:flex">
-                                    <Layers className="w-3.5 h-3.5 text-blue-200" />
-                                    <span className="text-xs font-black tracking-widest">{totalProcessosSocio.toLocaleString('pt-BR')} PROCS.</span>
+                                  <div className="ml-4 w-[140px] px-3 py-1 bg-[#1e3a8a] text-white rounded-lg shadow-sm flex items-center justify-center gap-2 transform group-hover:scale-105 transition-all hidden md:flex">
+                                    <Layers className="w-3.5 h-3.5 text-blue-200 shrink-0" />
+                                    <span className="text-xs font-black tracking-widest truncate">{totalProcessosSocio.toLocaleString('pt-BR')} PROCS.</span>
                                   </div>
                                 </div>
                                 {/* Badges de Resumo (Centro-Direita) */}
