@@ -67,6 +67,12 @@ export function History() {
             .select('*')
             .order('created_at', { ascending: false })
 
+        if (activeTab === 'activities') {
+            query = query.neq('action', 'LOGIN').neq('action', 'LOGOUT')
+        } else if (activeTab === 'access') {
+            query = query.in('action', ['LOGIN', 'LOGOUT'])
+        }
+
         if (startDate) {
             query = query.gte('created_at', `${startDate}T00:00:00`)
         }
@@ -79,7 +85,7 @@ export function History() {
         let combinedLogs: any[] = logsData || []
 
         // Se for admin, buscamos também os audit_logs (retroativo/profundo)
-        if (userRole === 'admin') {
+        if (userRole === 'admin' && activeTab === 'activities') {
             let auditQuery = supabase
                 .from('audit_logs')
                 .select('*')
@@ -128,7 +134,7 @@ export function History() {
 
     useEffect(() => {
         fetchLogs()
-    }, [startDate, endDate])
+    }, [startDate, endDate, activeTab])
 
     const clearFilters = () => {
         setFilter('')
@@ -156,11 +162,8 @@ export function History() {
 
     const filteredLogs = logs.filter(log => {
         const parsed = parseLogDetails(log.details)
-        const isAuthAction = ['LOGIN', 'LOGOUT'].includes(log.action)
+        // const isAuthAction = ['LOGIN', 'LOGOUT'].includes(log.action) // Local filtering removed, done at database level
 
-        // Filtro por Aba
-        if (activeTab === 'activities' && isAuthAction) return false
-        if (activeTab === 'access' && !isAuthAction) return false
 
         const matchesText =
             log.user_email.toLowerCase().includes(filter.toLowerCase()) ||
