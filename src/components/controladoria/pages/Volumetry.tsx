@@ -10,7 +10,8 @@ import {
   ShieldCheck,
   FileSpreadsheet,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  MapPin
 } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 import html2canvas from 'html2canvas';
@@ -133,6 +134,100 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
           <div className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/50">
             <Clock className="w-8 h-8 text-gray-300 mb-3" />
             <p className="text-xs font-black text-gray-400 uppercase tracking-widest text-center px-4">Filtragem não contém dados temporais para gerar histórico</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function UfChartSection({ processes }: { processes: any[] }) {
+  const { valid, missingUf, chartData } = useMemo(() => {
+    let missingUfCount = 0;
+    const ufMap: Record<string, {ativos: number, arquivados: number}> = {};
+
+    processes.forEach(p => {
+      let uf = p.uf?.toUpperCase().trim();
+      if (!uf || uf === '' || uf === '-' || uf === 'N/I' || uf.length > 2) {
+        missingUfCount++;
+        return;
+      }
+      
+      const isAtivo = p.status?.toLowerCase() === 'ativo';
+
+      if (!ufMap[uf]) {
+        ufMap[uf] = { ativos: 0, arquivados: 0 };
+      }
+
+      if (isAtivo) {
+        ufMap[uf].ativos++;
+      } else {
+        ufMap[uf].arquivados++;
+      }
+    });
+
+    // Convert map to array and sort by total descending
+    const sortedData = Object.entries(ufMap)
+      .map(([name, data]) => ({ name, ...data, total: data.ativos + data.arquivados }))
+      .sort((a, b) => b.total - a.total);
+
+    return {
+      valid: processes.length - missingUfCount,
+      missingUf: missingUfCount,
+      chartData: sortedData
+    };
+  }, [processes]);
+
+  return (
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col lg:flex-row gap-8 items-center mt-2">
+      <div className="w-full lg:w-1/3 flex flex-col gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="p-2 bg-indigo-50 rounded-lg">
+              <MapPin className="w-4 h-4 text-indigo-600" />
+            </div>
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Distribuição por UF</h3>
+          </div>
+          <p className="text-3xl font-black text-indigo-900 tracking-tight leading-none mt-2">{valid.toLocaleString('pt-BR')}</p>
+          <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Processos com estado (UF) identificado</p>
+        </div>
+
+        {missingUf > 0 && (
+          <div className="flex items-start gap-3 bg-amber-50 p-4 rounded-xl border border-amber-100 mt-2">
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+            <p className="text-[10px] font-bold text-amber-800 uppercase tracking-tight leading-relaxed">
+              <span className="font-black text-amber-900">{missingUf.toLocaleString('pt-BR')} processos</span> não possuem UF preenchida no sistema.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="w-full lg:w-2/3 h-[250px]">
+        {valid > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} interval={0} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
+              <Tooltip
+                cursor={{ fill: '#f8fafc' }}
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                labelStyle={{ fontSize: '10px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}
+                itemStyle={{ fontSize: '12px', fontWeight: '900' }}
+              />
+              <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '10px' }} iconType="circle" iconSize={6} />
+              
+              <Bar dataKey="ativos" name="Ativos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
+                <LabelList dataKey="ativos" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#059669', fontSize: 10, fontWeight: 'bold' }} />
+              </Bar>
+              <Bar dataKey="arquivados" name="Arquivados / Baixados / Suspensos" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={30} animationDuration={1000}>
+                <LabelList dataKey="arquivados" position="top" formatter={(v: number) => v > 0 ? v : ''} style={{ fill: '#d97706', fontSize: 10, fontWeight: 'bold' }} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/50">
+            <MapPin className="w-8 h-8 text-gray-300 mb-3" />
+            <p className="text-xs font-black text-gray-400 uppercase tracking-widest text-center px-4">Nenhum dado de UF disponível para gerar o gráfico</p>
           </div>
         )}
       </div>
@@ -813,8 +908,11 @@ export function Volumetry() {
             )}
           </div>
 
-          {/* Tempo Médio de Tramitação */}
+          {/* Tema e Tempo */}
           <LifeCycleSection processes={lifeCycleProcesses} />
+
+          {/* Distribuição por UF */}
+          <UfChartSection processes={lifeCycleProcesses} />
 
           {/* Qualidade da Base */}
           {!loading && processes.length > 0 && (
