@@ -10,6 +10,7 @@ import {
   Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { SearchableSelect } from '../../crm/SearchableSelect';
 
 const EmissaoNF = () => {
   const [selectedCity, setSelectedCity] = useState('Rio de Janeiro');
@@ -100,7 +101,7 @@ const EmissaoNF = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 w-full">
+      <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 w-full">
         {/* Painel de Configuração */}
         <div className="space-y-4 sm:space-y-6">
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-gray-100 space-y-4">
@@ -109,15 +110,15 @@ const EmissaoNF = () => {
             </h2>
             <div className="space-y-2">
               <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest">Cidade de Emissão</label>
-              <select
+              <SearchableSelect
+                label=""
+                placeholder="Selecione a cidade"
                 value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all font-medium text-sm text-[#0a192f]"
-              >
-                {cities.map(city => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
+                onChange={setSelectedCity}
+                options={cities.map(city => ({ id: city, name: city }))}
+                className="w-full"
+                align="left"
+              />
             </div>
             <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-xl flex gap-2">
               <CheckCircle2 className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
@@ -171,14 +172,14 @@ const EmissaoNF = () => {
       </div>
 
       {/* Histórico Simulado */}
-      <div className="max-w-7xl mx-auto w-full">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+      <div className="max-w-[1600px] mx-auto w-full">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden min-h-[400px]">
           <div className="p-4 sm:p-6 border-b border-gray-100 bg-white flex justify-between items-center">
             <h3 className="font-black text-[13px] uppercase tracking-widest text-[#0a192f]">Monitor de Transmissão</h3>
             <span className="text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">Webservice Online</span>
           </div>
-          <div className="p-12 text-center bg-gray-50/30">
-            <div className="max-w-xs mx-auto space-y-4">
+          <div className="p-12 text-center bg-gray-50/30 h-full flex items-center justify-center">
+            <div className="max-w-xs mx-auto space-y-4 mt-10">
               <div className="p-4 rounded-full bg-gray-50 w-fit mx-auto shadow-sm border border-gray-100">
                 <FileText className="w-10 h-10 text-gray-300" />
               </div>
