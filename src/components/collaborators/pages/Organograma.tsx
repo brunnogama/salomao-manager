@@ -122,6 +122,137 @@ const OrganogramNode = React.memo(({
         }
     }
 
+    if (colab.isSocio && context.activeTab === 'ADMINISTRATIVO') {
+        const filteredSubs = sortedSubordinates.filter(sub => {
+            if (context.selectedAtuacao === 'ALL') return true;
+            return sub.atuacao === context.selectedAtuacao;
+        });
+
+        const atuacaoGroups = new Map<string, ColaboradorCard[]>();
+        filteredSubs.forEach(sub => {
+            const key = sub.atuacao || 'Sem Atuação';
+            if (!atuacaoGroups.has(key)) atuacaoGroups.set(key, []);
+            atuacaoGroups.get(key)!.push(sub);
+        });
+        const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+        return (
+            <div className={`flex flex-col items-center w-full gap-y-24 transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
+                {atuacaoEntries.map(([atuacaoName, atuacaoColabs]) => {
+                    const localGroups = new Map<string, ColaboradorCard[]>();
+                    atuacaoColabs.forEach(sub => {
+                        const key = sub.local || 'Sem Local';
+                        if (!localGroups.has(key)) localGroups.set(key, []);
+                        localGroups.get(key)!.push(sub);
+                    });
+                    const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                    const uniqueDroppableId = `root:${colab.id}:${atuacaoName}`;
+                    
+                    return (
+                        <div key={atuacaoName} className="flex flex-col items-center w-full relative">
+                            {/* Socio Card Repeated */}
+                            <div className="z-20">
+                                <Droppable droppableId={uniqueDroppableId} type="COLAB">
+                                    {(provided, snapshot) => (
+                                        <div ref={provided.innerRef} {...provided.droppableProps} className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[190px]' : isDense ? 'w-[220px]' : 'w-[240px]'}`}>
+                                            <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
+                                            
+                                            <Draggable draggableId={`${colab.id}-${atuacaoName}`} index={0} isDragDisabled={true}>
+                                                {(dragProvided) => (
+                                                    <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className="flex flex-col items-center w-full cursor-pointer" onClick={() => context.setSelectedColabForModal(colab.fullData)}>
+                                                        <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-[#1e3a8a]/30`}>
+                                                            {colab.photo_url ? (
+                                                                <img src={colab.photo_url} alt={colab.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                                    <UserIcon className={isSuperDense ? 'w-6 h-6' : isDense ? 'w-8 h-8' : 'w-10 h-10'} />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
+                                                            <div>
+                                                                <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{colab.name}</h4>
+                                                                <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{roleStr}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                            {provided.placeholder}
+                                        </div>
+                                    )}
+                                </Droppable>
+                            </div>
+
+                            {/* Stem linking Socio to Atuação Label */}
+                            <div className="w-[2px] h-8 bg-gray-300 mt-2"></div>
+                            
+                            {/* Atuação Label */}
+                            <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-[#1e3a8a] px-8 py-3 rounded-[1.25rem] shadow-sm mb-6 flex items-center gap-2 relative z-10 w-max">
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#1e3a8a]"></div>
+                                <span className="text-[13px] font-black uppercase tracking-[0.2em]">{atuacaoName}</span>
+                            </div>
+
+                            {localEntries.length > 0 && (
+                                <div className="flex justify-center relative pt-8 w-full gap-x-8">
+                                    <div className="absolute top-[-1.5rem] left-1/2 w-[2px] h-8 bg-gray-300 -translate-x-1/2"></div>
+                                    
+                                    {localEntries.map(([localName, localColabs], locIdx) => (
+                                        <div key={localName} className={`relative flex flex-col items-center ${localEntries.length > 5 ? 'px-1' : 'px-6'}`}>
+                                            {localEntries.length > 1 && (
+                                                <div className="absolute h-[2px] bg-gray-300" style={{
+                                                    top: '-2rem',
+                                                    left: locIdx === 0 ? '50%' : '0',
+                                                    right: locIdx === localEntries.length - 1 ? '50%' : '0'
+                                                }}></div>
+                                            )}
+                                            <div className="absolute top-0 left-1/2 w-[2px] h-8 bg-gray-300 -mt-8 -translate-x-1/2"></div>
+                                            
+                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-2 relative z-10 w-max">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.15em]">{localName}</span>
+                                            </div>
+                
+                                            <div className="w-[2px] h-6 bg-gray-300"></div>
+                
+                                            <div className="flex justify-center relative pt-4">
+                                                {localColabs.map((sub, idx) => (
+                                                    <div key={sub.id} className={`relative flex flex-col items-center ${localColabs.length > 8 ? 'px-0' : localColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
+                                                        {localColabs.length > 1 && (
+                                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                                top: '-1rem',
+                                                                left: idx === 0 ? '50%' : '0',
+                                                                right: idx === localColabs.length - 1 ? '50%' : '0'
+                                                            }}></div>
+                                                        )}
+                                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                                        <div style={{
+                                                            transform: localColabs.length > 12 ? 'scale(0.8)' : localColabs.length > 8 ? 'scale(0.85)' : localColabs.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                                            transformOrigin: 'top center'
+                                                        }}>
+                                                            <OrganogramNode
+                                                                colab={sub}
+                                                                context={context}
+                                                                visitedIds={nextVisited}
+                                                                level={level + 1}
+                                                                isDense={localColabs.length > 5 && localColabs.length <= 8}
+                                                                isSuperDense={localColabs.length > 8}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    }
+
     return (
         <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
             <Droppable droppableId={colab.id} type="COLAB">
@@ -253,107 +384,6 @@ const OrganogramNode = React.memo(({
                                             </div>
                                         </div>
                                     ))}
-                                </div>
-                            );
-                        })() : colab.isSocio && context.activeTab === 'ADMINISTRATIVO' ? (() => {
-                            // ADMIN SÓCIOS: Atuação -> Local (Horizontal -> Horizontal)
-                            
-                            // 1. Filter Subordinates by Selected Atuação
-                            const filteredSubs = sortedSubordinates.filter(sub => {
-                                if (context.selectedAtuacao === 'ALL') return true;
-                                return sub.atuacao === context.selectedAtuacao;
-                            });
-
-                            const atuacaoGroups = new Map<string, ColaboradorCard[]>();
-                            filteredSubs.forEach(sub => {
-                                const key = sub.atuacao || 'Sem Atuação';
-                                if (!atuacaoGroups.has(key)) atuacaoGroups.set(key, []);
-                                atuacaoGroups.get(key)!.push(sub);
-                            });
-                            const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-
-                            return (
-                                <div className="flex justify-center relative pt-8 w-full gap-x-12">
-                                    {atuacaoEntries.map(([atuacaoName, atuacaoColabs], atuIdx) => {
-                                        const localGroups = new Map<string, ColaboradorCard[]>();
-                                        atuacaoColabs.forEach(sub => {
-                                            const key = sub.local || 'Sem Local';
-                                            if (!localGroups.has(key)) localGroups.set(key, []);
-                                            localGroups.get(key)!.push(sub);
-                                        });
-                                        const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-
-                                        return (
-                                            <div key={atuacaoName} className={`relative flex flex-col items-center ${atuacaoEntries.length > 5 ? 'px-1' : 'px-8'}`}>
-                                                {/* Atuação Branching block */}
-                                                {atuacaoEntries.length > 1 && (
-                                                    <div className="absolute h-[2px] bg-gray-300" style={{
-                                                        top: '-2rem',
-                                                        left: atuIdx === 0 ? '50%' : '0',
-                                                        right: atuIdx === atuacaoEntries.length - 1 ? '50%' : '0'
-                                                    }}></div>
-                                                )}
-                                                <div className="absolute top-0 left-1/2 w-[2px] h-8 bg-gray-300 -mt-8 -translate-x-1/2"></div>
-                                                
-                                                <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-[#1e3a8a] px-6 py-2.5 rounded-[1.25rem] shadow-sm mb-6 flex items-center gap-2 relative z-10 w-max">
-                                                    <div className="w-2 h-2 rounded-full bg-[#1e3a8a]"></div>
-                                                    <span className="text-[12px] font-black uppercase tracking-[0.2em]">{atuacaoName}</span>
-                                                </div>
-
-                                                <div className="flex justify-center relative pt-8 w-full gap-x-8">
-                                                    
-                                                    {localEntries.map(([localName, localColabs], locIdx) => (
-                                                        <div key={localName} className={`relative flex flex-col items-center ${localEntries.length > 5 ? 'px-1' : 'px-6'}`}>
-                                                            {/* Per-Local horizontal segment */}
-                                                            {localEntries.length > 1 && (
-                                                                <div className="absolute h-[2px] bg-gray-300" style={{
-                                                                    top: '-2rem',
-                                                                    left: locIdx === 0 ? '50%' : '0',
-                                                                    right: locIdx === localEntries.length - 1 ? '50%' : '0'
-                                                                }}></div>
-                                                            )}
-                                                            <div className="absolute top-0 left-1/2 w-[2px] h-8 bg-gray-300 -mt-8 -translate-x-1/2"></div>
-                                
-                                                            {/* Local Label */}
-                                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-2 relative z-10 w-max">
-                                                                <span className="text-[10px] font-black uppercase tracking-[0.15em]">{localName}</span>
-                                                            </div>
-                                
-                                                            <div className="w-[2px] h-6 bg-gray-300"></div>
-                                
-                                                            <div className="flex justify-center relative pt-4">
-                                                                {localColabs.map((sub, idx) => (
-                                                                    <div key={sub.id} className={`relative flex flex-col items-center ${localColabs.length > 8 ? 'px-0' : localColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
-                                                                        {localColabs.length > 1 && (
-                                                                            <div className="absolute h-[2px] bg-gray-300" style={{
-                                                                                top: '-1rem',
-                                                                                left: idx === 0 ? '50%' : '0',
-                                                                                right: idx === localColabs.length - 1 ? '50%' : '0'
-                                                                            }}></div>
-                                                                        )}
-                                                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
-                                                                        <div style={{
-                                                                            transform: localColabs.length > 12 ? 'scale(0.8)' : localColabs.length > 8 ? 'scale(0.85)' : localColabs.length > 5 ? 'scale(0.95)' : 'scale(1)',
-                                                                            transformOrigin: 'top center'
-                                                                        }}>
-                                                                            <OrganogramNode
-                                                                                colab={sub}
-                                                                                context={context}
-                                                                                visitedIds={nextVisited}
-                                                                                level={level + 1}
-                                                                                isDense={localColabs.length > 5 && localColabs.length <= 8}
-                                                                                isSuperDense={localColabs.length > 8}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
                                 </div>
                             );
                         })() : context.activeTab === 'ADMINISTRATIVO' ? (
