@@ -190,8 +190,11 @@ const UfTooltip = ({ active, payload, label }: any) => {
 };
 
 function UfChartSection({ processes }: { processes: any[] }) {
-  const { valid, missingUf, chartData } = useMemo(() => {
+  const { valid, missingUf, chartData, validAtivos, validArquivados } = useMemo(() => {
     let missingUfCount = 0;
+    let validAtivosCount = 0;
+    let validArquivadosCount = 0;
+
     const ufMap: Record<string, {ativos: number, arquivados: number, originalNames: Set<string>}> = {};
 
     processes.forEach(p => {
@@ -212,8 +215,10 @@ function UfChartSection({ processes }: { processes: any[] }) {
 
       if (isAtivo) {
         ufMap[sigla].ativos++;
+        validAtivosCount++;
       } else {
         ufMap[sigla].arquivados++;
+        validArquivadosCount++;
       }
     });
 
@@ -250,7 +255,9 @@ function UfChartSection({ processes }: { processes: any[] }) {
     }
 
     return {
-      valid: processes.length - missingUfCount,
+      valid: validAtivosCount + validArquivadosCount,
+      validAtivos: validAtivosCount,
+      validArquivados: validArquivadosCount,
       missingUf: missingUfCount,
       chartData: mainData
     };
@@ -266,8 +273,24 @@ function UfChartSection({ processes }: { processes: any[] }) {
             </div>
             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Distribuição por UF</h3>
           </div>
-          <p className="text-3xl font-black text-indigo-900 tracking-tight leading-none mt-2">{valid.toLocaleString('pt-BR')}</p>
-          <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Processos com estado (UF) identificado</p>
+          
+          <div className="mt-3">
+            <p className="text-3xl font-black text-[#0a192f] tracking-tight leading-none">{valid.toLocaleString('pt-BR')}</p>
+            <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Total Identificado</p>
+          </div>
+
+          <div className="flex items-center gap-3 mt-4 flex-wrap">
+            <div className="flex items-center gap-2 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-100/50">
+               <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+               <span className="text-sm font-black text-emerald-700">{validAtivos.toLocaleString('pt-BR')}</span>
+               <span className="text-[9px] font-bold text-emerald-600/80 uppercase tracking-widest">Ativos</span>
+            </div>
+            <div className="flex items-center gap-2 bg-amber-50 px-3 py-2 rounded-xl border border-amber-100/50">
+               <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+               <span className="text-sm font-black text-amber-700">{validArquivados.toLocaleString('pt-BR')}</span>
+               <span className="text-[9px] font-bold text-amber-600/80 uppercase tracking-widest">Inativos</span>
+            </div>
+          </div>
         </div>
 
         {missingUf > 0 && (
