@@ -27,7 +27,7 @@ export const CARGOS_ADMINISTRATIVA = [
   'Diretor Financeiro',
   'Gerente de Operações',
   'Gerente de TI',
-  'Gerente Recursos Humanos',
+  'Gerente de RH',
   'Jovem Aprendiz',
   'Mensageiro',
   'Motorista',

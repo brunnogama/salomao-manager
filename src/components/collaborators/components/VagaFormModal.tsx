@@ -18,8 +18,16 @@ import {
     Coffee,
     Folder,
     Globe,
-    Headphones,
-    Scale
+    Scale,
+    UsersRound,
+    ChartPie,
+    Package,
+    Baby,
+    Mail,
+    Car,
+    Send,
+    Headset,
+    NotebookTabs
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { ManagedSelect } from '../../crm/ManagedSelect'
@@ -41,6 +49,33 @@ interface VagaFormModalProps {
 const getRoleAppearance = (roleName: string, atuacaoStr?: string) => {
     const norm = ((roleName || '') + ' ' + (atuacaoStr || '')).toLowerCase();
     
+    if (norm.includes('gerente de rh') || norm.includes('gerente recursos humanos')) {
+      return { Icon: UsersRound, colorClass: 'bg-pink-50 text-pink-600 border-pink-200' };
+    }
+    if (norm.includes('controller')) {
+      return { Icon: ChartPie, colorClass: 'bg-orange-50 text-orange-600 border-orange-200' };
+    }
+    if (norm.includes('gerente de operações') || norm.includes('gerente de operacoes')) {
+      return { Icon: Package, colorClass: 'bg-amber-50 text-amber-600 border-amber-200' };
+    }
+    if (norm.includes('jovem aprendiz')) {
+      return { Icon: Baby, colorClass: 'bg-green-50 text-green-600 border-green-200' };
+    }
+    if (norm.includes('mensageiro')) {
+      return { Icon: Mail, colorClass: 'bg-blue-50 text-blue-600 border-blue-200' };
+    }
+    if (norm.includes('motorista')) {
+      return { Icon: Car, colorClass: 'bg-slate-50 text-slate-600 border-slate-200' };
+    }
+    if (norm.includes('portador')) {
+      return { Icon: Send, colorClass: 'bg-cyan-50 text-cyan-600 border-cyan-200' };
+    }
+    if (norm.includes('recepcionista') || norm.includes('recepção') || norm.includes('telefonista') || norm.includes('atendente')) {
+      return { Icon: Headset, colorClass: 'bg-sky-50 text-sky-600 border-sky-200' };
+    }
+    if (norm.includes('secretária') || norm.includes('secretaria')) {
+      return { Icon: NotebookTabs, colorClass: 'bg-indigo-50 text-indigo-600 border-indigo-200' };
+    }
     if (norm.includes('advogad') || norm.includes('paralegal') || norm.includes('jurídic') || norm.includes('juridic') || norm.includes('sócio') || norm.includes('socio')) {
       return { Icon: Scale, colorClass: 'bg-indigo-50 text-indigo-600 border-indigo-200' };
     }
@@ -59,13 +94,10 @@ const getRoleAppearance = (roleName: string, atuacaoStr?: string) => {
     if (norm.includes('rh') || norm.includes('gente') || norm.includes('departamento pessoal') || norm.includes('dp') || norm.includes('recrutamento')) {
       return { Icon: Users, colorClass: 'bg-pink-50 text-pink-600 border-pink-200' };
     }
-    if (norm.includes('recepção') || norm.includes('recepcionista') || norm.includes('telefonista') || norm.includes('atendente')) {
-      return { Icon: Headphones, colorClass: 'bg-sky-50 text-sky-600 border-sky-200' };
-    }
     if (norm.includes('copeira') || norm.includes('limpeza') || norm.includes('serviços gerais')) {
       return { Icon: Coffee, colorClass: 'bg-stone-50 text-stone-600 border-stone-200' };
     }
-    if (norm.includes('arquivo') || norm.includes('administrativo') || norm.includes('auxiliar') || norm.includes('assistente') || norm.includes('secretária') || norm.includes('secretaria') || norm.includes('mensageiro')) {
+    if (norm.includes('arquivo') || norm.includes('administrativo') || norm.includes('auxiliar') || norm.includes('assistente')) {
       return { Icon: Folder, colorClass: 'bg-blue-50 text-blue-600 border-blue-200' };
     }
     if (norm.includes('marketing') || norm.includes('comunicação') || norm.includes('designer')) {

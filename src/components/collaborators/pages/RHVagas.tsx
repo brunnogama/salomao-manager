@@ -28,7 +28,16 @@ import {
   Coffee,
   Folder,
   Globe,
-  Headphones
+  UsersRound,
+  UserRound,
+  ChartPie,
+  Package,
+  Baby,
+  Mail,
+  Car,
+  Send,
+  Headset,
+  NotebookTabs
 } from 'lucide-react'
 // date-fns importado acima do componente junto com as funções utilitárias
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
@@ -170,7 +179,34 @@ const getRoleAppearance = (roleName: string, atuacaoStr?: string, areaStr?: stri
   let Icon = Briefcase;
   let colorClass = 'bg-slate-50 text-slate-600 border-slate-200';
 
-  if (norm.includes('advogad') || norm.includes('paralegal') || norm.includes('jurídic') || norm.includes('juridic') || norm.includes('sócio') || norm.includes('socio')) {
+  if (norm.includes('gerente de rh') || norm.includes('gerente recursos humanos')) {
+    Icon = UsersRound;
+  }
+  else if (norm.includes('controller')) {
+    Icon = ChartPie;
+  }
+  else if (norm.includes('gerente de operações') || norm.includes('gerente de operacoes')) {
+    Icon = Package;
+  }
+  else if (norm.includes('jovem aprendiz')) {
+    Icon = Baby;
+  }
+  else if (norm.includes('mensageiro')) {
+    Icon = Mail;
+  }
+  else if (norm.includes('motorista')) {
+    Icon = Car;
+  }
+  else if (norm.includes('portador')) {
+    Icon = Send;
+  }
+  else if (norm.includes('recepcionista') || norm.includes('recepção') || norm.includes('telefonista') || norm.includes('atendente')) {
+    Icon = Headset;
+  }
+  else if (norm.includes('secretária') || norm.includes('secretaria')) {
+    Icon = NotebookTabs;
+  }
+  else if (norm.includes('advogad') || norm.includes('paralegal') || norm.includes('jurídic') || norm.includes('juridic') || norm.includes('sócio') || norm.includes('socio')) {
     Icon = Scale;
   }
   else if (norm.includes('estagiário') || norm.includes('estagiario') || norm.includes('trainee')) {
@@ -188,13 +224,10 @@ const getRoleAppearance = (roleName: string, atuacaoStr?: string, areaStr?: stri
   else if (norm.includes('rh') || norm.includes('gente') || norm.includes('departamento pessoal') || norm.includes('dp') || norm.includes('recrutamento')) {
     Icon = Users;
   }
-  else if (norm.includes('recepção') || norm.includes('recepcionista') || norm.includes('telefonista') || norm.includes('atendente')) {
-    Icon = Headphones;
-  }
   else if (norm.includes('copeira') || norm.includes('limpeza') || norm.includes('serviços gerais')) {
     Icon = Coffee;
   }
-  else if (norm.includes('arquivo') || norm.includes('administrativo') || norm.includes('auxiliar') || norm.includes('assistente') || norm.includes('secretária') || norm.includes('secretaria') || norm.includes('mensageiro')) {
+  else if (norm.includes('arquivo') || norm.includes('administrativo') || norm.includes('auxiliar') || norm.includes('assistente')) {
     Icon = Folder;
   }
   else if (norm.includes('marketing') || norm.includes('comunicação') || norm.includes('designer')) {
@@ -1563,7 +1596,7 @@ export function RHVagas() {
                                     {c.photo_url || c.foto_url ? (
                                       <img src={c.photo_url || c.foto_url} alt={c.nome} className="h-full w-full object-cover" />
                                     ) : (
-                                      <span className="text-sm font-black text-white">{c.nome?.charAt(0).toUpperCase()}</span>
+                                      <UserRound className="w-5 h-5 text-white/90" />
                                     )}
                                   </div>
                                   <div className="min-w-0 flex-1">
