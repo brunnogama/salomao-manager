@@ -169,37 +169,37 @@ const getRoleAppearance = (roleName: string, atuacaoStr?: string) => {
   const norm = ((roleName || '') + ' ' + (atuacaoStr || '')).toLowerCase();
   
   if (norm.includes('advogad') || norm.includes('paralegal') || norm.includes('jurídic') || norm.includes('juridic') || norm.includes('sócio') || norm.includes('socio')) {
-    return { Icon: Scale, bg: 'from-blue-600 to-[#1e3a8a]', border: 'border-blue-200' };
+    return { Icon: Scale, colorClass: 'bg-indigo-50 text-indigo-600 border-indigo-200' };
   }
   if (norm.includes('estagiário') || norm.includes('estagiario') || norm.includes('trainee')) {
-    return { Icon: GraduationCap, bg: 'from-emerald-500 to-emerald-700', border: 'border-emerald-200' };
+    return { Icon: GraduationCap, colorClass: 'bg-emerald-50 text-emerald-600 border-emerald-200' };
   }
   if (norm.includes('ti ') || norm.includes('tecnologia') || norm.startsWith('ti') || norm.includes('dados') || norm.includes('desenvolvedor') || norm.includes('dev') || norm.includes('suporte')) {
-    return { Icon: Monitor, bg: 'from-purple-500 to-purple-700', border: 'border-purple-200' };
+    return { Icon: Monitor, colorClass: 'bg-purple-50 text-purple-600 border-purple-200' };
   }
   if (norm.includes('fiscal') || norm.includes('tributário') || norm.includes('tributario') || norm.includes('imposto')) {
-    return { Icon: Calculator, bg: 'from-amber-500 to-amber-600', border: 'border-amber-200' };
+    return { Icon: Calculator, colorClass: 'bg-amber-50 text-amber-600 border-amber-200' };
   }
   if (norm.includes('financeiro') || norm.includes('faturamento') || norm.includes('cobrança') || norm.includes('contabil') || norm.includes('contábil')) {
-    return { Icon: Landmark, bg: 'from-teal-500 to-teal-700', border: 'border-teal-200' };
+    return { Icon: Landmark, colorClass: 'bg-teal-50 text-teal-600 border-teal-200' };
   }
   if (norm.includes('rh') || norm.includes('gente') || norm.includes('departamento pessoal') || norm.includes('dp') || norm.includes('recrutamento')) {
-    return { Icon: Users, bg: 'from-pink-500 to-pink-700', border: 'border-pink-200' };
+    return { Icon: Users, colorClass: 'bg-pink-50 text-pink-600 border-pink-200' };
   }
   if (norm.includes('recepção') || norm.includes('recepcionista') || norm.includes('telefonista') || norm.includes('atendente')) {
-    return { Icon: Headphones, bg: 'from-sky-400 to-sky-600', border: 'border-sky-200' };
+    return { Icon: Headphones, colorClass: 'bg-sky-50 text-sky-600 border-sky-200' };
   }
   if (norm.includes('copeira') || norm.includes('limpeza') || norm.includes('serviços gerais')) {
-    return { Icon: Coffee, bg: 'from-stone-500 to-stone-700', border: 'border-stone-200' };
+    return { Icon: Coffee, colorClass: 'bg-stone-50 text-stone-600 border-stone-200' };
   }
   if (norm.includes('arquivo') || norm.includes('administrativo') || norm.includes('auxiliar') || norm.includes('assistente') || norm.includes('secretária') || norm.includes('secretaria') || norm.includes('mensageiro')) {
-    return { Icon: Folder, bg: 'from-indigo-500 to-indigo-700', border: 'border-indigo-200' };
+    return { Icon: Folder, colorClass: 'bg-blue-50 text-blue-600 border-blue-200' };
   }
   if (norm.includes('marketing') || norm.includes('comunicação') || norm.includes('designer')) {
-    return { Icon: Globe, bg: 'from-rose-500 to-rose-700', border: 'border-rose-200' };
+    return { Icon: Globe, colorClass: 'bg-rose-50 text-rose-600 border-rose-200' };
   }
   
-  return { Icon: Briefcase, bg: 'from-gray-500 to-gray-700', border: 'border-gray-200' };
+  return { Icon: Briefcase, colorClass: 'bg-slate-50 text-slate-600 border-slate-200' };
 }
 
 export function RHVagas() {
@@ -1707,9 +1707,13 @@ export function RHVagas() {
                                   const atuacaoStr = typeof vaga.atuacao === 'string' ? vaga.atuacao : (vaga.atuacao?.name || '');
                                   const appearance = getRoleAppearance(vaga.role?.name || '', atuacaoStr);
                                   const IconComponent = appearance.Icon;
+                                  
+                                  const isAberta = vaga.status === 'Aberta';
+                                  const colorClass = isAberta ? appearance.colorClass : 'bg-gray-50 text-gray-400 border-gray-200';
+                                  
                                   return (
-                                    <div className={`flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden bg-gradient-to-br ${appearance.bg} flex items-center justify-center border-2 border-white shadow-sm ring-1 ring-offset-1 ring-gray-100 ${appearance.border}`}>
-                                      <IconComponent className="w-5 h-5 text-white stroke-[2.5px] drop-shadow-sm" />
+                                    <div className={`flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden flex items-center justify-center border shadow-sm ring-2 ring-white ${colorClass}`}>
+                                      <IconComponent className="w-5 h-5 stroke-[2.5px] drop-shadow-sm" />
                                     </div>
                                   );
                                 })()}
