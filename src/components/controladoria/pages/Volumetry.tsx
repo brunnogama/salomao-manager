@@ -25,9 +25,29 @@ import { VolumetryProcesses } from './VolumetryProcesses';
 import { MultiFilterSelect } from '../ui/MultiFilterSelect';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
 
+// Helper para converter nome de Estado para Sigla UF
+const stateToUf: Record<string, string> = {
+  'ACRE': 'AC', 'ALAGOAS': 'AL', 'AMAPÁ': 'AP', 'AMAPA': 'AP', 'AMAZONAS': 'AM',
+  'BAHIA': 'BA', 'CEARÁ': 'CE', 'CEARA': 'CE', 'DISTRITO FEDERAL': 'DF',
+  'ESPÍRITO SANTO': 'ES', 'ESPIRITO SANTO': 'ES', 'GOIÁS': 'GO', 'GOIAS': 'GO',
+  'MARANHÃO': 'MA', 'MARANHAO': 'MA', 'MATO GROSSO': 'MT', 'MATO GROSSO DO SUL': 'MS',
+  'MINAS GERAIS': 'MG', 'PARÁ': 'PA', 'PARA': 'PA', 'PARAÍBA': 'PB', 'PARAIBA': 'PB',
+  'PARANÁ': 'PR', 'PARANA': 'PR', 'PERNAMBUCO': 'PE', 'PIAUÍ': 'PI', 'PIAUI': 'PI',
+  'RIO DE JANEIRO': 'RJ', 'RIO GRANDE DO NORTE': 'RN', 'RIO GRANDE DO SUL': 'RS',
+  'RONDÔNIA': 'RO', 'RONDONIA': 'RO', 'RORAIMA': 'RR', 'SANTA CATARINA': 'SC',
+  'SÃO PAULO': 'SP', 'SAO PAULO': 'SP', 'SERGIPE': 'SE', 'TOCANTINS': 'TO'
+};
+
+const getUfSigla = (name: string) => {
+  const norm = name.toUpperCase().trim();
+  if (norm.length === 2) return norm;
+  return stateToUf[norm] || norm.substring(0, 2);
+};
+
 function LifeCycleSection({ processes }: { processes: any[] }) {
-  const { valid, invalid, avgText, chartData } = useMemo(() => {
+  const { valid, invalid, avgText, chartData, topUfs } = useMemo(() => {
     let validCount = 0, invalidCount = 0, totalDays = 0;
+    const ufStats: Record<string, { count: number, totalDays: number, validForAvg: number }> = {};
     const buckets = [
       { name: '< 1 ano', ativos: 0, arquivados: 0 },
       { name: '1 a 3 anos', ativos: 0, arquivados: 0 },
@@ -37,6 +57,16 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
     ];
 
     processes.forEach(p => {
+      let rawUf = p.uf?.toUpperCase().trim();
+      let sigla = '';
+      if (rawUf && rawUf !== '' && rawUf !== '-' && rawUf !== 'N/I') {
+        sigla = getUfSigla(rawUf);
+        if (!ufStats[sigla]) {
+          ufStats[sigla] = { count: 0, totalDays: 0, validForAvg: 0 };
+        }
+        ufStats[sigla].count++;
+      }
+
       if (!p.data_cadastro) {
         invalidCount++;
         return;
@@ -64,6 +94,10 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
       const days = (end - start) / 86400000;
       validCount++;
       totalDays += days;
+      if (sigla) {
+        ufStats[sigla].totalDays += days;
+        ufStats[sigla].validForAvg++;
+      }
       const years = days / 365.25;
 
       const category = isAtivo ? 'ativos' : 'arquivados';
@@ -79,17 +113,34 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
     const avgYears = Math.floor(avgDays / 365.25);
     const avgMonths = Math.floor((avgDays % 365.25) / 30.4);
     
+    const topUfs = Object.entries(ufStats)
+      .map(([s, stats]) => {
+        const avgD = stats.validForAvg > 0 ? (stats.totalDays / stats.validForAvg) : 0;
+        const avgY = Math.floor(avgD / 365.25);
+        const avgM = Math.floor((avgD % 365.25) / 30.4);
+        let timeStr = '-';
+        if (stats.validForAvg > 0) {
+          if (avgY > 0) timeStr = `${avgY}a ${avgM}m`;
+          else if (avgM > 0) timeStr = `${avgM}m`;
+          else timeStr = `${Math.floor(avgD)}d`;
+        }
+        return { sigla: s, count: stats.count, timeStr, avgDays: avgD };
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
     return {
       valid: validCount,
       invalid: invalidCount,
       avgText: validCount > 0 ? `${avgYears} ano${avgYears !== 1 ? 's' : ''} e ${avgMonths} ${avgMonths === 1 ? 'mês' : 'meses'}` : '-',
-      chartData: buckets
+      chartData: buckets,
+      topUfs
     };
   }, [processes]);
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col lg:flex-row gap-8 items-center">
-      <div className="w-full lg:w-1/3 flex flex-col gap-4">
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col xl:flex-row gap-8 items-center mt-2">
+      <div className="w-full xl:w-1/4 flex flex-col gap-4 shrink-0">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 bg-blue-50 rounded-lg">
@@ -111,7 +162,7 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
         )}
       </div>
 
-      <div className="w-full lg:w-2/3 h-[250px]">
+      <div className="w-full xl:w-2/4 h-[250px] min-w-0">
         {valid > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
@@ -140,28 +191,41 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
           </div>
         )}
       </div>
+
+      <div className="w-full xl:w-1/4 flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch">
+        <div className="flex items-center gap-2 mb-1">
+           <div className="p-1.5 bg-blue-100 rounded-md">
+             <MapPin className="w-3.5 h-3.5 text-blue-700" />
+           </div>
+           <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-tight">Média/Top 5 UFs</h3>
+        </div>
+        
+        <div className="flex flex-col gap-2">
+          {topUfs.map((uf: any, idx: number) => (
+            <div key={uf.sigla} className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm group hover:border-blue-200 transition-colors">
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-black text-gray-400 w-3">{idx + 1}º</span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-black text-[#0a192f] leading-none">{uf.sigla}</span>
+                  <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{uf.count} procs.</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 bg-blue-50/50 px-2.5 py-1 rounded border border-blue-100/50 group-hover:bg-blue-100 transition-colors">
+                <Clock className="w-3 h-3 text-blue-500" />
+                <span className="text-[10px] font-black text-blue-700 tracking-wider tooltip" title={`Média de ${Math.floor(uf.avgDays)} dias`}>{uf.timeStr}</span>
+              </div>
+            </div>
+          ))}
+          {topUfs.length === 0 && (
+             <div className="text-center p-4">
+                <p className="text-[10px] font-bold text-gray-400 uppercase">Nenhum dado UF</p>
+             </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
-
-// Helper para converter nome de Estado para Sigla UF
-const stateToUf: Record<string, string> = {
-  'ACRE': 'AC', 'ALAGOAS': 'AL', 'AMAPÁ': 'AP', 'AMAPA': 'AP', 'AMAZONAS': 'AM',
-  'BAHIA': 'BA', 'CEARÁ': 'CE', 'CEARA': 'CE', 'DISTRITO FEDERAL': 'DF',
-  'ESPÍRITO SANTO': 'ES', 'ESPIRITO SANTO': 'ES', 'GOIÁS': 'GO', 'GOIAS': 'GO',
-  'MARANHÃO': 'MA', 'MARANHAO': 'MA', 'MATO GROSSO': 'MT', 'MATO GROSSO DO SUL': 'MS',
-  'MINAS GERAIS': 'MG', 'PARÁ': 'PA', 'PARA': 'PA', 'PARAÍBA': 'PB', 'PARAIBA': 'PB',
-  'PARANÁ': 'PR', 'PARANA': 'PR', 'PERNAMBUCO': 'PE', 'PIAUÍ': 'PI', 'PIAUI': 'PI',
-  'RIO DE JANEIRO': 'RJ', 'RIO GRANDE DO NORTE': 'RN', 'RIO GRANDE DO SUL': 'RS',
-  'RONDÔNIA': 'RO', 'RONDONIA': 'RO', 'RORAIMA': 'RR', 'SANTA CATARINA': 'SC',
-  'SÃO PAULO': 'SP', 'SAO PAULO': 'SP', 'SERGIPE': 'SE', 'TOCANTINS': 'TO'
-};
-
-const getUfSigla = (name: string) => {
-  const norm = name.toUpperCase().trim();
-  if (norm.length === 2) return norm;
-  return stateToUf[norm] || norm.substring(0, 2);
-};
 
 const UfTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
