@@ -310,7 +310,11 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 // Merge no formData
                 setFormData((prev: any) => {
                     const currentTags = (prev.perfil || '').split('\n').filter(Boolean);
-                    const newTagsArray = [...new Set([...currentTags, ...(perfilTags || [])])];
+                    const tempTags = [...(perfilTags || [])];
+                    if (sugestaoCargo) {
+                        tempTags.push(`Cargo sugerido: ${sugestaoCargo}`);
+                    }
+                    const newTagsArray = [...new Set([...currentTags, ...tempTags])];
 
                     return {
                         ...prev,
@@ -320,8 +324,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         resumo_cv: resumoProfissional || prev.resumo_cv,
                         atividades_academicas: atividades_academicas || prev.atividades_academicas,
                         idiomas: idiomas || prev.idiomas,
-                        perfil: newTagsArray.join('\n'),
-                        role: prev.role || sugestaoCargo // Só sugere cargo se estiver sem
+                        perfil: newTagsArray.join('\n')
                     };
                 });
 
