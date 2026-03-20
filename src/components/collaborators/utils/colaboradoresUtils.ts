@@ -24,41 +24,6 @@ export const toTitleCase = (str: string) => {
   }).join(' ');
 }
 
-export const formatPerfilTag = (tag: string) => {
-  if (!tag) return '';
-  // Remove bullets, dashes, asterisks and special chars at start
-  let cleaned = tag.replace(/^[•●\-\*]+\s*/g, '').trim();
-  if (!cleaned) return '';
-  
-  // Apply Title Case logic
-  const lowerWords = ['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'na', 'no', 'nas', 'nos', 'com', 'por', 'para', 'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas'];
-  return cleaned.split(' ').map((word, index) => {
-      if (word.length === 0) return '';
-      const lower = word.toLowerCase();
-      if (index > 0 && lowerWords.includes(lower)) {
-          return lower;
-      }
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-  }).filter(Boolean).join(' ');
-}
-
-export const parseRoleTags = (raw: string | undefined | null): Record<string, string> => {
-  if (!raw) return { general: '' };
-  try {
-      const trimmed = raw.trim();
-      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-          return JSON.parse(trimmed);
-      }
-  } catch (e) {
-      console.warn("Failed to parse role tags as JSON, falling back to general string", e);
-  }
-  return { general: raw };
-}
-
-export const stringifyRoleTags = (obj: Record<string, string>): string => {
-  return JSON.stringify(obj);
-}
-
 export const formatDateDisplay = (str?: string) => {
   if (!str) return '-'
   const date = new Date(str)
@@ -274,4 +239,21 @@ export const getInternScholarshipValue = async (hireDateUrlFormat: string | unde
   if (error || !data || data.length === 0) return null;
 
   return data[0].valor_bolsa;
+};
+
+export const parseRoleTags = (raw: string | undefined | null): Record<string, string> => {
+    if (!raw) return { general: '' };
+    try {
+        const trimmed = raw.trim();
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+            return JSON.parse(trimmed);
+        }
+    } catch (e) {
+        console.warn("Failed to parse role tags as JSON, falling back to general string", e);
+    }
+    return { general: raw };
+};
+
+export const stringifyRoleTags = (obj: Record<string, string>): string => {
+    return JSON.stringify(obj);
 };

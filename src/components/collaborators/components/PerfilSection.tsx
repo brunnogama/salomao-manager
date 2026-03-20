@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Tag, Save, AlertCircle, Loader2, Sparkles, Search } from 'lucide-react';
-import { formatPerfilTag } from '../utils/colaboradoresUtils';
 
 interface PerfilSectionProps {
     collaboratorId: string;
@@ -21,8 +20,6 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
     const [cursorPosition, setCursorPosition] = useState(0);
     const [tagDropdownSearch, setTagDropdownSearch] = useState('');
     const [dropdownTop, setDropdownTop] = useState(0);
-    const [initialTags, setInitialTags] = useState<string[]>([]);
-    const [aiGeneratedTags, setAiGeneratedTags] = useState<string[]>([]);
     const perfilTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
@@ -46,7 +43,6 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
 
             if (error) throw error;
             setPerfil(data?.perfil || '');
-            setInitialTags((data?.perfil || '').split('\n').map(formatPerfilTag).filter((x: string) => !!x));
             setResumoCv(data?.resumo_cv || '');
             setCompetencias(data?.competencias || '');
         } catch (error) {
@@ -103,12 +99,10 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
     const handleSave = async () => {
         try {
             setSaving(true);
-            const formattedLines = perfil.split('\n').map(formatPerfilTag).filter(l => l.length > 0);
-            const formattedPerfil = formattedLines.join('\n');
             const { error } = await supabase
                 .rpc('update_collaborator_perfil', {
                     p_id: collaboratorId,
-                    p_perfil: formattedPerfil,
+                    p_perfil: perfil,
                     p_competencias: competencias,
                     p_resumo_cv: resumoCv
                 });
@@ -118,7 +112,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
                     const fallback = await supabase
                         .from('collaborators')
                         .update({
-                            perfil: formattedPerfil,
+                            perfil: perfil,
                             competencias: competencias,
                             resumo_cv: resumoCv
                         })
@@ -130,9 +124,9 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
                 }
             }
 
-            const manualNewTags = formattedLines.filter(t => !initialTags.includes(t) && !aiGeneratedTags.includes(t));
-            if (manualNewTags.length > 0) {
-                const tagsToInsert = manualNewTags.map(t => ({ tag: t }));
+            const lines = perfil.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length > 0) {
+                const tagsToInsert = lines.map(t => ({ tag: t }));
                 await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
             }
 
@@ -180,9 +174,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
 
             if (result.success && result.data) {
                 setResumoCv(result.data.resumoProfissional || '');
-                const aiTags = (result.data.perfilTags || []).map(formatPerfilTag).filter((x: string) => !!x);
-                setPerfil(aiTags.join('\n'));
-                setAiGeneratedTags(prev => Array.from(new Set<string>([...prev, ...aiTags])));
+                setPerfil((result.data.perfilTags || []).join('\n'));
                 if (showAlert) showAlert('Extraído com Sucesso', `Os dados foram inferidos do documento: ${result.cvProcessado}`, 'success');
             }
 

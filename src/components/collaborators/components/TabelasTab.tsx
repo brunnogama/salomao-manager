@@ -48,6 +48,7 @@ export function TabelasTab() {
     // Modal State - Cargos (Tags)
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
     const [editingRole, setEditingRole] = useState<Role | null>(null);
+    const [editingTagsValue, setEditingTagsValue] = useState<string>('');
     const [isTagging, setIsTagging] = useState(false);
     const [tagSearch, setTagSearch] = useState('');
     const [cursorPosition, setCursorPosition] = useState(0);
@@ -56,14 +57,14 @@ export function TabelasTab() {
     const [dropdownTop, setDropdownTop] = useState(0);
     const tagsTextareaRef = useRef<HTMLTextAreaElement>(null);
 
+    // Derived state for Roles
     const [rolesJuridico, setRolesJuridico] = useState<Role[]>([]);
     const [rolesAdmin, setRolesAdmin] = useState<Role[]>([]);
     
-    // Cargo Tabs & Filters
-    const [cargosTab, setCargosTab] = useState<'Judiciário' | 'Administrativo'>('Judiciário');
-    const [cargoFilterType, setCargoFilterType] = useState<'Geral' | 'Sócio' | 'Líder'>('Geral');
+    // UI state for separated tabs and filters
+    const [cargosTab, setCargosTab] = useState<'Judici\u00E1rio' | 'Administrativo'>('Judici\u00E1rio');
+    const [cargoFilterType, setCargoFilterType] = useState<'Geral' | 'S\u00F3cio' | 'L\u00EDder'>('Geral');
     const [cargoFilterValue, setCargoFilterValue] = useState<string>('');
-    const [editingTagsValue, setEditingTagsValue] = useState<string>('');
 
     // Tags Management State
     const [tagDataList, setTagDataList] = useState<TagData[]>([]);
@@ -250,7 +251,7 @@ export function TabelasTab() {
 
     const formatPeriodo = (inicio: number, fim: number) => {
         if (inicio === fim) return `${inicio}º período`;
-        return `${inicio}º ao ${fim}º períodos`;
+        return `${inicio}º ao ${fim}º período`;
     };
 
     const formatAno = (inicio: number, fim: number) => {
@@ -261,14 +262,16 @@ export function TabelasTab() {
     const getTagsForSelection = (roleText: string | undefined | null) => {
         const parsed = parseRoleTags(roleText);
         let key = 'general';
-        if (cargoFilterType === 'Sócio' && cargoFilterValue) key = `socio:${cargoFilterValue}`;
-        if (cargoFilterType === 'Líder' && cargoFilterValue) key = `lider:${cargoFilterValue}`;
+        if (cargoFilterType === 'S\u00F3cio' && cargoFilterValue) key = `socio:${cargoFilterValue}`;
+        if (cargoFilterType === 'L\u00EDder' && cargoFilterValue) key = `lider:${cargoFilterValue}`;
         return parsed[key] || '';
     };
 
+    // Role Handlers
     const handleOpenRoleModal = (role: Role) => {
         setEditingRole({ ...role });
-        setEditingTagsValue(getTagsForSelection(role.default_tags));
+        const tags = getTagsForSelection(role.default_tags);
+        setEditingTagsValue(tags);
         setIsRoleModalOpen(true);
     };
 
@@ -277,7 +280,6 @@ export function TabelasTab() {
         setEditingRole(null);
         setIsTagging(false);
         setTagSearch('');
-        setEditingTagsValue('');
     };
 
     const handleTagsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -285,7 +287,7 @@ export function TabelasTab() {
 
         const text = e.target.value;
         const position = e.target.selectionStart;
-        setEditingTagsValue(text);
+        setEditingRole({ ...editingRole, default_tags: text });
 
         const lastAtSymbol = text.lastIndexOf('@', position - 1);
         const lastNewLine = text.lastIndexOf('\n', position - 1);
@@ -311,14 +313,14 @@ export function TabelasTab() {
     const insertRoleTag = (tagText: string) => {
         if (!editingRole || typeof editingRole.default_tags !== 'string') return;
 
-        const currentText = editingTagsValue;
+        const currentText = editingRole.default_tags;
         const beforeTag = currentText.substring(0, cursorPosition);
         const nextNewLine = currentText.indexOf('\n', cursorPosition);
         const afterTag = nextNewLine !== -1 ? currentText.substring(nextNewLine) : '';
 
         const newText = `${beforeTag}${tagText}${afterTag}`;
 
-        setEditingTagsValue(newText);
+        setEditingRole({ ...editingRole, default_tags: newText });
         setIsTagging(false);
         setTagSearch('');
         setTagDropdownSearch('');
@@ -329,28 +331,28 @@ export function TabelasTab() {
 
         setSaving(true);
         try {
-            const parsed = parseRoleTags(editingRole.default_tags);
             let key = 'general';
-            if (cargoFilterType === 'Sócio' && cargoFilterValue) key = `socio:${cargoFilterValue}`;
-            if (cargoFilterType === 'Líder' && cargoFilterValue) key = `lider:${cargoFilterValue}`;
-            parsed[key] = editingTagsValue;
-            
-            const newDefaultTagsStr = stringifyRoleTags(parsed);
+            if (cargoFilterType === 'S\u00F3cio' && cargoFilterValue) key = `socio:${cargoFilterValue}`;
+            if (cargoFilterType === 'L\u00EDder' && cargoFilterValue) key = `lider:${cargoFilterValue}`;
+
+            let parsed = parseRoleTags(editingRole.default_tags);
+            parsed[key] = editingTagsValue.trim();
+            const newDefaultTags = stringifyRoleTags(parsed);
 
             const payload = {
-                default_tags: newDefaultTagsStr,
+                default_tags: newDefaultTags,
             };
 
             const { error } = await supabase.from('roles').update(payload).eq('id', editingRole.id);
             if (error) throw error;
 
             // Save tags to perfil_tags dictionary if they are new
-            if (editingTagsValue) {
+            if (editingRole.default_tags) {
                 // Determine the area of this role
                 const isJuridico = rolesJuridico.some(r => r.id === editingRole.id);
                 const area = isJuridico ? 'Jurídica' : 'Administrativa';
 
-                const lines = editingTagsValue.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                const lines = editingRole.default_tags.split('\n').map(l => l.trim()).filter(l => l.length > 0);
                 if (lines.length > 0) {
                     const tagsToInsert = lines.map(t => ({ tag: t, area: area }));
                     const { error: tagError } = await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
@@ -598,50 +600,50 @@ export function TabelasTab() {
 
                     {!loading && activeView === 'cargos' && (
                         <div className="flex-1 overflow-auto mt-6">
-                            <h3 className="text-lg font-bold text-[#0a192f] mb-6">Cargos - Informações e Perfis</h3>
+                            <h3 className="text-lg font-bold text-[#0a192f] mb-6">Cargos - Informa\u00E7\u00F5es e Perfis</h3>
 
                             <div className="flex space-x-4 mb-6 border-b border-gray-100">
-                                <button onClick={() => setCargosTab('Judiciário')} className={cargosTab === 'Judiciário' ? "py-2 border-b-2 border-[#1e3a8a] text-[#1e3a8a] font-bold transition-all" : "py-2 text-gray-500 font-medium hover:text-[#1e3a8a] transition-all"}>Área Judiciária</button>
-                                <button onClick={() => setCargosTab('Administrativo')} className={cargosTab === 'Administrativo' ? "py-2 border-b-2 border-[#1e3a8a] text-[#1e3a8a] font-bold transition-all" : "py-2 text-gray-500 font-medium hover:text-[#1e3a8a] transition-all"}>Área Administrativa</button>
+                                <button onClick={() => setCargosTab('Judici\u00E1rio')} className={cargosTab === 'Judici\u00E1rio' ? "py-2 border-b-2 border-[#1e3a8a] text-[#1e3a8a] font-bold transition-all" : "py-2 text-gray-500 font-medium hover:text-[#1e3a8a] transition-all"}>\u00C1rea Judici\u00E1ria</button>
+                                <button onClick={() => setCargosTab('Administrativo')} className={cargosTab === 'Administrativo' ? "py-2 border-b-2 border-[#1e3a8a] text-[#1e3a8a] font-bold transition-all" : "py-2 text-gray-500 font-medium hover:text-[#1e3a8a] transition-all"}>\u00C1rea Administrativa</button>
                             </div>
 
                             {/* Judiciária */}
-                            {cargosTab === 'Judiciário' && (
+                            {cargosTab === 'Judici\u00E1rio' && (
                             <div className="mb-8 animate-in fade-in duration-300">
                                 <div className="flex flex-col md:flex-row md:items-end gap-4 mb-4">
                                     <div className="w-full md:w-56">
-                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Filtro de Exigência</label>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Filtro de Exig\u00EAncia</label>
                                         <select 
                                             value={cargoFilterType} 
                                             onChange={e => { setCargoFilterType(e.target.value as any); setCargoFilterValue(''); }}
                                             className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl px-3 py-2.5 outline-none font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                         >
-                                            <option value="Geral">Cargo Geral (Padrão)</option>
-                                            <option value="Sócio">Específico por Sócio</option>
-                                            <option value="Líder">Específico por Líder</option>
+                                            <option value="Geral">Cargo Geral (Padr\u00E3o)</option>
+                                            <option value="S\u00F3cio">Espec\u00EDfico por S\u00F3cio</option>
+                                            <option value="L\u00EDder">Espec\u00EDfico por L\u00EDder</option>
                                         </select>
                                     </div>
                                     
-                                    {cargoFilterType === 'Sócio' && (
+                                    {cargoFilterType === 'S\u00F3cio' && (
                                         <div className="w-full md:w-72">
                                             <ManagedSelect
-                                                label="Selecione o Sócio"
+                                                label="Selecione o S\u00F3cio"
                                                 value={cargoFilterValue}
                                                 onChange={v => setCargoFilterValue(v)}
                                                 tableName="partners"
-                                                placeholder="Escolha um sócio..."
+                                                placeholder="Escolha um s\u00F3cio..."
                                             />
                                         </div>
                                     )}
                                     
-                                    {cargoFilterType === 'Líder' && (
+                                    {cargoFilterType === 'L\u00EDder' && (
                                         <div className="w-full md:w-72">
                                             <ManagedSelect
-                                                label="Selecione o Líder"
+                                                label="Selecione o L\u00EDder"
                                                 value={cargoFilterValue}
                                                 onChange={v => setCargoFilterValue(v)}
                                                 tableName="collaborators"
-                                                placeholder="Escolha um líder..."
+                                                placeholder="Escolha um l\u00EDder..."
                                             />
                                         </div>
                                     )}
@@ -652,7 +654,7 @@ export function TabelasTab() {
                                             <tr className="bg-gray-50 border-b border-gray-200">
                                                 <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider w-1/3">Cargo</th>
                                                 <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">Tags (Perfil p/ {cargoFilterType})</th>
-                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider text-right w-24">Ações</th>
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider text-right w-24">A\u00E7\u00F5es</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -701,8 +703,8 @@ export function TabelasTab() {
                                         <thead>
                                             <tr className="bg-gray-50 border-b border-gray-200">
                                                 <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider w-1/3">Cargo</th>
-                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">Tags (Perfil Padrão)</th>
-                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider text-right w-24">Ações</th>
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">Tags (Perfil Padr\u00E3o)</th>
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider text-right w-24">A\u00E7\u00F5es</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -710,32 +712,21 @@ export function TabelasTab() {
                                                 <tr key={role.id} className="hover:bg-blue-50/30 transition-colors">
                                                     <td className="px-6 py-4 text-sm font-bold text-[#0a192f]">{role.name}</td>
                                                     <td className="px-6 py-4">
-                                                        {(() => {
-                                                            const parsed = parseRoleTags(role.default_tags);
-                                                            const tags = parsed.general;
-                                                            return tags ? (
+                                                        {role.default_tags ? (
                                                             <div className="flex flex-wrap gap-1">
-                                                                {tags.split('\n').filter(l => l.trim()).map((tag, i) => (
+                                                                {role.default_tags.split('\n').filter(l => l.trim()).map((tag, i) => (
                                                                     <span key={i} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 max-w-xs truncate">
                                                                         {tag.trim()}
                                                                     </span>
                                                                 ))}
                                                             </div>
-                                                            ) : (
-                                                                <span className="text-xs text-gray-400 italic">Nenhuma tag cadastrada</span>
-                                                            )
-                                                        })()}
+                                                        ) : (
+                                                            <span className="text-xs text-gray-400 italic">Nenhuma tag cadastrada</span>
+                                                        )}
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
                                                         <button
-                                                            onClick={async () => {
-                                                                // Temporarily force filter to Geral when opening modal in Administrativo tab
-                                                                setCargoFilterType('Geral');
-                                                                setCargoFilterValue('');
-                                                                setEditingRole({ ...role });
-                                                                setEditingTagsValue(parseRoleTags(role.default_tags).general || '');
-                                                                setIsRoleModalOpen(true);
-                                                            }}
+                                                            onClick={() => handleOpenRoleModal(role)}
                                                             className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
                                                             title="Editar Tags"
                                                         >
@@ -749,7 +740,6 @@ export function TabelasTab() {
                                 </div>
                             </div>
                             )}
-
                         </div>
                     )}
 
@@ -969,13 +959,13 @@ export function TabelasTab() {
                         <div className="p-6">
                             <div>
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex justify-between items-center">
-                                    Tags Padrão {cargoFilterType !== 'Geral' ? `(${cargoFilterType} específico)` : ''}
+                                    Tags Padrão
                                     <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Use @ para pesquisar tags</span>
                                 </label>
                                 <div className="relative">
                                 <textarea
                                     ref={tagsTextareaRef}
-                                    value={editingTagsValue}
+                                    value={editingRole?.default_tags || ''}
                                     onChange={handleTagsChange}
                                     placeholder="Descreva as tags (cada linha salva vira uma tag)&#10;Ex:&#10;Experiência no contencioso cível&#10;Legalone&#10;&#10;Dica: Use @ para buscar na nuvem de talentos"
                                     className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm h-48 resize-none"
