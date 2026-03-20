@@ -931,7 +931,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, on
                                                             return (
                                                                 <tr key={cand.id} className="hover:bg-gray-50 transition-colors">
                                                                     <td className="px-4 py-3 font-medium text-gray-900">{cand.nome}</td>
-                                                                    <td className="px-4 py-3 text-xs">{cand.role || '-'}</td>
+                                                                    <td className="px-4 py-3 text-xs">{(rolesList.find(r => String(r.id) === String(cand.role))?.name) || cand.role || '-'}</td>
                                                                     <td className="px-4 py-3 text-right">
                                                                         {!viewMode && (
                                                                             <button 
