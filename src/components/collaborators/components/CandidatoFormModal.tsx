@@ -518,6 +518,54 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
         try {
             setLoading(true)
+
+            // --- INÍCIO VERIFICAÇÃO DE DUPLICIDADE ---
+            const checkCpf = formData.cpf?.replace(/\D/g, '');
+            const checkName = (formData.nome || formData.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+            const { data: existingCandidates, error: duplicateError } = await supabase
+                .from('candidatos')
+                .select('id, nome, cpf');
+
+            if (!duplicateError && existingCandidates) {
+                let duplicate = null;
+                let duplicateType = '';
+
+                // Only verify duplicates for different IDs (handles both create and edit)
+                const otherCandidates = candidatoId 
+                    ? existingCandidates.filter(c => c.id !== candidatoId)
+                    : existingCandidates;
+
+                // 1. Verificação por CPF (se preenchido)
+                if (checkCpf && checkCpf.length === 11) {
+                    duplicate = otherCandidates.find(c => c.cpf?.replace(/\D/g, '') === checkCpf);
+                    if (duplicate) duplicateType = 'CPF';
+                }
+
+                // 2. Verificação por Nome (caso NÃO tenha CPF)
+                if (!checkCpf || checkCpf.length !== 11) {
+                    if (checkName.length > 0) {
+                        duplicate = otherCandidates.find(c => {
+                            if (!c.nome) return false;
+                            const dbName = c.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                            return dbName === checkName;
+                        });
+                        if (duplicate) duplicateType = 'nome';
+                    }
+                }
+
+                if (duplicate) {
+                    const msg = duplicateType === 'CPF' 
+                        ? `O candidato já está cadastrado com este CPF (${duplicate.nome}).\nPor favor, atualize o cadastro existente.`
+                        : `Já existe um candidato cadastrado com este nome (${duplicate.nome}).\nVerifique se não é a mesma pessoa e atualize o cadastro existente.`;
+                    
+                    showAlert('Candidato já cadastrado', msg, 'warning');
+                    setLoading(false);
+                    return;
+                }
+            }
+            // --- FIM VERIFICAÇÃO DE DUPLICIDADE ---
+
             const payload = {
                 ...formData
             }
