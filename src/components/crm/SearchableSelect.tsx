@@ -138,40 +138,37 @@ export function SearchableSelect({
   const getName = (opt: Option) => String(opt.name || opt.nome || opt.label || opt.value || '');
   const getId = (opt: Option) => opt.id || opt.value || Math.random();
 
-  // Fuzzy similarity: normalized Levenshtein-like scoring
+  // Fuzzy similarity: word-level matching with strict requirements
   const fuzzyScore = (source: string, target: string): number => {
-    const s = source.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const t = target.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const s = source.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const t = target.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
     // Exact substring match = perfect score
     if (t.includes(s)) return 1;
-    if (s.includes(t)) return 0.9;
-    // Check each word of the search term
-    const searchWords = s.split(/\s+/).filter(w => w.length > 1);
+    // Check each significant word (>=2 chars) from search term
+    const searchWords = s.split(/[\s\-]+/).filter(w => w.length >= 2);
     if (searchWords.length === 0) return 0;
-    let matched = 0;
+    const targetWords = t.split(/[\s\-]+/);
+    let totalScore = 0;
+    let unmatchedCount = 0;
     for (const word of searchWords) {
-      // Check if any word in target starts with or contains the search word
-      const targetWords = t.split(/\s+/);
-      if (targetWords.some(tw => tw.startsWith(word) || tw.includes(word))) {
-        matched++;
-      } else {
-        // Check character-level similarity for typo tolerance
-        const bestWordScore = Math.max(...targetWords.map(tw => {
-          const shorter = word.length < tw.length ? word : tw;
-          const longer = word.length < tw.length ? tw : word;
-          if (longer.length === 0) return 1;
-          let matches = 0;
-          let lastIdx = -1;
-          for (const ch of shorter) {
-            const idx = longer.indexOf(ch, lastIdx + 1);
-            if (idx > -1) { matches++; lastIdx = idx; }
-          }
-          return matches / longer.length;
-        }));
-        if (bestWordScore > 0.6) matched += bestWordScore;
+      // Best match for this word against all target words
+      let bestMatch = 0;
+      for (const tw of targetWords) {
+        if (tw === word) { bestMatch = 1; break; }
+        if (tw.startsWith(word) || word.startsWith(tw)) {
+          bestMatch = Math.max(bestMatch, 0.85);
+        } else if (tw.includes(word) || word.includes(tw)) {
+          bestMatch = Math.max(bestMatch, 0.7);
+        }
       }
+      if (bestMatch === 0) unmatchedCount++;
+      totalScore += bestMatch;
     }
-    return matched / searchWords.length;
+    // If more than 1 word has zero match, reject
+    if (unmatchedCount > 1) return 0;
+    // If the only unmatched word is very short (like preposition), still ok
+    if (unmatchedCount === 1 && searchWords.length <= 2) return 0;
+    return totalScore / searchWords.length;
   };
 
   const filteredOptions = (() => {
@@ -183,13 +180,20 @@ export function SearchableSelect({
         return searchTarget.includes(term.toLowerCase());
       });
     }
-    // Fuzzy: score and sort, include items with score > 0.3
+    // Fuzzy: score and sort, include items with score > 0.5
     return options
       .map(opt => ({ opt, score: fuzzyScore(term, String(opt.label || getName(opt))) }))
-      .filter(({ score }) => score > 0.3)
+      .filter(({ score }) => score > 0.5)
       .sort((a, b) => b.score - a.score)
       .map(({ opt }) => opt);
   })();
+
+  // Check if search term exactly matches any option (for showing 'Adicionar' button)
+  const hasExactMatch = searchTerm.trim() ? filteredOptions.some(opt => {
+    const name = getName(opt).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const term = searchTerm.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return name === term || name.includes(term);
+  }) : true;
 
   const selectedOption = options.find(opt =>
     (opt.id?.toString() === String(value)) || (getName(opt).toLowerCase() === String(value || '').toLowerCase())
@@ -267,9 +271,25 @@ export function SearchableSelect({
                 </button>
               );
             })}
+            {allowCustom && searchTerm.trim() && !hasExactMatch && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const val = searchTerm.trim();
+                  onChange(val);
+                  if (onCustomAdd) onCustomAdd(val);
+                  setIsOpen(false);
+                  setSearchTerm('');
+                }}
+                className="w-full px-4 py-2.5 text-left text-sm font-bold rounded-xl transition-all text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 mt-2"
+              >
+                + Adicionar "{searchTerm}"
+              </button>
+            )}
           </div>
         ) : (
-          <div className="py-8 text-center">
+          <div className="py-4 text-center space-y-2">
             {allowCustom && searchTerm.trim() ? (
               <button
                 type="button"
@@ -281,9 +301,9 @@ export function SearchableSelect({
                   setIsOpen(false);
                   setSearchTerm('');
                 }}
-                className="w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all text-[#1e3a8a] bg-blue-50 hover:bg-blue-100"
+                className="w-full px-4 py-2.5 text-left text-sm font-bold rounded-xl transition-all text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200"
               >
-                Adicionar "{searchTerm}"
+                + Adicionar "{searchTerm}"
               </button>
             ) : (
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nenhum resultado</p>
