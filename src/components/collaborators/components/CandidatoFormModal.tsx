@@ -59,6 +59,13 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         onClose()
     }
 
+    const handleRequestEdit = () => {
+        if (viewMode && candidatoId && onEdit) {
+            onClose();
+            onEdit(candidatoId, activeTab);
+        }
+    }
+
     useCloseOnEscape(isOpen, viewMode ? onClose : handleRequestClose)
 
     const [activeTab, setActiveTab] = useState(1)
@@ -1179,7 +1186,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             maskRG={maskRG}
                             maskPhone={maskPhone}
                             maskCNPJ={maskCNPJ}
-                            isViewMode={false}
+                            isViewMode={viewMode}
                             hideBankingAndEmergency={true}
                         />
                         <EnderecoSection
@@ -1187,7 +1194,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             setFormData={setFormData}
                             maskCEP={maskCEP}
                             handleCepBlur={handleCepBlur}
-                            isViewMode={false}
+                            isViewMode={viewMode}
                         />
                     </div>
                 )}
@@ -1197,7 +1204,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         <DadosProfissionaisCandidato
                             formData={formData}
                             setFormData={setFormData}
-                            isViewMode={false}
+                            isViewMode={viewMode}
                         />
                     </div>
                 )}
@@ -1207,8 +1214,9 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         <DadosEscolaridadeSection
                             formData={formData as any}
                             setFormData={setFormData}
-                            isViewMode={false}
+                            isViewMode={viewMode}
                             maskDate={maskDate}
+                            onRequestEdit={handleRequestEdit}
                         />
                     </div>
                 )}
@@ -1218,7 +1226,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         <CandidatoEntrevistaSection
                             formData={formData}
                             setFormData={setFormData}
-                            isViewMode={false}
+                            isViewMode={viewMode}
                             onShowReprovadoModal={(status) => {
                                 setTempReprovadoStatus(status);
                                 setTempReprovadoMotivo('');
@@ -1358,10 +1366,11 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
                         <CandidatoExperienciasSection
                             candidatoId={candidatoId || null}
-                            isViewMode={false}
+                            isViewMode={viewMode}
                             pendingExperiencias={pendingExperiencias}
                             setPendingExperiencias={setPendingExperiencias}
                             showAlert={showAlert}
+                            onRequestEdit={handleRequestEdit}
                         />
                     </div>
                 )}
@@ -1370,7 +1379,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
                         <CandidatoHistoricoSection
                             candidatoId={candidatoId || null}
-                            isViewMode={false}
+                            isViewMode={viewMode}
                             pendingHistorico={pendingHistorico}
                             setPendingHistorico={setPendingHistorico}
                         />

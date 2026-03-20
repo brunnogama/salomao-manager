@@ -8,6 +8,7 @@ interface CandidatoExperienciasSectionProps {
     pendingExperiencias: any[]
     setPendingExperiencias: React.Dispatch<React.SetStateAction<any[]>>
     showAlert: (title: string, message: string, type: 'success' | 'warning' | 'error') => void
+    onRequestEdit?: () => void
 }
 
 export function CandidatoExperienciasSection({
@@ -15,7 +16,8 @@ export function CandidatoExperienciasSection({
     isViewMode = false,
     pendingExperiencias,
     setPendingExperiencias,
-    showAlert
+    showAlert,
+    onRequestEdit
 }: CandidatoExperienciasSectionProps) {
     const [experienciasList, setExperienciasList] = useState<any[]>([])
     const [loadingExp, setLoadingExp] = useState(false)
@@ -400,22 +402,26 @@ export function CandidatoExperienciasSection({
                                         </p>
                                         <p className="text-[9px] font-black text-purple-400 uppercase tracking-wider">{calcTempo(item.data_inicio, item.data_fim)}</p>
                                     </div>
-                                    {!isViewMode && (
+                                    {(onRequestEdit || !isViewMode) && (
                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
-                                                onClick={() => handleEditExperiencia(item)}
-                                                className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"
+                                                type="button"
+                                                onClick={(e) => { e.preventDefault(); if (isViewMode && onRequestEdit) { onRequestEdit(); } else { handleEditExperiencia(item); } }}
+                                                className="pointer-events-auto p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors z-10"
                                                 title="Editar"
                                             >
                                                 <Edit2 className="h-4 w-4" />
                                             </button>
-                                            <button
-                                                onClick={() => handleDeleteExperiencia(item.id, item.temp_id)}
-                                                className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                                                title="Excluir"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
+                                            {!isViewMode && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.preventDefault(); handleDeleteExperiencia(item.id, item.temp_id); }}
+                                                    className="pointer-events-auto p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors z-10"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                 </div>

@@ -11,6 +11,7 @@ interface DadosEscolaridadeSectionProps {
     handleRefresh?: () => void
     isViewMode?: boolean
     changedFields?: string[]
+    onRequestEdit?: () => void
 }
 
 const semestres = ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período', '6º Período', '7º Período', '8º Período', '9º Período', '10º Período']
@@ -28,7 +29,7 @@ const ESTADOS_BRASIL = [
     { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }
 ]
 
-export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isViewMode = false, changedFields = [] }: DadosEscolaridadeSectionProps) {
+export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isViewMode = false, changedFields = [], onRequestEdit }: DadosEscolaridadeSectionProps) {
     const isChanged = (field: string) => changedFields.includes(field)
     const highlightClass = 'ring-2 ring-amber-400 border-amber-300 bg-amber-50/30'
     const [institutions, setInstitutions] = useState<{ id: string, uf: string, name: string }[]>([])
@@ -300,14 +301,16 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                             {item.turno && <span className="flex items-center gap-1"><span className="text-gray-400">Turno:</span> <span className="text-[#1e3a8a]">{item.turno}</span></span>}
                                         </div>
                                     </div>
-                                    {!isViewMode && (
+                                    {(onRequestEdit || !isViewMode) && (
                                         <div className="absolute top-4 right-4 flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button type="button" onClick={() => toggleEdit(item.id, true)} className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 bg-white border border-gray-200 shadow-sm rounded-lg transition-colors" title="Editar">
+                                            <button type="button" onClick={(e) => { e.preventDefault(); if (isViewMode && onRequestEdit) { onRequestEdit(); } else { toggleEdit(item.id, true); } }} className="pointer-events-auto p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 bg-white border border-gray-200 shadow-sm rounded-lg transition-colors z-10" title="Editar">
                                                 <Edit2 className="h-4 w-4" />
                                             </button>
-                                            <button type="button" onClick={() => handleRemoveEducation(item.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 bg-white border border-gray-200 shadow-sm rounded-lg transition-colors" title="Remover">
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
+                                            {!isViewMode && (
+                                                <button type="button" onClick={(e) => { e.preventDefault(); handleRemoveEducation(item.id); }} className="pointer-events-auto p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 bg-white border border-gray-200 shadow-sm rounded-lg transition-colors z-10" title="Remover">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                 </div>
