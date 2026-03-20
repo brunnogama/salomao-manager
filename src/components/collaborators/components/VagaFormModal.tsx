@@ -345,7 +345,6 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, on
                 delete payload.vaga_id_text;
             }
             // Remove fields that are UI-only and not in the vagas table
-            delete payload.entrevistados;
             delete payload.role;
             delete payload.location;
             delete payload.atuacao;
