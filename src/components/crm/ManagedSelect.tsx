@@ -20,6 +20,7 @@ interface ManagedSelectProps {
     extraInsertFields?: Record<string, any>
     // Column used to display and insert the item name (defaults to 'name')
     nameColumn?: string
+    className?: string
 }
 
 interface Item {
@@ -41,7 +42,8 @@ export function ManagedSelect({
     filter,
     clientFilter,
     extraInsertFields,
-    nameColumn = 'name'
+    nameColumn = 'name',
+    className
 }: ManagedSelectProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [isManaging, setIsManaging] = useState(false)
@@ -221,6 +223,7 @@ export function ManagedSelect({
               flex items-center justify-between transition-all outline-none
               ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-blue-300'}
               ${isOpen ? 'border-blue-500 ring-2 ring-blue-500/10' : ''}
+              ${className || ''}
             `}
                     >
                         <span className={value ? 'text-gray-700' : 'text-gray-400'}>

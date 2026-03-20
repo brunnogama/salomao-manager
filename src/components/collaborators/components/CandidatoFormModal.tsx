@@ -111,6 +111,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, label?: string, tempId: string, atestadoDatas?: { inicio: string, fim: string } }[]>([])
     const [pendingHistorico, setPendingHistorico] = useState<any[]>([])
     const [pendingExperiencias, setPendingExperiencias] = useState<any[]>([])
+    const [missingFields, setMissingFields] = useState<string[]>([])
     const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, title: string, message: string, type: 'success' | 'warning' | 'error' }>({ isOpen: false, title: '', message: '', type: 'success' })
 
     const showAlert = (title: string, message: string, type: 'success' | 'warning' | 'error') => {
@@ -482,14 +483,21 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     }
 
     const handleSave = async () => {
-        // Basic validation
-        if (!formData.name && !formData.nome) {
-            showAlert('Atenção', 'Nome do candidato é obrigatório.', 'warning')
-            return
-        }
-        if (!formData.gender) {
-            showAlert('Atenção', 'O campo Gênero é obrigatório.', 'warning')
-            return
+        // Validation for mandatory fields
+        const missing: string[] = [];
+        const missingLabels: string[] = [];
+
+        if (!formData.name && !formData.nome) { missing.push('name'); missingLabels.push('Nome do Candidato'); }
+        if (!formData.gender) { missing.push('gender'); missingLabels.push('Gênero'); }
+        if (!formData.area) { missing.push('area'); missingLabels.push('Área'); }
+        if (!formData.role) { missing.push('role'); missingLabels.push('Cargo Pretendido'); }
+        if (!formData.local) { missing.push('local'); missingLabels.push('Local'); }
+
+        setMissingFields(missing);
+
+        if (missing.length > 0) {
+            showAlert('Campos Obrigatórios', `Por favor, preencha os seguintes campos antes de salvar:\n\n${missingLabels.map(l => `• ${l}`).join('\n')}`, 'warning');
+            return;
         }
 
         // Validate institutions in education_history
@@ -1188,6 +1196,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             maskCNPJ={maskCNPJ}
                             isViewMode={viewMode}
                             hideBankingAndEmergency={true}
+                            missingFields={missingFields}
                         />
                         <EnderecoSection
                             formData={formData}
@@ -1205,6 +1214,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             formData={formData}
                             setFormData={setFormData}
                             isViewMode={viewMode}
+                            missingFields={missingFields}
                         />
                     </div>
                 )}

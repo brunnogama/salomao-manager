@@ -16,6 +16,7 @@ interface DadosPessoaisSectionProps {
   isViewMode?: boolean
   hideBankingAndEmergency?: boolean
   changedFields?: string[]
+  missingFields?: string[]
 }
 
 export function DadosPessoaisSection({
@@ -28,11 +29,14 @@ export function DadosPessoaisSection({
   maskCNPJ,
   isViewMode = false,
   hideBankingAndEmergency = false,
-  changedFields = []
+  changedFields = [],
+  missingFields = []
 }: DadosPessoaisSectionProps) {
   const [bancos, setBancos] = useState<{ name: string }[]>([])
   const isChanged = (field: string) => changedFields.includes(field)
+  const isMissing = (field: string) => missingFields.includes(field)
   const highlightClass = 'ring-2 ring-amber-400 border-amber-300 bg-amber-50/30'
+  const errorClass = 'ring-2 ring-red-500 border-red-500 bg-red-50'
 
   useEffect(() => {
     fetch('https://brasilapi.com.br/api/banks/v1')
@@ -55,11 +59,11 @@ export function DadosPessoaisSection({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Nome Completo - Mapeado para 'name' */}
         <div className="md:col-span-3">
-          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-            Nome Completo
+          <label className={`block text-[9px] font-black uppercase tracking-widest mb-2 ${isMissing('name') ? 'text-red-500' : 'text-gray-400'}`}>
+            Nome Completo <span className="text-red-500 text-sm ml-0.5">*</span>
           </label>
           <input
-            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''} ${isChanged('name') ? highlightClass : ''}`}
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''} ${isMissing('name') ? errorClass : isChanged('name') ? highlightClass : ''}`}
             value={formData.name || ''}
             onChange={e => setFormData({ ...formData, name: e.target.value })}
             disabled={isViewMode}
@@ -69,13 +73,15 @@ export function DadosPessoaisSection({
 
         {/* Gênero - Mapeado para 'gender' */}
         <div className="md:col-span-1">
+          <label className={`block text-[9px] font-black uppercase tracking-widest mb-2 ${isMissing('gender') ? 'text-red-500' : 'text-gray-400'}`}>
+            Gênero <span className="text-red-500 text-sm ml-0.5">*</span>
+          </label>
           <SearchableSelect
-            label="Gênero"
             value={formData.gender || ''}
             onChange={v => setFormData({ ...formData, gender: v })}
             options={[{ name: 'Masculino' }, { name: 'Feminino' }, { name: 'Outro' }]}
             disabled={isViewMode}
-            className="searchable-select-container"
+            className={`searchable-select-container ${isMissing('gender') ? 'ring-2 ring-red-500 border-red-500 bg-red-50 rounded-xl' : ''}`}
           />
         </div>
 

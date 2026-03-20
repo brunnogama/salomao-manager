@@ -8,11 +8,14 @@ interface DadosProfissionaisCandidatoProps {
     formData: any
     setFormData: (data: any) => void
     isViewMode?: boolean
+    missingFields?: string[]
 }
 
 export function DadosProfissionaisCandidato({
-    formData, setFormData, isViewMode = false
+    formData, setFormData, isViewMode = false, missingFields = []
 }: DadosProfissionaisCandidatoProps) {
+    const isMissing = (field: string) => missingFields.includes(field)
+    const errorClass = 'ring-2 ring-red-500 border-red-500 bg-red-50 rounded-xl'
 
     return (
         <div className="space-y-6">
@@ -27,12 +30,15 @@ export function DadosProfissionaisCandidato({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="relative z-[120]">
+                        <label className={`block text-[9px] font-black uppercase tracking-widest mb-2 ${isMissing('area') ? 'text-red-500' : 'text-gray-400'}`}>
+                            Área <span className="text-red-500 text-sm ml-0.5">*</span>
+                        </label>
                         <SearchableSelect
-                            label="Área"
                             value={formData.area || ''}
                             onChange={v => setFormData({ ...formData, area: v })}
                             options={[{ id: 'Administrativa', name: 'Administrativa' }, { id: 'Jurídica', name: 'Jurídica' }]}
                             disabled={isViewMode}
+                            className={isMissing('area') ? errorClass : ''}
                         />
                     </div>
 
@@ -54,12 +60,15 @@ export function DadosProfissionaisCandidato({
                     </div>
 
                     <div className="relative z-[118]">
+                        <label className={`block text-[9px] font-black uppercase tracking-widest mb-2 ${isMissing('role') ? 'text-red-500' : 'text-gray-400'}`}>
+                            Cargo Pretendido <span className="text-red-500 text-sm ml-0.5">*</span>
+                        </label>
                         <ManagedSelect
-                            label="Cargo Pretendido"
                             value={formData.role || ''}
                             onChange={v => setFormData({ ...formData, role: v })}
                             tableName="roles"
                             disabled={isViewMode}
+                            className={isMissing('role') ? errorClass : ''}
                             clientFilter={(item: any) => {
                                 const roleName = item.name;
                                 if (formData.area === 'Jurídica') return CARGOS_JURIDICA.includes(roleName);
@@ -70,12 +79,15 @@ export function DadosProfissionaisCandidato({
                     </div>
 
                     <div className="relative z-[117]">
+                        <label className={`block text-[9px] font-black uppercase tracking-widest mb-2 ${isMissing('local') ? 'text-red-500' : 'text-gray-400'}`}>
+                            Local <span className="text-red-500 text-sm ml-0.5">*</span>
+                        </label>
                         <ManagedSelect
-                            label="Local"
                             value={formData.local || ''}
                             onChange={v => setFormData({ ...formData, local: v })}
                             tableName="locations"
                             disabled={isViewMode}
+                            className={isMissing('local') ? errorClass : ''}
                         />
                     </div>
                 </div>
