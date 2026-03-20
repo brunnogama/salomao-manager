@@ -36,6 +36,7 @@ import { SearchableSelect } from '../../crm/SearchableSelect'
 import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { differenceInDays, differenceInMonths, isValid } from 'date-fns'
 import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA } from '../utils/cargosAtuacoesUtils'
+import { formatPerfilTag } from '../utils/colaboradoresUtils'
 import { CollaboratorModalLayout } from './CollaboratorLayouts'
 
 interface VagaFormModalProps {
@@ -131,6 +132,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
     const [availableTags, setAvailableTags] = useState<{ tag: string, area?: string }[]>([])
     const [tagDropdownSearch, setTagDropdownSearch] = useState('')
     const [dropdownTop, setDropdownTop] = useState(0)
+    const [initialTags, setInitialTags] = useState<string[]>([])
     const perfilTextareaRef = useRef<HTMLTextAreaElement>(null)
 
     // Data for UI lookup
@@ -187,6 +189,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                     perfil: '',
                     entrevistados: []
                 })
+                setInitialTags([])
                 setError(null)
             }
         }
@@ -232,6 +235,10 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
             if (dbError) throw dbError
 
             setFormData(data || { entrevistados: [] })
+            if (data) {
+                const loadedTags = (data.perfil || '').split('\n').map((t: string) => formatPerfilTag(t)).filter((x: string) => !!x);
+                setInitialTags(Array.from(new Set<string>(loadedTags)));
+            }
         } catch (err: any) {
             console.error('Error fetching vaga:', err)
             setError('Erro ao carregar dados da vaga.')
@@ -368,10 +375,12 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
             }
 
             if (payload.perfil) {
-                const lines = payload.perfil.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
-                if (lines.length > 0) {
-                    const areaForTags = payload.area || null;
-                    const tagsToInsert = lines.map((t: string) => ({ tag: t, area: areaForTags }));
+                const formattedLines = payload.perfil.split('\n').map((l: string) => formatPerfilTag(l)).filter((l: string) => l.length > 0);
+                payload.perfil = formattedLines.join('\n');
+                const areaForTags = payload.area || null;
+                const manualNewTags = formattedLines.filter((t: string) => !initialTags.includes(t));
+                if (manualNewTags.length > 0) {
+                    const tagsToInsert = manualNewTags.map((t: string) => ({ tag: t, area: areaForTags }));
                     const { error: tagError } = await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
                     if (tagError) console.error("Error upserting tags", tagError);
                 }

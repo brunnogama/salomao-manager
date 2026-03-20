@@ -25,7 +25,8 @@ import {
     formatPhoneDisplay,
     formatNameDisplay,
     formatDateFieldToDisplay,
-    toTitleCase
+    toTitleCase,
+    formatPerfilTag
 } from '../utils/colaboradoresUtils'
 import { ATUACOES_ADMINISTRATIVA, ATUACOES_JURIDICA } from '../utils/cargosAtuacoesUtils'
 
@@ -66,12 +67,13 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
     const [aiLoading, setAiLoading] = useState(false)
     const [formData, setFormData] = useState<Partial<any>>({})
 
-    // Tagging system state
     const [isTagging, setIsTagging] = useState(false)
     const [tagSearch, setTagSearch] = useState('')
     const [tagInputValue, setTagInputValue] = useState('')
     const [availableTags, setAvailableTags] = useState<string[]>([])
     const [tagDropdownSearch, setTagDropdownSearch] = useState('')
+    const [initialTags, setInitialTags] = useState<string[]>([])
+    const [aiGeneratedTags, setAiGeneratedTags] = useState<string[]>([])
 
     const [showReprovadoModal, setShowReprovadoModal] = useState(false)
     const [tempReprovadoMotivo, setTempReprovadoMotivo] = useState('')
@@ -253,11 +255,24 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 }
                 setGedDocs([]);
 
+                // Set initial tags so they aren't duplicated later
+                const mergedTags = (initialData.perfilTags || []).map(formatPerfilTag).filter((x: string) => !!x)
+                if (initialData.experiencias && Array.isArray(initialData.experiencias)) {
+                    initialData.experiencias.forEach((e: any) => {
+                        if (e.descricao) {
+                            mergedTags.push(...e.descricao.split('\n').map(formatPerfilTag).filter((x: string) => !!x))
+                        }
+                    })
+                }
+                setInitialTags(Array.from(new Set<string>(mergedTags)))
+
             } else {
                 setFormData({})
                 setGedDocs([])
                 setPhotoPreview(null)
                 setSelectedPhotoFile(null)
+                setInitialTags([])
+                setAiGeneratedTags([])
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -305,6 +320,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 if (data.city) data.city = toTitleCase(data.city);
                 if (data.address_complement) data.address_complement = toTitleCase(data.address_complement);
                 if (data.indicado_por) data.indicado_por = toTitleCase(data.indicado_por);
+                setInitialTags((data.perfil || '').split('\n').map(formatPerfilTag).filter((x: string) => !!x));
             }
             setFormData(data)
         } catch (error) {
@@ -400,6 +416,9 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         tempTags.push(`Cargo sugerido: ${sugestaoCargo}`);
                     }
                     const newTagsArray = [...new Set([...currentTags, ...tempTags])];
+
+                    const aiTagsFormatted = tempTags.map(formatPerfilTag).filter((x: string) => !!x);
+                    setAiGeneratedTags(prev => Array.from(new Set<string>([...prev, ...aiTagsFormatted])));
 
                     return {
                         ...prev,
@@ -615,9 +634,12 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
             // Extract tags from form data and upsert to perfil_tags
             if (cleanPayload.perfil) {
-                const lines = payload.perfil.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
-                if (lines.length > 0) {
-                    const tagsToInsert = lines.map((t: string) => ({ tag: t }));
+                const formattedLines = payload.perfil.split('\n').map(formatPerfilTag).filter((l: string) => l.length > 0);
+                cleanPayload.perfil = formattedLines.join('\n');
+                
+                const manualNewTags = formattedLines.filter((t: string) => !initialTags.includes(t) && !aiGeneratedTags.includes(t));
+                if (manualNewTags.length > 0) {
+                    const tagsToInsert = manualNewTags.map((t: string) => ({ tag: t }));
                     const { error: tagError } = await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
                     if (tagError) console.error("Error upserting tags", tagError);
                 }
@@ -681,11 +703,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
                 for (const exp of pendingExperiencias) {
                     if (exp.perfil) {
-                        const lines = exp.perfil.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
-                        if (lines.length > 0) {
-                            const tagsToInsert = lines.map((t: string) => ({ tag: t }));
-                            await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
-                        }
+                        const lines = exp.perfil.split('\n').map(formatPerfilTag).filter((l: string) => l.length > 0);
+                        exp.perfil = lines.join('\n');
+                        // Intentionally skipping upsert into perfil_tags here to keep AI extracted experience descriptions
+                        // from polluting the suggestion dropdowns.
                     }
                 }
             }
