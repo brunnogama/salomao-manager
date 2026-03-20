@@ -462,16 +462,6 @@ export function ContractFormModal(props: Props) {
             const {
               id,
               created_at,
-              author_cnpj,
-              opponent_cnpj,
-              cause_value,
-              value_of_cause,
-              author,
-              vara,
-              comarca,
-              subject,
-              magistrates,
-              position,
               ...rest
             } = p as any;
 
