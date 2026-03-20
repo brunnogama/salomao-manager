@@ -252,10 +252,6 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 }
                 setGedDocs([]);
 
-                // Show AI review warning
-                setTimeout(() => {
-                    showAlert('Atenção', 'Os dados foram preenchidos pela Inteligência Artificial.\n\nPor favor, revise atentamente as informações em todas as abas antes de salvar o cadastro definitivo.', 'warning');
-                }, 500);
             } else {
                 setFormData({})
                 setGedDocs([])
@@ -486,6 +482,37 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
         if (!formData.gender) {
             showAlert('Atenção', 'O campo Gênero é obrigatório.', 'warning')
             return
+        }
+
+        // Validate institutions in education_history
+        const educationHistory = formData.education_history || [];
+        if (educationHistory.length > 0) {
+            const entriesWithInst = educationHistory.filter((e: any) => e.instituicao && e.instituicao.trim() && e.instituicao_uf);
+            if (entriesWithInst.length > 0) {
+                try {
+                    const { data: allInstitutions } = await supabase.rpc('get_education_institutions');
+                    const invalidEntries: string[] = [];
+                    for (const entry of entriesWithInst) {
+                        const found = (allInstitutions || []).some((inst: any) =>
+                            inst.uf === entry.instituicao_uf && inst.name === entry.instituicao
+                        );
+                        if (!found) {
+                            invalidEntries.push(entry.instituicao);
+                        }
+                    }
+                    if (invalidEntries.length > 0) {
+                        showAlert(
+                            'Instituição não encontrada',
+                            `As seguintes instituições não foram encontradas na base de dados:\n\n${invalidEntries.map((i: string) => `• ${i}`).join('\n')}\n\nVá até a aba "Escolaridade" e selecione a instituição correta da lista, ou utilize o botão "+ Adicionar" para cadastrá-la.`,
+                            'warning'
+                        );
+                        setActiveTab(3);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Erro ao validar instituições:', e);
+                }
+            }
         }
 
         try {
