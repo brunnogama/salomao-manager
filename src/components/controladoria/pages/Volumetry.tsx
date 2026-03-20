@@ -255,7 +255,13 @@ const UfTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-function UfChartSection({ processes, isPartnerFiltered }: { processes: any[], isPartnerFiltered: boolean }) {
+const toTitleCase = (str: string) => {
+  let n = str.trim().toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
+  if (n === 'Luiz Henrique Pavan') n = 'Luiz Henrique Miguel Pavan';
+  return n;
+};
+
+function UfChartSection({ processes, isPartnerFiltered, leaderPartners }: { processes: any[], isPartnerFiltered: boolean, leaderPartners: Record<string, string> }) {
   const { valid, missingUf, chartData, validAtivos, validArquivados, socioMatrix, mainUfNames, hasSmallUfs } = useMemo(() => {
     let missingUfCount = 0;
     let validAtivosCount = 0;
@@ -272,7 +278,8 @@ function UfChartSection({ processes, isPartnerFiltered }: { processes: any[], is
       
       const sigla = getUfSigla(rawUf);
       const isAtivo = p.status?.toLowerCase() === 'ativo';
-      const socioStr = p["Sócio"] || "Sem Sócio Definido";
+      const leaderName = toTitleCase(p.responsavel_principal || '');
+      const socioStr = leaderPartners[leaderName] || "Sem Sócio Definido";
 
       if (!ufMap[sigla]) {
         ufMap[sigla] = { ativos: 0, arquivados: 0, originalNames: new Set(), bySocio: {} };
@@ -366,7 +373,7 @@ function UfChartSection({ processes, isPartnerFiltered }: { processes: any[], is
       mainUfNames,
       hasSmallUfs
     };
-  }, [processes]);
+  }, [processes, isPartnerFiltered, leaderPartners]);
 
   return (
     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col xl:flex-row gap-8 items-stretch mt-2">
@@ -486,12 +493,6 @@ function UfChartSection({ processes, isPartnerFiltered }: { processes: any[], is
     </div>
   )
 }
-
-const toTitleCase = (str: string) => {
-  let n = str.trim().toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
-  if (n === 'Luiz Henrique Pavan') n = 'Luiz Henrique Miguel Pavan';
-  return n;
-};
 
 export function Volumetry() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'processos'>('dashboard');
@@ -1235,7 +1236,7 @@ export function Volumetry() {
           <LifeCycleSection processes={lifeCycleProcesses} />
 
           {/* Distribuição por UF */}
-          <UfChartSection processes={lifeCycleProcesses} isPartnerFiltered={partnerFilter.length > 0} />
+          <UfChartSection processes={lifeCycleProcesses} isPartnerFiltered={partnerFilter.length > 0} leaderPartners={leaderPartners} />
 
           {/* Qualidade da Base */}
           {!loading && processes.length > 0 && (
