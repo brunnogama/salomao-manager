@@ -635,6 +635,7 @@ export function TabelasTab() {
                                         <thead>
                                             <tr className="bg-gray-50 border-b border-gray-200">
                                                 <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider w-1/3">Cargo</th>
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">Tags {selectedPartnerId ? '(Perfil p/ Sócio)' : selectedLeaderId ? '(Perfil p/ Líder)' : '(Perfil Padrão)'}</th>
                                                 <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider text-right w-24">Ações</th>
                                             </tr>
                                         </thead>
