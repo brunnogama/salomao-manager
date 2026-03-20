@@ -286,11 +286,11 @@ function UfChartSection({ processes, isPartnerFiltered, leaderPartners }: { proc
       }
 
       ufMap[sigla].originalNames.add(p.uf.trim());
-      ufMap[sigla].bySocio[socioStr] = (ufMap[sigla].bySocio[socioStr] || 0) + 1;
 
       if (isAtivo) {
         ufMap[sigla].ativos++;
         validAtivosCount++;
+        ufMap[sigla].bySocio[socioStr] = (ufMap[sigla].bySocio[socioStr] || 0) + 1;
       } else {
         ufMap[sigla].arquivados++;
         validArquivadosCount++;
@@ -446,7 +446,10 @@ function UfChartSection({ processes, isPartnerFiltered, leaderPartners }: { proc
            <div className="p-1.5 bg-indigo-100 rounded-md">
              <Briefcase className="w-3.5 h-3.5 text-indigo-700" />
            </div>
-           <h3 className="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-none">Distribuição de Sócios {'>'} UFs</h3>
+           <h3 className="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-none flex items-center gap-1.5">
+             Distribuição de Sócios {'>'} UFs
+             <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[8px] font-black tracking-wider tooltip" title="Apenas considerando processos ativos">APENAS ATIVOS</span>
+           </h3>
         </div>
         
         <div className="flex-1 overflow-auto styled-scrollbar custom-scrollbar max-h-[300px]">
