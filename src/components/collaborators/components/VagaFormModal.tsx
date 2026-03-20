@@ -36,7 +36,7 @@ import { SearchableSelect } from '../../crm/SearchableSelect'
 import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { differenceInDays, differenceInMonths, isValid } from 'date-fns'
 import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA } from '../utils/cargosAtuacoesUtils'
-import { formatPerfilTag } from '../utils/colaboradoresUtils'
+import { formatPerfilTag, parseRoleTags } from '../utils/colaboradoresUtils'
 import { CollaboratorModalLayout } from './CollaboratorLayouts'
 
 interface VagaFormModalProps {
@@ -141,6 +141,10 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
     const [hiringReasons, setHiringReasons] = useState<{id: string, name: string}[]>([])
     const [availableCandidates, setAvailableCandidates] = useState<any[]>([])
     
+    // Auto-fill role tags state
+    const [cachedRoleData, setCachedRoleData] = useState<Record<string, string> | null>(null);
+    const [autoFilledTags, setAutoFilledTags] = useState<string>('');
+
     // UI state for Candidatos tab
     const [selectedCandidateToAdd, setSelectedCandidateToAdd] = useState('')
 
@@ -191,9 +195,30 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                 })
                 setInitialTags([])
                 setError(null)
+                setCachedRoleData(null)
+                setAutoFilledTags('')
             }
         }
     }, [isOpen, vagaId])
+
+    useEffect(() => {
+        if (!cachedRoleData) return;
+        
+        let specificTags = cachedRoleData.general || '';
+        if (formData.partner_id && cachedRoleData[`socio:${formData.partner_id}`]) {
+            specificTags = cachedRoleData[`socio:${formData.partner_id}`];
+        } else if (formData.leader_id && cachedRoleData[`lider:${formData.leader_id}`]) {
+            specificTags = cachedRoleData[`lider:${formData.leader_id}`];
+        }
+
+        const currentPerfil = formData.perfil ? formData.perfil.trim() : '';
+        const isSafeToOverride = currentPerfil === '' || currentPerfil === autoFilledTags;
+
+        if (isSafeToOverride && specificTags !== currentPerfil) {
+            setFormData(prev => ({ ...prev, perfil: specificTags }));
+            setAutoFilledTags(specificTags);
+        }
+    }, [formData.partner_id, formData.leader_id, cachedRoleData]);
 
     const fetchTags = async () => {
         try {
@@ -652,27 +677,25 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                                                     onChange={async (v) => {
                                                         if (!v) {
                                                             setFormData({ ...formData, role_id: v });
+                                                            setCachedRoleData(null);
                                                             return;
                                                         }
-                                                        if (!formData.perfil || formData.perfil.trim() === '') {
-                                                            try {
-                                                                const { data, error } = await supabase
-                                                                    .from('roles')
-                                                                    .select('default_tags')
-                                                                    .eq('id', v)
-                                                                    .single();
+                                                        setFormData({ ...formData, role_id: v });
+                                                        try {
+                                                            const { data, error } = await supabase
+                                                                .from('roles')
+                                                                .select('default_tags')
+                                                                .eq('id', v)
+                                                                .single();
 
-                                                                if (!error && data && data.default_tags) {
-                                                                    setFormData({ ...formData, role_id: v, perfil: data.default_tags });
-                                                                } else {
-                                                                    setFormData({ ...formData, role_id: v });
-                                                                }
-                                                            } catch (err) {
-                                                                console.error("Error fetching role default tags:", err);
-                                                                setFormData({ ...formData, role_id: v });
+                                                            if (!error && data && data.default_tags) {
+                                                                setCachedRoleData(parseRoleTags(data.default_tags));
+                                                            } else {
+                                                                setCachedRoleData(null);
                                                             }
-                                                        } else {
-                                                            setFormData({ ...formData, role_id: v });
+                                                        } catch (err) {
+                                                            console.error("Error fetching role default tags:", err);
+                                                            setCachedRoleData(null);
                                                         }
                                                     }}
                                                     tableName="roles"

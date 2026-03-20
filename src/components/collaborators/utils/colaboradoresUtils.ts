@@ -42,6 +42,23 @@ export const formatPerfilTag = (tag: string) => {
   }).filter(Boolean).join(' ');
 }
 
+export const parseRoleTags = (raw: string | undefined | null): Record<string, string> => {
+  if (!raw) return { general: '' };
+  try {
+      const trimmed = raw.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+          return JSON.parse(trimmed);
+      }
+  } catch (e) {
+      console.warn("Failed to parse role tags as JSON, falling back to general string", e);
+  }
+  return { general: raw };
+}
+
+export const stringifyRoleTags = (obj: Record<string, string>): string => {
+  return JSON.stringify(obj);
+}
+
 export const formatDateDisplay = (str?: string) => {
   if (!str) return '-'
   const date = new Date(str)
