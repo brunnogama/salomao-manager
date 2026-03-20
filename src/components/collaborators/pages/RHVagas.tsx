@@ -29,7 +29,6 @@ import {
   Folder,
   Globe,
   UsersRound,
-  UserRound,
   ChartPie,
   Package,
   Baby,
@@ -177,7 +176,7 @@ const getRoleAppearance = (roleName: string, atuacaoStr?: string, areaStr?: stri
   const norm = ((roleName || '') + ' ' + (atuacaoStr || '')).toLowerCase();
   
   let Icon = Briefcase;
-  let colorClass = 'bg-slate-50 text-slate-600 border-slate-200';
+  let colorClass = 'bg-slate-500 text-white border-slate-400 shadow-md shadow-slate-200/50';
 
   if (norm.includes('gerente de rh') || norm.includes('gerente recursos humanos')) {
     Icon = UsersRound;
@@ -235,10 +234,13 @@ const getRoleAppearance = (roleName: string, atuacaoStr?: string, areaStr?: stri
   }
   
   const areaNorm = (areaStr || '').toLowerCase();
+  // Using exact UI as requested:
+  // Administrativa uses the amber scheme from CANDIDATO modal.
+  // Juridica uses the dark blue scheme from VAGA modal.
   if (areaNorm.includes('jurídica') || areaNorm.includes('juridica')) {
-    colorClass = 'bg-blue-50 text-blue-600 border-blue-200';
+    colorClass = 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-lg group-hover:shadow-blue-300/50';
   } else if (areaNorm.includes('administrativa') || areaNorm.includes('administrativo')) {
-    colorClass = 'bg-orange-50 text-orange-600 border-orange-200';
+    colorClass = 'bg-amber-600 text-white border-amber-600 shadow-lg group-hover:shadow-amber-300/50';
   }
 
   return { Icon, colorClass };
@@ -1574,9 +1576,10 @@ export function RHVagas() {
                           // Vou assumir que se ele está marcado como "Aprovado" ou vinculado a uma vaga fechada, ou se já existe na tabela de collaborators.
                           // Vou precisar atualizar a query inicial de fetchCandidatos para trazer essa info.
 
-                          // Find names for role and local from options if they are just IDs
                           const roleName = roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-';
                           const localName = locationOptions.find(l => String(l.value) === String(c.local))?.label || c.local || '-';
+                          const appearance = getRoleAppearance(roleName, '', c.area);
+                          const IconComponent = appearance.Icon;
 
                           return (
                             <tr key={c.id} onClick={() => handleOpenCandidatoViewModal(c.id)} className={`hover:bg-blue-50/50 cursor-pointer transition-colors group ${activeTab === 'reprovados' ? 'bg-red-50/30' : ''} ${selectedCandidates.includes(c.id) ? 'bg-blue-50/80' : ''}`}>
@@ -1596,11 +1599,11 @@ export function RHVagas() {
                               </td>
                               <td className="px-3 py-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center border-2 border-white shadow-sm">
+                                  <div className={`flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden flex items-center justify-center border-2 border-white shadow-sm transition-all ${appearance.colorClass}`}>
                                     {c.photo_url || c.foto_url ? (
                                       <img src={c.photo_url || c.foto_url} alt={c.nome} className="h-full w-full object-cover" />
                                     ) : (
-                                      <UserRound className="w-5 h-5 text-white/90" />
+                                      <IconComponent className="w-5 h-5 md:w-6 md:h-6 text-white stroke-[2.5px] drop-shadow-sm" />
                                     )}
                                   </div>
                                   <div className="min-w-0 flex-1">
