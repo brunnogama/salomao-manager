@@ -70,10 +70,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
     const handleAddInstitution = async (name: string, uf: string) => {
         try {
             const { data, error } = await supabase
-                .from('education_institutions')
-                .insert({ name, uf })
-                .select()
-                .single();
+                .rpc('add_education_institution', { p_name: name, p_uf: uf });
             if (error) throw error;
             if (data) {
                 setInstitutions(prev => [...prev, { id: data.id, uf, name }]);
