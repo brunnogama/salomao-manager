@@ -287,7 +287,7 @@ export function TabelasTab() {
 
         const text = e.target.value;
         const position = e.target.selectionStart;
-        setEditingRole({ ...editingRole, default_tags: text });
+        setEditingTagsValue(text);
 
         const lastAtSymbol = text.lastIndexOf('@', position - 1);
         const lastNewLine = text.lastIndexOf('\n', position - 1);
@@ -311,16 +311,16 @@ export function TabelasTab() {
     };
 
     const insertRoleTag = (tagText: string) => {
-        if (!editingRole || typeof editingRole.default_tags !== 'string') return;
+        if (!editingRole) return;
 
-        const currentText = editingRole.default_tags;
+        const currentText = editingTagsValue;
         const beforeTag = currentText.substring(0, cursorPosition);
         const nextNewLine = currentText.indexOf('\n', cursorPosition);
         const afterTag = nextNewLine !== -1 ? currentText.substring(nextNewLine) : '';
 
         const newText = `${beforeTag}${tagText}${afterTag}`;
 
-        setEditingRole({ ...editingRole, default_tags: newText });
+        setEditingTagsValue(newText);
         setIsTagging(false);
         setTagSearch('');
         setTagDropdownSearch('');
@@ -336,7 +336,11 @@ export function TabelasTab() {
             else if (selectedLeaderId) key = `lider:${selectedLeaderId}`;
 
             let parsed = parseRoleTags(editingRole.default_tags);
-            parsed[key] = editingTagsValue.trim();
+            if (editingTagsValue.trim()) {
+                parsed[key] = editingTagsValue.trim();
+            } else {
+                delete parsed[key];
+            }
             const newDefaultTags = stringifyRoleTags(parsed);
 
             const payload = {
@@ -347,12 +351,12 @@ export function TabelasTab() {
             if (error) throw error;
 
             // Save tags to perfil_tags dictionary if they are new
-            if (editingRole.default_tags) {
+            if (editingTagsValue) {
                 // Determine the area of this role
                 const isJuridico = rolesJuridico.some(r => r.id === editingRole.id);
                 const area = isJuridico ? 'Jurídica' : 'Administrativa';
 
-                const lines = editingRole.default_tags.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                const lines = editingTagsValue.split('\n').map(l => l.trim()).filter(l => l.length > 0);
                 if (lines.length > 0) {
                     const tagsToInsert = lines.map(t => ({ tag: t, area: area }));
                     const { error: tagError } = await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
@@ -947,7 +951,7 @@ export function TabelasTab() {
                                 <div className="relative">
                                 <textarea
                                     ref={tagsTextareaRef}
-                                    value={editingRole?.default_tags || ''}
+                                    value={editingTagsValue}
                                     onChange={handleTagsChange}
                                     placeholder="Descreva as tags (cada linha salva vira uma tag)&#10;Ex:&#10;Experiência no contencioso cível&#10;Legalone&#10;&#10;Dica: Use @ para buscar na nuvem de talentos"
                                     className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm h-48 resize-none"
