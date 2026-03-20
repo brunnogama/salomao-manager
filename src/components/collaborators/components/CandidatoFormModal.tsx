@@ -493,14 +493,94 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 try {
                     const { data: allInstitutions } = await supabase.rpc('get_education_institutions');
                     const invalidEntries: string[] = [];
+                    
+                    const normalizeInst = (name: string) => {
+                        if (!name) return '';
+                        let n = name
+                            .toLowerCase()
+                            .normalize('NFD') // remove accents
+                            .replace(/[\u0300-\u036f]/g, '')
+                            .replace(/[^\w\s]/gi, ' ') // replace punctuation with spaces
+                            .replace(/\s+/g, ' ') // collapse multiple spaces
+                            .trim();
+
+                        const abbreviations = [
+                            [/\b(un|univ)\b/g, 'universidade'],
+                            [/\b(inst|instit)\b/g, 'instituto'],
+                            [/\bfed\b/g, 'federal'],
+                            [/\best\b/g, 'estadual'],
+                            [/\bcat\b/g, 'catolica'],
+                            [/\bpont\b/g, 'pontificia'],
+                            [/\bfac\b/g, 'faculdade'],
+                            [/\bcentro univ\b/g, 'centro universitario'],
+                        ];
+
+                        for (const [regex, full] of abbreviations) {
+                            n = n.replace(regex as RegExp, full as string);
+                        }
+
+                        n = n.replace(/\b(de|da|do|das|dos|e|em|no|na)\b/g, ' ');
+                        n = n.replace(/\s+/g, ' ').trim();
+                        return n;
+                    };
+
                     for (const entry of entriesWithInst) {
-                        const found = (allInstitutions || []).some((inst: any) =>
-                            inst.uf === entry.instituicao_uf && inst.name === entry.instituicao
-                        );
+                        const entryNorm = normalizeInst(entry.instituicao);
+                        let matchedDbInst = null;
+                        
+                        const found = (allInstitutions || []).some((inst: any) => {
+                            if (inst.uf !== entry.instituicao_uf) return false;
+                            
+                            const instNorm = normalizeInst(inst.name);
+                            if (instNorm === entryNorm) {
+                                matchedDbInst = inst.name;
+                                return true;
+                            }
+                            
+                            const entryWords = entryNorm.split(' ').filter((w: string) => w.length > 0);
+                            const instWords = instNorm.split(' ').filter((w: string) => w.length > 0);
+                            
+                            // Exact acronym
+                            if (entryWords.length === 1 && entryWords[0].length >= 2 && instWords.includes(entryWords[0])) {
+                                matchedDbInst = inst.name;
+                                return true;
+                            }
+                            if (instWords.length === 1 && instWords[0].length >= 2 && entryWords.includes(instWords[0])) {
+                                matchedDbInst = inst.name;
+                                return true;
+                            }
+
+                            if (instNorm.includes(entryNorm) || entryNorm.includes(instNorm)) {
+                                const longer = instNorm.length > entryNorm.length ? instNorm : entryNorm;
+                                const shorter = instNorm.length > entryNorm.length ? entryNorm : instNorm;
+                                const shorterWords = instNorm.length > entryNorm.length ? entryWords : instWords;
+                                
+                                const diff = longer.replace(shorter, '').replace(/\s+/g, '');
+                                
+                                // Restrict false positives if one is just a small abbreviation longer
+                                if (diff.length <= 4) {
+                                    matchedDbInst = inst.name;
+                                    return true;
+                                }
+                                
+                                const acronym = shorterWords.map((w: string) => w[0]).join('');
+                                if (diff === acronym || diff.includes(acronym)) {
+                                    matchedDbInst = inst.name;
+                                    return true;
+                                }
+                            }
+
+                            return false;
+                        });
+
                         if (!found) {
                             invalidEntries.push(entry.instituicao);
+                        } else if (matchedDbInst) {
+                            // Update the entry with the official database name for consistency
+                            entry.instituicao = matchedDbInst;
                         }
                     }
+
                     if (invalidEntries.length > 0) {
                         showAlert(
                             'Instituição não encontrada',
