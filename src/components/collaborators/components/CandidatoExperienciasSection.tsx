@@ -404,14 +404,15 @@ export function CandidatoExperienciasSection({
                                     </div>
                                     {(onRequestEdit || !isViewMode) && (
                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                type="button"
+                                            <div
+                                                role="button"
+                                                tabIndex={0}
                                                 onClick={(e) => { e.preventDefault(); if (isViewMode && onRequestEdit) { onRequestEdit(); } else { handleEditExperiencia(item); } }}
-                                                className="pointer-events-auto p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors z-10"
+                                                className="cursor-pointer pointer-events-auto p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors z-10"
                                                 title="Editar"
                                             >
                                                 <Edit2 className="h-4 w-4" />
-                                            </button>
+                                            </div>
                                             {!isViewMode && (
                                                 <button
                                                     type="button"

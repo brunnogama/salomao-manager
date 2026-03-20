@@ -303,9 +303,9 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                     </div>
                                     {(onRequestEdit || !isViewMode) && (
                                         <div className="absolute top-4 right-4 flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button type="button" onClick={(e) => { e.preventDefault(); if (isViewMode && onRequestEdit) { onRequestEdit(); } else { toggleEdit(item.id, true); } }} className="pointer-events-auto p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 bg-white border border-gray-200 shadow-sm rounded-lg transition-colors z-10" title="Editar">
+                                            <div role="button" tabIndex={0} onClick={(e) => { e.preventDefault(); if (isViewMode && onRequestEdit) { onRequestEdit(); } else { toggleEdit(item.id, true); } }} className="cursor-pointer pointer-events-auto p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 bg-white border border-gray-200 shadow-sm rounded-lg transition-colors z-10" title="Editar">
                                                 <Edit2 className="h-4 w-4" />
-                                            </button>
+                                            </div>
                                             {!isViewMode && (
                                                 <button type="button" onClick={(e) => { e.preventDefault(); handleRemoveEducation(item.id); }} className="pointer-events-auto p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 bg-white border border-gray-200 shadow-sm rounded-lg transition-colors z-10" title="Remover">
                                                     <Trash2 className="h-4 w-4" />
