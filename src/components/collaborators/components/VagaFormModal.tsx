@@ -8,6 +8,7 @@ import {
     Tag,
     Search,
     Info,
+    Loader2,
     Users,
     FileText,
     CheckSquare,
