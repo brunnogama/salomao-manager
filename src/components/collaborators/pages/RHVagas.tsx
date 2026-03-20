@@ -36,7 +36,8 @@ import {
   Car,
   Send,
   Headset,
-  NotebookTabs
+  NotebookTabs,
+  HelpCircle
 } from 'lucide-react'
 // date-fns importado acima do componente junto com as funções utilitárias
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
@@ -173,6 +174,10 @@ const calculateTempoAberto = (data_abertura?: string, data_fechamento?: string) 
 // ==== FIM FUNÇÕES UTILITÁRIAS ====
 
 const getRoleAppearance = (roleName: string, atuacaoStr?: string, areaStr?: string) => {
+  if (!roleName || roleName === '-' || roleName === 'Sem cargo' || roleName === 'Cargo não definido' || roleName.includes('Não localizado')) {
+    return { Icon: HelpCircle, colorClass: 'bg-red-600 text-white border-red-500 shadow-md shadow-red-200/50' };
+  }
+
   const norm = ((roleName || '') + ' ' + (atuacaoStr || '')).toLowerCase();
   
   let Icon = Briefcase;
@@ -1600,11 +1605,7 @@ export function RHVagas() {
                               <td className="px-3 py-4">
                                 <div className="flex items-center gap-3">
                                   <div className={`flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden flex items-center justify-center border-2 border-white shadow-sm transition-all ${appearance.colorClass}`}>
-                                    {c.photo_url || c.foto_url ? (
-                                      <img src={c.photo_url || c.foto_url} alt={c.nome} className="h-full w-full object-cover" />
-                                    ) : (
-                                      <IconComponent className="w-5 h-5 md:w-6 md:h-6 text-white stroke-[2.5px] drop-shadow-sm" />
-                                    )}
+                                    <IconComponent className="w-5 h-5 md:w-6 md:h-6 text-white stroke-[2.5px] drop-shadow-sm" />
                                   </div>
                                   <div className="min-w-0 flex-1">
                                     <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{toTitleCase(c.nome)}</p>

@@ -143,7 +143,7 @@ Por favor, analise o currículo e retorne EXATAMENTE UM JSON válido seguindo a 
     "estado": "Sigla do Estado com 2 letras (Ex: RJ, SP). OBRIGATÓRIO: se souber a cidade, DEDUZA o estado. Ex: Rio de Janeiro=RJ, São Paulo=SP, Niterói=RJ, Curitiba=PR, Belo Horizonte=MG"
   },
   "resumoProfissional": "Resumo em 1 ou no máximo 2 parágrafos potentes relatando o quem é o profissional, histórico, qualificações e seniority.",
-  "sugestaoCargo": "Um nome curto de um cargo focado na experiência detectada.",
+  "sugestaoCargo": "Apenas um dos SEGUINTES cargos EXATOS: 'Analista de RH', 'Analista de TI', 'Analista Financeiro', 'Analista Fiscal', 'Auxiliar Administrativo', 'Auxiliar de Serviços Gerais', 'Consultor de Marketing', 'Controller', 'Coordenador', 'Copeira', 'Diretor Financeiro', 'Gerente de Operações', 'Gerente de TI', 'Gerente de RH', 'Jovem Aprendiz', 'Mensageiro', 'Motorista', 'Portador', 'Recepcionista', 'Secretária', 'Sócio', 'Advogado Júnior I', 'Advogado Júnior II', 'Advogado Júnior III', 'Advogado Pleno I', 'Advogado Pleno II', 'Advogado Pleno III', 'Advogado Sênior I', 'Advogado Sênior II', 'Advogado Sênior III', 'Auxiliar Jurídico', 'Consultor Jurídico', 'Estagiário', 'Paralegal'. IMPORTANTE: 'Estagiária' DEVE ser retornado como 'Estagiário'. Se a experiência não corresponder a NENHUM destes cargos, retorne EXATAMENTE 'Não localizado (Preencher manualmente)'.",
   "perfilTags": ["Habilidade 1", "Habilidade 2", "Tecnologia", "Soft Skill 1"],
   "education_history": [
     {

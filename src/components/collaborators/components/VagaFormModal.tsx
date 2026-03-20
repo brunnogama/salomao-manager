@@ -28,7 +28,8 @@ import {
     Car,
     Send,
     Headset,
-    NotebookTabs
+    NotebookTabs,
+    HelpCircle
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { ManagedSelect } from '../../crm/ManagedSelect'
@@ -50,6 +51,10 @@ interface VagaFormModalProps {
 }
 
 const getRoleAppearance = (roleName: string, atuacaoStr?: string, areaStr?: string) => {
+    if (!roleName || roleName === '-' || roleName === 'Sem cargo' || roleName === 'Cargo não definido' || roleName.includes('Não localizado')) {
+      return { Icon: HelpCircle, colorClass: 'bg-red-600 text-white border-red-500 shadow-md shadow-red-200/50' };
+    }
+
     const norm = ((roleName || '') + ' ' + (atuacaoStr || '')).toLowerCase();
     
     let Icon = Briefcase;
