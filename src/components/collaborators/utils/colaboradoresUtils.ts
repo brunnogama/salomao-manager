@@ -13,10 +13,14 @@ export const ESTADOS_BRASIL = [
 export const toTitleCase = (str: string) => {
   if (!str) return ''
   const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
-  const acronyms = ['clt', 'pj', 'cpf', 'cnpj', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
-  return str.toLowerCase().split(' ').map(word => {
+  const acronyms = ['clt', 'pj', 'cpf', 'cnpj', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps', 'ltda', 'epp', 'eireli', 'cia'];
+  const prepositions = ['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'no', 'na', 'nos', 'nas', 'a', 'o', 'ao', 'ou', 'por', 'para', 'com'];
+  const specialUpper: Record<string, string> = { 's/a': 'S/A', 's.a.': 'S.A.', 'me': 'ME' };
+  return str.toLowerCase().split(' ').map((word, index) => {
+    if (specialUpper[word]) return specialUpper[word];
     if (romanNumerals.includes(word) || acronyms.includes(word)) return word.toUpperCase();
-    return (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
+    if (index > 0 && prepositions.includes(word)) return word;
+    return (word.length > 0) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
   }).join(' ');
 }
 
@@ -55,13 +59,50 @@ export const maskRG = (v: string) => {
 
 export const maskPhone = (v: string) => {
   const raw = v.replace(/\D/g, '')
-  // Force 9-digit structure (XX) XXXXX-XXXX
-  return raw.replace(/(\d{2})(\d{1,5})?(\d{1,4})?/, (_, p1, p2, p3) => {
-    let result = `(${p1}`
-    if (p2) result += `) ${p2}`
+  // Sem DDD (até 9 dígitos): XXXXX-XXXX ou XXXX-XXXX
+  if (raw.length <= 9) {
+    return raw.replace(/(\d{4,5})(\d{1,4})?/, (_, p1, p2) => {
+      let result = p1
+      if (p2) result += `-${p2}`
+      return result
+    }).slice(0, 10)
+  }
+  // Com DDD (10-11 dígitos): (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+  return raw.replace(/(\d{2})(\d{4,5})(\d{1,4})?/, (_, p1, p2, p3) => {
+    let result = `(${p1}) ${p2}`
     if (p3) result += `-${p3}`
     return result
   }).slice(0, 15)
+}
+
+export const formatPhoneDisplay = (phone: string | undefined | null): string => {
+  if (!phone) return ''
+  const raw = phone.replace(/\D/g, '')
+  if (!raw) return phone
+  // Já formatado corretamente
+  if (raw.length === 11) return `(${raw.slice(0,2)}) ${raw.slice(2,7)}-${raw.slice(7)}`
+  if (raw.length === 10) return `(${raw.slice(0,2)}) ${raw.slice(2,6)}-${raw.slice(6)}`
+  if (raw.length === 9) return `${raw.slice(0,5)}-${raw.slice(5)}`
+  if (raw.length === 8) return `${raw.slice(0,4)}-${raw.slice(4)}`
+  return phone
+}
+
+export const formatNameDisplay = (name: string | undefined | null): string => {
+  if (!name) return ''
+  return toTitleCase(name)
+}
+
+export const formatDateFieldToDisplay = (isoDate: string | undefined | null): string => {
+  if (!isoDate) return ''
+  // Já no formato DD/MM/AAAA
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(isoDate)) return isoDate
+  // Formato ISO YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss
+  const cleanDate = isoDate.split('T')[0]
+  const parts = cleanDate.split('-')
+  if (parts.length === 3 && parts[0].length === 4) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`
+  }
+  return isoDate
 }
 
 export const formatCurrency = (value: number | string | undefined): string => {

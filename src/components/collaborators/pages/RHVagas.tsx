@@ -45,7 +45,7 @@ import { FilterMultiSelect } from '../../controladoria/ui/FilterMultiSelect'
 import { VagaFormModal } from '../components/VagaFormModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
 import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelectionModal'
-import { formatDateToDisplay } from '../utils/colaboradoresUtils'
+import { formatDateToDisplay, toTitleCase } from '../utils/colaboradoresUtils'
 import { AlertModal } from '../../../components/ui/AlertModal'
 import { isValid, addDays, getDay, isSameDay } from 'date-fns'
 
@@ -307,6 +307,8 @@ export function RHVagas() {
   const [selectedVagaId, setSelectedVagaId] = useState<string | null>(null)
   const [selectedCandidatoId, setSelectedCandidatoId] = useState<string | null>(null)
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
+  const [editInitialTab, setEditInitialTab] = useState(1)
+  const [candidatoEditInitialTab, setCandidatoEditInitialTab] = useState(1)
 
   useEffect(() => {
     setSelectedCandidates([])
@@ -683,10 +685,11 @@ export function RHVagas() {
     }
   }
 
-  const handleOpenModal = (id?: string) => {
+  const handleOpenModal = (id?: string, initialTab?: number) => {
     setSelectedVagaId(id || null)
     setIsModalOpen(true)
     setIsViewModalOpen(false)
+    setEditInitialTab(initialTab || 1)
   }
 
   const handleOpenViewModal = (id: string) => {
@@ -695,8 +698,9 @@ export function RHVagas() {
     setIsModalOpen(false)
   }
 
-  const handleOpenCandidatoModal = (id: string) => {
+  const handleOpenCandidatoModal = (id: string, initialTab?: number) => {
     setSelectedCandidatoId(id)
+    setCandidatoEditInitialTab(initialTab || 1)
     setIsCandidatoModalOpen(true)
   }
 
@@ -1600,7 +1604,7 @@ export function RHVagas() {
                                     )}
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
+                                    <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{toTitleCase(c.nome)}</p>
                                     {(c.email || c.telefone) && (
                                       <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
                                     )}
@@ -1738,7 +1742,13 @@ export function RHVagas() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).map(vaga => (
+                        {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).sort((a, b) => {
+                          if (activeTab === 'abertas') {
+                            const order: Record<string, number> = { 'Aberta': 0, 'Aguardando Autorização': 1, 'Congelada': 2 };
+                            return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+                          }
+                          return 0;
+                        }).map(vaga => (
                           <tr key={vaga.id} onClick={() => handleOpenViewModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
                             <td className="px-3 py-3 whitespace-nowrap">
                               <span className="inline-block px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-black tracking-widest uppercase">{vaga.vaga_id_text || 'Sem ID'}</span>
@@ -1836,6 +1846,7 @@ export function RHVagas() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         vagaId={selectedVagaId}
+        initialTab={editInitialTab}
         onSuccess={() => {
           fetchVagas();
           fetchCandidatos();
@@ -1847,9 +1858,9 @@ export function RHVagas() {
         onClose={handleCloseViewModal}
         vagaId={selectedVagaId}
         viewMode={true}
-        onEdit={(id: string) => {
+        onEdit={(id: string, tab?: number) => {
           handleCloseViewModal()
-          handleOpenModal(id)
+          handleOpenModal(id, tab)
         }}
       />
 
@@ -1859,6 +1870,7 @@ export function RHVagas() {
         candidatoId={selectedCandidatoId}
         initialData={candidatoInitialData}
         initialFile={candidatoInitialFile}
+        initialTab={candidatoEditInitialTab}
         onSave={() => {
           fetchVagas();
           fetchCandidatos();
@@ -1870,7 +1882,7 @@ export function RHVagas() {
         onClose={handleCloseCandidatoViewModal}
         candidatoId={selectedCandidatoId}
         viewMode={true}
-        onEdit={(id) => handleOpenCandidatoModal(id)}
+        onEdit={(id, tab) => handleOpenCandidatoModal(id, tab)}
         onSave={() => {
           fetchVagas();
           fetchCandidatos();

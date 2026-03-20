@@ -30,6 +30,8 @@ interface SearchableSelectProps {
   icon?: React.ReactNode; // Ícone opcional no trigger
   allowCustom?: boolean; // Permite digitação livre caso a opção não exista
   hideSearch?: boolean; // Esconde o campo de busca
+  fuzzySearch?: boolean; // Busca por aproximação (fuzzy matching)
+  onCustomAdd?: (value: string) => void; // Callback para salvar novo item no banco
 }
 
 export function SearchableSelect({
@@ -49,7 +51,9 @@ export function SearchableSelect({
   align = 'left',
   icon,
   allowCustom = false,
-  hideSearch = false
+  hideSearch = false,
+  fuzzySearch = false,
+  onCustomAdd
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,6 +63,10 @@ export function SearchableSelect({
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isFetchedRef = useRef(false);
+
+  // Detect if inside a disabled fieldset
+  const isFieldsetDisabled = dropdownRef.current?.closest('fieldset[disabled]') !== null && dropdownRef.current?.closest('fieldset[disabled]') !== undefined;
+  const isDisabled = disabled || isFieldsetDisabled;
 
   const formatText = (str: any) => {
     if (!str) return '';
@@ -134,10 +142,62 @@ export function SearchableSelect({
   const getName = (opt: Option) => String(opt.name || opt.nome || opt.label || opt.value || '');
   const getId = (opt: Option) => opt.id || opt.value || Math.random();
 
-  const filteredOptions = options.filter(opt => {
-    const searchTarget = String(opt.label || getName(opt)).toLowerCase();
-    return searchTarget.includes((searchTerm || '').toLowerCase());
-  });
+  // Fuzzy similarity: word-level matching with strict requirements
+  const fuzzyScore = (source: string, target: string): number => {
+    const s = source.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const t = target.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    // Exact substring match = perfect score
+    if (t.includes(s)) return 1;
+    // Check each significant word (>=2 chars) from search term
+    const searchWords = s.split(/[\s\-]+/).filter(w => w.length >= 2);
+    if (searchWords.length === 0) return 0;
+    const targetWords = t.split(/[\s\-]+/);
+    let totalScore = 0;
+    let unmatchedCount = 0;
+    for (const word of searchWords) {
+      // Best match for this word against all target words
+      let bestMatch = 0;
+      for (const tw of targetWords) {
+        if (tw === word) { bestMatch = 1; break; }
+        if (tw.startsWith(word) || word.startsWith(tw)) {
+          bestMatch = Math.max(bestMatch, 0.85);
+        } else if (tw.includes(word) || word.includes(tw)) {
+          bestMatch = Math.max(bestMatch, 0.7);
+        }
+      }
+      if (bestMatch === 0) unmatchedCount++;
+      totalScore += bestMatch;
+    }
+    // If more than 1 word has zero match, reject
+    if (unmatchedCount > 1) return 0;
+    // If the only unmatched word is very short (like preposition), still ok
+    if (unmatchedCount === 1 && searchWords.length <= 2) return 0;
+    return totalScore / searchWords.length;
+  };
+
+  const filteredOptions = (() => {
+    const term = (searchTerm || '').trim();
+    if (!term) return options;
+    if (!fuzzySearch) {
+      return options.filter(opt => {
+        const searchTarget = String(opt.label || getName(opt)).toLowerCase();
+        return searchTarget.includes(term.toLowerCase());
+      });
+    }
+    // Fuzzy: score and sort, include items with score > 0.5
+    return options
+      .map(opt => ({ opt, score: fuzzyScore(term, String(opt.label || getName(opt))) }))
+      .filter(({ score }) => score > 0.5)
+      .sort((a, b) => b.score - a.score)
+      .map(({ opt }) => opt);
+  })();
+
+  // Check if search term exactly matches any option (for showing 'Adicionar' button)
+  const hasExactMatch = searchTerm.trim() ? filteredOptions.some(opt => {
+    const name = getName(opt).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const term = searchTerm.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return name === term || name.includes(term);
+  }) : true;
 
   const selectedOption = options.find(opt =>
     (opt.id?.toString() === String(value)) || (getName(opt).toLowerCase() === String(value || '').toLowerCase())
@@ -215,21 +275,39 @@ export function SearchableSelect({
                 </button>
               );
             })}
+            {allowCustom && searchTerm.trim() && !hasExactMatch && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const val = searchTerm.trim();
+                  onChange(val);
+                  if (onCustomAdd) onCustomAdd(val);
+                  setIsOpen(false);
+                  setSearchTerm('');
+                }}
+                className="w-full px-4 py-2.5 text-left text-sm font-bold rounded-xl transition-all text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 mt-2"
+              >
+                + Adicionar "{searchTerm}"
+              </button>
+            )}
           </div>
         ) : (
-          <div className="py-8 text-center">
+          <div className="py-4 text-center space-y-2">
             {allowCustom && searchTerm.trim() ? (
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onChange(searchTerm.trim());
+                  const val = searchTerm.trim();
+                  onChange(val);
+                  if (onCustomAdd) onCustomAdd(val);
                   setIsOpen(false);
                   setSearchTerm('');
                 }}
-                className="w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all text-[#1e3a8a] bg-blue-50 hover:bg-blue-100"
+                className="w-full px-4 py-2.5 text-left text-sm font-bold rounded-xl transition-all text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200"
               >
-                Usar "{searchTerm}"
+                + Adicionar "{searchTerm}"
               </button>
             ) : (
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nenhum resultado</p>
@@ -246,7 +324,7 @@ export function SearchableSelect({
 
       <div
         onClick={() => {
-          if (!disabled) {
+          if (!isDisabled) {
             if (!isOpen && dropdownRef.current) {
               const rect = dropdownRef.current.getBoundingClientRect();
 
@@ -281,7 +359,7 @@ export function SearchableSelect({
 
         className={`
           w-full bg-gray-100/50 border rounded-xl p-3 text-left flex items-center justify-between cursor-pointer transition-all
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white hover:border-[#1e3a8a]'}
+          ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white hover:border-[#1e3a8a]'}
           ${isOpen ? 'border-[#1e3a8a] bg-white ring-2 ring-[#1e3a8a]/10' : 'border-gray-200'}
         `}
       >
@@ -293,7 +371,7 @@ export function SearchableSelect({
         </div>
 
         <div className="flex items-center gap-1">
-          {value && !disabled && (
+          {value && !isDisabled && (
             <button
               onClick={handleClearSelection}
               className="p-1 text-gray-400 hover:text-red-500 rounded-full transition-colors"

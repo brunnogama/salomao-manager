@@ -67,6 +67,19 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
         fetchData()
     }, [])
 
+    const handleAddInstitution = async (name: string, uf: string) => {
+        try {
+            const { data, error } = await supabase
+                .rpc('add_education_institution', { p_name: name, p_uf: uf });
+            if (error) throw error;
+            if (data) {
+                setInstitutions(prev => [...prev, { id: data.id, uf, name }]);
+            }
+        } catch (e) {
+            console.warn('Erro ao salvar instituição:', e);
+        }
+    }
+
     const handleAddEducation = (nivel: 'Ensino Fundamental' | 'Ensino Médio' | 'Graduação' | 'Pós-Graduação') => {
         const newEntry = {
             id: crypto.randomUUID(),
@@ -155,14 +168,6 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                 if (field === 'instituicao_uf') {
                     updatedEntry.instituicao = '';
                 }
-                // Se mudar o curso para Outro, limpa o valor para abrir o texto livre vazio
-                if (field === 'curso' && value === 'Outro') {
-                    updatedEntry.curso = ' ';
-                }
-                // Limpeza similar para Instituição "Outra"
-                if (field === 'instituicao' && value === 'Outra') {
-                    updatedEntry.instituicao = ' ';
-                }
                 return updatedEntry;
             }
             return e;
@@ -241,17 +246,11 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                         ? institutions.filter(i => i.uf === currentUF).map(i => ({ name: i.name }))
                         : [];
 
-                    if (currentUF) {
-                        ufInstitutions.push({ name: 'Outra' });
-                    }
-
                     // Check if current course is "Outro" (not in list)
                     const isCustomCourse = item.curso !== undefined && item.curso !== '' && !activeCoursesList.find(c => c.name === item.curso);
                     const displayCourseValue = isCustomCourse ? 'Outro' : (item.curso || '');
 
-                    // Check if current institution is "Outra" (not in UF list)
-                    const isCustomInstitution = item.instituicao !== undefined && item.instituicao !== '' && currentUF && !institutions.find(i => i.uf === currentUF && i.name === item.instituicao);
-                    const displayInstValue = isCustomInstitution ? 'Outra' : (item.instituicao || '');
+
 
                     const formatDisplayDate = (d: string | undefined) => {
                         if (!d) return '';
@@ -431,35 +430,19 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                                             Instituição
                                                             {loadingData && <Loader2 className="h-3 w-3 animate-spin text-[#1e3a8a] ml-1" />}
                                                         </span>
-                                                        <span className="text-[8px] text-amber-500 font-bold normal-case tracking-normal">
-                                                            (Selecione "Outra" caso não encontre na lista)
-                                                        </span>
                                                     </span> as any
                                                 }
-                                                value={displayInstValue}
+                                                value={item.instituicao || ''}
                                                 onChange={(v) => updateEducation(item.id, 'instituicao', v)}
                                                 options={ufInstitutions}
                                                 disabled={isViewMode || !currentUF}
                                                 disableFormatting={true}
+                                                allowCustom={true}
+                                                fuzzySearch={true}
+                                                onCustomAdd={(val) => {
+                                                    if (currentUF) handleAddInstitution(val, currentUF);
+                                                }}
                                             />
-
-                                            {/* Campo Outro (Texto Livre) */}
-                                            {isCustomInstitution && (
-                                                <div className="relative mt-2 animate-in fade-in zoom-in duration-200">
-                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <Building className="h-4 w-4 text-gray-400" />
-                                                    </div>
-                                                    <input
-                                                        type="text"
-                                                        value={item.instituicao === ' ' ? '' : item.instituicao}
-                                                        onChange={(e) => updateEducation(item.id, 'instituicao', e.target.value)}
-                                                        className={`w-full pl-10 pr-3 py-2.5 bg-blue-50/50 border border-blue-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-blue-300 focus:bg-white focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                        placeholder="Digite o nome da instituição..."
-                                                        disabled={isViewMode}
-                                                        autoFocus
-                                                    />
-                                                </div>
-                                            )}
                                         </div>
                                     </>
                                 )}

@@ -21,8 +21,13 @@ import {
     maskRG,
     maskPhone,
     maskCNPJ,
-    maskCEP
+    maskCEP,
+    formatPhoneDisplay,
+    formatNameDisplay,
+    formatDateFieldToDisplay,
+    toTitleCase
 } from '../utils/colaboradoresUtils'
+import { ATUACOES_ADMINISTRATIVA, ATUACOES_JURIDICA } from '../utils/cargosAtuacoesUtils'
 
 interface CandidatoFormModalProps {
     isOpen: boolean;
@@ -32,10 +37,11 @@ interface CandidatoFormModalProps {
     initialData?: any;
     initialFile?: File | null;
     viewMode?: boolean;
-    onEdit?: (id: string) => void;
+    initialTab?: number;
+    onEdit?: (id: string, activeTab?: number) => void;
 }
 
-export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile, viewMode = false, onEdit }: CandidatoFormModalProps) {
+export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile, viewMode = false, initialTab, onEdit }: CandidatoFormModalProps) {
     const navigate = useNavigate()
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
     const downloadLinkRef = useRef<HTMLAnchorElement>(null)
@@ -106,7 +112,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
     useEffect(() => {
         if (isOpen) {
-            setActiveTab(1)
+            setActiveTab(initialTab || 1)
             fetchTags()
             setPendingGedDocs([])
             setPendingHistorico([])
@@ -117,23 +123,95 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 fetchCandidato(candidatoId)
                 fetchGedDocs(candidatoId)
             } else if (initialData) {
+                const formattedNome = formatNameDisplay(initialData.nome) || '';
+                const formattedTelefone = formatPhoneDisplay(initialData.telefone) || '';
+                const formattedBirthDate = formatDateFieldToDisplay(initialData.data_nascimento) || '';
+                // Normalize AI suggested role: separate area from role name
+                let aiRole = initialData.sugestaoCargo || '';
+                let aiArea = '';
+                const lowerRole = aiRole.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                if (lowerRole.includes('direito') || lowerRole.includes('juridic')) {
+                    aiArea = 'Jurídica';
+                    aiRole = aiRole.replace(/\(a\)/gi, '').replace(/\s+de\s+direito/gi, '').replace(/\s+jurídic[oa]/gi, '').trim();
+                } else if (lowerRole.includes('administra')) {
+                    aiArea = 'Administrativa';
+                    aiRole = aiRole.replace(/\(a\)/gi, '').replace(/\s+administrati?v[oa]/gi, '').replace(/\s+de\s+administra[cç][aã]o/gi, '').trim();
+                }
+                // Clean up generic (a) patterns
+                aiRole = aiRole.replace(/\(a\)/gi, '').trim();
+
+                // Detect atuação from AI data (role + resume)
+                let aiAtuacao = '';
+                const searchText = `${initialData.sugestaoCargo || ''} ${initialData.resumoProfissional || ''} ${(initialData.perfilTags || []).join(' ')}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const atuacoesRef = aiArea === 'Administrativa' ? ATUACOES_ADMINISTRATIVA : ATUACOES_JURIDICA;
+                // Try to match longest atuação name first (e.g. "Contencioso Estratégico" before "Contencioso")
+                const sortedAtuacoes = [...atuacoesRef].sort((a, b) => b.length - a.length);
+                for (const atuacao of sortedAtuacoes) {
+                    const normalizedAtuacao = atuacao.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    if (searchText.includes(normalizedAtuacao)) {
+                        aiAtuacao = atuacao;
+                        break;
+                    }
+                }
+
+                // Infer state from AI data (may come as sigla or full name)
+                const SIGLA_TO_ESTADO: Record<string, string> = {
+                    'AC': 'AC', 'AL': 'AL', 'AP': 'AP', 'AM': 'AM', 'BA': 'BA', 'CE': 'CE',
+                    'DF': 'DF', 'ES': 'ES', 'GO': 'GO', 'MA': 'MA', 'MT': 'MT', 'MS': 'MS',
+                    'MG': 'MG', 'PA': 'PA', 'PB': 'PB', 'PR': 'PR', 'PE': 'PE', 'PI': 'PI',
+                    'RJ': 'RJ', 'RN': 'RN', 'RS': 'RS', 'RO': 'RO', 'RR': 'RR', 'SC': 'SC',
+                    'SP': 'SP', 'SE': 'SE', 'TO': 'TO'
+                };
+                const CIDADE_TO_UF: Record<string, string> = {
+                    'rio de janeiro': 'RJ', 'niterói': 'RJ', 'niteroi': 'RJ', 'petrópolis': 'RJ', 'petropolis': 'RJ',
+                    'são gonçalo': 'RJ', 'sao goncalo': 'RJ', 'duque de caxias': 'RJ', 'volta redonda': 'RJ',
+                    'são paulo': 'SP', 'sao paulo': 'SP', 'campinas': 'SP', 'santos': 'SP', 'guarulhos': 'SP',
+                    'belo horizonte': 'MG', 'uberlândia': 'MG', 'juiz de fora': 'MG',
+                    'curitiba': 'PR', 'londrina': 'PR', 'maringá': 'PR', 'maringa': 'PR',
+                    'porto alegre': 'RS', 'florianópolis': 'SC', 'florianopolis': 'SC',
+                    'brasília': 'DF', 'brasilia': 'DF', 'salvador': 'BA', 'recife': 'PE',
+                    'fortaleza': 'CE', 'manaus': 'AM', 'belém': 'PA', 'belem': 'PA',
+                    'goiânia': 'GO', 'goiania': 'GO', 'vitória': 'ES', 'vitoria': 'ES',
+                    'natal': 'RN', 'joão pessoa': 'PB', 'joao pessoa': 'PB', 'maceió': 'AL', 'maceio': 'AL',
+                    'são luís': 'MA', 'sao luis': 'MA', 'teresina': 'PI', 'campo grande': 'MS',
+                    'cuiabá': 'MT', 'cuiaba': 'MT', 'aracaju': 'SE', 'macapá': 'AP', 'macapa': 'AP',
+                    'porto velho': 'RO', 'boa vista': 'RR', 'rio branco': 'AC', 'palmas': 'TO'
+                };
+                let aiState = initialData.endereco?.estado || '';
+                // If state is a valid sigla, use it directly
+                if (aiState && SIGLA_TO_ESTADO[aiState.toUpperCase()]) {
+                    aiState = aiState.toUpperCase();
+                } else if (!aiState && initialData.endereco?.cidade) {
+                    // Try to infer from city name
+                    const cityLower = initialData.endereco.cidade.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    for (const [cidade, uf] of Object.entries(CIDADE_TO_UF)) {
+                        const cidadeNorm = cidade.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                        if (cityLower === cidadeNorm || cityLower.includes(cidadeNorm)) {
+                            aiState = uf;
+                            break;
+                        }
+                    }
+                }
+
                 const mappedData: any = {
-                    nome: initialData.nome || '',
-                    name: initialData.nome || '',
+                    nome: formattedNome,
+                    name: formattedNome,
                     email: initialData.email || '',
                     email_pessoal: initialData.email || '',
-                    telefone: initialData.telefone || '',
+                    telefone: formattedTelefone,
                     gender: initialData.genero || '',
-                    birth_date: initialData.data_nascimento || '',
+                    birth_date: formattedBirthDate,
                     zip_code: initialData.endereco?.cep || '',
-                    address: initialData.endereco?.logradouro || '',
+                    address: toTitleCase(initialData.endereco?.logradouro) || '',
                     address_number: initialData.endereco?.numero || '',
-                    address_complement: initialData.endereco?.complemento || '',
-                    neighborhood: initialData.endereco?.bairro || '',
-                    city: initialData.endereco?.cidade || '',
-                    state: initialData.endereco?.estado || '',
+                    address_complement: toTitleCase(initialData.endereco?.complemento) || '',
+                    neighborhood: toTitleCase(initialData.endereco?.bairro) || '',
+                    city: toTitleCase(initialData.endereco?.cidade) || '',
+                    state: aiState,
                     resumo_cv: initialData.resumoProfissional || '',
-                    role: initialData.sugestaoCargo || '',
+                    role: aiRole,
+                    area: aiArea || undefined,
+                    atuacao_id: aiAtuacao || undefined,
                     linkedin_url: initialData.linkedin || '',
                     perfil: (initialData.perfilTags || []).join('\n'),
                     idiomas: initialData.idiomas || '',
@@ -144,6 +222,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     education_history: initialData.education_history?.map((e: any) => ({
                         id: Math.random().toString(36).substring(7),
                         instituicao: e.instituicao || '',
+                        instituicao_uf: e.instituicao_uf || '',
                         curso: e.curso || '',
                         nivel: e.nivel || 'Graduação',
                         status: e.status || 'Formado(a)',
@@ -155,8 +234,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 if (initialData.experiencias && Array.isArray(initialData.experiencias)) {
                     const mappedExp = initialData.experiencias.map((e: any) => ({
                         temp_id: Math.random().toString(36).substring(7),
-                        empresa: e.empresa || '',
-                        cargo: e.cargo || '',
+                        empresa: toTitleCase(e.empresa) || '',
+                        cargo: toTitleCase(e.cargo) || '',
                         data_inicio: e.inicio || '',
                         data_fim: e.fim || '',
                         perfil: e.descricao || ''
@@ -174,10 +253,6 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 }
                 setGedDocs([]);
 
-                // Show AI review warning
-                setTimeout(() => {
-                    showAlert('Atenção', 'Os dados foram preenchidos pela Inteligência Artificial.\n\nPor favor, revise atentamente as informações em todas as abas antes de salvar o cadastro definitivo.', 'warning');
-                }, 500);
             } else {
                 setFormData({})
                 setGedDocs([])
@@ -218,8 +293,18 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 .single()
             if (error) throw error
             // Map DB 'nome' to 'name' for DadosPessoaisSection compatibility
-            if (data && data.nome) {
-                data.name = data.nome;
+            if (data) {
+                if (data.nome) {
+                    data.nome = formatNameDisplay(data.nome);
+                    data.name = data.nome;
+                }
+                if (data.telefone) data.telefone = formatPhoneDisplay(data.telefone);
+                if (data.birthday) data.birthday = formatDateFieldToDisplay(data.birthday);
+                if (data.address) data.address = toTitleCase(data.address);
+                if (data.neighborhood) data.neighborhood = toTitleCase(data.neighborhood);
+                if (data.city) data.city = toTitleCase(data.city);
+                if (data.address_complement) data.address_complement = toTitleCase(data.address_complement);
+                if (data.indicado_por) data.indicado_por = toTitleCase(data.indicado_por);
             }
             setFormData(data)
         } catch (error) {
@@ -248,9 +333,9 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 if (!data.erro) {
                     setFormData(prev => ({
                         ...prev,
-                        address: data.logradouro,
-                        neighborhood: data.bairro,
-                        city: data.localidade,
+                        address: toTitleCase(data.logradouro),
+                        neighborhood: toTitleCase(data.bairro),
+                        city: toTitleCase(data.localidade),
                         state: data.uf
                     }))
                 }
@@ -395,6 +480,41 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
             showAlert('Atenção', 'Nome do candidato é obrigatório.', 'warning')
             return
         }
+        if (!formData.gender) {
+            showAlert('Atenção', 'O campo Gênero é obrigatório.', 'warning')
+            return
+        }
+
+        // Validate institutions in education_history
+        const educationHistory = formData.education_history || [];
+        if (educationHistory.length > 0) {
+            const entriesWithInst = educationHistory.filter((e: any) => e.instituicao && e.instituicao.trim() && e.instituicao_uf);
+            if (entriesWithInst.length > 0) {
+                try {
+                    const { data: allInstitutions } = await supabase.rpc('get_education_institutions');
+                    const invalidEntries: string[] = [];
+                    for (const entry of entriesWithInst) {
+                        const found = (allInstitutions || []).some((inst: any) =>
+                            inst.uf === entry.instituicao_uf && inst.name === entry.instituicao
+                        );
+                        if (!found) {
+                            invalidEntries.push(entry.instituicao);
+                        }
+                    }
+                    if (invalidEntries.length > 0) {
+                        showAlert(
+                            'Instituição não encontrada',
+                            `As seguintes instituições não foram encontradas na base de dados:\n\n${invalidEntries.map((i: string) => `• ${i}`).join('\n')}\n\nVá até a aba "Escolaridade" e selecione a instituição correta da lista, ou utilize o botão "+ Adicionar" para cadastrá-la.`,
+                            'warning'
+                        );
+                        setActiveTab(3);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Erro ao validar instituições:', e);
+                }
+            }
+        }
 
         try {
             setLoading(true)
@@ -404,9 +524,17 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
             // Map 'name' back to 'nome' for DB compatibility and clean up non-DB fields
             if (payload.name) {
-                payload.nome = payload.name;
+                payload.nome = formatNameDisplay(payload.name);
                 delete payload.name;
+            } else if (payload.nome) {
+                payload.nome = formatNameDisplay(payload.nome);
             }
+            // Apply toTitleCase to all text fields before saving
+            if (payload.address) payload.address = toTitleCase(payload.address);
+            if (payload.neighborhood) payload.neighborhood = toTitleCase(payload.neighborhood);
+            if (payload.city) payload.city = toTitleCase(payload.city);
+            if (payload.address_complement) payload.address_complement = toTitleCase(payload.address_complement);
+            if (payload.indicado_por) payload.indicado_por = toTitleCase(payload.indicado_por);
             // Remove relationship arrays that might be in formData
             delete payload.candidato_historico;
             delete payload.candidato_experiencias;
@@ -852,7 +980,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                                     type="button"
                                     onClick={() => {
                                         onClose()
-                                        onEdit(candidatoId)
+                                        onEdit(candidatoId, activeTab)
                                     }}
                                     className="bg-[#1e3a8a] text-white px-8 py-2.5 rounded-xl font-bold text-sm hover:bg-[#1e3a8a]/90 transition-all flex items-center gap-2 shadow-lg shadow-[#1e3a8a]/20 active:scale-95 hover:-translate-y-0.5"
                                 >

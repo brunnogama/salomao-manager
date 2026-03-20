@@ -140,14 +140,15 @@ Por favor, analise o currículo e retorne EXATAMENTE UM JSON válido seguindo a 
     "complemento": "Apenas o complemento (apto, bloco, casa, etc) se houver",
     "bairro": "Bairro",
     "cidade": "Cidade",
-    "estado": "Sigla do Estado (Ex: RJ, SP)"
+    "estado": "Sigla do Estado com 2 letras (Ex: RJ, SP). OBRIGATÓRIO: se souber a cidade, DEDUZA o estado. Ex: Rio de Janeiro=RJ, São Paulo=SP, Niterói=RJ, Curitiba=PR, Belo Horizonte=MG"
   },
   "resumoProfissional": "Resumo em 1 ou no máximo 2 parágrafos potentes relatando o quem é o profissional, histórico, qualificações e seniority.",
   "sugestaoCargo": "Um nome curto de um cargo focado na experiência detectada.",
   "perfilTags": ["Habilidade 1", "Habilidade 2", "Tecnologia", "Soft Skill 1"],
   "education_history": [
     {
-      "instituicao": "Nome curto da Instituição de Ensino",
+      "instituicao": "Nome COMPLETO da Instituição de Ensino seguido da sigla entre parênteses ou travessão. Ex: 'Universidade Federal Fluminense - UFF', 'Pontifícia Universidade Católica do Rio de Janeiro - PUC-Rio'. NUNCA use apenas a sigla.",
+      "instituicao_uf": "Sigla do estado (UF) onde a instituição fica localizada. Ex: RJ, SP, MG",
       "curso": "Nome do Curso",
       "nivel": "Ensino Fundamental, Ensino Médio, Graduação, Pós-Graduação",
       "status": "Cursando, Formado(a), Trancado",

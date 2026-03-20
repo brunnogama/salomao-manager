@@ -58,6 +58,10 @@ export function ManagedSelect({
     const managingRef = useRef<HTMLDivElement>(null)
     const isFetchedRef = useRef(false)
 
+    // Detect if inside a disabled fieldset
+    const isFieldsetDisabled = dropdownRef.current?.closest('fieldset[disabled]') !== null && dropdownRef.current?.closest('fieldset[disabled]') !== undefined;
+    const isDisabled = disabled || isFieldsetDisabled;
+
     const fetchItems = async () => {
         setLoading(true)
         let query = supabase.from(tableName).select('*').order(orderBy, { ascending: true })
@@ -187,7 +191,7 @@ export function ManagedSelect({
                     {/* TRIGGER */}
                     <div
                         onClick={() => {
-                            if (!disabled) {
+                            if (!isDisabled) {
                                 if (!isOpen && dropdownRef.current) {
                                     const rect = dropdownRef.current.getBoundingClientRect()
                                     let top: number | undefined = rect.bottom
@@ -215,7 +219,7 @@ export function ManagedSelect({
                         className={`
               w-full px-3 py-2.5 bg-[#f9fafb] border border-gray-200 rounded-xl text-sm font-medium 
               flex items-center justify-between transition-all outline-none
-              ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-blue-300'}
+              ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-blue-300'}
               ${isOpen ? 'border-blue-500 ring-2 ring-blue-500/10' : ''}
             `}
                     >
@@ -223,7 +227,7 @@ export function ManagedSelect({
                             {selectedItem ? selectedItem[nameColumn] : placeholder}
                         </span>
                         <div className="flex items-center gap-1">
-                            {value && !disabled && (
+                            {value && !isDisabled && (
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation()
@@ -297,7 +301,7 @@ export function ManagedSelect({
                 </div>
 
                 {/* BOTÃO GERENCIAR */}
-                {showManageButton && !disabled && (
+                {showManageButton && !isDisabled && (
                     <button
                         onClick={() => setIsManaging(true)}
                         className="px-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded-xl transition-all border border-gray-200 flex items-center justify-center shadow-sm"

@@ -935,7 +935,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     }
   }
 
-  const handleEdit = (colaborador: Collaborator) => {
+  const handleEdit = (colaborador: Collaborator, initialTab?: number) => {
     // Format dates for display (DD/MM/YYYY)
     const formattedColaborador = {
       ...colaborador,
@@ -966,7 +966,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setFormData(formattedColaborador)
     setPhotoPreview(colaborador.photo_url || null)
     setSelectedPhotoFile(null)
-    setActiveFormTab(1)
+    setActiveFormTab(initialTab || 1)
 
     // Save scroll position before opening the modal
     if (listContainerRef.current) {
@@ -2019,16 +2019,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
                                   {c.matricula_interna && <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-200">{c.matricula_interna}</span>}
                                   <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
                                 </div>
-                                {c.perfil && (
+                                {c.perfil && c.perfil.split('\n').filter((l: string) => l.trim()).length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-1.5">
-                                    {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                      <span key={i} className="px-1.5 py-0.5 bg-amber-100/50 text-amber-700 border border-amber-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                        {tag.trim()}
-                                      </span>
-                                    ))}
-                                    {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                      <span className="text-[8px] font-bold text-amber-500 ml-0.5">...</span>
-                                    )}
+                                    <span className="px-1.5 py-0.5 bg-amber-100/50 text-amber-700 border border-amber-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                      {c.perfil.split('\n').filter((l: string) => l.trim()).length} tag{c.perfil.split('\n').filter((l: string) => l.trim()).length !== 1 ? 's' : ''}
+                                    </span>
                                   </div>
                                 )}
                               </div>
@@ -2090,16 +2085,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
                                   {c.matricula_interna && <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-50 text-blue-600 border border-blue-100">{c.matricula_interna}</span>}
                                   <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
                                 </div>
-                                {c.perfil && (
+                                {c.perfil && c.perfil.split('\n').filter((l: string) => l.trim()).length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-1.5">
-                                    {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
-                                      <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                        {tag.trim()}
-                                      </span>
-                                    ))}
-                                    {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
-                                      <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
-                                    )}
+                                    <span className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                      {c.perfil.split('\n').filter((l: string) => l.trim()).length} tag{c.perfil.split('\n').filter((l: string) => l.trim()).length !== 1 ? 's' : ''}
+                                    </span>
                                   </div>
                                 )}
                               </div>
@@ -2972,7 +2962,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
           () => setSelectedColaborador(null),
           activeDetailTab,
           setActiveDetailTab,
-          renderModalContent(activeDetailTab, true, selectedColaborador),
+          <fieldset disabled className="contents">{renderModalContent(activeDetailTab, true, selectedColaborador)}</fieldset>,
           (
             <>
               <button
@@ -2982,7 +2972,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 <Trash2 className="h-4 w-4" /> Excluir
               </button>
               <button
-                onClick={() => handleEdit(selectedColaborador)}
+                onClick={() => handleEdit(selectedColaborador, activeDetailTab)}
                 className="px-6 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
               >
                 <Pencil className="h-4 w-4" /> Editar Perfil
