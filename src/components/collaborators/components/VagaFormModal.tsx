@@ -532,8 +532,8 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, on
                         )}
 
                         {loading ? (
-                            <div className="flex justify-center items-center py-20 min-h-[650px]">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1e3a8a]"></div>
+                            <div className="flex justify-center items-center py-20 min-h-[650px] opacity-0 animate-[fadeIn_0.3s_ease-in_0.2s_forwards]">
+                                <Loader2 className="h-6 w-6 text-[#1e3a8a] animate-spin" />
                             </div>
                         ) : (
                             <div className="min-h-[650px]">
