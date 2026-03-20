@@ -27,6 +27,7 @@ import {
     formatDateFieldToDisplay,
     toTitleCase
 } from '../utils/colaboradoresUtils'
+import { ATUACOES_ADMINISTRATIVA, ATUACOES_JURIDICA } from '../utils/cargosAtuacoesUtils'
 
 interface CandidatoFormModalProps {
     isOpen: boolean;
@@ -138,6 +139,20 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 // Clean up generic (a) patterns
                 aiRole = aiRole.replace(/\(a\)/gi, '').trim();
 
+                // Detect atuação from AI data (role + resume)
+                let aiAtuacao = '';
+                const searchText = `${initialData.sugestaoCargo || ''} ${initialData.resumoProfissional || ''} ${(initialData.perfilTags || []).join(' ')}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const atuacoesRef = aiArea === 'Administrativa' ? ATUACOES_ADMINISTRATIVA : ATUACOES_JURIDICA;
+                // Try to match longest atuação name first (e.g. "Contencioso Estratégico" before "Contencioso")
+                const sortedAtuacoes = [...atuacoesRef].sort((a, b) => b.length - a.length);
+                for (const atuacao of sortedAtuacoes) {
+                    const normalizedAtuacao = atuacao.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    if (searchText.includes(normalizedAtuacao)) {
+                        aiAtuacao = atuacao;
+                        break;
+                    }
+                }
+
                 const mappedData: any = {
                     nome: formattedNome,
                     name: formattedNome,
@@ -156,6 +171,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     resumo_cv: initialData.resumoProfissional || '',
                     role: aiRole,
                     area: aiArea || undefined,
+                    atuacao_id: aiAtuacao || undefined,
                     linkedin_url: initialData.linkedin || '',
                     perfil: (initialData.perfilTags || []).join('\n'),
                     idiomas: initialData.idiomas || '',
