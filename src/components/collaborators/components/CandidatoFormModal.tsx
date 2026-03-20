@@ -153,6 +153,45 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     }
                 }
 
+                // Infer state from AI data (may come as sigla or full name)
+                const SIGLA_TO_ESTADO: Record<string, string> = {
+                    'AC': 'AC', 'AL': 'AL', 'AP': 'AP', 'AM': 'AM', 'BA': 'BA', 'CE': 'CE',
+                    'DF': 'DF', 'ES': 'ES', 'GO': 'GO', 'MA': 'MA', 'MT': 'MT', 'MS': 'MS',
+                    'MG': 'MG', 'PA': 'PA', 'PB': 'PB', 'PR': 'PR', 'PE': 'PE', 'PI': 'PI',
+                    'RJ': 'RJ', 'RN': 'RN', 'RS': 'RS', 'RO': 'RO', 'RR': 'RR', 'SC': 'SC',
+                    'SP': 'SP', 'SE': 'SE', 'TO': 'TO'
+                };
+                const CIDADE_TO_UF: Record<string, string> = {
+                    'rio de janeiro': 'RJ', 'niterói': 'RJ', 'niteroi': 'RJ', 'petrópolis': 'RJ', 'petropolis': 'RJ',
+                    'são gonçalo': 'RJ', 'sao goncalo': 'RJ', 'duque de caxias': 'RJ', 'volta redonda': 'RJ',
+                    'são paulo': 'SP', 'sao paulo': 'SP', 'campinas': 'SP', 'santos': 'SP', 'guarulhos': 'SP',
+                    'belo horizonte': 'MG', 'uberlândia': 'MG', 'juiz de fora': 'MG',
+                    'curitiba': 'PR', 'londrina': 'PR', 'maringá': 'PR', 'maringa': 'PR',
+                    'porto alegre': 'RS', 'florianópolis': 'SC', 'florianopolis': 'SC',
+                    'brasília': 'DF', 'brasilia': 'DF', 'salvador': 'BA', 'recife': 'PE',
+                    'fortaleza': 'CE', 'manaus': 'AM', 'belém': 'PA', 'belem': 'PA',
+                    'goiânia': 'GO', 'goiania': 'GO', 'vitória': 'ES', 'vitoria': 'ES',
+                    'natal': 'RN', 'joão pessoa': 'PB', 'joao pessoa': 'PB', 'maceió': 'AL', 'maceio': 'AL',
+                    'são luís': 'MA', 'sao luis': 'MA', 'teresina': 'PI', 'campo grande': 'MS',
+                    'cuiabá': 'MT', 'cuiaba': 'MT', 'aracaju': 'SE', 'macapá': 'AP', 'macapa': 'AP',
+                    'porto velho': 'RO', 'boa vista': 'RR', 'rio branco': 'AC', 'palmas': 'TO'
+                };
+                let aiState = initialData.endereco?.estado || '';
+                // If state is a valid sigla, use it directly
+                if (aiState && SIGLA_TO_ESTADO[aiState.toUpperCase()]) {
+                    aiState = aiState.toUpperCase();
+                } else if (!aiState && initialData.endereco?.cidade) {
+                    // Try to infer from city name
+                    const cityLower = initialData.endereco.cidade.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    for (const [cidade, uf] of Object.entries(CIDADE_TO_UF)) {
+                        const cidadeNorm = cidade.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                        if (cityLower === cidadeNorm || cityLower.includes(cidadeNorm)) {
+                            aiState = uf;
+                            break;
+                        }
+                    }
+                }
+
                 const mappedData: any = {
                     nome: formattedNome,
                     name: formattedNome,
@@ -167,7 +206,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     address_complement: toTitleCase(initialData.endereco?.complemento) || '',
                     neighborhood: toTitleCase(initialData.endereco?.bairro) || '',
                     city: toTitleCase(initialData.endereco?.cidade) || '',
-                    state: initialData.endereco?.estado || '',
+                    state: aiState,
                     resumo_cv: initialData.resumoProfissional || '',
                     role: aiRole,
                     area: aiArea || undefined,
@@ -182,6 +221,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     education_history: initialData.education_history?.map((e: any) => ({
                         id: Math.random().toString(36).substring(7),
                         instituicao: e.instituicao || '',
+                        instituicao_uf: e.instituicao_uf || '',
                         curso: e.curso || '',
                         nivel: e.nivel || 'Graduação',
                         status: e.status || 'Formado(a)',
