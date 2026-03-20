@@ -307,6 +307,7 @@ export function RHVagas() {
   const [selectedVagaId, setSelectedVagaId] = useState<string | null>(null)
   const [selectedCandidatoId, setSelectedCandidatoId] = useState<string | null>(null)
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
+  const [editInitialTab, setEditInitialTab] = useState(1)
 
   useEffect(() => {
     setSelectedCandidates([])
@@ -683,10 +684,11 @@ export function RHVagas() {
     }
   }
 
-  const handleOpenModal = (id?: string) => {
+  const handleOpenModal = (id?: string, initialTab?: number) => {
     setSelectedVagaId(id || null)
     setIsModalOpen(true)
     setIsViewModalOpen(false)
+    setEditInitialTab(initialTab || 1)
   }
 
   const handleOpenViewModal = (id: string) => {
@@ -1842,6 +1844,7 @@ export function RHVagas() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         vagaId={selectedVagaId}
+        initialTab={editInitialTab}
         onSuccess={() => {
           fetchVagas();
           fetchCandidatos();
@@ -1853,9 +1856,9 @@ export function RHVagas() {
         onClose={handleCloseViewModal}
         vagaId={selectedVagaId}
         viewMode={true}
-        onEdit={(id: string) => {
+        onEdit={(id: string, tab?: number) => {
           handleCloseViewModal()
-          handleOpenModal(id)
+          handleOpenModal(id, tab)
         }}
       />
 

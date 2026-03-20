@@ -44,7 +44,8 @@ interface VagaFormModalProps {
     vagaId?: string | null;
     onSuccess?: () => void;
     viewMode?: boolean;
-    onEdit?: (id: string) => void;
+    initialTab?: number;
+    onEdit?: (id: string, activeTab?: number) => void;
 }
 
 const getRoleAppearance = (roleName: string, atuacaoStr?: string) => {
@@ -108,7 +109,7 @@ const getRoleAppearance = (roleName: string, atuacaoStr?: string) => {
     return { Icon: Briefcase, colorClass: 'bg-slate-50 text-slate-600 border-slate-200' };
 }
 
-export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, onEdit }: VagaFormModalProps) {
+export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, initialTab, onEdit }: VagaFormModalProps) {
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -173,7 +174,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, on
 
     useEffect(() => {
         if (isOpen) {
-            setActiveTab(1)
+            setActiveTab(initialTab || 1)
             fetchTags()
             loadLookupData()
             if (vagaId) {
@@ -486,7 +487,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, on
                             </button>
                             {onEdit && vagaId && (
                                 <button
-                                    onClick={() => { onClose(); onEdit(vagaId); }}
+                                    onClick={() => { onClose(); onEdit(vagaId, activeTab); }}
                                     className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30 transition-all font-bold"
                                 >
                                     <Edit2 className="h-4 w-4" />
@@ -537,6 +538,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, on
                                 <Loader2 className="h-6 w-6 text-[#1e3a8a] animate-spin" />
                             </div>
                         ) : (
+                            <fieldset disabled={viewMode} className="contents">
                             <div className="min-h-[650px]">
                                 {/* TAB 1 */}
                                 {activeTab === 1 && (
@@ -967,6 +969,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, on
                                     </div>
                                 )}
                             </div>
+                            </fieldset>
                         )}
         </CollaboratorModalLayout>
     )
