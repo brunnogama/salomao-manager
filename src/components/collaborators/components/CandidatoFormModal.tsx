@@ -124,6 +124,20 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                 const formattedNome = formatNameDisplay(initialData.nome) || '';
                 const formattedTelefone = formatPhoneDisplay(initialData.telefone) || '';
                 const formattedBirthDate = formatDateFieldToDisplay(initialData.data_nascimento) || '';
+                // Normalize AI suggested role: separate area from role name
+                let aiRole = initialData.sugestaoCargo || '';
+                let aiArea = '';
+                const lowerRole = aiRole.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                if (lowerRole.includes('direito') || lowerRole.includes('juridic')) {
+                    aiArea = 'Jurídica';
+                    aiRole = aiRole.replace(/\(a\)/gi, '').replace(/\s+de\s+direito/gi, '').replace(/\s+jurídic[oa]/gi, '').trim();
+                } else if (lowerRole.includes('administra')) {
+                    aiArea = 'Administrativa';
+                    aiRole = aiRole.replace(/\(a\)/gi, '').replace(/\s+administrati?v[oa]/gi, '').replace(/\s+de\s+administra[cç][aã]o/gi, '').trim();
+                }
+                // Clean up generic (a) patterns
+                aiRole = aiRole.replace(/\(a\)/gi, '').trim();
+
                 const mappedData: any = {
                     nome: formattedNome,
                     name: formattedNome,
@@ -140,7 +154,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                     city: toTitleCase(initialData.endereco?.cidade) || '',
                     state: initialData.endereco?.estado || '',
                     resumo_cv: initialData.resumoProfissional || '',
-                    role: initialData.sugestaoCargo || '',
+                    role: aiRole,
+                    area: aiArea || undefined,
                     linkedin_url: initialData.linkedin || '',
                     perfil: (initialData.perfilTags || []).join('\n'),
                     idiomas: initialData.idiomas || '',
