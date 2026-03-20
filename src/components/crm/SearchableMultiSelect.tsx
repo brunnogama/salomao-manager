@@ -59,6 +59,10 @@ export function SearchableMultiSelect({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isFetchedRef = useRef(false);
 
+  // Detect if inside a disabled fieldset
+  const isFieldsetDisabled = dropdownRef.current?.closest('fieldset[disabled]') !== null && dropdownRef.current?.closest('fieldset[disabled]') !== undefined;
+  const isDisabled = disabled || isFieldsetDisabled;
+
   const formatText = (str: any) => {
     if (!str) return '';
     const safeStr = String(str);
@@ -263,7 +267,7 @@ export function SearchableMultiSelect({
 
       <div
         onClick={() => {
-          if (!disabled) {
+          if (!isDisabled) {
             if (!isOpen && dropdownRef.current) {
               const rect = dropdownRef.current.getBoundingClientRect();
 
@@ -298,7 +302,7 @@ export function SearchableMultiSelect({
 
         className={`
           w-full bg-gray-100/50 border rounded-xl p-2 min-h-[46px] text-left flex items-center justify-between cursor-pointer transition-all
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white hover:border-[#1e3a8a]'}
+          ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white hover:border-[#1e3a8a]'}
           ${isOpen ? 'border-[#1e3a8a] bg-white ring-2 ring-[#1e3a8a]/10' : 'border-gray-200'}
         `}
       >
@@ -310,7 +314,7 @@ export function SearchableMultiSelect({
               {selectedValuesArray.map((val, index) => (
                 <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 text-xs font-semibold text-gray-700 rounded-md shadow-sm">
                   {val}
-                  {!disabled && (
+                  {!isDisabled && (
                     <button
                       onClick={(e) => removeValue(e, val)}
                       className="text-gray-400 hover:text-red-500 rounded focus:outline-none"
@@ -329,7 +333,7 @@ export function SearchableMultiSelect({
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0">
-          {selectedValuesArray.length > 0 && !disabled && (
+          {selectedValuesArray.length > 0 && !isDisabled && (
             <button
               onClick={handleClearSelection}
               className="p-1 text-gray-400 hover:text-red-500 rounded-full transition-colors"

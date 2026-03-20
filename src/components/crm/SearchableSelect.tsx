@@ -64,6 +64,10 @@ export function SearchableSelect({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isFetchedRef = useRef(false);
 
+  // Detect if inside a disabled fieldset
+  const isFieldsetDisabled = dropdownRef.current?.closest('fieldset[disabled]') !== null && dropdownRef.current?.closest('fieldset[disabled]') !== undefined;
+  const isDisabled = disabled || isFieldsetDisabled;
+
   const formatText = (str: any) => {
     if (!str) return '';
     const safeStr = String(str);
@@ -320,7 +324,7 @@ export function SearchableSelect({
 
       <div
         onClick={() => {
-          if (!disabled) {
+          if (!isDisabled) {
             if (!isOpen && dropdownRef.current) {
               const rect = dropdownRef.current.getBoundingClientRect();
 
@@ -355,7 +359,7 @@ export function SearchableSelect({
 
         className={`
           w-full bg-gray-100/50 border rounded-xl p-3 text-left flex items-center justify-between cursor-pointer transition-all
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white hover:border-[#1e3a8a]'}
+          ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white hover:border-[#1e3a8a]'}
           ${isOpen ? 'border-[#1e3a8a] bg-white ring-2 ring-[#1e3a8a]/10' : 'border-gray-200'}
         `}
       >
@@ -367,7 +371,7 @@ export function SearchableSelect({
         </div>
 
         <div className="flex items-center gap-1">
-          {value && !disabled && (
+          {value && !isDisabled && (
             <button
               onClick={handleClearSelection}
               className="p-1 text-gray-400 hover:text-red-500 rounded-full transition-colors"

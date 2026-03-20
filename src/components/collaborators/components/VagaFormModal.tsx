@@ -553,6 +553,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                                                         onChange={(v) => setFormData({ ...formData, status: v as any })}
                                                         options={statusOptions}
                                                         uppercase={false}
+                                                        disabled={viewMode}
                                                     />
                                                 </div>
                                                 <div className="flex flex-col justify-end pb-[2px]">
@@ -607,6 +608,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                                                             orderBy="nome"
                                                             nameColumn="nome"
                                                             placeholder="Selecione o candidato aprovado"
+                                                            disabled={viewMode}
                                                         />
 
                                                         <ManagedSelect
@@ -614,6 +616,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                                                             value={formData.aprovador_id || ''}
                                                             onChange={v => setFormData({ ...formData, aprovador_id: v })}
                                                             tableName="partners"
+                                                            disabled={viewMode}
                                                         />
                                                     </div>
                                                 </div>
@@ -631,6 +634,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                                                     }}
                                                     options={areaOptions}
                                                     uppercase={false}
+                                                    disabled={viewMode}
                                                 />
 
                                                 <ManagedSelect
