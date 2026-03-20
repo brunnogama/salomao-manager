@@ -62,9 +62,9 @@ export function TabelasTab() {
     const [rolesAdmin, setRolesAdmin] = useState<Role[]>([]);
     
     // UI state for separated tabs and filters
-    const [cargosTab, setCargosTab] = useState<'Judici\u00E1rio' | 'Administrativo'>('Judici\u00E1rio');
-    const [cargoFilterType, setCargoFilterType] = useState<'Geral' | 'S\u00F3cio' | 'L\u00EDder'>('Geral');
-    const [cargoFilterValue, setCargoFilterValue] = useState<string>('');
+    const [cargosTab, setCargosTab] = useState<'Judiciário' | 'Administrativo'>('Judiciário');
+    const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
+    const [selectedLeaderId, setSelectedLeaderId] = useState<string>('');
 
     // Tags Management State
     const [tagDataList, setTagDataList] = useState<TagData[]>([]);
@@ -262,8 +262,8 @@ export function TabelasTab() {
     const getTagsForSelection = (roleText: string | undefined | null) => {
         const parsed = parseRoleTags(roleText);
         let key = 'general';
-        if (cargoFilterType === 'S\u00F3cio' && cargoFilterValue) key = `socio:${cargoFilterValue}`;
-        if (cargoFilterType === 'L\u00EDder' && cargoFilterValue) key = `lider:${cargoFilterValue}`;
+        if (selectedPartnerId) key = `socio:${selectedPartnerId}`;
+        else if (selectedLeaderId) key = `lider:${selectedLeaderId}`;
         return parsed[key] || '';
     };
 
@@ -332,8 +332,8 @@ export function TabelasTab() {
         setSaving(true);
         try {
             let key = 'general';
-            if (cargoFilterType === 'S\u00F3cio' && cargoFilterValue) key = `socio:${cargoFilterValue}`;
-            if (cargoFilterType === 'L\u00EDder' && cargoFilterValue) key = `lider:${cargoFilterValue}`;
+            if (selectedPartnerId) key = `socio:${selectedPartnerId}`;
+            else if (selectedLeaderId) key = `lider:${selectedLeaderId}`;
 
             let parsed = parseRoleTags(editingRole.default_tags);
             parsed[key] = editingTagsValue.trim();
@@ -600,61 +600,42 @@ export function TabelasTab() {
 
                     {!loading && activeView === 'cargos' && (
                         <div className="flex-1 overflow-auto mt-6">
-                            <h3 className="text-lg font-bold text-[#0a192f] mb-6">Cargos - Informa\u00E7\u00F5es e Perfis</h3>
+                            <h3 className="text-lg font-bold text-[#0a192f] mb-6">Cargos - Informações e Perfis</h3>
 
                             <div className="flex space-x-4 mb-6 border-b border-gray-100">
-                                <button onClick={() => setCargosTab('Judici\u00E1rio')} className={cargosTab === 'Judici\u00E1rio' ? "py-2 border-b-2 border-[#1e3a8a] text-[#1e3a8a] font-bold transition-all" : "py-2 text-gray-500 font-medium hover:text-[#1e3a8a] transition-all"}>\u00C1rea Judici\u00E1ria</button>
-                                <button onClick={() => setCargosTab('Administrativo')} className={cargosTab === 'Administrativo' ? "py-2 border-b-2 border-[#1e3a8a] text-[#1e3a8a] font-bold transition-all" : "py-2 text-gray-500 font-medium hover:text-[#1e3a8a] transition-all"}>\u00C1rea Administrativa</button>
+                                <button onClick={() => setCargosTab('Judiciário')} className={cargosTab === 'Judiciário' ? "py-2 border-b-2 border-[#1e3a8a] text-[#1e3a8a] font-bold transition-all" : "py-2 text-gray-500 font-medium hover:text-[#1e3a8a] transition-all"}>Área Judiciária</button>
+                                <button onClick={() => setCargosTab('Administrativo')} className={cargosTab === 'Administrativo' ? "py-2 border-b-2 border-[#1e3a8a] text-[#1e3a8a] font-bold transition-all" : "py-2 text-gray-500 font-medium hover:text-[#1e3a8a] transition-all"}>Área Administrativa</button>
                             </div>
 
                             {/* Judiciária */}
-                            {cargosTab === 'Judici\u00E1rio' && (
+                            {cargosTab === 'Judiciário' && (
                             <div className="mb-8 animate-in fade-in duration-300">
                                 <div className="flex flex-col md:flex-row md:items-end gap-4 mb-4">
-                                    <div className="w-full md:w-56">
-                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Filtro de Exig\u00EAncia</label>
-                                        <select 
-                                            value={cargoFilterType} 
-                                            onChange={e => { setCargoFilterType(e.target.value as any); setCargoFilterValue(''); }}
-                                            className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl px-3 py-2.5 outline-none font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                                        >
-                                            <option value="Geral">Cargo Geral (Padr\u00E3o)</option>
-                                            <option value="S\u00F3cio">Espec\u00EDfico por S\u00F3cio</option>
-                                            <option value="L\u00EDder">Espec\u00EDfico por L\u00EDder</option>
-                                        </select>
+                                    <div className="w-full md:w-72">
+                                        <ManagedSelect
+                                            label="Sócio Específico (Opcional)"
+                                            value={selectedPartnerId}
+                                            onChange={v => { setSelectedPartnerId(v); if(v) setSelectedLeaderId(''); }}
+                                            tableName="partners"
+                                            placeholder="Geral (Sem sócio específico)"
+                                        />
                                     </div>
-                                    
-                                    {cargoFilterType === 'S\u00F3cio' && (
-                                        <div className="w-full md:w-72">
-                                            <ManagedSelect
-                                                label="Selecione o S\u00F3cio"
-                                                value={cargoFilterValue}
-                                                onChange={v => setCargoFilterValue(v)}
-                                                tableName="partners"
-                                                placeholder="Escolha um s\u00F3cio..."
-                                            />
-                                        </div>
-                                    )}
-                                    
-                                    {cargoFilterType === 'L\u00EDder' && (
-                                        <div className="w-full md:w-72">
-                                            <ManagedSelect
-                                                label="Selecione o L\u00EDder"
-                                                value={cargoFilterValue}
-                                                onChange={v => setCargoFilterValue(v)}
-                                                tableName="collaborators"
-                                                placeholder="Escolha um l\u00EDder..."
-                                            />
-                                        </div>
-                                    )}
+                                    <div className="w-full md:w-72">
+                                        <ManagedSelect
+                                            label="Líder Específico (Opcional)"
+                                            value={selectedLeaderId}
+                                            onChange={v => { setSelectedLeaderId(v); if(v) setSelectedPartnerId(''); }}
+                                            tableName="collaborators"
+                                            placeholder="Geral (Sem líder específico)"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
                                     <table className="w-full text-left border-collapse">
                                         <thead>
                                             <tr className="bg-gray-50 border-b border-gray-200">
                                                 <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider w-1/3">Cargo</th>
-                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">Tags (Perfil p/ {cargoFilterType})</th>
-                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider text-right w-24">A\u00E7\u00F5es</th>
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider text-right w-24">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -680,9 +661,9 @@ export function TabelasTab() {
                                                     <td className="px-6 py-4 text-right">
                                                         <button
                                                             onClick={() => handleOpenRoleModal(role)}
-                                                            className={`p-1.5 rounded-lg transition-colors ${!getTagsForSelection(role.default_tags) && cargoFilterType !== 'Geral' ? 'text-gray-400 hover:bg-gray-100' : 'text-blue-600 hover:bg-blue-100'}`}
+                                                            className={`p-1.5 rounded-lg transition-colors ${!getTagsForSelection(role.default_tags) && (selectedPartnerId || selectedLeaderId) ? 'text-gray-400 hover:bg-gray-100' : 'text-blue-600 hover:bg-blue-100'}`}
                                                             title="Editar Tags"
-                                                            disabled={cargoFilterType !== 'Geral' && !cargoFilterValue}
+                                                            disabled={(!!selectedPartnerId || !!selectedLeaderId) && !selectedPartnerId && !selectedLeaderId}
                                                         >
                                                             <Edit2 className="h-4 w-4" />
                                                         </button>
@@ -703,8 +684,8 @@ export function TabelasTab() {
                                         <thead>
                                             <tr className="bg-gray-50 border-b border-gray-200">
                                                 <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider w-1/3">Cargo</th>
-                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">Tags (Perfil Padr\u00E3o)</th>
-                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider text-right w-24">A\u00E7\u00F5es</th>
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">Tags (Perfil Padrão)</th>
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider text-right w-24">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
