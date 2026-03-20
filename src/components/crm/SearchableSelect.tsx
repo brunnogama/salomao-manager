@@ -30,6 +30,8 @@ interface SearchableSelectProps {
   icon?: React.ReactNode; // Ícone opcional no trigger
   allowCustom?: boolean; // Permite digitação livre caso a opção não exista
   hideSearch?: boolean; // Esconde o campo de busca
+  fuzzySearch?: boolean; // Busca por aproximação (fuzzy matching)
+  onCustomAdd?: (value: string) => void; // Callback para salvar novo item no banco
 }
 
 export function SearchableSelect({
@@ -49,7 +51,9 @@ export function SearchableSelect({
   align = 'left',
   icon,
   allowCustom = false,
-  hideSearch = false
+  hideSearch = false,
+  fuzzySearch = false,
+  onCustomAdd
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -134,10 +138,58 @@ export function SearchableSelect({
   const getName = (opt: Option) => String(opt.name || opt.nome || opt.label || opt.value || '');
   const getId = (opt: Option) => opt.id || opt.value || Math.random();
 
-  const filteredOptions = options.filter(opt => {
-    const searchTarget = String(opt.label || getName(opt)).toLowerCase();
-    return searchTarget.includes((searchTerm || '').toLowerCase());
-  });
+  // Fuzzy similarity: normalized Levenshtein-like scoring
+  const fuzzyScore = (source: string, target: string): number => {
+    const s = source.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const t = target.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    // Exact substring match = perfect score
+    if (t.includes(s)) return 1;
+    if (s.includes(t)) return 0.9;
+    // Check each word of the search term
+    const searchWords = s.split(/\s+/).filter(w => w.length > 1);
+    if (searchWords.length === 0) return 0;
+    let matched = 0;
+    for (const word of searchWords) {
+      // Check if any word in target starts with or contains the search word
+      const targetWords = t.split(/\s+/);
+      if (targetWords.some(tw => tw.startsWith(word) || tw.includes(word))) {
+        matched++;
+      } else {
+        // Check character-level similarity for typo tolerance
+        const bestWordScore = Math.max(...targetWords.map(tw => {
+          const shorter = word.length < tw.length ? word : tw;
+          const longer = word.length < tw.length ? tw : word;
+          if (longer.length === 0) return 1;
+          let matches = 0;
+          let lastIdx = -1;
+          for (const ch of shorter) {
+            const idx = longer.indexOf(ch, lastIdx + 1);
+            if (idx > -1) { matches++; lastIdx = idx; }
+          }
+          return matches / longer.length;
+        }));
+        if (bestWordScore > 0.6) matched += bestWordScore;
+      }
+    }
+    return matched / searchWords.length;
+  };
+
+  const filteredOptions = (() => {
+    const term = (searchTerm || '').trim();
+    if (!term) return options;
+    if (!fuzzySearch) {
+      return options.filter(opt => {
+        const searchTarget = String(opt.label || getName(opt)).toLowerCase();
+        return searchTarget.includes(term.toLowerCase());
+      });
+    }
+    // Fuzzy: score and sort, include items with score > 0.3
+    return options
+      .map(opt => ({ opt, score: fuzzyScore(term, String(opt.label || getName(opt))) }))
+      .filter(({ score }) => score > 0.3)
+      .sort((a, b) => b.score - a.score)
+      .map(({ opt }) => opt);
+  })();
 
   const selectedOption = options.find(opt =>
     (opt.id?.toString() === String(value)) || (getName(opt).toLowerCase() === String(value || '').toLowerCase())
@@ -223,13 +275,15 @@ export function SearchableSelect({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onChange(searchTerm.trim());
+                  const val = searchTerm.trim();
+                  onChange(val);
+                  if (onCustomAdd) onCustomAdd(val);
                   setIsOpen(false);
                   setSearchTerm('');
                 }}
                 className="w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all text-[#1e3a8a] bg-blue-50 hover:bg-blue-100"
               >
-                Usar "{searchTerm}"
+                Adicionar "{searchTerm}"
               </button>
             ) : (
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nenhum resultado</p>
