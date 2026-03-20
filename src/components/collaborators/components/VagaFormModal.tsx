@@ -818,7 +818,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, on
                                                             value={formData.perfil || ''}
                                                             onChange={handlePerfilChange}
                                                             placeholder="Descreva o perfil (cada linha salva vira uma tag)&#10;Ex:&#10;Experiência no contencioso cível&#10;Legalone&#10;&#10;Dica: Use @ para buscar na nuvem de talentos"
-                                                            className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm h-32 resize-none ${viewMode ? 'bg-gray-50' : ''}`}
+                                                            className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm min-h-[250px] resize-none ${viewMode ? 'bg-gray-50' : ''}`}
                                                             disabled={viewMode}
                                                         />
 
@@ -872,7 +872,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, on
                                                     <textarea
                                                         value={formData.observacoes || ''}
                                                         onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
-                                                        className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm h-32 resize-none ${viewMode ? 'bg-gray-50' : ''}`}
+                                                        className={`w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm min-h-[250px] resize-none ${viewMode ? 'bg-gray-50' : ''}`}
                                                         disabled={viewMode}
                                                     />
                                                 </div>
