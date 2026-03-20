@@ -37,10 +37,11 @@ interface CandidatoFormModalProps {
     initialData?: any;
     initialFile?: File | null;
     viewMode?: boolean;
-    onEdit?: (id: string) => void;
+    initialTab?: number;
+    onEdit?: (id: string, activeTab?: number) => void;
 }
 
-export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile, viewMode = false, onEdit }: CandidatoFormModalProps) {
+export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initialData, initialFile, viewMode = false, initialTab, onEdit }: CandidatoFormModalProps) {
     const navigate = useNavigate()
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
     const downloadLinkRef = useRef<HTMLAnchorElement>(null)
@@ -111,7 +112,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
 
     useEffect(() => {
         if (isOpen) {
-            setActiveTab(1)
+            setActiveTab(initialTab || 1)
             fetchTags()
             setPendingGedDocs([])
             setPendingHistorico([])
@@ -979,7 +980,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                                     type="button"
                                     onClick={() => {
                                         onClose()
-                                        onEdit(candidatoId)
+                                        onEdit(candidatoId, activeTab)
                                     }}
                                     className="bg-[#1e3a8a] text-white px-8 py-2.5 rounded-xl font-bold text-sm hover:bg-[#1e3a8a]/90 transition-all flex items-center gap-2 shadow-lg shadow-[#1e3a8a]/20 active:scale-95 hover:-translate-y-0.5"
                                 >

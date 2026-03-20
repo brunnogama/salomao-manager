@@ -308,6 +308,7 @@ export function RHVagas() {
   const [selectedCandidatoId, setSelectedCandidatoId] = useState<string | null>(null)
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
   const [editInitialTab, setEditInitialTab] = useState(1)
+  const [candidatoEditInitialTab, setCandidatoEditInitialTab] = useState(1)
 
   useEffect(() => {
     setSelectedCandidates([])
@@ -697,8 +698,9 @@ export function RHVagas() {
     setIsModalOpen(false)
   }
 
-  const handleOpenCandidatoModal = (id: string) => {
+  const handleOpenCandidatoModal = (id: string, initialTab?: number) => {
     setSelectedCandidatoId(id)
+    setCandidatoEditInitialTab(initialTab || 1)
     setIsCandidatoModalOpen(true)
   }
 
@@ -1868,6 +1870,7 @@ export function RHVagas() {
         candidatoId={selectedCandidatoId}
         initialData={candidatoInitialData}
         initialFile={candidatoInitialFile}
+        initialTab={candidatoEditInitialTab}
         onSave={() => {
           fetchVagas();
           fetchCandidatos();
@@ -1879,7 +1882,7 @@ export function RHVagas() {
         onClose={handleCloseCandidatoViewModal}
         candidatoId={selectedCandidatoId}
         viewMode={true}
-        onEdit={(id) => handleOpenCandidatoModal(id)}
+        onEdit={(id, tab) => handleOpenCandidatoModal(id, tab)}
         onSave={() => {
           fetchVagas();
           fetchCandidatos();

@@ -935,7 +935,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     }
   }
 
-  const handleEdit = (colaborador: Collaborator) => {
+  const handleEdit = (colaborador: Collaborator, initialTab?: number) => {
     // Format dates for display (DD/MM/YYYY)
     const formattedColaborador = {
       ...colaborador,
@@ -966,7 +966,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setFormData(formattedColaborador)
     setPhotoPreview(colaborador.photo_url || null)
     setSelectedPhotoFile(null)
-    setActiveFormTab(1)
+    setActiveFormTab(initialTab || 1)
 
     // Save scroll position before opening the modal
     if (listContainerRef.current) {
@@ -2962,7 +2962,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
           () => setSelectedColaborador(null),
           activeDetailTab,
           setActiveDetailTab,
-          renderModalContent(activeDetailTab, true, selectedColaborador),
+          <fieldset disabled className="contents">{renderModalContent(activeDetailTab, true, selectedColaborador)}</fieldset>,
           (
             <>
               <button
@@ -2972,7 +2972,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 <Trash2 className="h-4 w-4" /> Excluir
               </button>
               <button
-                onClick={() => handleEdit(selectedColaborador)}
+                onClick={() => handleEdit(selectedColaborador, activeDetailTab)}
                 className="px-6 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
               >
                 <Pencil className="h-4 w-4" /> Editar Perfil
