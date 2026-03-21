@@ -1133,27 +1133,47 @@ export function RHVagas() {
               {/* Card de KPI da tab ativa */}
               <div className="flex items-stretch shrink-0">
                 {activeTab === 'abertas' && (
-                  <div className="flex flex-col items-center justify-center px-6 py-3 rounded-xl border bg-blue-50 border-[#1e3a8a] ring-2 ring-[#1e3a8a]/20 shadow-sm min-w-[110px]">
-                    <span className="text-2xl font-black leading-none text-[#1e3a8a]">{countAbertas}</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest mt-1 text-[#1e3a8a]">Abertas</span>
+                  <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+                    <div className="p-2 rounded-lg bg-blue-50">
+                      <Briefcase className="h-5 w-5 text-[#1e3a8a]" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Abertas</span>
+                      <span className="text-xl font-black text-[#0a192f] leading-tight">{countAbertas}</span>
+                    </div>
                   </div>
                 )}
                 {activeTab === 'talentos' && (
-                  <div className="flex flex-col items-center justify-center px-6 py-3 rounded-xl border bg-blue-50 border-[#1e3a8a] ring-2 ring-[#1e3a8a]/20 shadow-sm min-w-[110px]">
-                    <span className="text-2xl font-black leading-none text-[#1e3a8a]">{countTalentos}</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest mt-1 text-[#1e3a8a]">Talentos</span>
+                  <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+                    <div className="p-2 rounded-lg bg-blue-50">
+                      <Users className="h-5 w-5 text-[#1e3a8a]" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Talentos</span>
+                      <span className="text-xl font-black text-[#0a192f] leading-tight">{countTalentos}</span>
+                    </div>
                   </div>
                 )}
                 {activeTab === 'fechadas' && (
-                  <div className="flex flex-col items-center justify-center px-6 py-3 rounded-xl border bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20 shadow-sm min-w-[110px]">
-                    <span className="text-2xl font-black leading-none text-emerald-700">{countFechadas}</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest mt-1 text-emerald-600">Fechadas</span>
+                  <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+                    <div className="p-2 rounded-lg bg-emerald-50">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Fechadas</span>
+                      <span className="text-xl font-black text-[#0a192f] leading-tight">{countFechadas}</span>
+                    </div>
                   </div>
                 )}
                 {activeTab === 'reprovados' && (
-                  <div className="flex flex-col items-center justify-center px-6 py-3 rounded-xl border bg-red-50 border-red-500 ring-2 ring-red-500/20 shadow-sm min-w-[110px]">
-                    <span className="text-2xl font-black leading-none text-red-600">{countReprovados}</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest mt-1 text-red-500">Reprovados</span>
+                  <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+                    <div className="p-2 rounded-lg bg-red-50">
+                      <UserX className="h-5 w-5 text-red-500" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Reprovados</span>
+                      <span className="text-xl font-black text-[#0a192f] leading-tight">{countReprovados}</span>
+                    </div>
                   </div>
                 )}
               </div>
