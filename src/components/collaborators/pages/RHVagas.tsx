@@ -1105,14 +1105,15 @@ export function RHVagas() {
           <div className="flex items-center gap-3 border-l border-gray-100 pl-4 ml-2">
             <button
               onClick={() => setActiveTab('ats')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap shadow-sm
+              className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all shrink-0 overflow-hidden
                 ${activeTab === 'ats'
-                  ? 'bg-gradient-to-r from-blue-700 to-[#112240] text-white shadow-blue-500/40 ring-2 ring-blue-500/50 ring-offset-1'
-                  : 'bg-gradient-to-r from-blue-600 to-[#1e3a8a] text-white shadow-blue-500/30 hover:from-blue-700 hover:to-[#112240]'}
+                  ? 'bg-gradient-to-r from-blue-700 to-[#112240] text-white shadow-lg shadow-blue-500/40 ring-2 ring-blue-400/60 ring-offset-1'
+                  : 'bg-gradient-to-r from-blue-600 to-[#1e3a8a] text-white shadow-lg shadow-blue-500/30 hover:from-blue-700 hover:to-[#112240]'}
               `}
               title="Match Inteligente (ATS)"
             >
-              <Sparkles className="h-4 w-4" /> Match Inteligente (ATS)
+              <Sparkles className="h-5 w-5 relative z-10" />
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
             </button>
             <button
               onClick={handleOpenSelectionModal}
