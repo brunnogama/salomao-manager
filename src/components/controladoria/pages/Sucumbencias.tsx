@@ -221,15 +221,9 @@ export function Sucumbencias() {
     const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
     // Filtros de Data. Default: 1 de Janeiro deste ano até hoje.
-    const [startDate, setStartDate] = useState(() => {
-        const today = new Date();
-        return `${today.getFullYear()}-01-01`;
-    });
+    const [startDate, setStartDate] = useState('');
 
-    const [endDate, setEndDate] = useState(() => {
-        const today = new Date();
-        return today.toISOString().split('T')[0];
-    });
+    const [endDate, setEndDate] = useState('');
 
     // --- Supabase Actions ---
     const handleAction = async (item: FilteredSucumbencia, status: 'aguardando' | 'descartado' | 'recebido' | 'prescrito') => {
@@ -621,8 +615,8 @@ export function Sucumbencias() {
     const clearAllFilters = () => {
         setSearchTerm('');
         setFilterResponsavel('Todos');
-        setStartDate(`${new Date().getFullYear()}-01-01`);
-        setEndDate(new Date().toISOString().split('T')[0]);
+        setStartDate('');
+        setEndDate('');
     };
 
     return (
