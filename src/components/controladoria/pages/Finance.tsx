@@ -1,68 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
-  DollarSign, Search, Download, CheckCircle2, Circle, Clock, Loader2,
-  CalendarDays, Receipt, Filter, MapPin, Hash,
-  AlertTriangle, Plus, ChevronDown, FileDown, Briefcase
+  DollarSign, Download, CheckCircle2, Circle, Clock, Loader2,
+  CalendarDays, Receipt, MapPin, Hash,
+  AlertTriangle, Plus, FileDown, Briefcase
 } from 'lucide-react';
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 
-// Rota corrigida para localizar o EmptyState corretamente
 import { EmptyState } from '../ui/EmptyState';
-
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
 import XLSX from 'xlsx-js-style';
 import { toast } from 'sonner';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
+import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 
 // --- COMPONENTES AUXILIARES ---
-
-const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { icon?: React.ElementType, value: string, onChange: (val: string) => void, options: { label: string, value: string }[], placeholder: string }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [wrapperRef]);
-
-  const displayValue = options.find((opt) => opt.value === value)?.label || placeholder;
-
-  return (
-    <div className="relative w-full sm:w-auto sm:min-w-[160px]" ref={wrapperRef}>
-      <div
-        className="flex items-center bg-white px-3 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors select-none shadow-sm h-[40px]"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {Icon && <Icon className="w-4 h-4 text-gray-400 mr-2 shrink-0" />}
-        <span className="text-xs font-bold text-gray-600 flex-1 truncate uppercase tracking-wider">{displayValue}</span>
-        <ChevronDown className={`w-3 h-3 text-gray-400 ml-2 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </div>
-
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto flex flex-col animate-in fade-in zoom-in-95">
-          {options.map((opt) => (
-            <div
-              key={opt.value}
-              className={`px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-blue-50 cursor-pointer ${value === opt.value ? 'bg-blue-50 text-[#1e3a8a]' : ''}`}
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-            >
-              {opt.label}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 export function Finance() {
 
@@ -394,14 +346,79 @@ export function Finance() {
     { label: 'Vencidos', value: 'overdue' },
   ];
 
-  const locationOptions = [{ label: 'Todos Locais', value: '' }, ...locations.map(l => ({ label: l, value: l }))];
-  const partnerOptions = [{ label: 'Todos Sócios', value: '' }, ...partners.map(p => ({ label: p.name, value: p.id }))];
+
+  // FilterBar: categorias, chips, count
+  const filterCategories = useMemo((): FilterCategory[] => [
+    {
+      key: 'partner',
+      label: 'Sócio',
+      icon: Briefcase,
+      type: 'single',
+      options: partners.map(p => ({ label: p.name, value: p.id })),
+      value: selectedPartner,
+      onChange: (val: string) => setSelectedPartner(val),
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      icon: Clock,
+      type: 'single',
+      options: statusOptions.filter(o => o.value !== 'all'),
+      value: statusFilter === 'all' ? '' : statusFilter,
+      onChange: (val: string) => setStatusFilter(val || 'all'),
+    },
+    {
+      key: 'location',
+      label: 'Local',
+      icon: MapPin,
+      type: 'single',
+      options: locations.map(l => ({ label: l, value: l })),
+      value: selectedLocation,
+      onChange: (val: string) => setSelectedLocation(val),
+    },
+  ], [selectedPartner, statusFilter, selectedLocation, partners, locations]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (selectedPartner) count++;
+    if (statusFilter !== 'all') count++;
+    if (selectedLocation) count++;
+    if (startDate) count++;
+    if (endDate) count++;
+    return count;
+  }, [selectedPartner, statusFilter, selectedLocation, startDate, endDate]);
+
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; onClear: () => void }[] = [];
+    if (selectedPartner) {
+      const name = partners.find(p => p.id === selectedPartner)?.name || selectedPartner;
+      chips.push({ key: 'partner', label: `Sócio: ${name}`, onClear: () => setSelectedPartner('') });
+    }
+    if (statusFilter !== 'all') {
+      const label = statusOptions.find(o => o.value === statusFilter)?.label || statusFilter;
+      chips.push({ key: 'status', label: `Status: ${label}`, onClear: () => setStatusFilter('all') });
+    }
+    if (selectedLocation) {
+      chips.push({ key: 'location', label: `Local: ${selectedLocation}`, onClear: () => setSelectedLocation('') });
+    }
+    if (startDate) {
+      chips.push({ key: 'startDate', label: `De: ${new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setStartDate('') });
+    }
+    if (endDate) {
+      chips.push({ key: 'endDate', label: `Até: ${new Date(endDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setEndDate('') });
+    }
+    return chips;
+  }, [selectedPartner, statusFilter, selectedLocation, startDate, endDate, partners]);
+
+  const clearAllFilters = () => {
+    clearFilters();
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
 
-      {/* 1. Header - Salomão Design System */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      {/* 1. Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
             <DollarSign className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
@@ -412,20 +429,26 @@ export function Finance() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
-          <button onClick={exportToExcel} className="hidden lg:flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
-            <Download className="h-4 w-4" /> Exportar XLS
+        {/* Ícones redondos */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={exportToExcel}
+            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+            title="Exportar XLSX"
+          >
+            <Download className="h-4 w-4" />
           </button>
           <button
             onClick={handleNewInvoice}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 whitespace-nowrap"
+            className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30"
+            title="Novo Lançamento"
           >
-            <Plus className="h-4 w-4" /> Novo Lançamento
+            <Plus className="h-5 w-5" />
           </button>
         </div>
       </div>
 
-      {/* 2. Cards de Totais - Salomão Design System */}
+      {/* 2. Cards de Totais */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div
           onClick={totalOverdueCount > 0 ? handleFilterOverdue : undefined}
@@ -475,75 +498,40 @@ export function Finance() {
         </div>
       </div>
 
-      {/* 3. Toolbar Principal - Padrão Contratos */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 w-full">
-        <div className="flex flex-col lg:flex-row flex-wrap items-stretch lg:items-center gap-4">
-
-          {/* Barra de Busca (flex-1, sempre visível) */}
-          <div className="relative flex-1 w-full lg:w-auto shrink-0 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar cliente, HON, ID..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          {/* Filtros: Sócios, Status, Locais e Período */}
-          <div className="flex flex-col sm:flex-row flex-wrap lg:flex-nowrap items-stretch sm:items-center gap-2 w-full lg:w-auto">
-            <FilterSelect
-              icon={Briefcase}
-              value={selectedPartner}
-              onChange={setSelectedPartner}
-              options={partnerOptions}
-              placeholder="Sócios"
-            />
-
-            <FilterSelect
-              icon={Filter}
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={statusOptions}
-              placeholder="Status"
-            />
-
-            <FilterSelect
-              icon={MapPin}
-              value={selectedLocation}
-              onChange={setSelectedLocation}
-              options={locationOptions}
-              placeholder="Locais"
-            />
-
-            {/* Período: De - Até */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px] flex-1 sm:flex-none justify-between sm:justify-start">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
+      {/* 3. FilterBar */}
+      <FilterBar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        categories={filterCategories}
+        activeFilterChips={activeFilterChips}
+        activeFilterCount={activeFilterCount}
+        onClearAll={clearAllFilters}
+        extraContent={
+          <div className="px-4 py-3 space-y-2">
+            <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Período</div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
+                  className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
                 />
               </div>
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px] flex-1 sm:flex-none justify-between sm:justify-start">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
+              <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
+                  className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
                 />
               </div>
             </div>
-
-
           </div>
-
-        </div>
-      </div>
+        }
+      />
 
       {/* 4. Área de Conteúdo */}
       <div className="flex-1">
