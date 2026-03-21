@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, Fragment } from 'react';
-import { Search, Filter, Download, ShieldCheck, Clock, Eye, Trash2, Plus, Loader2, LayoutDashboard, Database, BarChart3, FileSearch, Edit, Building2 } from 'lucide-react';
+import { Download, ShieldCheck, Clock, Eye, Trash2, Plus, Loader2, LayoutDashboard, Database, BarChart3, FileSearch, Edit, Building2, AlertTriangle } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { EmptyState } from '../ui/EmptyState';
 import { CertificateFormModal } from '../certificates/CertificateFormModal';
 import { CertificateDetailsModal } from '../certificates/CertificateDetailsModal';
-import { FilterSelect } from '../ui/FilterSelect';
+import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 
 const CNPJ_MAP: Record<string, string> = {
   'Salomão BA': '63.808.246/0001-04',
@@ -311,8 +311,59 @@ export function Compliance() {
 
     const matchesType = !selectedCertType || getCertName(c) === selectedCertType;
 
-    return matchesSearch && matchesType;
+    // Filtro por local (para as tabs de escritório)
+    const matchesLocation = !activeTab || activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab;
+
+    return matchesSearch && matchesType && matchesLocation;
   });
+
+  // FilterBar: opções de escritórios
+  const locationFilterOptions = useMemo(() => {
+    return locationsList.map(loc => ({
+      label: loc.name,
+      value: loc.name
+    }));
+  }, [locationsList]);
+
+  // FilterBar: categorias, chips, count
+  const filterCategories = useMemo((): FilterCategory[] => [
+    {
+      key: 'location',
+      label: 'Escritório',
+      icon: Building2,
+      type: 'single',
+      options: locationFilterOptions,
+      value: activeTab !== 'dashboard' && activeTab !== 'ged' ? activeTab : '',
+      onChange: (val: string) => {
+        if (val) setActiveTab(val);
+        else setActiveTab('dashboard');
+      },
+    },
+  ], [activeTab, locationFilterOptions]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (activeTab !== 'dashboard' && activeTab !== 'ged') count++;
+    if (selectedCertType) count++;
+    return count;
+  }, [activeTab, selectedCertType]);
+
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; onClear: () => void }[] = [];
+    if (activeTab !== 'dashboard' && activeTab !== 'ged') {
+      chips.push({ key: 'location', label: `Escritório: ${activeTab}`, onClear: () => setActiveTab('dashboard') });
+    }
+    if (selectedCertType) {
+      chips.push({ key: 'certType', label: `Tipo: ${selectedCertType}`, onClear: () => setSelectedCertType('') });
+    }
+    return chips;
+  }, [activeTab, selectedCertType]);
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setSelectedCertType('');
+    setActiveTab('dashboard');
+  };
 
   const exportToExcel = () => {
     // Header e configuração XLSX
@@ -512,7 +563,8 @@ export function Compliance() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
+        {/* Left: Título e Ícone */}
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
             <ShieldCheck className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
@@ -522,21 +574,70 @@ export function Compliance() {
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gestão de Certidões e Conformidade</p>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full lg:w-auto">
-          <button
-            onClick={exportToExcel}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 sm:py-2.5 bg-green-50 text-green-700 border border-green-200 rounded-xl hover:bg-green-100 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95 w-full sm:w-auto"
-          >
-            <Download className="h-4 w-4 shrink-0" /> Exportar XLS
-          </button>
 
-          {/* Ações */}
-          <button
-            onClick={handleCreateNew}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
-          >
-            <Plus className="h-4 w-4 shrink-0" /> Nova Certidão
-          </button>
+        {/* Right: Abas + Ações */}
+        <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end mt-2 md:mt-0">
+          {/* Abas Dashboard | GED */}
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'dashboard' || (activeTab !== 'ged' && activeTab !== 'dashboard') ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <LayoutDashboard className="h-4 w-4" /> Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('ged')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'ged' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Database className="h-4 w-4" /> GED
+            </button>
+          </div>
+
+          {/* Ícones redondos */}
+          <div className="flex items-center gap-2 border-l border-gray-100 pl-3 ml-1">
+            <button
+              onClick={exportToExcel}
+              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+              title="Exportar XLSX"
+            >
+              <Download className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleCreateNew}
+              className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30"
+              title="Nova Certidão"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Card + FilterBar */}
+      <div className="flex flex-col lg:flex-row items-stretch gap-4">
+        {/* Card de KPI - Certidões Vencidas */}
+        <div className="flex items-stretch shrink-0">
+          <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+            <div className={`p-2 rounded-lg ${stats.expired > 0 ? 'bg-red-50' : 'bg-blue-50'}`}>
+              <AlertTriangle className={`h-5 w-5 ${stats.expired > 0 ? 'text-red-500' : 'text-[#1e3a8a]'}`} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Vencidas</span>
+              <span className={`text-xl font-black leading-tight ${stats.expired > 0 ? 'text-red-600' : 'text-[#0a192f]'}`}>{stats.expired}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* FilterBar */}
+        <div className="flex-1">
+          <FilterBar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            categories={filterCategories}
+            activeFilterChips={activeFilterChips}
+            activeFilterCount={activeFilterCount}
+            onClearAll={clearAllFilters}
+          />
         </div>
       </div>
 
@@ -547,57 +648,6 @@ export function Compliance() {
         </div>
       ) : (
         <div className="flex flex-col space-y-6">
-          {/* Abas de Locais no Estilo do Sistema */}
-          <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-2 overflow-hidden">
-            <div className="flex space-x-2 overflow-x-auto pb-2 custom-scrollbar">
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2 ${activeTab === 'dashboard'
-                  ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-md'
-                  : 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-[#1e3a8a]'
-                  }`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                Dashboard
-              </button>
-
-              {locationsList.map(loc => {
-                const expiringCount = expiringByLocation[loc.name] || 0;
-                return (
-                  <button
-                    key={loc.name}
-                    onClick={() => setActiveTab(loc.name)}
-                    className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-3 ${activeTab === loc.name
-                      ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-md'
-                      : 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-[#1e3a8a]'
-                      }`}
-                  >
-                    {loc.name}
-                    {expiringCount > 0 && (
-                      <span className={`flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black border animate-pulse ${activeTab === loc.name
-                        ? 'bg-white text-[#112240] border-transparent'
-                        : 'bg-red-500 text-white border-red-600 shadow-sm'
-                        }`}>
-                        {expiringCount}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-
-              <button
-                onClick={() => setActiveTab('ged')}
-                className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2 ${activeTab === 'ged'
-                  ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-md'
-                  : 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-[#1e3a8a]'
-                  }`}
-              >
-                <Database className="w-4 h-4" />
-                GED
-              </button>
-            </div>
-          </div>
-
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -800,53 +850,25 @@ export function Compliance() {
 
           {activeTab !== 'dashboard' && activeTab !== 'ged' && (
             <div className="w-full flex flex-col space-y-6">
-              {/* Toolbar: Busca e Ações */}
-              <div className="w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
-
-                {/* Search and Filter */}
-                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full xl:flex-1">
-                  <div className="flex items-center gap-3 w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg relative focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
-                    <Search className="h-4 w-4 text-gray-400 shrink-0" />
-                    <input
-                      type="text"
-                      placeholder="Buscar certidão por nome, cartório ou local..."
-                      className="w-full bg-transparent border-none text-sm font-medium outline-none text-gray-700"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="w-full md:w-64 shrink-0">
-                    <FilterSelect
-                      icon={Filter}
-                      value={selectedCertType}
-                      onChange={setSelectedCertType}
-                      placeholder="Todas as Certidões"
-                      options={uniqueCertTypes.map(type => ({ label: type, value: type }))}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto shrink-0 mt-4 xl:mt-0">
-                  {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab) && (
-                    <button
-                      onClick={() => handleEmitRF(activeTab)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
-                    >
-                      <Download className="h-4 w-4 shrink-0" /> Emitir Certidão RF
-                    </button>
-                  )}
-
-                  {activeTab !== 'dashboard' && activeTab !== 'ged' && CNPJ_MAP[activeTab] && (
-                    <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg w-full sm:w-auto">
+              {/* CNPJ Badge + Emitir RF Button */}
+              {locationsList.find(l => l.name === activeTab) && (
+                <div className="flex flex-wrap items-center gap-3">
+                  {CNPJ_MAP[activeTab] && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg">
                       <ShieldCheck className="w-4 h-4 text-[#1e3a8a] shrink-0" />
-                      <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest truncate">
+                      <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest">
                         CNPJ FILIAL: {CNPJ_MAP[activeTab]}
                       </span>
                     </div>
                   )}
+                  <button
+                    onClick={() => handleEmitRF(activeTab)}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+                  >
+                    <Download className="h-4 w-4 shrink-0" /> Emitir Certidão RF
+                  </button>
                 </div>
-              </div>
+              )}
 
               {/* Tabela de Certidões */}
               <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto custom-scrollbar">
