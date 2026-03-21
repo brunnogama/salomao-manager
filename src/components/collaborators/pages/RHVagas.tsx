@@ -1092,8 +1092,8 @@ export function RHVagas() {
 
             {/* Painel de Filtros Colapsável */}
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isFiltersOpen ? 'max-h-[500px] opacity-100 mt-4 pt-4 border-t border-gray-100' : 'max-h-0 opacity-0'
+              className={`transition-all duration-300 ease-in-out ${
+                isFiltersOpen ? 'max-h-[500px] opacity-100 mt-4 pt-4 border-t border-gray-100 overflow-visible' : 'max-h-0 opacity-0 overflow-hidden'
               }`}
             >
               <div className="flex flex-wrap items-center gap-3">
