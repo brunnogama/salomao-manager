@@ -650,7 +650,7 @@ export function Sucumbencias() {
                     onClick={() => setActiveTab('potenciais')}
                     className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'potenciais' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
-                    Potenciais
+                    <Wallet className="h-4 w-4" /> Potenciais
                     <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'potenciais' ? 'bg-blue-50 text-blue-600' : 'bg-gray-200/60 text-gray-500'}`}>
                       {importedData.filter(d => (d.status || 'potencial') === 'potencial').length}
                     </span>
@@ -659,7 +659,7 @@ export function Sucumbencias() {
                     onClick={() => setActiveTab('prescritos')}
                     className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'prescritos' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
-                    Prescritos
+                    <Clock className="h-4 w-4" /> Prescritos
                     <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'prescritos' ? 'bg-amber-50 text-amber-600' : 'bg-gray-200/60 text-gray-500'}`}>
                       {importedData.filter(d => d.status === 'prescrito').length}
                     </span>
@@ -668,7 +668,7 @@ export function Sucumbencias() {
                     onClick={() => setActiveTab('recebidos')}
                     className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'recebidos' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
-                    Já Pagos
+                    <Wallet className="h-4 w-4" /> Já Pagos
                     <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'recebidos' ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-200/60 text-gray-500'}`}>
                       {importedData.filter(d => d.status === 'recebido').length}
                     </span>
@@ -677,7 +677,7 @@ export function Sucumbencias() {
                     onClick={() => setActiveTab('aguardando')}
                     className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'aguardando' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
-                    Aguardando
+                    <Hourglass className="h-4 w-4" /> Aguardando
                     <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'aguardando' ? 'bg-amber-50 text-amber-600' : 'bg-gray-200/60 text-gray-500'}`}>
                       {importedData.filter(d => d.status === 'aguardando').length}
                     </span>
@@ -686,7 +686,7 @@ export function Sucumbencias() {
                     onClick={() => setActiveTab('descartados')}
                     className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'descartados' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
-                    Descartados
+                    <XCircle className="h-4 w-4" /> Descartados
                     <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'descartados' ? 'bg-red-50 text-red-600' : 'bg-gray-200/60 text-gray-500'}`}>
                       {importedData.filter(d => d.status === 'descartado').length}
                     </span>
