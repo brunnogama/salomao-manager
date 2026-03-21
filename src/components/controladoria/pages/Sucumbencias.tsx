@@ -629,143 +629,156 @@ export function Sucumbencias() {
                 className="hidden" 
             />
 
-            {/* Header com Título, Abas e Botões de Ação Principais */}
+            {/* Header */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
-                <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
-                        <Award className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Hon. Sucumbência</h1>
-                        <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gestão e acompanhamento de valores sucumbenciais</p>
-                    </div>
+              {/* Left: Título e Ícone */}
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
+                  <Award className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Sucumbências</h1>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gestão e acompanhamento de valores sucumbenciais</p>
+                </div>
+              </div>
+
+              {/* Right: Abas + Ações */}
+              <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end mt-2 md:mt-0">
+                {/* Abas */}
+                <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
+                  <button
+                    onClick={() => setActiveTab('potenciais')}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'potenciais' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Potenciais
+                    <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'potenciais' ? 'bg-blue-50 text-blue-600' : 'bg-gray-200/60 text-gray-500'}`}>
+                      {importedData.filter(d => (d.status || 'potencial') === 'potencial').length}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('prescritos')}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'prescritos' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Prescritos
+                    <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'prescritos' ? 'bg-amber-50 text-amber-600' : 'bg-gray-200/60 text-gray-500'}`}>
+                      {importedData.filter(d => d.status === 'prescrito').length}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('recebidos')}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'recebidos' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Já Pagos
+                    <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'recebidos' ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-200/60 text-gray-500'}`}>
+                      {importedData.filter(d => d.status === 'recebido').length}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('aguardando')}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'aguardando' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Aguardando
+                    <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'aguardando' ? 'bg-amber-50 text-amber-600' : 'bg-gray-200/60 text-gray-500'}`}>
+                      {importedData.filter(d => d.status === 'aguardando').length}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('descartados')}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'descartados' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Descartados
+                    <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'descartados' ? 'bg-red-50 text-red-600' : 'bg-gray-200/60 text-gray-500'}`}>
+                      {importedData.filter(d => d.status === 'descartado').length}
+                    </span>
+                  </button>
                 </div>
 
-                {/* Right: Abas + Ações */}
-                <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end mt-2 md:mt-0">
-                    {/* Abas */}
-                    <div className="flex items-center bg-gray-100/80 p-1 rounded-xl overflow-x-auto">
-                        <button
-                            onClick={() => setActiveTab('potenciais')}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'potenciais' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Potenciais
-                            <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'potenciais' ? 'bg-blue-50 text-blue-600' : 'bg-gray-200/60 text-gray-500'}`}>
-                                {importedData.filter(d => (d.status || 'potencial') === 'potencial').length}
-                            </span>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('prescritos')}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'prescritos' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Prescritos
-                            <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'prescritos' ? 'bg-amber-50 text-amber-600' : 'bg-gray-200/60 text-gray-500'}`}>
-                                {importedData.filter(d => d.status === 'prescrito').length}
-                            </span>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('recebidos')}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'recebidos' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Já Pagos
-                            <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'recebidos' ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-200/60 text-gray-500'}`}>
-                                {importedData.filter(d => d.status === 'recebido').length}
-                            </span>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('aguardando')}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'aguardando' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Aguardando
-                            <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'aguardando' ? 'bg-amber-50 text-amber-600' : 'bg-gray-200/60 text-gray-500'}`}>
-                                {importedData.filter(d => d.status === 'aguardando').length}
-                            </span>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('descartados')}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'descartados' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Descartados
-                            <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'descartados' ? 'bg-red-50 text-red-600' : 'bg-gray-200/60 text-gray-500'}`}>
-                                {importedData.filter(d => d.status === 'descartado').length}
-                            </span>
-                        </button>
-                    </div>
-
-                    {/* Ícones redondos */}
-                    <div className="flex items-center gap-2 border-l border-gray-100 pl-3 ml-1 shrink-0">
-                        <button 
-                            onClick={() => setIsClearModalOpen(true)}
-                            className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-red-500 rounded-full hover:bg-red-50 transition-all shadow-sm"
-                            title="Limpar Base"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                        <button 
-                            onClick={() => fileInputRef.current?.click()}
-                            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
-                            title="Importar Relatório LegalOne"
-                        >
-                            <Upload className="w-4 h-4" />
-                        </button>
-                    </div>
+                {/* Ícones redondos */}
+                <div className="flex items-center gap-2 border-l border-gray-100 pl-3 ml-1">
+                  <button
+                    onClick={() => setIsClearModalOpen(true)}
+                    className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-red-500 rounded-full hover:bg-red-50 transition-all shadow-sm"
+                    title="Limpar Base"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+                    title="Importar Relatório LegalOne"
+                  >
+                    <Upload className="w-4 h-4" />
+                  </button>
                 </div>
+              </div>
             </div>
 
             {/* KPI Card + FilterBar */}
             {hasImported && (
-                <div className="flex flex-col lg:flex-row items-stretch gap-4">
-                    {/* Card de KPI - Andamentos */}
-                    <div className="flex items-stretch shrink-0">
-                        <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
-                            <div className="p-2 rounded-lg bg-blue-50">
-                                <Award className="h-5 w-5 text-[#1e3a8a]" />
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Andamentos</span>
-                                <span className="text-xl font-black text-[#0a192f] leading-tight">{displayedData.reduce((acc, curr) => acc + curr.andamentos.length, 0).toLocaleString('pt-BR')}</span>
-                            </div>
-                        </div>
+              <div className="flex flex-col lg:flex-row items-stretch gap-4">
+                {/* Cards de KPI */}
+                <div className="flex items-stretch gap-3 shrink-0">
+                  {/* Card de KPI - Processos */}
+                  <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+                    <div className="p-2 rounded-lg bg-amber-50">
+                      <Hourglass className="h-5 w-5 text-amber-500" />
                     </div>
-
-                    {/* FilterBar */}
-                    <div className="flex-1">
-                        <FilterBar
-                            searchTerm={searchTerm}
-                            onSearchChange={setSearchTerm}
-                            categories={filterCategories}
-                            activeFilterChips={activeFilterChips}
-                            activeFilterCount={activeFilterCount}
-                            onClearAll={clearAllFilters}
-                            extraContent={
-                                <div className="px-4 py-3 space-y-2">
-                                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Período</div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
-                                            <input
-                                                type="date"
-                                                value={startDate}
-                                                onChange={(e) => setStartDate(e.target.value)}
-                                                className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
-                                            <input
-                                                type="date"
-                                                value={endDate}
-                                                onChange={(e) => setEndDate(e.target.value)}
-                                                className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        />
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Processos</span>
+                      <span className="text-xl font-black text-[#0a192f] leading-tight">{importedData.filter(d => (d.status || 'potencial') === 'potencial').length.toLocaleString('pt-BR')}</span>
                     </div>
+                  </div>
+                  {/* Card de KPI - Andamentos */}
+                  <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+                    <div className="p-2 rounded-lg bg-blue-50">
+                      <Award className="h-5 w-5 text-[#1e3a8a]" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Andamentos</span>
+                      <span className="text-xl font-black text-[#0a192f] leading-tight">{displayedData.reduce((acc, curr) => acc + curr.andamentos.length, 0).toLocaleString('pt-BR')}</span>
+                    </div>
+                  </div>
                 </div>
+
+                {/* FilterBar */}
+                <div className="flex-1">
+                  <FilterBar
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    categories={filterCategories}
+                    activeFilterChips={activeFilterChips}
+                    activeFilterCount={activeFilterCount}
+                    onClearAll={clearAllFilters}
+                    extraContent={
+                      <div className="px-4 py-3 space-y-2">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Período</div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
+                            <input
+                              type="date"
+                              value={startDate}
+                              onChange={(e) => setStartDate(e.target.value)}
+                              className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
+                            <input
+                              type="date"
+                              value={endDate}
+                              onChange={(e) => setEndDate(e.target.value)}
+                              className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  />
+                </div>
+              </div>
             )}
+
 
             {loading ? (
                 <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center flex flex-col items-center justify-center">
