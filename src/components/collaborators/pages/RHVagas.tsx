@@ -1130,52 +1130,32 @@ export function RHVagas() {
           <>
             {/* KPI Cards + Filter Bar */}
             <div className="flex flex-col lg:flex-row items-stretch gap-4">
-              {/* Cards de KPI */}
-              <div className="flex items-stretch gap-3 shrink-0">
-                <button
-                  onClick={() => setActiveTab('abertas')}
-                  className={`flex flex-col items-center justify-center px-5 py-3 rounded-xl border transition-all min-w-[110px] ${
-                    activeTab === 'abertas'
-                      ? 'bg-blue-50 border-[#1e3a8a] ring-2 ring-[#1e3a8a]/20 shadow-sm'
-                      : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
-                  }`}
-                >
-                  <span className={`text-2xl font-black leading-none ${activeTab === 'abertas' ? 'text-[#1e3a8a]' : 'text-[#0a192f]'}`}>{countAbertas}</span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest mt-1 ${activeTab === 'abertas' ? 'text-[#1e3a8a]' : 'text-gray-400'}`}>Abertas</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('talentos')}
-                  className={`flex flex-col items-center justify-center px-5 py-3 rounded-xl border transition-all min-w-[110px] ${
-                    activeTab === 'talentos'
-                      ? 'bg-blue-50 border-[#1e3a8a] ring-2 ring-[#1e3a8a]/20 shadow-sm'
-                      : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
-                  }`}
-                >
-                  <span className={`text-2xl font-black leading-none ${activeTab === 'talentos' ? 'text-[#1e3a8a]' : 'text-[#0a192f]'}`}>{countTalentos}</span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest mt-1 ${activeTab === 'talentos' ? 'text-[#1e3a8a]' : 'text-gray-400'}`}>Talentos</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('fechadas')}
-                  className={`flex flex-col items-center justify-center px-5 py-3 rounded-xl border transition-all min-w-[110px] ${
-                    activeTab === 'fechadas'
-                      ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20 shadow-sm'
-                      : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
-                  }`}
-                >
-                  <span className={`text-2xl font-black leading-none ${activeTab === 'fechadas' ? 'text-emerald-700' : 'text-[#0a192f]'}`}>{countFechadas}</span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest mt-1 ${activeTab === 'fechadas' ? 'text-emerald-600' : 'text-gray-400'}`}>Fechadas</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('reprovados')}
-                  className={`flex flex-col items-center justify-center px-5 py-3 rounded-xl border transition-all min-w-[110px] ${
-                    activeTab === 'reprovados'
-                      ? 'bg-red-50 border-red-500 ring-2 ring-red-500/20 shadow-sm'
-                      : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
-                  }`}
-                >
-                  <span className={`text-2xl font-black leading-none ${activeTab === 'reprovados' ? 'text-red-600' : 'text-[#0a192f]'}`}>{countReprovados}</span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest mt-1 ${activeTab === 'reprovados' ? 'text-red-500' : 'text-gray-400'}`}>Reprovados</span>
-                </button>
+              {/* Card de KPI da tab ativa */}
+              <div className="flex items-stretch shrink-0">
+                {activeTab === 'abertas' && (
+                  <div className="flex flex-col items-center justify-center px-6 py-3 rounded-xl border bg-blue-50 border-[#1e3a8a] ring-2 ring-[#1e3a8a]/20 shadow-sm min-w-[110px]">
+                    <span className="text-2xl font-black leading-none text-[#1e3a8a]">{countAbertas}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest mt-1 text-[#1e3a8a]">Abertas</span>
+                  </div>
+                )}
+                {activeTab === 'talentos' && (
+                  <div className="flex flex-col items-center justify-center px-6 py-3 rounded-xl border bg-blue-50 border-[#1e3a8a] ring-2 ring-[#1e3a8a]/20 shadow-sm min-w-[110px]">
+                    <span className="text-2xl font-black leading-none text-[#1e3a8a]">{countTalentos}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest mt-1 text-[#1e3a8a]">Talentos</span>
+                  </div>
+                )}
+                {activeTab === 'fechadas' && (
+                  <div className="flex flex-col items-center justify-center px-6 py-3 rounded-xl border bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20 shadow-sm min-w-[110px]">
+                    <span className="text-2xl font-black leading-none text-emerald-700">{countFechadas}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest mt-1 text-emerald-600">Fechadas</span>
+                  </div>
+                )}
+                {activeTab === 'reprovados' && (
+                  <div className="flex flex-col items-center justify-center px-6 py-3 rounded-xl border bg-red-50 border-red-500 ring-2 ring-red-500/20 shadow-sm min-w-[110px]">
+                    <span className="text-2xl font-black leading-none text-red-600">{countReprovados}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest mt-1 text-red-500">Reprovados</span>
+                  </div>
+                )}
               </div>
 
               {/* Filter Bar */}
