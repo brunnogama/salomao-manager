@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment } from 'react';
+import { useState, useEffect, useRef, Fragment, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx';
 import { Dialog, Transition } from '@headlessui/react';
@@ -8,19 +8,18 @@ import {
     Loader2,
     Upload,
     FileSpreadsheet,
-    Search,
     FileText,
     Trash2,
     XCircle,
     AlertTriangle,
-    Filter,
     X,
     Wallet,
     Hourglass,
-    Clock
+    Clock,
+    User
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
-import { SearchableSelect } from '../../crm/SearchableSelect';
+import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 
 interface LegalOneRow {
     Tipo?: string;
@@ -580,6 +579,52 @@ export function Sucumbencias() {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const finalPaginatedData = displayedData.slice(startIndex, startIndex + itemsPerPage);
 
+    // FilterBar: categorias, chips, count
+    const responsavelOptions = useMemo(() => 
+        uniqueResponsaveis.map(r => ({ label: r, value: r })),
+    [uniqueResponsaveis]);
+
+    const filterCategories = useMemo((): FilterCategory[] => [
+        {
+            key: 'responsavel',
+            label: 'Responsável',
+            icon: User,
+            type: 'single',
+            options: responsavelOptions,
+            value: filterResponsavel === 'Todos' ? '' : filterResponsavel,
+            onChange: (val: string) => setFilterResponsavel(val || 'Todos'),
+        },
+    ], [filterResponsavel, responsavelOptions]);
+
+    const activeFilterCount = useMemo(() => {
+        let count = 0;
+        if (filterResponsavel !== 'Todos') count++;
+        if (startDate) count++;
+        if (endDate) count++;
+        return count;
+    }, [filterResponsavel, startDate, endDate]);
+
+    const activeFilterChips = useMemo(() => {
+        const chips: { key: string; label: string; onClear: () => void }[] = [];
+        if (filterResponsavel !== 'Todos') {
+            chips.push({ key: 'responsavel', label: `Resp: ${filterResponsavel}`, onClear: () => setFilterResponsavel('Todos') });
+        }
+        if (startDate) {
+            chips.push({ key: 'startDate', label: `De: ${new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setStartDate('') });
+        }
+        if (endDate) {
+            chips.push({ key: 'endDate', label: `Até: ${new Date(endDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setEndDate('') });
+        }
+        return chips;
+    }, [filterResponsavel, startDate, endDate]);
+
+    const clearAllFilters = () => {
+        setSearchTerm('');
+        setFilterResponsavel('Todos');
+        setStartDate(`${new Date().getFullYear()}-01-01`);
+        setEndDate(new Date().toISOString().split('T')[0]);
+    };
+
     return (
         <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 animate-in fade-in duration-500">
             {/* Input de Arquivo Global (Oculto) mantido na raiz do dom para que os botões de upload sempre tenham acesso ao ref, independente do estado da tela */}
@@ -592,7 +637,7 @@ export function Sucumbencias() {
             />
 
             {/* Header com Título, Abas e Botões de Ação Principais */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center gap-3 sm:gap-4">
                     <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
                         <Award className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
@@ -602,143 +647,130 @@ export function Sucumbencias() {
                         <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gestão e acompanhamento de valores sucumbenciais</p>
                     </div>
                 </div>
-            </div>
 
-            {/* Barra de Abas e Ações */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                    {/* Tabs */}
-                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                {/* Right: Abas + Ações */}
+                <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end mt-2 md:mt-0">
+                    {/* Abas */}
+                    <div className="flex items-center bg-gray-100/80 p-1 rounded-xl overflow-x-auto">
                         <button
                             onClick={() => setActiveTab('potenciais')}
-                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'potenciais' ? 'bg-white shadow-sm text-[#1e3a8a]' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'potenciais' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <span className="hidden sm:inline">Potenciais</span>
-                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => (d.status || 'potencial') === 'potencial').length}</span>
+                            Potenciais
+                            <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'potenciais' ? 'bg-blue-50 text-blue-600' : 'bg-gray-200/60 text-gray-500'}`}>
+                                {importedData.filter(d => (d.status || 'potencial') === 'potencial').length}
+                            </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('prescritos')}
-                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'prescritos' ? 'bg-white shadow-sm text-amber-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'prescritos' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <span className="hidden sm:inline">Prescritos</span>
-                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'prescrito').length}</span>
+                            Prescritos
+                            <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'prescritos' ? 'bg-amber-50 text-amber-600' : 'bg-gray-200/60 text-gray-500'}`}>
+                                {importedData.filter(d => d.status === 'prescrito').length}
+                            </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('recebidos')}
-                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'recebidos' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'recebidos' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <span className="hidden sm:inline">Já Pagos</span>
-                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'recebido').length}</span>
+                            Já Pagos
+                            <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'recebidos' ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-200/60 text-gray-500'}`}>
+                                {importedData.filter(d => d.status === 'recebido').length}
+                            </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('aguardando')}
-                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'aguardando' ? 'bg-white shadow-sm text-amber-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'aguardando' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <span className="hidden sm:inline">Aguardando</span>
-                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'aguardando').length}</span>
+                            Aguardando
+                            <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'aguardando' ? 'bg-amber-50 text-amber-600' : 'bg-gray-200/60 text-gray-500'}`}>
+                                {importedData.filter(d => d.status === 'aguardando').length}
+                            </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('descartados')}
-                            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2 ${activeTab === 'descartados' ? 'bg-white shadow-sm text-red-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'descartados' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <span className="hidden sm:inline">Descartados</span>
-                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[9px]">{importedData.filter(d => d.status === 'descartado').length}</span>
+                            Descartados
+                            <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'descartados' ? 'bg-red-50 text-red-600' : 'bg-gray-200/60 text-gray-500'}`}>
+                                {importedData.filter(d => d.status === 'descartado').length}
+                            </span>
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* Ícones redondos */}
+                    <div className="flex items-center gap-2 border-l border-gray-100 pl-3 ml-1">
                         <button 
                             onClick={() => setIsClearModalOpen(true)}
-                            className="w-10 h-10 bg-white hover:bg-gray-50 border border-gray-200 text-[#1e3a8a] rounded-xl flex items-center justify-center transition-all shadow-sm"
+                            className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-red-500 rounded-full hover:bg-red-50 transition-all shadow-sm"
                             title="Limpar Base"
                         >
-                            <Trash2 className="w-5 h-5 text-red-500" />
+                            <Trash2 className="w-4 h-4" />
                         </button>
                         <button 
                             onClick={() => fileInputRef.current?.click()}
-                            className="w-10 h-10 bg-emerald-500 hover:bg-emerald-600 border border-emerald-600 text-white rounded-xl flex items-center justify-center transition-all shadow-sm shadow-emerald-500/20"
+                            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
                             title="Importar Relatório LegalOne"
                         >
-                            <Upload className="w-5 h-5" />
+                            <Upload className="w-4 h-4" />
                         </button>
                     </div>
+                </div>
             </div>
 
-            {/* Barra de Filtros Inferior Branca parecida com a de Colaboradores */}
+            {/* KPI Card + FilterBar */}
             {hasImported && (
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                    
-                    {/* Card de Quantidade (Pequeno) */}
-                    <div className="flex items-center gap-4 bg-[#f8fafc] px-4 py-2 rounded-lg border border-gray-100 shrink-0">
-                        <div className="flex items-center gap-3">
-                            <div className="p-1.5 bg-blue-100/50 rounded-md">
-                                <Award className="w-4 h-4 text-blue-600" />
+                <div className="flex flex-col lg:flex-row items-stretch gap-4">
+                    {/* Card de KPI - Andamentos */}
+                    <div className="flex items-stretch shrink-0">
+                        <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+                            <div className="p-2 rounded-lg bg-blue-50">
+                                <Award className="h-5 w-5 text-[#1e3a8a]" />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-blue-900 uppercase tracking-widest opacity-60">Processos Ativos</span>
-                                <span className="text-sm font-bold text-[#0a192f] leading-tight">{displayedData.length}</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Andamentos</span>
+                                <span className="text-xl font-black text-[#0a192f] leading-tight">{displayedData.reduce((acc, curr) => acc + curr.andamentos.length, 0)}</span>
                             </div>
                         </div>
-                        <div className="w-px h-8 bg-gray-200"></div>
-                        <div className="flex flex-col">
-                            <span className="text-[9px] font-black text-blue-900 uppercase tracking-widest opacity-60">Andamentos</span>
-                            <span className="text-sm font-bold text-[#0a192f] leading-tight flex items-baseline gap-1">
-                                {displayedData.reduce((acc, curr) => acc + curr.andamentos.length, 0)}
-                                <span className="text-[9px] font-normal text-gray-400">eventos agrupados</span>
-                            </span>
-                        </div>
                     </div>
 
-                    {/* Barra de Pesquisa */}
-                    <div className="relative flex-1 min-w-[200px]">
-                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input 
-                            type="text" 
-                            placeholder="Buscar processo, palavra ou nome..." 
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-xs font-medium focus:outline-none focus:border-blue-300 focus:bg-white transition-all focus:ring-2 focus:ring-blue-100"
-                        />
-                        {searchTerm && (
-                            <button 
-                                onClick={() => setSearchTerm('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 bg-gray-200 text-gray-500 rounded-md hover:bg-gray-300 transition-colors"
-                            >
-                                <X className="w-3 h-3" />
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Filtro de Período (Duração de Andamentos) */}
-                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 shrink-0">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="text-xs font-medium border-none outline-none text-gray-600 bg-transparent cursor-pointer"
-                        />
-                        <span className="text-gray-300 text-xs">-</span>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="text-xs font-medium border-none outline-none text-gray-600 bg-transparent cursor-pointer"
-                        />
-                    </div>
-
-                    {/* Filtro de Responsável */}
-                    <div className="relative shrink-0 w-full sm:w-64 z-20">
-                        <SearchableSelect 
-                            value={filterResponsavel === 'Todos' ? '' : filterResponsavel}
-                            onChange={(val) => setFilterResponsavel(val || 'Todos')}
-                            options={uniqueResponsaveis.map(r => ({ value: r, label: r, name: r }))}
-                            placeholder="Todos os Responsáveis"
-                            icon={<Filter className="w-4 h-4 text-gray-400" />}
-                            className="[&>div]:py-2 [&>div]:bg-gray-50 [&>div]:border-gray-100 [&>div]:shadow-none"
-                            hideSearch={uniqueResponsaveis.length <= 10}
+                    {/* FilterBar */}
+                    <div className="flex-1">
+                        <FilterBar
+                            searchTerm={searchTerm}
+                            onSearchChange={setSearchTerm}
+                            categories={filterCategories}
+                            activeFilterChips={activeFilterChips}
+                            activeFilterCount={activeFilterCount}
+                            onClearAll={clearAllFilters}
+                            extraContent={
+                                <div className="px-4 py-3 space-y-2">
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Período</div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
+                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
+                                            <input
+                                                type="date"
+                                                value={startDate}
+                                                onChange={(e) => setStartDate(e.target.value)}
+                                                className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
+                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
+                                            <input
+                                                type="date"
+                                                value={endDate}
+                                                onChange={(e) => setEndDate(e.target.value)}
+                                                className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            }
                         />
                     </div>
-                    
                 </div>
             )}
 
