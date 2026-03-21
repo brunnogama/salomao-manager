@@ -4,7 +4,6 @@ import { Vaga } from '../../../types/controladoria'
 import {
   Briefcase,
   Plus,
-  Search,
   Users,
   Clock,
   CheckCircle2,
@@ -37,12 +36,11 @@ import {
   Send,
   Headset,
   NotebookTabs,
-  HelpCircle,
-  SlidersHorizontal
+  HelpCircle
 } from 'lucide-react'
 // date-fns importado acima do componente junto com as funções utilitárias
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
-import { FilterMultiSelect } from '../../controladoria/ui/FilterMultiSelect'
+import { FilterBar, FilterCategory } from '../components/FilterBar'
 import { VagaFormModal } from '../components/VagaFormModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
 import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelectionModal'
@@ -259,7 +257,7 @@ export function RHVagas() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'reprovados' | 'ats'>('abertas')
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+
 
   // Alert Modal State
   const [alertConfig, setAlertConfig] = useState<{
@@ -306,6 +304,114 @@ export function RHVagas() {
     { value: 'Tarde', label: 'Tarde' },
     { value: 'Noite', label: 'Noite' }
   ]
+
+  // Categorias de filtro para a FilterBar (montadas dinamicamente por tab)
+  const filterCategories = useMemo((): FilterCategory[] => {
+    const cats: FilterCategory[] = [];
+
+    // Líder e Sócio apenas para tabs de vagas
+    if (activeTab !== 'talentos' && activeTab !== 'reprovados') {
+      cats.push({
+        key: 'lider',
+        label: 'Líder',
+        icon: User,
+        type: 'single',
+        options: liderOptions,
+        value: filterLider,
+        onChange: setFilterLider,
+      });
+      cats.push({
+        key: 'partner',
+        label: 'Sócio',
+        icon: Users,
+        type: 'single',
+        options: partnerOptions,
+        value: filterPartner,
+        onChange: setFilterPartner,
+      });
+    }
+
+    cats.push({
+      key: 'area',
+      label: 'Área',
+      icon: Briefcase,
+      type: 'single',
+      options: [{ value: 'Administrativa', label: 'Administrativa' }, { value: 'Jurídica', label: 'Jurídica' }],
+      value: filterArea,
+      onChange: setFilterArea,
+    });
+
+    // Faculdades, Período e Turno apenas para tabs de candidatos
+    if (activeTab === 'talentos' || activeTab === 'reprovados') {
+      cats.push({
+        key: 'faculdades',
+        label: 'Faculdades',
+        icon: GraduationCap,
+        type: 'multi',
+        options: faculdadesOptions,
+        value: filterFaculdades,
+        onChange: setFilterFaculdades,
+      });
+      cats.push({
+        key: 'periodos',
+        label: 'Período',
+        icon: CalendarDays,
+        type: 'multi',
+        options: periodosGlobais,
+        value: filterPeriodos,
+        onChange: setFilterPeriodos,
+      });
+      cats.push({
+        key: 'turnos',
+        label: 'Turno',
+        icon: Clock,
+        type: 'multi',
+        options: turnosGlobais,
+        value: filterTurnos,
+        onChange: setFilterTurnos,
+      });
+    }
+
+    cats.push({
+      key: 'cargo',
+      label: 'Cargo',
+      icon: Briefcase,
+      type: 'single',
+      options: roleOptions,
+      value: filterCargo,
+      onChange: setFilterCargo,
+    });
+
+    cats.push({
+      key: 'local',
+      label: 'Local',
+      icon: Building2,
+      type: 'single',
+      options: locationOptions,
+      value: filterLocal,
+      onChange: setFilterLocal,
+    });
+
+    // Status apenas para tabs de vagas abertas/fechadas
+    if (activeTab === 'abertas' || activeTab === 'fechadas') {
+      cats.push({
+        key: 'status',
+        label: 'Status',
+        icon: AlertCircle,
+        type: 'single',
+        options: [
+          { value: 'Aberta', label: 'Aberta' },
+          { value: 'Congelada', label: 'Congelada' },
+          { value: 'Aguardando Autorização', label: 'Aguardando Autorização' },
+          { value: 'Fechada', label: 'Fechada' },
+        ],
+        value: filterStatus,
+        onChange: setFilterStatus,
+      });
+    }
+
+    return cats;
+  }, [activeTab, filterLider, filterPartner, filterArea, filterFaculdades, filterPeriodos, filterTurnos, filterCargo, filterLocal, filterStatus, liderOptions, partnerOptions, faculdadesOptions, roleOptions, locationOptions, periodosGlobais, turnosGlobais]);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -1021,177 +1127,14 @@ export function RHVagas() {
 
       {
         activeTab !== 'ats' && (
-          <div className="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100 flex-none">
-            {/* Linha principal: Busca + Botão Filtros */}
-            <div className="flex items-center gap-3">
-              {/* Search Bar */}
-              <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
-                <Search className="h-4 w-4 text-gray-400 mr-3 shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400 pr-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
-                    title="Limpar busca"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Botão Filtros */}
-              <button
-                onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all shrink-0 h-[42px] ${
-                  isFiltersOpen || activeFilterCount > 0
-                    ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-500/20'
-                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                }`}
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                Filtros
-                {activeFilterCount > 0 && (
-                  <span className="min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black bg-white/20 text-white">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* Chips de filtros ativos (visíveis quando painel fechado e há filtros) */}
-            {!isFiltersOpen && activeFilterChips.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                {activeFilterChips.map(chip => (
-                  <span
-                    key={chip.key}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#1e3a8a] rounded-lg text-[10px] font-black uppercase tracking-wider border border-blue-100"
-                  >
-                    {chip.label}
-                    <button
-                      onClick={chip.onClear}
-                      className="p-0.5 hover:bg-blue-100 rounded-full transition-colors"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-                <button
-                  onClick={clearAllFilters}
-                  className="text-[10px] font-black uppercase tracking-wider text-gray-400 hover:text-red-500 transition-colors ml-1"
-                >
-                  Limpar todos
-                </button>
-              </div>
-            )}
-
-            {/* Painel de Filtros Colapsável */}
-            <div
-              className={`transition-all duration-300 ease-in-out ${
-                isFiltersOpen ? 'max-h-[500px] opacity-100 mt-4 pt-4 border-t border-gray-100 overflow-visible' : 'max-h-0 opacity-0 overflow-hidden'
-              }`}
-            >
-              <div className="flex flex-wrap items-center gap-3">
-                {activeTab !== 'talentos' && activeTab !== 'reprovados' && (
-                  <>
-                    <FilterSelect
-                      icon={User}
-                      value={filterLider}
-                      onChange={setFilterLider}
-                      options={liderOptions}
-                      placeholder="Líder"
-                    />
-                    <FilterSelect
-                      icon={Users}
-                      value={filterPartner}
-                      onChange={setFilterPartner}
-                      options={partnerOptions}
-                      placeholder="Sócio"
-                    />
-                  </>
-                )}
-                <FilterSelect
-                  icon={Briefcase}
-                  value={filterArea}
-                  onChange={setFilterArea}
-                  options={[
-                    { value: 'Administrativa', label: 'Administrativa' },
-                    { value: 'Jurídica', label: 'Jurídica' }
-                  ]}
-                  placeholder="Área"
-                />
-                {(activeTab === 'talentos' || activeTab === 'reprovados') && (
-                  <>
-                    <FilterMultiSelect
-                      icon={GraduationCap}
-                      value={filterFaculdades}
-                      onChange={setFilterFaculdades}
-                      options={faculdadesOptions}
-                      placeholder="Faculdades"
-                    />
-                    <FilterMultiSelect
-                      icon={CalendarDays}
-                      value={filterPeriodos}
-                      onChange={setFilterPeriodos}
-                      options={periodosGlobais}
-                      placeholder="Período"
-                    />
-                    <FilterMultiSelect
-                      icon={Clock}
-                      value={filterTurnos}
-                      onChange={setFilterTurnos}
-                      options={turnosGlobais}
-                      placeholder="Turno"
-                    />
-                  </>
-                )}
-                <FilterSelect
-                  icon={Briefcase}
-                  value={filterCargo}
-                  onChange={setFilterCargo}
-                  options={roleOptions}
-                  placeholder="Cargo"
-                />
-                <FilterSelect
-                  icon={Building2}
-                  value={filterLocal}
-                  onChange={setFilterLocal}
-                  options={locationOptions}
-                  placeholder="Local"
-                />
-                {(activeTab === 'abertas' || activeTab === 'fechadas') && (
-                  <FilterSelect
-                    icon={AlertCircle}
-                    value={filterStatus}
-                    onChange={setFilterStatus}
-                    options={[
-                      { value: 'Aberta', label: 'Aberta' },
-                      { value: 'Congelada', label: 'Congelada' },
-                      { value: 'Aguardando Autorização', label: 'Aguardando Autorização' },
-                      { value: 'Fechada', label: 'Fechada' }
-                    ]}
-                    placeholder="Status"
-                  />
-                )}
-
-                {/* Botão Limpar Filtros */}
-                {activeFilterCount > 0 && (
-                  <button
-                    onClick={clearAllFilters}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all h-[42px] border border-transparent hover:border-red-100"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                    Limpar Filtros
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+          <FilterBar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            categories={filterCategories}
+            activeFilterChips={activeFilterChips}
+            activeFilterCount={activeFilterCount}
+            onClearAll={clearAllFilters}
+          />
         )
       }
 
