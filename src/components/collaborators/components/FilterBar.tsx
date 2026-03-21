@@ -18,6 +18,7 @@ interface FilterBarProps {
   activeFilterChips: { key: string; label: string; onClear: () => void }[];
   activeFilterCount: number;
   onClearAll: () => void;
+  extraContent?: React.ReactNode;
 }
 
 export function FilterBar({
@@ -27,6 +28,7 @@ export function FilterBar({
   activeFilterChips,
   activeFilterCount,
   onClearAll,
+  extraContent,
 }: FilterBarProps) {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -209,6 +211,12 @@ export function FilterBar({
                       </div>
                     );
                   })}
+                  {/* Conteúdo extra (ex: período) */}
+                  {extraContent && (
+                    <div className="border-t border-gray-100">
+                      {extraContent}
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Opções da categoria selecionada */

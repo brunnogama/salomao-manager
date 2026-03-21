@@ -2,18 +2,16 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import {
-  FileSpreadsheet, RefreshCw, Download, Upload,
+  RefreshCw, Download, Upload,
   Users, Briefcase, FileText,
   Plus, Clock, MapPin, User
 } from 'lucide-react'
 import XLSX from 'xlsx-js-style'
 import { supabase } from '../../../lib/supabase'
-import { SearchableSelect } from '../../crm/SearchableSelect'
-import { MonthSelect } from '../components/MonthSelect'
 import { FilterBar, FilterCategory } from '../components/FilterBar'
 
 // Importações Modularizadas
-import { PresenceRecord, SocioRule, MarcacaoPonto, RegistroDiario } from '../types/presencial'
+import { PresenceRecord, SocioRule, MarcacaoPonto } from '../types/presencial'
 import {
   normalizeKey,
   toTitleCase,
@@ -570,32 +568,33 @@ export function Presencial() {
             activeFilterChips={activeFilterChips}
             activeFilterCount={activeFilterCount}
             onClearAll={clearAllFilters}
+            extraContent={(viewMode === 'descriptive' || viewMode === 'horas') ? (
+              <div className="px-4 py-3 space-y-2">
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Período</div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : undefined}
           />
         </div>
-
-        {/* Período (De/Até) - apenas para Horas e Descritivo */}
-        {(viewMode === 'descriptive' || viewMode === 'horas') && (
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1 bg-white border border-gray-100 rounded-xl p-2.5 shadow-sm hover:border-[#1e3a8a] transition-all">
-              <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent border-none text-sm p-1 outline-none text-gray-700 font-medium cursor-pointer"
-              />
-            </div>
-            <div className="flex items-center gap-1 bg-white border border-gray-100 rounded-xl p-2.5 shadow-sm hover:border-[#1e3a8a] transition-all">
-              <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent border-none text-sm p-1 outline-none text-gray-700 font-medium cursor-pointer"
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* CONTENT */}
