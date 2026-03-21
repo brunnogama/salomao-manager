@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   MessageSquare,
-  Search,
   Trash2,
   Pencil,
   Users,
@@ -10,10 +9,11 @@ import {
   Tag,
   MessageSquarePlus,
   Megaphone,
-  BookOpen,
-  X
+  X,
+  Tag as TagIcon
 } from 'lucide-react'
 import { AlertModal } from '../../../components/ui/AlertModal'
+import { FilterBar, FilterCategory } from '../components/FilterBar'
 
 type ComunicacaoCategoria = 'Aviso' | 'Comunicado' | 'Política' | 'Procedimento' | 'Outro'
 type ComunicacaoPublico = 'Todos' | 'Advogados' | 'Estagiários' | 'Administrativo' | 'Diretoria'
@@ -80,7 +80,11 @@ export function RHComunicacoesInternas() {
   const [searchTerm, setSearchTerm] = useState('')
   const [comunicacoes, setComunicacoes] = useState<Comunicacao[]>(MOCK_COMUNICACOES)
   const [activeTab, setActiveTab] = useState<ActiveTab>('Todos')
-  const [categoriaFiltro, setCategoriaFiltro] = useState<ComunicacaoCategoria | 'Todas'>('Todas')
+
+  // Filter state
+  const [filterCategoria, setFilterCategoria] = useState('')
+  const [filterPublico, setFilterPublico] = useState('')
+
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [selectedComunicacao, setSelectedComunicacao] = useState<Comunicacao | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
@@ -158,26 +162,68 @@ export function RHComunicacoesInternas() {
     setComunicacoes(prev => prev.map(c => c.id === id ? { ...c, fixado: !c.fixado } : c))
   }
 
+  // ---- Filter config for FilterBar ----
+  const categoriaOptions = (['Aviso', 'Comunicado', 'Política', 'Procedimento', 'Outro'] as ComunicacaoCategoria[])
+    .map(v => ({ value: v, label: v }))
+
+  const publicoOptions = (['Todos', 'Advogados', 'Estagiários', 'Administrativo', 'Diretoria'] as ComunicacaoPublico[])
+    .map(v => ({ value: v, label: v }))
+
+  const filterCategories: FilterCategory[] = [
+    {
+      key: 'categoria',
+      label: 'Categoria',
+      icon: TagIcon,
+      type: 'single',
+      options: categoriaOptions,
+      value: filterCategoria,
+      onChange: setFilterCategoria,
+    },
+    {
+      key: 'publico',
+      label: 'Público-Alvo',
+      icon: Users,
+      type: 'single',
+      options: publicoOptions,
+      value: filterPublico,
+      onChange: setFilterPublico,
+    },
+  ]
+
+  const activeFilterChips: { key: string; label: string; onClear: () => void }[] = []
+  if (filterCategoria) activeFilterChips.push({ key: 'categoria', label: `Cat: ${filterCategoria}`, onClear: () => setFilterCategoria('') })
+  if (filterPublico) activeFilterChips.push({ key: 'publico', label: `Para: ${filterPublico}`, onClear: () => setFilterPublico('') })
+
+  const activeFilterCount = activeFilterChips.length
+
+  const handleClearAll = () => {
+    setFilterCategoria('')
+    setFilterPublico('')
+  }
+
+  // ---- Derived filtered list ----
   const filtered = comunicacoes
     .filter(c => {
       const matchSearch =
         c.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.conteudo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.autor.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchCategoria = categoriaFiltro === 'Todas' || c.categoria === categoriaFiltro
+
+      const matchCategoria = !filterCategoria || c.categoria === filterCategoria
+      const matchPublico = !filterPublico || c.publico === filterPublico
+
       const matchTab =
         activeTab === 'Todos' ? true :
         activeTab === 'Fixados' ? c.fixado :
         activeTab === 'Avisos' ? c.categoria === 'Aviso' : true
-      return matchSearch && matchCategoria && matchTab
+
+      return matchSearch && matchCategoria && matchPublico && matchTab
     })
     .sort((a, b) => {
       if (a.fixado && !b.fixado) return -1
       if (!a.fixado && b.fixado) return 1
       return b.data_publicacao.localeCompare(a.data_publicacao)
     })
-
-  const categorias: (ComunicacaoCategoria | 'Todas')[] = ['Todas', 'Aviso', 'Comunicado', 'Política', 'Procedimento', 'Outro']
 
   const tabs: { id: ActiveTab; label: string; icon: any; count: number }[] = [
     { id: 'Todos', label: 'Todos', icon: MessageSquare, count: comunicacoes.length },
@@ -188,10 +234,9 @@ export function RHComunicacoesInternas() {
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6">
 
-      {/* PAGE HEADER — identical structure to Colaboradores */}
+      {/* PAGE HEADER */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
 
-        {/* Left: Icon + title + subtitle */}
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
             <MessageSquare className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
@@ -206,10 +251,8 @@ export function RHComunicacoesInternas() {
           </div>
         </div>
 
-        {/* Right: Tabs + round action button (same as Colaboradores) */}
+        {/* Right: Tabs + round action button */}
         <div className="flex flex-wrap items-center gap-3 shrink-0 w-full md:w-auto justify-end mt-2 md:mt-0">
-
-          {/* TABS */}
           <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
             {tabs.map(tab => (
               <button
@@ -234,7 +277,6 @@ export function RHComunicacoesInternas() {
             ))}
           </div>
 
-          {/* Separator + round button (exactly like Colaboradores) */}
           <div className="flex items-center gap-3 border-l border-gray-100 pl-4 ml-1">
             <button
               onClick={handleOpenNew}
@@ -249,34 +291,30 @@ export function RHComunicacoesInternas() {
 
       <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6 w-full">
 
-        {/* TOOLBAR */}
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-          <div className="relative w-full sm:w-96">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por título, conteúdo ou autor..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-xl shadow-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium text-sm"
-            />
+        {/* TOOLBAR: counter card (left) + FilterBar (right, full width) */}
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+
+          {/* Counter card */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-3 shrink-0 min-w-[160px]">
+            <div className="w-2 h-12 rounded-full bg-gradient-to-b from-[#1e3a8a] to-[#112240]" />
+            <div>
+              <div className="text-3xl font-black text-[#0a192f] leading-none">{comunicacoes.length}</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-1">
+                Total de<br />Comunicações
+              </div>
+            </div>
           </div>
 
-          {/* Category filter chips */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {categorias.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategoriaFiltro(cat)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
-                  categoriaFiltro === cat
-                    ? 'bg-[#1e3a8a] text-white shadow-md'
-                    : 'bg-white text-gray-500 border border-gray-100 hover:border-gray-300'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          {/* FilterBar (grows to fill remaining space) */}
+          <div className="flex-1">
+            <FilterBar
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              categories={filterCategories}
+              activeFilterChips={activeFilterChips}
+              activeFilterCount={activeFilterCount}
+              onClearAll={handleClearAll}
+            />
           </div>
         </div>
 
@@ -371,7 +409,6 @@ export function RHComunicacoesInternas() {
       {isFormOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-            {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
@@ -392,7 +429,6 @@ export function RHComunicacoesInternas() {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 space-y-5">
               <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-gray-500 mb-1.5">
@@ -491,7 +527,6 @@ export function RHComunicacoesInternas() {
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
               <button
                 onClick={() => setIsFormOpen(false)}
@@ -510,7 +545,6 @@ export function RHComunicacoesInternas() {
         </div>
       )}
 
-      {/* Confirm Delete */}
       <AlertModal
         isOpen={!!pendingDeleteId}
         onClose={() => setPendingDeleteId(null)}
@@ -521,7 +555,6 @@ export function RHComunicacoesInternas() {
         onConfirm={confirmDelete}
       />
 
-      {/* Alert Modal */}
       <AlertModal
         isOpen={alertConfig.isOpen}
         onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
