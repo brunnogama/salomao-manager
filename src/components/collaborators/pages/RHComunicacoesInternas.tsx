@@ -2,18 +2,22 @@ import { useState } from 'react'
 import {
   MessageSquare,
   Search,
-  Plus,
   Trash2,
   Pencil,
   Users,
   Calendar,
   Pin,
-  Tag
+  Tag,
+  MessageSquarePlus,
+  Megaphone,
+  BookOpen,
+  X
 } from 'lucide-react'
 import { AlertModal } from '../../../components/ui/AlertModal'
 
 type ComunicacaoCategoria = 'Aviso' | 'Comunicado' | 'Política' | 'Procedimento' | 'Outro'
 type ComunicacaoPublico = 'Todos' | 'Advogados' | 'Estagiários' | 'Administrativo' | 'Diretoria'
+type ActiveTab = 'Todos' | 'Fixados' | 'Avisos'
 
 interface Comunicacao {
   id: string
@@ -75,6 +79,7 @@ const formatDate = (dateStr: string) => {
 export function RHComunicacoesInternas() {
   const [searchTerm, setSearchTerm] = useState('')
   const [comunicacoes, setComunicacoes] = useState<Comunicacao[]>(MOCK_COMUNICACOES)
+  const [activeTab, setActiveTab] = useState<ActiveTab>('Todos')
   const [categoriaFiltro, setCategoriaFiltro] = useState<ComunicacaoCategoria | 'Todas'>('Todas')
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [selectedComunicacao, setSelectedComunicacao] = useState<Comunicacao | null>(null)
@@ -160,7 +165,11 @@ export function RHComunicacoesInternas() {
         c.conteudo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.autor.toLowerCase().includes(searchTerm.toLowerCase())
       const matchCategoria = categoriaFiltro === 'Todas' || c.categoria === categoriaFiltro
-      return matchSearch && matchCategoria
+      const matchTab =
+        activeTab === 'Todos' ? true :
+        activeTab === 'Fixados' ? c.fixado :
+        activeTab === 'Avisos' ? c.categoria === 'Aviso' : true
+      return matchSearch && matchCategoria && matchTab
     })
     .sort((a, b) => {
       if (a.fixado && !b.fixado) return -1
@@ -170,11 +179,19 @@ export function RHComunicacoesInternas() {
 
   const categorias: (ComunicacaoCategoria | 'Todas')[] = ['Todas', 'Aviso', 'Comunicado', 'Política', 'Procedimento', 'Outro']
 
+  const tabs: { id: ActiveTab; label: string; icon: any; count: number }[] = [
+    { id: 'Todos', label: 'Todos', icon: MessageSquare, count: comunicacoes.length },
+    { id: 'Fixados', label: 'Fixados', icon: Pin, count: comunicacoes.filter(c => c.fixado).length },
+    { id: 'Avisos', label: 'Avisos', icon: Megaphone, count: comunicacoes.filter(c => c.categoria === 'Aviso').length },
+  ]
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6">
 
-      {/* PAGE HEADER */}
+      {/* PAGE HEADER — identical structure to Colaboradores */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+
+        {/* Left: Icon + title + subtitle */}
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
             <MessageSquare className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
@@ -189,13 +206,44 @@ export function RHComunicacoesInternas() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0 w-full md:w-auto mt-2 md:mt-0 justify-end flex-wrap">
-          <button
-            onClick={handleOpenNew}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-          >
-            <Plus className="h-4 w-4" /> Nova Comunicação
-          </button>
+        {/* Right: Tabs + round action button (same as Colaboradores) */}
+        <div className="flex flex-wrap items-center gap-3 shrink-0 w-full md:w-auto justify-end mt-2 md:mt-0">
+
+          {/* TABS */}
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                  activeTab === tab.id
+                    ? 'bg-white text-[#1e3a8a] shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+                {tab.count > 0 && (
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                    activeTab === tab.id ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Separator + round button (exactly like Colaboradores) */}
+          <div className="flex items-center gap-3 border-l border-gray-100 pl-4 ml-1">
+            <button
+              onClick={handleOpenNew}
+              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+              title="Nova Comunicação"
+            >
+              <MessageSquarePlus className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -214,7 +262,7 @@ export function RHComunicacoesInternas() {
             />
           </div>
 
-          {/* Category filter */}
+          {/* Category filter chips */}
           <div className="flex items-center gap-2 flex-wrap">
             {categorias.map(cat => (
               <button
@@ -230,24 +278,6 @@ export function RHComunicacoesInternas() {
               </button>
             ))}
           </div>
-        </div>
-
-        {/* STATS SUMMARY */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: 'Total', value: comunicacoes.length, color: 'from-blue-500 to-blue-700' },
-            { label: 'Fixados', value: comunicacoes.filter(c => c.fixado).length, color: 'from-amber-500 to-amber-700' },
-            { label: 'Este mês', value: comunicacoes.filter(c => c.data_publicacao.startsWith('2026-03')).length, color: 'from-green-500 to-green-700' },
-            { label: 'Avisos', value: comunicacoes.filter(c => c.categoria === 'Aviso').length, color: 'from-purple-500 to-purple-700' },
-          ].map(stat => (
-            <div key={stat.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-3">
-              <div className={`w-2 h-10 rounded-full bg-gradient-to-b ${stat.color}`} />
-              <div>
-                <div className="text-2xl font-black text-[#0a192f]">{stat.value}</div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{stat.label}</div>
-              </div>
-            </div>
-          ))}
         </div>
 
         {/* COMMUNICATIONS LIST */}
@@ -329,7 +359,7 @@ export function RHComunicacoesInternas() {
                 </div>
                 <h2 className="text-xl font-black text-[#0a192f]">Nenhuma comunicação encontrada</h2>
                 <p className="text-gray-500 max-w-sm mt-2">
-                  Crie a primeira comunicação interna clicando em "Nova Comunicação".
+                  Crie a primeira comunicação interna clicando no botão verde no topo.
                 </p>
               </div>
             </div>
@@ -345,7 +375,7 @@ export function RHComunicacoesInternas() {
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
-                  <MessageSquare className="h-5 w-5 text-white" />
+                  <MessageSquarePlus className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <h2 className="text-lg font-black text-[#0a192f]">
@@ -358,7 +388,7 @@ export function RHComunicacoesInternas() {
                 onClick={() => setIsFormOpen(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <Plus className="h-5 w-5 rotate-45" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
