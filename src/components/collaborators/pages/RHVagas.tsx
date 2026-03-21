@@ -37,7 +37,8 @@ import {
   Send,
   Headset,
   NotebookTabs,
-  HelpCircle
+  HelpCircle,
+  SlidersHorizontal
 } from 'lucide-react'
 // date-fns importado acima do componente junto com as funções utilitárias
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
@@ -258,6 +259,7 @@ export function RHVagas() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'reprovados' | 'ats'>('abertas')
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
 
   // Alert Modal State
   const [alertConfig, setAlertConfig] = useState<{
@@ -864,6 +866,73 @@ export function RHVagas() {
   const countTalentos = filteredCandidatos.filter((c: any) => !(c.status_selecao && c.status_selecao.startsWith('Reprovado'))).length;
   const countReprovados = filteredCandidatos.filter((c: any) => c.status_selecao?.startsWith('Reprovado')).length;
 
+
+  // Contagem de filtros ativos para badge do botão colapsável
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filterArea) count++;
+    if (filterCargo) count++;
+    if (filterLocal) count++;
+    if (activeTab !== 'talentos' && activeTab !== 'reprovados') {
+      if (filterLider) count++;
+      if (filterPartner) count++;
+    }
+    if (activeTab === 'abertas' || activeTab === 'fechadas') {
+      if (filterStatus) count++;
+    }
+    if (activeTab === 'talentos' || activeTab === 'reprovados') {
+      if (filterFaculdades.length > 0) count++;
+      if (filterPeriodos.length > 0) count++;
+      if (filterTurnos.length > 0) count++;
+    }
+    return count;
+  }, [filterArea, filterCargo, filterLocal, filterLider, filterPartner, filterStatus, filterFaculdades, filterPeriodos, filterTurnos, activeTab]);
+
+  // Helper: gera a lista de chips de filtros ativos
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; onClear: () => void }[] = [];
+    if (filterArea) chips.push({ key: 'area', label: `Área: ${filterArea}`, onClear: () => setFilterArea('') });
+    if (filterCargo) {
+      const cargoLabel = roleOptions.find(r => r.value === filterCargo)?.label || filterCargo;
+      chips.push({ key: 'cargo', label: `Cargo: ${cargoLabel}`, onClear: () => setFilterCargo('') });
+    }
+    if (filterLocal) {
+      const localLabel = locationOptions.find(l => l.value === filterLocal)?.label || filterLocal;
+      chips.push({ key: 'local', label: `Local: ${localLabel}`, onClear: () => setFilterLocal('') });
+    }
+    if (activeTab !== 'talentos' && activeTab !== 'reprovados') {
+      if (filterLider) {
+        const liderLabel = liderOptions.find(l => l.value === filterLider)?.label || filterLider;
+        chips.push({ key: 'lider', label: `Líder: ${liderLabel}`, onClear: () => setFilterLider('') });
+      }
+      if (filterPartner) {
+        const partnerLabel = partnerOptions.find(p => p.value === filterPartner)?.label || filterPartner;
+        chips.push({ key: 'partner', label: `Sócio: ${partnerLabel}`, onClear: () => setFilterPartner('') });
+      }
+    }
+    if ((activeTab === 'abertas' || activeTab === 'fechadas') && filterStatus) {
+      chips.push({ key: 'status', label: `Status: ${filterStatus}`, onClear: () => setFilterStatus('') });
+    }
+    if (activeTab === 'talentos' || activeTab === 'reprovados') {
+      if (filterFaculdades.length > 0) chips.push({ key: 'faculdades', label: `Faculdades (${filterFaculdades.length})`, onClear: () => setFilterFaculdades([]) });
+      if (filterPeriodos.length > 0) chips.push({ key: 'periodos', label: `Período (${filterPeriodos.length})`, onClear: () => setFilterPeriodos([]) });
+      if (filterTurnos.length > 0) chips.push({ key: 'turnos', label: `Turno (${filterTurnos.length})`, onClear: () => setFilterTurnos([]) });
+    }
+    return chips;
+  }, [filterArea, filterCargo, filterLocal, filterLider, filterPartner, filterStatus, filterFaculdades, filterPeriodos, filterTurnos, activeTab, roleOptions, locationOptions, liderOptions, partnerOptions]);
+
+  const clearAllFilters = () => {
+    setFilterLider('');
+    setFilterPartner('');
+    setFilterLocal('');
+    setFilterCargo('');
+    setFilterArea('');
+    setFilterStatus('');
+    setFilterFaculdades([]);
+    setFilterPeriodos([]);
+    setFilterTurnos([]);
+  };
+
   return (
     <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24">
 
@@ -952,57 +1021,11 @@ export function RHVagas() {
 
       {
         activeTab !== 'ats' && (
-          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-none">
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
-
-              {/* Active Count Card */}
-              {activeTab === 'abertas' && (
-                <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100 shrink-0">
-                  <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
-                    <Clock className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Abertas</p>
-                    <p className="text-xl font-black text-[#0a192f] leading-none">{countAbertas}</p>
-                  </div>
-                </div>
-              )}
-              {activeTab === 'talentos' && (
-                <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100 shrink-0">
-                  <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Total Talentos</p>
-                    <p className="text-xl font-black text-[#0a192f] leading-none">{countTalentos}</p>
-                  </div>
-                </div>
-              )}
-              {activeTab === 'fechadas' && (
-                <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100 shrink-0">
-                  <div className="p-2 bg-emerald-100/80 text-emerald-700 rounded-lg">
-                    <CheckCircle2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Fechadas</p>
-                    <p className="text-xl font-black text-[#0a192f] leading-none">{countFechadas}</p>
-                  </div>
-                </div>
-              )}
-              {activeTab === 'reprovados' && (
-                <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100 shrink-0">
-                  <div className="p-2 bg-red-100/80 text-red-700 rounded-lg">
-                    <UserX className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Reprovados</p>
-                    <p className="text-xl font-black text-[#0a192f] leading-none">{countReprovados}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Search Bar - Expanded */}
-              <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
+          <div className="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100 flex-none">
+            {/* Linha principal: Busca + Botão Filtros */}
+            <div className="flex items-center gap-3">
+              {/* Search Bar */}
+              <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
                 <Search className="h-4 w-4 text-gray-400 mr-3 shrink-0" />
                 <input
                   type="text"
@@ -1022,8 +1045,58 @@ export function RHVagas() {
                 )}
               </div>
 
-              {/* Filters Row - Auto-sizing */}
-              <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
+              {/* Botão Filtros */}
+              <button
+                onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all shrink-0 h-[42px] ${
+                  isFiltersOpen || activeFilterCount > 0
+                    ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-500/20'
+                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                }`}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filtros
+                {activeFilterCount > 0 && (
+                  <span className="min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black bg-white/20 text-white">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Chips de filtros ativos (visíveis quando painel fechado e há filtros) */}
+            {!isFiltersOpen && activeFilterChips.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                {activeFilterChips.map(chip => (
+                  <span
+                    key={chip.key}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#1e3a8a] rounded-lg text-[10px] font-black uppercase tracking-wider border border-blue-100"
+                  >
+                    {chip.label}
+                    <button
+                      onClick={chip.onClear}
+                      className="p-0.5 hover:bg-blue-100 rounded-full transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+                <button
+                  onClick={clearAllFilters}
+                  className="text-[10px] font-black uppercase tracking-wider text-gray-400 hover:text-red-500 transition-colors ml-1"
+                >
+                  Limpar todos
+                </button>
+              </div>
+            )}
+
+            {/* Painel de Filtros Colapsável */}
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                isFiltersOpen ? 'max-h-[500px] opacity-100 mt-4 pt-4 border-t border-gray-100' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="flex flex-wrap items-center gap-3">
                 {activeTab !== 'talentos' && activeTab !== 'reprovados' && (
                   <>
                     <FilterSelect
@@ -1042,7 +1115,6 @@ export function RHVagas() {
                     />
                   </>
                 )}
-                {/* Area filter */}
                 <FilterSelect
                   icon={Briefcase}
                   value={filterArea}
@@ -1106,13 +1178,22 @@ export function RHVagas() {
                     placeholder="Status"
                   />
                 )}
+
+                {/* Botão Limpar Filtros */}
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all h-[42px] border border-transparent hover:border-red-100"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Limpar Filtros
+                  </button>
+                )}
               </div>
             </div>
           </div>
         )
       }
-
-
 
       {/* ATS MATCH TAB */}
       {
