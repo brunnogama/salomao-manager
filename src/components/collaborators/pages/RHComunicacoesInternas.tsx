@@ -318,77 +318,94 @@ export function RHComunicacoesInternas() {
           </div>
         </div>
 
-        {/* COMMUNICATIONS LIST */}
-        <div className="grid grid-cols-1 gap-4">
+        {/* COMMUNICATIONS CARD GRID */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
           {filtered.length > 0 ? (
-            filtered.map((comunicacao) => (
-              <div
-                key={comunicacao.id}
-                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden"
-              >
-                {comunicacao.fixado && (
-                  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-400 to-amber-600 rounded-l-2xl" />
-                )}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-50 to-transparent rounded-bl-[100px] -z-0 opacity-50 group-hover:opacity-100 transition-opacity" />
+            filtered.map((comunicacao) => {
+              const ACCENT: Record<ComunicacaoCategoria, string> = {
+                Aviso: 'from-amber-400 to-amber-600',
+                Comunicado: 'from-blue-500 to-blue-700',
+                Política: 'from-purple-500 to-purple-700',
+                Procedimento: 'from-green-500 to-green-700',
+                Outro: 'from-gray-400 to-gray-600',
+              }
+              return (
+                <div
+                  key={comunicacao.id}
+                  className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group relative overflow-hidden flex flex-col"
+                >
+                  {/* Top accent bar */}
+                  <div className={`h-1 w-full bg-gradient-to-r ${ACCENT[comunicacao.categoria]} shrink-0`} />
 
-                <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-4">
-                  <div className="flex-1 space-y-3">
-                    <div className="flex flex-wrap items-center gap-2">
+                  {/* Card body */}
+                  <div className="flex flex-col flex-1 p-5 gap-3">
+
+                    {/* Badges row */}
+                    <div className="flex items-center gap-2 flex-wrap">
                       {comunicacao.fixado && (
                         <span className="flex items-center gap-1 px-2 py-1 text-[9px] font-black uppercase tracking-wider rounded-md bg-amber-50 text-amber-600">
-                          <Pin className="h-3 w-3" /> Fixado
+                          <Pin className="h-2.5 w-2.5" /> Fixado
                         </span>
                       )}
                       <span className={`px-2 py-1 text-[9px] font-black uppercase tracking-wider rounded-md ${CATEGORIA_COLORS[comunicacao.categoria]}`}>
                         {comunicacao.categoria}
                       </span>
-                      <h3 className="text-lg font-black text-[#0a192f]">{comunicacao.titulo}</h3>
                     </div>
 
-                    <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">
+                    {/* Title */}
+                    <h3 className="text-base font-black text-[#0a192f] leading-snug line-clamp-2">
+                      {comunicacao.titulo}
+                    </h3>
+
+                    {/* Content preview */}
+                    <p className="text-sm text-gray-500 leading-relaxed line-clamp-3 flex-1">
                       {comunicacao.conteudo}
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-400">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {formatDate(comunicacao.data_publicacao)}
+                    {/* Footer */}
+                    <div className="pt-3 border-t border-gray-50 flex items-end justify-between gap-2 mt-auto">
+                      <div className="flex flex-col gap-1 text-[11px] font-medium text-gray-400">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3 w-3 shrink-0" />
+                          {formatDate(comunicacao.data_publicacao)}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-3 w-3 shrink-0" />
+                          {comunicacao.publico}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Tag className="h-3 w-3 shrink-0" />
+                          {comunicacao.autor}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5" />
-                        {comunicacao.publico}
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Tag className="h-3.5 w-3.5" />
-                        {comunicacao.autor}
+
+                      {/* Actions — visible on hover */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        <button
+                          onClick={() => togglePin(comunicacao.id)}
+                          title={comunicacao.fixado ? 'Desafixar' : 'Fixar'}
+                          className={`p-1.5 rounded-lg transition-colors ${comunicacao.fixado ? 'text-amber-500 hover:bg-amber-50' : 'text-gray-300 hover:text-gray-500 hover:bg-gray-50'}`}
+                        >
+                          <Pin className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(comunicacao)}
+                          className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(comunicacao.id)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                    <button
-                      onClick={() => togglePin(comunicacao.id)}
-                      title={comunicacao.fixado ? 'Desafixar' : 'Fixar'}
-                      className={`p-2 rounded-lg transition-colors ${comunicacao.fixado ? 'text-amber-500 hover:bg-amber-50' : 'text-gray-400 hover:bg-gray-50'}`}
-                    >
-                      <Pin className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleEdit(comunicacao)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(comunicacao.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           ) : (
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
               <div className="p-16 flex flex-col items-center justify-center text-center">
