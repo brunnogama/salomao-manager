@@ -23,7 +23,7 @@ import jsPDF from 'jspdf';
 import { toast } from 'sonner';
 
 import { VolumetryProcesses } from './VolumetryProcesses';
-import { MultiFilterSelect } from '../ui/MultiFilterSelect';
+import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
 
 // Helper para converter nome de Estado para Sigla UF
@@ -875,6 +875,62 @@ export function Volumetry() {
     }, 300);
   };
 
+  // FilterBar: categorias, chips, count
+  const filterCategories = useMemo((): FilterCategory[] => [
+    {
+      key: 'partner',
+      label: 'Líder Responsável',
+      icon: Briefcase,
+      type: 'multi',
+      options: allPartners.map(p => ({ label: p as string, value: p as string })),
+      value: partnerFilter,
+      onChange: (val: string[]) => { setPartnerFilter(val); if (val.length > 0) setExpandedSocios({}); },
+    },
+    {
+      key: 'socio',
+      label: 'Sócio',
+      icon: Scale,
+      type: 'multi',
+      options: allSocios.map(s => ({ label: s as string, value: s as string })),
+      value: socioFilter,
+      onChange: (val: string[]) => { setSocioFilter(val); if (val.length > 0) setExpandedSocios({}); },
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      icon: Activity,
+      type: 'multi',
+      options: allStatuses.map(s => ({ label: s as string, value: s as string })),
+      value: statusFilter,
+      onChange: setStatusFilter,
+    },
+  ], [partnerFilter, socioFilter, statusFilter, allPartners, allSocios, allStatuses]);
+
+  const activeFilterCount = useMemo(() => {
+    return partnerFilter.length + socioFilter.length + statusFilter.length;
+  }, [partnerFilter, socioFilter, statusFilter]);
+
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; onClear: () => void }[] = [];
+    partnerFilter.forEach(p => {
+      chips.push({ key: `partner-${p}`, label: `Líder: ${p}`, onClear: () => setPartnerFilter(prev => prev.filter(v => v !== p)) });
+    });
+    socioFilter.forEach(s => {
+      chips.push({ key: `socio-${s}`, label: `Sócio: ${s}`, onClear: () => setSocioFilter(prev => prev.filter(v => v !== s)) });
+    });
+    statusFilter.forEach(s => {
+      chips.push({ key: `status-${s}`, label: `Status: ${s}`, onClear: () => setStatusFilter(prev => prev.filter(v => v !== s)) });
+    });
+    return chips;
+  }, [partnerFilter, socioFilter, statusFilter]);
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setPartnerFilter([]);
+    setSocioFilter([]);
+    setStatusFilter(['Ativo']);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
 
@@ -938,54 +994,14 @@ export function Volumetry() {
         <div className="flex flex-col space-y-6" id="volumetry-dashboard-content">
           {/* Dashboard Filters ou Cabeçalho Elegante de Relatório PDF */}
           {!isExportingPDF ? (
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end" data-html2canvas-ignore>
-               <div className="flex-1 min-w-[200px]">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Busca (Cliente, CNJ ou Pasta)</label>
-                  <input
-                    type="text"
-                    placeholder="Pesquisar..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-600 font-medium placeholder:text-gray-400"
-                  />
-                </div>
-
-                <div className="w-full sm:w-48">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Líder Responsável</label>
-                  <MultiFilterSelect
-                    value={partnerFilter}
-                    onChange={(val: string[]) => {
-                      setPartnerFilter(val);
-                      if (val.length > 0) setExpandedSocios({});
-                    }}
-                    placeholder="Todos"
-                    options={allPartners.map(p => ({ value: p as string, label: p as string }))}
-                  />
-                </div>
-
-                <div className="w-full sm:w-48">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Sócio</label>
-                  <MultiFilterSelect
-                    value={socioFilter}
-                    onChange={(val: string[]) => {
-                      setSocioFilter(val);
-                      if (val.length > 0) setExpandedSocios({});
-                    }}
-                    placeholder="Todos"
-                    options={allSocios.map(s => ({ value: s as string, label: s as string }))}
-                  />
-                </div>
-
-                <div className="w-full sm:w-48">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
-                  <MultiFilterSelect
-                    value={statusFilter}
-                    onChange={setStatusFilter}
-                    placeholder="Todos"
-                    options={allStatuses.map(s => ({ value: s as string, label: s as string }))}
-                  />
-                </div>
-            </div>
+            <FilterBar
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              categories={filterCategories}
+              activeFilterChips={activeFilterChips}
+              activeFilterCount={activeFilterCount}
+              onClearAll={clearAllFilters}
+            />
           ) : (
             <div className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] p-6 rounded-2xl shadow-sm text-white flex flex-col gap-4 border border-[#ffffff10]">
               <div className="border-b border-[#ffffff20] pb-4">
