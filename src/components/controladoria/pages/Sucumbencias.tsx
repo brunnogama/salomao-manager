@@ -631,24 +631,24 @@ export function Sucumbencias() {
             />
 
             {/* Header com Título, Abas e Botões de Ação Principais */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0">
                     <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
                         <Award className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Honorários de Sucumbência</h1>
-                        <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gestão e acompanhamento de valores sucumbenciais</p>
+                        <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none whitespace-nowrap">Honorários de Sucumbência</h1>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5 whitespace-nowrap">Gestão e acompanhamento de valores sucumbenciais</p>
                     </div>
                 </div>
 
                 {/* Right: Abas + Ações */}
-                <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end mt-2 md:mt-0">
+                <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end mt-2 md:mt-0 overflow-hidden">
                     {/* Abas */}
-                    <div className="flex items-center bg-gray-100/80 p-1 rounded-xl overflow-x-auto">
+                    <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0 overflow-x-auto no-scrollbar">
                         <button
                             onClick={() => setActiveTab('potenciais')}
-                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'potenciais' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'potenciais' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Potenciais
                             <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'potenciais' ? 'bg-blue-50 text-blue-600' : 'bg-gray-200/60 text-gray-500'}`}>
@@ -657,7 +657,7 @@ export function Sucumbencias() {
                         </button>
                         <button
                             onClick={() => setActiveTab('prescritos')}
-                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'prescritos' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'prescritos' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Prescritos
                             <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'prescritos' ? 'bg-amber-50 text-amber-600' : 'bg-gray-200/60 text-gray-500'}`}>
@@ -666,7 +666,7 @@ export function Sucumbencias() {
                         </button>
                         <button
                             onClick={() => setActiveTab('recebidos')}
-                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'recebidos' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'recebidos' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Já Pagos
                             <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'recebidos' ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-200/60 text-gray-500'}`}>
@@ -675,7 +675,7 @@ export function Sucumbencias() {
                         </button>
                         <button
                             onClick={() => setActiveTab('aguardando')}
-                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'aguardando' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'aguardando' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Aguardando
                             <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'aguardando' ? 'bg-amber-50 text-amber-600' : 'bg-gray-200/60 text-gray-500'}`}>
@@ -684,7 +684,7 @@ export function Sucumbencias() {
                         </button>
                         <button
                             onClick={() => setActiveTab('descartados')}
-                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'descartados' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'descartados' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Descartados
                             <span className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'descartados' ? 'bg-red-50 text-red-600' : 'bg-gray-200/60 text-gray-500'}`}>
@@ -694,7 +694,7 @@ export function Sucumbencias() {
                     </div>
 
                     {/* Ícones redondos */}
-                    <div className="flex items-center gap-2 border-l border-gray-100 pl-3 ml-1">
+                    <div className="flex items-center gap-2 border-l border-gray-100 pl-3 ml-1 shrink-0">
                         <button 
                             onClick={() => setIsClearModalOpen(true)}
                             className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-red-500 rounded-full hover:bg-red-50 transition-all shadow-sm"
