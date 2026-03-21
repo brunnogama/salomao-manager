@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
-  Plus, Search, Filter, Calendar, User, Briefcase,
+  Plus, Filter, Calendar, User, Briefcase,
   Loader2,
   Download, Edit, Trash2, Bell,
   FileSignature, FileSearch, Eye
@@ -18,7 +18,7 @@ import { AnalystManagerModal } from '../analysts/AnalystManagerModal';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { EmptyState } from '../ui/EmptyState';
 import { parseCurrency, safeDate } from '../utils/masks';
-import { FilterSelect } from '../ui/FilterSelect';
+import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 
 const getStatusColor = (status: string) => {
@@ -525,7 +525,6 @@ export function Contracts() {
   const hasActiveFilters = searchTerm !== '' || statusFilter !== '' || partnerFilter !== '' || startDate !== '' || endDate !== '';
 
   const statusOptions = [
-    { label: 'Todos Status', value: '' },
     { label: 'Sob Análise', value: 'analysis' },
     { label: 'Proposta Enviada', value: 'proposal' },
     { label: 'Contrato Fechado', value: 'active' },
@@ -533,10 +532,57 @@ export function Contracts() {
     { label: 'Probono', value: 'probono' }
   ];
 
-  const partnerOptions = [
-    { label: 'Todos Sócios', value: '' },
-    ...partners.map(p => ({ label: p.name, value: p.id }))
-  ];
+  const partnerOptions = partners.map(p => ({ label: p.name, value: p.id }));
+
+  // FilterBar: categorias, chips, count
+  const filterCategories = useMemo((): FilterCategory[] => [
+    {
+      key: 'status',
+      label: 'Status',
+      icon: Filter,
+      type: 'single',
+      options: statusOptions,
+      value: statusFilter,
+      onChange: setStatusFilter,
+    },
+    {
+      key: 'partner',
+      label: 'Sócio',
+      icon: User,
+      type: 'single',
+      options: partnerOptions,
+      value: partnerFilter,
+      onChange: setPartnerFilter,
+    },
+  ], [statusFilter, partnerFilter, statusOptions, partnerOptions]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (statusFilter) count++;
+    if (partnerFilter) count++;
+    if (startDate) count++;
+    if (endDate) count++;
+    return count;
+  }, [statusFilter, partnerFilter, startDate, endDate]);
+
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; onClear: () => void }[] = [];
+    if (statusFilter) {
+      const label = statusOptions.find(s => s.value === statusFilter)?.label || statusFilter;
+      chips.push({ key: 'status', label: `Status: ${label}`, onClear: () => setStatusFilter('') });
+    }
+    if (partnerFilter) {
+      const label = partnerOptions.find(p => p.value === partnerFilter)?.label || partnerFilter;
+      chips.push({ key: 'partner', label: `Sócio: ${label}`, onClear: () => setPartnerFilter('') });
+    }
+    if (startDate) {
+      chips.push({ key: 'startDate', label: `De: ${new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setStartDate('') });
+    }
+    if (endDate) {
+      chips.push({ key: 'endDate', label: `Até: ${new Date(endDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setEndDate('') });
+    }
+    return chips;
+  }, [statusFilter, partnerFilter, startDate, endDate, statusOptions, partnerOptions]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 animate-in fade-in duration-500">
@@ -553,29 +599,31 @@ export function Contracts() {
           </div>
         </div>
 
-        {/* Direita: Exportar XLSX, Novo Caso, Notificações */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0 w-full sm:w-auto">
-          {/* Exportar XLSX (Verde) */}
+        {/* Direita: Ícones redondos */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Exportar XLSX */}
           <button
             onClick={exportToExcel}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 sm:py-2.5 bg-green-50 text-green-700 border border-green-200 rounded-xl hover:bg-green-100 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95 flex-1 sm:flex-none"
+            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+            title="Exportar XLSX"
           >
-            <Download className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">Exportar XLS</span><span className="sm:hidden">Exportar</span>
+            <Download className="h-4 w-4" />
           </button>
 
-          {/* Novo Caso (Azul Royal) */}
+          {/* Novo Caso */}
           <button
             onClick={handleNew}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 flex-1 sm:flex-none"
+            className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30"
+            title="Novo Caso"
           >
-            <Plus className="h-4 w-4 shrink-0" /> Novo Caso
+            <Plus className="h-5 w-5" />
           </button>
 
           {/* Notificações */}
           <div className="relative shrink-0">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className={`p-2 rounded-full relative transition-all h-[40px] w-[40px] flex items-center justify-center ${notifications.length > 0
+              className={`flex items-center justify-center w-10 h-10 rounded-full relative transition-all ${notifications.length > 0
                 ? 'bg-red-50 text-red-500 hover:bg-red-100'
                 : 'bg-white border border-gray-200 text-gray-400 hover:bg-gray-100'
                 }`}
@@ -617,75 +665,56 @@ export function Contracts() {
         </div>
       </div>
 
-      {/* Toolbar: Total | Busca | Filtros | Período */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
-
-          {/* Card de Total */}
-          <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100">
-            <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
-              <Briefcase className="w-5 h-5" />
+      {/* KPI Card + FilterBar */}
+      <div className="flex flex-col lg:flex-row items-stretch gap-4">
+        {/* Card de KPI */}
+        <div className="flex items-stretch shrink-0">
+          <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+            <div className="p-2 rounded-lg bg-blue-50">
+              <Briefcase className="h-5 w-5 text-[#1e3a8a]" />
             </div>
-            <div>
-              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Total</p>
-              <p className="text-xl font-black text-[#0a192f] leading-none">{contracts.length}</p>
+            <div className="flex flex-col">
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Total</span>
+              <span className="text-xl font-black text-[#0a192f] leading-tight">{filteredContracts.length}</span>
             </div>
           </div>
+        </div>
 
-          {/* Barra de Busca (flex-1, sempre visível) */}
-          <div className="relative flex-1 w-full lg:w-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por cliente, HON, processo..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          {/* Filtros: Sócios e Status */}
-          <div className="flex flex-wrap items-center gap-2">
-            <FilterSelect
-              icon={User}
-              value={partnerFilter}
-              onChange={setPartnerFilter}
-              options={partnerOptions}
-              placeholder="Sócios"
-            />
-
-            <FilterSelect
-              icon={Filter}
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={statusOptions}
-              placeholder="Status"
-            />
-
-            {/* Período: De - Até */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px] flex-1">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2 shrink-0">De</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-full"
-                />
+        {/* FilterBar */}
+        <div className="flex-1">
+          <FilterBar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            categories={filterCategories}
+            activeFilterChips={activeFilterChips}
+            activeFilterCount={activeFilterCount}
+            onClearAll={clearFilters}
+            extraContent={
+              <div className="px-4 py-3 space-y-2">
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Período</div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px] flex-1">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2 shrink-0">Até</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-full"
-                />
-              </div>
-            </div>
-
-
-          </div>
+            }
+          />
         </div>
       </div>
 
