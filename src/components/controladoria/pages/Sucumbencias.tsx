@@ -619,16 +619,15 @@ export function Sucumbencias() {
     };
 
     return (
+        <>
+        <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            accept=".xlsx, .xls, .csv" 
+            className="hidden" 
+        />
         <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 animate-in fade-in duration-500">
-            {/* Input de Arquivo Global (Oculto) mantido na raiz do dom para que os botões de upload sempre tenham acesso ao ref, independente do estado da tela */}
-            <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileUpload} 
-                accept=".xlsx, .xls, .csv" 
-                className="hidden" 
-            />
-
             {/* Header */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
               {/* Left: Título e Ícone */}
@@ -1179,5 +1178,6 @@ export function Sucumbencias() {
                 </div>
             , document.body)}
         </div>
+        </>
     );
 }
