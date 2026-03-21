@@ -180,7 +180,7 @@ export function FilterBar({
 
           {/* Popover / Dropdown (posicionado relativo ao botão) */}
           {isPopoverOpen && (
-            <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+            <div className="absolute top-full right-0 mt-2 w-96 bg-white border border-gray-100 rounded-xl shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
               {!selectedCategory ? (
                 /* Lista de categorias */
                 <div className="py-1">
