@@ -87,7 +87,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { path: '/rh/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/rh/calendario', label: 'Agenda', icon: Calendar },
     { path: '/rh/colaboradores', label: 'Colaboradores', icon: Users },
-    { path: '/rh/comunicacoes', label: 'Comunicações Internas', icon: MessageSquare },
+    { path: '/rh/comunicacoes', label: 'Comunicações', icon: MessageSquare },
     { path: '/rh/vagas', label: 'Recrutamento', icon: UserPlus },
     { path: '/rh/acoes', label: 'Ações', icon: Megaphone },
     { path: '/rh/organograma', label: 'Organograma', icon: Network },
