@@ -631,14 +631,14 @@ export function Sucumbencias() {
             />
 
             {/* Header com Título, Abas e Botões de Ação Principais */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
-                <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-                    <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
-                        <Award className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex items-center gap-4 shrink-0">
+                    <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg shrink-0 flex items-center justify-center">
+                        <Award className="h-7 w-7 text-white" />
                     </div>
-                    <div>
-                        <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none whitespace-nowrap">Honorários de Sucumbência</h1>
-                        <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5 whitespace-nowrap">Gestão e acompanhamento de valores sucumbenciais</p>
+                    <div className="flex flex-col justify-center">
+                        <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none whitespace-nowrap">Honorários de Sucumbência</h1>
+                        <p className="text-sm font-semibold text-gray-500 mt-1 whitespace-nowrap">Gestão e acompanhamento de valores sucumbenciais</p>
                     </div>
                 </div>
 
