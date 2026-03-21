@@ -235,7 +235,7 @@ export function RHComunicacoesInternas() {
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6">
 
       {/* PAGE HEADER */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
 
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
@@ -289,7 +289,7 @@ export function RHComunicacoesInternas() {
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6 w-full">
+      <div className="space-y-4 sm:space-y-6 w-full">
 
         {/* TOOLBAR: counter card (left) + FilterBar (right, full width) */}
         <div className="flex flex-col sm:flex-row gap-3 items-stretch">
