@@ -1236,7 +1236,7 @@ export function Proposals() {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {/* Language Toggle */}
+          {/* Language + Marcus Lívio Toggle */}
           <div className="flex items-center gap-1 bg-gray-100/80 p-1 rounded-xl border border-gray-200">
             <button
               type="button"
@@ -1250,13 +1250,13 @@ export function Proposals() {
                 }));
                 if (!isEditingBody) setCustomBodyText("");
               }}
-              className={`px-3 py-2 text-xs font-bold rounded-lg transition-all ${
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
                 language === 'pt'
                   ? 'bg-white text-[#1e3a8a] shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              PT
+              Português
             </button>
             <button
               type="button"
@@ -1270,24 +1270,22 @@ export function Proposals() {
                 }));
                 if (!isEditingBody) setCustomBodyText("");
               }}
-              className={`px-3 py-2 text-xs font-bold rounded-lg transition-all ${
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
                 language === 'en'
                   ? 'bg-white text-[#1e3a8a] shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              EN
+              Inglês
+            </button>
+            <button
+              type="button"
+              onClick={() => { /* TODO: Marcus Lívio config */ }}
+              className="px-4 py-2 text-xs font-bold rounded-lg transition-all text-gray-500 hover:text-gray-700"
+            >
+              Marcus Lívio
             </button>
           </div>
-
-          {/* Marcus Lívio */}
-          <button
-            onClick={() => { /* TODO: Marcus Lívio config */ }}
-            className="flex items-center justify-center w-10 h-10 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30 active:scale-95"
-            title="Marcus Lívio"
-          >
-            <span className="text-[10px] font-black">ML</span>
-          </button>
 
           {/* Editar */}
           <button
