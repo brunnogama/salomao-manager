@@ -730,7 +730,7 @@ export function Sucumbencias() {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Andamentos</span>
-                                <span className="text-xl font-black text-[#0a192f] leading-tight">{displayedData.reduce((acc, curr) => acc + curr.andamentos.length, 0)}</span>
+                                <span className="text-xl font-black text-[#0a192f] leading-tight">{displayedData.reduce((acc, curr) => acc + curr.andamentos.length, 0).toLocaleString('pt-BR')}</span>
                             </div>
                         </div>
                     </div>
