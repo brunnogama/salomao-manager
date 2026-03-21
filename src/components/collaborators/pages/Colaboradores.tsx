@@ -12,6 +12,7 @@ import { supabase } from '../../../lib/supabase'
 import { logAction } from '../../../lib/logger'
 
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
+import { FilterBar, FilterCategory } from '../components/FilterBar'
 import { Collaborator, Partner, GEDDocument } from '../../../types/controladoria'
 import { AlertModal } from '../../ui/AlertModal'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
@@ -346,6 +347,83 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const activeCount = React.useMemo(() =>
     colaboradores.filter(c => c.status === 'active').length
     , [colaboradores])
+
+  // Categorias de filtro para a FilterBar
+  const filterCategories = React.useMemo((): FilterCategory[] => [
+    {
+      key: 'lider',
+      label: 'Líder',
+      icon: User,
+      type: 'single',
+      options: liderOptions,
+      value: filterLider,
+      onChange: setFilterLider,
+    },
+    {
+      key: 'partner',
+      label: 'Sócio',
+      icon: Users,
+      type: 'single',
+      options: partnerOptions,
+      value: filterPartner,
+      onChange: setFilterPartner,
+    },
+    {
+      key: 'local',
+      label: 'Local',
+      icon: Building2,
+      type: 'single',
+      options: locationOptions,
+      value: filterLocal,
+      onChange: setFilterLocal,
+    },
+    {
+      key: 'cargo',
+      label: 'Cargo',
+      icon: Briefcase,
+      type: 'single',
+      options: roleOptions,
+      value: filterCargo,
+      onChange: setFilterCargo,
+    },
+  ], [filterLider, filterPartner, filterLocal, filterCargo, liderOptions, partnerOptions, locationOptions, roleOptions]);
+
+  const activeFilterCount = React.useMemo(() => {
+    let count = 0;
+    if (filterLider) count++;
+    if (filterPartner) count++;
+    if (filterLocal) count++;
+    if (filterCargo) count++;
+    return count;
+  }, [filterLider, filterPartner, filterLocal, filterCargo]);
+
+  const activeFilterChips = React.useMemo(() => {
+    const chips: { key: string; label: string; onClear: () => void }[] = [];
+    if (filterLider) {
+      const label = liderOptions.find(l => l.value === filterLider)?.label || filterLider;
+      chips.push({ key: 'lider', label: `Líder: ${label}`, onClear: () => setFilterLider('') });
+    }
+    if (filterPartner) {
+      const label = partnerOptions.find(p => p.value === filterPartner)?.label || filterPartner;
+      chips.push({ key: 'partner', label: `Sócio: ${label}`, onClear: () => setFilterPartner('') });
+    }
+    if (filterLocal) {
+      const label = locationOptions.find(l => l.value === filterLocal)?.label || filterLocal;
+      chips.push({ key: 'local', label: `Local: ${label}`, onClear: () => setFilterLocal('') });
+    }
+    if (filterCargo) {
+      const label = roleOptions.find(r => r.value === filterCargo)?.label || filterCargo;
+      chips.push({ key: 'cargo', label: `Cargo: ${label}`, onClear: () => setFilterCargo('') });
+    }
+    return chips;
+  }, [filterLider, filterPartner, filterLocal, filterCargo, liderOptions, partnerOptions, locationOptions, roleOptions]);
+
+  const clearAllFilters = () => {
+    setFilterLider('');
+    setFilterPartner('');
+    setFilterLocal('');
+    setFilterCargo('');
+  };
 
   // Inicializa estado vazio por padrão conforme solicitado
   const [formData, setFormData] = useState<Partial<Collaborator>>({ status: 'active', state: '' })
@@ -1878,72 +1956,30 @@ export function Colaboradores({ }: ColaboradoresProps) {
       {activeMainTab === 'Colaboradores' && (
         <>
           {!isReadOnly && (
-            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
-              <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
-
-                {/* Active Count Card */}
-                <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100 shrink-0 animate-in fade-in slide-in-from-left-4 duration-700">
-                  <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
-                    <Users className="w-5 h-5" />
+            <div className="flex flex-col lg:flex-row items-stretch gap-4">
+              {/* Card de KPI */}
+              <div className="flex items-stretch shrink-0">
+                <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+                  <div className="p-2 rounded-lg bg-blue-50">
+                    <Users className="h-5 w-5 text-[#1e3a8a]" />
                   </div>
-                  <div>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Ativos</p>
-                    <p className="text-xl font-black text-[#0a192f] leading-none">{filtered.filter(c => c.status === 'active').length}</p>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Ativos</span>
+                    <span className="text-xl font-black text-[#0a192f] leading-tight">{filtered.filter(c => c.status === 'active').length}</span>
                   </div>
                 </div>
+              </div>
 
-                {/* Search Bar - Expanded */}
-                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
-                  <Search className="h-4 w-4 text-gray-400 mr-3 shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="Buscar..."
-                    className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400 pr-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
-                      title="Limpar busca"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Filters Row - Auto-sizing */}
-                <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
-                  <FilterSelect
-                    icon={User}
-                    value={filterLider}
-                    onChange={setFilterLider}
-                    options={liderOptions}
-                    placeholder="Líder"
-                  />
-                  <FilterSelect
-                    icon={Users}
-                    value={filterPartner}
-                    onChange={setFilterPartner}
-                    options={partnerOptions}
-                    placeholder="Sócio"
-                  />
-                  <FilterSelect
-                    icon={Building2}
-                    value={filterLocal}
-                    onChange={setFilterLocal}
-                    options={locationOptions}
-                    placeholder="Local"
-                  />
-                  <FilterSelect
-                    icon={Briefcase}
-                    value={filterCargo}
-                    onChange={setFilterCargo}
-                    options={roleOptions}
-                    placeholder="Cargo"
-                  />
-                </div>
+              {/* Filter Bar */}
+              <div className="flex-1">
+                <FilterBar
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  categories={filterCategories}
+                  activeFilterChips={activeFilterChips}
+                  activeFilterCount={activeFilterCount}
+                  onClearAll={clearAllFilters}
+                />
               </div>
             </div>
           )}
