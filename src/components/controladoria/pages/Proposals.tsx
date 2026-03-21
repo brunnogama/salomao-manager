@@ -1235,18 +1235,74 @@ export function Proposals() {
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gerador de Propostas e Minutas</p>
           </div>
         </div>
-        <button
-          onClick={() => {
-            if (!isEditingBody && !customBodyText) {
-              setCustomBodyText(language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText());
-            }
-            setIsEditingBody(true);
-          }}
-          className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30 active:scale-95"
-          title="Abrir Modo de Edição"
-        >
-          <FileSignature className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Language Toggle */}
+          <div className="flex items-center gap-1 bg-gray-100/80 p-1 rounded-xl border border-gray-200">
+            <button
+              type="button"
+              onClick={() => {
+                setLanguage('pt');
+                setProposalData(prev => ({
+                  ...prev,
+                  pro_labore_clauses: prev.pro_labore_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'pt') } : c),
+                  intermediate_fee_clauses: prev.intermediate_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'pt') } : c),
+                  final_success_fee_clauses: prev.final_success_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'pt') } : c)
+                }));
+                if (!isEditingBody) setCustomBodyText("");
+              }}
+              className={`px-3 py-2 text-xs font-bold rounded-lg transition-all ${
+                language === 'pt'
+                  ? 'bg-white text-[#1e3a8a] shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              PT
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLanguage('en');
+                setProposalData(prev => ({
+                  ...prev,
+                  pro_labore_clauses: prev.pro_labore_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'en') } : c),
+                  intermediate_fee_clauses: prev.intermediate_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'en') } : c),
+                  final_success_fee_clauses: prev.final_success_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'en') } : c)
+                }));
+                if (!isEditingBody) setCustomBodyText("");
+              }}
+              className={`px-3 py-2 text-xs font-bold rounded-lg transition-all ${
+                language === 'en'
+                  ? 'bg-white text-[#1e3a8a] shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              EN
+            </button>
+          </div>
+
+          {/* Marcus Lívio */}
+          <button
+            onClick={() => { /* TODO: Marcus Lívio config */ }}
+            className="flex items-center justify-center w-10 h-10 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30 active:scale-95"
+            title="Marcus Lívio"
+          >
+            <span className="text-[10px] font-black">ML</span>
+          </button>
+
+          {/* Editar */}
+          <button
+            onClick={() => {
+              if (!isEditingBody && !customBodyText) {
+                setCustomBodyText(language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText());
+              }
+              setIsEditingBody(true);
+            }}
+            className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30 active:scale-95"
+            title="Abrir Modo de Edição"
+          >
+            <FileSignature className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Conteúdo da página */}
@@ -1472,56 +1528,8 @@ export function Proposals() {
           </div>
         </div>
 
-        {/* DIREITA: Preview Visual e Toggle de Idioma */}
+        {/* DIREITA: Preview Visual */}
         <div className="flex flex-col gap-4">
-          {/* Language Toggle above Preview */}
-          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
-            <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest flex items-center gap-2">
-              <FileSignature className="w-4 h-4" /> Configuração da Proposta
-            </span>
-            <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 w-[240px]">
-              <button
-                type="button"
-                onClick={() => {
-                  setLanguage('pt');
-                  setProposalData(prev => ({
-                    ...prev,
-                    pro_labore_clauses: prev.pro_labore_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'pt') } : c),
-                    intermediate_fee_clauses: prev.intermediate_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'pt') } : c),
-                    final_success_fee_clauses: prev.final_success_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'pt') } : c)
-                  }));
-                  if (!isEditingBody) setCustomBodyText("");
-                }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                  language === 'pt' 
-                    ? 'bg-white text-[#1e3a8a] shadow-sm border border-gray-200' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Português
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setLanguage('en');
-                  setProposalData(prev => ({
-                    ...prev,
-                    pro_labore_clauses: prev.pro_labore_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'en') } : c),
-                    intermediate_fee_clauses: prev.intermediate_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'en') } : c),
-                    final_success_fee_clauses: prev.final_success_fee_clauses.map(c => c.type === 'currency' && c.value ? { ...c, value: maskMoney(c.value, 'en') } : c)
-                  }));
-                  if (!isEditingBody) setCustomBodyText("");
-                }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                  language === 'en' 
-                    ? 'bg-white text-[#1e3a8a] shadow-sm border border-gray-200' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Inglês
-              </button>
-            </div>
-          </div>
 
           <div className="bg-white p-4 sm:p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center relative min-h-[500px] sm:min-h-[900px] w-full">
           <p className="absolute top-4 right-6 text-[9px] font-black text-gray-300 uppercase tracking-widest hidden sm:flex items-center gap-1 z-20">
