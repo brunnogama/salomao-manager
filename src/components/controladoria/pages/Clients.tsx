@@ -3,24 +3,22 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
   Users,
-  Search,
   Plus,
   Edit,
   Trash2,
   Building,
   User,
   Briefcase,
-
   Mail,
   Phone,
   MapPin,
-  Filter,
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { Client } from '../../../types/controladoria';
 import { ClientFormModal } from '../clients/ClientFormModal';
-import { FilterSelect } from '../ui/FilterSelect';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
+import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 
 // CAMINHO CORRIGIDO: saindo de /pages e entrando em /utils (dentro de controladoria)
 import { maskCNPJ } from '../utils/masks';
@@ -239,9 +237,51 @@ export function Clients() {
     return matchesSearch && matchesClient && matchesPartner;
   }), [groupedClients, searchTerm, clientFilter, partnerFilter]);
 
-  const hasActiveFilters = !!clientFilter || !!partnerFilter;
 
+  const filterCategories = useMemo((): FilterCategory[] => [
+    {
+      key: 'client',
+      label: 'Cliente',
+      icon: Building,
+      type: 'single',
+      options: uniqueClients.map(c => ({ label: c, value: c })),
+      value: clientFilter,
+      onChange: (val: string) => setClientFilter(val),
+    },
+    {
+      key: 'partner',
+      label: 'Sócio',
+      icon: User,
+      type: 'single',
+      options: uniquePartners.map(p => ({ label: p!, value: p! })),
+      value: partnerFilter,
+      onChange: (val: string) => setPartnerFilter(val),
+    },
+  ], [clientFilter, partnerFilter, uniqueClients, uniquePartners]);
 
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (clientFilter) count++;
+    if (partnerFilter) count++;
+    return count;
+  }, [clientFilter, partnerFilter]);
+
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; onClear: () => void }[] = [];
+    if (clientFilter) {
+      chips.push({ key: 'client', label: `Cliente: ${clientFilter}`, onClear: () => setClientFilter('') });
+    }
+    if (partnerFilter) {
+      chips.push({ key: 'partner', label: `Sócio: ${partnerFilter}`, onClear: () => setPartnerFilter('') });
+    }
+    return chips;
+  }, [clientFilter, partnerFilter]);
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setClientFilter('');
+    setPartnerFilter('');
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
@@ -258,63 +298,69 @@ export function Clients() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+      {/* Ícones redondos */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => {
+              const data = filteredGroups.map(g => ({
+                'Cliente': g.primaryClient.name,
+                'CNPJ': g.primaryClient.cnpj || '',
+                'Sócio': g.partners.map(p => p.partner_name).join(', '),
+                'Contratos': g.totalContracts,
+                'UF': g.primaryClient.uf || '',
+                'Email': g.primaryClient.email || '',
+                'Telefone': g.primaryClient.phone || '',
+              }));
+              import('xlsx-js-style').then(mod => {
+                const XLSX = mod.default || mod;
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+                XLSX.writeFile(wb, 'Clientes_Controladoria.xlsx');
+              });
+            }}
+            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+            title="Exportar XLSX"
+          >
+            <Download className="h-4 w-4" />
+          </button>
           {!isReadOnly && (
             <button
               onClick={handleNew}
-              className="flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+              className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30"
+              title="Novo Cliente"
             >
-              <Plus className="h-4 w-4" /> Novo Cliente
+              <Plus className="h-5 w-5" />
             </button>
           )}
         </div>
       </div>
 
-      {/* 2. Toolbar: Total | Busca | Filtros */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
-
-          {/* Card de Total */}
-          <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100">
-            <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
-              <Briefcase className="w-5 h-5" />
+      {/* 2. KPI Card + FilterBar */}
+      <div className="flex flex-col lg:flex-row items-stretch gap-4">
+        {/* Card de KPI - Total */}
+        <div className="flex items-stretch shrink-0">
+          <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+            <div className="p-2 rounded-lg bg-blue-50">
+              <Briefcase className="h-5 w-5 text-[#1e3a8a]" />
             </div>
-            <div>
-              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Total</p>
-              <p className="text-xl font-black text-[#0a192f] leading-none">{filteredGroups.length}</p>
+            <div className="flex flex-col">
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Total</span>
+              <span className="text-xl font-black text-[#0a192f] leading-tight">{filteredGroups.length.toLocaleString('pt-BR')}</span>
             </div>
           </div>
+        </div>
 
-          {/* Barra de Busca (flex-1, sempre visível) */}
-          <div className="relative flex-1 w-full lg:w-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por nome, CNPJ, email ou sócio..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          {/* Filtros: Clientes e Sócios */}
-          <div className="flex flex-wrap items-center gap-2">
-            <FilterSelect
-              icon={Building}
-              value={clientFilter}
-              onChange={setClientFilter}
-              options={uniqueClients.map(c => ({ label: c, value: c }))}
-              placeholder="Todos os Clientes"
-            />
-
-            <FilterSelect
-              icon={User}
-              value={partnerFilter}
-              onChange={setPartnerFilter}
-              options={uniquePartners.map(p => ({ label: p!, value: p! }))}
-              placeholder="Todos os Sócios"
-            />
-          </div>
+        {/* FilterBar */}
+        <div className="flex-1">
+          <FilterBar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            categories={filterCategories}
+            activeFilterChips={activeFilterChips}
+            activeFilterCount={activeFilterCount}
+            onClearAll={clearAllFilters}
+          />
         </div>
       </div>
 
