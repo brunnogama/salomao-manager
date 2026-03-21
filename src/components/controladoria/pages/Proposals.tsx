@@ -1242,9 +1242,10 @@ export function Proposals() {
             }
             setIsEditingBody(true);
           }}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-[#1e3a8a] text-white hover:bg-[#112240] shadow-lg active:scale-95"
+          className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30 active:scale-95"
+          title="Abrir Modo de Edição"
         >
-          <FileSignature className="w-4 h-4" /> Abrir Modo de Edição
+          <FileSignature className="w-4 h-4" />
         </button>
       </div>
 
