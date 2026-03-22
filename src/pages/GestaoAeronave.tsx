@@ -23,14 +23,14 @@ import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
 
 // Tipos
-import { AeronaveLancamento } from '../types/AeronaveTypes'
+import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
 
 // Componentes
 import { AeronaveTable } from '../components/AeronaveTable'
 import { AeronaveDashboard } from '../components/AeronaveDashboard'
 import { AeronaveFormModal } from '../components/AeronaveFormModal'
 import { AeronaveViewModal } from '../components/AeronaveViewModal'
-
+import { TipoLancamentoModal } from '../components/TipoLancamentoModal'
 import { AeronaveComparativoComercialParticular } from '../components/AeronaveComparativoComercialParticular'
 import { ConfirmationModal } from '../components/ui/ConfirmationModal'
 
@@ -147,11 +147,13 @@ export function GestaoAeronave() {
   const [isImporting, setIsImporting] = useState(false)
 
   // --- Estados de Modais ---
+  const [isTipoModalOpen, setIsTipoModalOpen] = useState(false)
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
 
   const [selectedItem, setSelectedItem] = useState<AeronaveLancamento | null>(null)
   const [selectedGroup, setSelectedGroup] = useState<AeronaveLancamento[]>([])
+  const [selectedOrigemForNew, setSelectedOrigemForNew] = useState<OrigemLancamento>('missao')
 
   // --- Estado de Deleção ---
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -333,8 +335,10 @@ export function GestaoAeronave() {
   const handleFormatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
 
-  const handleOpenNew = () => {
+  const handleOpenNew = (origem: OrigemLancamento) => {
+    setSelectedOrigemForNew(origem)
     setSelectedItem(null)
+    setIsTipoModalOpen(false)
     setIsFormModalOpen(true)
   }
 
@@ -663,7 +667,7 @@ export function GestaoAeronave() {
           )}
 
           <button
-            onClick={() => handleOpenNew()}
+            onClick={() => setIsTipoModalOpen(true)}
             className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
             title="Novo Lançamento"
           >
@@ -928,6 +932,7 @@ export function GestaoAeronave() {
             onRowClick={handleRowClick}
             onEdit={(item) => {
               setSelectedItem(item)
+              setSelectedOrigemForNew(item.origem)
               setIsFormModalOpen(true)
             }}
             onDelete={(item) => {
@@ -939,12 +944,19 @@ export function GestaoAeronave() {
       </div>
 
       {/* 5. Modais */}
+      <TipoLancamentoModal
+        isOpen={isTipoModalOpen}
+        onClose={() => setIsTipoModalOpen(false)}
+        onSelect={(tipo) => handleOpenNew(tipo)}
+      />
+
       <AeronaveFormModal
         isOpen={isFormModalOpen}
         onClose={() => {
           setIsFormModalOpen(false)
           setSelectedItem(null)
         }}
+        origem={selectedOrigemForNew}
         initialData={selectedItem}
         onSave={handleSaveLancamento}
         onSuccess={fetchDados}
@@ -962,6 +974,7 @@ export function GestaoAeronave() {
         onEdit={(item) => {
           setIsViewModalOpen(false)
           setSelectedItem(item)
+          setSelectedOrigemForNew(item.origem)
           setIsFormModalOpen(true)
         }}
         onDelete={() => {

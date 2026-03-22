@@ -9,6 +9,7 @@ import { CollaboratorModalLayout } from './collaborators/components/Collaborator
 interface AeronaveFormModalProps {
   isOpen: boolean;
   onClose: () => void;
+  origem: OrigemLancamento;
   initialData?: AeronaveLancamento | null;
   onSave: (data: Partial<AeronaveLancamento>) => Promise<void>;
   onSuccess?: () => void;
@@ -195,19 +196,18 @@ const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
 export function AeronaveFormModal({
   isOpen,
   onClose,
+  origem,
   initialData,
   onSave,
   onSuccess
 }: AeronaveFormModalProps) {
-  // --- Aba ativa: 1 = Custo Missões, 2 = Despesa Fixa ---
+  // --- Aba ativa: seções do formulário ---
   const [activeTab, setActiveTab] = useState(1)
 
-  // Derivar origem a partir da aba ativa
-  const origem: OrigemLancamento = activeTab === 1 ? 'missao' : 'fixa'
-
   const steps = [
-    { id: 1, label: 'Custo Missões', icon: Plane },
-    { id: 2, label: 'Despesa Fixa', icon: DollarSign },
+    { id: 1, label: 'Dados Operacionais', icon: FileText },
+    { id: 2, label: 'Detalhes Financeiros', icon: DollarSign },
+    { id: 3, label: 'Fiscal e Observações', icon: FileText },
   ]
 
   // --- Estados de Listas Dinâmicas ---
@@ -222,14 +222,14 @@ export function AeronaveFormModal({
   })
 
   // --- Estado do Formulário ---
-  const getEmptyForm = (tab: number): Partial<AeronaveLancamento> => ({
-    origem: tab === 1 ? 'missao' : 'fixa',
+  const emptyForm: Partial<AeronaveLancamento> = {
+    origem: origem,
     tripulacao: '',
     aeronave: 'PR WBW',
     data_missao: '',
     id_missao: undefined,
     nome_missao: '',
-    despesa: tab === 1 ? 'Custo Missões' : 'Despesa Fixa',
+    despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
     tipo: '',
     descricao: '',
     fornecedor: '',
@@ -243,9 +243,9 @@ export function AeronaveFormModal({
     numero_doc: '',
     valor_total_doc: 0,
     centro_custo: ''
-  })
+  }
 
-  const [formData, setFormData] = useState<Partial<AeronaveLancamento>>(getEmptyForm(1))
+  const [formData, setFormData] = useState<Partial<AeronaveLancamento>>(emptyForm)
   const [loading, setLoading] = useState(false)
 
   // --- Carregar Listas do Banco ---
@@ -271,24 +271,19 @@ export function AeronaveFormModal({
   useEffect(() => {
     if (isOpen) {
       fetchListas()
+      setActiveTab(1)
       if (initialData) {
         setFormData({ ...initialData })
-        // Definir aba com base na origem do dado existente
-        setActiveTab(initialData.origem === 'fixa' ? 2 : 1)
       } else {
-        setFormData(getEmptyForm(1))
-        setActiveTab(1)
+        setFormData({
+          ...emptyForm,
+          origem: origem,
+          despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
+          aeronave: 'PR WBW'
+        })
       }
     }
-  }, [isOpen, initialData])
-
-  // Ao mudar de aba (apenas para novos lançamentos), resetar form com a origem correta
-  const handleTabChange = (tabId: number) => {
-    setActiveTab(tabId)
-    if (!initialData) {
-      setFormData(getEmptyForm(tabId))
-    }
-  }
+  }, [isOpen, initialData, origem])
 
   // --- Helpers ---
   const handleChange = (field: keyof AeronaveLancamento, value: any) => {
@@ -310,18 +305,17 @@ export function AeronaveFormModal({
   const handleSubmit = async (saveAndNew: boolean) => {
     try {
       setLoading(true)
-      // Garantir que a origem está sincronizada com a aba
-      const dataToSave = { ...formData, origem }
-      if (origem === 'missao') {
-        dataToSave.despesa = 'Custo Missões'
-      } else {
-        dataToSave.despesa = 'Despesa Fixa'
-      }
-      await onSave(dataToSave)
+      await onSave(formData)
       if (onSuccess) onSuccess()
 
       if (saveAndNew) {
-        setFormData(getEmptyForm(activeTab))
+        setFormData({
+          ...emptyForm,
+          origem: origem,
+          despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
+          aeronave: 'PR WBW'
+        })
+        setActiveTab(1)
       } else {
         onClose()
       }
@@ -341,7 +335,7 @@ export function AeronaveFormModal({
         title={initialData ? 'Editar Lançamento' : 'Novo Lançamento'}
         onClose={onClose}
         activeTab={activeTab}
-        setActiveTab={handleTabChange}
+        setActiveTab={setActiveTab}
         currentSteps={steps}
         isEditMode={!!initialData}
         sidebarContent={
@@ -367,21 +361,12 @@ export function AeronaveFormModal({
           </div>
         }
       >
-        {/* Form Body */}
-        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-6">
-
-            {/* COLUNA 1: Dados Principais e Operacionais */}
+        {/* TAB 1 - Dados Operacionais */}
+        {activeTab === 1 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-1.5 border-b border-gray-100">
-                <div className="p-1 bg-gray-100 rounded-lg text-gray-500">
-                  <FileText className="h-3.5 w-3.5" />
-                </div>
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dados Operacionais</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2 flex flex-col gap-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-1">
                   <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Aeronave</label>
                   <div className="flex gap-2 w-full">
                     <SearchableSelect
@@ -400,61 +385,56 @@ export function AeronaveFormModal({
                   </div>
                 </div>
 
-                {origem === 'missao' && (
-                  <div className="col-span-2 flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Missão</label>
-                    <MissaoSelect
-                      value={formData.id_missao}
-                      onSelect={(missao) => {
-                        if (missao) {
-                          handleChange('id_missao', missao.id_missao)
-                          handleChange('nome_missao', missao.nome_missao)
-                          handleChange('data_missao', missao.data_inicio || '')
-                        } else {
-                          handleChange('id_missao', undefined)
-                          handleChange('nome_missao', '')
-                          handleChange('data_missao', '')
-                        }
-                      }}
-                    />
-                  </div>
-                )}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Categoria</label>
+                  <input
+                    disabled
+                    className="input-base bg-gray-50 text-gray-400 cursor-not-allowed"
+                    value={formData.despesa}
+                  />
+                </div>
+              </div>
 
-                <div className="col-span-2 grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Categoria</label>
-                    <input
-                      disabled
-                      className="input-base bg-gray-50 text-gray-400 cursor-not-allowed"
-                      value={origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa'}
-                    />
-                  </div>
+              {origem === 'missao' && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Missão</label>
+                  <MissaoSelect
+                    value={formData.id_missao}
+                    onSelect={(missao) => {
+                      if (missao) {
+                        handleChange('id_missao', missao.id_missao)
+                        handleChange('nome_missao', missao.nome_missao)
+                        handleChange('data_missao', missao.data_inicio || '')
+                      } else {
+                        handleChange('id_missao', undefined)
+                        handleChange('nome_missao', '')
+                        handleChange('data_missao', '')
+                      }
+                    }}
+                  />
+                </div>
+              )}
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Tipo de Gasto</label>
-                    <div className="flex gap-2 w-full">
-                      <SearchableSelect
-                        value={formData.tipo || ''}
-                        onChange={val => handleChange('tipo', val)}
-                        options={tiposOpcoes}
-                        placeholder="Selecione..."
-                      />
-                      <button
-                        onClick={() => handleOpenConfig('Tipos de Despesa', 'aeronave_tipos')}
-                        className="px-2.5 bg-white hover:bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm active:scale-95"
-                      >
-                        <Settings className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Tipo de Gasto</label>
+                  <div className="flex gap-2 w-full">
+                    <SearchableSelect
+                      value={formData.tipo || ''}
+                      onChange={val => handleChange('tipo', val)}
+                      options={tiposOpcoes}
+                      placeholder="Selecione..."
+                    />
+                    <button
+                      onClick={() => handleOpenConfig('Tipos de Despesa', 'aeronave_tipos')}
+                      className="px-2.5 bg-white hover:bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm active:scale-95"
+                    >
+                      <Settings className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
 
-                <div className="col-span-2 flex flex-col gap-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Descrição Detalhada</label>
-                  <input type="text" className="input-base" value={formData.descricao || ''} onChange={e => handleChange('descricao', e.target.value)} />
-                </div>
-
-                <div className="col-span-2 flex flex-col gap-1">
+                <div className="flex flex-col gap-1">
                   <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Fornecedor</label>
                   <div className="flex gap-2 w-full">
                     <SearchableSelect
@@ -471,86 +451,78 @@ export function AeronaveFormModal({
                     </button>
                   </div>
                 </div>
-
-                <div className="col-span-2 flex flex-col gap-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Centro de Custo</label>
-                  <input type="text" className="input-base" value={formData.centro_custo || ''} onChange={e => handleChange('centro_custo', e.target.value)} placeholder="Ex: Administrativo, Jurídico..." />
-                </div>
-
-              </div>
-            </div>
-
-            {/* COLUNA 2: Financeiro e Fiscal */}
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-1.5 border-b border-gray-100">
-                  <div className="p-1 bg-gray-100 rounded-lg text-gray-500">
-                    <DollarSign className="h-3.5 w-3.5" />
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Detalhes Financeiros</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Vencimento</label>
-                    <input type="date" className="input-base" value={formData.vencimento || ''} onChange={e => handleChange('vencimento', e.target.value)} />
-                  </div>
-
-                  <CurrencyInput label="Valor Previsto" value={formData.valor_previsto || 0} onChange={(val: number) => handleChange('valor_previsto', val)} />
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Data Pagamento</label>
-                    <input type="date" className="input-base" value={formData.data_pagamento || ''} onChange={e => handleChange('data_pagamento', e.target.value)} />
-                  </div>
-
-                  <CurrencyInput label="Valor Pago" value={formData.valor_pago || 0} onChange={(val: number) => handleChange('valor_pago', val)} />
-                </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-1.5 border-b border-gray-100">
-                  <div className="p-1 bg-gray-100 rounded-lg text-gray-500">
-                    <FileText className="h-3.5 w-3.5" />
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fiscal e Observações</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="col-span-2 flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Doc. Fiscal</label>
-                    <div className="flex gap-2 w-full">
-                      <SearchableSelect
-                        value={formData.doc_fiscal || ''}
-                        onChange={val => handleChange('doc_fiscal', val)}
-                        options={docFiscalOpcoes}
-                        placeholder="Tipo de documento..."
-                      />
-                      <button
-                        onClick={() => handleOpenConfig('Docs Fiscais', 'aeronave_docs_fiscais')}
-                        className="px-2.5 bg-white hover:bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm active:scale-95"
-                      >
-                        <Settings className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Número</label>
-                    <input type="text" className="input-base" value={formData.numero_doc || ''} onChange={e => handleChange('numero_doc', e.target.value)} />
-                  </div>
-
-                  <CurrencyInput label="Valor Total Doc" value={formData.valor_total_doc || 0} onChange={(val: number) => handleChange('valor_total_doc', val)} />
-
-                  <div className="col-span-2 flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Observação</label>
-                    <textarea rows={2} className="input-base py-2 resize-none" value={formData.observacao || ''} onChange={e => handleChange('observacao', e.target.value)} />
-                  </div>
-                </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Descrição Detalhada</label>
+                <input type="text" className="input-base" value={formData.descricao || ''} onChange={e => handleChange('descricao', e.target.value)} />
               </div>
 
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Centro de Custo</label>
+                <input type="text" className="input-base" value={formData.centro_custo || ''} onChange={e => handleChange('centro_custo', e.target.value)} placeholder="Ex: Administrativo, Jurídico..." />
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* TAB 2 - Detalhes Financeiros */}
+        {activeTab === 2 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Vencimento</label>
+                <input type="date" className="input-base" value={formData.vencimento || ''} onChange={e => handleChange('vencimento', e.target.value)} />
+              </div>
+
+              <CurrencyInput label="Valor Previsto" value={formData.valor_previsto || 0} onChange={(val: number) => handleChange('valor_previsto', val)} />
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Data Pagamento</label>
+                <input type="date" className="input-base" value={formData.data_pagamento || ''} onChange={e => handleChange('data_pagamento', e.target.value)} />
+              </div>
+
+              <CurrencyInput label="Valor Pago" value={formData.valor_pago || 0} onChange={(val: number) => handleChange('valor_pago', val)} />
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3 - Fiscal e Observações */}
+        {activeTab === 3 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Doc. Fiscal</label>
+                <div className="flex gap-2 w-full">
+                  <SearchableSelect
+                    value={formData.doc_fiscal || ''}
+                    onChange={val => handleChange('doc_fiscal', val)}
+                    options={docFiscalOpcoes}
+                    placeholder="Tipo de documento..."
+                  />
+                  <button
+                    onClick={() => handleOpenConfig('Docs Fiscais', 'aeronave_docs_fiscais')}
+                    className="px-2.5 bg-white hover:bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm active:scale-95"
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Número</label>
+                <input type="text" className="input-base" value={formData.numero_doc || ''} onChange={e => handleChange('numero_doc', e.target.value)} />
+              </div>
+
+              <CurrencyInput label="Valor Total Doc" value={formData.valor_total_doc || 0} onChange={(val: number) => handleChange('valor_total_doc', val)} />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Observação</label>
+              <textarea rows={4} className="input-base py-2 resize-none" value={formData.observacao || ''} onChange={e => handleChange('observacao', e.target.value)} />
+            </div>
+          </div>
+        )}
 
         <style>{`
           .input-base {
