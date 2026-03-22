@@ -295,12 +295,14 @@ export function RHComunicacoesInternas() {
         <div className="flex flex-col sm:flex-row gap-3 items-stretch">
 
           {/* Counter card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-3 shrink-0 min-w-[160px]">
-            <div className="w-2 h-12 rounded-full bg-gradient-to-b from-[#1e3a8a] to-[#112240]" />
-            <div>
-              <div className="text-3xl font-black text-[#0a192f] leading-none">{comunicacoes.length}</div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-1">
-                Total de<br />Comunicações
+          <div className="flex items-stretch shrink-0">
+            <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
+              <div className="p-2 rounded-lg bg-blue-50">
+                <MessageSquare className="h-5 w-5 text-[#1e3a8a]" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Total</span>
+                <span className="text-xl font-black text-[#0a192f] leading-tight">{comunicacoes.length}</span>
               </div>
             </div>
           </div>
