@@ -1,16 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
-import { X, Save, Plus, DollarSign, FileText, Plane, Settings, Search, ChevronDown, Check } from 'lucide-react'
+import { Save, Plus, DollarSign, FileText, Plane, Settings, Search, ChevronDown, Check } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
 import { GerenciadorOpcoesModal } from './GerenciadorOpcoesModal'
 import { MissaoSelect } from './MissaoSelect'
-import { useEscKey } from '../hooks/useEscKey'
+import { CollaboratorModalLayout } from './collaborators/components/CollaboratorLayouts'
 
 interface AeronaveFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  origem: OrigemLancamento;
   initialData?: AeronaveLancamento | null;
   onSave: (data: Partial<AeronaveLancamento>) => Promise<void>;
   onSuccess?: () => void;
@@ -197,12 +195,20 @@ const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
 export function AeronaveFormModal({
   isOpen,
   onClose,
-  origem,
   initialData,
   onSave,
   onSuccess
 }: AeronaveFormModalProps) {
-  useEscKey(isOpen, onClose);
+  // --- Aba ativa: 1 = Custo Missões, 2 = Despesa Fixa ---
+  const [activeTab, setActiveTab] = useState(1)
+
+  // Derivar origem a partir da aba ativa
+  const origem: OrigemLancamento = activeTab === 1 ? 'missao' : 'fixa'
+
+  const steps = [
+    { id: 1, label: 'Custo Missões', icon: Plane },
+    { id: 2, label: 'Despesa Fixa', icon: DollarSign },
+  ]
 
   // --- Estados de Listas Dinâmicas ---
   const [tiposOpcoes, setTiposOpcoes] = useState<string[]>([])
@@ -216,14 +222,14 @@ export function AeronaveFormModal({
   })
 
   // --- Estado do Formulário ---
-  const emptyForm: Partial<AeronaveLancamento> = {
-    origem: origem,
+  const getEmptyForm = (tab: number): Partial<AeronaveLancamento> => ({
+    origem: tab === 1 ? 'missao' : 'fixa',
     tripulacao: '',
     aeronave: 'PR WBW',
     data_missao: '',
     id_missao: undefined,
     nome_missao: '',
-    despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
+    despesa: tab === 1 ? 'Custo Missões' : 'Despesa Fixa',
     tipo: '',
     descricao: '',
     fornecedor: '',
@@ -237,9 +243,9 @@ export function AeronaveFormModal({
     numero_doc: '',
     valor_total_doc: 0,
     centro_custo: ''
-  }
+  })
 
-  const [formData, setFormData] = useState<Partial<AeronaveLancamento>>(emptyForm)
+  const [formData, setFormData] = useState<Partial<AeronaveLancamento>>(getEmptyForm(1))
   const [loading, setLoading] = useState(false)
 
   // --- Carregar Listas do Banco ---
@@ -267,22 +273,27 @@ export function AeronaveFormModal({
       fetchListas()
       if (initialData) {
         setFormData({ ...initialData })
+        // Definir aba com base na origem do dado existente
+        setActiveTab(initialData.origem === 'fixa' ? 2 : 1)
       } else {
-        setFormData({
-          ...emptyForm,
-          origem: origem,
-          despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
-          aeronave: 'PR WBW'
-        })
+        setFormData(getEmptyForm(1))
+        setActiveTab(1)
       }
     }
-  }, [isOpen, initialData, origem])
+  }, [isOpen, initialData])
+
+  // Ao mudar de aba (apenas para novos lançamentos), resetar form com a origem correta
+  const handleTabChange = (tabId: number) => {
+    setActiveTab(tabId)
+    if (!initialData) {
+      setFormData(getEmptyForm(tabId))
+    }
+  }
 
   // --- Helpers ---
   const handleChange = (field: keyof AeronaveLancamento, value: any) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
-
       return newData;
     });
   }
@@ -299,16 +310,18 @@ export function AeronaveFormModal({
   const handleSubmit = async (saveAndNew: boolean) => {
     try {
       setLoading(true)
-      await onSave(formData)
+      // Garantir que a origem está sincronizada com a aba
+      const dataToSave = { ...formData, origem }
+      if (origem === 'missao') {
+        dataToSave.despesa = 'Custo Missões'
+      } else {
+        dataToSave.despesa = 'Despesa Fixa'
+      }
+      await onSave(dataToSave)
       if (onSuccess) onSuccess()
 
       if (saveAndNew) {
-        setFormData({
-          ...emptyForm,
-          origem: origem,
-          despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
-          aeronave: 'PR WBW'
-        })
+        setFormData(getEmptyForm(activeTab))
       } else {
         onClose()
       }
@@ -322,34 +335,40 @@ export function AeronaveFormModal({
 
   if (!isOpen) return null
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 border border-gray-100">
-
-        {/* Header */}
-        <div className={`flex items-center justify-between px-6 py-4 border-b border-gray-100 ${origem === 'missao' ? 'bg-blue-50/50' : 'bg-emerald-50/50'}`}>
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl shadow-sm ${origem === 'missao' ? 'bg-blue-600 text-white' : 'bg-emerald-600 text-white'}`}>
-              <Plane className="h-5 w-5" />
+  return (
+    <>
+      <CollaboratorModalLayout
+        title={initialData ? 'Editar Lançamento' : 'Novo Lançamento'}
+        onClose={onClose}
+        activeTab={activeTab}
+        setActiveTab={handleTabChange}
+        currentSteps={steps}
+        isEditMode={!!initialData}
+        sidebarContent={
+          <div className="flex flex-col items-center gap-4">
+            <div className={`p-6 rounded-3xl shadow-inner flex items-center justify-center ${origem === 'missao' ? 'bg-blue-600 text-white shadow-blue-200/50' : 'bg-emerald-600 text-white shadow-emerald-200/50'}`}>
+              {origem === 'missao' ? <Plane className="w-16 h-16" /> : <DollarSign className="w-16 h-16" />}
             </div>
-            <div>
-              <h2 className="text-lg font-black text-[#112240] uppercase tracking-tight">
-                {initialData ? 'Editar Lançamento' : 'Novo Lançamento'}
-              </h2>
-              <div className="flex items-center gap-2">
-                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${origem === 'missao' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                  {origem === 'missao' ? 'Custo de Missão' : 'Despesa Fixa'}
-                </span>
-              </div>
+            <div className="text-center w-full px-2">
+              <h3 className="font-black text-[#0a192f] text-sm uppercase tracking-[0.1em] text-center">
+                {origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa'}
+              </h3>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-1">
+                {initialData ? 'Editando' : 'Novo Lançamento'}
+              </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
+        }
+        footer={
+          <div className="flex justify-end gap-3 w-full">
+            <button onClick={onClose} disabled={loading} className="px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 transition-all">Cancelar</button>
+            <button onClick={() => handleSubmit(true)} disabled={loading} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-white border border-[#1e3a8a] text-[#1e3a8a] hover:bg-blue-50 transition-all shadow-sm"><Plus className="h-3.5 w-3.5" /> Salvar e Novo</button>
+            <button onClick={() => handleSubmit(false)} disabled={loading} className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white hover:shadow-xl transition-all shadow-lg active:scale-95"><Save className="h-3.5 w-3.5" /> {loading ? 'Salvando...' : 'Salvar'}</button>
+          </div>
+        }
+      >
         {/* Form Body */}
-        <div className="flex-1 p-4 sm:p-6 bg-white overflow-y-auto custom-scrollbar">
+        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-6">
 
             {/* COLUNA 1: Dados Principais e Operacionais */}
@@ -407,7 +426,7 @@ export function AeronaveFormModal({
                     <input
                       disabled
                       className="input-base bg-gray-50 text-gray-400 cursor-not-allowed"
-                      value={formData.despesa}
+                      value={origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa'}
                     />
                   </div>
 
@@ -533,39 +552,31 @@ export function AeronaveFormModal({
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
-          <button onClick={onClose} disabled={loading} className="px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 transition-all">Cancelar</button>
-          <button onClick={() => handleSubmit(true)} disabled={loading} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-white border border-[#1e3a8a] text-[#1e3a8a] hover:bg-blue-50 transition-all shadow-sm"><Plus className="h-3.5 w-3.5" /> Salvar e Novo</button>
-          <button onClick={() => handleSubmit(false)} disabled={loading} className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-[#1e3a8a] text-white hover:bg-[#112240] transition-all shadow-lg active:scale-95"><Save className="h-3.5 w-3.5" /> {loading ? 'Salvando...' : 'Salvar'}</button>
-        </div>
-
-      </div>
-
-      <style>{`
-        .input-base {
-          width: 100%;
-          padding: 0.5rem 0.75rem;
-          background-color: #ffffff;
-          border: 1px solid #e5e7eb;
-          border-radius: 0.75rem;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: #374151;
-          outline: none;
-          transition: all 0.2s;
-          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
-        .input-base:focus {
-          border-color: #93c5fd;
-          background-color: #ffffff;
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.05);
-        }
-        .input-base:disabled {
-          background-color: #f3f4f6;
-          color: #9ca3af;
-        }
-      `}</style>
+        <style>{`
+          .input-base {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #374151;
+            outline: none;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+          }
+          .input-base:focus {
+            border-color: #93c5fd;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.05);
+          }
+          .input-base:disabled {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+          }
+        `}</style>
+      </CollaboratorModalLayout>
 
       <GerenciadorOpcoesModal
         isOpen={configModal.open}
@@ -573,7 +584,6 @@ export function AeronaveFormModal({
         titulo={configModal.tipo}
         tabela={configModal.tabela}
       />
-    </div>,
-    document.body
+    </>
   )
 }
