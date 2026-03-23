@@ -310,12 +310,13 @@ export function DadosCorporativosSection({
                   type: 'select',
                   options: [
                     { id: 'Jurídica', name: 'Jurídica' },
-                    { id: 'Administrativa', name: 'Administrativa' }
+                    { id: 'Administrativa', name: 'Administrativa' },
+                    { id: 'Ambas', name: 'Ambas/Ambos' }
                   ]
                 }]}
                 clientFilter={(item: any) => {
                   if (!formData.area) return true;
-                  if (item.area) return item.area === formData.area;
+                  if (item.area) return item.area === formData.area || item.area === 'Ambas' || item.area === 'Ambos';
                   
                   const roleName = item.name;
                   if (formData.area === 'Jurídica') return CARGOS_JURIDICA.includes(roleName);

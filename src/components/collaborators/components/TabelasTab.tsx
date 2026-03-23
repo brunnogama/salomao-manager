@@ -149,7 +149,10 @@ export function TabelasTab() {
                 if (r.area) {
                     if (r.area === 'Jurídica') {
                         jud.push(r);
-                    } else {
+                    } else if (r.area === 'Administrativa') {
+                        adm.push(r);
+                    } else if (r.area === 'Ambos' || r.area === 'Ambas') {
+                        jud.push(r);
                         adm.push(r);
                     }
                     continue;

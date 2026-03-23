@@ -693,13 +693,14 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                                                         type: 'select',
                                                         options: [
                                                             { id: 'Jurídica', name: 'Jurídica' },
-                                                            { id: 'Administrativa', name: 'Administrativa' }
+                                                            { id: 'Administrativa', name: 'Administrativa' },
+                                                            { id: 'Ambas', name: 'Ambas/Ambos' }
                                                         ]
                                                     }]}
                                                     disabled={viewMode || !formData.area}
                                                     clientFilter={(item: any) => {
                                                         if (!formData.area) return true;
-                                                        if (item.area) return item.area === formData.area;
+                                                        if (item.area) return item.area === formData.area || item.area === 'Ambas' || item.area === 'Ambos';
                                                         
                                                         const roleName = item.name;
                                                         if (formData.area === 'Jurídica') return CARGOS_JURIDICA.includes(roleName);
