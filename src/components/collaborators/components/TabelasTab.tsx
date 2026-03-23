@@ -23,6 +23,7 @@ interface Role {
     default_tags?: string;
     created_at?: string;
     active?: boolean;
+    area?: string;
 }
 
 interface TagData {
@@ -123,11 +124,20 @@ export function TabelasTab() {
             const rolesData = data || [];
 
             // Separação entre Jurídico e Administrativo
-            // Baseado na lógica já existente (VagaFormModal/DadosCorporativos):
             const jud = [];
             const adm = [];
 
             for (const r of rolesData) {
+                if (r.area) {
+                    if (r.area === 'Jurídica') {
+                        jud.push(r);
+                    } else {
+                        adm.push(r);
+                    }
+                    continue;
+                }
+
+                // Fallback para cargos antigos sem área definida
                 const lower = r.name.toLowerCase();
                 const isJuridico = lower.includes('advogado') ||
                     lower.includes('sócio') ||

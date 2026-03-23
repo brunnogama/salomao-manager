@@ -304,7 +304,19 @@ export function DadosCorporativosSection({
                 value={formData.role || ''}
                 onChange={v => setFormData({ ...formData, role: v })}
                 tableName="roles"
+                manageColumns={[{
+                  key: 'area',
+                  label: 'Área',
+                  type: 'select',
+                  options: [
+                    { id: 'Jurídica', name: 'Jurídica' },
+                    { id: 'Administrativa', name: 'Administrativa' }
+                  ]
+                }]}
                 clientFilter={(item: any) => {
+                  if (!formData.area) return true;
+                  if (item.area) return item.area === formData.area;
+                  
                   const roleName = item.name;
                   if (formData.area === 'Jurídica') return CARGOS_JURIDICA.includes(roleName);
                   if (formData.area === 'Administrativa') return CARGOS_ADMINISTRATIVA.includes(roleName);

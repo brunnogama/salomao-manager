@@ -18,6 +18,8 @@ interface ManagedSelectProps {
     clientFilter?: (item: any) => boolean
     // For 'managed' items that need a foreign key (e.g. adding a reason that needs an initiative_id)
     extraInsertFields?: Record<string, any>
+    // Extra columns to manage in the modal
+    manageColumns?: { key: string, label: string, type: 'select', options: {id: string, name: string}[] }[]
     // Column used to display and insert the item name (defaults to 'name')
     nameColumn?: string
     className?: string
@@ -43,6 +45,7 @@ export function ManagedSelect({
     clientFilter,
     extraInsertFields,
     nameColumn = 'name',
+    manageColumns,
     className
 }: ManagedSelectProps) {
     const [isOpen, setIsOpen] = useState(false)
@@ -53,6 +56,7 @@ export function ManagedSelect({
 
     // Management States
     const [newItemName, setNewItemName] = useState('')
+    const [newItemData, setNewItemData] = useState<Record<string, string>>({})
     const [editingItem, setEditingItem] = useState<Item | null>(null)
     const [coords, setCoords] = useState({ top: 0 as number | undefined, bottom: undefined as number | undefined, left: 0, width: 0 })
 
@@ -129,8 +133,15 @@ export function ManagedSelect({
     const handleAddItem = async () => {
         if (!newItemName.trim()) return
 
+        // Validate that all required manageColumns are filled
+        if (manageColumns && manageColumns.some(col => !newItemData[col.key])) {
+             alert('Preencha todos os campos obrigatórios.')
+             return
+        }
+
         const payload = {
             [nameColumn]: newItemName.trim(),
+            ...newItemData,
             ...extraInsertFields
         }
 
@@ -142,15 +153,24 @@ export function ManagedSelect({
         }
 
         setNewItemName('')
+        setNewItemData({})
         fetchItems()
     }
 
     const handleUpdateItem = async () => {
         if (!editingItem || !editingItem[nameColumn] || !String(editingItem[nameColumn]).trim()) return
 
+        const updatePayload: any = { [nameColumn]: String(editingItem[nameColumn]).trim() }
+        
+        if (manageColumns) {
+            manageColumns.forEach(c => {
+                 updatePayload[c.key] = editingItem[c.key]
+            })
+        }
+
         const { error } = await supabase
             .from(tableName)
-            .update({ [nameColumn]: String(editingItem[nameColumn]).trim() })
+            .update(updatePayload)
             .eq('id', editingItem.id)
 
         if (error) {
@@ -338,6 +358,7 @@ export function ManagedSelect({
                                     setIsManaging(false)
                                     setEditingItem(null)
                                     setNewItemName('')
+                                    setNewItemData({})
                                 }}
                                 className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-white"
                             >
@@ -348,19 +369,41 @@ export function ManagedSelect({
                         {/* Content */}
                         <div className="p-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
                             {/* Form Adicionar */}
-                            <div className="mb-4 flex gap-2">
-                                <input
-                                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                                    placeholder="Novo item..."
-                                    value={newItemName}
-                                    onChange={(e) => setNewItemName(e.target.value)}
-                                />
+                            <div className="mb-4 flex flex-col gap-2">
+                                <div className="flex gap-2 w-full">
+                                    <input
+                                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                        placeholder="Novo item..."
+                                        value={newItemName}
+                                        onChange={(e) => setNewItemName(e.target.value)}
+                                    />
+                                    {manageColumns?.map(col => (
+                                        <select
+                                            key={col.key}
+                                            className="w-1/3 border border-gray-300 rounded-lg px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white"
+                                            value={newItemData[col.key] || ''}
+                                            onChange={e => setNewItemData({...newItemData, [col.key]: e.target.value})}
+                                        >
+                                            <option value="">{col.label}</option>
+                                            {col.options.map(opt => (
+                                                <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                            ))}
+                                        </select>
+                                    ))}
+                                    <button
+                                        onClick={handleAddItem}
+                                        disabled={!newItemName.trim() || manageColumns?.some(c => !newItemData[c.key])}
+                                        className="px-4 bg-[#112240] text-white rounded-lg hover:bg-[#1a3a6c] transition-all disabled:opacity-50 disabled:cursor-not-allowed hidden sm:block"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                    </button>
+                                </div>
                                 <button
                                     onClick={handleAddItem}
-                                    disabled={!newItemName.trim()}
-                                    className="px-4 bg-[#112240] text-white rounded-lg hover:bg-[#1a3a6c] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={!newItemName.trim() || manageColumns?.some(c => !newItemData[c.key])}
+                                    className="w-full py-2 bg-[#112240] text-white rounded-lg hover:bg-[#1a3a6c] transition-all disabled:opacity-50 disabled:cursor-not-allowed sm:hidden"
                                 >
-                                    <Plus className="h-4 w-4" />
+                                    Adicionar
                                 </button>
                             </div>
 
@@ -375,11 +418,24 @@ export function ManagedSelect({
                                             {editingItem?.id === item.id ? (
                                                 <>
                                                     <input
-                                                        className="flex-1 border border-blue-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-100 outline-none"
+                                                        className="flex-1 border border-blue-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-100 outline-none min-w-[100px]"
                                                         value={editingItem[nameColumn]}
                                                         onChange={(e) => setEditingItem({ ...editingItem, [nameColumn]: e.target.value })}
                                                         autoFocus
                                                     />
+                                                    {manageColumns?.map(col => (
+                                                        <select
+                                                            key={col.key}
+                                                            className="w-1/4 border border-blue-300 rounded px-1 py-1 text-xs focus:ring-2 focus:ring-blue-100 outline-none bg-white min-w-[90px]"
+                                                            value={editingItem[col.key] || ''}
+                                                            onChange={e => setEditingItem({...editingItem, [col.key]: e.target.value})}
+                                                        >
+                                                            <option value="">{col.label}</option>
+                                                            {col.options.map(opt => (
+                                                                <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    ))}
                                                     <button
                                                         onClick={handleUpdateItem}
                                                         className="bg-green-100 text-green-700 p-1.5 rounded-md hover:bg-green-200 transition-colors"
@@ -395,7 +451,14 @@ export function ManagedSelect({
                                                 </>
                                             ) : (
                                                 <>
-                                                    <span className="flex-1 text-sm font-medium text-gray-700">{item[nameColumn]}</span>
+                                                    <span className="flex-1 text-sm font-medium text-gray-700 truncate">{item[nameColumn]}</span>
+                                                    {manageColumns?.map(col => (
+                                                        item[col.key] && (
+                                                            <span key={col.key} className="hidden sm:inline-block px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                                                                {col.options.find(o => String(o.id) === String(item[col.key]))?.name || item[col.key]}
+                                                            </span>
+                                                        )
+                                                    ))}
                                                     <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => setEditingItem(item)}
