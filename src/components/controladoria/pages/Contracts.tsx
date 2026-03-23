@@ -183,6 +183,7 @@ export function Contracts() {
     setCurrentProcess({ process_number: '' });
     setTimelineData([]);
     setIsEditing(false);
+    setNewIntermediateFee('');
     setIsModalOpen(true);
   };
 
@@ -200,6 +201,7 @@ export function Contracts() {
       setProcesses(formattedProcesses);
     }
     if (timeRes.data) setTimelineData(timeRes.data);
+    setNewIntermediateFee('');
     setIsDetailsModalOpen(true);
   };
 
