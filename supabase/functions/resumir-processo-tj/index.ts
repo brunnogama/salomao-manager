@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // CORS Preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -168,9 +168,9 @@ Sua missão é receber um histórico "cru" de andamentos de um processo obtido v
 
   } catch (error: any) {
     console.error("❌ ERRO Edge Function resumir-processo-tj:", error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+      status: 200, // Retornando 200 para conseguirmos ler o erro real no Frontend
     })
   }
 })
