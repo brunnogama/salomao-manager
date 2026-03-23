@@ -208,7 +208,8 @@ export function DashboardHeader({
             onClick={handleExportPDF}
             disabled={isExportingPDF || isCapturing}
             title="Exportar Dashboard em PDF (Alta Resolução)"
-            className="flex justify-center items-center h-10 px-4 rounded-xl shadow-lg transition-all active:scale-95 bg-red-600 text-white hover:bg-red-700 border-none disabled:opacity-50 disabled:cursor-not-allowed gap-2"
+            className="flex justify-center items-center h-10 px-4 rounded-xl transition-all active:scale-95 bg-red-600 text-white hover:bg-red-700 border-none disabled:opacity-50 disabled:cursor-not-allowed gap-2"
+            style={{ boxShadow: '0 4px 14px rgba(220, 38, 38, 0.4)' }}
           >
             {isExportingPDF ? (
               <Loader2 className="w-5 h-5 animate-spin text-white" />
