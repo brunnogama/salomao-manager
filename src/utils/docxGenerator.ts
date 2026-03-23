@@ -30,6 +30,10 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         fetchImage('/rodape2.png')
     ]);
 
+    const propLivioBuffer = await fetchImage('/prop-livio.png').catch(() => null);
+    const propLivioJpgBuffer = await fetchImage('/prop-livio.jpg').catch(() => null);
+    const targetPropLivioBuffer = propLivioBuffer || propLivioJpgBuffer;
+
     const standardFont = "Aptos";
     const boldFont = "Aptos";
 
@@ -130,6 +134,26 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         } else if (pText.startsWith('<<LEFT>>')) {
             align = AlignmentType.LEFT;
             pText = pText.replace('<<LEFT>>', '');
+        }
+
+        if (pText.trim() === '<<IMAGE:PROP_LIVIO>>') {
+            if (targetPropLivioBuffer) {
+                return new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    spacing: { line: 276, after: 0 },
+                    children: [
+                        new ImageRun({
+                            data: targetPropLivioBuffer,
+                            transformation: {
+                                width: 550,
+                                height: 110
+                            }
+                        })
+                    ]
+                });
+            } else {
+                return new Paragraph({ spacing: { line: 276, after: 0 } });
+            }
         }
 
         const parts = pText.split(/(\*\*.*?\*\*)/g);

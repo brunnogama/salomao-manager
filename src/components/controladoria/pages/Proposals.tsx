@@ -60,8 +60,14 @@ export function Proposals() {
     pro_labore_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
     final_success_fee_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
     intermediate_fee_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
+
+    // Specific to Marcus Livio Mode
+    endereco: '',
+    responsaveis: '',
+    honorariosText: '',
   });
 
+  const [proposalMode, setProposalMode] = useState<'default' | 'marcus_livio'>('default');
   const [isEditingBody, setIsEditingBody] = useState(false);
   const [customBodyText, setCustomBodyText] = useState("");
   const [language, setLanguage] = useState<'pt' | 'en'>('pt');
@@ -850,6 +856,80 @@ export function Proposals() {
     return text;
   };
 
+  const generateMarcusLivioBodyText = () => {
+    const todayStr = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const location = proposalData.contractLocation || '[local]';
+
+    let text = `<<RIGHT>>${location}, ${todayStr}\n\n`;
+    text += `**À**\n**${proposalData.clientName ? proposalData.clientName.toUpperCase() : '[Cliente]'}**\n`;
+    if (proposalData.endereco) {
+      text += `**${proposalData.endereco}**\n`;
+    }
+    text += `\n**Ref.:** ${proposalData.reference || '[Referência]'}\n`;
+    text += `**Cód.:** [código proposta]\n\n`;
+    if (proposalData.responsaveis) {
+      text += `**[A/C:**\n**${proposalData.responsaveis}**]\n\n`;
+    }
+
+    text += `Prezados Senhores,\n\n`;
+    text += `É com grande honra que SALOMÃO ADVOGADOS, neste ato representado por seu sócio Marcus Lívio Gomes (“Escritório” ou “Contratado”), vem formular a presente proposta de honorários e prestação de serviços advocatícios, nos seguintes termos.\n\n`;
+
+    text += `**1. O ESCRITÓRIO**\n\n`;
+    text += `Constituído por mais de 90 advogados e com escritórios no Rio de Janeiro, em São Paulo, Brasília e Vitória, o SALOMÃO ADVOGADOS é especializado em diversos ramos do Direito, destacando-se por sua atuação em demandas estratégicas nos Tribunais do país, inclusive nas Cortes Superiores.\n\n`;
+    text += `Com uma equipe altamente qualificada, o Escritório vem sendo reconhecido por diversas organizações e diretórios jurídicos de grande prestígio, tanto nacionais quanto internacionais:\n\n`;
+
+    text += `<<IMAGE:PROP_LIVIO>>\n\n`;
+
+    text += `**2. OS RESPONSÁVEIS TÉCNICOS**\n\n`;
+    text += `O sócio Marcus Lívio Gomes e o advogado Rafael Goulart serão os responsáveis técnicos pela condução da demanda de interesse da Empresa, possuindo a seguinte qualificação:\n\n`;
+
+    text += `**Marcus Lívio** é Doutor e Mestre em Direito Tributário pela Universidade Complutense de Madrid, Espanha, e atualmente é Pesquisador Visitante na Universidade de Londres (Institute of Advanced Legal Studies – IALS).\n\n`;
+    text += `É Professor Titular de Direito Financeiro e Tributário nos programas de graduação e pós-graduação stricto sensu em Direito Tributário da Universidade do Estado do Rio de Janeiro (UERJ), desde 2013.\n`;
+    text += `Coordenou o Diagnóstico do Contencioso Judicial Tributário Brasileiro, uma iniciativa pioneira do Conselho Nacional de Justiça (CNJ), enquanto Secretário Especial de Programas e Projetos na gestão do Ministro Luiz Fux.\n\n`;
+    text += `Foi o relator da Comissão de Juristas para a Reforma do Processo Tributário do Senado Federal, presidida pela Ministra Regina Helena Costa, criada pelo Senador Rodrigo Pacheco, então Presidente do Senado Federal, e o Ministro Luiz Fux, então Presidente do STF.\n`;
+    text += `É Juiz Federal aposentado do Tribunal Regional Federal da 2ª Região, onde foi Coordenador da Comissão de Direito Tributário da Escola da Magistratura Federal do TRF2.\n`;
+    text += `Foi também Coordenador e Docente da Comissão de Direito Tributário da Escola da Magistratura do Tribunal de Justiça do Rio de Janeiro.\n`;
+    text += `É membro da Associação Brasileira de Direito Financeiro (ABDF), do Instituto Latino-Americano de Direito Tributário (ILADT) e da International Fiscal Association (IFA).\n`;
+    text += `Reconhecido pela Análise Advocacia 2025 entre os advogados mais admirados na categoria Abrangente.\n\n`;
+
+    text += `**[Guilherme Alves de Lima]** é especialista e Mestrando em Direito Tributário, atua assessorando clientes nacionais e estrangeiros em assuntos consultivos e contenciosos. Seu trabalho envolve (i) a análise de assuntos relacionados à Reforma Tributária, na interpretação das novas normas e na adaptação de modelos de negócios, (ii) a estruturação de cadeias de importação, industrialização, comercialização e prestação de serviços, com vistas a identificar e mitigar riscos e analisar a tributação incidente, (iii) a análise de regimes especiais (aduaneiros ou tributários), benefícios fiscais e tratamentos tributários diferenciados, (iv) a análise tributária em reorganizações societárias, e (v) a atuação em processos administrativos municipais, estaduais e federais. Tem experiência nos setores de petróleo e gás, energia elétrica, financeiro, farmacêutico, aeronáutico, de bebidas e varejo.\n\n`;
+
+    text += `**[Rafael Goulart]** é graduado em Direito pela Universidade Candido Mendes – Centro/RJ (UCAM/RJ). Cursou a Especialização em Direito Tributário e Financeiro da Universidade Federal Fluminense (UFF). Integrou a Comissão Especial de Assuntos Tributários (CEAT) e a Comissão de Assuntos da Justiça Federal (CAJF), ambas da OAB-RJ, assim como foi professor da Escola Superior da Advocacia (ESA).\n`;
+    text += `Apontado pela Chambers and Partners, ITR (International Tax Review), Leaders League, Latin Lawyer e Análise Advocacia como um dos advogados mais admirados do Brasil na área tributária.\n\n`;
+
+    text += `**3. OBJETO E ESCOPO DO SERVIÇO**\n\n`;
+    text += `${proposalData.object || '[objeto]'}\n\n`;
+
+    text += `**4. HONORÁRIOS**\n\n`;
+    text += `${proposalData.honorariosText || '[honorários]'}\n\n`;
+
+    text += `**5. CONDIÇÕES GERAIS**\n\n`;
+    text += `Não estão incluídas nos honorários as despesas relacionadas ao caso, tais como aquelas com custas judiciais, extrajudiciais, passagens aéreas e eventuais hospedagens, dentre outras próprias dos Clientes. As despesas poderão ser adiantadas pelo Escritório e submetidas à reembolso pelos Clientes. Caso venhamos a contratar outros profissionais, peritos, vistoriadores, tradutores ou demais prestadores de serviços em nome dos Clientes e sob prévia aprovação de V.Sa., tal contratação será feita na qualidade de mandatários dos Cliente ficando V.Sas. desde já responsável pelo pagamento dos honorários dos profissionais supramencionados.\n`;
+    text += `O atraso no pagamento dos honorários sujeitará os Clientes ao pagamento de multa de mora de 10% (dez por cento), juros de mora de 1% (um por cento) ao mês e correção monetária pela variação positiva do IPCA, INPC ou IGPM, a maior dentre elas. Na hipótese de necessidade de cobrança judicial, serão devidos também honorários à razão de 20% (vinte por cento) do valor atualizado do débito.\n`;
+    text += `Os valores previstos na presente proposta são líquidos de tributos e deverão ser corrigidos monetariamente pela variação positiva do IPCA, INPC ou IGPM, a maior dentre elas, desde a presente data até sua efetiva liquidação, com exceção da primeira parcela de engajamento, a qual não sofrerá correção. Na falta dos índices supracitados, incidirá o maior índice oficial que o substituir.\n`;
+    text += `Esta proposta constitui-se em contrato entre as partes com respeito ao assunto objeto desta, podendo ser modificada ou substituída somente mediante autorização por escrito de ambas as partes envolvidas. Em caso de divergência das cláusulas do presente instrumento em relação a outro contrato enviado pelos Clientes, ainda que posterior, prevalecerão as do presente instrumento.\n`;
+    text += `O aceite em relação a presente contratação poderá se dar de forma expressa ou tácita, sendo que neste último caso se dará a partir do início da prestação de serviços pelo Contratado.\n`;
+    text += `Em qualquer caso, a responsabilidade do Contratado será limitada aos valores efetivamente recebidos por este.\n`;
+    text += `Mediante expressa autorização dos Clientes, o Contratado poderá indicar outros advogados para atuar na referida demanda sem custo adicional aos Clientes.\n`;
+    text += `Esta proposta obriga os herdeiros e sucessores das partes para o fiel cumprimento de suas obrigações.\n`;
+    text += `A presente proposta possui o prazo de validade de 30 dias, contados de sua emissão.\n`;
+    text += `O Escritório Contratado adota as medidas adequadas, de acordo com as boas práticas da legislação, para impedir qualquer atividade fraudulenta por si, seus advogados, estagiários, e/ou por quaisquer fornecedores, agentes, contratadas, subcontratadas e/ou os empregados.\n`;
+    text += `As partes se comprometem a cumprir toda a legislação aplicável sobre segurança da informação, privacidade e proteção de dados, inclusive a Constituição Federal, o Código de Defesa do Consumidor, o Código Civil, o Marco Civil da Internet (Lei Federal n. 12.965/14), seu decreto regulamentador (Decreto 8.771/2016), a Lei Geral de Proteção de Dados (Lei Federal n. 13.709/2018), e demais normas setoriais ou gerais sobre o tema, se comprometendo a tratar apenas os dados mencionados e/ou nas formas dispostas neste instrumento mediante instruções expressas do controlador de dados (parte que determina as finalidades e os meios de tratamento de dados pessoais); ou com o devido embasamento legal, sem transferi-los a qualquer terceiro, exceto se expressamente autorizado por este ou outro instrumento que as vincule.\n`;
+    text += `As partes concordam em tratar todas e quaisquer informações como confidenciais, ficando vedado, por ação ou omissão, a revelação de quaisquer informações, documentos entre outros, obtidos nas tratativas e/ou na execução do Contrato, sem prévio e expresso consentimento da outra parte. Tal regra não abrange as informações que se encontram em domínio público nem impede a menção da Contratante como cliente do Escritório.\n`;
+    text += `As partes elegem o foro da Comarca da Capital da Cidade do Rio de Janeiro para dirimir todas as controvérsias oriundas do presente instrumento, com renúncia expressa a qualquer outro.\n`;
+    text += `Por fim, agradecemos a oportunidade de apresentar a presente proposta de prestação de serviços e permanecemos à disposição para demais esclarecimentos e considerações necessárias. Caso a presente proposta seja aceita, pedimos o obséquio de ser assinada no campo abaixo e remetida para nosso Escritório na via original.\n`;
+    text += `Os Clientes e o Escritório concordam que esta proposta poderá ser firmada de maneira digital por todos os seus signatários. Para este fim, serão utilizados serviços disponíveis no mercado e amplamente utilizados que possibilitam a segurança de assinatura digital por meio de sistemas de certificação capazes de validar a autoria de assinatura eletrônica, bem como de certificar sua integridade, através de certificado digital emitido no padrão ICP-Brasil, autorizando, inclusive, a sua assinatura digital por meio de plataformas digitais.\n\n`;
+
+    text += `<<CENTER>>Cordialmente,\n\n\n`;
+    text += `<<CENTER>>**SALOMÃO ADVOGADOS**\n<<CENTER>>Marcus Lívio Gomes\n\n\n`;
+    text += `<<CENTER>>**${proposalData.clientName ? proposalData.clientName.toUpperCase() : '[Cliente]'}**\n\n\n`;
+    text += `<<LEFT>>De acordo em: ___/___/___\n\n`;
+    text += `<<LEFT>>Testemunha 01:\n\n`;
+    text += `<<LEFT>>Testemunha 02:\n`;
+
+    return text;
+  };
+
   const handleGenerateProposal = async () => {
     if (!proposalData.clientName) return toast.error("Preencha o Nome do Cliente");
     if (proposalData.selectedPartners.length === 0) return toast.error("Selecione pelo menos um Sócio");
@@ -918,7 +998,13 @@ export function Proposals() {
       // This needs to be done *before* generating the DOCX, and `generateDefaultBodyText` relies on `proposalData`
       // which might be cleared later.
       if (!isEditingBody && !customBodyText) {
-        fullContractData.custom_body_text = language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText();
+        let generatedText = '';
+        if (proposalMode === 'marcus_livio') {
+            generatedText = generateMarcusLivioBodyText();
+        } else {
+            generatedText = language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText();
+        }
+        fullContractData.custom_body_text = generatedText;
       }
 
       const docBlob = await generateProposalDocx(fullContractData, proposalCode);
@@ -1028,7 +1114,13 @@ export function Proposals() {
       // This needs to be done *before* generating the DOCX, and `generateDefaultBodyText` relies on `proposalData`
       // which might be cleared later.
       if (!isEditingBody && !customBodyText) {
-        fullContractData.custom_body_text = language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText();
+        let generatedText = '';
+        if (proposalMode === 'marcus_livio') {
+            generatedText = generateMarcusLivioBodyText();
+        } else {
+            generatedText = language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText();
+        }
+        fullContractData.custom_body_text = generatedText;
       }
 
       const docBlob = await generateProposalDocx(fullContractData, proposalCode);
@@ -1049,7 +1141,7 @@ export function Proposals() {
 
   const renderPreviewContent = () => (
     <div className="w-full h-full pb-5">
-      {(customBodyText || (language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText())).split('\n').map((paragraph, idx) => {
+      {(customBodyText || (proposalMode === 'marcus_livio' ? generateMarcusLivioBodyText() : (language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText()))).split('\n').map((paragraph, idx) => {
         if (!paragraph.trim()) {
           return <div key={idx} className="h-4"></div>;
         }
@@ -1066,6 +1158,22 @@ export function Proposals() {
         } else if (pText.startsWith('<<LEFT>>')) {
           alignClass = "text-left";
           pText = pText.replace('<<LEFT>>', '');
+        }
+
+        if (pText.trim() === '<<IMAGE:PROP_LIVIO>>') {
+          return (
+            <div key={idx} className="flex justify-center my-4">
+              <img src="/prop-livio.png" alt="Logos" className="max-h-20 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            </div>
+          );
+        }
+
+        if (pText.trim() === '<<IMAGE:PROP_LIVIO>>') {
+          return (
+            <div key={idx} className="flex justify-center my-4">
+              <img src="/prop-livio.png" alt="Logos" className="max-h-20 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            </div>
+          );
         }
 
         // Component for highlighted and bold text
@@ -1241,6 +1349,7 @@ export function Proposals() {
             <button
               type="button"
               onClick={() => {
+                setProposalMode('default');
                 setLanguage('pt');
                 setProposalData(prev => ({
                   ...prev,
@@ -1251,7 +1360,7 @@ export function Proposals() {
                 if (!isEditingBody) setCustomBodyText("");
               }}
               className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                language === 'pt'
+                language === 'pt' && proposalMode === 'default'
                   ? 'bg-white text-[#1e3a8a] shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
@@ -1261,6 +1370,7 @@ export function Proposals() {
             <button
               type="button"
               onClick={() => {
+                setProposalMode('default');
                 setLanguage('en');
                 setProposalData(prev => ({
                   ...prev,
@@ -1271,7 +1381,7 @@ export function Proposals() {
                 if (!isEditingBody) setCustomBodyText("");
               }}
               className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                language === 'en'
+                language === 'en' && proposalMode === 'default'
                   ? 'bg-white text-[#1e3a8a] shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
@@ -1280,8 +1390,16 @@ export function Proposals() {
             </button>
             <button
               type="button"
-              onClick={() => { /* TODO: Marcus Lívio config */ }}
-              className="px-4 py-2 text-xs font-bold rounded-lg transition-all text-gray-500 hover:text-gray-700"
+              onClick={() => {
+                setProposalMode('marcus_livio');
+                setLanguage('pt');
+                if (!isEditingBody) setCustomBodyText("");
+              }}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                proposalMode === 'marcus_livio'
+                  ? 'bg-white text-[#1e3a8a] shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
               Marcus Lívio
             </button>
@@ -1496,13 +1614,56 @@ export function Proposals() {
               />
             </div>
 
-            {/* Fields Refactored */}
-            {/* Fields Refactored */}
-            {renderClauseInputs("Pró-Labore & Condições", "pro_labore_clauses", "R$ 0,00", "Descrição do pró-labore...", true)}
-            {renderClauseInputs("Êxito Intermediário", "intermediate_fee_clauses", "R$ 0,00", "Descrição do êxito...", true)}
+            {/* Fields conditionally rendered for Marcus Livio Mode */}
+            {proposalMode === 'marcus_livio' && (
+              <>
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Endereço do Cliente</label>
+                  <input
+                    type="text"
+                    name="endereco"
+                    value={proposalData.endereco}
+                    onChange={handleChange}
+                    placeholder="Ex: Av. Rio Branco, 1..."
+                    onFocus={() => jumpToFieldPage('endereco')}
+                    className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">A/C Responsáveis</label>
+                  <input
+                    type="text"
+                    name="responsaveis"
+                    value={proposalData.responsaveis}
+                    onChange={handleChange}
+                    placeholder="Ex: João Silva e Maria Costa..."
+                    onFocus={() => jumpToFieldPage('responsaveis')}
+                    className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Honorários (Texto Livre)</label>
+                  <textarea
+                    name="honorariosText"
+                    value={proposalData.honorariosText}
+                    onChange={handleChange}
+                    rows={4}
+                    placeholder="Ex: Honorários fixos de R$ 10.000,00 mensais..."
+                    onFocus={() => jumpToFieldPage('honorariosText')}
+                    className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none resize-none bg-gray-50/50 transition-all"
+                  />
+                </div>
+              </>
+            )}
 
-            {/* Unified Success Fees */}
-            {renderClauseInputs("Êxito Final (R$ ou %)", "final_success_fee_clauses", "Valor", "Descrição do êxito...", true)}
+            {/* Default Proposal Clauses */}
+            {proposalMode !== 'marcus_livio' && (
+              <>
+                {renderClauseInputs("Pró-Labore & Condições", "pro_labore_clauses", "R$ 0,00", "Descrição do pró-labore...", true)}
+                {renderClauseInputs("Êxito Intermediário", "intermediate_fee_clauses", "R$ 0,00", "Descrição do êxito...", true)}
+                {renderClauseInputs("Êxito Final (R$ ou %)", "final_success_fee_clauses", "Valor", "Descrição do êxito...", true)}
+              </>
+            )}
 
           </div>
 
