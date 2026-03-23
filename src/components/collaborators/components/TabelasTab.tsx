@@ -5,6 +5,7 @@ import { formatDbMoneyToDisplay, parseRoleTags, stringifyRoleTags } from '../uti
 import { ConfirmationModal } from '../../ui/ConfirmationModal';
 import { AlertModal } from '../../ui/AlertModal';
 import { ManagedSelect } from '../../crm/ManagedSelect';
+import { SearchableSelect } from '../../crm/SearchableSelect';
 
 interface BolsaEstagioRule {
     id: string;
@@ -66,6 +67,7 @@ export function TabelasTab() {
     const [cargosTab, setCargosTab] = useState<'Judiciário' | 'Administrativo'>('Judiciário');
     const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
     const [selectedLeaderId, setSelectedLeaderId] = useState<string>('');
+    const [leadersList, setLeadersList] = useState<{id: string, name: string}[]>([]);
 
     // Tags Management State
     const [tagDataList, setTagDataList] = useState<TagData[]>([]);
@@ -87,6 +89,7 @@ export function TabelasTab() {
         } else if (activeView === 'cargos') {
             fetchRoles();
             fetchTags();
+            fetchLeaders();
         } else if (activeView === 'tags') {
             fetchTagSet();
         }
@@ -107,6 +110,21 @@ export function TabelasTab() {
             console.error('Erro ao buscar regras de bolsa:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchLeaders = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('collaborators')
+                .select('id, name, team_leader!inner(*)')
+                .order('name', { ascending: true });
+            if (error) throw error;
+            if (data) {
+                setLeadersList(data.map(d => ({ id: String(d.id), name: d.name })));
+            }
+        } catch (error) {
+            console.error('Erro ao buscar líderes:', error);
         }
     };
 
@@ -635,12 +653,15 @@ export function TabelasTab() {
                                         />
                                     </div>
                                     <div className="w-full md:w-72">
-                                        <ManagedSelect
+                                        <SearchableSelect
                                             label="Líder Específico (Opcional)"
                                             value={selectedLeaderId}
                                             onChange={v => { setSelectedLeaderId(v); if(v) setSelectedPartnerId(''); }}
-                                            tableName="collaborators"
-                                            placeholder="Geral (Sem líder específico)"
+                                            options={[
+                                                { id: '', name: 'Geral (Sem líder específico)' },
+                                                ...leadersList
+                                            ]}
+                                            uppercase={false}
                                         />
                                     </div>
                                 </div>
