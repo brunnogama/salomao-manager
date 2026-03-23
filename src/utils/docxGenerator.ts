@@ -18,6 +18,9 @@ interface ProposalData extends Contract {
 // Helper to fetch image as ArrayBuffer
 const fetchImage = async (url: string): Promise<ArrayBuffer> => {
     const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('image')) throw new Error('Not an image');
     const blob = await response.blob();
     return await blob.arrayBuffer();
 };

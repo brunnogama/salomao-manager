@@ -68,6 +68,7 @@ export function Proposals() {
   });
 
   const [proposalMode, setProposalMode] = useState<'default' | 'marcus_livio'>('default');
+  const [selectedTechs, setSelectedTechs] = useState<string[]>(['Rafael Goulart']);
   const [isEditingBody, setIsEditingBody] = useState(false);
   const [customBodyText, setCustomBodyText] = useState("");
   const [language, setLanguage] = useState<'pt' | 'en'>('pt');
@@ -868,7 +869,7 @@ export function Proposals() {
     text += `\n**Ref.:** ${proposalData.reference || '[Referência]'}\n`;
     text += `**Cód.:** [código proposta]\n\n`;
     if (proposalData.responsaveis) {
-      text += `**[A/C:**\n**${proposalData.responsaveis}**]\n\n`;
+      text += `**A/C:**\n**${proposalData.responsaveis}**\n\n`;
     }
 
     text += `Prezados Senhores,\n\n`;
@@ -881,7 +882,19 @@ export function Proposals() {
     text += `<<IMAGE:PROP_LIVIO>>\n\n`;
 
     text += `**2. OS RESPONSÁVEIS TÉCNICOS**\n\n`;
-    text += `O sócio Marcus Lívio Gomes e o advogado Rafael Goulart serão os responsáveis técnicos pela condução da demanda de interesse da Empresa, possuindo a seguinte qualificação:\n\n`;
+    
+    const techsNames = [];
+    if (selectedTechs.includes('Guilherme Alves de Lima')) techsNames.push('Guilherme Alves de Lima');
+    if (selectedTechs.includes('Rafael Goulart')) techsNames.push('Rafael Goulart');
+
+    let techIntro = `O sócio Marcus Lívio Gomes será o responsável técnico pela condução da demanda de interesse da Empresa, possuindo a seguinte qualificação:`;
+    if (techsNames.length === 1) {
+      techIntro = `O sócio Marcus Lívio Gomes e o advogado ${techsNames[0]} serão os responsáveis técnicos pela condução da demanda de interesse da Empresa, possuindo a seguinte qualificação:`;
+    } else if (techsNames.length === 2) {
+      techIntro = `O sócio Marcus Lívio Gomes e os advogados ${techsNames[0]} e ${techsNames[1]} serão os responsáveis técnicos pela condução da demanda de interesse da Empresa, possuindo a seguinte qualificação:`;
+    }
+    
+    text += `${techIntro}\n\n`;
 
     text += `**Marcus Lívio** é Doutor e Mestre em Direito Tributário pela Universidade Complutense de Madrid, Espanha, e atualmente é Pesquisador Visitante na Universidade de Londres (Institute of Advanced Legal Studies – IALS).\n\n`;
     text += `É Professor Titular de Direito Financeiro e Tributário nos programas de graduação e pós-graduação stricto sensu em Direito Tributário da Universidade do Estado do Rio de Janeiro (UERJ), desde 2013.\n`;
@@ -892,10 +905,14 @@ export function Proposals() {
     text += `É membro da Associação Brasileira de Direito Financeiro (ABDF), do Instituto Latino-Americano de Direito Tributário (ILADT) e da International Fiscal Association (IFA).\n`;
     text += `Reconhecido pela Análise Advocacia 2025 entre os advogados mais admirados na categoria Abrangente.\n\n`;
 
-    text += `**[Guilherme Alves de Lima]** é especialista e Mestrando em Direito Tributário, atua assessorando clientes nacionais e estrangeiros em assuntos consultivos e contenciosos. Seu trabalho envolve (i) a análise de assuntos relacionados à Reforma Tributária, na interpretação das novas normas e na adaptação de modelos de negócios, (ii) a estruturação de cadeias de importação, industrialização, comercialização e prestação de serviços, com vistas a identificar e mitigar riscos e analisar a tributação incidente, (iii) a análise de regimes especiais (aduaneiros ou tributários), benefícios fiscais e tratamentos tributários diferenciados, (iv) a análise tributária em reorganizações societárias, e (v) a atuação em processos administrativos municipais, estaduais e federais. Tem experiência nos setores de petróleo e gás, energia elétrica, financeiro, farmacêutico, aeronáutico, de bebidas e varejo.\n\n`;
+    if (selectedTechs.includes('Guilherme Alves de Lima')) {
+      text += `**Guilherme Alves de Lima** é especialista e Mestrando em Direito Tributário, atua assessorando clientes nacionais e estrangeiros em assuntos consultivos e contenciosos. Seu trabalho envolve (i) a análise de assuntos relacionados à Reforma Tributária, na interpretação das novas normas e na adaptação de modelos de negócios, (ii) a estruturação de cadeias de importação, industrialização, comercialização e prestação de serviços, com vistas a identificar e mitigar riscos e analisar a tributação incidente, (iii) a análise de regimes especiais (aduaneiros ou tributários), benefícios fiscais e tratamentos tributários diferenciados, (iv) a análise tributária em reorganizações societárias, e (v) a atuação em processos administrativos municipais, estaduais e federais. Tem experiência nos setores de petróleo e gás, energia elétrica, financeiro, farmacêutico, aeronáutico, de bebidas e varejo.\n\n`;
+    }
 
-    text += `**[Rafael Goulart]** é graduado em Direito pela Universidade Candido Mendes – Centro/RJ (UCAM/RJ). Cursou a Especialização em Direito Tributário e Financeiro da Universidade Federal Fluminense (UFF). Integrou a Comissão Especial de Assuntos Tributários (CEAT) e a Comissão de Assuntos da Justiça Federal (CAJF), ambas da OAB-RJ, assim como foi professor da Escola Superior da Advocacia (ESA).\n`;
-    text += `Apontado pela Chambers and Partners, ITR (International Tax Review), Leaders League, Latin Lawyer e Análise Advocacia como um dos advogados mais admirados do Brasil na área tributária.\n\n`;
+    if (selectedTechs.includes('Rafael Goulart')) {
+      text += `**Rafael Goulart** é graduado em Direito pela Universidade Candido Mendes – Centro/RJ (UCAM/RJ). Cursou a Especialização em Direito Tributário e Financeiro da Universidade Federal Fluminense (UFF). Integrou a Comissão Especial de Assuntos Tributários (CEAT) e a Comissão de Assuntos da Justiça Federal (CAJF), ambas da OAB-RJ, assim como foi professor da Escola Superior da Advocacia (ESA).\n`;
+      text += `Apontado pela Chambers and Partners, ITR (International Tax Review), Leaders League, Latin Lawyer e Análise Advocacia como um dos advogados mais admirados do Brasil na área tributária.\n\n`;
+    }
 
     text += `**3. OBJETO E ESCOPO DO SERVIÇO**\n\n`;
     text += `${proposalData.object || '[objeto]'}\n\n`;
@@ -1163,15 +1180,18 @@ export function Proposals() {
         if (pText.trim() === '<<IMAGE:PROP_LIVIO>>') {
           return (
             <div key={idx} className="flex justify-center my-4">
-              <img src="/prop-livio.png" alt="Logos" className="max-h-20 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            </div>
-          );
-        }
-
-        if (pText.trim() === '<<IMAGE:PROP_LIVIO>>') {
-          return (
-            <div key={idx} className="flex justify-center my-4">
-              <img src="/prop-livio.png" alt="Logos" className="max-h-20 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              <img 
+                src="/prop-livio.png" 
+                alt="Logos" 
+                className="max-h-20 object-contain" 
+                onError={(e) => { 
+                    if (e.currentTarget.src.endsWith('.png')) {
+                        e.currentTarget.src = '/prop-livio.jpg';
+                    } else {
+                        e.currentTarget.style.display = 'none'; 
+                    }
+                }} 
+              />
             </div>
           );
         }
@@ -1617,6 +1637,35 @@ export function Proposals() {
             {/* Fields conditionally rendered for Marcus Livio Mode */}
             {proposalMode === 'marcus_livio' && (
               <>
+                <div className="mb-2">
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Responsáveis Técnicos Adicionais</label>
+                  <div className="flex gap-4 p-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedTechs.includes('Guilherme Alves de Lima')} 
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedTechs(prev => [...prev, 'Guilherme Alves de Lima']);
+                          else setSelectedTechs(prev => prev.filter(t => t !== 'Guilherme Alves de Lima'));
+                        }} 
+                        className="w-4 h-4 text-[#1e3a8a] rounded border-gray-300 focus:ring-[#1e3a8a]"
+                      />
+                      Guilherme Alves de Lima
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedTechs.includes('Rafael Goulart')} 
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedTechs(prev => [...prev, 'Rafael Goulart']);
+                          else setSelectedTechs(prev => prev.filter(t => t !== 'Rafael Goulart'));
+                        }} 
+                        className="w-4 h-4 text-[#1e3a8a] rounded border-gray-300 focus:ring-[#1e3a8a]"
+                      />
+                      Rafael Goulart
+                    </label>
+                  </div>
+                </div>
                 <div>
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Endereço do Cliente</label>
                   <input
