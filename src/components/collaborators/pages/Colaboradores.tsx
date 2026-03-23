@@ -2421,30 +2421,32 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cargo</label>
                           <SearchableSelect value={advFilterRole} onChange={setAdvFilterRole} options={roleOptions as any} placeholder="Todos..." />
                         </div>
-                        <div className="col-span-1 md:col-span-2">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Desligamento (Início e Fim)</label>
-                          <div className="flex items-center gap-2 max-w-sm">
-                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterTerminationStart} onChange={e => setAdvFilterTerminationStart(e.target.value)} />
-                            <span className="text-gray-400">-</span>
-                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterTerminationEnd} onChange={e => setAdvFilterTerminationEnd(e.target.value)} />
-                          </div>
-                        </div>
                         <div className="relative z-[104]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local</label>
                           <SearchableSelect value={advFilterLocal} onChange={setAdvFilterLocal} options={locationOptions as any} placeholder="Todos..." />
                         </div>
+                      </div>
 
-                        <div className="col-span-1 md:col-span-2">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div>
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Admissão (Início e Fim)</label>
-                          <div className="flex items-center gap-2 max-w-sm">
+                          <div className="flex items-center gap-2 w-full">
                             <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterAdmissionStart} onChange={e => setAdvFilterAdmissionStart(e.target.value)} />
                             <span className="text-gray-400">-</span>
                             <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterAdmissionEnd} onChange={e => setAdvFilterAdmissionEnd(e.target.value)} />
                           </div>
                         </div>
-                        <div className="col-span-1 md:col-span-2">
+                        <div>
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Desligamento (Início e Fim)</label>
+                          <div className="flex items-center gap-2 w-full">
+                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterTerminationStart} onChange={e => setAdvFilterTerminationStart(e.target.value)} />
+                            <span className="text-gray-400">-</span>
+                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterTerminationEnd} onChange={e => setAdvFilterTerminationEnd(e.target.value)} />
+                          </div>
+                        </div>
+                        <div>
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Ativo (Início e Fim)</label>
-                          <div className="flex items-center gap-2 max-w-sm">
+                          <div className="flex items-center gap-2 w-full">
                             <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterActivePeriodStart} onChange={e => setAdvFilterActivePeriodStart(e.target.value)} />
                             <span className="text-gray-400">-</span>
                             <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterActivePeriodEnd} onChange={e => setAdvFilterActivePeriodEnd(e.target.value)} />
