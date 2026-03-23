@@ -282,18 +282,15 @@ export function Finance() {
 
       const { data: fileData, error: downloadError } = await supabase.storage
         .from('ged-documentos')
-        .download(doc.file_path);
+        .createSignedUrl(doc.file_path, 60, { download: true });
 
       if (downloadError) throw downloadError;
 
-      const url = URL.createObjectURL(fileData);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = doc.file_name || 'contrato.pdf';
+      a.href = fileData.signedUrl;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
 
       toast.dismiss(loadingToast);
       toast.success('Download concluído!');

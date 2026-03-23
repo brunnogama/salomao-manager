@@ -602,12 +602,17 @@ export function ContractFormModal(props: Props) {
 
   const handleDownload = async (path: string) => {
     try {
-      const { data, error } = await supabase.storage.from('ged-documentos').download(path);
+      const { data, error } = await supabase.storage.from('ged-documentos').createSignedUrl(path, 60, { download: true });
       if (error) throw error;
-      const url = URL.createObjectURL(data), a = document.createElement('a');
-      a.href = url; a.download = path.split('_').slice(1).join('_') || 'documento.pdf';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-    } catch (error: any) { alert("Erro ao baixar arquivo: " + error.message); }
+      
+      const a = document.createElement('a');
+      a.href = data.signedUrl;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (error: any) {
+      alert('Erro ao baixar documento: ' + error.message);
+    }
   };
 
   const removeTempFile = (index: number) => {
@@ -785,7 +790,6 @@ export function ContractFormModal(props: Props) {
                     setIsStandardCNJ={setIsStandardCNJ}
                     otherProcessType={otherProcessType}
                     setOtherProcessType={setOtherProcessType}
-                    handleCNJSearch={handleCNJSearch}
                     handleOpenJusbrasil={handleOpenJusbrasil}
                     ufOptions={ufOptions}
                     opponentOptions={opponentOptions}

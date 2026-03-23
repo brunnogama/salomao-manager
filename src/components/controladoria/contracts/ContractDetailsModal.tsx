@@ -113,16 +113,14 @@ export function ContractDetailsModal({
   const handleDownload = async (e: React.MouseEvent, doc: ContractDocument) => {
     e.stopPropagation();
     try {
-      const { data, error } = await supabase.storage.from('ged-documentos').download(doc.file_path);
+      const { data, error } = await supabase.storage.from('ged-documentos').createSignedUrl(doc.file_path, 60, { download: true });
       if (error) throw error;
-      const url = URL.createObjectURL(data);
+      
       const a = document.createElement('a');
-      a.href = url;
-      a.download = doc.file_name;
+      a.href = data.signedUrl;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     } catch (error: any) {
       alert('Erro ao baixar documento: ' + error.message);
     }

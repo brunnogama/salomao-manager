@@ -106,16 +106,14 @@ export function CertificateDetailsModal({
                 filePath = filePath.split('/public/ged-documentos/')[1];
             }
 
-            const { data, error } = await supabase.storage.from('ged-documentos').download(filePath);
+            const { data, error } = await supabase.storage.from('ged-documentos').createSignedUrl(filePath, 60, { download: true });
             if (error) throw error;
-            const url = URL.createObjectURL(data);
+            
             const a = document.createElement('a');
-            a.href = url;
-            a.download = file.file_name || `certidao_${file.id}.pdf`;
+            a.href = data.signedUrl;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
             toast.success('Download concluído', { id: toastId });
         } catch (error: any) {
             toast.error('Erro ao baixar documento: ' + error.message, { id: toastId });
