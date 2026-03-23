@@ -256,6 +256,11 @@ export function ContractDetailsModal({
 
   const financials = calculateFinancials();
 
+  const validPercentExtras = ((contract as any).percent_extras && Array.isArray((contract as any).percent_extras)) 
+    ? (contract as any).percent_extras.filter((v: string) => v && v.trim() !== '') 
+    : [];
+  const hasPercent = Boolean(contract.final_success_percent) || validPercentExtras.length > 0;
+
   const steps = [
     { id: 0, label: 'Resumo', icon: PieChart },
     { id: 1, label: 'Dados do Cliente', icon: Briefcase },
@@ -378,12 +383,6 @@ export function ContractDetailsModal({
               );
             })}
           </div>
-
-          <div className="hidden md:flex mt-auto pt-6 border-t border-gray-200">
-            <button onClick={onClose} className="w-full flex items-center justify-center gap-2 text-gray-500 hover:text-red-500 hover:bg-red-50 p-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest">
-              <X className="w-4 h-4" /> Fechar
-            </button>
-          </div>
         </div>
 
         {/* Right Content */}
@@ -411,6 +410,12 @@ export function ContractDetailsModal({
                   <Trash2 className="w-3.5 h-3.5" /> Excluir
                 </button>
               )}
+
+              <div className="w-px h-6 bg-gray-200 mx-1"></div>
+
+              <button onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Fechar">
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
@@ -485,12 +490,12 @@ export function ContractDetailsModal({
                            )}
                            
                            {/* Exibir Extras de Percentual se houver */}
-                           {(contract.final_success_percent || ((contract as any).percent_extras && (contract as any).percent_extras.length > 0)) && (
+                           {hasPercent && (
                              <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 flex flex-col">
                                 <span className="text-[10px] font-bold text-yellow-700 uppercase">Valores em %</span>
                                 <div className="mt-1 flex flex-wrap gap-1">
                                   {contract.final_success_percent && <span className="text-xs font-black text-yellow-900">{contract.final_success_percent} (Final)</span>}
-                                  {(contract as any).percent_extras && Array.isArray((contract as any).percent_extras) && (contract as any).percent_extras.map((val: string, idx: number) => (
+                                  {validPercentExtras.map((val: string, idx: number) => (
                                     <span key={idx} className="text-xs font-black text-yellow-900">{val} (Extra)</span>
                                   ))}
                                 </div>
