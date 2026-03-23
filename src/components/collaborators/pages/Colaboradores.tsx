@@ -641,7 +641,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         termReasonsRes,
         atuacoesRes
       ] = await Promise.all([
-        supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name), oab_number(*), education_history:collaborator_education_history(*)`).order('name'),
+        supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name), oab_number(*), education_history:collaborator_education_history(*), team_leader:team_leader(id)`).order('name'),
         supabase.from('roles').select('id, name'),
         supabase.from('locations').select('id, name'),
         supabase.from('teams').select('id, name'),
@@ -674,6 +674,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
       const enrichedData = colabRes.data?.map(c => ({
         ...c,
+        is_team_leader: c.team_leader && (Array.isArray(c.team_leader) ? c.team_leader.length > 0 : true),
         oabs: c.oab_number?.map((o: any) => ({
           id: o.id,
           numero: o.numero,
@@ -889,7 +890,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       const payload: any = {};
       Object.entries(dataToSave).forEach(([key, value]) => {
         // Skip metadata, joined objects, photo fields, and independent sections (Perfil manages its own data)
-        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs', 'oab_numero', 'oab_uf', 'oab_tipo', 'oab_emissao', 'original_role', 'role_change_date', 'perfil', 'competencias', 'resumo_cv', 'linkedin', 'atuacao_id', 'nome', 'education_history'].includes(key)) return;
+        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs', 'oab_numero', 'oab_uf', 'oab_tipo', 'oab_emissao', 'original_role', 'role_change_date', 'perfil', 'competencias', 'resumo_cv', 'linkedin', 'atuacao_id', 'nome', 'education_history', 'is_team_leader', 'team_leader'].includes(key)) return;
         if (value !== null && typeof value === 'object' && !Array.isArray(value)) return;
 
         // Map empty strings to null for better DB consistency
@@ -978,6 +979,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
               }
             }
           }
+        }
+      }
+
+      // Handle Team Leader
+      if (savedColabId) {
+        if (formData.is_team_leader) {
+          const { data: tlExists } = await supabase.from('team_leader').select('id').eq('collaborator_id', savedColabId).maybeSingle();
+          if (!tlExists) {
+            await supabase.from('team_leader').insert({ collaborator_id: savedColabId });
+          }
+        } else {
+          await supabase.from('team_leader').delete().eq('collaborator_id', savedColabId);
         }
       }
 

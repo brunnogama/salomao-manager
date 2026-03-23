@@ -44,6 +44,8 @@ export interface Collaborator {
   partner?: { id: string; name: string }; // Joined field
   leader_id?: string; // Vínculo com o Líder Direto
   leader?: { id: string; name: string }; // Joined field
+  is_team_leader?: boolean;
+  team_leader?: any[]; // Joined field proxy
   email?: string; // E-mail Corporativo
   email_pessoal?: string; // E-mail Pessoal
   telefone?: string;

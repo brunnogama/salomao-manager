@@ -239,6 +239,23 @@ export function DadosCorporativosSection({
                 disabled={isViewMode}
               />
 
+              <div className="md:col-span-1 flex flex-col justify-center">
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Líder de Equipe</label>
+                <div className="flex items-center gap-2 mt-1">
+                  <input
+                    type="checkbox"
+                    id="is_team_leader"
+                    className={`w-4 h-4 text-[#1e3a8a] bg-white border-gray-300 rounded focus:ring-[#1e3a8a] focus:ring-2 ${isViewMode ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
+                    checked={!!formData.is_team_leader}
+                    onChange={e => setFormData({ ...formData, is_team_leader: e.target.checked })}
+                    disabled={isViewMode}
+                  />
+                  <label htmlFor="is_team_leader" className={`text-sm font-medium text-[#0a192f] select-none ${isViewMode ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                    Sim, é Líder de Equipe
+                  </label>
+                </div>
+              </div>
+
               {/* Row 3 */}
               <SearchableSelect
                 label="Área"
