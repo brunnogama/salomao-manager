@@ -151,10 +151,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterTransporteTipo, setAdvFilterTransporteTipo] = useState('');
 
   // Escolares
-  const [advFilterGraduationComplete, setAdvFilterGraduationComplete] = useState<'sim' | 'nao' | ''>('');
-  const [advFilterPostGraduationComplete, setAdvFilterPostGraduationComplete] = useState<'sim' | 'nao' | ''>('');
-  const [advFilterExpectedCompletion, setAdvFilterExpectedCompletion] = useState('');
-  const [advFilterCompletionYear, setAdvFilterCompletionYear] = useState('');
+  const [advFilterGraduationExpected, setAdvFilterGraduationExpected] = useState('');
+  const [advFilterGraduationCompletion, setAdvFilterGraduationCompletion] = useState('');
+  const [advFilterGraduationUF, setAdvFilterGraduationUF] = useState('');
+  const [advFilterGraduationInstitution, setAdvFilterGraduationInstitution] = useState('');
+
+  const [advFilterPostGraduationExpected, setAdvFilterPostGraduationExpected] = useState('');
+  const [advFilterPostGraduationCompletion, setAdvFilterPostGraduationCompletion] = useState('');
+  const [advFilterPostGraduationUF, setAdvFilterPostGraduationUF] = useState('');
+  const [advFilterPostGraduationInstitution, setAdvFilterPostGraduationInstitution] = useState('');
 
   // Custom VT Scenarios State
   const [customVt1, setCustomVt1] = useState<number>(200);
@@ -227,8 +232,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setAdvFilterTransporteTipo('');
     setAdvFilterGraduationComplete('');
     setAdvFilterPostGraduationComplete('');
-    setAdvFilterExpectedCompletion('');
-    setAdvFilterCompletionYear('');
+    setAdvFilterGraduationExpected('');
+    setAdvFilterGraduationCompletion('');
+    setAdvFilterGraduationUF('');
+    setAdvFilterGraduationInstitution('');
+    setAdvFilterPostGraduationExpected('');
+    setAdvFilterPostGraduationCompletion('');
+    setAdvFilterPostGraduationUF('');
+    setAdvFilterPostGraduationInstitution('');
   };
 
   // --- HR Notifications Logic ---
@@ -1134,13 +1145,38 @@ export function Colaboradores({ }: ColaboradoresProps) {
         if (advFilterPostGraduationComplete === 'nao' && hasPost) return false;
       }
 
-      if (advFilterExpectedCompletion) {
-        const prevCourse = c.escolaridade_previsao_conclusao || c.education_history?.find(e => e.status === 'Cursando')?.previsao_conclusao;
-        if (!prevCourse || !prevCourse.includes(advFilterExpectedCompletion)) return false;
+      if (advFilterGraduationExpected) {
+        const hasMatch = c.education_history?.some(e => e.nivel === 'Graduação' && e.previsao_conclusao?.includes(advFilterGraduationExpected));
+        if (!hasMatch) return false;
       }
-      if (advFilterCompletionYear) {
-        const compYear = c.education_history?.find(e => e.status === 'Formado(a)')?.ano_conclusao;
-        if (!compYear || !compYear.includes(advFilterCompletionYear)) return false;
+      if (advFilterGraduationCompletion) {
+        const hasMatch = c.education_history?.some(e => e.nivel === 'Graduação' && e.ano_conclusao?.includes(advFilterGraduationCompletion));
+        if (!hasMatch) return false;
+      }
+      if (advFilterGraduationUF) {
+        const hasMatch = c.education_history?.some(e => e.nivel === 'Graduação' && e.instituicao_uf === advFilterGraduationUF);
+        if (!hasMatch) return false;
+      }
+      if (advFilterGraduationInstitution) {
+        const hasMatch = c.education_history?.some(e => e.nivel === 'Graduação' && e.instituicao && e.instituicao.toLowerCase().includes(advFilterGraduationInstitution.toLowerCase()));
+        if (!hasMatch) return false;
+      }
+
+      if (advFilterPostGraduationExpected) {
+        const hasMatch = c.education_history?.some(e => e.nivel === 'Pós-Graduação' && e.previsao_conclusao?.includes(advFilterPostGraduationExpected));
+        if (!hasMatch) return false;
+      }
+      if (advFilterPostGraduationCompletion) {
+        const hasMatch = c.education_history?.some(e => e.nivel === 'Pós-Graduação' && e.ano_conclusao?.includes(advFilterPostGraduationCompletion));
+        if (!hasMatch) return false;
+      }
+      if (advFilterPostGraduationUF) {
+        const hasMatch = c.education_history?.some(e => e.nivel === 'Pós-Graduação' && e.instituicao_uf === advFilterPostGraduationUF);
+        if (!hasMatch) return false;
+      }
+      if (advFilterPostGraduationInstitution) {
+        const hasMatch = c.education_history?.some(e => e.nivel === 'Pós-Graduação' && e.instituicao && e.instituicao.toLowerCase().includes(advFilterPostGraduationInstitution.toLowerCase()));
+        if (!hasMatch) return false;
       }
 
       return true;
@@ -1151,8 +1187,36 @@ export function Colaboradores({ }: ColaboradoresProps) {
     colaboradores, advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
     advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterTerminationStart, advFilterTerminationEnd, advFilterPartner, advFilterLeader,
     advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal, advFilterTransporteTipo,
-    advFilterGraduationComplete, advFilterPostGraduationComplete, advFilterExpectedCompletion, advFilterCompletionYear
+    advFilterGraduationComplete, advFilterPostGraduationComplete,
+    advFilterGraduationExpected, advFilterGraduationCompletion, advFilterGraduationUF, advFilterGraduationInstitution,
+    advFilterPostGraduationExpected, advFilterPostGraduationCompletion, advFilterPostGraduationUF, advFilterPostGraduationInstitution
   ]);
+
+  const graduationInstitutionOptions = React.useMemo(() => {
+    if (!advFilterGraduationUF) return [];
+    const insts = new Set<string>();
+    colaboradores.forEach(c => {
+      c.education_history?.forEach(h => {
+        if (h.nivel === 'Graduação' && h.instituicao_uf === advFilterGraduationUF && h.instituicao) {
+          insts.add(h.instituicao);
+        }
+      });
+    });
+    return Array.from(insts).sort().map(i => ({ id: i, label: i, value: i }));
+  }, [colaboradores, advFilterGraduationUF]);
+
+  const postGraduationInstitutionOptions = React.useMemo(() => {
+    if (!advFilterPostGraduationUF) return [];
+    const insts = new Set<string>();
+    colaboradores.forEach(c => {
+      c.education_history?.forEach(h => {
+        if (h.nivel === 'Pós-Graduação' && h.instituicao_uf === advFilterPostGraduationUF && h.instituicao) {
+          insts.add(h.instituicao);
+        }
+      });
+    });
+    return Array.from(insts).sort().map(i => ({ id: i, label: i, value: i }));
+  }, [colaboradores, advFilterPostGraduationUF]);
 
 
   const handleExportVT = (group: 'Estagiários' | 'CLTs' | 'Todos') => {
@@ -1768,7 +1832,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 </button>
               </div>
 
-              <div className="relative">
+              <div className="relative z-[150]">
                 <button
                   onClick={() => setShowExportMenu(!showExportMenu)}
                   className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
@@ -1779,8 +1843,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                 {showExportMenu && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)}></div>
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                    <div className="fixed inset-0 z-[190]" onClick={() => setShowExportMenu(false)}></div>
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-[200] overflow-hidden py-1">
                       <button
                         onClick={() => {
                           setShowExportMenu(false);
@@ -2336,7 +2400,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           <SearchableSelect value={advFilterLocal} onChange={setAdvFilterLocal} options={locationOptions as any} placeholder="Todos..." />
                         </div>
 
-                        <div className="col-span-1 md:col-span-3">
+                        <div className="col-span-1 md:col-span-2">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Admissão (Início e Fim)</label>
                           <div className="flex items-center gap-2 max-w-sm">
                             <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterAdmissionStart} onChange={e => setAdvFilterAdmissionStart(e.target.value)} />
@@ -2344,7 +2408,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterAdmissionEnd} onChange={e => setAdvFilterAdmissionEnd(e.target.value)} />
                           </div>
                         </div>
-                        <div className="col-span-1 md:col-span-3">
+                        <div className="col-span-1 md:col-span-2">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Desligamento (Início e Fim)</label>
                           <div className="flex items-center gap-2 max-w-sm">
                             <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterTerminationStart} onChange={e => setAdvFilterTerminationStart(e.target.value)} />
@@ -2358,8 +2422,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     {/* Escolares */}
                     <div>
                       <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><GraduationCap className="h-4 w-4" /> Filtros Escolares</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="relative z-[110]">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+                        <div className="relative z-[113]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Graduação Completa</label>
                           <SearchableSelect
                             value={advFilterGraduationComplete}
@@ -2371,7 +2435,28 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             placeholder="Todos..."
                           />
                         </div>
+                        <div className="relative z-[112]">
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">UF (Graduação)</label>
+                           <SearchableSelect value={advFilterGraduationUF} onChange={(v) => { setAdvFilterGraduationUF(v); setAdvFilterGraduationInstitution(''); }} options={ESTADOS_BRASIL.map(e => ({id: e.sigla, label: e.nome, value: e.sigla}))} placeholder="Todos..." />
+                        </div>
+                        <div className="relative z-[111]">
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Instituição</label>
+                           <SearchableSelect value={advFilterGraduationInstitution} onChange={setAdvFilterGraduationInstitution} options={graduationInstitutionOptions} placeholder="Todas..." disabled={!advFilterGraduationUF}/>
+                        </div>
+                        <div className="relative z-[110]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano Prev. Conclusão</label>
+                          <input type="text" placeholder="Ex: 2025" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterGraduationExpected} onChange={e => setAdvFilterGraduationExpected(e.target.value)} />
+                          {advFilterGraduationExpected && <button onClick={() => setAdvFilterGraduationExpected('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
+                        </div>
                         <div className="relative z-[109]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano de Conclusão</label>
+                          <input type="text" placeholder="Ex: 2020" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterGraduationCompletion} onChange={e => setAdvFilterGraduationCompletion(e.target.value)} />
+                          {advFilterGraduationCompletion && <button onClick={() => setAdvFilterGraduationCompletion('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div className="relative z-[108]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Pós-Graduação Comp.</label>
                           <SearchableSelect
                             value={advFilterPostGraduationComplete}
@@ -2383,15 +2468,23 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             placeholder="Todos..."
                           />
                         </div>
-                        <div className="relative">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano Prev. Conclusão</label>
-                          <input type="text" placeholder="Ex: 2025" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterExpectedCompletion} onChange={e => setAdvFilterExpectedCompletion(e.target.value)} />
-                          {advFilterExpectedCompletion && <button onClick={() => setAdvFilterExpectedCompletion('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
+                        <div className="relative z-[107]">
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">UF (Pós)</label>
+                           <SearchableSelect value={advFilterPostGraduationUF} onChange={(v) => { setAdvFilterPostGraduationUF(v); setAdvFilterPostGraduationInstitution(''); }} options={ESTADOS_BRASIL.map(e => ({id: e.sigla, label: e.nome, value: e.sigla}))} placeholder="Todos..." />
                         </div>
-                        <div className="relative">
+                        <div className="relative z-[106]">
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Instituição</label>
+                           <SearchableSelect value={advFilterPostGraduationInstitution} onChange={setAdvFilterPostGraduationInstitution} options={postGraduationInstitutionOptions} placeholder="Todas..." disabled={!advFilterPostGraduationUF}/>
+                        </div>
+                        <div className="relative z-[105]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano Prev. Conclusão</label>
+                          <input type="text" placeholder="Ex: 2025" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterPostGraduationExpected} onChange={e => setAdvFilterPostGraduationExpected(e.target.value)} />
+                          {advFilterPostGraduationExpected && <button onClick={() => setAdvFilterPostGraduationExpected('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
+                        </div>
+                        <div className="relative z-[104]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano de Conclusão</label>
-                          <input type="text" placeholder="Ex: 2020" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterCompletionYear} onChange={e => setAdvFilterCompletionYear(e.target.value)} />
-                          {advFilterCompletionYear && <button onClick={() => setAdvFilterCompletionYear('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
+                          <input type="text" placeholder="Ex: 2020" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterPostGraduationCompletion} onChange={e => setAdvFilterPostGraduationCompletion(e.target.value)} />
+                          {advFilterPostGraduationCompletion && <button onClick={() => setAdvFilterPostGraduationCompletion('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
                         </div>
                       </div>
                     </div>
