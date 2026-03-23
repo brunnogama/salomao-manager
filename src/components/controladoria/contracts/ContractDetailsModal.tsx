@@ -367,7 +367,7 @@ export function ContractDetailsModal({
     </div>
   );
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-[95vw] xl:max-w-[1300px] h-[95vh] flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
         
@@ -823,6 +823,7 @@ export function ContractDetailsModal({
           )}
         </div>
       </div>
-    </div >
+    </div>,
+    document.body
   );
 }

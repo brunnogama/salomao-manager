@@ -96,9 +96,13 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                     opponent: ed.opponent || prev.opponent,
                     ia_summary: data.summary || prev.ia_summary
                 }));
+            } else {
+                // Se só gerou resumo e não enviou extractedData (comportamento atual da edge function)
+                setCurrentProcess(prev => ({ ...prev, ia_summary: data.summary || prev.ia_summary }));
             }
         } catch (err: any) {
             console.error('Magic Fill Error:', err);
+            window.alert('Erro ao preencher com IA: ' + err.message);
         } finally {
             setIsMagicFilling(false);
         }

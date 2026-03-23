@@ -785,7 +785,6 @@ export function ContractFormModal(props: Props) {
                     setIsStandardCNJ={setIsStandardCNJ}
                     otherProcessType={otherProcessType}
                     setOtherProcessType={setOtherProcessType}
-                    searchingCNJ={searchingCNJ}
                     handleCNJSearch={handleCNJSearch}
                     handleOpenJusbrasil={handleOpenJusbrasil}
                     ufOptions={ufOptions}
