@@ -3,8 +3,9 @@ import {
   X, Edit, Trash2, User, FileText, Briefcase, MapPin, 
   History as HistoryIcon, Hourglass, CalendarCheck, Calculator, 
   Paperclip, CheckCircle2, Clock, ChevronsRight, Download,
-  PieChart, Scale, Sparkles, Bot, Loader2
+  PieChart, Scale, Sparkles, Bot, Loader2, AlertCircle
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import { Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 import { useEscKey } from '../../../hooks/useEscKey';
@@ -76,6 +77,7 @@ export function ContractDetailsModal({
   const [totalPaid, setTotalPaid] = useState(0);
   const [loadingAiMap, setLoadingAiMap] = useState<Record<string, boolean>>({});
   const [localSummaries, setLocalSummaries] = useState<Record<string, string>>({});
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let isMounted = true;
@@ -134,6 +136,7 @@ export function ContractDetailsModal({
 
   const handleGenerateSummary = async (process: ContractProcess) => {
     setLoadingAiMap(prev => ({ ...prev, [process.process_number]: true }));
+    setLocalErrors(prev => ({ ...prev, [process.process_number]: '' }));
     try {
       const { data, error } = await supabase.functions.invoke('resumir-processo-tj', {
         body: {
@@ -149,7 +152,7 @@ export function ContractDetailsModal({
       setLocalSummaries(prev => ({ ...prev, [process.process_number]: summaryText }));
       
     } catch (err: any) {
-      alert("Erro ao conversar com a Inteligência Artificial: " + err.message);
+      setLocalErrors(prev => ({ ...prev, [process.process_number]: err.message }));
     } finally {
       setLoadingAiMap(prev => ({ ...prev, [process.process_number]: false }));
     }
@@ -669,6 +672,7 @@ export function ContractDetailsModal({
                   <div className="space-y-4">
                      {processes.map((proc, idx) => {
                        const summaryToShow = localSummaries[proc.process_number] || proc.ia_summary;
+                       const aiError = localErrors[proc.process_number];
                        const isGenerating = loadingAiMap[proc.process_number] || false;
                        
                        return (
@@ -713,27 +717,35 @@ export function ContractDetailsModal({
                           </div>
                           
                           {/* Bloco de Resumo IA Expandido */}
-                          {(summaryToShow || isGenerating) && (
-                            <div className="mt-2 bg-gradient-to-br from-slate-50 to-indigo-50/20 p-4 rounded-xl border border-indigo-100/50 shadow-inner relative overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+                          {(summaryToShow || isGenerating || aiError) && (
+                            <div className={`mt-2 p-4 rounded-xl border shadow-inner relative overflow-hidden animate-in fade-in zoom-in-95 duration-300 ${aiError ? 'bg-red-50/50 border-red-100' : 'bg-gradient-to-br from-slate-50 to-indigo-50/20 border-indigo-100/50'}`}>
                               <div className="flex items-start gap-3">
-                                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg shrink-0 shadow-sm mt-0.5 relative z-10">
-                                  <Bot className="w-5 h-5" />
+                                <div className={`p-2 rounded-lg shrink-0 shadow-sm mt-0.5 relative z-10 ${aiError ? 'bg-red-100 text-red-600' : 'bg-indigo-100 text-indigo-600'}`}>
+                                  {aiError ? <AlertCircle className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
                                 </div>
                                 <div className="flex-1 relative z-10">
                                   <div className="flex items-center gap-2 mb-2">
-                                    <h4 className="text-xs font-black uppercase tracking-wider text-indigo-900 border-b border-indigo-200/50 pb-1 w-full flex items-center gap-2">
-                                      Resumo Gerado (Datajud + ChatGPT)
+                                    <h4 className={`text-xs font-black uppercase tracking-wider border-b pb-1 w-full flex items-center gap-2 ${aiError ? 'text-red-900 border-red-200/50' : 'text-indigo-900 border-indigo-200/50'}`}>
+                                      {aiError ? 'Erro ao Gerar Resumo' : 'Resumo Gerado (Datajud + ChatGPT)'}
                                       {isGenerating && <span className="text-[10px] font-bold text-indigo-500 lowercase bg-indigo-100 px-2 py-0.5 rounded-full animate-pulse">lendo...</span>}
                                     </h4>
                                   </div>
-                                  <div className={`text-sm text-slate-700 whitespace-pre-wrap leading-relaxed ${isGenerating ? 'opacity-40' : 'opacity-100'} transition-opacity`}>
-                                    {isGenerating ? 'Consultando Tribunal de Justiça via API e enviando andamentos cruciais para análise da IA...' : summaryToShow}
-                                  </div>
+                                  {aiError ? (
+                                    <div className="text-sm text-red-700 leading-relaxed font-medium">
+                                      {aiError}
+                                    </div>
+                                  ) : (
+                                    <div className={`text-sm text-slate-700 whitespace-pre-wrap leading-relaxed ${isGenerating ? 'opacity-40' : 'opacity-100'} transition-opacity`}>
+                                      {isGenerating ? 'Consultando Tribunal de Justiça via API e enviando andamentos cruciais para análise da IA...' : summaryToShow}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                              <div className="absolute -bottom-2 -right-2 text-indigo-200/30">
-                                <Sparkles className="w-24 h-24" />
-                              </div>
+                              {!aiError && (
+                                <div className="absolute -bottom-2 -right-2 text-indigo-200/30">
+                                  <Sparkles className="w-24 h-24" />
+                                </div>
+                              )}
                             </div>
                           )}
                           
