@@ -49,6 +49,8 @@ export function ContractFormModal(props: Props) {
   const [documents, setDocuments] = useState<ContractDocument[]>([]);
   const [uploading, setUploading] = useState(false);
   const [showPendingProcessConfirm, setShowPendingProcessConfirm] = useState(false);
+  const [showFinanceConfirm, setShowFinanceConfirm] = useState(false);
+  const [savedContractId, setSavedContractId] = useState<string | null>(null);
   const [searchingCNJ, setSearchingCNJ] = useState(false);
   const [statusOptions, setStatusOptions] = useState<{ label: string, value: string }[]>([]);
   const [clientExtraData, setClientExtraData] = useState({ address: '', number: '', complement: '', city: '', email: '', is_person: false });
@@ -507,8 +509,13 @@ export function ContractFormModal(props: Props) {
         }
       }
 
-      onSave();
-      onClose();
+      if (formData.status === 'active' && (!initialFormData || initialFormData.status !== 'active')) {
+        setSavedContractId(savedId!);
+        setShowFinanceConfirm(true);
+      } else {
+        onSave();
+        onClose();
+      }
     } catch (error: any) {
       if (error.code === '23505' || error.message?.includes('contracts_hon_number_key')) {
         let msg = '⚠️ Duplicidade de Caso Detectada\n\nJá existe um contrato cadastrado com este Número HON.';
@@ -526,6 +533,54 @@ export function ContractFormModal(props: Props) {
     } finally {
       setLocalLoading(false);
     }
+  };
+
+  const handleSendFinanceNotification = () => {
+    const webhookUrl = import.meta.env.VITE_MAKE_WEBHOOK_FINANCEIRO;
+    if (!webhookUrl) {
+      toast.error("Webhook financeiro não configurado. Adicione VITE_MAKE_WEBHOOK_FINANCEIRO no .env");
+      return;
+    }
+
+    const promise = (async () => {
+      let valuesText = '';
+      const formatVal = (label: string, value: any) => {
+        if (value && value !== 'R$ 0,00' && value !== '') valuesText += `${label}: ${value}\n`;
+      };
+      formatVal('Pro Labore', formData.pro_labore);
+      formatVal('Mensalidade', formData.fixed_monthly_fee);
+      formatVal('Êxito', formData.final_success_fee);
+      formatVal('Outras Taxas', formData.other_fees);
+      if (!valuesText) valuesText = 'Sem valores cadastrados.';
+
+      let attachmentsUrl: string[] = [];
+      if (savedContractId) {
+        const { data: docs } = await supabase.from('contract_documents').select('file_path').eq('contract_id', savedContractId);
+        if (docs && docs.length > 0) {
+          const { data: signedUrls } = await supabase.storage.from('ged-documentos').createSignedUrls(docs.map(d => d.file_path), 3600);
+          if (signedUrls) attachmentsUrl = signedUrls.map(u => u.signedUrl);
+        }
+      }
+
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientName: formData.client_name,
+          honNumber: formData.hon_number || 'Não informado',
+          reference: formData.reference || 'Não informada',
+          valuesText: valuesText.trim(),
+          attachmentsUrl
+        })
+      });
+      if (!res.ok) throw new Error("Falha na comunicação com o Make.com");
+    })();
+
+    toast.promise(promise, {
+      loading: 'Notificando financeiro via Make...',
+      success: 'Financeiro notificado com sucesso!',
+      error: 'Erro ao notificar o financeiro.'
+    });
   };
 
   const handleCNPJSearch = async () => {
@@ -882,6 +937,20 @@ export function ContractFormModal(props: Props) {
         title="Salvar com Processo Pendente"
         description="Você inseriu dados de um processo, mas não o adicionou. Deseja salvar o contrato assim mesmo?"
         confirmText="Salvar Contrato"
+      />
+
+      <ConfirmationModal
+        isOpen={showFinanceConfirm}
+        onClose={() => {
+          setShowFinanceConfirm(false);
+          onSave();
+          onClose();
+        }}
+        onConfirm={handleSendFinanceNotification}
+        title="Informar ao Financeiro"
+        description="Deseja enviar um e-mail informando este novo contrato fechado ao setor financeiro?"
+        confirmText="Sim, Enviar"
+        cancelText="Não"
       />
     </div>,
     document.body
