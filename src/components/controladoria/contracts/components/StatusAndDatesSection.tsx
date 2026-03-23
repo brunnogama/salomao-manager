@@ -317,6 +317,18 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                 )}
             </div>
 
+            {(formData.status === 'proposal' || formData.status === 'active') && (
+                <div className="mb-5 animate-in fade-in slide-in-from-top-1">
+                    <label className="text-xs font-medium block mb-1">Referência</label>
+                    <textarea 
+                        className="w-full border border-gray-300 rounded-lg p-3 text-sm h-20 focus:border-salomao-blue outline-none bg-white resize-none" 
+                        value={(formData as any).reference || ''} 
+                        onChange={e => setFormData({ ...formData, reference: e.target.value } as any)} 
+                        placeholder="Ex: Proposta 123/2025" 
+                    />
+                </div>
+            )}
+
             {formData.status === 'analysis' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2">
                     <div><CustomSelect label="Analisado Por" value={formData.analyst_id || ''} onChange={(val: string) => setFormData({ ...formData, analyst_id: val })} options={analystSelectOptions} onAction={onOpenAnalystManager} actionIcon={Settings} actionLabel="Gerenciar Analistas" /></div>

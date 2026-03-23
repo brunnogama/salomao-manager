@@ -16,6 +16,7 @@ import { logAction } from '../../../lib/logger';
 import { OptionManager } from './components/OptionManager';
 import { ContractDocuments } from './components/ContractDocuments';
 import { ProcessDetailsModal } from './components/ProcessDetailsModal';
+import { ConfirmationModal } from '../../ui/ConfirmationModal';
 import { StatusAndDatesSection } from './components/StatusAndDatesSection';
 import { ClientFormSection } from './components/ClientFormSection';
 import { LegalProcessForm } from './components/LegalProcessForm';
@@ -47,6 +48,7 @@ export function ContractFormModal(props: Props) {
   const [localLoading, setLocalLoading] = useState(false);
   const [documents, setDocuments] = useState<ContractDocument[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [showPendingProcessConfirm, setShowPendingProcessConfirm] = useState(false);
   const [searchingCNJ, setSearchingCNJ] = useState(false);
   const [statusOptions, setStatusOptions] = useState<{ label: string, value: string }[]>([]);
   const [clientExtraData, setClientExtraData] = useState({ address: '', number: '', complement: '', city: '', email: '', is_person: false });
@@ -398,11 +400,15 @@ export function ContractFormModal(props: Props) {
       // Permitir salvar sem adicionar o atual, apenas avisando.
       // E remover o currentProcess.
       if (currentProcess.process_number || otherProcessType) {
-        const confirmSave = confirm('⚠️ Você inseriu dados de um processo mas não o adicionou.\n\nDeseja salvar o contrato assim mesmo (os dados não adicionados serão perdidos)?');
-        if (!confirmSave) return;
+        setShowPendingProcessConfirm(true);
+        return;
       }
     }
 
+    await executeSave();
+  };
+
+  const executeSave = async () => {
     if (!formData.client_name) return alert('O "Nome do Cliente" é obrigatório.');
     if (!formData.partner_id) return alert('O "Responsável (Sócio)" é obrigatório.');
     if (formData.status === 'analysis' && !formData.prospect_date) return alert('A "Data Prospect" é obrigatória para contratos em Análise.');
@@ -797,16 +803,6 @@ export function ContractFormModal(props: Props) {
                   />
                   <LegalProcessList processes={processes} clientName={formData.client_name || ''} setViewProcess={setViewProcess} setViewProcessIndex={setViewProcessIndex} editProcess={editProcess} removeProcess={removeProcess} />
                 </section>
-                {(formData.status === 'proposal' || formData.status === 'active') && (
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Referência</label>
-                    <textarea className="w-full border border-gray-300 rounded-lg p-3 text-sm h-24 focus:border-salomao-blue outline-none bg-white mb-4" value={(formData as any).reference || ''} onChange={e => setFormData({ ...formData, reference: e.target.value } as any)} placeholder="Ex: Proposta 123/2025" />
-                  </div>
-                )}
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Observações Gerais</label>
-                  <textarea className="w-full border border-gray-300 rounded-lg p-3 text-sm h-24 focus:border-salomao-blue outline-none bg-white" value={formData.observations} onChange={(e) => setFormData({ ...formData, observations: toTitleCase(e.target.value) })}></textarea>
-                </div>
               </div>
             )}
 
@@ -872,6 +868,18 @@ export function ContractFormModal(props: Props) {
       )}
 
       <ProcessDetailsModal process={viewProcess} onClose={() => setViewProcess(null)} onEdit={() => { if (viewProcessIndex !== null) { setViewProcess(null); editProcess(viewProcessIndex); } }} />
+
+      <ConfirmationModal
+        isOpen={showPendingProcessConfirm}
+        onClose={() => setShowPendingProcessConfirm(false)}
+        onConfirm={() => {
+            setShowPendingProcessConfirm(false);
+            executeSave();
+        }}
+        title="Salvar com Processo Pendente"
+        description="Você inseriu dados de um processo, mas não o adicionou. Deseja salvar o contrato assim mesmo?"
+        confirmText="Salvar Contrato"
+      />
     </div>,
     document.body
   );

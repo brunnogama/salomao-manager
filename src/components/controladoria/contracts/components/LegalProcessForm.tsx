@@ -12,6 +12,7 @@ export interface LegalProcessFormProps {
     isStandardCNJ: boolean;
     setIsStandardCNJ: (v: boolean) => void;
     otherProcessType: string;
+    setOtherProcessType: (v: string) => void;
     duplicateProcessData: any | null;
     handleOpenJusbrasil: () => void;
     ufOptions: { label: string; value: string }[];
