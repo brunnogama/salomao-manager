@@ -305,41 +305,11 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                             </div>
                         )}
 
-                        {/* Linha 2: Cliente e UF */}
+                        {/* Linha 2 e 3 (Combinada): UF e Contrário */}
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                            <div className="col-span-12 md:col-span-4">
-                                <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between items-center mb-1">
-                                    <span>Buscar Cliente por CNPJ</span>
-                                    <label className="flex items-center gap-1 cursor-pointer">
-                                        <input type="checkbox" checked={hasNoClientCnpj} onChange={(e) => setHasNoClientCnpj(e.target.checked)} className="rounded border-gray-300 text-salomao-blue focus:ring-salomao-blue" />
-                                        <span className="text-[9px] font-medium text-gray-500 normal-case">Sem CNPJ</span>
-                                    </label>
-                                </label>
-                                <div className="flex items-center relative">
-                                    <input
-                                        type="text"
-                                        className="w-full border-b border-gray-300 focus:border-salomao-blue outline-none py-2 text-sm font-medium pr-8 bg-white disabled:bg-gray-50 disabled:text-gray-400"
-                                        placeholder="00.000.000/0000-00"
-                                        value={localCNPJ}
-                                        onChange={(e) => setLocalCNPJ(maskCNPJ(e.target.value))}
-                                        maxLength={18}
-                                        disabled={hasNoClientCnpj}
-                                    />
-                                    <button onClick={handleClientCNPJSearch} disabled={hasNoClientCnpj || searchingClient || localCNPJ.length < 14} className="absolute right-0 top-1/2 -translate-y-1/2 text-salomao-blue hover:text-salomao-gold disabled:opacity-30 p-2 transition-colors">
-                                        {searchingClient ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="col-span-12 md:col-span-5">
-                                <CustomSelect label="Cliente *" value={currentProcess.client_name || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, client_name: val })} options={clientSelectOptions} onAction={() => setActiveManager('client')} actionLabel="Gerenciar Clientes" placeholder="Selecione o Cliente..." />
-                            </div>
                             <div className="col-span-12 md:col-span-3">
                                 <CustomSelect label="Estado (UF) *" value={currentProcess.uf || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, uf: val })} options={ufOptions} placeholder="UF" />
                             </div>
-                        </div>
-
-                        {/* Linha 3: Contrário */}
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                             <div className="col-span-12 md:col-span-4">
                                 <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between items-center mb-1">
                                     <span>Buscar Contrário por CNPJ</span>
@@ -363,7 +333,7 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                                     </button>
                                 </div>
                             </div>
-                            <div className="col-span-12 md:col-span-8">
+                            <div className="col-span-12 md:col-span-5">
                                 <CustomSelect label="Contrário" value={currentProcess.opponent || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, opponent: val })} options={(Array.isArray(opponentOptions) ? opponentOptions : []).map(o => ({ label: o, value: o }))} onAction={() => setActiveManager('opponent')} actionLabel="Gerenciar Contrário" placeholder="Selecione ou adicione novo..." />
                                 {duplicateOpponentCases.length > 0 && (
                                     <div className="mt-1 flex flex-wrap gap-1">
@@ -374,8 +344,8 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                             </div>
                         </div>
 
-                        {/* Linha Oculta para Exibir Objeto / Valor / Resumo IA preenchido automaticamente */}
-                        {((currentProcess.subject && currentProcess.subject.trim() !== '') || (currentProcess.value_of_cause && currentProcess.value_of_cause > 0) || currentProcess.ia_summary) && (
+                        {/* Linha Oculta para Exibir Objeto / Valor preenchido automaticamente pela IA caso contenha valor */}
+                        {((currentProcess.subject && currentProcess.subject.trim() !== '') || (currentProcess.value_of_cause && currentProcess.value_of_cause > 0)) && (
                             <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50 flex flex-col gap-4">
                                 <div className="flex flex-wrap gap-4 items-center">
                                     {currentProcess.subject && (
@@ -393,23 +363,22 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                                         </div>
                                     ) : null}
                                 </div>
-                                {currentProcess.ia_summary && (
-                                    <div className="w-full pt-2 border-t border-indigo-100/50">
-                                        <label className="text-[10px] text-indigo-500 uppercase font-black mb-2 flex items-center gap-1.5">
-                                            <Bot className="w-3.5 h-3.5"/> Resumo Executivo da IA
-                                        </label>
-                                        <textarea
-                                            value={currentProcess.ia_summary}
-                                            onChange={(e) => setCurrentProcess({...currentProcess, ia_summary: e.target.value})}
-                                            className="w-full bg-white/60 border border-indigo-100 rounded-lg p-3 text-sm font-medium text-indigo-900 focus:outline-none focus:ring-1 focus:ring-indigo-300 resize-none"
-                                            rows={5}
-                                            placeholder="Resumo do caso gerado pela IA..."
-                                        />
-                                        <p className="text-[9px] text-indigo-400 mt-1">* Você pode editar livremente o texto gerado pela Inteligência Artificial antes de salvar.</p>
-                                    </div>
-                                )}
                             </div>
                         )}
+
+                        {/* Campo Resumo do Processo (Sempre Visível) */}
+                        <div className="w-full mt-4">
+                            <label className="text-[10px] text-gray-500 uppercase font-bold mb-2 flex items-center gap-1.5">
+                                <Bot className="w-3.5 h-3.5 text-indigo-500"/> Resumo do Processo (IA)
+                            </label>
+                            <textarea
+                                value={currentProcess.ia_summary || ''}
+                                onChange={(e) => setCurrentProcess({...currentProcess, ia_summary: e.target.value})}
+                                className="w-full bg-white/60 border border-gray-200 rounded-lg p-3 text-sm font-medium text-gray-700 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-300 resize-none"
+                                rows={4}
+                                placeholder="Clique no robôzinho azul ao lado do número do processo ou digite um resumo manualmente..."
+                            />
+                        </div>
 
                         {/* Ações */}
                         <div className="flex justify-end mt-6 pt-4 border-t border-gray-100">
