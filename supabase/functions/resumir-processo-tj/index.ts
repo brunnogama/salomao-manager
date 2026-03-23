@@ -37,8 +37,8 @@ serve(async (req) => {
     console.log(`🔍 Buscando processo ${cleanNumber} no DataJud CNJ...`);
 
     // 2. Chamar a API Pública do Datajud (CNJ)
-    // A chave pública oficial divulgada pelo CNJ em sua documentação é estática:
-    const datajudApiKey = "c094daec50afbb4e0b0dbff2c481d89b";
+    // A chave pública oficial atualizada pelo CNJ:
+    const datajudApiKey = "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==";
     
     // Rota que busca em todos os tribunais (_search global api_publica_)
     const cnjResponse = await fetch(`https://api-publica.datajud.cnj.jus.br/api_publica_*/_search`, {
