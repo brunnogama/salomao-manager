@@ -311,7 +311,7 @@ export function DadosCorporativosSection({
                   options: [
                     { id: 'Jurídica', name: 'Jurídica' },
                     { id: 'Administrativa', name: 'Administrativa' },
-                    { id: 'Ambas', name: 'Ambas/Ambos' }
+                    { id: 'Ambas', name: 'Ambas' }
                   ]
                 }]}
                 clientFilter={(item: any) => {

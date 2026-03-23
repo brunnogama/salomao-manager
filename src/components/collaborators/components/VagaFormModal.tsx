@@ -694,7 +694,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                                                         options: [
                                                             { id: 'Jurídica', name: 'Jurídica' },
                                                             { id: 'Administrativa', name: 'Administrativa' },
-                                                            { id: 'Ambas', name: 'Ambas/Ambos' }
+                                                            { id: 'Ambas', name: 'Ambas' }
                                                         ]
                                                     }]}
                                                     disabled={viewMode || !formData.area}
