@@ -99,16 +99,16 @@ serve(async (req: Request) => {
     console.log(`📄 Resumindo ${sortedMovimentos.length} movimentos via OpenAI...`);
 
     // 4. Chamar a OpenAI
-    const systemInstruction = `Você é um Advogado Sênior Especialista em Análise Processual e Legal Controller (Controladoria Jurídica).
-Sua missão é receber um histórico "cru" de andamentos de um processo obtido via sistema do Tribunal (CNJ/Datajud) e gerar um **resumo executivo ultra claro, direto ao ponto e cronometrado** para gestores de um escritório de advocacia.
+    const systemInstruction = `Você é um Assistente Jurídico Especialista.
+Sua missão é receber os dados de um processo (Classe, Assunto e andamentos) obtidos via Tribunal (CNJ/Datajud) e gerar **somente um breve parágrafo** resumindo objetivamente qual é o Objeto da Ação (ou seja, do que se trata o processo e qual o pedido principal).
 
-**Regras para o resumo:**
-1. A primeira linha DEVE SER o status mais provável atual do processo (Exemplo: "🟢 Status: Aguardando Sentença" ou "🔴 Status: Trânsito em Julgado").
-2. Escreva 1 parágrafo curto resumindo O QUE É a ação (com base na Classe/Assunto).
-3. Escreva um parágrafo que resume como foi a linha do tempo (Ex: "Houve citação em tal data, defesa apresentada, audiência realizada, etc.").
-4. Liste, em bullet points (máximo de 3), **os últimos andamentos cruciais** que ditam a situação Deste processo.
-5. Se não houver andamento conclusivo, diga objetivamente qual foi a última movimentação.
-6. EVITE juridiquês antiquado. USE linguagem corporativa leve.`;
+**Regras estritas:**
+1. Retorne APENAS um único parágrafo descrevendo o objeto/assunto da ação de forma clara e direta.
+2. NÃO inclua status da ação (como "Status: Trânsito em Julgado").
+3. NÃO inclua linha do tempo, histórico cronológico ou histórico de movimentações.
+4. NÃO inclua marcadores de lista, datas ou andamentos processuais.
+5. Vá direto ao ponto, sem juridiquês antiquado.
+Exemplo de saída esperada: "A ação refere-se ao Cumprimento de Sentença de Ações Coletivas, onde se busca a efetivação de uma decisão judicial que beneficia um grupo de pessoas em relação a um determinado direito."`;
 
     const requestBody = {
       model: "gpt-4o-mini", // Utilizando um modelo rápido e da geração mais atual da OpenAI
