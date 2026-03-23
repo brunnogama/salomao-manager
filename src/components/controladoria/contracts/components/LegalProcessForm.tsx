@@ -154,6 +154,48 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
         }
     }, [currentProcess.opponent, opponentCnpjMap, hasNoOpponentCnpj]);
 
+    // Regra de Auto-preenchimento de UF pelo Padrão CNJ
+    React.useEffect(() => {
+        if (!currentProcess.process_number || currentProcess.process_number.length < 25) return;
+        
+        // Só auto-preenche se o usuário ainda não tiver escolhido uma UF
+        if (currentProcess.uf && currentProcess.uf.trim() !== '') return;
+
+        const partes = currentProcess.process_number.split('.');
+        if (partes.length === 5) {
+            const ramo = partes[2];
+            const tribunal = partes[3];
+            
+            // Justiça Estadual (8)
+            if (ramo === '8') {
+                const ufMap: Record<string, string> = {
+                    '01': 'AC', '02': 'AL', '03': 'AP', '04': 'AM', '05': 'BA',
+                    '06': 'CE', '07': 'DF', '08': 'ES', '09': 'GO', '10': 'MA',
+                    '11': 'MT', '12': 'MS', '13': 'MG', '14': 'PA', '15': 'PB',
+                    '16': 'PR', '17': 'PE', '18': 'PI', '19': 'RJ', '20': 'RN',
+                    '21': 'RS', '22': 'RO', '23': 'RR', '24': 'SC', '25': 'SE',
+                    '26': 'SP', '27': 'TO'
+                };
+                if (ufMap[tribunal]) {
+                    setCurrentProcess(prev => ({ ...prev, uf: ufMap[tribunal] }));
+                }
+            }
+            // Justiça do Trabalho (5)
+            else if (ramo === '5') {
+                const trtMap: Record<string, string> = {
+                    '01': 'RJ', '02': 'SP', '03': 'MG', '04': 'RS', '05': 'BA',
+                    '06': 'PE', '07': 'CE', '08': 'PA', '09': 'PR', '10': 'DF',
+                    '11': 'AM', '12': 'SC', '13': 'PB', '14': 'RO', '15': 'SP',
+                    '16': 'MA', '17': 'ES', '18': 'GO', '19': 'AL', '20': 'SE',
+                    '21': 'RN', '22': 'PI', '23': 'MT', '24': 'MS'
+                };
+                if (trtMap[tribunal]) {
+                    setCurrentProcess(prev => ({ ...prev, uf: trtMap[tribunal] }));
+                }
+            }
+        }
+    }, [currentProcess.process_number, currentProcess.uf]);
+
     // Se nenhum tipo está preenchido, não mostra o form
     const isEditingMode = editingProcessIndex !== null;
     const showForm = isEditingMode || !!otherProcessType;
