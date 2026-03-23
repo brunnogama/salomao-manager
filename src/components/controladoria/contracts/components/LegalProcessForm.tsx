@@ -1,9 +1,10 @@
 import React from 'react';
-import { Check, Plus, Search, Loader2, Link as LinkIcon, AlertTriangle, Building2, Gavel, Scale, Briefcase, FileText } from 'lucide-react';
+import { Check, Plus, Search, Loader2, Link as LinkIcon, AlertTriangle, Building2, Gavel, Scale, Briefcase, FileText, Bot } from 'lucide-react';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { Contract, ContractProcess } from '../../../../types/controladoria';
+import { supabase } from '../../../../lib/supabase';
 
-interface LegalProcessFormProps {
+export interface LegalProcessFormProps {
     formData: Contract;
     setFormData: React.Dispatch<React.SetStateAction<Contract>>;
     currentProcess: ContractProcess;
@@ -97,6 +98,40 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
             .replace(/(-\d{2})\d+?$/, '$1');
     };
 
+    const [isMagicFilling, setIsMagicFilling] = React.useState(false);
+
+    const handleMagicFill = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (!currentProcess.process_number || currentProcess.process_number.length < 20) return;
+        setIsMagicFilling(true);
+        try {
+            const { data, error } = await supabase.functions.invoke('resumir-processo-tj', {
+                body: { processNumber: currentProcess.process_number }
+            });
+            if (error) throw new Error(error.message);
+            if (!data?.success) throw new Error(data?.error || 'Erro desconhecido na IA');
+
+            if (data.extractedData) {
+                const ed = data.extractedData;
+                setCurrentProcess(prev => ({
+                    ...prev,
+                    subject: ed.subject || prev.subject,
+                    value_of_cause: typeof ed.value_of_cause === 'number' && ed.value_of_cause > 0 ? ed.value_of_cause : prev.value_of_cause,
+                    court: ed.court || prev.court,
+                    vara: ed.vara || prev.vara,
+                    comarca: ed.comarca || prev.comarca,
+                    uf: ed.uf || prev.uf,
+                    opponent: ed.opponent || prev.opponent,
+                    ia_summary: data.summary || prev.ia_summary
+                }));
+            }
+        } catch (err: any) {
+            console.error('Magic Fill Error:', err);
+        } finally {
+            setIsMagicFilling(false);
+        }
+    };
+
     // Auto-fill CNPJ when Client is selected from the dropdown
     React.useEffect(() => {
         if (hasNoClientCnpj) {
@@ -181,9 +216,27 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                                             onChange={(e) => setCurrentProcess({ ...currentProcess, process_number: localMaskCNJ(e.target.value) })}
                                             autoFocus
                                         />
-                                        <button onClick={handleCNJSearch} disabled={searchingCNJ || !currentProcess.process_number || currentProcess.process_number.length < 20} className="absolute right-0 top-1/2 -translate-y-1/2 text-salomao-blue hover:text-salomao-gold disabled:opacity-30 transition-colors p-2">
-                                            {searchingCNJ ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                                        </button>
+                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center pr-1 gap-1">
+                                            {/* Preenchimento Mágico (IA) */}
+                                            <button 
+                                                onClick={handleMagicFill} 
+                                                disabled={isMagicFilling || !currentProcess.process_number || currentProcess.process_number.length < 20} 
+                                                className="text-indigo-500 hover:text-indigo-700 disabled:opacity-30 p-1.5 transition-colors bg-indigo-50 rounded"
+                                                title="Preencher com Inteligência Artificial (ChatGPT)"
+                                            >
+                                                {isMagicFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
+                                            </button>
+                                            
+                                            {/* Lupa Nativa */}
+                                            <button 
+                                                onClick={handleCNJSearch} 
+                                                disabled={searchingCNJ || !currentProcess.process_number || currentProcess.process_number.length < 20} 
+                                                className="text-salomao-blue hover:text-salomao-gold disabled:opacity-30 p-1.5 transition-colors"
+                                                title="Pesquisar Partes no Datajud"
+                                            >
+                                                {searchingCNJ ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 {duplicateProcessData && (
@@ -278,6 +331,26 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                                 )}
                             </div>
                         </div>
+
+                        {/* Linha Oculta para Exibir Objeto / Valor preenchido pela IA automaticamente (caso preenchido) */}
+                        {((currentProcess.subject && currentProcess.subject.trim() !== '') || (currentProcess.value_of_cause && currentProcess.value_of_cause > 0)) && (
+                            <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100/50 flex flex-wrap gap-4 items-center">
+                                {currentProcess.subject && (
+                                    <div className="flex-1">
+                                        <label className="text-[10px] text-indigo-500 uppercase font-black mb-1 block">Assunto / Objeto</label>
+                                        <input type="text" value={currentProcess.subject} onChange={(e) => setCurrentProcess({...currentProcess, subject: e.target.value})} className="w-full bg-transparent text-sm border-b border-indigo-200 focus:border-indigo-400 outline-none p-1 font-medium text-indigo-900" />
+                                    </div>
+                                )}
+                                {currentProcess.value_of_cause && currentProcess.value_of_cause > 0 ? (
+                                    <div className="w-32">
+                                        <label className="text-[10px] text-indigo-500 uppercase font-black mb-1 block">Valor da Causa</label>
+                                        <div className="text-sm border-b border-indigo-200 outline-none p-1 font-medium text-emerald-600 bg-transparent flex items-center">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentProcess.value_of_cause)}
+                                        </div>
+                                    </div>
+                                ) : null}
+                            </div>
+                        )}
 
                         {/* Ações */}
                         <div className="flex justify-end mt-6 pt-4 border-t border-gray-100">

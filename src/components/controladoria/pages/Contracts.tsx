@@ -370,6 +370,10 @@ export function Contracts() {
     }
 
     return matchesSearch && matchesStatus && matchesPartner && matchesDate;
+  }).sort((a: Contract, b: Contract) => {
+    const da = safeDate(getRelevantDate(a)) || new Date(0);
+    const db = safeDate(getRelevantDate(b)) || new Date(0);
+    return db.getTime() - da.getTime(); // newest to oldest
   });
 
   const getPartnerDisplay = (c: Contract) => {

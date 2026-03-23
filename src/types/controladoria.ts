@@ -254,6 +254,14 @@ export interface ContractProcess {
   
   // UI/Form fields
   uf?: string;
+  subject?: string;
+  value_of_cause?: number;
+  cause_value?: string;
+  position?: string;
+  author?: string;
+  magistrates?: any[];
+  author_cnpj?: string;
+  opponent_cnpj?: string;
 }
 
 export interface ContractCase {
