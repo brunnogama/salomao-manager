@@ -3,7 +3,7 @@ import {
   X, Edit, Trash2, User, FileText, Briefcase, MapPin, 
   History as HistoryIcon, Hourglass, CalendarCheck, Calculator, 
   Paperclip, CheckCircle2, Clock, ChevronsRight, Download,
-  PieChart, Scale
+  PieChart, Scale, Sparkles, Bot, Loader2
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
@@ -74,6 +74,8 @@ export function ContractDetailsModal({
   
   const [activeTab, setActiveTab] = useState(0);
   const [totalPaid, setTotalPaid] = useState(0);
+  const [loadingAiMap, setLoadingAiMap] = useState<Record<string, boolean>>({});
+  const [localSummaries, setLocalSummaries] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let isMounted = true;
@@ -129,6 +131,29 @@ export function ContractDetailsModal({
       handleDownload(e, documents[0]);
     }
   };
+
+  const handleGenerateSummary = async (process: ContractProcess) => {
+    setLoadingAiMap(prev => ({ ...prev, [process.process_number]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke('resumir-processo-tj', {
+        body: {
+          processNumber: process.process_number,
+          contractProcessId: process.id
+        }
+      });
+      
+      if (error) throw new Error(error.message);
+      if (!data?.success) throw new Error(data?.error || 'Erro desconhecido na IA ao contatar o CNJ');
+      
+      const summaryText = data.summary;
+      setLocalSummaries(prev => ({ ...prev, [process.process_number]: summaryText }));
+      
+    } catch (err: any) {
+      alert("Erro ao conversar com a Inteligência Artificial: " + err.message);
+    } finally {
+      setLoadingAiMap(prev => ({ ...prev, [process.process_number]: false }));
+    }
+  }
 
   // 1. CONSTRUÇÃO DA TIMELINE BASEADA NAS DATAS INTERNAS
   const buildInternalTimeline = (): InternalTimelineEvent[] => {
@@ -657,18 +682,37 @@ export function ContractDetailsModal({
                   <p className="text-sm text-gray-400 italic">Nenhum processo detalhado vinculado a este caso.</p>
                 ) : (
                   <div className="space-y-4">
-                     {processes.map((proc, idx) => (
+                     {processes.map((proc, idx) => {
+                       const summaryToShow = localSummaries[proc.process_number] || proc.ia_summary;
+                       const isGenerating = loadingAiMap[proc.process_number] || false;
+                       
+                       return (
                         <div key={idx} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-3">
                           <div className="flex flex-wrap gap-4 justify-between border-b border-gray-50 pb-3">
                             <div>
                                <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Número do Processo</label>
                                <div className="font-mono font-bold text-salomao-blue text-base">{proc.process_number}</div>
                             </div>
-                            <div className="text-right">
-                               <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Localização</label>
-                               <div className="font-medium text-gray-700 text-sm">
-                                  {proc.court || '-'} • {proc.uf || '-'} • {proc.vara || '-'}
+                            <div className="flex items-center gap-3">
+                               <div className="text-right">
+                                 <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Localização</label>
+                                 <div className="font-medium text-gray-700 text-sm">
+                                    {proc.court || '-'} • {proc.uf || '-'} • {proc.vara || '-'}
+                                 </div>
                                </div>
+                               <div className="h-8 w-px bg-gray-200" />
+                               <button 
+                                 onClick={() => handleGenerateSummary(proc)}
+                                 disabled={isGenerating}
+                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                               >
+                                 {isGenerating ? (
+                                   <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                                 ) : (
+                                   <Sparkles className="w-4 h-4 text-indigo-500 group-hover:text-indigo-700" />
+                                 )}
+                                 {summaryToShow ? 'Atualizar com IA' : 'Resumo IA'}
+                               </button>
                             </div>
                           </div>
                           
@@ -682,8 +726,35 @@ export function ContractDetailsModal({
                               <div className="font-medium text-gray-800 text-sm mt-1">{proc.client_name || contract.client_position || '-'}</div>
                             </div>
                           </div>
+                          
+                          {/* Bloco de Resumo IA Expandido */}
+                          {(summaryToShow || isGenerating) && (
+                            <div className="mt-2 bg-gradient-to-br from-slate-50 to-indigo-50/20 p-4 rounded-xl border border-indigo-100/50 shadow-inner relative overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg shrink-0 shadow-sm mt-0.5 relative z-10">
+                                  <Bot className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 relative z-10">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <h4 className="text-xs font-black uppercase tracking-wider text-indigo-900 border-b border-indigo-200/50 pb-1 w-full flex items-center gap-2">
+                                      Resumo Gerado (Datajud + ChatGPT)
+                                      {isGenerating && <span className="text-[10px] font-bold text-indigo-500 lowercase bg-indigo-100 px-2 py-0.5 rounded-full animate-pulse">lendo...</span>}
+                                    </h4>
+                                  </div>
+                                  <div className={`text-sm text-slate-700 whitespace-pre-wrap leading-relaxed ${isGenerating ? 'opacity-40' : 'opacity-100'} transition-opacity`}>
+                                    {isGenerating ? 'Consultando Tribunal de Justiça via API e enviando andamentos cruciais para análise da IA...' : summaryToShow}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="absolute -bottom-2 -right-2 text-indigo-200/30">
+                                <Sparkles className="w-24 h-24" />
+                              </div>
+                            </div>
+                          )}
+                          
                         </div>
-                     ))}
+                     );
+                     })}
                   </div>
                 )}
               </div>

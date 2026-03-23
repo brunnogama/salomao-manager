@@ -246,6 +246,11 @@ export interface ContractProcess {
   client_name?: string;
   client_id?: string;
   opponent?: string;
+  ia_summary?: string;
+  ia_summary_date?: string;
+  court?: string;
+  vara?: string;
+  comarca?: string;
   
   // UI/Form fields
   uf?: string;
