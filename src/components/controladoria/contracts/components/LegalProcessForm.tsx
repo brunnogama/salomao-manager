@@ -200,7 +200,7 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
 
                     <div className="space-y-4">
                         {/* Linha 1: Número */}
-                        {otherProcessType === 'Processo Judicial' ? (
+                        {(otherProcessType === 'Processo Judicial' || (isEditingMode && (!otherProcessType || otherProcessType === 'Processo Judicial' || (currentProcess.process_number && currentProcess.process_number.length >= 15)))) ? (
                             <div className="w-full">
                                 <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between mb-1">
                                     Número do Processo *
@@ -332,23 +332,40 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
                             </div>
                         </div>
 
-                        {/* Linha Oculta para Exibir Objeto / Valor preenchido pela IA automaticamente (caso preenchido) */}
-                        {((currentProcess.subject && currentProcess.subject.trim() !== '') || (currentProcess.value_of_cause && currentProcess.value_of_cause > 0)) && (
-                            <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100/50 flex flex-wrap gap-4 items-center">
-                                {currentProcess.subject && (
-                                    <div className="flex-1">
-                                        <label className="text-[10px] text-indigo-500 uppercase font-black mb-1 block">Assunto / Objeto</label>
-                                        <input type="text" value={currentProcess.subject} onChange={(e) => setCurrentProcess({...currentProcess, subject: e.target.value})} className="w-full bg-transparent text-sm border-b border-indigo-200 focus:border-indigo-400 outline-none p-1 font-medium text-indigo-900" />
+                        {/* Linha Oculta para Exibir Objeto / Valor / Resumo IA preenchido automaticamente */}
+                        {((currentProcess.subject && currentProcess.subject.trim() !== '') || (currentProcess.value_of_cause && currentProcess.value_of_cause > 0) || currentProcess.ia_summary) && (
+                            <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50 flex flex-col gap-4">
+                                <div className="flex flex-wrap gap-4 items-center">
+                                    {currentProcess.subject && (
+                                        <div className="flex-1">
+                                            <label className="text-[10px] text-indigo-500 uppercase font-black mb-1 flex items-center gap-1.5"><Bot className="w-3.5 h-3.5"/> Assunto / Objeto</label>
+                                            <input type="text" value={currentProcess.subject} onChange={(e) => setCurrentProcess({...currentProcess, subject: e.target.value})} className="w-full bg-transparent text-sm border-b border-indigo-200 focus:border-indigo-400 outline-none p-1 font-medium text-indigo-900" />
+                                        </div>
+                                    )}
+                                    {currentProcess.value_of_cause && currentProcess.value_of_cause > 0 ? (
+                                        <div className="w-32">
+                                            <label className="text-[10px] text-indigo-500 uppercase font-black mb-1 flex items-center gap-1.5"><Bot className="w-3.5 h-3.5"/> Valor da Causa</label>
+                                            <div className="text-sm border-b border-indigo-200 outline-none p-1 font-medium text-emerald-600 bg-transparent flex items-center">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentProcess.value_of_cause)}
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                </div>
+                                {currentProcess.ia_summary && (
+                                    <div className="w-full pt-2 border-t border-indigo-100/50">
+                                        <label className="text-[10px] text-indigo-500 uppercase font-black mb-2 flex items-center gap-1.5">
+                                            <Bot className="w-3.5 h-3.5"/> Resumo Executivo da IA
+                                        </label>
+                                        <textarea
+                                            value={currentProcess.ia_summary}
+                                            onChange={(e) => setCurrentProcess({...currentProcess, ia_summary: e.target.value})}
+                                            className="w-full bg-white/60 border border-indigo-100 rounded-lg p-3 text-sm font-medium text-indigo-900 focus:outline-none focus:ring-1 focus:ring-indigo-300 resize-none"
+                                            rows={5}
+                                            placeholder="Resumo do caso gerado pela IA..."
+                                        />
+                                        <p className="text-[9px] text-indigo-400 mt-1">* Você pode editar livremente o texto gerado pela Inteligência Artificial antes de salvar.</p>
                                     </div>
                                 )}
-                                {currentProcess.value_of_cause && currentProcess.value_of_cause > 0 ? (
-                                    <div className="w-32">
-                                        <label className="text-[10px] text-indigo-500 uppercase font-black mb-1 block">Valor da Causa</label>
-                                        <div className="text-sm border-b border-indigo-200 outline-none p-1 font-medium text-emerald-600 bg-transparent flex items-center">
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentProcess.value_of_cause)}
-                                        </div>
-                                    </div>
-                                ) : null}
                             </div>
                         )}
 
