@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import {
-  Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
+  Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, Loader2, UserPlus,
-  GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Bus, Clock,
+  GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, FileDown, Bus, Clock,
   Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon, ChevronDown, ChevronRight, TableIcon,
   ArrowRight, ArrowLeft, Filter
 } from 'lucide-react'
@@ -11,7 +11,7 @@ import { exportColaboradoresXLSX, exportVTXLSX } from '../utils/exportColaborado
 import { supabase } from '../../../lib/supabase'
 import { logAction } from '../../../lib/logger'
 
-import { FilterSelect } from '../../controladoria/ui/FilterSelect'
+
 import { FilterBar, FilterCategory } from '../components/FilterBar'
 import { Collaborator, Partner, GEDDocument } from '../../../types/controladoria'
 import { AlertModal } from '../../ui/AlertModal'
@@ -138,6 +138,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterRateio, setAdvFilterRateio] = useState('');
   const [advFilterAdmissionStart, setAdvFilterAdmissionStart] = useState('');
   const [advFilterAdmissionEnd, setAdvFilterAdmissionEnd] = useState('');
+  const [advFilterTerminationStart, setAdvFilterTerminationStart] = useState('');
+  const [advFilterTerminationEnd, setAdvFilterTerminationEnd] = useState('');
   const [advFilterPartner, setAdvFilterPartner] = useState('');
   const [advFilterLeader, setAdvFilterLeader] = useState('');
   const [advFilterArea, setAdvFilterArea] = useState('');
@@ -212,6 +214,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setAdvFilterRateio('');
     setAdvFilterAdmissionStart('');
     setAdvFilterAdmissionEnd('');
+    setAdvFilterTerminationStart('');
+    setAdvFilterTerminationEnd('');
     setAdvFilterPartner('');
     setAdvFilterLeader('');
     setAdvFilterArea('');
@@ -1073,7 +1077,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const matchUpdated = showUpdatedOnly ? c.cadastro_atualizado === true : true
     return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchUpdated
   })
-  const getAdvancedFiltered = () => {
+  const getAdvancedFiltered = (overrideStatus?: string) => {
     return colaboradores.filter(c => {
       // Pessoais
       if (advFilterGender && c.gender !== advFilterGender) return false;
@@ -1087,10 +1091,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (advFilterStateHome && c.state !== advFilterStateHome) return false;
 
       // Corporativos
-      if (advFilterStatus && c.status !== advFilterStatus) return false;
+      const statusToCheck = overrideStatus !== undefined ? overrideStatus : advFilterStatus;
+      if (statusToCheck && c.status !== statusToCheck) return false;
       if (advFilterRateio && String(c.rateio_id) !== advFilterRateio) return false;
       if (advFilterAdmissionStart && (!c.hire_date || c.hire_date < advFilterAdmissionStart)) return false;
       if (advFilterAdmissionEnd && (!c.hire_date || c.hire_date > advFilterAdmissionEnd)) return false;
+      if (advFilterTerminationStart && (!c.termination_date || c.termination_date < advFilterTerminationStart)) return false;
+      if (advFilterTerminationEnd && (!c.termination_date || c.termination_date > advFilterTerminationEnd)) return false;
 
       const safeCompare = (filterVal: string, ...targetVals: (string | undefined | null)[]) => {
         if (!filterVal) return true;
@@ -1142,27 +1149,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   const currentAdvancedFiltered = React.useMemo(() => getAdvancedFiltered(), [
     colaboradores, advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
-    advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterPartner, advFilterLeader,
+    advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterTerminationStart, advFilterTerminationEnd, advFilterPartner, advFilterLeader,
     advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal, advFilterTransporteTipo,
     advFilterGraduationComplete, advFilterPostGraduationComplete, advFilterExpectedCompletion, advFilterCompletionYear
   ]);
 
-  const handleExportAdvanced = () => {
-    exportColaboradoresXLSX({
-      filtered: currentAdvancedFiltered,
-      rateios,
-      hiringReasons,
-      partners,
-      colaboradores,
-      terminationInitiatives,
-      terminationTypes,
-      terminationReasons,
-      roles,
-      locations,
-      teams,
-      atuacoes
-    })
-  };
 
   const handleExportVT = (group: 'Estagiários' | 'CLTs' | 'Todos') => {
     setShowExportVTMenu(false);
@@ -1783,7 +1774,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
                   title={`Exportar`}
                 >
-                  <FileSpreadsheet className="h-5 w-5" />
+                  <FileDown className="h-5 w-5" />
                 </button>
 
                 {showExportMenu && (
@@ -1793,42 +1784,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       <button
                         onClick={() => {
                           setShowExportMenu(false);
-                          // Atualiza temporariamente o filtro avançado para 'active', pega o novo array e exporta
-                          const tempFiltered = colaboradores.filter(c => {
-                            if (c.status !== 'active') return false;
-
-                            // Aplica todos os outros filtros avançados
-                            const birthStartMatch = advFilterBirthStart ? new Date(c.birthday || '') >= new Date(advFilterBirthStart) : true;
-                            const birthEndMatch = advFilterBirthEnd ? new Date(c.birthday || '') <= new Date(`${advFilterBirthEnd}T23:59:59`) : true;
-                            const genderMatch = advFilterGender ? c.gender === advFilterGender : true;
-                            const childrenMatch = advFilterChildren ? (advFilterChildren === 'sim' ? (c.children_data && c.children_data.length > 0) : (!c.children_data || c.children_data.length === 0)) : true;
-                            const stateHomeMatch = advFilterStateHome ? c.state === advFilterStateHome : true;
-
-                            const rateioMatch = advFilterRateio ? String(c.rateios?.id || c.rateio) === advFilterRateio : true;
-                            const admStartMatch = advFilterAdmissionStart ? new Date(c.hire_date || '') >= new Date(advFilterAdmissionStart) : true;
-                            const admEndMatch = advFilterAdmissionEnd ? new Date(c.hire_date || '') <= new Date(`${advFilterAdmissionEnd}T23:59:59`) : true;
-                            const partnerMatch = advFilterPartner ? String(c.partner?.id || c.partner_id) === advFilterPartner : true;
-                            const leaderMatch = advFilterLeader ? String(c.leader?.id || c.leader_id) === advFilterLeader : true;
-                            const areaMatch = advFilterArea ? c.area === advFilterArea : true;
-                            const teamMatch = advFilterTeam ? String(c.teams?.id || c.equipe) === advFilterTeam : true;
-                            const roleMatch = advFilterRole ? String(c.roles?.id || c.role) === advFilterRole : true;
-                            const contractTypeMatch = advFilterContractType ? c.contract_type === advFilterContractType : true;
-                            const partnerTypeMatch = advFilterPartnerType ? c.contract_type === advFilterPartnerType : true;
-                            const localMatch = advFilterLocal ? String(c.locations?.id || c.local) === advFilterLocal : true;
-
-                            const transporteTipoMatch = advFilterTransporteTipo ? c.transporte_tipo === advFilterTransporteTipo : true;
-
-                            const gradCompMatch = advFilterGraduationComplete ? (advFilterGraduationComplete === 'sim' ? c.escolaridade_graduacao_concluida === true : c.escolaridade_graduacao_concluida === false) : true;
-                            const postGradCompMatch = advFilterPostGraduationComplete ? (advFilterPostGraduationComplete === 'sim' ? c.escolaridade_pos_graduacao_concluida === true : c.escolaridade_pos_graduacao_concluida === false) : true;
-                            const expCompMatch = advFilterExpectedCompletion ? c.escolaridade_previsao_conclusao === advFilterExpectedCompletion : true;
-                            const compYearMatch = advFilterCompletionYear ? c.escolaridade_ano_conclusao === advFilterCompletionYear : true;
-
-                            return birthStartMatch && birthEndMatch && genderMatch && childrenMatch && stateHomeMatch &&
-                              rateioMatch && admStartMatch && admEndMatch && partnerMatch && leaderMatch && areaMatch &&
-                              teamMatch && roleMatch && contractTypeMatch && partnerTypeMatch && localMatch &&
-                              transporteTipoMatch &&
-                              gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
-                          });
+                          const tempFiltered = getAdvancedFiltered('active');
                           if (tempFiltered.length > 0) {
                             const d = new Date();
                             const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
@@ -1844,41 +1800,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       <button
                         onClick={() => {
                           setShowExportMenu(false);
-                          const tempFiltered = colaboradores.filter(c => {
-                            if (c.status !== 'inactive') return false;
-
-                            // Aplica todos os outros filtros avançados
-                            const birthStartMatch = advFilterBirthStart ? new Date(c.birthday || '') >= new Date(advFilterBirthStart) : true;
-                            const birthEndMatch = advFilterBirthEnd ? new Date(c.birthday || '') <= new Date(`${advFilterBirthEnd}T23:59:59`) : true;
-                            const genderMatch = advFilterGender ? c.gender === advFilterGender : true;
-                            const childrenMatch = advFilterChildren ? (advFilterChildren === 'sim' ? (c.children_data && c.children_data.length > 0) : (!c.children_data || c.children_data.length === 0)) : true;
-                            const stateHomeMatch = advFilterStateHome ? c.state === advFilterStateHome : true;
-
-                            const rateioMatch = advFilterRateio ? String(c.rateios?.id || c.rateio) === advFilterRateio : true;
-                            const admStartMatch = advFilterAdmissionStart ? new Date(c.hire_date || '') >= new Date(advFilterAdmissionStart) : true;
-                            const admEndMatch = advFilterAdmissionEnd ? new Date(c.hire_date || '') <= new Date(`${advFilterAdmissionEnd}T23:59:59`) : true;
-                            const partnerMatch = advFilterPartner ? String(c.partner?.id || c.partner_id) === advFilterPartner : true;
-                            const leaderMatch = advFilterLeader ? String(c.leader?.id || c.leader_id) === advFilterLeader : true;
-                            const areaMatch = advFilterArea ? c.area === advFilterArea : true;
-                            const teamMatch = advFilterTeam ? String(c.teams?.id || c.equipe) === advFilterTeam : true;
-                            const roleMatch = advFilterRole ? String(c.roles?.id || c.role) === advFilterRole : true;
-                            const contractTypeMatch = advFilterContractType ? c.contract_type === advFilterContractType : true;
-                            const partnerTypeMatch = advFilterPartnerType ? c.contract_type === advFilterPartnerType : true;
-                            const localMatch = advFilterLocal ? String(c.locations?.id || c.local) === advFilterLocal : true;
-
-                            const transporteTipoMatch = advFilterTransporteTipo ? c.transporte_tipo === advFilterTransporteTipo : true;
-
-                            const gradCompMatch = advFilterGraduationComplete ? (advFilterGraduationComplete === 'sim' ? c.escolaridade_graduacao_concluida === true : c.escolaridade_graduacao_concluida === false) : true;
-                            const postGradCompMatch = advFilterPostGraduationComplete ? (advFilterPostGraduationComplete === 'sim' ? c.escolaridade_pos_graduacao_concluida === true : c.escolaridade_pos_graduacao_concluida === false) : true;
-                            const expCompMatch = advFilterExpectedCompletion ? c.escolaridade_previsao_conclusao === advFilterExpectedCompletion : true;
-                            const compYearMatch = advFilterCompletionYear ? c.escolaridade_ano_conclusao === advFilterCompletionYear : true;
-
-                            return birthStartMatch && birthEndMatch && genderMatch && childrenMatch && stateHomeMatch &&
-                              rateioMatch && admStartMatch && admEndMatch && partnerMatch && leaderMatch && areaMatch &&
-                              teamMatch && roleMatch && contractTypeMatch && partnerTypeMatch && localMatch &&
-                              transporteTipoMatch &&
-                              gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
-                          });
+                          const tempFiltered = getAdvancedFiltered('inactive');
                           if (tempFiltered.length > 0) {
                             const d = new Date();
                             const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
@@ -1896,41 +1818,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       <button
                         onClick={() => {
                           setShowExportMenu(false);
-                          const tempFiltered = colaboradores.filter(c => {
-                            // Status ignore (Todos)
-
-                            // Aplica todos os outros filtros avançados
-                            const birthStartMatch = advFilterBirthStart ? new Date(c.birthday || '') >= new Date(advFilterBirthStart) : true;
-                            const birthEndMatch = advFilterBirthEnd ? new Date(c.birthday || '') <= new Date(`${advFilterBirthEnd}T23:59:59`) : true;
-                            const genderMatch = advFilterGender ? c.gender === advFilterGender : true;
-                            const childrenMatch = advFilterChildren ? (advFilterChildren === 'sim' ? (c.children_data && c.children_data.length > 0) : (!c.children_data || c.children_data.length === 0)) : true;
-                            const stateHomeMatch = advFilterStateHome ? c.state === advFilterStateHome : true;
-
-                            const rateioMatch = advFilterRateio ? String(c.rateios?.id || c.rateio) === advFilterRateio : true;
-                            const admStartMatch = advFilterAdmissionStart ? new Date(c.hire_date || '') >= new Date(advFilterAdmissionStart) : true;
-                            const admEndMatch = advFilterAdmissionEnd ? new Date(c.hire_date || '') <= new Date(`${advFilterAdmissionEnd}T23:59:59`) : true;
-                            const partnerMatch = advFilterPartner ? String(c.partner?.id || c.partner_id) === advFilterPartner : true;
-                            const leaderMatch = advFilterLeader ? String(c.leader?.id || c.leader_id) === advFilterLeader : true;
-                            const areaMatch = advFilterArea ? c.area === advFilterArea : true;
-                            const teamMatch = advFilterTeam ? String(c.teams?.id || c.equipe) === advFilterTeam : true;
-                            const roleMatch = advFilterRole ? String(c.roles?.id || c.role) === advFilterRole : true;
-                            const contractTypeMatch = advFilterContractType ? c.contract_type === advFilterContractType : true;
-                            const partnerTypeMatch = advFilterPartnerType ? c.contract_type === advFilterPartnerType : true;
-                            const localMatch = advFilterLocal ? String(c.locations?.id || c.local) === advFilterLocal : true;
-
-                            const transporteTipoMatch = advFilterTransporteTipo ? c.transporte_tipo === advFilterTransporteTipo : true;
-
-                            const gradCompMatch = advFilterGraduationComplete ? (advFilterGraduationComplete === 'sim' ? c.escolaridade_graduacao_concluida === true : c.escolaridade_graduacao_concluida === false) : true;
-                            const postGradCompMatch = advFilterPostGraduationComplete ? (advFilterPostGraduationComplete === 'sim' ? c.escolaridade_pos_graduacao_concluida === true : c.escolaridade_pos_graduacao_concluida === false) : true;
-                            const expCompMatch = advFilterExpectedCompletion ? c.escolaridade_previsao_conclusao === advFilterExpectedCompletion : true;
-                            const compYearMatch = advFilterCompletionYear ? c.escolaridade_ano_conclusao === advFilterCompletionYear : true;
-
-                            return birthStartMatch && birthEndMatch && genderMatch && childrenMatch && stateHomeMatch &&
-                              rateioMatch && admStartMatch && admEndMatch && partnerMatch && leaderMatch && areaMatch &&
-                              teamMatch && roleMatch && contractTypeMatch && partnerTypeMatch && localMatch &&
-                              transporteTipoMatch &&
-                              gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
-                          });
+                          const tempFiltered = getAdvancedFiltered('');
                           if (tempFiltered.length > 0) {
                             const d = new Date();
                             const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
@@ -2456,6 +2344,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterAdmissionEnd} onChange={e => setAdvFilterAdmissionEnd(e.target.value)} />
                           </div>
                         </div>
+                        <div className="col-span-1 md:col-span-3">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Desligamento (Início e Fim)</label>
+                          <div className="flex items-center gap-2 max-w-sm">
+                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterTerminationStart} onChange={e => setAdvFilterTerminationStart(e.target.value)} />
+                            <span className="text-gray-400">-</span>
+                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterTerminationEnd} onChange={e => setAdvFilterTerminationEnd(e.target.value)} />
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -2500,14 +2396,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       </div>
                     </div>
 
-                    <div className="flex justify-end pt-6 border-t border-gray-100">
-                      <button
-                        onClick={handleExportAdvanced}
-                        className="flex items-center gap-2 px-8 py-3 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-xl active:scale-95 text-xs"
-                      >
-                        <FileSpreadsheet className="h-5 w-5" /> Gerar Relatório XLSX ({currentAdvancedFiltered.length})
-                      </button>
-                    </div>
                   </div>
                 </div>
               )}
@@ -2537,8 +2425,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                       {showExportVTMenu && (
                         <>
-                          <div className="fixed inset-0 z-40" onClick={() => setShowExportVTMenu(false)}></div>
-                          <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                          <div className="fixed inset-0 z-[190]" onClick={() => setShowExportVTMenu(false)}></div>
+                          <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-[200] overflow-hidden py-1">
                             <button
                               onClick={() => handleExportVT('Estagiários')}
                               className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
@@ -2998,7 +2886,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
           () => setSelectedColaborador(null),
           activeDetailTab,
           setActiveDetailTab,
-          <fieldset disabled className="contents">{renderModalContent(activeDetailTab, true, selectedColaborador)}</fieldset>,
+          activeDetailTab === 4 
+            ? <div className="contents">{renderModalContent(activeDetailTab, true, selectedColaborador)}</div>
+            : <fieldset disabled className="contents">{renderModalContent(activeDetailTab, true, selectedColaborador)}</fieldset>,
           (
             <>
               <button
