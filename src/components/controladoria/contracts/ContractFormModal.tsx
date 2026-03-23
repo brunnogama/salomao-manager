@@ -510,15 +510,9 @@ export function ContractFormModal(props: Props) {
       }
 
       if (formData.status === 'active' && (!initialFormData || initialFormData.status !== 'active')) {
-        console.log("Finance modal should appear NOW!");
-        console.log("initialFormData was:", initialFormData?.status);
-        console.log("formData is:", formData.status);
         setSavedContractId(savedId!);
         setShowFinanceConfirm(true);
       } else {
-        console.log("Finance modal bypassed.");
-        console.log("initialFormData was:", initialFormData?.status);
-        console.log("formData is:", formData.status);
         onSave();
         onClose();
       }
