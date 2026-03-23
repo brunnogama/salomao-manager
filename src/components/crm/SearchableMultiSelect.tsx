@@ -55,6 +55,7 @@ export function SearchableMultiSelect({
   const [options, setOptions] = useState<Option[]>([]);
   const [loading, setLoading] = useState(false);
   const [coords, setCoords] = useState({ top: 0 as number | undefined, bottom: undefined as number | undefined, left: 0, width: 0 });
+  const [isTagsExpanded, setIsTagsExpanded] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isFetchedRef = useRef(false);
@@ -311,7 +312,7 @@ export function SearchableMultiSelect({
 
           {selectedValuesArray.length > 0 ? (
             <div className="flex flex-wrap gap-1">
-              {selectedValuesArray.slice(0, 2).map((val, index) => (
+              {(isTagsExpanded ? selectedValuesArray : selectedValuesArray.slice(0, 2)).map((val, index) => (
                 <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 text-xs font-semibold text-gray-700 rounded-md shadow-sm max-w-[140px]">
                   <span className="truncate">{val}</span>
                   {!isDisabled && (
@@ -325,12 +326,18 @@ export function SearchableMultiSelect({
                 </span>
               ))}
               {selectedValuesArray.length > 2 && (
-                <span 
-                  className="inline-flex items-center px-2 py-1 bg-blue-50/80 border border-blue-200 text-[10px] uppercase font-black tracking-widest text-[#1e3a8a] rounded-md shadow-sm cursor-help"
-                  title={selectedValuesArray.slice(2).join(', ')}
+                <button 
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsTagsExpanded(!isTagsExpanded);
+                  }}
+                  className="inline-flex items-center px-2 py-1 bg-blue-50/80 hover:bg-blue-100 border border-blue-200 text-[10px] uppercase font-black tracking-widest text-[#1e3a8a] rounded-md shadow-sm transition-colors cursor-pointer"
+                  title={isTagsExpanded ? "Retrair" : `Ver mais ${selectedValuesArray.length - 2} opções`}
                 >
-                  +{selectedValuesArray.length - 2}
-                </span>
+                  {!isTagsExpanded && <span className="mr-0.5">+{selectedValuesArray.length - 2}</span>}
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isTagsExpanded ? 'rotate-180' : ''}`} />
+                </button>
               )}
             </div>
           ) : (
