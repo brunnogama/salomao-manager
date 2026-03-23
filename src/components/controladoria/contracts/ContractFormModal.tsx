@@ -543,22 +543,26 @@ export function ContractFormModal(props: Props) {
     }
 
     const promise = (async () => {
-      let valuesText = '';
+      let valuesHtml = '';
       const formatVal = (label: string, value: any) => {
-        if (value && value !== 'R$ 0,00' && value !== '') valuesText += `${label}: ${value}\n`;
+        if (value && value !== 'R$ 0,00' && value !== '') valuesHtml += `<li style="margin-bottom: 4px;"><strong>${label}:</strong> ${value}</li>`;
       };
-      formatVal('Pro Labore', formData.pro_labore);
+      formatVal('Pró-Labore', formData.pro_labore);
       formatVal('Mensalidade', formData.fixed_monthly_fee);
       formatVal('Êxito', formData.final_success_fee);
       formatVal('Outras Taxas', formData.other_fees);
-      if (!valuesText) valuesText = 'Sem valores cadastrados.';
+      if (!valuesHtml) valuesHtml = '<li><i>Nenhum valor financeiro atrelado.</i></li>';
 
-      let attachmentsUrl: string[] = [];
+      let attachmentsHtml = '<li><i>Sem documentos anexos no momento do cadastro.</i></li>';
       if (savedContractId) {
-        const { data: docs } = await supabase.from('contract_documents').select('file_path').eq('contract_id', savedContractId);
+        const { data: docs } = await supabase.from('contract_documents').select('file_name, file_path').eq('contract_id', savedContractId);
         if (docs && docs.length > 0) {
           const { data: signedUrls } = await supabase.storage.from('ged-documentos').createSignedUrls(docs.map(d => d.file_path), 3600);
-          if (signedUrls) attachmentsUrl = signedUrls.map(u => u.signedUrl);
+          if (signedUrls) {
+            attachmentsHtml = signedUrls.map((u, i) => 
+               `<li style="margin-bottom: 6px;"><a href="${u.signedUrl}" style="color: #1e3a8a; text-decoration: none; font-weight: bold;">📄 Baixar: ${docs[i].file_name || `Anexo ${i + 1}`}</a></li>`
+            ).join('');
+          }
         }
       }
 
@@ -569,8 +573,8 @@ export function ContractFormModal(props: Props) {
           clientName: formData.client_name,
           honNumber: formData.hon_number || 'Não informado',
           reference: formData.reference || 'Não informada',
-          valuesText: valuesText.trim(),
-          attachmentsUrl
+          valuesHtml,
+          attachmentsHtml
         })
       });
       if (!res.ok) throw new Error("Falha na comunicação com o Make.com");
