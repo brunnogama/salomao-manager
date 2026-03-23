@@ -140,6 +140,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterAdmissionEnd, setAdvFilterAdmissionEnd] = useState('');
   const [advFilterTerminationStart, setAdvFilterTerminationStart] = useState('');
   const [advFilterTerminationEnd, setAdvFilterTerminationEnd] = useState('');
+  const [advFilterActivePeriodStart, setAdvFilterActivePeriodStart] = useState('');
+  const [advFilterActivePeriodEnd, setAdvFilterActivePeriodEnd] = useState('');
   const [advFilterPartner, setAdvFilterPartner] = useState('');
   const [advFilterLeader, setAdvFilterLeader] = useState('');
   const [advFilterArea, setAdvFilterArea] = useState('');
@@ -224,6 +226,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setAdvFilterAdmissionEnd('');
     setAdvFilterTerminationStart('');
     setAdvFilterTerminationEnd('');
+    setAdvFilterActivePeriodStart('');
+    setAdvFilterActivePeriodEnd('');
     setAdvFilterPartner('');
     setAdvFilterLeader('');
     setAdvFilterArea('');
@@ -1129,6 +1133,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (advFilterAdmissionEnd && (!c.hire_date || c.hire_date > advFilterAdmissionEnd)) return false;
       if (advFilterTerminationStart && (!c.termination_date || c.termination_date < advFilterTerminationStart)) return false;
       if (advFilterTerminationEnd && (!c.termination_date || c.termination_date > advFilterTerminationEnd)) return false;
+      if (advFilterActivePeriodStart && c.termination_date && c.termination_date < advFilterActivePeriodStart) return false;
+      if (advFilterActivePeriodEnd && c.hire_date && c.hire_date > advFilterActivePeriodEnd) return false;
 
       const safeCompare = (filterVal: string, ...targetVals: (string | undefined | null)[]) => {
         if (!filterVal) return true;
@@ -1205,7 +1211,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   const currentAdvancedFiltered = React.useMemo(() => getAdvancedFiltered(), [
     colaboradores, advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
-    advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterTerminationStart, advFilterTerminationEnd, advFilterPartner, advFilterLeader,
+    advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterTerminationStart, advFilterTerminationEnd, advFilterActivePeriodStart, advFilterActivePeriodEnd, advFilterPartner, advFilterLeader,
     advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal, advFilterTransporteTipo,
     advFilterGraduationComplete, advFilterPostGraduationComplete,
     advFilterGraduationExpected, advFilterGraduationCompletion, advFilterGraduationUF, advFilterGraduationInstitution,
@@ -2415,6 +2421,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cargo</label>
                           <SearchableSelect value={advFilterRole} onChange={setAdvFilterRole} options={roleOptions as any} placeholder="Todos..." />
                         </div>
+                        <div className="col-span-1 md:col-span-2">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Desligamento (Início e Fim)</label>
+                          <div className="flex items-center gap-2 max-w-sm">
+                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterTerminationStart} onChange={e => setAdvFilterTerminationStart(e.target.value)} />
+                            <span className="text-gray-400">-</span>
+                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterTerminationEnd} onChange={e => setAdvFilterTerminationEnd(e.target.value)} />
+                          </div>
+                        </div>
                         <div className="relative z-[104]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local</label>
                           <SearchableSelect value={advFilterLocal} onChange={setAdvFilterLocal} options={locationOptions as any} placeholder="Todos..." />
@@ -2429,11 +2443,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           </div>
                         </div>
                         <div className="col-span-1 md:col-span-2">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Desligamento (Início e Fim)</label>
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Ativo (Início e Fim)</label>
                           <div className="flex items-center gap-2 max-w-sm">
-                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterTerminationStart} onChange={e => setAdvFilterTerminationStart(e.target.value)} />
+                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterActivePeriodStart} onChange={e => setAdvFilterActivePeriodStart(e.target.value)} />
                             <span className="text-gray-400">-</span>
-                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterTerminationEnd} onChange={e => setAdvFilterTerminationEnd(e.target.value)} />
+                            <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterActivePeriodEnd} onChange={e => setAdvFilterActivePeriodEnd(e.target.value)} />
                           </div>
                         </div>
                       </div>
