@@ -1,5 +1,10 @@
-import React from 'react';
-import { X, Edit, Trash2, User, FileText, Briefcase, MapPin, History as HistoryIcon, Hourglass, CalendarCheck, Calculator, Paperclip, CheckCircle2, Clock, ChevronsRight, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  X, Edit, Trash2, User, FileText, Briefcase, MapPin, 
+  History as HistoryIcon, Hourglass, CalendarCheck, Calculator, 
+  Paperclip, CheckCircle2, Clock, ChevronsRight, Download,
+  PieChart, Scale
+} from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 import { useEscKey } from '../../../hooks/useEscKey';
@@ -50,7 +55,6 @@ interface Props {
   onDelete: () => void;
   processes: ContractProcess[];
   documents?: ContractDocument[];
-  // Novas props de permissão
   canEdit?: boolean;
   canDelete?: boolean;
 }
@@ -67,6 +71,39 @@ export function ContractDetailsModal({
   canDelete = false
 }: Props) {
   useEscKey(isOpen, onClose);
+  
+  const [activeTab, setActiveTab] = useState(0);
+  const [totalPaid, setTotalPaid] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPaid = async () => {
+      if (!contract?.id || contract.status !== 'active') {
+        if (isMounted) setTotalPaid(0);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from('financial_installments')
+          .select('amount')
+          .eq('contract_id', contract.id)
+          .eq('status', 'paid');
+          
+        if (!error && data && isMounted) {
+          const sum = data.reduce((acc, curr) => acc + Number(curr.amount), 0);
+          setTotalPaid(sum);
+        }
+      } catch (err) {}
+    };
+    
+    if (isOpen) {
+      setActiveTab(0); // reset tab on open
+      fetchPaid();
+    }
+    
+    return () => { isMounted = false; };
+  }, [contract, isOpen]);
+
   if (!isOpen || !contract) return null;
 
   const handleDownload = async (e: React.MouseEvent, doc: ContractDocument) => {
@@ -89,7 +126,6 @@ export function ContractDetailsModal({
 
   const handleDownloadLatest = (e: React.MouseEvent) => {
     if (documents && documents.length > 0) {
-      // Assume que o primeiro é o mais recente ou relevante
       handleDownload(e, documents[0]);
     }
   };
@@ -137,53 +173,65 @@ export function ContractDetailsModal({
       case 'active': return 'bg-green-100 text-green-800 border-green-200';
       case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
       case 'probono': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getStatusLabel = (status: string) => {
-    const map: any = { analysis: 'Sob Análise', proposal: 'Proposta', active: 'Ativo', rejected: 'Rejeitado', probono: 'Probono' };
+    const map: any = { analysis: 'Sob Análise', proposal: 'Proposta Enviada', active: 'Contrato Fechado', rejected: 'Rejeitada', probono: 'Probono' };
     return map[status] || status;
   };
+  
+  const getRelevantDateStr = () => {
+    switch (contract.status) {
+      case 'analysis': return contract.prospect_date || contract.created_at;
+      case 'proposal': return contract.proposal_date || contract.created_at;
+      case 'active': return contract.contract_date || contract.created_at;
+      case 'rejected': return contract.rejection_date || contract.created_at;
+      case 'probono': return contract.probono_date || contract.contract_date || contract.created_at;
+      default: return contract.created_at;
+    }
+  };
 
-  // --- LÓGICA DE CÁLCULO FINANCEIRO CORRIGIDA ---
+  const getHonOrPropStr = () => {
+    if (contract.status === 'proposal') return contract.proposal_code ? `Cód: ${contract.proposal_code}` : '-';
+    if (contract.status === 'active') {
+      if (!contract.hon_number) return '-';
+      return contract.hon_number.toUpperCase().startsWith('HON') ? contract.hon_number : `HON - ${contract.hon_number}`;
+    }
+    return contract.hon_number ? `HON: ${contract.hon_number}` : (contract.proposal_code ? `Cód: ${contract.proposal_code}` : '-');
+  };
+
+  // --- LÓGICA DE CÁLCULO FINANCEIRO ---
   const calculateFinancials = () => {
     const isFinancialRelevant = ['proposal', 'active'].includes(contract.status);
 
-    // 1. Pró-Labore (Base + Extras)
     const proLaboreBase = parseCurrency(contract.pro_labore);
-    // CORREÇÃO: Tratando como string[] igual ao intermediate_fees
     const proLaboreExtrasList = (contract as any).pro_labore_extras;
     const proLaboreExtrasTotal = (Array.isArray(proLaboreExtrasList) ? proLaboreExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
     const totalProLabore = proLaboreBase + proLaboreExtrasTotal;
 
-    // 2. Êxito Intermediário (Lista)
     const intermediateList = contract.intermediate_fees;
     const intermediateTotal = (Array.isArray(intermediateList) ? intermediateList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
 
-    // 3. Êxito Final (Base + Extras)
     const finalFeeBase = parseCurrency(contract.final_success_fee);
-    // CORREÇÃO: Tratando como string[]
     const finalFeeExtrasList = (contract as any).final_success_extras;
     const finalFeeExtrasTotal = (Array.isArray(finalFeeExtrasList) ? finalFeeExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
     const totalFinalFee = finalFeeBase + finalFeeExtrasTotal;
 
-    // 4. Outros Honorários (Base + Extras)
     const otherFeesBase = parseCurrency(contract.other_fees);
-    // CORREÇÃO: Tratando como string[]
     const otherFeesExtrasList = (contract as any).other_fees_extras;
     const otherFeesExtrasTotal = (Array.isArray(otherFeesExtrasList) ? otherFeesExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
     const totalOtherFees = otherFeesBase + otherFeesExtrasTotal;
 
-    // 5. Fixo Mensal (Base + Extras)
     const fixedMonthlyBase = parseCurrency(contract.fixed_monthly_fee);
-    // CORREÇÃO: Tratando como string[]
     const fixedMonthlyExtrasList = (contract as any).fixed_monthly_extras;
     const fixedMonthlyExtrasTotal = (Array.isArray(fixedMonthlyExtrasList) ? fixedMonthlyExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
     const totalFixedMonthly = fixedMonthlyBase + fixedMonthlyExtrasTotal;
 
-    // Soma Geral
     const grandTotal = totalProLabore + intermediateTotal + totalFinalFee + totalOtherFees + totalFixedMonthly;
+    
+    const lackToPay = grandTotal - totalPaid;
 
     return {
       showTotals: isFinancialRelevant,
@@ -193,8 +241,8 @@ export function ContractDetailsModal({
       totalOtherFees,
       totalFixedMonthly,
       grandTotal,
+      lackToPay: lackToPay > 0 ? lackToPay : 0,
 
-      // Flags para UI
       hasProLaboreExtras: proLaboreExtrasTotal > 0,
       hasFinalFeeExtras: finalFeeExtrasTotal > 0,
       hasOtherFeesExtras: otherFeesExtrasTotal > 0,
@@ -208,311 +256,470 @@ export function ContractDetailsModal({
 
   const financials = calculateFinancials();
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-white w-full max-w-7xl rounded-3xl shadow-2xl flex flex-col max-h-[95vh] animate-in zoom-in-95 overflow-hidden">
+  const steps = [
+    { id: 0, label: 'Resumo', icon: PieChart },
+    { id: 1, label: 'Dados do Cliente', icon: Briefcase },
+    { id: 2, label: 'Status & Valores', icon: Clock },
+    { id: 3, label: 'Dados do Objeto', icon: Scale },
+    { id: 4, label: 'GED (Arquivos)', icon: FileText }
+  ];
 
-        {/* Header */}
-        <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start relative shrink-0 gap-4">
-          <div className="flex-1 pr-10 sm:pr-0">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-              <span className={`px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wide border ${getStatusColor(contract.status)}`}>
-                {getStatusLabel(contract.status)}
-              </span>
-              {contract.hon_number && (
-                <span className="font-mono text-[9px] sm:text-[10px] text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded">
-                  HON: {contract.hon_number}
-                </span>
-              )}
-              {contract.proposal_code && contract.status === 'proposal' && (
-                <span className="font-mono text-[9px] sm:text-[10px] text-blue-600 bg-blue-50 border border-blue-100 px-2 py-1 rounded">
-                  Cód: {contract.proposal_code}
-                </span>
-              )}
-              <span className="text-gray-300 font-mono text-[9px] sm:text-[10px]">
-                #{contract.display_id || String(contract.seq_id || 0).padStart(6, '0')}
-              </span>
+  /* 
+    Seção Reutilizável de Timeline e Cálculos de Timeline 
+  */
+  const renderTimeline = () => (
+    <div className="border-t border-gray-100 pt-6">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">
+          <HistoryIcon className="w-4 h-4 mr-2" /> Timeline das Fases
+        </h3>
+      </div>
+
+      {timelineEvents.length > 0 ? (
+        <div className="flex items-stretch overflow-x-auto pb-4 px-2 space-x-2 scrollbar-thin scrollbar-thumb-gray-200 w-full">
+          {timelineEvents.map((event, idx) => {
+            const isLast = idx === timelineEvents.length - 1;
+            const nextEvent = !isLast ? timelineEvents[idx + 1] : null;
+
+            const durationToNext = nextEvent
+              ? getDurationBetween(event.date, nextEvent.date)
+              : null;
+
+            return (
+              <React.Fragment key={idx}>
+                <div className="flex-shrink-0 flex flex-col h-full min-w-[200px] flex-1">
+                  <div className={`flex-1 flex flex-col justify-between bg-white p-4 rounded-xl border shadow-sm transition-all w-full text-center relative ${event.status === contract.status ? 'border-salomao-blue ring-1 ring-salomao-blue/20 shadow-md' : 'border-gray-100'}`}>
+                    <div>
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border mb-3 ${event.color}`}>
+                        {event.label}
+                      </span>
+                      <p className="text-sm font-bold text-gray-700 flex items-center justify-center gap-1.5">
+                        <CalendarCheck className="w-4 h-4 text-gray-400" />
+                        {safeDate(event.date)?.toLocaleDateString('pt-BR') || '-'}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2 mt-3">
+                      {event.status === 'active' && (
+                        <div className="flex items-center justify-center text-[10px] text-green-700 bg-green-50 px-2 py-1 rounded-lg border border-green-100 w-full font-medium">
+                          <Hourglass className="w-3 h-3 mr-1" />
+                          Total: {getTotalDuration()}
+                        </div>
+                      )}
+
+                      {durationToNext && (
+                        <div className="flex items-center justify-center text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 w-full mx-auto">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {durationToNext}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {!isLast && (
+                  <div className="flex-shrink-0 text-gray-300 self-center">
+                    <ChevronsRight className="w-6 h-6" />
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl text-gray-400 text-sm">
+          Nenhuma data interna preenchida.
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-[95vw] xl:max-w-[1300px] h-[95vh] flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
+        
+        {/* Left Sidebar */}
+        <div className="w-full md:w-72 bg-gray-50 border-b md:border-b-0 md:border-r border-gray-200 flex flex-col py-4 md:py-8 px-4 md:px-5 shrink-0 z-10">
+          <div className="mb-4 md:mb-8 px-2 flex justify-between items-start md:items-center">
+            <div>
+              <h2 className="text-xl font-black text-[#0a192f] tracking-tight leading-tight">
+                Detalhes do Caso
+              </h2>
+              <p className="text-xs text-gray-400 mt-1 font-medium">
+                ID: {contract.display_id || String(contract.seq_id || 0).padStart(6, '0')}
+              </p>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">{contract.client_name}</h2>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-gray-500 text-sm">
-              {contract.cnpj && (
-                <span className="font-mono font-medium text-xs sm:text-sm">{contract.cnpj}</span>
-              )}
-              <span className="flex items-center text-xs sm:text-sm"><Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" /> {contract.area}</span>
-              <span className="flex items-center text-xs sm:text-sm"><MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" /> {contract.uf}</span>
-            </div>
+            {/* Mobile close button */}
+            <button onClick={onClose} className="md:hidden p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2 absolute top-2 right-2 sm:static sm:top-auto sm:right-auto">
-            {canEdit && (
-              <button onClick={onEdit} className="p-2 sm:p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors shadow-sm" title="Editar">
-                <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
-            )}
+          <div className="flex flex-row md:flex-col space-x-2 md:space-x-0 md:space-y-1 w-full flex-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0 custom-scrollbar">
+            {steps.map((step) => {
+              const Icon = step.icon;
+              const isActive = activeTab === step.id;
+              return (
+                <button
+                  key={step.id}
+                  onClick={() => setActiveTab(step.id)}
+                  className={`flex-shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-4 py-2.5 md:p-3.5 rounded-xl transition-all text-left relative group ${isActive
+                    ? 'text-[#1e3a8a] bg-white font-bold shadow-sm border border-gray-100'
+                    : 'text-gray-500 hover:bg-white/50 hover:text-gray-700'
+                    }`}
+                >
+                  <div className={`p-1 rounded-lg transition-colors ${isActive ? 'text-[#1e3a8a]' : 'text-gray-400 group-hover:text-gray-600'}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-[0.1em] font-bold whitespace-nowrap">{step.label}</span>
+                  {isActive && <div className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#1e3a8a] rounded-r-full" />}
+                  {isActive && <div className="md:hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#1e3a8a] rounded-t-full" />}
+                </button>
+              );
+            })}
+          </div>
 
-            {canDelete && (
-              <button onClick={onDelete} className="p-2 sm:p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors shadow-sm" title="Excluir">
-                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
-            )}
-            <button onClick={onClose} className="p-2 sm:p-3 bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 transition-colors ml-1 sm:ml-2 shadow-sm">
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="hidden md:flex mt-auto pt-6 border-t border-gray-200">
+            <button onClick={onClose} className="w-full flex items-center justify-center gap-2 text-gray-500 hover:text-red-500 hover:bg-red-50 p-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest">
+              <X className="w-4 h-4" /> Fechar
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {/* Coluna 1: Dados Gerais */}
-            <div className="space-y-6">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2">Dados Gerais</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs text-gray-400 block">Sócio Responsável</label>
-                  <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
-                    <User className="w-4 h-4 text-salomao-blue" /> {contract.partner_name || '-'}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 block">Analista</label>
-                  <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
-                    <User className="w-4 h-4 text-purple-500" /> {contract.analyzed_by_name || '-'}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 block">Documento (CNPJ/CPF)</label>
-                  <div className="text-gray-800 font-mono mt-1 mb-2">{contract.cnpj || 'Não informado'}</div>
+        {/* Right Content */}
+        <div className="flex-1 flex flex-col min-w-0 bg-white transition-colors duration-300">
+          
+          {/* Header Action Bar */}
+          <div className="px-6 py-4 flex flex-wrap gap-4 justify-between items-center border-b border-gray-100 bg-white sticky top-0 z-20">
+            <div className="flex items-center gap-3">
+              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${getStatusColor(contract.status)}`}>
+                {getStatusLabel(contract.status)}
+              </span>
+              <span className="font-mono text-sm font-bold text-gray-800 bg-gray-50 border border-gray-200 px-3 py-1 rounded-md">
+                {getHonOrPropStr()}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {canEdit && (
+                <button onClick={onEdit} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-xs font-bold" title="Editar">
+                  <Edit className="w-3.5 h-3.5" /> Editar
+                </button>
+              )}
+              {canDelete && (
+                <button onClick={onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-xs font-bold" title="Excluir">
+                  <Trash2 className="w-3.5 h-3.5" /> Excluir
+                </button>
+              )}
+            </div>
+          </div>
 
-                  {/* ÍCONE DE CLIPE PARA DOWNLOAD - UI MELHORADA */}
-                  <div className="mt-2">
-                    <button
-                      onClick={handleDownloadLatest}
-                      disabled={!documents || documents.length === 0}
-                      className={`group flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg transition-all border w-full max-w-[250px] ${documents && documents.length > 0
-                        ? 'bg-white border-gray-200 text-gray-700 hover:border-salomao-blue hover:text-salomao-blue hover:shadow-sm cursor-pointer'
-                        : 'bg-gray-50 border-transparent text-gray-400 cursor-not-allowed'
-                        }`}
-                      title={documents && documents.length > 0 ? documents[0].file_name : "Nenhum arquivo anexado"}
-                    >
-                      <div className={`p-1.5 rounded-md shrink-0 ${documents && documents.length > 0 ? 'bg-blue-50 text-salomao-blue group-hover:bg-blue-100' : 'bg-gray-200 text-gray-500'}`}>
-                        <Paperclip className="w-3.5 h-3.5" />
+          {/* Scrollable Body */}
+          <div className="flex-1 overflow-y-auto px-6 py-6 md:px-10 md:py-8 custom-scrollbar">
+            
+            {/* ABA 0: RESUMO */}
+            {activeTab === 0 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                {/* Cabeçalho Executivo do Resumo */}
+                <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h2 className="text-2xl font-black text-[#0a192f] tracking-tight">{contract.client_name}</h2>
+                      <div className="flex items-center text-sm mt-2 text-gray-600 font-medium">
+                        <User className="w-4 h-4 mr-1.5" />
+                        {contract.partner_name || '-'}
+                        {contract.co_partner_ids && contract.co_partner_ids.length > 0 && <span className="ml-1 text-xs text-gray-400 font-normal"> (+{contract.co_partner_ids.length} sócio(s))</span>}
                       </div>
-                      <span className="truncate text-left flex-1">
-                        {documents && documents.length > 0 ? documents[0].file_name : 'Sem anexo vinculado'}
-                      </span>
-                      {documents && documents.length > 0 && <Download className="w-3.5 h-3.5 text-gray-400 group-hover:text-salomao-blue shrink-0" />}
-                    </button>
+                    </div>
+                    <div className="flex flex-col md:items-end justify-center">
+                      <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Data do Status Atual</p>
+                      <div className="flex items-center text-lg font-bold text-[#1e3a8a]">
+                        <CalendarCheck className="w-5 h-5 mr-2" />
+                        {safeDate(getRelevantDateStr())?.toLocaleDateString('pt-BR') || '-'}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                {(contract as any).reference_text && (
-                  <div className="mt-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <label className="text-xs text-gray-400 block font-bold mb-1">Referência</label>
-                    <p className="text-xs text-gray-700 italic line-clamp-3">{(contract as any).reference_text}</p>
+
+                {/* Área Financeira (apenas Fechado/Ativo ou Proposta) */}
+                {financials.showTotals && (
+                  <div className="space-y-4">
+                     <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-black/5 pb-2">Resumo Financeiro</h3>
+                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                       
+                       {/* Box 1: Valores das Fases */}
+                       <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                         <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 text-xs font-bold text-gray-600 uppercase">
+                            Composição e Fases
+                         </div>
+                         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                           {financials.totalProLabore > 0 && (
+                             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase">Pró-Labore</span>
+                                <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalProLabore)}</span>
+                             </div>
+                           )}
+                           {financials.intermediateTotal > 0 && (
+                             <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex flex-col">
+                                <span className="text-[10px] font-bold text-blue-600 uppercase">Ex. Intermediário</span>
+                                <span className="text-sm font-black text-blue-800 mt-1">{formatMoney(financials.intermediateTotal)}</span>
+                             </div>
+                           )}
+                           {financials.totalFinalFee > 0 && (
+                             <div className="bg-green-50 p-3 rounded-lg border border-green-100 flex flex-col">
+                                <span className="text-[10px] font-bold text-green-700 uppercase">Êxito Final</span>
+                                <span className="text-sm font-black text-green-900 mt-1">{formatMoney(financials.totalFinalFee)}</span>
+                             </div>
+                           )}
+                           {financials.totalFixedMonthly > 0 && (
+                             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase">Fixo Mensal</span>
+                                <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalFixedMonthly)}</span>
+                             </div>
+                           )}
+                           {financials.totalOtherFees > 0 && (
+                             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase">Outros Honorários</span>
+                                <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalOtherFees)}</span>
+                             </div>
+                           )}
+                           
+                           {/* Exibir Extras de Percentual se houver */}
+                           {(contract.final_success_percent || ((contract as any).percent_extras && (contract as any).percent_extras.length > 0)) && (
+                             <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 flex flex-col">
+                                <span className="text-[10px] font-bold text-yellow-700 uppercase">Valores em %</span>
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  {contract.final_success_percent && <span className="text-xs font-black text-yellow-900">{contract.final_success_percent} (Final)</span>}
+                                  {(contract as any).percent_extras && Array.isArray((contract as any).percent_extras) && (contract as any).percent_extras.map((val: string, idx: number) => (
+                                    <span key={idx} className="text-xs font-black text-yellow-900">{val} (Extra)</span>
+                                  ))}
+                                </div>
+                             </div>
+                           )}
+                         </div>
+                       </div>
+
+                       {/* Box 2: Totais e Pagamentos */}
+                       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm flex flex-col">
+                         <div className="bg-[#1e3a8a] px-4 py-3 text-xs font-bold text-white uppercase text-center">
+                            Saldo e Totais
+                         </div>
+                         <div className="p-4 flex-1 flex flex-col gap-4">
+                           <div className="text-center">
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total do Contrato</p>
+                              <p className="text-2xl font-black text-[#0a192f] mt-1">{formatMoney(financials.grandTotal)}</p>
+                           </div>
+                           
+                           {contract.status === 'active' && (
+                             <>
+                               <div className="h-px bg-gray-100 w-full" />
+                               <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                 <span className="text-xs font-bold text-gray-600">Total Pago:</span>
+                                 <span className="text-sm font-bold text-green-600">{formatMoney(totalPaid)}</span>
+                               </div>
+                               <div className="flex justify-between items-center bg-red-50 p-2 rounded-lg border border-red-100">
+                                 <span className="text-xs font-bold text-red-600">Falta Quitar:</span>
+                                 <span className="text-sm font-bold text-red-700">{formatMoney(financials.lackToPay)}</span>
+                               </div>
+                             </>
+                           )}
+                         </div>
+                       </div>
+
+                     </div>
+                  </div>
+                )}
+
+                {/* Sub-lista de Objetos do Resumo */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-black/5 pb-2">Objetos da Ação (Resumo)</h3>
+                  {(!processes || processes.length === 0) ? (
+                    <p className="text-sm text-gray-400 italic">Nenhum processo vinculado.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                      {processes.map((proc, idx) => (
+                        <div key={idx} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2">
+                          <div className="font-mono font-bold text-salomao-blue text-xs flex items-center">
+                            <Scale className="w-4 h-4 mr-2" />
+                            {proc.process_number}
+                          </div>
+                          <div className="text-gray-700 font-medium text-sm flex items-center">
+                            Adverso: <span className="font-bold ml-1">{proc.opponent || '-'}</span>
+                          </div>
+                          <div className="text-gray-500 text-xs bg-gray-50 p-2 rounded border border-gray-100 mt-1 inline-flex w-fit max-w-full">
+                            <span className="truncate">{proc.court || '-'} • {proc.uf || '-'} • {proc.vara || '-'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {renderTimeline()}
+              </div>
+            )}
+
+            {/* ABA 1: DADOS DO CLIENTE */}
+            {activeTab === 1 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-black/5 pb-2">Dados do Cliente</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs text-gray-400 block font-bold uppercase tracking-wider">Documento (CNPJ/CPF)</label>
+                      <div className="text-gray-800 font-mono font-bold mt-1 text-base">{contract.cnpj || 'Não informado'}</div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 block font-bold uppercase tracking-wider">Nome do Cliente</label>
+                      <div className="text-gray-800 font-bold mt-1 text-base">{contract.client_name}</div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 block font-bold uppercase tracking-wider">Área do Direito</label>
+                      <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
+                        <Briefcase className="w-4 h-4 text-salomao-blue" /> {contract.area || '-'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs text-gray-400 block font-bold uppercase tracking-wider">Responsável Principal</label>
+                      <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
+                        <User className="w-4 h-4 text-salomao-blue" /> {contract.partner_name || '-'}
+                      </div>
+                    </div>
+                    {contract.co_partner_ids && contract.co_partner_ids.length > 0 && (
+                      <div>
+                        <label className="text-xs text-gray-400 block font-bold uppercase tracking-wider">Sócios Adicionais</label>
+                        <div className="mt-1 text-sm font-medium text-gray-600 bg-gray-50 p-2 rounded border border-gray-100">
+                          Quantidade: {contract.co_partner_ids.length} sócio(s) adicional(is)
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <label className="text-xs text-gray-400 block font-bold uppercase tracking-wider">Localidade</label>
+                      <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
+                        <MapPin className="w-4 h-4 text-gray-500" /> {contract.uf || '-'} {contract.billing_location ? `(Faturamento: ${contract.billing_location})` : ''}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ABA 2: STATUS & VALORES */}
+            {activeTab === 2 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-black/5 pb-2">Status & Condições</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div>
+                    <label className="text-xs text-gray-400 block">Status Atual</label>
+                    <div className="mt-2 inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border bg-white border-gray-200">
+                      {getStatusLabel(contract.status)}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 block">Analista</label>
+                    <div className="font-medium text-gray-800 mt-2">{contract.analyzed_by_name || '-'}</div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 block">Assinatura Física?</label>
+                    <div className="font-medium text-gray-800 mt-2">
+                      {contract.physical_signature === true ? 'Sim' : contract.physical_signature === false ? 'Não' : '-'}
+                    </div>
+                  </div>
+                  {(contract as any).reference_text && (
+                    <div className="lg:col-span-4">
+                      <label className="text-xs text-gray-400 block">Referência</label>
+                      <div className="font-medium text-gray-800 mt-2">{contract.reference || (contract as any).reference_text}</div>
+                    </div>
+                  )}
+                  {contract.observations && (
+                    <div className="lg:col-span-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                      <label className="text-xs text-gray-500 block font-bold mb-2">Observações Adicionais</label>
+                      <div className="text-sm text-gray-700 whitespace-pre-wrap">{contract.observations}</div>
+                    </div>
+                  )}
+                </div>
+                {renderTimeline()}
+              </div>
+            )}
+
+            {/* ABA 3: DADOS DO OBJETO */}
+            {activeTab === 3 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-black/5 pb-2">Processos / Objetos ({processes.length})</h3>
+                {(!processes || processes.length === 0) ? (
+                  <p className="text-sm text-gray-400 italic">Nenhum processo detalhado vinculado a este caso.</p>
+                ) : (
+                  <div className="space-y-4">
+                     {processes.map((proc, idx) => (
+                        <div key={idx} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-3">
+                          <div className="flex flex-wrap gap-4 justify-between border-b border-gray-50 pb-3">
+                            <div>
+                               <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Número do Processo</label>
+                               <div className="font-mono font-bold text-salomao-blue text-base">{proc.process_number}</div>
+                            </div>
+                            <div className="text-right">
+                               <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Localização</label>
+                               <div className="font-medium text-gray-700 text-sm">
+                                  {proc.court || '-'} • {proc.uf || '-'} • {proc.vara || '-'}
+                               </div>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Parte Adversa</label>
+                              <div className="font-bold text-gray-800 text-sm mt-1">{proc.opponent || 'Não informada'}</div>
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Posição Cliente</label>
+                              <div className="font-medium text-gray-800 text-sm mt-1">{proc.client_name || contract.client_position || '-'}</div>
+                            </div>
+                          </div>
+                        </div>
+                     ))}
                   </div>
                 )}
               </div>
-            </div>
+            )}
 
-            {/* Coluna 2: Financeiro */}
-            <div className="space-y-6">
-              {financials.showTotals && (
-                <>
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2 flex items-center justify-between">
-                    Financeiro
-                    <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200">Consolidado</span>
-                  </h3>
-
-                  <div className="space-y-4">
-                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                      <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase flex items-center">
-                        <Calculator className="w-3 h-3 mr-2" /> Composição de Honorários
-                      </div>
-
-                      <div className="divide-y divide-gray-100">
-                        {/* TIMESHEET INDICATOR */}
-                        {contract.timesheet && (
-                          <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50 bg-purple-50/30 border-l-4 border-purple-400">
-                            <div>
-                              <p className="text-xs font-bold text-purple-700">Honorários por Timesheet</p>
-                              <span className="text-[10px] text-purple-500">Cobrança baseada em horas</span>
-                            </div>
-                            <Clock className="w-4 h-4 text-purple-600" />
-                          </div>
-                        )}
-
-                        {/* Pró-Labore */}
-                        <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50">
-                          <div>
-                            <p className="text-xs font-medium text-gray-600">Pró-Labore</p>
-                            {financials.hasProLaboreExtras && <span className="text-[10px] text-gray-400">(Inclui extras)</span>}
-                          </div>
-                          <span className="text-sm font-bold text-gray-800">{formatMoney(financials.totalProLabore)}</span>
-                        </div>
-
-                        {/* Êxito Intermediário */}
-                        {(financials.hasIntermediate) && (
-                          <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50 bg-blue-50/30">
-                            <div>
-                              <p className="text-xs font-medium text-blue-600">Êxito Intermediário</p>
-                              <span className="text-sm font-bold text-blue-800">{formatMoney(financials.intermediateTotal)}</span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Êxito Final */}
-                        <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50 bg-green-50/30">
-                          <div>
-                            <p className="text-xs font-medium text-green-600">Êxito Final (Valor)</p>
-                            {financials.hasFinalFeeExtras && <span className="text-[10px] text-green-500">(Inclui extras)</span>}
-                          </div>
-                          <span className="text-sm font-bold text-green-800">{formatMoney(financials.totalFinalFee)}</span>
-                        </div>
-
-                        {/* Outros Honorários */}
-                        {(financials.hasOther) && (
-                          <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50">
-                            <div>
-                              <p className="text-xs font-medium text-gray-600">Outros Honorários</p>
-                              {financials.hasOtherFeesExtras && <span className="text-[10px] text-gray-400">(Inclui extras)</span>}
-                            </div>
-                            <span className="text-sm font-bold text-gray-800">{formatMoney(financials.totalOtherFees)}</span>
-                          </div>
-                        )}
-
-                        {/* Fixo Mensal */}
-                        {(financials.hasFixed) && (
-                          <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50">
-                            <div>
-                              <p className="text-xs font-medium text-gray-600">Fixo Mensal</p>
-                              {financials.hasFixedMonthlyExtras && <span className="text-[10px] text-gray-400">(Inclui extras)</span>}
-                            </div>
-                            <span className="text-sm font-bold text-gray-800">{formatMoney(financials.totalFixedMonthly)}</span>
-                          </div>
-                        )}
-
-                        {/* TOTAL GERAL */}
-                        <div className="px-4 py-4 bg-gray-50 flex justify-between items-center border-t border-gray-200">
-                          <p className="text-sm font-black text-gray-800 uppercase">Total Geral</p>
-                          <span className="text-lg font-black text-salomao-blue">{formatMoney(financials.grandTotal)}</span>
-                        </div>
-                      </div>
-
-                      {(contract.final_success_percent || (contract as any).percent_extras) && (
-                        <div className="px-4 py-2 bg-yellow-50 border-t border-yellow-100 flex flex-wrap gap-2 items-center">
-                          <span className="text-[10px] font-bold text-yellow-700 uppercase">Êxito (%):</span>
-                          {contract.final_success_percent && <span className="text-xs font-bold text-yellow-800 bg-white px-2 py-0.5 rounded border border-yellow-200">{contract.final_success_percent} (Final)</span>}
-
-                          {/* Exibir Extras de Percentual se houver */}
-                          {(contract as any).percent_extras && Array.isArray((contract as any).percent_extras) && (contract as any).percent_extras.map((val: string, idx: number) => (
-                            <span key={idx} className="text-xs font-bold text-yellow-800 bg-white px-2 py-0.5 rounded border border-yellow-200">{val}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+            {/* ABA 4: GED (Arquivos) */}
+            {activeTab === 4 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-black/5 pb-2">Gestão Eletrônica de Documentos</h3>
+                {documents.length === 0 ? (
+                  <div className="text-center py-10 border border-dashed border-gray-200 rounded-xl bg-gray-50">
+                     <Paperclip className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                     <p className="text-sm text-gray-500 font-medium">Nenhum documento anexado.</p>
                   </div>
-                </>
-              )}
-            </div>
-
-            {/* Coluna 3: Processos */}
-            <div className="space-y-6">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2">Processos ({processes.length})</h3>
-              {(!processes || !Array.isArray(processes) || processes.length === 0) ? (
-                <p className="text-sm text-gray-400 italic">Nenhum processo vinculado.</p>
-              ) : (
-                <div className="space-y-3">
-                  {processes.map((proc, idx) => (
-                    <div key={idx} className="bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm hover:bg-gray-100 transition-colors flex flex-col gap-1">
-                      <div className="font-mono font-bold text-salomao-blue text-xs flex items-center">
-                        <CheckCircle2 className="w-3 h-3 mr-1.5 text-gray-400" />
-                        {proc.process_number}
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {documents.map((doc) => (
+                      <div key={doc.id} className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm flex flex-col justify-between group hover:border-salomao-blue transition-colors">
+                         <div className="flex items-start gap-3 mb-4">
+                           <div className="p-2 bg-blue-50 text-salomao-blue rounded-lg">
+                             <FileText className="w-5 h-5" />
+                           </div>
+                           <div className="min-w-0 flex-1">
+                             <p className="text-xs font-bold text-gray-800 truncate" title={doc.file_name}>{doc.file_name}</p>
+                             <p className="text-[10px] text-gray-400 mt-1 uppercase">{doc.file_type || 'Documento'}</p>
+                           </div>
+                         </div>
+                         <button 
+                           onClick={(e) => handleDownload(e, doc)} 
+                           className="w-full flex items-center justify-center gap-2 py-2 bg-gray-50 hover:bg-salomao-blue hover:text-white text-gray-600 rounded-lg text-xs font-bold transition-colors"
+                         >
+                           <Download className="w-3.5 h-3.5" /> Baixar Anexo
+                         </button>
                       </div>
-                      <div className="text-gray-700 font-medium text-xs ml-4">{proc.opponent}</div>
-                      <div className="text-gray-500 text-[10px] ml-4">{proc.court} • {proc.uf} • {proc.vara || 'Vara não inf.'}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {contract.observations && (
-            <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
-              <h4 className="text-xs font-bold text-yellow-700 uppercase mb-2 flex items-center">
-                <FileText className="w-4 h-4 mr-1" /> Observações
-              </h4>
-              <p className="text-sm text-yellow-900 leading-relaxed">{contract.observations}</p>
-            </div>
-          )}
-
-          {/* SECTION INFERIOR: TIMELINE EXPANDIDA (FULL WIDTH) */}
-          <div className="border-t border-gray-100 pt-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">
-                <HistoryIcon className="w-4 h-4 mr-2" /> Timeline (Datas do Processo)
-              </h3>
-            </div>
-
-            {timelineEvents.length > 0 ? (
-              <div className="flex items-stretch overflow-x-auto pb-4 px-2 space-x-2 scrollbar-thin scrollbar-thumb-gray-200 w-full">
-                {Array.isArray(timelineEvents) && timelineEvents.map((event, idx) => {
-                  const isLast = idx === timelineEvents.length - 1;
-                  const nextEvent = !isLast ? timelineEvents[idx + 1] : null;
-
-                  const durationToNext = nextEvent
-                    ? getDurationBetween(event.date, nextEvent.date)
-                    : null;
-
-                  return (
-                    <React.Fragment key={idx}>
-                      <div className="flex-shrink-0 flex flex-col h-full min-w-[200px] flex-1">
-                        {/* Card do Evento */}
-                        <div className={`flex-1 flex flex-col justify-between bg-white p-4 rounded-xl border shadow-sm transition-all w-full text-center relative ${event.status === contract.status ? 'border-salomao-blue ring-1 ring-salomao-blue/20 shadow-md' : 'border-gray-100 hover:border-blue-200'}`}>
-                          <div>
-                            <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border mb-3 ${event.color}`}>
-                              {event.label}
-                            </span>
-                            <p className="text-sm font-bold text-gray-700 flex items-center justify-center gap-1.5">
-                              <CalendarCheck className="w-4 h-4 text-gray-400" />
-                              {safeDate(event.date)?.toLocaleDateString('pt-BR') || '-'}
-                            </p>
-                          </div>
-
-                          <div className="space-y-2 mt-3">
-                            {/* Mostrar Duração Total dentro do card Active (Contrato Fechado) */}
-                            {event.status === 'active' && (
-                              <div className="flex items-center justify-center text-[10px] text-green-700 bg-green-50 px-2 py-1 rounded-lg border border-green-100 w-full font-medium">
-                                <Hourglass className="w-3 h-3 mr-1" />
-                                Total: {getTotalDuration()}
-                              </div>
-                            )}
-
-                            {durationToNext && (
-                              <div className="flex items-center justify-center text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 w-full mx-auto">
-                                <Clock className="w-3 h-3 mr-1" />
-                                {durationToNext}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {!isLast && (
-                        <div className="flex-shrink-0 text-gray-300 self-center">
-                          <ChevronsRight className="w-6 h-6" />
-                        </div>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl text-gray-400 text-sm">
-                Nenhuma data interna (Prospect, Proposta, etc.) preenchida.
+                    ))}
+                  </div>
+                )}
               </div>
             )}
-          </div>
 
+          </div>
         </div>
       </div>
     </div >
