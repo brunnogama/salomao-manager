@@ -12,16 +12,14 @@ export interface LegalProcessFormProps {
     isStandardCNJ: boolean;
     setIsStandardCNJ: (v: boolean) => void;
     otherProcessType: string;
-    setOtherProcessType: (v: string) => void;
     duplicateProcessData: any | null;
-    searchingCNJ: boolean;
-    handleCNJSearch: () => void;
     handleOpenJusbrasil: () => void;
     ufOptions: { label: string; value: string }[];
     opponentOptions: string[];
     duplicateOpponentCases: any[];
     editingProcessIndex: number | null;
     handleProcessAction: () => void;
+    cancelEditProcess?: () => void;
     localMaskCNJ: (v: string) => string;
     setActiveManager: (v: string) => void;
     clientSelectOptions?: { label: string; value: string }[];
@@ -32,9 +30,9 @@ export interface LegalProcessFormProps {
 export function LegalProcessForm(props: LegalProcessFormProps) {
     const {
         currentProcess, setCurrentProcess, isStandardCNJ, setIsStandardCNJ,
-        otherProcessType, setOtherProcessType, duplicateProcessData, searchingCNJ, handleCNJSearch, handleOpenJusbrasil,
+        otherProcessType, setOtherProcessType, duplicateProcessData, handleOpenJusbrasil,
         ufOptions, opponentOptions, duplicateOpponentCases,
-        editingProcessIndex, handleProcessAction, localMaskCNJ, setActiveManager,
+        editingProcessIndex, handleProcessAction, cancelEditProcess, localMaskCNJ, setActiveManager,
         opponentCnpjMap
     } = props;
     const [localOpponentCNPJ, setLocalOpponentCNPJ] = React.useState('');
@@ -160,6 +158,7 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
 
     // Se nenhum tipo está preenchido, não mostra o form
     const isEditingMode = editingProcessIndex !== null;
+    const isJudicial = otherProcessType === 'Processo Judicial' || (isEditingMode && (!otherProcessType || otherProcessType === 'Processo Judicial' || (currentProcess.process_number && currentProcess.process_number.length >= 15)));
     const showForm = isEditingMode || !!otherProcessType;
     const isSpecialCase = ['Consultoria', 'Assessoria Jurídica', 'Processo Administrativo', 'Outros'].includes(otherProcessType) && otherProcessType !== '';
 
@@ -180,98 +179,74 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
             {showForm && (
                 <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm animate-in slide-in-from-top-4 duration-300 relative">
                     {/* Header: Titulo + Fechar */}
-                    {!isEditingMode && (
-                         <div className="flex justify-between flex-row items-center border-b border-gray-100 pb-3 mb-4">
-                            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
-                                {otherProcessType === 'Processo Judicial' ? 'Novo Processo Judicial' : `Novo(a) ${otherProcessType}`}
-                            </h3>
-                            <button
-                                onClick={() => {
-                                    setOtherProcessType('');
-                                    setCurrentProcess({ process_number: '', uf: '', opponent: '', client_name: '' });
-                                }}
-                                className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                                title="Cancelar"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-                    )}
-                    
-                    {isEditingMode && (
-                        <h3 className="text-sm font-bold text-salomao-blue uppercase tracking-wider mb-4 border-b border-gray-100 pb-3">Editar Processo</h3>
-                    )}
+                    <div className="flex justify-between flex-row items-center border-b border-gray-100 pb-3 mb-4">
+                        <h3 className={`text-sm font-bold uppercase tracking-wider ${isEditingMode ? 'text-salomao-blue' : 'text-gray-700'}`}>
+                            {isEditingMode ? 'Editar Processo' : (otherProcessType === 'Processo Judicial' ? 'Novo Processo Judicial' : `Novo(a) ${otherProcessType}`)}
+                        </h3>
+                        <button
+                            onClick={() => {
+                                if (cancelEditProcess) {
+                                    cancelEditProcess();
+                                }
+                                setOtherProcessType('');
+                                setCurrentProcess({ process_number: '', uf: '', opponent: '', client_name: '' } as any);
+                            }}
+                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                            title={isEditingMode ? "Cancelar Edição" : "Cancelar"}
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
 
                     <div className="space-y-4">
-                        {/* Linha 1: Número */}
-                        {(otherProcessType === 'Processo Judicial' || (isEditingMode && (!otherProcessType || otherProcessType === 'Processo Judicial' || (currentProcess.process_number && currentProcess.process_number.length >= 15)))) ? (
-                            <div className="w-full">
-                                <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between mb-1">
-                                    Número do Processo *
-                                    {currentProcess.process_number && isStandardCNJ && (<button onClick={handleOpenJusbrasil} className="text-[10px] text-blue-500 hover:underline flex items-center" title="Abrir no Jusbrasil"><LinkIcon className="w-3 h-3 mr-1" /> Ver Externo</button>)}
+                        {/* Linha 1: Número e UF */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <div className="col-span-12 md:col-span-8">
+                                <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between items-end mb-1">
+                                    <span>{isJudicial ? 'Número do Processo *' : (isSpecialCase ? 'Identificação / Assunto *' : 'Número do Processo *')}</span>
+                                    {currentProcess.process_number && isStandardCNJ && isJudicial && (<button onClick={handleOpenJusbrasil} className="text-[10px] text-blue-500 hover:underline flex items-center" title="Abrir no Jusbrasil"><LinkIcon className="w-3 h-3 mr-1" /> Ver Externo</button>)}
                                 </label>
                                 <div className="flex items-center">
                                     <div className="flex-1 relative">
                                         <input
                                             type="text"
-                                            className={`w-full border-b ${duplicateProcessData ? 'border-orange-300 bg-orange-50 text-orange-900' : 'border-gray-300'} focus:border-salomao-blue outline-none py-2 text-sm font-mono pr-8 bg-white`}
-                                            placeholder={"0000000-00.0000.0.00.0000"}
+                                            className={`w-full border-b ${duplicateProcessData ? 'border-orange-300 bg-orange-50 text-orange-900' : 'border-gray-300'} focus:border-salomao-blue outline-none py-2 text-sm ${isJudicial ? 'font-mono pr-20' : 'font-medium'} bg-white`}
+                                            placeholder={isJudicial ? "0000000-00.0000.0.00.0000" : (isSpecialCase ? "Descreva o assunto para identificação..." : "Digite o número...")}
                                             value={currentProcess.process_number || ''}
-                                            onChange={(e) => setCurrentProcess({ ...currentProcess, process_number: localMaskCNJ(e.target.value) })}
-                                            autoFocus
+                                            onChange={(e) => setCurrentProcess({ ...currentProcess, process_number: isJudicial ? localMaskCNJ(e.target.value) : e.target.value })}
+                                            autoFocus={!isEditingMode}
                                         />
-                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center pr-1 gap-1">
-                                            {/* Preenchimento Mágico (IA) */}
-                                            <button 
-                                                onClick={handleMagicFill} 
-                                                disabled={isMagicFilling || !currentProcess.process_number || currentProcess.process_number.length < 20} 
-                                                className="text-indigo-500 hover:text-indigo-700 disabled:opacity-30 p-1.5 transition-colors bg-indigo-50 rounded"
-                                                title="Preencher com Inteligência Artificial (ChatGPT)"
-                                            >
-                                                {isMagicFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
-                                            </button>
-                                            
-                                            {/* Lupa Nativa */}
-                                            <button 
-                                                onClick={handleCNJSearch} 
-                                                disabled={searchingCNJ || !currentProcess.process_number || currentProcess.process_number.length < 20} 
-                                                className="text-salomao-blue hover:text-salomao-gold disabled:opacity-30 p-1.5 transition-colors"
-                                                title="Pesquisar Partes no Datajud"
-                                            >
-                                                {searchingCNJ ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                                            </button>
-                                        </div>
+                                        {isJudicial && (
+                                            <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center pr-1">
+                                                {/* Preenchimento Mágico (IA) Destaque */}
+                                                <button 
+                                                    onClick={handleMagicFill} 
+                                                    disabled={isMagicFilling || !currentProcess.process_number || currentProcess.process_number.length < 20} 
+                                                    className="text-white hover:bg-indigo-700 disabled:opacity-50 px-2.5 py-1.5 transition-all bg-indigo-600 rounded-lg shadow-sm flex items-center gap-1.5 font-bold text-xs group"
+                                                    title="Preencher com Inteligência Artificial"
+                                                >
+                                                    {isMagicFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4 group-hover:scale-110 transition-transform" />}
+                                                    <span className="hidden sm:inline">IA</span>
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                                {duplicateProcessData && (
+                                {isSpecialCase && !isJudicial && <p className="text-[10px] text-gray-400 mt-1">Este campo substitui o número do processo.</p>}
+                                {duplicateProcessData && isJudicial && (
                                     <div className="text-[10px] text-orange-700 mt-2 flex items-center font-bold bg-orange-50 border border-orange-200 p-1.5 rounded animate-in slide-in-from-top-1">
                                         <AlertTriangle className="w-3 h-3 mr-1.5 flex-shrink-0" />
                                         <span>Já cadastrado em: <a href={`/contracts/${duplicateProcessData.contract_id || duplicateProcessData.id}`} target="_blank" rel="noreferrer" className="ml-1 underline hover:text-orange-900">{duplicateProcessData.contracts?.client_name || duplicateProcessData.client_name}</a></span>
                                     </div>
                                 )}
                             </div>
-                        ) : (
-                            <div className="w-full">
-                                <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between mb-1">
-                                    {isSpecialCase ? 'Identificação / Assunto *' : 'Número do Processo *'}
-                                </label>
-                                <input
-                                    type="text"
-                                    className="w-full border-b border-gray-300 focus:border-salomao-blue outline-none py-2 text-sm font-medium bg-white"
-                                    placeholder={isSpecialCase ? "Descreva o assunto para identificação..." : "Digite o número..."}
-                                    value={currentProcess.process_number || ''}
-                                    onChange={(e) => setCurrentProcess({ ...currentProcess, process_number: e.target.value })}
-                                    autoFocus={!isEditingMode}
-                                />
-                                {isSpecialCase && <p className="text-[10px] text-gray-400 mt-1">Este campo substitui o número do processo.</p>}
-                            </div>
-                        )}
-
-                        {/* Linha 2 e 3 (Combinada): UF e Contrário */}
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                            <div className="col-span-12 md:col-span-3">
+                            <div className="col-span-12 md:col-span-4 flex flex-col justify-end">
                                 <CustomSelect label="Estado (UF) *" value={currentProcess.uf || ''} onChange={(val: string) => setCurrentProcess({ ...currentProcess, uf: val })} options={ufOptions} placeholder="UF" />
                             </div>
+                        </div>
+
+                        {/* Linha 2 e 3 (Combinada): Contrário */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                             <div className="col-span-12 md:col-span-4">
                                 <label className="text-[10px] text-gray-500 uppercase font-bold flex justify-between items-center mb-1">
                                     <span>Buscar Contrário por CNPJ</span>

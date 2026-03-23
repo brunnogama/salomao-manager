@@ -31,14 +31,14 @@ const UFS = [{ sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { 
 interface Props {
   isOpen: boolean; onClose: () => void; formData: Contract; setFormData: React.Dispatch<React.SetStateAction<Contract>>; onSave: () => void; loading: boolean; isEditing: boolean;
   partners: Partner[]; onOpenPartnerManager: () => void; analysts: Analyst[]; onOpenAnalystManager: () => void;
-  onCNPJSearch: () => void; processes: ContractProcess[]; currentProcess: ContractProcess; setCurrentProcess: React.Dispatch<React.SetStateAction<ContractProcess>>; editingProcessIndex: number | null; handleProcessAction: () => void; editProcess: (idx: number) => void; removeProcess: (idx: number) => void; newIntermediateFee: string; setNewIntermediateFee: (v: string) => void; addIntermediateFee: () => void; removeIntermediateFee: (idx: number) => void; timelineData: TimelineEvent[]; getStatusColor: (s: string) => string; getStatusLabel: (s: string) => string;
+  onCNPJSearch: () => void; processes: ContractProcess[]; currentProcess: ContractProcess; setCurrentProcess: React.Dispatch<React.SetStateAction<ContractProcess>>; editingProcessIndex: number | null; handleProcessAction: () => void; cancelEditProcess?: () => void; editProcess: (idx: number) => void; removeProcess: (idx: number) => void; newIntermediateFee: string; setNewIntermediateFee: (v: string) => void; addIntermediateFee: () => void; removeIntermediateFee: (idx: number) => void; timelineData: TimelineEvent[]; getStatusColor: (s: string) => string; getStatusLabel: (s: string) => string;
 }
 
 export function ContractFormModal(props: Props) {
   const {
     isOpen, onClose, formData, setFormData, onSave, loading: parentLoading, isEditing,
     partners, onOpenPartnerManager, analysts, onOpenAnalystManager,
-    processes, currentProcess, setCurrentProcess, editingProcessIndex, handleProcessAction, editProcess, removeProcess,
+    processes, currentProcess, setCurrentProcess, editingProcessIndex, handleProcessAction, cancelEditProcess, editProcess, removeProcess,
     newIntermediateFee, setNewIntermediateFee, addIntermediateFee, removeIntermediateFee, getStatusLabel
   } = props;
 
@@ -787,6 +787,7 @@ export function ContractFormModal(props: Props) {
                     duplicateOpponentCases={duplicateOpponentCases}
                     editingProcessIndex={editingProcessIndex}
                     handleProcessAction={handleProcessAction}
+                    cancelEditProcess={cancelEditProcess}
                     localMaskCNJ={localMaskCNJ}
                     setActiveManager={setActiveManager}
                     duplicateProcessData={duplicateProcessData}

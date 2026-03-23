@@ -281,6 +281,23 @@ export function Contracts() {
     setEditingProcessIndex(idx);
   };
 
+  const cancelEditProcess = () => {
+    setEditingProcessIndex(null);
+    setCurrentProcess({
+      process_number: '',
+      opponent: '',
+      court: '',
+      vara: '',
+      uf: '',
+      position: '',
+      author: '',
+      subject: '',
+      magistrates: [],
+      cause_value: '',
+      value_of_cause: 0
+    });
+  };
+
   const removeProcess = (idx: number) => {
     setProcesses(processes.filter((_, i) => i !== idx));
   };
@@ -844,6 +861,7 @@ export function Contracts() {
         setCurrentProcess={setCurrentProcess}
         editingProcessIndex={editingProcessIndex}
         handleProcessAction={handleProcessAction}
+        cancelEditProcess={cancelEditProcess}
         editProcess={editProcess}
         removeProcess={removeProcess}
         newIntermediateFee={newIntermediateFee}
