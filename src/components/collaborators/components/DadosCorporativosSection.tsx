@@ -241,18 +241,28 @@ export function DadosCorporativosSection({
 
               <div className="md:col-span-1 flex flex-col justify-center">
                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Líder de Equipe</label>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-3 mt-1">
                   <input
                     type="checkbox"
                     id="is_team_leader"
-                    className={`w-4 h-4 text-[#1e3a8a] bg-white border-gray-300 rounded focus:ring-[#1e3a8a] focus:ring-2 ${isViewMode ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
+                    className={`w-4 h-4 text-[#1e3a8a] bg-white border-gray-300 rounded outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
                     checked={!!formData.is_team_leader}
                     onChange={e => setFormData({ ...formData, is_team_leader: e.target.checked })}
                     disabled={isViewMode}
                   />
-                  <label htmlFor="is_team_leader" className={`text-sm font-medium text-[#0a192f] select-none ${isViewMode ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
-                    Sim, é Líder de Equipe
-                  </label>
+                  {formData.is_team_leader ? (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] rounded-full shadow-sm border border-blue-800/20 relative group transition-all animate-in zoom-in-95 duration-200">
+                      <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"></div>
+                      <Crown className="w-3.5 h-3.5 text-blue-100 drop-shadow-sm" />
+                      <span className="text-[10px] font-black text-white tracking-widest uppercase drop-shadow-sm select-none">
+                        Líder de Equipe
+                      </span>
+                    </div>
+                  ) : (
+                    <label htmlFor="is_team_leader" className={`text-sm font-medium text-gray-400 select-none ${isViewMode ? 'cursor-not-allowed' : 'cursor-pointer'} hover:text-[#1e3a8a] transition-colors`}>
+                      Marcar como Líder
+                    </label>
+                  )}
                 </div>
               </div>
 
