@@ -151,6 +151,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterTransporteTipo, setAdvFilterTransporteTipo] = useState('');
 
   // Escolares
+  const [advFilterGraduationComplete, setAdvFilterGraduationComplete] = useState<'sim' | 'nao' | ''>('');
+  const [advFilterPostGraduationComplete, setAdvFilterPostGraduationComplete] = useState<'sim' | 'nao' | ''>('');
+  
   const [advFilterGraduationExpected, setAdvFilterGraduationExpected] = useState('');
   const [advFilterGraduationCompletion, setAdvFilterGraduationCompletion] = useState('');
   const [advFilterGraduationUF, setAdvFilterGraduationUF] = useState('');
@@ -230,6 +233,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setAdvFilterPartnerType('');
     setAdvFilterLocal('');
     setAdvFilterTransporteTipo('');
+    setAdvFilterGraduationComplete('');
+    setAdvFilterPostGraduationComplete('');
     setAdvFilterGraduationComplete('');
     setAdvFilterPostGraduationComplete('');
     setAdvFilterGraduationExpected('');
@@ -336,7 +341,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
     advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
     advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterPartner,
     advFilterLeader, advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterPartnerType, advFilterLocal,
-    advFilterTransporteTipo, advFilterGraduationComplete, advFilterPostGraduationComplete, advFilterExpectedCompletion, advFilterCompletionYear
+    advFilterTransporteTipo, advFilterGraduationComplete, advFilterPostGraduationComplete,
+    advFilterGraduationExpected, advFilterGraduationCompletion, advFilterGraduationUF, advFilterGraduationInstitution,
+    advFilterPostGraduationExpected, advFilterPostGraduationCompletion, advFilterPostGraduationUF, advFilterPostGraduationInstitution
   }).some(val => val !== '');
 
 
