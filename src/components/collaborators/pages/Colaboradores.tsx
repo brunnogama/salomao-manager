@@ -2523,6 +2523,25 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       </div>
                     </div>
 
+                    <div className="flex justify-end mt-8 border-t border-gray-100 pt-6">
+                      <button
+                        onClick={() => {
+                          const tempFiltered = getAdvancedFiltered('');
+                          if (tempFiltered.length > 0) {
+                            const d = new Date();
+                            const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
+                            exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes, fileName: `Colaboradores_Pesquisa_${fd}` });
+                          } else {
+                            alert('Nenhum colaborador encontrado com os filtros informados.');
+                          }
+                        }}
+                        className="flex items-center gap-2 px-8 py-3 bg-[#1e3a8a] text-white rounded-xl font-black uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-lg active:scale-95 text-sm cursor-pointer"
+                      >
+                        <FileSpreadsheet className="h-5 w-5 mr-1" />
+                        Pesquisar e Exportar
+                      </button>
+                    </div>
+
                   </div>
                 </div>
               )}
