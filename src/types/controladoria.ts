@@ -282,6 +282,7 @@ export interface Contract {
   billing_location?: string;
   partner_id?: string;
   partner_name?: string;
+  co_partner_ids?: string[];
   analyst_id?: string;
   analyzed_by_name?: string;
   has_legal_process?: boolean;

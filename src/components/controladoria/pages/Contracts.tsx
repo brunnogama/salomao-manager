@@ -372,6 +372,26 @@ export function Contracts() {
     return matchesSearch && matchesStatus && matchesPartner && matchesDate;
   });
 
+  const getPartnerDisplay = (c: Contract) => {
+    let text = c.partner_name || '-';
+    if (c.co_partner_ids && c.co_partner_ids.length > 0) {
+      const coNames = c.co_partner_ids.map(id => partners.find(p => p.id === id)?.name).filter(Boolean);
+      if (coNames.length > 0) {
+        text += ` + ${coNames.join(', ')}`;
+      }
+    }
+    return text;
+  };
+
+  const getHonDisplay = (c: Contract) => {
+    if (c.status === 'proposal') return c.proposal_code || '-';
+    if (c.status === 'active') {
+      if (!c.hon_number) return '-';
+      return c.hon_number.toUpperCase().startsWith('HON') ? c.hon_number : `HON - ${c.hon_number}`;
+    }
+    return c.hon_number || c.proposal_code || '-';
+  };
+
   const exportToExcel = () => {
     let sumPro = 0;
     let sumOther = 0;
@@ -420,8 +440,8 @@ export function Contracts() {
         c.display_id,
         getStatusLabel(c.status),
         c.client_name,
-        c.partner_name || '-',
-        c.status === 'proposal' ? (c.proposal_code || '-') : c.status === 'active' ? (c.hon_number || '-') : (c.hon_number || c.proposal_code || '-'),
+        getPartnerDisplay(c),
+        getHonDisplay(c),
         safeDate(getRelevantDate(c))?.toLocaleDateString('pt-BR') || '-',
         c.billing_location || '-',
         vPro,
@@ -761,13 +781,9 @@ export function Contracts() {
                         </span>
                       </td>
                       <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
-                      <td className="p-4 text-[11px] font-semibold text-gray-600">{contract.partner_name || '-'}</td>
+                      <td className="p-4 text-[11px] font-semibold text-gray-600 line-clamp-1 truncate max-w-[150px]" title={getPartnerDisplay(contract)}>{getPartnerDisplay(contract)}</td>
                       <td className="p-4 font-mono text-[10px] font-bold text-gray-400">
-                        {contract.status === 'proposal' 
-                          ? contract.proposal_code || '-' 
-                          : contract.status === 'active' 
-                            ? contract.hon_number || '-' 
-                            : contract.hon_number || contract.proposal_code || '-'}
+                        {getHonDisplay(contract)}
                       </td>
                       <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}</td>
                       <td className="p-4">

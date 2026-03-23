@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, Settings, AlertCircle, Link as LinkIcon } from 'lucide-react';
 import { Contract } from '../../../../types/controladoria'; 
 import { CustomSelect } from '../../ui/CustomSelect'; 
+import { CustomMultiSelect } from '../../ui/CustomMultiSelect'; 
 
 interface ClientFormSectionProps {
   formData: Contract;
@@ -88,7 +89,7 @@ export function ClientFormSection(props: ClientFormSectionProps) {
             )}
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div>
             <CustomSelect 
               label="Área do Direito" 
@@ -103,13 +104,25 @@ export function ClientFormSection(props: ClientFormSectionProps) {
           </div>
           <div>
             <CustomSelect 
-              label="Responsável (Sócio) *" 
+              label="Responsável Principal *" 
               value={formData.partner_id || ''} 
               onChange={(val: string) => setFormData({...formData, partner_id: val})} 
               options={partnerSelectOptions} 
               onAction={onOpenPartnerManager} 
               actionIcon={Settings} 
               actionLabel="Gerenciar Sócios" 
+            />
+          </div>
+          <div>
+            <CustomMultiSelect 
+              label="Sócios Adicionais" 
+              values={formData.co_partner_ids || []} 
+              onChange={(vals: string[]) => setFormData({...formData, co_partner_ids: vals})} 
+              options={partnerSelectOptions.filter(o => o.value !== '')} 
+              onAction={onOpenPartnerManager} 
+              actionIcon={Settings} 
+              actionLabel="Gerenciar Sócios" 
+              placeholder="Opcional"
             />
           </div>
         </div>
