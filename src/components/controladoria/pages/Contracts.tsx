@@ -318,6 +318,7 @@ export function Contracts() {
     const matchesSearch =
       c.client_name?.toLowerCase().includes(term) ||
       c.hon_number?.toLowerCase().includes(term) ||
+      c.proposal_code?.toLowerCase().includes(term) ||
       c.cnpj?.includes(term) ||
       c.display_id?.includes(term) ||
       c.observations?.toLowerCase().includes(term) ||
@@ -380,7 +381,7 @@ export function Contracts() {
     let sumTotalSuccess = 0;
 
     const header = [
-      'ID', 'Status', 'Cliente', 'Sócio', 'HON', 'Data Relevante', 'Local Faturamento',
+      'ID', 'Status', 'Cliente', 'Sócio', 'HON/PROP', 'Data Relevante', 'Local Faturamento',
       'Pró-Labore', 'Cláusula Pró-Labore',
       'Outros Honorários', 'Cláusula Outros',
       'Fixo Mensal', 'Cláusula Fixo Mensal',
@@ -420,7 +421,7 @@ export function Contracts() {
         getStatusLabel(c.status),
         c.client_name,
         c.partner_name || '-',
-        c.hon_number || '-',
+        c.status === 'proposal' ? (c.proposal_code || '-') : c.status === 'active' ? (c.hon_number || '-') : (c.hon_number || c.proposal_code || '-'),
         safeDate(getRelevantDate(c))?.toLocaleDateString('pt-BR') || '-',
         c.billing_location || '-',
         vPro,
@@ -745,7 +746,7 @@ export function Contracts() {
                     <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
                     <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
                     <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">HON</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">HON/PROP</th>
                     <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Data</th>
                     <th className="p-4 sticky right-0 bg-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)]">Ações</th>
                   </tr>
@@ -761,7 +762,13 @@ export function Contracts() {
                       </td>
                       <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
                       <td className="p-4 text-[11px] font-semibold text-gray-600">{contract.partner_name || '-'}</td>
-                      <td className="p-4 font-mono text-[10px] font-bold text-gray-400">{contract.hon_number || '-'}</td>
+                      <td className="p-4 font-mono text-[10px] font-bold text-gray-400">
+                        {contract.status === 'proposal' 
+                          ? contract.proposal_code || '-' 
+                          : contract.status === 'active' 
+                            ? contract.hon_number || '-' 
+                            : contract.hon_number || contract.proposal_code || '-'}
+                      </td>
                       <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}</td>
                       <td className="p-4">
                         <div className="flex justify-end gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
