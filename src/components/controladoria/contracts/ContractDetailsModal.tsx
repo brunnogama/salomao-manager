@@ -566,21 +566,31 @@ export function ContractDetailsModal({
                   {(!processes || processes.length === 0) ? (
                     <p className="text-sm text-gray-400 italic">Nenhum processo vinculado.</p>
                   ) : (
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                      {processes.map((proc, idx) => (
-                        <div key={idx} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2">
-                          <div className="font-mono font-bold text-salomao-blue text-xs flex items-center">
-                            <Scale className="w-4 h-4 mr-2" />
-                            {proc.process_number}
+                    <div className="grid grid-cols-1 gap-4">
+                      {processes.map((proc, idx) => {
+                        const summaryContent = localSummaries[proc.process_number] || proc.ia_summary || proc.subject || 'Nenhum resumo ou objeto informado.';
+                        return (
+                          <div key={idx} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-2">
+                              <div className="font-mono font-bold text-salomao-blue text-xs flex items-center">
+                                <Scale className="w-4 h-4 mr-2" />
+                                {proc.process_number}
+                              </div>
+                              <div className="text-gray-500 text-[10px] font-bold uppercase tracking-wider text-right">
+                                {proc.court || '-'} • {proc.uf || '-'} • {proc.vara || '-'}
+                              </div>
+                            </div>
+                            
+                            <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-medium bg-slate-50 border border-slate-100 p-3 rounded-lg">
+                              {summaryContent}
+                            </div>
+                            
+                            <div className="text-[10px] text-gray-500 flex items-center">
+                              Parte Adversa: <strong className="ml-1 text-gray-700">{proc.opponent || '-'}</strong>
+                            </div>
                           </div>
-                          <div className="text-gray-700 font-medium text-sm flex items-center">
-                            Adverso: <span className="font-bold ml-1">{proc.opponent || '-'}</span>
-                          </div>
-                          <div className="text-gray-500 text-xs bg-gray-50 p-2 rounded border border-gray-100 mt-1 inline-flex w-fit max-w-full">
-                            <span className="truncate">{proc.court || '-'} • {proc.uf || '-'} • {proc.vara || '-'}</span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
