@@ -23,6 +23,25 @@ const getLookupName = (list: { id: string | number; name: string }[], id?: strin
     return list.find(i => String(i.id) === String(id))?.name || ''
 }
 
+const parseDateForExcel = (isoDate: string | undefined | null): Date | string => {
+    if (!isoDate) return '';
+    if (isoDate.includes('/')) {
+        const parts = isoDate.split('/');
+        if (parts.length === 3) {
+            return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        }
+        if (parts.length === 2) {
+            return new Date(Number(parts[1]), Number(parts[0]) - 1, 1);
+        }
+        return isoDate;
+    }
+    const cleanDate = isoDate.split('T')[0];
+    const parts = cleanDate.split('-');
+    if (parts.length !== 3) return isoDate;
+    const [y, m, d] = parts;
+    return new Date(Number(y), Number(m) - 1, Number(d));
+};
+
 export const exportColaboradoresXLSX = (options: ExportOptions) => {
     const {
         filtered,
@@ -49,7 +68,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Nome Completo': c.name,
         'CPF': c.cpf,
         'RG': c.rg,
-        'Data Nascimento': formatDateToDisplay(c.birthday),
+        'Data Nascimento': parseDateForExcel(c.birthday),
         'Gênero': c.gender,
         'Estado Civil': c.civil_status,
         'Possui Filhos?': c.has_children ? 'Sim' : 'Não',
@@ -73,8 +92,8 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
 
         'OAB Número': c.oabs?.find((o: any) => o.tipo === 'Principal')?.numero || '',
         'OAB UF': c.oabs?.find((o: any) => o.tipo === 'Principal')?.uf || '',
-        'OAB Emissão': formatDateToDisplay(c.oab_emissao),
-        'OAB Validade': formatDateToDisplay(c.oabs?.find((o: any) => o.tipo === 'Principal')?.validade) || '',
+        'OAB Emissão': parseDateForExcel(c.oab_emissao),
+        'OAB Validade': parseDateForExcel(c.oabs?.find((o: any) => o.tipo === 'Principal')?.validade) || '',
         'Tipo Inscrição OAB': c.oabs?.find((o: any) => o.tipo === 'Principal')?.tipo || '',
 
         'PIS/PASEP': c.pis || c.pis_pasep,
@@ -91,7 +110,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Curso': c.escolaridade_curso,
         'Matrícula Escolar': c.escolaridade_matricula,
         'Semestre': c.escolaridade_semestre,
-        'Previsão Conclusão': formatDateToDisplay(c.escolaridade_previsao_conclusao),
+        'Previsão Conclusão': parseDateForExcel(c.escolaridade_previsao_conclusao),
 
         'Forma de Pagamento': c.forma_pagamento,
         'Nome do Banco': c.banco_nome,
@@ -103,7 +122,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
 
         'Status': c.status === 'active' ? 'Ativo' : 'Inativo',
         'Rateio': getLookupName(rateios, c.rateio_id),
-        'Data Admissão': formatDateToDisplay(c.hire_date),
+        'Data Admissão': parseDateForExcel(c.hire_date),
         'Motivo Contratação': getLookupName(hiringReasons, c.hiring_reason_id),
         'Tipo Contrato': c.contract_type,
         'Email Corporativo': c.email,
@@ -123,7 +142,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Total Volta': c.transportes?.reduce((sum: number, t: any) => sum + (t.volta_valores?.reduce((a: number, b: number) => a + (b || 0), 0) || 0), 0) || 0,
         'Custo Total Transporte': c.transportes?.reduce((sum: number, t: any) => sum + (t.ida_valores?.reduce((a: number, b: number) => a + (b || 0), 0) || 0) + (t.volta_valores?.reduce((a: number, b: number) => a + (b || 0), 0) || 0), 0) || 0,
 
-        'Data Desligamento': formatDateToDisplay(c.termination_date),
+        'Data Desligamento': parseDateForExcel(c.termination_date),
         'Iniciativa Desligamento': getLookupName(terminationInitiatives, c.termination_initiative_id),
         'Tipo Desligamento': getLookupName(terminationTypes, c.termination_type_id),
         'Motivo Desligamento': getLookupName(terminationReasons, c.termination_reason_id),
@@ -137,7 +156,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         ? `${options.fileName}.xlsx`
         : `Colaboradores_${formattedDate}_${formattedTime}.xlsx`;
 
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const ws = XLSX.utils.json_to_sheet(dataToExport, { cellDates: true, dateNF: 'dd/mm/yyyy' });
 
     // Apply Styles
     // Range gives us the dimensions Ex: "A1:Z100"
@@ -191,8 +210,8 @@ export const exportVTXLSX = (options: ExportOptions) => {
         return {
             'Nome (do colaborador)': c.name,
             'Líder Direto': lider,
-            'Previsão de Formatura': formatMonthYearDateToDisplay(c.previsao_formatura) || '-',
-            'Término Contrato': formatDateToDisplay(c.termino_contrato_estagio) || '-',
+            'Previsão de Formatura': parseDateForExcel(c.previsao_formatura) || '-',
+            'Término Contrato': parseDateForExcel(c.termino_contrato_estagio) || '-',
             'Bolsa': c.bolsa_valor || '-',
             'Transporte': transporte,
             'VR': c.vr_valor || '-',
@@ -209,7 +228,7 @@ export const exportVTXLSX = (options: ExportOptions) => {
         ? `${options.fileName}.xlsx`
         : `Custo_Vale_Transporte_${formattedDate}.xlsx`;
 
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const ws = XLSX.utils.json_to_sheet(dataToExport, { cellDates: true, dateNF: 'dd/mm/yyyy' });
 
     // Auto-width for columns
     const wscols = Object.keys(dataToExport[0] || {}).map(() => ({ wch: 20 }));
