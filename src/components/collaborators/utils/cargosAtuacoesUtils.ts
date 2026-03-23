@@ -19,6 +19,7 @@ export const CARGOS_ADMINISTRATIVA = [
   'Analista Financeiro',
   'Analista Fiscal',
   'Auxiliar Administrativo',
+  'Auxiliar de RH',
   'Auxiliar de Serviços Gerais',
   'Consultor de Marketing',
   'Controller',
