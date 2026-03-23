@@ -24,8 +24,8 @@ export interface LegalProcessFormProps {
     handleProcessAction: () => void;
     localMaskCNJ: (v: string) => string;
     setActiveManager: (v: string) => void;
-    clientSelectOptions: { label: string; value: string }[];
-    clientCnpjMap: Record<string, string>;
+    clientSelectOptions?: { label: string; value: string }[];
+    clientCnpjMap?: Record<string, string>;
     opponentCnpjMap: Record<string, string>;
 }
 
@@ -37,36 +37,9 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
         editingProcessIndex, handleProcessAction, localMaskCNJ, setActiveManager,
         clientSelectOptions, clientCnpjMap, opponentCnpjMap
     } = props;
-
-    // Local state to hold the CNPJ being typed for search
-    const [localCNPJ, setLocalCNPJ] = React.useState('');
-    const [searchingClient, setSearchingClient] = React.useState(false);
-    const [hasNoClientCnpj, setHasNoClientCnpj] = React.useState(false);
-
     const [localOpponentCNPJ, setLocalOpponentCNPJ] = React.useState('');
     const [searchingOpponent, setSearchingOpponent] = React.useState(false);
     const [hasNoOpponentCnpj, setHasNoOpponentCnpj] = React.useState(false);
-
-    // Simple auto-fill for existing clients list when CNPJ is typed (as a simulated search, though we might not have CNPJ in clientSelectOptions directly unless we fetch it. Usually it fetches from public API)
-    const handleClientCNPJSearch = async () => {
-        if (!localCNPJ) return;
-        setSearchingClient(true);
-        try {
-            const cleanCNPJ = localCNPJ.replace(/\D/g, '');
-            const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCNPJ}`);
-            if (response.ok) {
-                const data = await response.json();
-                const name = data.razao_social || data.nome_fantasia;
-                if (name) {
-                    setCurrentProcess(prev => ({ ...prev, client_name: name }));
-                }
-            }
-        } catch (error) {
-            console.error('Erro ao buscar CNPJ:', error);
-        } finally {
-            setSearchingClient(false);
-        }
-    };
 
     const handleOpponentCNPJSearch = async () => {
         if (!localOpponentCNPJ || hasNoOpponentCnpj) return;
@@ -131,17 +104,6 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
             setIsMagicFilling(false);
         }
     };
-
-    // Auto-fill CNPJ when Client is selected from the dropdown
-    React.useEffect(() => {
-        if (hasNoClientCnpj) {
-            setLocalCNPJ('');
-        } else if (currentProcess.client_name && clientCnpjMap[currentProcess.client_name]) {
-            setLocalCNPJ(maskCNPJ(clientCnpjMap[currentProcess.client_name]));
-        } else if (!currentProcess.client_name) {
-            setLocalCNPJ('');
-        }
-    }, [currentProcess.client_name, clientCnpjMap, hasNoClientCnpj]);
 
     // Auto-fill CNPJ when Opponent is selected from the dropdown
     React.useEffect(() => {
