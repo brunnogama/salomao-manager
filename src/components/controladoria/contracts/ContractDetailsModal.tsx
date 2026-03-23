@@ -458,23 +458,15 @@ export function ContractDetailsModal({
                     </div>
                   </div>
                   
-                  {/* Contexto Geral (Referência e Observações) */}
-                  {(contract.reference || (contract as any).reference_text || contract.observations) && (
+                  {/* Observações Gerais */}
+                  {contract.observations && (
                     <div className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-1 gap-4">
-                      {(contract.reference || (contract as any).reference_text) && (
-                        <div>
-                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Referência / Título Secundário</p>
-                           <p className="text-sm font-medium text-gray-700">{contract.reference || (contract as any).reference_text}</p>
-                        </div>
-                      )}
-                      {contract.observations && (
-                        <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-100">
-                           <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center">
-                             <FileText className="w-3 h-3 mr-1.5" /> Observações Gerais
-                           </p>
-                           <p className="text-sm font-medium text-gray-700 whitespace-pre-wrap leading-relaxed">{contract.observations}</p>
-                        </div>
-                      )}
+                      <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-100">
+                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center">
+                           <FileText className="w-3 h-3 mr-1.5" /> Observações Gerais
+                         </p>
+                         <p className="text-sm font-medium text-gray-700 whitespace-pre-wrap leading-relaxed">{contract.observations}</p>
+                      </div>
                     </div>
                   )}
                 </div>
