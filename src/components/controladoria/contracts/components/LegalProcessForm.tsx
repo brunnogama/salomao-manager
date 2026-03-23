@@ -35,7 +35,7 @@ export function LegalProcessForm(props: LegalProcessFormProps) {
         otherProcessType, setOtherProcessType, duplicateProcessData, searchingCNJ, handleCNJSearch, handleOpenJusbrasil,
         ufOptions, opponentOptions, duplicateOpponentCases,
         editingProcessIndex, handleProcessAction, localMaskCNJ, setActiveManager,
-        clientSelectOptions, clientCnpjMap, opponentCnpjMap
+        opponentCnpjMap
     } = props;
     const [localOpponentCNPJ, setLocalOpponentCNPJ] = React.useState('');
     const [searchingOpponent, setSearchingOpponent] = React.useState(false);
