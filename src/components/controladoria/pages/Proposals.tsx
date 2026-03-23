@@ -1429,7 +1429,13 @@ export function Proposals() {
           <button
             onClick={() => {
               if (!isEditingBody && !customBodyText) {
-                setCustomBodyText(language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText());
+                let generatedText = '';
+                if (proposalMode === 'marcus_livio') {
+                    generatedText = generateMarcusLivioBodyText();
+                } else {
+                    generatedText = language === 'en' ? generateEnglishBodyText() : generateDefaultBodyText();
+                }
+                setCustomBodyText(generatedText);
               }
               setIsEditingBody(true);
             }}
@@ -1448,9 +1454,39 @@ export function Proposals() {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
           <div className="absolute right-0 top-0 h-full w-1 bg-[#1e3a8a]"></div>
 
-          <h2 className="text-[12px] font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-            <FileSignature className="w-4 h-4 text-[#1e3a8a]" /> Dados da Proposta
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-[12px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <FileSignature className="w-4 h-4 text-[#1e3a8a]" /> Dados da Proposta
+            </h2>
+            <button
+              onClick={() => {
+                setProposalData({
+                  clientName: '',
+                  cnpj: '',
+                  selectedPartners: [],
+                  reference: '',
+                  object: '',
+                  contractLocation: '',
+                  isPerson: false,
+                  pro_labore_clauses: [{ value: '', description: '', type: 'currency' }],
+                  final_success_fee_clauses: [{ value: '', description: '', type: 'currency' }],
+                  intermediate_fee_clauses: [{ value: '', description: '', type: 'currency' }],
+                  endereco: '',
+                  responsaveis: '',
+                  honorariosText: '',
+                });
+                setSelectedTechs([]);
+                setCustomBodyText('');
+                setIsEditingBody(false);
+                toast.success('Formulário limpo com sucesso!');
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
+              title="Limpar formulário"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Limpar Dados
+            </button>
+          </div>
 
           <div className="space-y-5">
             <div>
