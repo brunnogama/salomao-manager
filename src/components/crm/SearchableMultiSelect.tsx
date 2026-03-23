@@ -311,19 +311,27 @@ export function SearchableMultiSelect({
 
           {selectedValuesArray.length > 0 ? (
             <div className="flex flex-wrap gap-1">
-              {selectedValuesArray.map((val, index) => (
-                <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 text-xs font-semibold text-gray-700 rounded-md shadow-sm">
-                  {val}
+              {selectedValuesArray.slice(0, 2).map((val, index) => (
+                <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 text-xs font-semibold text-gray-700 rounded-md shadow-sm max-w-[140px]">
+                  <span className="truncate">{val}</span>
                   {!isDisabled && (
                     <button
                       onClick={(e) => removeValue(e, val)}
-                      className="text-gray-400 hover:text-red-500 rounded focus:outline-none"
+                      className="text-gray-400 hover:text-red-500 flex-shrink-0 rounded focus:outline-none"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   )}
                 </span>
               ))}
+              {selectedValuesArray.length > 2 && (
+                <span 
+                  className="inline-flex items-center px-2 py-1 bg-blue-50/80 border border-blue-200 text-[10px] uppercase font-black tracking-widest text-[#1e3a8a] rounded-md shadow-sm cursor-help"
+                  title={selectedValuesArray.slice(2).join(', ')}
+                >
+                  +{selectedValuesArray.length - 2}
+                </span>
+              )}
             </div>
           ) : (
             <span className="text-sm font-medium text-gray-400 ml-1 truncate">
