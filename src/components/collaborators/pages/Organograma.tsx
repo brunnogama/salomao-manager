@@ -440,9 +440,7 @@ export function Organograma() {
     const [exportScope, setExportScope] = useState<string[]>([]);
     const [isExportingPDF, setIsExportingPDF] = useState(false);
 
-    // Pan (Massive Canvas) Logic - using native scroll over an invisible massive plane to bypass RBD coordinate bugs
-
-
+    // Pan (Drag to Scroll) Logic - Native scroll tracking
     useEffect(() => {
         const container = containerRef.current;
         const wrapper = treeWrapperRef.current;
@@ -498,14 +496,12 @@ export function Organograma() {
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('mousemove', onMouseMove);
         };
-    }, []); // Empty dependency! Simple and native.
+    }, []); 
 
     // Auto-center pan when changing tabs/filters
     useLayoutEffect(() => {
         if (containerRef.current) {
-            // Center horizontally on the 20000px massive canvas
-            const center = 10000 - (containerRef.current.clientWidth / 2);
-            containerRef.current.scrollLeft = center;
+            containerRef.current.scrollLeft = (containerRef.current.scrollWidth - containerRef.current.clientWidth) / 2;
             containerRef.current.scrollTop = 0;
         }
     }, [activeTab, selectedPartner, selectedAtuacao]);
@@ -1323,26 +1319,20 @@ export function Organograma() {
             <div 
                 ref={containerRef} 
                 tabIndex={0}
-                className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
+                className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
             >
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    {/* MASSIVE INVISIBLE CANVAS PLANE to force massive scroll bounds natively! */}
-                    <div style={{ 
-                        width: isExportingPDF ? 'auto' : '20000px', 
-                        height: isExportingPDF ? 'auto' : '10000px', 
-                        position: isExportingPDF ? 'static' : 'relative' 
-                    }}>
+                    <div className="p-8 md:p-16 text-center min-w-full inline-block align-top print:w-full h-full">
                         <div
                             ref={treeWrapperRef}
-                            className={`transition-transform duration-300 ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'} print:!static print:!transform-none ${isExportingPDF ? 'inline-flex flex-col gap-16' : 'absolute top-16 inline-flex flex-col gap-16 pb-32'}`}
+                            className={`transition-all duration-300 ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'} print:!static print:!transform-none ${isExportingPDF ? 'inline-flex flex-col gap-16' : 'inline-flex flex-col gap-16 pb-32'}`}
                             style={isExportingPDF ? {
                                 width: 'max-content'
                             } : {
-                                left: '10000px',
-                                transform: `translateX(-50%) scale(${zoomLevel})`,
-                                transformOrigin: 'top center',
-                                width: 'max-content'
-                            }}
+                                width: 'max-content',
+                                minWidth: '100%',
+                                zoom: zoomLevel // Uses native browser reflow scaling! Perfect for Drag-Drop and Scrollbars!
+                            } as React.CSSProperties}
                         >
                             {roots.length > 0 ? (
                                 (() => {
@@ -1442,6 +1432,7 @@ export function Organograma() {
                                 )}
                             </Droppable>
                         </div>
+                    </div>
                 </DragDropContext>
             </div>
 
