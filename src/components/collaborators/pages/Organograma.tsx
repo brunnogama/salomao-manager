@@ -28,6 +28,18 @@ const JURIDICO_HIERARCHY = [
     'Assistente Jurídico'
 ];
 
+const getRoleRingColor = (role: string, isSocio: boolean): string => {
+    if (isSocio) return '#7C3AED'; // Roxo
+    const r = role.toLowerCase();
+    if (r.includes('consultor jurídico') || r.includes('consultor juridico')) return '#1E3A5F'; // Azul escuro
+    if (r.includes('sênior') || r.includes('senior')) return '#1D4ED8'; // Azul Royal
+    if (r.includes('pleno')) return '#3B82F6'; // Azul médio
+    if (r.includes('júnior') || r.includes('junior')) return '#60A5FA'; // Azul claro
+    if (r.includes('estagiário') || r.includes('estagiario')) return '#93C5FD'; // Azul mais claro
+    if (r.includes('coordenador')) return '#1E3A5F'; // Azul escuro (mesmo do consultor)
+    return '#94A3B8'; // Cinza padrão para outros
+};
+
 interface ColaboradorCard {
     id: string;
     name: string;
@@ -196,7 +208,7 @@ const OrganogramNode = React.memo(({
                                             <Draggable draggableId={`${firstColab.id}-${atuacaoName}`} index={0} isDragDisabled={true}>
                                                 {(dragProvided) => (
                                                     <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className="flex flex-col items-center w-full cursor-pointer" onClick={() => context.setSelectedColabForModal(firstColab.fullData)}>
-                                                        <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-[#1e3a8a]/30`}>
+                                                        <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:scale-105`} style={{ borderColor: getRoleRingColor(firstColab.role, firstColab.isSocio) }}>
                                                             {firstColab.photo_url ? (
                                                                 <img src={firstColab.photo_url} alt={firstColab.name} className="w-full h-full object-cover" />
                                                             ) : (
@@ -331,7 +343,7 @@ const OrganogramNode = React.memo(({
                                                 className={`flex flex-col items-center cursor-pointer w-full ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
                                                 onClick={() => setSelectedColabForModal(currentItem.fullData)}
                                             >
-                                                <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30`}>
+                                                <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110`} style={{ borderColor: getRoleRingColor(currentItem.role, currentItem.isSocio) }}>
                                                     {currentItem.photo_url ? (
                                                         <img src={currentItem.photo_url} alt={currentItem.name} className="w-full h-full object-cover" />
                                                     ) : (
@@ -593,7 +605,7 @@ const CottaBlockOrganogramNode = React.memo(({
                         className="flex flex-col items-center cursor-pointer transition-all duration-300 hover:scale-105"
                         onClick={() => context.setSelectedColabForModal(socio.fullData)}
                     >
-                        <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:border-[#1e3a8a]/30">
+                        <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl" style={{ borderColor: getRoleRingColor(socio.role, socio.isSocio) }}>
                             {socio.photo_url ? (
                                 <img src={socio.photo_url} alt={socio.name} className="w-full h-full object-cover" />
                             ) : (
@@ -650,7 +662,7 @@ const CottaBlockOrganogramNode = React.memo(({
                                                                 className={`flex flex-col items-center cursor-pointer group ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
                                                                 onClick={() => context.setSelectedColabForModal(leader.fullData)}
                                                             >
-                                                                <div className="w-20 h-20 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                                                                <div className="w-20 h-20 rounded-full bg-white shadow-md border-[3px] flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110" style={{ borderColor: getRoleRingColor(leader.role, leader.isSocio) }}>
                                                                     {leader.photo_url ? (
                                                                         <img src={leader.photo_url} alt={leader.name} className="w-full h-full object-cover" />
                                                                     ) : (
