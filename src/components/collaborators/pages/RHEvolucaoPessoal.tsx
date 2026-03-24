@@ -250,6 +250,30 @@ export function RHEvolucaoPessoal() {
       })
     }
   }, [filteredData, filterYear, filterMonth])
+
+  // 1b. Role Distribution (Current Active)
+  const processRoleDistribution = useCallback((targetSegment: Segment) => {
+    const roleCounts = new Map<string, number>()
+
+    filteredData.forEach(c => {
+      // Only active ones (Fotografia Atual)
+      if (c.status !== 'active') return
+      
+      if (getSegment(c) !== targetSegment) return
+
+      const roleName = c.roles?.name || String(c.role || 'Não definido')
+      roleCounts.set(roleName, (roleCounts.get(roleName) || 0) + 1)
+    })
+
+    const data = Array.from(roleCounts.entries())
+      .map(([role, count]) => ({ role, count }))
+      .sort((a, b) => b.count - a.count)
+
+    return data
+  }, [filteredData])
+
+  const roleDistributionAdmin = useMemo(() => processRoleDistribution('Administrativo'), [processRoleDistribution])
+  const roleDistributionTerceirizada = useMemo(() => processRoleDistribution('Terceirizada'), [processRoleDistribution])
   // 2. Hiring Ranking by Role (Horizontal Bar)
   const processHiringRanking = useCallback((targetSegment: Segment) => {
     const roleCounts = new Map<string, number>()
@@ -704,6 +728,113 @@ export function RHEvolucaoPessoal() {
               </Area>
             </AreaChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Current Role Distribution (Fotografia Atual) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 mb-6">
+        {/* Admin Distribution */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-[#ea580c]/10 text-[#ea580c]">
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Cargo (Adm)</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fotografia Atual dos Ativos</p>
+            </div>
+          </div>
+          <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
+            <div className="w-full" style={{ height: Math.max(300, roleDistributionAdmin.length * 35) }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={roleDistributionAdmin} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="role"
+                    type="category"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                    width={280}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#f3f4f6' }}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white p-2 border border-[#ea580c]/20 shadow-lg rounded-lg">
+                            <p className="text-xs font-bold text-gray-700">{payload[0].payload.role}</p>
+                            <p className="text-sm font-black text-[#ea580c]">{payload[0].value} ativos</p>
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                  <Bar dataKey="count" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
+                    if (data && data.role) {
+                      navigate('/controladoria/colaboradores', { state: { roleFilter: data.role } })
+                    }
+                  }}>
+                    <LabelList dataKey="count" position="right" fill={COLORS.primary} fontSize={10} fontWeight={700} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Terceirizada Distribution */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-[#0d9488]/10 text-[#0d9488]">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Cargo (Terc)</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fotografia Atual dos Ativos</p>
+            </div>
+          </div>
+          <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
+            <div className="w-full" style={{ height: Math.max(300, roleDistributionTerceirizada.length * 35) }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={roleDistributionTerceirizada} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="role"
+                    type="category"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                    width={280}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#f3f4f6' }}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white p-2 border border-[#0d9488]/20 shadow-lg rounded-lg">
+                            <p className="text-xs font-bold text-gray-700">{payload[0].payload.role}</p>
+                            <p className="text-sm font-black text-[#0d9488]">{payload[0].value} ativos</p>
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                  <Bar dataKey="count" fill={COLORS.terceirizada} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
+                    if (data && data.role) {
+                      navigate('/controladoria/colaboradores', { state: { roleFilter: data.role } })
+                    }
+                  }}>
+                    <LabelList dataKey="count" position="right" fill={COLORS.terceirizada} fontSize={10} fontWeight={700} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
       </div>
 
