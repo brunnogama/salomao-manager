@@ -450,9 +450,11 @@ export function Organograma() {
         let lastY = 0;
 
         const onMouseDown = (e: MouseEvent) => {
+            console.log("Organograma PAN: mousedown on", e.target);
             const target = e.target as HTMLElement;
             // Allow panning only when clicking on the background (not nodes, buttons, inputs)
             if (target.closest('button') || target.closest('[data-rbd-draggable-id]') || target.closest('input')) {
+                console.log("Organograma PAN: mousedown blocked by interactive element", target);
                 return;
             }
 
@@ -463,10 +465,12 @@ export function Organograma() {
             document.body.style.userSelect = 'none';
             container.style.cursor = 'grabbing';
             container.focus();
+            console.log("Organograma PAN: drag started", { lastX, lastY, scrollLeft: container.scrollLeft, scrollTop: container.scrollTop });
         };
 
         const onMouseUp = () => {
             if (!isDown) return;
+            console.log("Organograma PAN: mouseup, drag ended");
             isDown = false;
             document.body.style.userSelect = '';
             container.style.cursor = 'grab';
@@ -480,6 +484,11 @@ export function Organograma() {
             const dy = e.clientY - lastY;
             lastX = e.clientX;
             lastY = e.clientY;
+
+            // Only log if there was actual movement to avoid flooding console with 0s
+            if (dx !== 0 || dy !== 0) {
+                console.log("Organograma PAN: mousemoved", { dx, dy, beforeLeft: container.scrollLeft, beforeTop: container.scrollTop });
+            }
 
             container.scrollLeft -= dx;
             container.scrollTop -= dy;
