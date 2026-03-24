@@ -251,6 +251,10 @@ export function RHEvolucaoPessoal() {
     }
   }, [filteredData, filterYear, filterMonth])
 
+  const hasAdminHeadcount = useMemo(() => headcountChartData.some(d => d.Administrativo > 0), [headcountChartData])
+  const hasLegalHeadcount = useMemo(() => headcountChartData.some(d => d.Jurídico > 0), [headcountChartData])
+  const hasTerceirizadaHeadcount = useMemo(() => headcountChartData.some(d => d.Terceirizada > 0), [headcountChartData])
+
   // 1b. Role Distribution (Current Active)
   const processRoleDistribution = useCallback((targetSegment: Segment) => {
     const roleCounts = new Map<string, number>()
@@ -694,40 +698,40 @@ export function RHEvolucaoPessoal() {
                 type="monotone"
                 stackId="1"
                 dataKey="Administrativo"
-                stroke={COLORS.primary}
-                fillOpacity={1}
+                stroke={hasAdminHeadcount ? COLORS.primary : 'transparent'}
+                fillOpacity={hasAdminHeadcount ? 1 : 0}
                 fill="url(#colorAdmin)"
-                strokeWidth={3}
-                dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
-                activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
+                strokeWidth={hasAdminHeadcount ? 3 : 0}
+                dot={hasAdminHeadcount ? { r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 } : false}
+                activeDot={hasAdminHeadcount ? { r: 6, fill: COLORS.primary, strokeWidth: 0 } : false}
               >
-                <LabelList dataKey="Administrativo" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.primary} position="bottom" />} />
+                {hasAdminHeadcount && <LabelList dataKey="Administrativo" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.primary} position="bottom" />} />}
               </Area>
               <Area
                 type="monotone"
                 stackId="1"
                 dataKey="Jurídico"
-                stroke={COLORS.secondary}
-                fillOpacity={1}
+                stroke={hasLegalHeadcount ? COLORS.secondary : 'transparent'}
+                fillOpacity={hasLegalHeadcount ? 1 : 0}
                 fill="url(#colorLegal)"
-                strokeWidth={3}
-                dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
-                activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
+                strokeWidth={hasLegalHeadcount ? 3 : 0}
+                dot={hasLegalHeadcount ? { r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 } : false}
+                activeDot={hasLegalHeadcount ? { r: 6, fill: COLORS.secondary, strokeWidth: 0 } : false}
               >
-                <LabelList dataKey="Jurídico" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.secondary} position="top" />} />
+                {hasLegalHeadcount && <LabelList dataKey="Jurídico" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.secondary} position="top" />} />}
               </Area>
               <Area
                 type="monotone"
                 stackId="1"
                 dataKey="Terceirizada"
-                stroke={COLORS.terceirizada}
-                fillOpacity={1}
+                stroke={hasTerceirizadaHeadcount ? COLORS.terceirizada : 'transparent'}
+                fillOpacity={hasTerceirizadaHeadcount ? 1 : 0}
                 fill="url(#colorTerceirizada)"
-                strokeWidth={3}
-                dot={{ r: 4, fill: '#ffffff', stroke: COLORS.terceirizada, strokeWidth: 2 }}
-                activeDot={{ r: 6, fill: COLORS.terceirizada, strokeWidth: 0 }}
+                strokeWidth={hasTerceirizadaHeadcount ? 3 : 0}
+                dot={hasTerceirizadaHeadcount ? { r: 4, fill: '#ffffff', stroke: COLORS.terceirizada, strokeWidth: 2 } : false}
+                activeDot={hasTerceirizadaHeadcount ? { r: 6, fill: COLORS.terceirizada, strokeWidth: 0 } : false}
               >
-                <LabelList dataKey="Terceirizada" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.terceirizada} position="top" />} />
+                {hasTerceirizadaHeadcount && <LabelList dataKey="Terceirizada" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.terceirizada} position="top" />} />}
               </Area>
             </AreaChart>
           </ResponsiveContainer>
