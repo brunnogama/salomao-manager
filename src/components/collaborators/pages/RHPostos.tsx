@@ -95,7 +95,7 @@ export function RHPostos() {
     return postos.map(posto => {
       const localName = posto.local || 'Sem Escritório Vinculado';
       const localColaboradores = activeColaboradores.filter(c => {
-        const cLocName = c.location?.name || allLocations.find(l => String(l.id) === String(c.location_id))?.name;
+        const cLocName = c.location?.name || allLocations.find(l => String(l.id) === String(c.local) || String(l.id) === String(c.location_id))?.name;
         // Tratar null/undefined para strings consistentes
         return (cLocName || 'Sem Escritório Vinculado') === localName;
       });
