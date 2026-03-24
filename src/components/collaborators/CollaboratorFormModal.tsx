@@ -5,7 +5,7 @@ import { X, Save, Settings2, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Collaborator, Partner } from '../../types/controladoria';
 import { useEscKey } from '../../hooks/useEscKey';
-import { SearchableSelect } from '../SearchableSelect'; // Ajustado para o caminho correto do componente
+import { ManagedMultiSelect } from '../crm/ManagedMultiSelect';
 import { PartnerManagerModal } from './modals/PartnerManagerModal';
 import { CollaboratorManagerModal } from './modals/CollaboratorManagerModal';
 
@@ -19,17 +19,14 @@ interface Props {
 export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }: Props) {
   useEscKey(isOpen, onClose);
   const [loading, setLoading] = useState(false);
-  const [partners, setPartners] = useState<Partner[]>([]);
-  const [leaders, setLeaders] = useState<Collaborator[]>([]);
-
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const [isLeaderModalOpen, setIsLeaderModalOpen] = useState(false);
   const [roleChangeDate, setRoleChangeDate] = useState('');
 
   const [formData, setFormData] = useState<Partial<Collaborator>>({
     name: '',
-    partner_id: '',
-    leader_id: '',
+    partner_ids: [],
+    leader_ids: [],
     status: 'active',
     role: '',
     linkedin_url: ''
@@ -40,11 +37,11 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
       if (collaborator) {
         setFormData({
           ...collaborator,
-          partner_id: collaborator.partner_id || '',
-          leader_id: collaborator.leader_id || ''
+          partner_ids: collaborator.partner_ids || [],
+          leader_ids: collaborator.leader_ids || []
         });
       } else {
-        setFormData({ name: '', partner_id: '', leader_id: '', status: 'active', role: '', linkedin_url: '' });
+        setFormData({ name: '', partner_ids: [], leader_ids: [], status: 'active', role: '', linkedin_url: '' });
       }
       setRoleChangeDate('');
       fetchData();
@@ -52,18 +49,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
   }, [isOpen, collaborator]);
 
   const fetchData = async () => {
-    try {
-      // Busca dados de Sócios e Colaboradores (Líderes) simultaneamente
-      const [partnersRes, leadersRes] = await Promise.all([
-        supabase.from('partners').select('id, name').eq('status', 'active').order('name'),
-        supabase.from('collaborators').select('id, name').eq('status', 'active').order('name')
-      ]);
-
-      if (partnersRes.data) setPartners(partnersRes.data);
-      if (leadersRes.data) setLeaders(leadersRes.data);
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-    }
+    // Other fetching logic if needed in the future
   };
 
   const handleSave = async () => {
@@ -88,8 +74,10 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
 
       const payload = {
         ...rest,
-        partner_id: formData.partner_id || null,
-        leader_id: formData.leader_id || null
+        partner_ids: formData.partner_ids && formData.partner_ids.length > 0 ? formData.partner_ids : null,
+        leader_ids: formData.leader_ids && formData.leader_ids.length > 0 ? formData.leader_ids : null,
+        partner_id: formData.partner_ids?.[0] || null,
+        leader_id: formData.leader_ids?.[0] || null
       };
 
       console.log('DEBUG: Payload being sent:', payload);
@@ -185,11 +173,11 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
                   <Settings2 className="w-3 h-3" /> Gerenciar
                 </button>
               </div>
-              <SearchableSelect
-                placeholder="Selecione o Sócio"
-                value={formData.partner_id || ''}
-                onChange={(val) => setFormData({ ...formData, partner_id: val })}
-                options={partners.map(p => ({ id: p.id, name: p.name }))}
+              <ManagedMultiSelect
+                placeholder="Selecione o(s) Sócio(s)"
+                value={formData.partner_ids || []}
+                onChange={(val) => setFormData({ ...formData, partner_ids: val })}
+                tableName="partners"
               />
             </div>
 
@@ -205,14 +193,11 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
                   <Settings2 className="w-3 h-3" /> Gerenciar
                 </button>
               </div>
-              <SearchableSelect
-                placeholder="Selecione o Líder"
-                value={formData.leader_id || ''}
-                onChange={(val) => setFormData({ ...formData, leader_id: val })}
-                options={leaders
-                  .filter(l => l.id !== collaborator?.id)
-                  .map(l => ({ id: l.id, name: l.name }))
-                }
+              <ManagedMultiSelect
+                placeholder="Selecione o(s) Líder(es)"
+                value={formData.leader_ids || []}
+                onChange={(val) => setFormData({ ...formData, leader_ids: val })}
+                tableName="collaborators"
               />
             </div>
           </div>

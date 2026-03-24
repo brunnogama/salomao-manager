@@ -25,8 +25,10 @@ export interface Colaborador {
   competencias?: string
 
   // Hierarquia (UUIDs)
-  partner_id?: string // UUID do sócio
-  leader_id?: string // UUID do líder direto
+  partner_id?: string // UUID do sócio (legado)
+  leader_id?: string // UUID do líder direto (legado)
+  partner_ids?: string[] // Múltiplos sócios
+  leader_ids?: string[] // Múltiplos líderes
 
   // Relacionamentos (Retornados via Join)
   partner?: { id: string; name: string }

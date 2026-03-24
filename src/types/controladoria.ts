@@ -41,8 +41,10 @@ export interface Collaborator {
   matricula_interna?: string;
   name: string;
   partner_id?: string; // Vínculo com o Sócio Responsável (tabela partners)
+  partner_ids?: string[]; // Múltiplos sócios
   partner?: { id: string; name: string }; // Joined field
   leader_id?: string; // Vínculo com o Líder Direto
+  leader_ids?: string[]; // Múltiplos líderes
   leader?: { id: string; name: string }; // Joined field
   is_team_leader?: boolean;
   team_leader?: any[]; // Joined field proxy

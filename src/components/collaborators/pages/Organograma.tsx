@@ -36,6 +36,8 @@ interface ColaboradorCard {
     atuacao: string;
     local: string;
     leader_id?: string;
+    partner_ids?: string[];
+    leader_ids?: string[];
     competencias?: string;
     photo_url?: string;
     foto_url?: string;
@@ -50,6 +52,7 @@ const OrganogramNode = React.memo(({
     colab,
     context,
     visitedIds,
+    parentId = 'root',
     level = 0,
     isDense = false,
     isSuperDense = false
@@ -67,6 +70,7 @@ const OrganogramNode = React.memo(({
         hasAdministrativeSubordinates: (id: string, visited?: Set<string>) => boolean,
     },
     visitedIds: Set<string>,
+    parentId?: string,
     level?: number,
     isDense?: boolean,
     isSuperDense?: boolean
@@ -222,6 +226,7 @@ const OrganogramNode = React.memo(({
                                                                 colab={sub}
                                                                 context={context}
                                                                 visitedIds={nextVisited}
+                                                                parentId={localColabs.length > 0 ? colab.id : 'root'}
                                                                 level={level + 1}
                                                                 isDense={localColabs.length > 5 && localColabs.length <= 8}
                                                                 isSuperDense={localColabs.length > 8}
@@ -252,7 +257,7 @@ const OrganogramNode = React.memo(({
                     >
                         <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
 
-                        <Draggable draggableId={colab.id} index={0}>
+                        <Draggable draggableId={`${parentId}_${colab.id}`} index={0}>
                             {(dragProvided, dragSnapshot) => (
                                 <div
                                     ref={dragProvided.innerRef}
@@ -362,6 +367,7 @@ const OrganogramNode = React.memo(({
                                                                 colab={sub}
                                                                 context={context}
                                                                 visitedIds={nextVisited}
+                                                                parentId={colab.id}
                                                                 level={level + 1}
                                                                 isDense={localColabs.length > 5 && localColabs.length <= 8}
                                                                 isSuperDense={localColabs.length > 8}
@@ -396,6 +402,7 @@ const OrganogramNode = React.memo(({
                                                     colab={sub}
                                                     context={context}
                                                     visitedIds={nextVisited}
+                                                    parentId={colab.id}
                                                     level={level + 1}
                                                     isDense={sortedSubordinates.length > 5 && sortedSubordinates.length <= 8}
                                                     isSuperDense={sortedSubordinates.length > 8}
@@ -660,6 +667,8 @@ export function Organograma() {
                         atuacao: atuacaoName,
                         local: (typeof c.locations === 'object' ? (c.locations as any)?.name : c.local) || 'Sem Local',
                         leader_id: c.leader_id || undefined,
+                        partner_ids: c.partner_ids || [],
+                        leader_ids: c.leader_ids || [],
                         competencias: c.competencias || '',
                         photo_url: c.photo_url || c.foto_url,
                         foto_url: c.foto_url,
@@ -697,8 +706,10 @@ export function Organograma() {
 
     const handleDragConfirm = useCallback(async () => {
         if (!pendingDragResult) return;
-        const { destination, draggableId } = pendingDragResult;
+        const { destination, draggableId: rawDraggableId } = pendingDragResult;
         if (!destination) return;
+
+        const draggableId = rawDraggableId.includes('_') ? rawDraggableId.split('_')[1] : rawDraggableId;
 
         const draggedColab = data.find(c => c.id === draggableId);
         if (!draggedColab) return;
@@ -741,12 +752,19 @@ export function Organograma() {
         }
 
         try {
-            const updates: any = { leader_id: leaderToUpdate };
+            const updates: any = { 
+                leader_ids: leaderToUpdate ? [leaderToUpdate] : [],
+                leader_id: leaderToUpdate || null // maintain legacy sync
+            };
             // Sync partner_id
             if (targetIsSocio) {
+                updates.partner_ids = [leaderToUpdate];
                 updates.partner_id = leaderToUpdate;
+            } else if (leaderData?.fullData?.partner_ids && leaderData.fullData.partner_ids.length > 0) {
+                updates.partner_ids = leaderData.fullData.partner_ids;
+                updates.partner_id = leaderData.fullData.partner_ids[0];
             } else if (leaderData?.fullData?.partner_id) {
-                // Inherit from leader if leader is not a socio but has a partner
+                updates.partner_ids = [leaderData.fullData.partner_id];
                 updates.partner_id = leaderData.fullData.partner_id;
             }
             // Sync atuacao
@@ -765,9 +783,13 @@ export function Organograma() {
                 c.id === draggableId
                     ? {
                         ...c,
+                        leader_ids: leaderToUpdate ? [leaderToUpdate] : [],
                         leader_id: leaderToUpdate || undefined,
                         // Update local partner_id
-                        ...((targetIsSocio || leaderData?.fullData?.partner_id) ? { partner_id: targetIsSocio ? leaderToUpdate : leaderData?.fullData?.partner_id } : {}),
+                        ...((targetIsSocio || leaderData?.fullData?.partner_ids?.length > 0) ? { 
+                            partner_ids: targetIsSocio ? [leaderToUpdate] : (leaderData?.fullData?.partner_ids || []),
+                            partner_id: targetIsSocio ? leaderToUpdate : (leaderData?.fullData?.partner_ids?.[0] || undefined)
+                        } : {}),
                         // Update local atuacao name
                         ...(targetAtuacaoName ? { atuacao: targetAtuacaoName } : {})
                     }
@@ -802,7 +824,11 @@ export function Organograma() {
 
         const destId = destination.droppableId;
         const resolvedDestId = destId.startsWith('root:') ? destId.split(':')[1] : destId;
-        if (draggableId === resolvedDestId) {
+        
+        const rawId = draggableId;
+        const colabId = rawId.includes('_') ? rawId.split('_')[1] : rawId;
+        
+        if (colabId === resolvedDestId) {
             showAlert('Ação Inválida', 'Um colaborador não pode ser líder dele mesmo.', 'error');
             return;
         }
@@ -814,9 +840,17 @@ export function Organograma() {
     const rawSubordinatesMap = useMemo(() => {
         const map = new Map<string | null, ColaboradorCard[]>();
         data.forEach(c => {
-            const lid = c.leader_id || null;
-            if (!map.has(lid)) map.set(lid, []);
-            map.get(lid)!.push(c);
+            let lids = c.leader_ids && Array.isArray(c.leader_ids) && c.leader_ids.length > 0 
+                ? c.leader_ids 
+                : [c.leader_id || null];
+            
+            // Deduplicate
+            const uniqueLids = Array.from(new Set(lids));
+            
+            uniqueLids.forEach((lid: any) => {
+                if (!map.has(lid)) map.set(lid, []);
+                map.get(lid)!.push(c);
+            });
         });
         return map;
     }, [data]);
@@ -882,7 +916,8 @@ export function Organograma() {
             if (c.isSocio) return true;
             
             // Otherwise, they're top level if they have no leader
-            return !c.leader_id;
+            const lids = c.leader_ids && c.leader_ids.length > 0 ? c.leader_ids : [c.leader_id];
+            return !lids || lids.length === 0 || lids[0] === null || lids[0] === undefined;
         });
     }, [data]);
     // Find pure top level nodes based on active tab

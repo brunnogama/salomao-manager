@@ -3,6 +3,7 @@ import { Briefcase, Calendar, Clock, Crown, GraduationCap, MapPin } from 'lucide
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
+import { ManagedMultiSelect } from '../../crm/ManagedMultiSelect'
 import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { differenceInMonths, differenceInYears } from 'date-fns'
 import { TransporteSection } from './TransporteSection'
@@ -247,18 +248,18 @@ export function DadosCorporativosSection({
                 />
               </div>
 
-              <ManagedSelect
-                label="Sócio Responsável"
-                value={formData.partner_id || ''}
-                onChange={v => setFormData({ ...formData, partner_id: v })}
+              <ManagedMultiSelect
+                label="Sócios Responsáveis"
+                value={formData.partner_ids || []}
+                onChange={v => setFormData({ ...formData, partner_ids: v })}
                 tableName="partners"
                 disabled={isViewMode}
               />
 
-              <ManagedSelect
-                label="Líder Direto"
-                value={formData.leader_id || ''}
-                onChange={v => setFormData({ ...formData, leader_id: v })}
+              <ManagedMultiSelect
+                label="Líderes Diretos"
+                value={formData.leader_ids || []}
+                onChange={v => setFormData({ ...formData, leader_ids: v })}
                 tableName="collaborators"
                 disabled={isViewMode}
               />
