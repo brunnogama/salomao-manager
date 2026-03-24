@@ -487,12 +487,33 @@ export function Organograma() {
             container.scrollTop -= dy;
         };
 
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (!container.contains(document.activeElement) && document.activeElement !== container) return;
+            
+            const step = 40;
+            let dx = 0;
+            let dy = 0;
+
+            if (e.key === 'ArrowUp') dy = -step;
+            if (e.key === 'ArrowDown') dy = step;
+            if (e.key === 'ArrowLeft') dx = -step;
+            if (e.key === 'ArrowRight') dx = step;
+            
+            if (dx !== 0 || dy !== 0) {
+                e.preventDefault();
+                container.scrollLeft += dx;
+                container.scrollTop += dy;
+            }
+        };
+
         container.addEventListener('mousedown', onMouseDown, { capture: true });
+        container.addEventListener('keydown', onKeyDown);
         window.addEventListener('mouseup', onMouseUp);
         window.addEventListener('mousemove', onMouseMove, { passive: false });
 
         return () => {
             container.removeEventListener('mousedown', onMouseDown, { capture: true });
+            container.removeEventListener('keydown', onKeyDown);
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('mousemove', onMouseMove);
         };
@@ -1322,7 +1343,8 @@ export function Organograma() {
                 className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
             >
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    <div className="p-8 md:p-16 text-center min-w-full inline-block align-top print:w-full h-full">
+                    {/* The intermediate wrapper must be able to stretch in both directions (w-max h-max equivalent logic) to allow native scrollbars when zoom increases */}
+                    <div className="p-8 md:p-16 text-center min-w-full min-h-full w-max h-max inline-flex flex-col items-center justify-start align-top print:w-full print:p-0">
                         <div
                             ref={treeWrapperRef}
                             className={`transition-all duration-300 ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'} print:!static print:!transform-none ${isExportingPDF ? 'inline-flex flex-col gap-16' : 'inline-flex flex-col gap-16 pb-32'}`}
