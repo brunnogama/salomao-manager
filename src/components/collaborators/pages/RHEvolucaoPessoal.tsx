@@ -52,6 +52,7 @@ const COLORS = {
   primary: '#ea580c',   // Admin (Dark Orange)
   secondary: '#1e3a8a', // Jurídico (Dark Blue)
   tertiary: '#f59e0b',  // Amber
+  terceirizada: '#0d9488', // Terceirizada (Teal)
   text: '#6b7280',
   grid: '#e5e7eb'
 }
@@ -152,6 +153,10 @@ export function RHEvolucaoPessoal() {
     return filteredData.filter(c => c.status === 'active' && getSegment(c) === 'Jurídico').length
   }, [filteredData])
 
+  const totalActiveTerceirizada = useMemo(() => {
+    return filteredData.filter(c => c.status === 'active' && getSegment(c) === 'Terceirizada').length
+  }, [filteredData])
+
   // --- Charts Data Preparation ---
 
   // 1. Headcount Evolution (Accumulated)
@@ -180,12 +185,14 @@ export function RHEvolucaoPessoal() {
 
         const activeAdmin = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Administrativo').length
         const activeLegal = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Jurídico').length
+        const activeTerceirizada = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Terceirizada').length
 
         return {
           name: date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
           Administrativo: activeAdmin,
           Jurídico: activeLegal,
-          Total: activeAdmin + activeLegal
+          Terceirizada: activeTerceirizada,
+          Total: activeAdmin + activeLegal + activeTerceirizada
         }
       })
     }
@@ -228,6 +235,7 @@ export function RHEvolucaoPessoal() {
 
         const activeAdmin = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Administrativo').length
         const activeLegal = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Jurídico').length
+        const activeTerceirizada = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Terceirizada').length
 
         // If future year (e.g. 2028 from some data anomaly) and values are just carry-over, it might look flat.
         // But logic holds: if hired before 2028 and not fired, they are active.
@@ -236,7 +244,8 @@ export function RHEvolucaoPessoal() {
           name: year.toString(),
           Administrativo: activeAdmin,
           Jurídico: activeLegal,
-          Total: activeAdmin + activeLegal
+          Terceirizada: activeTerceirizada,
+          Total: activeAdmin + activeLegal + activeTerceirizada
         }
       })
     }
@@ -277,6 +286,7 @@ export function RHEvolucaoPessoal() {
 
   const hiringAdminRanking = useMemo(() => processHiringRanking('Administrativo'), [processHiringRanking])
   const hiringLegalRanking = useMemo(() => processHiringRanking('Jurídico'), [processHiringRanking])
+  const hiringTerceirizadaRanking = useMemo(() => processHiringRanking('Terceirizada'), [processHiringRanking])
 
   // 3. Hiring Flow (Line Area)
   const yearlyHiringFlow = useMemo(() => {
@@ -294,25 +304,27 @@ export function RHEvolucaoPessoal() {
         const mStart = new Date(year, mIndex, 1)
         const mEnd = new Date(year, mIndex + 1, 1)
 
-        let adm = 0, leg = 0
+        let adm = 0, leg = 0, terc = 0
         filteredData.forEach(c => {
           if (!c.hire_date) return
           const h = new Date(c.hire_date + 'T12:00:00')
           if (h >= mStart && h < mEnd) {
             if (getSegment(c) === 'Administrativo') adm++
-            else leg++
+            else if (getSegment(c) === 'Jurídico') leg++
+            else terc++
           }
         })
         return {
           name: mStart.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
           Administrativo: adm,
-          Jurídico: leg
+          Jurídico: leg,
+          Terceirizada: terc
         }
       })
     } else {
       // Year='Todos' -> Yearly Flow
       // If Month Filter exists -> Comparison of that Month across Years
-      const yearsMap = new Map<number, { admin: number, legal: number }>()
+      const yearsMap = new Map<number, { admin: number, legal: number, terc: number }>()
 
       filteredData.forEach(c => {
         if (!c.hire_date) return
@@ -324,11 +336,12 @@ export function RHEvolucaoPessoal() {
         }
 
         const year = hDate.getFullYear()
-        if (!yearsMap.has(year)) yearsMap.set(year, { admin: 0, legal: 0 })
+        if (!yearsMap.has(year)) yearsMap.set(year, { admin: 0, legal: 0, terc: 0 })
 
         const counts = yearsMap.get(year)!
         if (getSegment(c) === 'Administrativo') counts.admin++
-        else counts.legal++
+        else if (getSegment(c) === 'Jurídico') counts.legal++
+        else counts.terc++
       })
 
       const sortedYears = Array.from(yearsMap.keys()).sort((a, b) => a - b)
@@ -337,7 +350,8 @@ export function RHEvolucaoPessoal() {
       return sortedYears.map(year => ({
         name: year.toString(),
         Administrativo: yearsMap.get(year)?.admin || 0,
-        Jurídico: yearsMap.get(year)?.legal || 0
+        Jurídico: yearsMap.get(year)?.legal || 0,
+        Terceirizada: yearsMap.get(year)?.terc || 0
       }))
     }
   }, [filteredData, filterYear, filterMonth])
@@ -358,23 +372,25 @@ export function RHEvolucaoPessoal() {
         const mStart = new Date(year, mIndex, 1)
         const mEnd = new Date(year, mIndex + 1, 1)
 
-        let adm = 0, leg = 0
+        let adm = 0, leg = 0, terc = 0
         filteredData.forEach(c => {
           if (!c.termination_date) return
           const t = new Date(c.termination_date + 'T12:00:00')
           if (t >= mStart && t < mEnd) {
             if (getSegment(c) === 'Administrativo') adm++
-            else leg++
+            else if (getSegment(c) === 'Jurídico') leg++
+            else terc++
           }
         })
         return {
           name: mStart.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
           Administrativo: adm,
-          Jurídico: leg
+          Jurídico: leg,
+          Terceirizada: terc
         }
       })
     } else {
-      const yearsMap = new Map<number, { admin: number, legal: number }>()
+      const yearsMap = new Map<number, { admin: number, legal: number, terc: number }>()
 
       filteredData.forEach(c => {
         if (!c.termination_date) return
@@ -385,11 +401,12 @@ export function RHEvolucaoPessoal() {
         }
 
         const year = tDate.getFullYear()
-        if (!yearsMap.has(year)) yearsMap.set(year, { admin: 0, legal: 0 })
+        if (!yearsMap.has(year)) yearsMap.set(year, { admin: 0, legal: 0, terc: 0 })
 
         const counts = yearsMap.get(year)!
         if (getSegment(c) === 'Administrativo') counts.admin++
-        else counts.legal++
+        else if (getSegment(c) === 'Jurídico') counts.legal++
+        else counts.terc++
       })
 
       const sortedYears = Array.from(yearsMap.keys()).sort((a, b) => a - b)
@@ -398,7 +415,8 @@ export function RHEvolucaoPessoal() {
       return sortedYears.map(year => ({
         name: year.toString(),
         Administrativo: yearsMap.get(year)?.admin || 0,
-        Jurídico: yearsMap.get(year)?.legal || 0
+        Jurídico: yearsMap.get(year)?.legal || 0,
+        Terceirizada: yearsMap.get(year)?.terc || 0
       }))
     }
   }, [filteredData, filterYear, filterMonth])
@@ -541,7 +559,7 @@ export function RHEvolucaoPessoal() {
       </div>
 
       {/* 2. KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
         {/* Total Active - General */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
@@ -579,6 +597,18 @@ export function RHEvolucaoPessoal() {
           </div>
         </div>
 
+        {/* Total Active - Terceirizada */}
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute right-0 top-0 h-full w-1 bg-[#0d9488]"></div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Terceirizada</p>
+            <p className="text-3xl font-black text-[#0d9488] mt-1">{totalActiveTerceirizada}</p>
+          </div>
+          <div className="p-3 bg-[#0d9488]/10 rounded-xl">
+            <Users className="h-6 w-6 text-[#0d9488]" />
+          </div>
+        </div>
+
       </div>
 
       {/* 3. Charts Section */}
@@ -613,6 +643,10 @@ export function RHEvolucaoPessoal() {
                 <linearGradient id="colorLegal" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.1} />
                   <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorTerceirizada" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={COLORS.terceirizada} stopOpacity={0.1} />
+                  <stop offset="95%" stopColor={COLORS.terceirizada} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
@@ -654,7 +688,19 @@ export function RHEvolucaoPessoal() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Jurídico" content={(props) => <CustomDataLabel {...props} fill={COLORS.secondary} position="top" />} />
+                <LabelList dataKey="Jurídico" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.secondary} position="top" />} />
+              </Area>
+              <Area
+                type="monotone"
+                dataKey="Terceirizada"
+                stroke={COLORS.terceirizada}
+                fillOpacity={1}
+                fill="url(#colorTerceirizada)"
+                strokeWidth={3}
+                dot={{ r: 4, fill: '#ffffff', stroke: COLORS.terceirizada, strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: COLORS.terceirizada, strokeWidth: 0 }}
+              >
+                <LabelList dataKey="Terceirizada" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.terceirizada} position="top" />} />
               </Area>
             </AreaChart>
           </ResponsiveContainer>
@@ -662,7 +708,7 @@ export function RHEvolucaoPessoal() {
       </div>
 
       {/* Administrative Hiring Ranking */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-[#ea580c]/10 text-[#ea580c]">
@@ -703,7 +749,7 @@ export function RHEvolucaoPessoal() {
                   />
                   <Bar dataKey="count" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
                     if (data && data.role) {
-                      navigate('/colaboradores', { state: { roleFilter: data.role } })
+                      navigate('/controladoria/colaboradores', { state: { roleFilter: data.role } })
                     }
                   }}>
                     <LabelList dataKey="count" position="right" fill={COLORS.primary} fontSize={10} fontWeight={700} />
@@ -755,10 +801,62 @@ export function RHEvolucaoPessoal() {
                   />
                   <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
                     if (data && data.role) {
-                      navigate('/colaboradores', { state: { roleFilter: data.role } })
+                      navigate('/controladoria/colaboradores', { state: { roleFilter: data.role } })
                     }
                   }}>
                     <LabelList dataKey="count" position="right" fill={COLORS.secondary} fontSize={10} fontWeight={700} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Terceirizada Hiring Ranking */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-[#0d9488]/10 text-[#0d9488]">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Terc)</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
+            </div>
+          </div>
+          <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
+            <div className="w-full" style={{ height: Math.max(300, hiringTerceirizadaRanking.length * 35) }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={hiringTerceirizadaRanking} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="role"
+                    type="category"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                    width={280}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#f3f4f6' }}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white p-2 border border-[#0d9488]/20 shadow-lg rounded-lg">
+                            <p className="text-xs font-bold text-gray-700">{payload[0].payload.role}</p>
+                            <p className="text-sm font-black text-[#0d9488]">{payload[0].value} contratações</p>
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                  <Bar dataKey="count" fill={COLORS.terceirizada} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
+                    if (data && data.role) {
+                      navigate('/controladoria/colaboradores', { state: { roleFilter: data.role } })
+                    }
+                  }}>
+                    <LabelList dataKey="count" position="right" fill={COLORS.terceirizada} fontSize={10} fontWeight={700} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -788,6 +886,10 @@ export function RHEvolucaoPessoal() {
                   <linearGradient id="colorLegalFlow" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.3} />
                     <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorTerceirizadaFlow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.terceirizada} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={COLORS.terceirizada} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
@@ -819,6 +921,18 @@ export function RHEvolucaoPessoal() {
                 >
                   <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="top" />} />
                 </Area>
+                <Area
+                  type="monotone"
+                  dataKey="Terceirizada"
+                  stroke={COLORS.terceirizada}
+                  fillOpacity={1}
+                  fill="url(#colorTerceirizadaFlow)"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.terceirizada, strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: COLORS.terceirizada, strokeWidth: 0 }}
+                >
+                  <LabelList dataKey="Terceirizada" content={<CustomDataLabel fill={COLORS.terceirizada} position="top" />} />
+                </Area>
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -841,6 +955,10 @@ export function RHEvolucaoPessoal() {
                   <linearGradient id="colorLegalTurn" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.3} />
                     <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorTerceirizadaTurn" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.terceirizada} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={COLORS.terceirizada} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
@@ -871,6 +989,18 @@ export function RHEvolucaoPessoal() {
                   activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
                 >
                   <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="top" />} />
+                </Area>
+                <Area
+                  type="monotone"
+                  dataKey="Terceirizada"
+                  stroke={COLORS.terceirizada}
+                  fillOpacity={1}
+                  fill="url(#colorTerceirizadaTurn)"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.terceirizada, strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: COLORS.terceirizada, strokeWidth: 0 }}
+                >
+                  <LabelList dataKey="Terceirizada" content={<CustomDataLabel fill={COLORS.terceirizada} position="top" />} />
                 </Area>
               </AreaChart>
             </ResponsiveContainer>

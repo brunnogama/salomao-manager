@@ -1,6 +1,6 @@
 import { Collaborator } from '../../../types/controladoria'
 
-export type Segment = 'Administrativo' | 'Jurídico'
+export type Segment = 'Administrativo' | 'Jurídico' | 'Terceirizada'
 
 export const normalizeString = (str?: string) => {
     if (!str) return ''
@@ -11,6 +11,7 @@ export const getSegment = (colaborador: Collaborator): Segment => {
     const area = normalizeString(colaborador.area)
     if (area === 'administrativa' || area === 'administrativo') return 'Administrativo'
     if (area === 'juridica' || area === 'juridico') return 'Jurídico'
+    if (area === 'terceirizada' || area === 'terceirizado') return 'Terceirizada'
 
     const roleName = colaborador.roles?.name || String(colaborador.role || '')
     const teamName = colaborador.teams?.name || String(colaborador.equipe || '')
@@ -22,6 +23,11 @@ export const getSegment = (colaborador: Collaborator): Segment => {
 
     if (legalKeywords.some(k => role.includes(k) || team.includes(k))) {
         return 'Jurídico'
+    }
+
+    const terceirizadaKeywords = ['terceiriz', 'limpeza', 'seguranca', 'manutencao']
+    if (terceirizadaKeywords.some(k => role.includes(k) || team.includes(k))) {
+        return 'Terceirizada'
     }
 
     return 'Administrativo'
