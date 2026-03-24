@@ -1,3 +1,4 @@
+// src/components/controladoria/contracts/ContractFormModal.tsx
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
@@ -106,7 +107,6 @@ export function ContractFormModal(props: Props) {
     handleGenericEdit
   } = useContractOptions({ formData, setFormData });
 
-  // Add dummy arrays to satisfy OptionManager since these aren't managed in this component anymore but OptionManager still expects them in props
   const authorOptions: string[] = [];
   const courtOptions: string[] = [];
   const classOptions: string[] = [];
@@ -116,7 +116,6 @@ export function ContractFormModal(props: Props) {
 
   const [dateWarningMessage, setDateWarningMessage] = useState<string | null>(null);
 
-  // --- USE EFFECTS (MANTIDOS) ---
   useEffect(() => {
     if (isOpen) {
       fetchStatuses();
@@ -142,7 +141,6 @@ export function ContractFormModal(props: Props) {
       setCurrentProcess(prev => ({ ...prev, process_number: '', uf: '', position: '', cause_value: '', subject: '' }));
 
       setDuplicateClientCases([]);
-      // setDuplicateAuthorCases([]); // Removed as it's now a derived state
       setDuplicateHonCase(null);
       setOpponentHasNoCnpj(false);
 
@@ -159,9 +157,6 @@ export function ContractFormModal(props: Props) {
       msg = "Data de Prospecção é necessária para o status Análise.";
     } else if (formData.status === 'proposal' && !formData.proposal_date) {
       msg = "Data da Proposta é necessária para o status Proposta Enviada.";
-      if (formData.proposal_code) {
-        // proposal_code is valid here
-      }
     } else if (formData.status === 'active' && !formData.contract_date) {
       msg = "Data de Assinatura é necessária para o status Contrato Fechado.";
     }
@@ -264,8 +259,6 @@ export function ContractFormModal(props: Props) {
     formData.other_fees, formData.other_fees_installments
   ]);
 
-
-  // --- FUNÇÕES AUXILIARES (MANTIDAS) ---
 
   const fetchStatuses = async () => {
     const { data } = await supabase.from('contract_statuses').select('*');
@@ -391,16 +384,11 @@ export function ContractFormModal(props: Props) {
   };
 
   const handleSaveWithIntegrations = async () => {
-    // 1) Se já tem processos adicionados (salvos no contrato), OK avançar sem avisar
     if (processes.length === 0) {
       if (!currentProcess.process_number && !otherProcessType && !currentProcess.client_name) {
-        // Se a pessoa não preencheu nada disso de fato, seguimos normal
-      } else {
-        // ... (resto do aviso original se quiser)
+        // Ok avançar
       }
     } else {
-      // Permitir salvar sem adicionar o atual, apenas avisando.
-      // E remover o currentProcess.
       if (currentProcess.process_number || otherProcessType) {
         setShowPendingProcessConfirm(true);
         return;
@@ -489,7 +477,6 @@ export function ContractFormModal(props: Props) {
         }
       }
 
-      // Upload de arquivos temporários se houver
       if (savedId && tempFiles.length > 0) {
         for (const item of tempFiles) {
           try {
@@ -523,8 +510,7 @@ export function ContractFormModal(props: Props) {
         if (error.message) msg += `\nErro Original: ${error.message}`;
 
         if (duplicateHonCase) {
-          msg += `\n\n - ID: ${duplicateHonCase.display_id}\n - Cliente: ${duplicateHonCase.client_name}\n - Status: ${getStatusLabel(duplicateHonCase.status)
-            }`;
+          msg += `\n\n - ID: ${duplicateHonCase.display_id}\n - Cliente: ${duplicateHonCase.client_name}\n - Status: ${getStatusLabel(duplicateHonCase.status)}`;
         }
         alert(msg);
       }
@@ -535,49 +521,74 @@ export function ContractFormModal(props: Props) {
     }
   };
 
+  // --- FUNÇÃO CORRIGIDA ---
   const handleSendFinanceNotification = () => {
     const webhookUrl = import.meta.env.VITE_MAKE_WEBHOOK_FINANCEIRO;
     if (!webhookUrl) {
       toast.error("Webhook financeiro não configurado. Adicione VITE_MAKE_WEBHOOK_FINANCEIRO no .env");
+      setShowFinanceConfirm(false);
+      onSave();
+      onClose();
       return;
     }
 
     const promise = (async () => {
-      let valuesHtml = '';
-      const formatVal = (label: string, value: any) => {
-        if (value && value !== 'R$ 0,00' && value !== '') valuesHtml += `<li style="margin-bottom: 4px;"><strong>${label}:</strong> ${value}</li>`;
-      };
-      formatVal('Pró-Labore', formData.pro_labore);
-      formatVal('Mensalidade', formData.fixed_monthly_fee);
-      formatVal('Êxito', formData.final_success_fee);
-      formatVal('Outras Taxas', formData.other_fees);
-      if (!valuesHtml) valuesHtml = '<li><i>Nenhum valor financeiro atrelado.</i></li>';
-
-      let attachmentsHtml = '<li><i>Sem documentos anexos no momento do cadastro.</i></li>';
-      if (savedContractId) {
-        const { data: docs } = await supabase.from('contract_documents').select('file_name, file_path').eq('contract_id', savedContractId);
-        if (docs && docs.length > 0) {
-          const { data: signedUrls } = await supabase.storage.from('ged-documentos').createSignedUrls(docs.map(d => d.file_path), 3600);
-          if (signedUrls) {
-            attachmentsHtml = signedUrls.map((u, i) => 
-               `<li style="margin-bottom: 6px;"><a href="${u.signedUrl}" style="color: #1e3a8a; text-decoration: none; font-weight: bold;">📄 Baixar: ${docs[i].file_name || `Anexo ${i + 1}`}</a></li>`
-            ).join('');
+      try {
+        let valuesHtml = '';
+        const formatVal = (label: string, value: any) => {
+          if (value && value !== 'R$ 0,00' && value !== '') {
+            valuesHtml += `<li style="margin-bottom: 4px;"><strong>${label}:</strong> ${value}</li>`;
           }
-        }
-      }
+        };
+        formatVal('Pró-Labore', formData.pro_labore);
+        formatVal('Mensalidade', formData.fixed_monthly_fee);
+        formatVal('Êxito', formData.final_success_fee);
+        formatVal('Outras Taxas', formData.other_fees);
+        if (!valuesHtml) valuesHtml = '<li><i>Nenhum valor financeiro atrelado.</i></li>';
 
-      const res = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientName: formData.client_name,
-          honNumber: formData.hon_number || 'Não informado',
-          reference: formData.reference || 'Não informada',
-          valuesHtml,
-          attachmentsHtml
-        })
-      });
-      if (!res.ok) throw new Error("Falha na comunicação com o Make.com");
+        let attachmentsHtml = '<li><i>Sem documentos anexos no momento do cadastro.</i></li>';
+        
+        // Bloqueio try-catch exclusivo para a busca de documentos, evitando que trave o envio
+        try {
+          if (savedContractId) {
+            const { data: docs, error: docsError } = await supabase.from('contract_documents')
+              .select('file_name, file_path').eq('contract_id', savedContractId);
+              
+            if (!docsError && docs && docs.length > 0) {
+              const { data: signedUrls, error: urlsError } = await supabase.storage.from('ged-documentos')
+                .createSignedUrls(docs.map(d => d.file_path), 3600);
+                
+              if (!urlsError && signedUrls) {
+                attachmentsHtml = signedUrls.map((u, i) =>
+                  `<li style="margin-bottom: 6px;"><a href="${u.signedUrl}" style="color: #1e3a8a; text-decoration: none; font-weight: bold;">📄 Baixar: ${docs[i].file_name || `Anexo ${i + 1}`}</a></li>`
+                ).join('');
+              }
+            }
+          }
+        } catch (storageError) {
+          console.error("Aviso: Falha ao carregar links dos anexos para o e-mail", storageError);
+        }
+
+        const res = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientName: formData.client_name,
+            honNumber: formData.hon_number || 'Não informado',
+            reference: (formData as any).reference || 'Não informada',
+            valuesHtml,
+            attachmentsHtml
+          })
+        });
+        
+        if (!res.ok) throw new Error("Falha na comunicação com o Make.com");
+
+      } finally {
+        // Garante que o modal se fechará indepedente de erro ou sucesso
+        setShowFinanceConfirm(false);
+        onSave();
+        onClose();
+      }
     })();
 
     toast.promise(promise, {
@@ -617,7 +628,6 @@ export function ContractFormModal(props: Props) {
       
       const data = await response.json();
       if (data && data.envolvidos) {
-         // Auto fill
          const court_name = data.tribunal || '';
          const firstOpponent = data.envolvidos.find((e: any) => e.tipo === 'Requerido' || e.tipo === 'Passivo' || e.tipo === 'Réu')?.nome || '';
          setCurrentProcess(prev => ({ ...prev, court: court_name, opponent: toTitleCase(firstOpponent) }));
@@ -634,12 +644,12 @@ export function ContractFormModal(props: Props) {
     const numeroLimpo = currentProcess.process_number.replace(/\D/g, '');
     window.open(`https://www.jusbrasil.com.br/processos/busca?q=${numeroLimpo}`, '_blank');
   };
+  
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!formData.id) {
-      // Armazena temporariamente para subir após o save
       setTempFiles(prev => [...prev, { file, type }]);
       toast.info(`Arquivo "${file.name}" agendado para upload após salvar o contrato.`);
       e.target.value = '';
@@ -719,8 +729,6 @@ export function ContractFormModal(props: Props) {
   };
 
   if (!isOpen) return null;
-
-  // --- NOVA UI (SIDEBAR + CONTENT) ---
 
   return createPortal(
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -830,8 +838,6 @@ export function ContractFormModal(props: Props) {
                   dateWarningMessage={dateWarningMessage}
                   getStatusLabel={getStatusLabel}
                 />
-
-
               </div>
             )}
 
