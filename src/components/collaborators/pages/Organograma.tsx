@@ -1370,10 +1370,11 @@ export function Organograma() {
                                 </div>
                             )}
                         </div>
+                    </div> {/* <--- FECHA O MASSIVE INVISIBLE CANVAS PLANE AQUI */}
 
-                        {/* Unassigned or Orphan Nodes Pool */}
-                        <div className="mt-16 pt-8 border-t border-gray-200">
-                            <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6">Colaboradores sem subordinação</h3>
+                    {/* Unassigned or Orphan Nodes Pool - rendered completely independently of the 20000px canvas */}
+                    <div className="mt-16 pt-8 border-t border-gray-200">
+                        <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6">Colaboradores sem subordinação</h3>
                             <Droppable droppableId="unassigned" direction="horizontal" type="COLAB">
                                 {(provided, snapshot) => (
                                     <div
@@ -1441,7 +1442,6 @@ export function Organograma() {
                                 )}
                             </Droppable>
                         </div>
-                    </div>
                 </DragDropContext>
             </div>
 
