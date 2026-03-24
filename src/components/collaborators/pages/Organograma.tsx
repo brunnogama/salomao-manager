@@ -502,6 +502,225 @@ const OrganogramNode = React.memo(({
     );
 });
 
+const CottaBlockOrganogramNode = React.memo(({
+    colab,
+    context,
+    visitedIds,
+}: {
+    colab: ColaboradorCard,
+    context: any,
+    visitedIds: Set<string>,
+}) => {
+    const socio = colab;
+    const colabId = socio.id;
+
+    if (visitedIds.has(colabId)) return null;
+    const nextVisited = new Set(visitedIds);
+    nextVisited.add(colabId);
+
+    const getRank = (rStr: string) => {
+        const r = rStr.trim();
+        const index = JURIDICO_HIERARCHY.findIndex(h => h.toLowerCase() === r.toLowerCase());
+        return index === -1 ? 999 : index;
+    };
+
+    // Get all direct subordinates of this sócio
+    const allSubs: ColaboradorCard[] = (context.subordinatesMap.get(colabId) || [])
+        .filter((c: ColaboradorCard) => !c.isSocio && c.isJuridico)
+        .sort((a: ColaboradorCard, b: ColaboradorCard) => getRank(a.role) - getRank(b.role));
+
+    // Group by Local
+    const localGroups = new Map<string, ColaboradorCard[]>();
+    allSubs.forEach((sub: ColaboradorCard) => {
+        const key = sub.local || 'Sem Local';
+        if (!localGroups.has(key)) localGroups.set(key, []);
+        localGroups.get(key)!.push(sub);
+    });
+    const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+    // Build blocks: each block = { local, leaders[], members[] }
+    // Leaders = subordinates that have their own sub-subordinates
+    // If multiple leaders share the same subordinates, group them together
+    const blocks: { localName: string, leaders: ColaboradorCard[], members: ColaboradorCard[] }[] = [];
+
+    localEntries.forEach(([localName, localColabs]) => {
+        const leaders: ColaboradorCard[] = [];
+        const directMembers: ColaboradorCard[] = [];
+
+        localColabs.forEach(c => {
+            const subs = (context.subordinatesMap.get(c.id) || [])
+                .filter((s: ColaboradorCard) => !s.isSocio && s.isJuridico);
+            if (subs.length > 0) {
+                leaders.push(c);
+            } else {
+                directMembers.push(c);
+            }
+        });
+
+        if (leaders.length > 0) {
+            // Group leaders that share the same subordinates
+            const leaderGroups = new Map<string, ColaboradorCard[]>();
+            leaders.forEach(leader => {
+                const leaderSubs = (context.subordinatesMap.get(leader.id) || [])
+                    .filter((s: ColaboradorCard) => !s.isSocio && s.isJuridico);
+                const sig = leaderSubs.map((s: ColaboradorCard) => s.id).sort().join('|');
+                if (!leaderGroups.has(sig)) leaderGroups.set(sig, []);
+                leaderGroups.get(sig)!.push(leader);
+            });
+
+            leaderGroups.forEach((groupLeaders) => {
+                const leaderSubs = (context.subordinatesMap.get(groupLeaders[0].id) || [])
+                    .filter((s: ColaboradorCard) => !s.isSocio && s.isJuridico)
+                    .sort((a: ColaboradorCard, b: ColaboradorCard) => getRank(a.role) - getRank(b.role));
+                blocks.push({ localName, leaders: groupLeaders, members: leaderSubs });
+            });
+
+            // Direct members under this local (no leader) go in a separate block
+            if (directMembers.length > 0) {
+                blocks.push({ localName, leaders: [], members: directMembers });
+            }
+        } else {
+            blocks.push({ localName, leaders: [], members: directMembers });
+        }
+    });
+
+    return (
+        <div className="flex flex-row items-start justify-center gap-x-10 flex-wrap gap-y-16">
+            {blocks.map((block, blockIdx) => (
+                <div key={`block-${blockIdx}`} className="flex flex-col items-center">
+                    {/* Sócio photo */}
+                    <div
+                        className="flex flex-col items-center cursor-pointer transition-all duration-300 hover:scale-105"
+                        onClick={() => context.setSelectedColabForModal(socio.fullData)}
+                    >
+                        <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:border-[#1e3a8a]/30">
+                            {socio.photo_url ? (
+                                <img src={socio.photo_url} alt={socio.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                    <UserIcon className="w-10 h-10" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="mt-3 text-center px-1">
+                            <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight text-center">{socio.name}</h4>
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center">{socio.role}</span>
+                        </div>
+                    </div>
+
+                    {/* Stem from Sócio to Local */}
+                    <div className="w-[2px] h-8 bg-gray-300 mt-2"></div>
+
+                    {/* Local Label */}
+                    <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md w-max z-10">
+                        <span className="text-[10px] font-black uppercase tracking-[0.15em]">{block.localName}</span>
+                    </div>
+
+                    {/* Stem from Local to Leader or Members */}
+                    <div className="w-[2px] h-6 bg-gray-300"></div>
+
+                    {/* Leaders (if any) */}
+                    {block.leaders.length > 0 && (
+                        <>
+                            <div className={`flex flex-row items-start justify-center relative ${block.leaders.length > 1 ? 'pt-4' : ''}`}>
+                                {block.leaders.length > 1 && (
+                                    <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2"></div>
+                                )}
+                                {block.leaders.map((leader, lIdx) => (
+                                    <div key={leader.id} className={`relative flex flex-col items-center ${block.leaders.length > 1 ? 'px-4' : ''}`}>
+                                        {block.leaders.length > 1 && (
+                                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                                top: 0,
+                                                left: lIdx === 0 ? '50%' : '0',
+                                                right: lIdx === block.leaders.length - 1 ? '50%' : '0'
+                                            }}></div>
+                                        )}
+                                        {block.leaders.length > 1 && (
+                                            <div className="w-[2px] h-4 bg-gray-300"></div>
+                                        )}
+                                        <Droppable droppableId={leader.id} type="COLAB">
+                                            {(provided) => (
+                                                <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col items-center">
+                                                    <Draggable draggableId={`${colabId}_${leader.id}`} index={0}>
+                                                        {(dragProvided, dragSnapshot) => (
+                                                            <div
+                                                                ref={dragProvided.innerRef}
+                                                                {...dragProvided.draggableProps}
+                                                                {...dragProvided.dragHandleProps}
+                                                                className={`flex flex-col items-center cursor-pointer group ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
+                                                                onClick={() => context.setSelectedColabForModal(leader.fullData)}
+                                                            >
+                                                                <div className="w-20 h-20 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                                                                    {leader.photo_url ? (
+                                                                        <img src={leader.photo_url} alt={leader.name} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                                            <UserIcon className="w-8 h-8" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="mt-3 text-center px-1 w-[150px]">
+                                                                    <h4 className="text-[12px] leading-tight font-black text-[#0a192f] tracking-tight text-center">{leader.name}</h4>
+                                                                    <span className="text-[9px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center">{leader.role}</span>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </Draggable>
+                                                    {provided.placeholder}
+                                                </div>
+                                            )}
+                                        </Droppable>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Stem from Leader(s) to Members */}
+                            {block.members.length > 0 && (
+                                <div className="w-[2px] h-6 bg-gray-300 mt-2"></div>
+                            )}
+                        </>
+                    )}
+
+                    {/* Members */}
+                    {block.members.length > 0 && (
+                        <div className={`flex flex-row items-start justify-center relative ${block.members.length > 1 ? 'pt-4' : ''}`}>
+                            {block.members.length > 1 && (
+                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2"></div>
+                            )}
+                            {block.members.map((member, mIdx) => (
+                                <div key={member.id} className={`relative flex flex-col items-center ${block.members.length > 8 ? 'px-0' : block.members.length > 5 ? 'px-0.5' : 'px-3'}`}>
+                                    {block.members.length > 1 && (
+                                        <div className="absolute h-[2px] bg-gray-300" style={{
+                                            top: '-1rem',
+                                            left: mIdx === 0 ? '50%' : '0',
+                                            right: mIdx === block.members.length - 1 ? '50%' : '0'
+                                        }}></div>
+                                    )}
+                                    <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                    <div style={{
+                                        transform: block.members.length > 12 ? 'scale(0.8)' : block.members.length > 8 ? 'scale(0.85)' : block.members.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                        transformOrigin: 'top center'
+                                    }}>
+                                        <OrganogramNode
+                                            colab={member}
+                                            context={context}
+                                            visitedIds={nextVisited}
+                                            parentId={colabId}
+                                            level={1}
+                                            isDense={block.members.length > 5 && block.members.length <= 8}
+                                            isSuperDense={block.members.length > 8}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+});
+
 
 export function Organograma() {
     const { colaboradores, loading: colsLoading, fetchColaboradores } = useColaboradores();
@@ -1606,9 +1825,14 @@ export function Organograma() {
                                             : roots;
                                             
                                         return visibleRoots.map((root, index) => {
+                                            const isCottaRoot = root.name.toLowerCase().includes('cotta');
                                             return (
                                                 <div key={root.id} id={index === 0 ? 'organogram-root-node' : undefined} className="relative flex flex-col items-center w-full mt-32 first:mt-0">
-                                                    <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
+                                                    {isCottaRoot ? (
+                                                        <CottaBlockOrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
+                                                    ) : (
+                                                        <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
+                                                    )}
                                                 </div>
                                             );
                                         });
@@ -1618,9 +1842,15 @@ export function Organograma() {
                                     const selectedRoot = roots.find(r => r.id === activePartner);
                                     if (!selectedRoot) return null;
                                     
+                                    const isCottaRoot = selectedRoot.name.toLowerCase().includes('cotta');
+                                    
                                     return (
                                         <div id="organogram-root-node" className="relative flex flex-col items-center w-full">
-                                            <OrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
+                                            {isCottaRoot ? (
+                                                <CottaBlockOrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
+                                            ) : (
+                                                <OrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
+                                            )}
                                         </div>
                                     );
                                 })()
