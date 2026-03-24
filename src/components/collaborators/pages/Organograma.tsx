@@ -434,13 +434,41 @@ export function Organograma() {
     const [selectedAtuacao, setSelectedAtuacao] = useState<string | string[] | 'ALL'>('ALL');
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+    
+    // Core state and refs
     const [isMaximized, setIsMaximized] = useState(false);
     const [editingCompetenciasId, setEditingCompetenciasId] = useState<string | null>(null);
     const [editingCompetenciasText, setEditingCompetenciasText] = useState('');
     const [editingPosition, setEditingPosition] = useState<{ top: number, left: number } | null>(null);
     const [showBackToTop, setShowBackToTop] = useState(false);
+    
     const containerRef = useRef<HTMLDivElement>(null);
     const treeWrapperRef = useRef<HTMLDivElement>(null);
+    const topScrollRef = useRef<HTMLDivElement>(null);
+    const [treeWidth, setTreeWidth] = useState<number>(0);
+
+    useLayoutEffect(() => {
+        if (!treeWrapperRef.current) return;
+        const observer = new ResizeObserver((entries) => {
+            if (entries[0]) {
+                setTreeWidth(entries[0].target.scrollWidth);
+            }
+        });
+        observer.observe(treeWrapperRef.current);
+        return () => observer.disconnect();
+    }, [data, zoomLevel, isMaximized]);
+
+    const handleTopScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        if (containerRef.current && containerRef.current.scrollLeft !== e.currentTarget.scrollLeft) {
+            containerRef.current.scrollLeft = e.currentTarget.scrollLeft;
+        }
+    };
+
+    const handleMainScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        if (topScrollRef.current && topScrollRef.current.scrollLeft !== e.currentTarget.scrollLeft) {
+            topScrollRef.current.scrollLeft = e.currentTarget.scrollLeft;
+        }
+    };
 
     // Export PDF Modal State
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
@@ -1393,21 +1421,31 @@ export function Organograma() {
                 </div>
             </div>
 
+            {/* Sync Top Scrollbar */}
+            <div 
+                ref={topScrollRef}
+                onScroll={handleTopScroll}
+                className="custom-scrollbar w-full overflow-x-auto rounded-xl border border-blue-100 bg-blue-50/20 shadow-inner mb-1"
+                style={{ height: '14px' }}
+            >
+                <div style={{ width: treeWidth > 0 ? `${treeWidth + 128}px` : '200%', height: '1px' }}></div>
+            </div>
+
             {/* Main Drag Drop Context Area */}
             <div 
                 ref={containerRef} 
+                onScroll={handleMainScroll}
                 tabIndex={0}
-                className={`custom-scrollbar bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-0 overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
+                className={`custom-scrollbar hide-horizontal-scrollbar bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[500px] overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
             >
                 <style>{`
                     .custom-scrollbar::-webkit-scrollbar {
-                        height: 14px;
-                        width: 14px;
+                        height: 12px;
+                        width: 12px;
                     }
                     .custom-scrollbar::-webkit-scrollbar-track {
                         background: rgba(0,0,0,0.03);
                         border-radius: 12px;
-                        margin: 16px;
                     }
                     .custom-scrollbar::-webkit-scrollbar-thumb {
                         background: rgba(30, 58, 138, 0.25);
@@ -1417,6 +1455,10 @@ export function Organograma() {
                     }
                     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
                         background: rgba(30, 58, 138, 0.45);
+                    }
+                    /* Esconde apenas o horizontal main mantendo o vertical */
+                    .hide-horizontal-scrollbar::-webkit-scrollbar:horizontal {
+                        display: none;
                     }
                 `}</style>
                 <DragDropContext onDragEnd={handleDragEnd}>
