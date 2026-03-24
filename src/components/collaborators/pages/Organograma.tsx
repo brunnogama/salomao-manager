@@ -458,9 +458,12 @@ export function Organograma() {
                 return;
             }
 
+            e.preventDefault(); // Prevent native text/image selection dragging
             isDown = true;
             container.classList.add('cursor-grabbing');
             container.classList.remove('cursor-grab');
+            document.body.style.userSelect = 'none'; // globally prevent selection during drag
+            
             startX = e.pageX - container.offsetLeft;
             startY = e.pageY - container.offsetTop;
             scrollLeft = container.scrollLeft;
@@ -472,17 +475,20 @@ export function Organograma() {
             isDown = false;
             container.classList.remove('cursor-grabbing');
             container.classList.add('cursor-grab');
+            document.body.style.userSelect = '';
         };
 
         const onMouseUp = () => {
             isDown = false;
             container.classList.remove('cursor-grabbing');
             container.classList.add('cursor-grab');
+            document.body.style.userSelect = '';
         };
 
         const onMouseMove = (e: MouseEvent) => {
             if (!isDown) return;
-            e.preventDefault();
+            e.preventDefault(); // Prevent any fallback selections
+
             const x = e.pageX - container.offsetLeft;
             const y = e.pageY - container.offsetTop;
             const walkX = (x - startX) * 1.5;
