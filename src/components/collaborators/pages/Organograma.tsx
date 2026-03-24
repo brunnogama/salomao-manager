@@ -5,6 +5,9 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2, ArrowUp, Download } from 'lucide-react';
 import { AlertModal } from '../../../components/ui/AlertModal';
 import * as XLSX from 'xlsx';
+import { createPortal } from 'react-dom';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 // Define the exact hierarchy order for Jurídico
 const JURIDICO_HIERARCHY = [
@@ -431,6 +434,19 @@ export function Organograma() {
     const [showBackToTop, setShowBackToTop] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
+    // Export PDF Modal State
+    const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+    const [exportScope, setExportScope] = useState<'ALL' | string>('ALL');
+    const [isExportingPDF, setIsExportingPDF] = useState(false);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setIsPdfModalOpen(false);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     // Alert Modal State
     const [alertConfig, setAlertConfig] = useState<{
         isOpen: boolean;
@@ -822,6 +838,128 @@ export function Organograma() {
         }
     }, [data]);
 
+    const handleExportPDF = async () => {
+        try {
+            if (data.length === 0) {
+                showAlert('Aviso', 'Não há dados para exportar.', 'info');
+                return;
+            }
+            setIsExportingPDF(true);
+            
+            // Allow DOM to update logic 
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const prevPartner = selectedPartner;
+            const prevAtuacao = selectedAtuacao;
+            
+            if (activeTab === 'JURIDICO') {
+                setSelectedPartner(exportScope);
+            } else {
+                setSelectedAtuacao(exportScope);
+            }
+            
+            // Wait for React to render the new tree layout
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            const element = containerRef.current;
+            if (!element) return;
+            
+            // Append temporary "Executive UI Header" to the element for the snapshot
+            const headerDiv = document.createElement('div');
+            headerDiv.style.padding = '40px 40px 20px 40px';
+            headerDiv.style.display = 'flex';
+            headerDiv.style.alignItems = 'center';
+            headerDiv.style.borderBottom = '4px solid #1e3a8a';
+            headerDiv.style.marginBottom = '20px';
+            headerDiv.style.marginTop = '20px';
+            headerDiv.style.background = 'white';
+            
+            const logoImg = document.createElement('img');
+            logoImg.src = '/logo-salomao.png';
+            logoImg.style.height = '70px'; // Executive size
+            logoImg.style.marginRight = '30px';
+            
+            const titleDiv = document.createElement('div');
+            const titleH1 = document.createElement('h1');
+            titleH1.innerText = 'Organograma - Salomão, Kaiuca & Abrahão';
+            titleH1.style.color = '#0a192f';
+            titleH1.style.margin = '0';
+            titleH1.style.fontSize = '26px';
+            titleH1.style.fontFamily = 'Arial, sans-serif';
+            titleH1.style.fontWeight = 'bold';
+            
+            const subtitleP = document.createElement('p');
+            const scopeLabel = exportScope === 'ALL' ? 'Todos' : (activeTab === 'JURIDICO' ? `${roots.find(r => r.id === exportScope)?.name || exportScope}` : exportScope);
+            subtitleP.innerText = `Estrutura: ${activeTab === 'JURIDICO' ? 'Jurídica' : 'Administrativa'} | Foco: ${scopeLabel}`;
+            subtitleP.style.color = '#64748b';
+            subtitleP.style.margin = '8px 0 0 0';
+            subtitleP.style.fontSize = '16px';
+            subtitleP.style.fontFamily = 'Arial, sans-serif';
+            
+            titleDiv.appendChild(titleH1);
+            titleDiv.appendChild(subtitleP);
+            headerDiv.appendChild(logoImg);
+            headerDiv.appendChild(titleDiv);
+            
+            element.insertBefore(headerDiv, element.firstChild);
+            
+            const originalBackground = element.style.background;
+            element.style.background = '#ffffff';
+            
+            // Temporary hide header logic controls
+            const controlsNode = element.querySelector('.flex.flex-col.md\\:flex-row.items-start');
+            let controlsDisplay = '';
+            if (controlsNode && controlsNode instanceof HTMLElement) {
+                controlsDisplay = controlsNode.style.display;
+                controlsNode.style.display = 'none';
+            }
+
+            const canvas = await html2canvas(element, {
+                scale: 3, // Alta resolução para fotos não ficarem pixelsadas
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                windowWidth: element.scrollWidth,
+                windowHeight: element.scrollHeight
+            });
+            
+            // Restore UI
+            element.removeChild(headerDiv);
+            element.style.background = originalBackground;
+            if (controlsNode && controlsNode instanceof HTMLElement) {
+                controlsNode.style.display = controlsDisplay;
+            }
+            
+            if (activeTab === 'JURIDICO') {
+                setSelectedPartner(prevPartner);
+            } else {
+                setSelectedAtuacao(prevAtuacao);
+            }
+            
+            const imgData = canvas.toDataURL('image/png', 1.0);
+            
+            // Converter tamanho originário em MM para um PDF de tamanho exato (high-res display)
+            const pdfWidth = (canvas.width * 25.4) / 300; // baseado em 300DPI
+            const pdfHeight = (canvas.height * 25.4) / 300; 
+            
+            const pdf = new jsPDF({
+                orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                unit: 'mm',
+                format: [pdfWidth, pdfHeight]
+            });
+            
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`Organograma_${activeTab}_${exportScope}.pdf`);
+            
+            showAlert('Sucesso', 'PDF Exportado com sucesso!', 'success');
+            setIsPdfModalOpen(false);
+        } catch (error) {
+            console.error('Erro ao gerar PDF:', error);
+            showAlert('Erro', 'Ocorreu um erro ao gerar o PDF.', 'error');
+        } finally {
+            setIsExportingPDF(false);
+        }
+    };
+
     if (colsLoading && data.length === 0) {
         return (
             <div className="flex items-center justify-center h-full min-h-[400px]">
@@ -915,13 +1053,14 @@ export function Organograma() {
                             <span className="hidden md:inline">Planilha</span>
                         </button>
 
-                        {/* Print Button */}
+                        {/* PDF Export Button */}
                         <button
-                            onClick={() => window.print()}
-                            className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-[#1e3a8a] hover:bg-blue-50 transition-all shadow-sm shrink-0"
-                            title="Imprimir / PDF"
+                            onClick={() => setIsPdfModalOpen(true)}
+                            className="flex items-center justify-center h-10 px-3 md:px-4 gap-2 bg-gradient-to-r from-red-600 to-red-500 border border-red-600 rounded-xl text-white hover:from-red-700 hover:to-red-600 hover:border-red-700 transition-all shadow-sm shadow-red-900/10 shrink-0 font-bold text-xs uppercase tracking-wider"
+                            title="Exportar PDF"
                         >
-                            <Printer className="w-5 h-5" />
+                            <Printer className="w-4 h-4" />
+                            <span className="hidden md:inline">PDF</span>
                         </button>
 
                     </div>
@@ -1348,6 +1487,64 @@ export function Organograma() {
                 variant={alertConfig.variant}
                 confirmText="OK"
             />
+
+            {/* Modal de Exportação PDF */}
+            {isPdfModalOpen && document.body && createPortal(
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsPdfModalOpen(false)}></div>
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-[#1e3a8a] to-[#0a192f]">
+                            <h2 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+                                <Printer className="w-5 h-5 text-white" />
+                                Exportar Relatório PDF
+                            </h2>
+                            <button onClick={() => setIsPdfModalOpen(false)} className="text-white hover:text-blue-200 transition-colors p-1" title="Fechar (ESC)">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Selecione o Escopo ({activeTab})</label>
+                                <select
+                                    className="w-full bg-gray-50 border border-gray-200 text-[#0a192f] rounded-xl px-4 py-3 text-sm font-medium focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 transition-all outline-none"
+                                    value={exportScope}
+                                    onChange={(e) => setExportScope(e.target.value)}
+                                >
+                                    <option value="ALL">Estrutura Completa</option>
+                                    {activeTab === 'JURIDICO' 
+                                        ? roots.map(r => <option key={r.id} value={r.id}>{r.name}</option>)
+                                        : (() => {
+                                            const atuacaoSet = new Set<string>();
+                                            adminColabs.forEach(c => { if (c.atuacao) atuacaoSet.add(c.atuacao); });
+                                            return Array.from(atuacaoSet).sort((a, b) => a.localeCompare(b)).map(atuacao => (
+                                                <option key={atuacao} value={atuacao}>{atuacao}</option>
+                                            ));
+                                        })()
+                                    }
+                                </select>
+                                <p className="text-[10px] text-gray-400 mt-2 font-medium">O PDF será gerado em alta resolução preservando as fotos, mantendo a escala ideal das conexões e a arquitetura visual original.</p>
+                            </div>
+                        </div>
+                        <div className="p-6 pt-0 flex items-center gap-3">
+                            <button
+                                onClick={() => setIsPdfModalOpen(false)}
+                                className="flex-1 px-4 py-3 text-sm font-bold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-center uppercase tracking-wider"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleExportPDF}
+                                disabled={isExportingPDF}
+                                className="flex-1 px-4 py-3 text-sm font-bold text-white border border-[#1e3a8a] rounded-xl bg-gradient-to-r from-[#1e3a8a] to-[#0a192f] transition-all shadow-sm flex justify-center items-center gap-2 uppercase tracking-wider hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {isExportingPDF ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Printer className="w-4 h-4 text-white" />}
+                                {isExportingPDF ? 'Gerando...' : 'Gerar PDF'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 }
