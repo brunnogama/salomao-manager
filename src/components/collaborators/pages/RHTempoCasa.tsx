@@ -446,7 +446,7 @@ export function RHTempoCasa() {
       </div>
 
       {/* 2. KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div id="export-kpis-tempo" className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* General Avg Tenure */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
@@ -474,7 +474,7 @@ export function RHTempoCasa() {
       </div>
 
       {/* 3. Charts Row 1: Evolution */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+      <div id="export-evolucao-estabilidade" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
           <div className="p-2 rounded-xl bg-green-50 text-green-600">
             <TrendingUp className="w-5 h-5" />
@@ -544,7 +544,7 @@ export function RHTempoCasa() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Tenure by Area */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+        <div id="export-tempo-area" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
               <Briefcase className="w-5 h-5" />
@@ -582,7 +582,7 @@ export function RHTempoCasa() {
         </div>
 
         {/* Experience Concentration */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+        <div id="export-concentracao-experiencia" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
               <Scale className="w-5 h-5" />
@@ -620,7 +620,7 @@ export function RHTempoCasa() {
       </div>
 
       {/* 5. Tenure by Leader */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+      <div id="export-tempo-lider" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
         <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
           <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
             <Users className="w-5 h-5" />
@@ -686,7 +686,7 @@ export function RHTempoCasa() {
       </div>
 
       {/* 6. Strategic HR Insights & Actions */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col space-y-6">
+      <div id="export-insights-tempo" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col space-y-6">
         <div className="pb-4 border-b border-gray-100 flex items-center gap-3">
           <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
             <Lightbulb className="w-6 h-6" />

@@ -172,19 +172,19 @@ export function RHDashboard() {
       <div className="max-w-[1600px] mx-auto w-full pb-10 flex flex-col gap-6">
 
         {/* Master Dashboards Included Here */}
-        <div id="export-evolucao-pessoal" className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
+        <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
           <RHEvolucaoPessoal />
         </div>
 
-        <div id="export-tempo-casa" className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
+        <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
           <RHTempoCasa />
         </div>
 
-        <div id="export-headcount" className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
+        <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
           <RHHeadcount />
         </div>
 
-        <div id="export-turnover" className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
+        <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
           <RHTurnover />
         </div>
 

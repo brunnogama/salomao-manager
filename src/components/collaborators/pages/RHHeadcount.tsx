@@ -498,7 +498,7 @@ export function RHHeadcount() {
       </div>
 
       {/* 2. KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div id="export-kpis-headcount" className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         {/* Total Active */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
@@ -538,7 +538,7 @@ export function RHHeadcount() {
       </div>
 
       {/* 3. Charts Row 1: Local */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div id="export-headcount-mapa" className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* Local & Area (Stacked Bar) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
@@ -600,7 +600,7 @@ export function RHHeadcount() {
       </div>
 
       {/* Collaborators per Team Leader */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+      <div id="export-headcount-lideres" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
         <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
           <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
             <Users className="w-5 h-5" />
@@ -667,7 +667,7 @@ export function RHHeadcount() {
       </div>
 
       {/* 4. Chart Row 2: Gender & Age Distributions */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div id="export-headcount-demografico" className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
         {/* Gender (Donut) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-1">
@@ -862,7 +862,7 @@ export function RHHeadcount() {
       </div>
 
       {/* 6. Chart Row 4: Legal Specifics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div id="export-headcount-cargos" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Legal Roles */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
@@ -925,7 +925,7 @@ export function RHHeadcount() {
       </div>
 
       {/* 7. Strategic HR Insights & Actions */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col space-y-6">
+      <div id="export-insights-headcount" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col space-y-6">
         <div className="pb-4 border-b border-gray-100 flex items-center gap-3">
           <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
             <Lightbulb className="w-6 h-6" />

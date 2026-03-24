@@ -587,7 +587,7 @@ export function RHEvolucaoPessoal() {
       </div>
 
       {/* 2. KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div id="export-kpis-evolucao" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
         {/* Total Active - General */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
@@ -642,7 +642,7 @@ export function RHEvolucaoPessoal() {
       {/* 3. Charts Section */}
 
       {/* Chart 1: Headcount Evolution */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+      <div id="export-evolucao-acumulada" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
@@ -739,7 +739,7 @@ export function RHEvolucaoPessoal() {
       </div>
 
       {/* Current Role Distribution (Fotografia Atual) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 mb-6">
+      <div id="export-distribuicao-cargo" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 mb-6">
         {/* Admin Distribution */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
@@ -846,7 +846,7 @@ export function RHEvolucaoPessoal() {
       </div>
 
       {/* Administrative Hiring Ranking */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div id="export-ranking-contratacoes" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-[#ea580c]/10 text-[#ea580c]">
@@ -1008,7 +1008,7 @@ export function RHEvolucaoPessoal() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Chart 3: Hiring Flow (Historical) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
+        <div id="export-fluxo-contratacoes" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
           <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
             <UserPlus className="w-4 h-4 text-[#ea580c]" />
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Contratações (Anual)</h3>
@@ -1077,7 +1077,7 @@ export function RHEvolucaoPessoal() {
         </div>
 
         {/* Chart 4: Turnover Flow (Historical) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
+        <div id="export-fluxo-desligamentos" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
           <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
             <UserMinus className="w-4 h-4 text-[#1e3a8a]" />
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Desligamentos (Anual)</h3>
@@ -1148,7 +1148,7 @@ export function RHEvolucaoPessoal() {
       </div>
 
       {/* 4. Strategic HR Insights & Actions */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col space-y-6">
+      <div id="export-insights-evolucao" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col space-y-6">
         <div className="pb-4 border-b border-gray-100 flex items-center gap-3">
           <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
             <Lightbulb className="w-6 h-6" />
