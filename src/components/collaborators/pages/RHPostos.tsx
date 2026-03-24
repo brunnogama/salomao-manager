@@ -276,7 +276,7 @@ export function RHPostos() {
 
       {/* RENDERIZAR VISÃO MAPA */}
       {viewMode === 'map' && (
-        <div className="flex flex-col lg:flex-row gap-6 max-w-[1400px] mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500 flex-1 min-h-[600px]">
+        <div className="flex flex-col lg:flex-row gap-6 mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500 flex-1 min-h-[600px] overflow-hidden">
           {/* Lado Esquerdo: Colaboradores sem mesa */}
           <div className="w-full lg:w-72 shrink-0 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[600px] lg:h-auto overflow-hidden">
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
@@ -325,7 +325,7 @@ export function RHPostos() {
           </div>
 
           {/* Lado Direito: Mapa Principal */}
-          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col items-center">
+          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 flex flex-col items-center min-w-0">
             <div className="w-full flex justify-between items-center mb-6">
               <h2 className="text-xl font-black text-gray-800 tracking-tight">31º Andar <span className="text-gray-400 font-medium">• Rio de Janeiro</span></h2>
               <div className="flex gap-4">
