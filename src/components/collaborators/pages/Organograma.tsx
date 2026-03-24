@@ -522,9 +522,9 @@ export function Organograma() {
     // Auto-center pan when changing tabs/filters
     useLayoutEffect(() => {
         if (containerRef.current) {
-            // Scroll to center the 50vw padding so the tree is in the middle of the screen
-            containerRef.current.scrollLeft = (containerRef.current.scrollWidth - containerRef.current.clientWidth) / 2;
-            containerRef.current.scrollTop = 0;
+            // Scroll to exactly 5000px center of the fixed 10000px plane
+            containerRef.current.scrollLeft = 5000 - (containerRef.current.clientWidth / 2);
+            containerRef.current.scrollTop = 5000 - 100; // Leaves 100px space above the tree
         }
     }, [activeTab, selectedPartner, selectedAtuacao]);
 
@@ -1344,16 +1344,24 @@ export function Organograma() {
                 className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-0 overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
             >
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    {/* The intermediate wrapper with 50vw padding acts as a "Native Infinite Canvas". It gives 50% screen width of void space on both sides, making horizontal dragging ALWAYS possible, while keeping RBD natively functional */}
-                    <div className="w-max min-h-full mx-auto flex flex-col items-center justify-start pt-16 pb-32 px-[50vw] print:px-0 print:py-0 print:w-full">
+                    {/* The intermediate wrapper is an explicit 10000x10000 plane. This guarantees massive scrollbars and prevents void-alignment bugs. Flexbox automatically centers the tree over the 5000px mark structurally! */}
+                    <div style={{
+                        width: isExportingPDF ? '100%' : '10000px',
+                        height: isExportingPDF ? '100%' : '10000px',
+                        paddingTop: isExportingPDF ? '0' : '5000px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: isExportingPDF ? 'flex-start' : 'center',
+                    }}>
                         <div
                             ref={treeWrapperRef}
-                            className={`transition-all duration-300 ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'} print:!static print:!transform-none ${isExportingPDF ? 'inline-flex flex-col gap-16' : 'inline-flex flex-col gap-16 pb-32'}`}
+                            className={`transition-all duration-300 ${isExportingPDF ? 'inline-flex flex-col gap-16' : 'inline-flex flex-col gap-16 pb-32'} print:!static print:!transform-none`}
                             style={isExportingPDF ? {
                                 width: 'max-content'
                             } : {
                                 width: 'max-content',
-                                zoom: zoomLevel // Uses native browser reflow scaling! Perfect for Drag-Drop and Scrollbars!
+                                transform: `scale(${zoomLevel})`,
+                                transformOrigin: 'top center' // Native transform scale! No more CSS zoom breaks.
                             } as React.CSSProperties}
                         >
                             {roots.length > 0 ? (
