@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import {
   Users,
-  Filter,
   BarChart3,
   PieChart as PieChartIcon,
   Map as MapIcon,
@@ -50,13 +49,15 @@ export function RHHeadcount() {
   const {
     colaboradores,
     loading,
-    locations: masterLocations
+    locations: masterLocations,
+    partners: masterPartners
   } = useColaboradores()
 
   // --- State for Filters ---
   const [filterYear, setFilterYear] = useState<string>('todos')
   const [filterMonth, setFilterMonth] = useState<string>('todos')
   const [filterLocal, setFilterLocal] = useState<string>('todos')
+  const [filterSocio, setFilterSocio] = useState<string>('todos')
 
   // --- Derived Data / Lists for Filters ---
   const years = useMemo(() => {
@@ -90,6 +91,12 @@ export function RHHeadcount() {
       .map(l => ({ label: l.name, value: String(l.id) }))
       .sort((a, b) => a.label.localeCompare(b.label))
   }, [masterLocations])
+
+  const socioOptions = useMemo(() => {
+    return masterPartners
+      .map(p => ({ label: p.name, value: String(p.id) }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [masterPartners])
 
   // --- Reference Date & Filter Logic ---
   const referenceDate = useMemo(() => {
@@ -125,7 +132,7 @@ export function RHHeadcount() {
     return now
   }, [filterYear, filterMonth])
 
-  // Active Data at Reference Date (Filtered by Local)
+  // Active Data at Reference Date (Filtered by Local and Socio)
   const activeData = useMemo(() => {
     return colaboradores.filter(c => {
       // 1. Must be active at reference date (if specific date filtered)
@@ -141,9 +148,15 @@ export function RHHeadcount() {
         if (String(c.local) !== filterLocal) return false
       }
 
+      // 3. Socio Filter
+      if (filterSocio !== 'todos') {
+        const cSocio = c.partner_id ? String(c.partner_id) : (c.partner?.id ? String(c.partner.id) : null)
+        if (cSocio !== filterSocio) return false
+      }
+
       return true
     })
-  }, [colaboradores, referenceDate, filterLocal])
+  }, [colaboradores, referenceDate, filterLocal, filterSocio])
 
   // --- KPI Calculations ---
   const totalActive = activeData.length
@@ -459,7 +472,7 @@ export function RHHeadcount() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto mt-2 md:mt-0 justify-end">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto mt-2 md:mt-0 justify-end bg-gray-50/50 p-2 rounded-xl border border-gray-100/80">
           <FilterSelect
             icon={Calendar}
             value={filterMonth === 'todos' ? '' : filterMonth}
@@ -467,6 +480,7 @@ export function RHHeadcount() {
             options={months}
             placeholder="Meses"
           />
+          <div className="w-px h-6 bg-gray-200 hidden sm:block"></div>
           <FilterSelect
             icon={Calendar}
             value={(filterYear === 'todos' || filterYear === 'Anos') ? '' : filterYear}
@@ -474,22 +488,33 @@ export function RHHeadcount() {
             options={[{ label: 'Anos', value: 'todos' }, ...years.map(y => ({ label: y, value: y }))]}
             placeholder="Anos"
           />
+          <div className="w-px h-6 bg-gray-200 hidden sm:block"></div>
           <FilterSelect
-            icon={Filter}
+            icon={MapIcon}
             value={filterLocal === 'todos' ? '' : filterLocal}
             onChange={(val) => setFilterLocal(val || 'todos')}
             options={locationOptions}
             placeholder="Local"
           />
+          <div className="w-px h-6 bg-gray-200 hidden sm:block"></div>
+          <FilterSelect
+            icon={Users}
+            value={filterSocio === 'todos' ? '' : filterSocio}
+            onChange={(val) => setFilterSocio(val || 'todos')}
+            options={socioOptions}
+            placeholder="Sócio (Opcional)"
+          />
 
-          {(filterLocal !== 'todos' || filterYear !== 'todos' || filterMonth !== 'todos') && (
+          {(filterLocal !== 'todos' || filterYear !== 'todos' || filterMonth !== 'todos' || filterSocio !== 'todos') && (
             <button
               onClick={() => {
                 setFilterLocal('todos');
                 setFilterYear('todos');
                 setFilterMonth('todos');
+                setFilterSocio('todos');
               }}
-              className="p-2 sm:p-2.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
+              className="p-2 sm:p-2.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-red-100 bg-white ml-2 shadow-sm"
+              title="Limpar Filtros"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
