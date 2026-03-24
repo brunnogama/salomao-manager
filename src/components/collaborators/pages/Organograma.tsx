@@ -1248,8 +1248,8 @@ export function Organograma() {
                             if (lower.includes('lívia') && lower.includes('sancio')) return 'Lívia Sancio';
                             if (lower.includes('luis felipe') && lower.includes('salomão')) return 'Luis Salomão';
                             if (lower.includes('luiz felipe pavan')) return 'Luiz Pavan';
-                            if (lower.includes('marcus lívio')) return 'Marcus Lívio';
-                            if (lower.includes('paulo de souza salomão')) return 'Paulo Salomão';
+                            if (lower.includes('marcus lívio') || lower.includes('livio')) return 'Marcus Lívio';
+                            if (lower.includes('paulo') && (lower.includes('salomão') || lower.includes('salomao') || lower.includes('souza') || lower.includes('filho'))) return 'Paulo Salomão';
                             if (lower.includes('pedro neiva')) return 'Pedro Neiva';
                             if (lower.includes('rodrigo de magalhães cotta')) return 'Rodrigo Cotta';
                             if (lower.includes('rodrigo raposo')) return 'Rodrigo Raposo';
