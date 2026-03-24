@@ -519,19 +519,34 @@ export function Organograma() {
         };
     }, []); 
 
-    // Auto-center pan when changing tabs/filters
+    // Auto-center pan to the specific root partner when changing tabs/filters
     useEffect(() => {
         const centerView = () => {
-            if (containerRef.current) {
-                // Scroll to center the content naturally so the tree is perfectly in view, starting from the top.
-                containerRef.current.scrollLeft = (containerRef.current.scrollWidth - containerRef.current.clientWidth) / 2;
-                containerRef.current.scrollTop = 0; 
+            const container = containerRef.current;
+            const node = document.getElementById('organogram-root-node');
+            
+            if (container && node) {
+                const containerRect = container.getBoundingClientRect();
+                const nodeRect = node.getBoundingClientRect();
+                
+                // Track where the math puts the node center vs the screen center
+                const containerCenter = containerRect.left + (containerRect.width / 2);
+                const nodeCenter = nodeRect.left + (nodeRect.width / 2);
+                
+                container.scrollLeft += (nodeCenter - containerCenter);
+                container.scrollTop = 0; 
+            } else if (container) {
+                // Fallback math
+                container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
+                container.scrollTop = 0;
             }
         };
 
         centerView();
-        const timeout = setTimeout(centerView, 100);
-        return () => clearTimeout(timeout);
+        const t1 = setTimeout(centerView, 50);
+        const t2 = setTimeout(centerView, 150);
+        const t3 = setTimeout(centerView, 300); // Guarantees math settles
+        return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
     }, [activeTab, selectedPartner, selectedAtuacao, isMaximized]);
 
     useEffect(() => {
@@ -1387,7 +1402,7 @@ export function Organograma() {
                                 (() => {
                                     if (activeTab === 'ADMINISTRATIVO') {
                                         return roots.map((root, index, arr) => (
-                                            <div key={root.id} className="relative flex flex-col items-center w-full">
+                                            <div key={root.id} id={index === 0 ? 'organogram-root-node' : undefined} className="relative flex flex-col items-center w-full">
                                                 <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
                                                 {index < arr.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20 print:hidden"></div>}
                                             </div>
@@ -1398,7 +1413,7 @@ export function Organograma() {
                                     const selectedRoot = roots.find(r => r.id === activePartner);
                                     if (!selectedRoot) return null;
                                     return (
-                                        <div className="relative flex flex-col items-center w-full">
+                                        <div id="organogram-root-node" className="relative flex flex-col items-center w-full">
                                             <OrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
                                         </div>
                                     );
