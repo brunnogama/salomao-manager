@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Building2, Loader2, RefreshCw, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { useColaboradores } from '../hooks/useColaboradores';
+import { getSegment } from '../utils/rhChartUtils';
 
 interface Posto {
   id: string;
@@ -11,12 +13,26 @@ interface Posto {
   ocupados: number;
   obs: string;
   ordem: number;
+  qdeCargos?: number; // Calculated field
 }
 
 export function RHPostos() {
   const [postos, setPostos] = useState<Posto[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
+
+  const { colaboradores, roles, locations: allLocations } = useColaboradores();
+
+  const rolesMap = useMemo(() => {
+    return roles.reduce((acc, role) => {
+      acc[String(role.id)] = role.name;
+      return acc;
+    }, {} as Record<string, string>);
+  }, [roles]);
+
+  const activeColaboradores = useMemo(() => {
+    return colaboradores.filter(c => c.status === 'active');
+  }, [colaboradores]);
 
   const fetchPostos = async () => {
     setLoading(true);
@@ -40,7 +56,6 @@ export function RHPostos() {
   }, []);
 
   const handleUpdate = async (id: string, field: keyof Posto, value: any) => {
-    // Optimistic update
     setPostos(prev => prev.map(p => {
       if (p.id === id) {
         return { ...p, [field]: value };
@@ -57,7 +72,6 @@ export function RHPostos() {
     if (error) {
       console.error('Error updating posto:', error);
       toast.error(`Erro ao salvar atualização em ${field}`);
-      // Revert on error (naively fetching all again)
       fetchPostos();
     }
     
@@ -65,7 +79,6 @@ export function RHPostos() {
   };
 
   const handleBlur = (id: string, field: keyof Posto, originalValue: any, newValue: any) => {
-    // Convert to number for integer fields if necessary
     let parsedValue = newValue;
     if (field === 'total' || field === 'ocupados') {
       parsedValue = parseInt(newValue) || 0;
@@ -76,8 +89,42 @@ export function RHPostos() {
     }
   };
 
+  // Processar Postos injetando qdeCargos
+  const processedPostos = useMemo(() => {
+    return postos.map(posto => {
+      const localName = posto.local || 'Sem Escritório Vinculado';
+      const localColaboradores = activeColaboradores.filter(c => {
+        const cLocName = c.location?.name || allLocations.find(l => String(l.id) === String(c.location_id))?.name;
+        // Tratar null/undefined para strings consistentes
+        return (cLocName || 'Sem Escritório Vinculado') === localName;
+      });
+
+      let qdeCargos = 0;
+      if (posto.cargo === 'JUNIOR') {
+        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.includes('Advogado Júnior')).length;
+      } else if (posto.cargo === 'PLENO') {
+        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.includes('Advogado Pleno')).length;
+      } else if (posto.cargo === 'SENIOR') {
+        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.includes('Advogado Sênior')).length;
+      } else if (posto.cargo === 'SÓCIO') {
+        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.toLowerCase().includes('sócio')).length;
+      } else if (posto.cargo === 'CONSULTOR') {
+        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.toLowerCase().includes('consultor')).length;
+      } else if (posto.cargo === 'ESTAG' || posto.cargo === 'ESTAGIÁRIOS') {
+        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.toLowerCase().includes('estagiário')).length;
+      } else if (posto.cargo === 'ADM*' || posto.cargo === 'ADMINISTRATIVO') {
+        qdeCargos = localColaboradores.filter(c => getSegment(c) === 'Administrativo').length;
+      }
+
+      return {
+        ...posto,
+        qdeCargos
+      };
+    });
+  }, [postos, activeColaboradores, rolesMap, allLocations]);
+
   // Agrupamento por local
-  const groupedPostos = postos.reduce((acc, posto) => {
+  const groupedPostos = processedPostos.reduce((acc, posto) => {
     const local = posto.local || 'Sem Escritório Vinculado';
     if (!acc[local]) acc[local] = [];
     acc[local].push(posto);
@@ -133,10 +180,11 @@ export function RHPostos() {
       {locations.map((local) => {
         const localPostos = groupedPostos[local];
         const totals = localPostos.reduce((acc, current) => ({
+          qdeCargos: acc.qdeCargos + (current.qdeCargos || 0),
           total: acc.total + (current.total || 0),
           ocupados: acc.ocupados + (current.ocupados || 0),
           disponiveis: acc.disponiveis + ((current.total || 0) - (current.ocupados || 0))
-        }), { total: 0, ocupados: 0, disponiveis: 0 });
+        }), { qdeCargos: 0, total: 0, ocupados: 0, disponiveis: 0 });
 
         return (
           <div key={local} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col mx-auto w-full max-w-6xl shrink-0 animate-in slide-in-from-bottom-4 duration-500">
@@ -150,11 +198,12 @@ export function RHPostos() {
               <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead>
                   <tr className="bg-white border-b-2 border-gray-200">
-                    <th className="py-4 px-6 font-black text-gray-800 text-sm uppercase tracking-wider w-1/5 whitespace-nowrap text-center">Postos</th>
-                    <th className="py-4 px-6 font-black text-gray-800 text-sm uppercase tracking-wider w-[15%] text-center whitespace-nowrap border-l border-gray-100">Totais</th>
+                    <th className="py-4 px-6 font-black text-gray-800 text-sm uppercase tracking-wider w-[15%] whitespace-nowrap text-center">Postos</th>
+                    <th className="py-4 px-6 font-black text-gray-800 text-sm uppercase tracking-wider w-[15%] text-center whitespace-nowrap border-l border-gray-100">Qde Cargos</th>
+                    <th className="py-4 px-6 font-black text-gray-800 text-sm uppercase tracking-wider w-[15%] text-center whitespace-nowrap border-l border-gray-100">Qde. Postos</th>
                     <th className="py-4 px-6 font-black text-gray-800 text-sm uppercase tracking-wider w-[15%] text-center whitespace-nowrap border-l border-gray-100">Ocupados</th>
                     <th className="py-4 px-6 font-black text-gray-800 text-sm uppercase tracking-wider w-[15%] text-center whitespace-nowrap border-l border-gray-100">Disponíveis</th>
-                    <th className="py-4 px-6 font-black text-gray-800 text-sm uppercase tracking-wider w-[35%] border-l border-gray-100">OBS</th>
+                    <th className="py-4 px-6 font-black text-gray-800 text-sm uppercase tracking-wider border-l border-gray-100">OBS</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -176,6 +225,11 @@ export function RHPostos() {
                         <td className="py-3 px-6 border-r border-gray-100/50 text-center align-middle">
                           <span className="text-base tracking-wide text-gray-700 font-bold">
                             {displayCargo}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 border-r border-gray-100/50 text-center align-middle">
+                          <span className="text-xl font-black text-[#1e3a8a]">
+                            {posto.qdeCargos === 0 ? '-' : posto.qdeCargos}
                           </span>
                         </td>
                         <td className="py-3 px-4 border-r border-gray-100/50 align-middle">
@@ -223,6 +277,7 @@ export function RHPostos() {
                   <tfoot>
                     <tr className="bg-yellow-300 border-t-2 border-gray-300">
                       <td className="py-4 px-6 font-black text-red-600 text-lg uppercase text-right border-r border-yellow-400/50">Total {local}</td>
+                      <td className="py-4 px-6 font-black text-red-600 text-xl text-center border-r border-yellow-400/50">{totals.qdeCargos}</td>
                       <td className="py-4 px-6 font-black text-red-600 text-xl text-center border-r border-yellow-400/50">{totals.total}</td>
                       <td className="py-4 px-6 font-black text-red-600 text-xl text-center border-r border-yellow-400/50">{totals.ocupados}</td>
                       <td className="py-4 px-6 font-black text-red-600 text-xl text-center border-r border-yellow-400/50">{totals.disponiveis}</td>
