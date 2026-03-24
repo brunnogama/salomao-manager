@@ -517,8 +517,11 @@ export function Organograma() {
                     const equipeLower = String(equipeName).toLowerCase();
                     const atuacaoLower = String(atuacaoName).toLowerCase();
 
+                    // roles that unconditionally belong to the Jurídico organization no matter the team's label
+                    const roleIsStrictlyLegal = isSocio || roleLower.includes('advogado') || roleLower.includes('estagiário') || roleLower.includes('estagiario') || roleLower.includes('sócio');
+
                     const explicitlyAdminEquipes = ['rh', 'recurso', 'financeiro', 'adm', 'administra', 'ti ', 'tecnologia', 'marketing', 'comunica', 'inova', 'facilities', 'recep', 'controladoria'];
-                    const explicitlyAdmin = explicitlyAdminEquipes.some(term => equipeLower.includes(term) || atuacaoLower.includes(term));
+                    const explicitlyAdmin = !roleIsStrictlyLegal && explicitlyAdminEquipes.some(term => equipeLower.includes(term) || atuacaoLower.includes(term));
 
                     const isLegalTeam = ['cível', 'civel', 'tributário', 'tributario', 'trabalhista', 'societário', 'societario', 'contencioso', 'estratégico', 'estrategico', 'empresarial', 'penal', 'público', 'publico'].some(term => equipeLower.includes(term) || atuacaoLower.includes(term));
 
