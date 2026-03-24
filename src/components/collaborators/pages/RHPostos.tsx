@@ -95,7 +95,7 @@ export function RHPostos() {
     return postos.map(posto => {
       const localName = posto.local || 'Sem Escritório Vinculado';
       const localColaboradores = activeColaboradores.filter(c => {
-        const cLocName = (c as any).locations?.name || allLocations.find(l => String(l.id) === String(c.local) || String(l.id) === String(c.location_id))?.name || c.local;
+        const cLocName = (c as any).locations?.name || allLocations.find(l => String(l.id) === String(c.local) || String(l.id) === String((c as any).location_id))?.name || c.local;
         // Tratar null/undefined para strings consistentes
         return (cLocName || 'Sem Escritório Vinculado') === localName;
       });
@@ -120,7 +120,9 @@ export function RHPostos() {
       } else if (posto.cargo === 'SÓCIO') {
         qdeCargos = localColaboradores.filter(c => matchRole(c, ['Socio'])).length;
       } else if (posto.cargo === 'CONSULTOR') {
-        qdeCargos = localColaboradores.filter(c => matchRole(c, ['Consultor'])).length;
+        qdeCargos = localColaboradores.filter(c => matchRole(c, ['Consultor Juridico'])).length;
+      } else if (posto.cargo === 'TERCEIRIZADOS' || posto.cargo === 'TERCEIRIZADO') {
+        qdeCargos = localColaboradores.filter(c => matchRole(c, ['Terceirizado', 'Consultor de Marketing'])).length;
       } else if (posto.cargo === 'ESTAG' || posto.cargo === 'ESTAGIÁRIOS') {
         qdeCargos = localColaboradores.filter(c => matchRole(c, ['Estagiario'])).length;
       } else if (posto.cargo === 'ADM*' || posto.cargo === 'ADMINISTRATIVO') {
@@ -321,23 +323,23 @@ export function RHPostos() {
                 {/* FOOTER TOTALS */}
                 {localPostos.length > 0 && (
                   <tfoot>
-                    <tr className="bg-yellow-300 border-t-2 border-gray-300">
-                      <td className="py-4 px-6 font-black text-red-600 text-lg uppercase text-right border-r border-yellow-400/50">Total {local}</td>
-                      <td className="py-4 px-6 font-black text-red-600 text-xl text-center border-r border-yellow-400/50">{totals.qdeCargos}</td>
-                      <td className="py-4 px-6 font-black text-red-600 text-xl text-center border-r border-yellow-400/50">{totals.total}</td>
-                      <td className="py-4 px-6 font-black text-red-600 text-xl text-center border-r border-yellow-400/50">{totals.ocupados}</td>
-                      <td className="py-4 px-6 font-black text-red-600 text-xl text-center border-r border-yellow-400/50">{totals.disponiveis}</td>
-                      <td className="py-4 px-6 bg-yellow-300"></td>
+                    <tr className="bg-[#1e3a8a] border-t-2 border-transparent">
+                      <td className="py-4 px-6 font-black text-white text-lg uppercase text-right border-r border-blue-800/50">Total {local}</td>
+                      <td className="py-4 px-6 font-black text-white text-xl text-center border-r border-blue-800/50">{totals.qdeCargos}</td>
+                      <td className="py-4 px-6 font-black text-white text-xl text-center border-r border-blue-800/50">{totals.total}</td>
+                      <td className="py-4 px-6 font-black text-white text-xl text-center border-r border-blue-800/50">{totals.ocupados}</td>
+                      <td className="py-4 px-6 font-black text-white text-xl text-center border-r border-blue-800/50">{totals.disponiveis}</td>
+                      <td className="py-4 px-6 bg-[#1e3a8a]"></td>
                     </tr>
                   </tfoot>
                 )}
               </table>
             </div>
-            {/* Disclaimer para Administrativos */}
+            {/* Disclaimer para Administrativos e Consultores */}
             <div className="bg-blue-50/50 border-t border-blue-100 px-6 py-3.5 text-xs text-[#1e3a8a] flex items-start gap-2">
               <span className="font-bold text-lg leading-none mt-[-2px]">*</span>
               <p className="leading-snug opacity-90">
-                A contagem de <strong className="font-bold">Administrativos</strong> exclui: Auxiliar de Serviços Gerais, Copeira, Mensageiro, Motorista, Portador, Recepcionista e Secretária.
+                A contagem de <strong className="font-bold">Administrativos</strong> exclui: Auxiliar de Serviços Gerais, Copeira, Mensageiro, Motorista, Portador, Recepcionista e Secretária. <br/>A contagem de <strong className="font-bold">Consultores</strong> considera exclusivamente Consultor Jurídico (Consultor de Marketing entra em Terceirizados).
               </p>
             </div>
           </div>
