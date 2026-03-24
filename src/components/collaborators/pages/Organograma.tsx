@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { supabase } from '../../../lib/supabase';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2, ArrowUp, Download } from 'lucide-react';
+import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2, ArrowUp, Download, CheckSquare, Square } from 'lucide-react';
 import { AlertModal } from '../../../components/ui/AlertModal';
 import * as XLSX from 'xlsx';
 import { createPortal } from 'react-dom';
@@ -63,7 +63,7 @@ const OrganogramNode = React.memo(({
         setEditingCompetenciasId: (id: string | null) => void,
         setEditingCompetenciasText: (text: string) => void,
         subordinatesMap: Map<string | null, ColaboradorCard[]>,
-        selectedAtuacao: string,
+        selectedAtuacao: string | string[] | 'ALL',
         hasAdministrativeSubordinates: (id: string, visited?: Set<string>) => boolean,
     },
     visitedIds: Set<string>,
@@ -143,7 +143,7 @@ const OrganogramNode = React.memo(({
                             <div className="z-20">
                                 <Droppable droppableId={uniqueDroppableId} type="COLAB">
                                     {(provided, snapshot) => (
-                                        <div ref={provided.innerRef} {...provided.droppableProps} className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[190px]' : isDense ? 'w-[220px]' : 'w-[240px]'}`}>
+                                        <div ref={provided.innerRef} {...provided.droppableProps} className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[120px]' : isDense ? 'w-[140px]' : 'w-[160px]'}`}>
                                             <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
                                             
                                             <Draggable draggableId={`${colab.id}-${atuacaoName}`} index={0} isDragDisabled={true}>
@@ -160,8 +160,8 @@ const OrganogramNode = React.memo(({
                                                         </div>
                                                         <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
                                                             <div>
-                                                                <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{colab.name}</h4>
-                                                                <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{roleStr}</span>
+                                                                <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center`}>{colab.name}</h4>
+                                                                <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center`}>{roleStr}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -248,7 +248,7 @@ const OrganogramNode = React.memo(({
                     <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[190px]' : isDense ? 'w-[220px]' : 'w-[240px]'} z-10 group hover:z-50 ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
+                        className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[120px]' : isDense ? 'w-[140px]' : 'w-[160px]'} z-10 group hover:z-50 ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
                     >
                         <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
 
@@ -273,8 +273,8 @@ const OrganogramNode = React.memo(({
 
                                     <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
                                         <div>
-                                            <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{colab.name}</h4>
-                                            <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{roleStr}</span>
+                                            <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center`}>{colab.name}</h4>
+                                            <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center`}>{roleStr}</span>
                                         </div>
                                         {colab.equipe && colab.equipe !== 'Sem Equipe' && colab.equipe !== 'Geral' && !isSuperDense && (
                                             <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-[180px]">
@@ -423,8 +423,8 @@ export function Organograma() {
     const [zoomLevel, setZoomLevel] = useState(1);
     const [selectedColabForModal, setSelectedColabForModal] = useState<any | null>(null);
     const [activeTab, setActiveTab] = useState<'JURIDICO' | 'ADMINISTRATIVO'>('JURIDICO');
-    const [selectedPartner, setSelectedPartner] = useState<string | 'ALL'>('ALL');
-    const [selectedAtuacao, setSelectedAtuacao] = useState<string | 'ALL'>('ALL');
+    const [selectedPartner, setSelectedPartner] = useState<string | string[] | 'ALL'>('ALL');
+    const [selectedAtuacao, setSelectedAtuacao] = useState<string | string[] | 'ALL'>('ALL');
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
@@ -433,10 +433,11 @@ export function Organograma() {
     const [editingPosition, setEditingPosition] = useState<{ top: number, left: number } | null>(null);
     const [showBackToTop, setShowBackToTop] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const treeWrapperRef = useRef<HTMLDivElement>(null);
 
     // Export PDF Modal State
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
-    const [exportScope, setExportScope] = useState<'ALL' | string>('ALL');
+    const [exportScope, setExportScope] = useState<string[]>([]);
     const [isExportingPDF, setIsExportingPDF] = useState(false);
 
     useEffect(() => {
@@ -706,7 +707,7 @@ export function Organograma() {
              
              // Check Atuacao filter match
              const matchesAtuacao = activeTab === 'ADMINISTRATIVO' && selectedAtuacao !== 'ALL' 
-                                    ? sub.atuacao === selectedAtuacao 
+                                    ? (Array.isArray(selectedAtuacao) ? selectedAtuacao.includes(sub.atuacao) : sub.atuacao === selectedAtuacao)
                                     : true;
 
             if (isTrulyAdmin && matchesAtuacao) return true;
@@ -727,7 +728,11 @@ export function Organograma() {
         // Helper to check if a specific node should be kept
         const shouldKeepNode = (colab: ColaboradorCard): boolean => {
             if (colab.isSocio) return true; // Keep partners
-            if (colab.atuacao === selectedAtuacao) return true; // Direct match
+            if (Array.isArray(selectedAtuacao)) {
+                if (colab.atuacao && selectedAtuacao.includes(colab.atuacao)) return true;
+            } else {
+                if (colab.atuacao === selectedAtuacao) return true; // Direct match
+            }
             // Check if any descendants match
             return hasAdministrativeSubordinates(colab.id);
         };
@@ -768,11 +773,22 @@ export function Organograma() {
         });
     }, [topLevelNodes, activeTab, hasAdministrativeSubordinates]);
 
-    // For Admin tab: get all admin collaborators for grouping by Atuação
     const adminColabs = useMemo(() => {
         if (activeTab !== 'ADMINISTRATIVO') return [];
         return data.filter(c => c.isAdministrativo && !c.isSocio);
     }, [data, activeTab]);
+
+    useEffect(() => {
+        if (isPdfModalOpen) {
+            if (activeTab === 'JURIDICO') {
+                setExportScope(roots.map(r => r.id));
+            } else {
+                const atuacaoSet = new Set<string>();
+                adminColabs.forEach(c => { if (c.atuacao) atuacaoSet.add(c.atuacao); });
+                setExportScope(Array.from(atuacaoSet));
+            }
+        }
+    }, [isPdfModalOpen, activeTab, roots, adminColabs]);
 
     const nodeContext = useMemo(() => ({
         activeTab,
@@ -844,6 +860,10 @@ export function Organograma() {
                 showAlert('Aviso', 'Não há dados para exportar.', 'info');
                 return;
             }
+            if (exportScope.length === 0) {
+                showAlert('Aviso', 'Selecione pelo menos um item para exportar.', 'info');
+                return;
+            }
             setIsExportingPDF(true);
             
             // Allow DOM to update logic 
@@ -852,17 +872,27 @@ export function Organograma() {
             const prevPartner = selectedPartner;
             const prevAtuacao = selectedAtuacao;
             
+            // Check if ALL options possible are selected
+            let isAllSelected = false;
             if (activeTab === 'JURIDICO') {
-                setSelectedPartner(exportScope);
+                isAllSelected = exportScope.length === roots.length;
+                setSelectedPartner(isAllSelected ? 'ALL' : exportScope);
             } else {
-                setSelectedAtuacao(exportScope);
+                const atuacaoSet = new Set<string>();
+                adminColabs.forEach(c => { if (c.atuacao) atuacaoSet.add(c.atuacao); });
+                isAllSelected = exportScope.length === atuacaoSet.size;
+                setSelectedAtuacao(isAllSelected ? 'ALL' : exportScope);
             }
             
             // Wait for React to render the new tree layout
             await new Promise(resolve => setTimeout(resolve, 800));
 
-            const element = containerRef.current;
-            if (!element) return;
+            const element = treeWrapperRef.current;
+            if (!element) {
+                showAlert('Erro', 'Conteúdo da árvore não encontrado.', 'error');
+                setIsExportingPDF(false);
+                return;
+            }
             
             // Append temporary "Executive UI Header" to the element for the snapshot
             const headerDiv = document.createElement('div');
@@ -876,10 +906,13 @@ export function Organograma() {
             
             const logoImg = document.createElement('img');
             logoImg.src = '/logo-salomao.png';
-            logoImg.style.height = '70px'; // Executive size
-            logoImg.style.marginRight = '30px';
+            logoImg.style.height = '64px';
+            logoImg.style.objectFit = 'contain';
             
             const titleDiv = document.createElement('div');
+            titleDiv.style.marginLeft = '24px';
+            titleDiv.style.borderLeft = '2px solid #1e3a8a';
+            titleDiv.style.paddingLeft = '24px';
             const titleH1 = document.createElement('h1');
             titleH1.innerText = 'Organograma - Salomão, Kaiuca & Abrahão';
             titleH1.style.color = '#0a192f';
@@ -889,7 +922,7 @@ export function Organograma() {
             titleH1.style.fontWeight = 'bold';
             
             const subtitleP = document.createElement('p');
-            const scopeLabel = exportScope === 'ALL' ? 'Todos' : (activeTab === 'JURIDICO' ? `${roots.find(r => r.id === exportScope)?.name || exportScope}` : exportScope);
+            const scopeLabel = isAllSelected ? 'Todos' : `${exportScope.length} itens selecionados`;
             subtitleP.innerText = `Estrutura: ${activeTab === 'JURIDICO' ? 'Jurídica' : 'Administrativa'} | Foco: ${scopeLabel}`;
             subtitleP.style.color = '#64748b';
             subtitleP.style.margin = '8px 0 0 0';
@@ -918,20 +951,9 @@ export function Organograma() {
             // - Remover truncamentos de texto para que não sejam cortados
             // - Remover limites de max-width
             // - Remover scales (transform) inline para renderizar as divs nos tamanhos 100% reais de alta qualidade
-            const printStyle = document.createElement('style');
-            printStyle.innerHTML = `
-                .pdf-export-mode .truncate {
-                    white-space: normal !important;
-                    overflow: visible !important;
-                    text-overflow: clip !important;
-                    max-width: none !important;
-                }
-                .pdf-export-mode [style*="transform"] {
-                    transform: none !important;
-                }
-            `;
-            document.head.appendChild(printStyle);
-            element.classList.add('pdf-export-mode');
+            // Neutralize inline transform explicitly to capture 100% native scale without clipping
+            const originalTransform = element.style.transform;
+            element.style.transform = 'none';
 
             const canvas = await html2canvas(element, {
                 scale: 3, // Alta resolução para fotos não ficarem pixelsadas
@@ -942,8 +964,7 @@ export function Organograma() {
             });
             
             // Restore UI
-            element.classList.remove('pdf-export-mode');
-            document.head.removeChild(printStyle);
+            element.style.transform = originalTransform;
             element.removeChild(headerDiv);
             element.style.background = originalBackground;
             if (controlsNode && controlsNode instanceof HTMLElement) {
@@ -969,7 +990,7 @@ export function Organograma() {
             });
             
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`Organograma_${activeTab}_${exportScope}.pdf`);
+            pdf.save(`Organograma_${activeTab}_Relatorio.pdf`);
             
             showAlert('Sucesso', 'PDF Exportado com sucesso!', 'success');
             setIsPdfModalOpen(false);
@@ -1169,7 +1190,8 @@ export function Organograma() {
                 <DragDropContext onDragEnd={handleDragEnd}>
                     <div className="p-8 md:p-16 text-center min-w-full inline-block align-top print:w-full">
                         <div
-                            className="inline-flex flex-col items-center gap-16 pb-32 transition-transform duration-300"
+                            ref={treeWrapperRef}
+                            className="inline-flex flex-col items-center gap-16 pb-32 transition-transform duration-300 relative"
                             style={{
                                 transform: `scale(${zoomLevel})`,
                                 transformOrigin: 'top center',
@@ -1178,11 +1200,13 @@ export function Organograma() {
                             }}
                         >
                             {roots.length > 0 ? (
-                                selectedPartner === 'ALL' || activeTab === 'ADMINISTRATIVO' ? (
-                                    roots.map((root, index) => (
+                                selectedPartner === 'ALL' || Array.isArray(selectedPartner) || activeTab === 'ADMINISTRATIVO' ? (
+                                    roots
+                                        .filter(r => Array.isArray(selectedPartner) && activeTab === 'JURIDICO' ? selectedPartner.includes(r.id) : true)
+                                        .map((root, index, arr) => (
                                         <div key={root.id} className="relative flex flex-col items-center w-full">
                                             <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
-                                            {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
+                                            {index < arr.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
                                         </div>
                                     ))
                                 ) : (
@@ -1525,25 +1549,67 @@ export function Organograma() {
                         </div>
                         <div className="p-6 space-y-6">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Selecione o Escopo ({activeTab})</label>
-                                <select
-                                    className="w-full bg-gray-50 border border-gray-200 text-[#0a192f] rounded-xl px-4 py-3 text-sm font-medium focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 transition-all outline-none"
-                                    value={exportScope}
-                                    onChange={(e) => setExportScope(e.target.value)}
-                                >
-                                    <option value="ALL">Estrutura Completa</option>
-                                    {activeTab === 'JURIDICO' 
-                                        ? roots.map(r => <option key={r.id} value={r.id}>{r.name}</option>)
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Selecione o Escopo ({activeTab})</label>
+                                
+                                {(() => {
+                                    const availableOptions = activeTab === 'JURIDICO' 
+                                        ? roots.map(r => ({ id: r.id, label: r.name, photo_url: r.photo_url || r.foto_url }))
                                         : (() => {
                                             const atuacaoSet = new Set<string>();
                                             adminColabs.forEach(c => { if (c.atuacao) atuacaoSet.add(c.atuacao); });
-                                            return Array.from(atuacaoSet).sort((a, b) => a.localeCompare(b)).map(atuacao => (
-                                                <option key={atuacao} value={atuacao}>{atuacao}</option>
-                                            ));
-                                        })()
-                                    }
-                                </select>
-                                <p className="text-[10px] text-gray-400 mt-2 font-medium">O PDF será gerado em alta resolução preservando as fotos, mantendo a escala ideal das conexões e a arquitetura visual original.</p>
+                                            return Array.from(atuacaoSet).sort((a, b) => a.localeCompare(b)).map(a => ({ id: a, label: a, photo_url: null }));
+                                        })();
+                                    
+                                    const allSelected = exportScope.length === availableOptions.length && availableOptions.length > 0;
+                                    
+                                    const toggleAll = () => {
+                                        if (allSelected) setExportScope([]);
+                                        else setExportScope(availableOptions.map(o => o.id));
+                                    };
+                                    
+                                    const toggleOption = (id: string) => {
+                                        setExportScope(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+                                    };
+
+                                    return (
+                                        <>
+                                            <button
+                                              onClick={toggleAll}
+                                              className="w-full flex items-center gap-3 p-3 rounded-xl bg-blue-50/50 hover:bg-blue-50 border border-blue-100 transition-colors group mb-4"
+                                            >
+                                              <div className={`p-0.5 rounded flex items-center justify-center shrink-0 transition-colors ${allSelected ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}>
+                                                {allSelected ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+                                              </div>
+                                              <span className={`text-sm font-bold transition-colors ${allSelected ? 'text-blue-800' : 'text-gray-600'}`}>
+                                                {allSelected ? 'Desmarcar Todos' : 'Selecionar Todos da Aba'}
+                                              </span>
+                                            </button>
+
+                                            <div className="space-y-2 max-h-[30vh] overflow-y-auto custom-scrollbar pr-2">
+                                              {availableOptions.map(opt => {
+                                                  const isSelected = exportScope.includes(opt.id);
+                                                  return (
+                                                      <button
+                                                        key={opt.id}
+                                                        onClick={() => toggleOption(opt.id)}
+                                                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group text-left border border-transparent hover:border-gray-100"
+                                                      >
+                                                        <div className={`shrink-0 transition-colors ${isSelected ? 'text-[#1e3a8a]' : 'text-gray-300 group-hover:text-[#1e3a8a]/60'}`}>
+                                                          {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                                                        </div>
+                                                        {opt.photo_url && <img src={opt.photo_url} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />}
+                                                        <span className={`text-sm font-medium leading-tight transition-colors ${isSelected ? 'text-[#0a192f]' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                                                          {opt.label}
+                                                        </span>
+                                                      </button>
+                                                  );
+                                              })}
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+
+                                <p className="text-[10px] text-gray-400 mt-4 font-medium text-center bg-gray-50 p-3 rounded-xl border border-gray-100">O PDF será gerado em alta resolução preservando a escala original.</p>
                             </div>
                         </div>
                         <div className="p-6 pt-0 flex items-center gap-3">
