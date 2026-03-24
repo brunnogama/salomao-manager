@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { supabase } from '../../../lib/supabase';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2, ArrowUp } from 'lucide-react';
+import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2, ArrowUp, Download } from 'lucide-react';
 import { AlertModal } from '../../../components/ui/AlertModal';
+import * as XLSX from 'xlsx';
 
 // Define the exact hierarchy order for Jurídico
 const JURIDICO_HIERARCHY = [
@@ -823,6 +824,58 @@ export function Organograma() {
         hasAdministrativeSubordinates
     }), [activeTab, searchQuery, subordinatesMap, selectedAtuacao, hasAdministrativeSubordinates]);
 
+    const handleExportExcel = useCallback(() => {
+        try {
+            if (data.length === 0) {
+                showAlert('Aviso', 'Não há dados para exportar.', 'info');
+                return;
+            }
+
+            const excelData = data.map(c => {
+                const leaderName = c.leader_id ? data.find(l => l.id === c.leader_id)?.name : 'Sem subordinação';
+                
+                return {
+                    'Identificação': c.id,
+                    'Nome': c.name,
+                    'Cargo': c.role,
+                    'Equipe / Área': c.equipe,
+                    'Atuação': c.atuacao || '-',
+                    'Localidade': c.local,
+                    'Líder Direto': leaderName,
+                    'Email': c.fullData?.email || 'Não informado',
+                    'Celular': c.fullData?.phone || 'Não informado',
+                    'Competências': c.competencias || ''
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            
+            // Set basic column widths
+            const colWidths = [
+                { wch: 15 }, // Identificação
+                { wch: 35 }, // Nome
+                { wch: 25 }, // Cargo
+                { wch: 25 }, // Equipe / Área
+                { wch: 20 }, // Atuação
+                { wch: 20 }, // Localidade
+                { wch: 35 }, // Líder Direto
+                { wch: 35 }, // Email
+                { wch: 20 }, // Celular
+                { wch: 60 }  // Competências
+            ];
+            ws['!cols'] = colWidths;
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Organograma');
+            
+            XLSX.writeFile(wb, 'Organograma_Estrutura.xlsx');
+            showAlert('Sucesso', 'Estrutura exportada em Excel com sucesso!', 'success');
+        } catch (error) {
+            console.error('Erro ao exportar para Excel:', error);
+            showAlert('Erro', 'Ocorreu um erro ao tentar exportar a planilha.', 'error');
+        }
+    }, [data]);
+
     if (colsLoading && data.length === 0) {
         return (
             <div className="flex items-center justify-center h-full min-h-[400px]">
@@ -906,6 +959,16 @@ export function Organograma() {
                             )}
                         </div>
 
+                        {/* Export Excel Button */}
+                        <button
+                            onClick={handleExportExcel}
+                            className="flex items-center justify-center h-10 px-3 md:px-4 gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 border border-emerald-600 rounded-xl text-white hover:from-emerald-700 hover:to-emerald-600 hover:border-emerald-700 transition-all shadow-sm shadow-emerald-900/10 shrink-0 font-bold text-xs uppercase tracking-wider"
+                            title="Planilha (Excel)"
+                        >
+                            <Download className="w-4 h-4" />
+                            <span className="hidden md:inline">Planilha</span>
+                        </button>
+
                         {/* Print Button */}
                         <button
                             onClick={() => window.print()}
@@ -914,7 +977,6 @@ export function Organograma() {
                         >
                             <Printer className="w-5 h-5" />
                         </button>
-
 
                     </div>
                 </div>
