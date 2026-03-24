@@ -105,23 +105,7 @@ const OrganogramNode = React.memo(({
         })
         .sort((a, b) => getRank(a.role) - getRank(b.role));
 
-    // Conditional Layout Logic
-    const roleGroups: ColaboradorCard[][] = [];
-
-    if (activeTab === 'JURIDICO') {
-        let currentRole: string | null = null;
-        let currentGroup: ColaboradorCard[] = [];
-
-        for (const sub of sortedSubordinates) {
-            if (sub.role !== currentRole) {
-                if (currentGroup.length > 0) roleGroups.push(currentGroup);
-                currentRole = sub.role;
-                currentGroup = [sub];
-            } else {
-                currentGroup.push(sub);
-            }
-        }
-    }
+    // Removed roleGroups logic to show all subordinates horizontally.
 
     if (colab.isSocio && context.activeTab === 'ADMINISTRATIVO') {
         const filteredSubs = sortedSubordinates.filter(sub => {
@@ -387,8 +371,8 @@ const OrganogramNode = React.memo(({
                                     ))}
                                 </div>
                             );
-                        })() : context.activeTab === 'ADMINISTRATIVO' ? (
-                            // Sub-levels: Admin fallback (horizontal list)
+                        })() : (
+                            // Sub-levels: All fallbacks (horizontal list)
                             <div className="flex flex-col items-center w-full relative pb-16">
                                 <div className="flex justify-center relative pt-4 w-full">
                                     {sortedSubordinates.map((sub, idx) => (
@@ -418,44 +402,6 @@ const OrganogramNode = React.memo(({
                                     ))}
                                 </div>
                             </div>
-                        ) : (
-                            // Sub-levels: group by role vertically (Jurídico fallback)
-                            roleGroups.map((group, groupIndex) => (
-                                <div key={groupIndex} className="flex flex-col items-center w-full relative pb-16">
-                                    {groupIndex < roleGroups.length - 1 && (
-                                        <div className="absolute top-0 left-1/2 w-[2px] h-full bg-gray-300 -translate-x-1/2 -z-10"></div>
-                                    )}
-                                    <div className="flex justify-center relative pt-4 w-full">
-                                        {group.map((sub, idx) => (
-                                            <div key={sub.id} className={`relative flex flex-col items-center ${group.length > 8 ? 'px-0' : group.length > 5 ? 'px-0.5' : 'px-4'}`}>
-                                                {/* Per-child horizontal segment */}
-                                                {group.length > 1 && (
-                                                    <div className="absolute h-[2px] bg-gray-300" style={{
-                                                        top: '-1rem',
-                                                        left: idx === 0 ? '50%' : '0',
-                                                        right: idx === group.length - 1 ? '50%' : '0'
-                                                    }}></div>
-                                                )}
-                                                {/* Vertical stub up */}
-                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
-                                                <div style={{
-                                                    transform: group.length > 12 ? 'scale(0.8)' : group.length > 8 ? 'scale(0.85)' : group.length > 5 ? 'scale(0.95)' : 'scale(1)',
-                                                    transformOrigin: 'top center'
-                                                }}>
-                                                    <OrganogramNode
-                                                        colab={sub}
-                                                        context={context}
-                                                        visitedIds={nextVisited}
-                                                        level={level + 1}
-                                                        isDense={group.length > 5 && group.length <= 8}
-                                                        isSuperDense={group.length > 8}
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))
                         )}
                     </div>
                 </div>
