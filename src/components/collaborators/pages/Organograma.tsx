@@ -1018,7 +1018,22 @@ export function Organograma() {
             });
             
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`Organograma_${activeTab}_Relatorio.pdf`);
+
+            let fileName = 'Organograma.pdf';
+            if (isAllSelected) {
+                fileName = `Organograma - Todos (${activeTab === 'JURIDICO' ? 'Jurídico' : 'Administrativo'}).pdf`;
+            } else if (exportScope.length === 1) {
+                if (activeTab === 'JURIDICO') {
+                    const partner = roots.find(r => r.id === exportScope[0]);
+                    fileName = `Organograma - ${partner?.name || 'Sócio'}.pdf`;
+                } else {
+                    fileName = `Organograma - ${exportScope[0]}.pdf`;
+                }
+            } else {
+                fileName = `Organograma - Seleção Personalizada.pdf`;
+            }
+            
+            pdf.save(fileName);
             
             showAlert('Sucesso', 'PDF Exportado com sucesso!', 'success');
             setIsPdfModalOpen(false);
