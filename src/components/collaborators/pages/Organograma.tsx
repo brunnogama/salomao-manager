@@ -4,7 +4,7 @@ import { useColaboradores } from '../hooks/useColaboradores';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2, ArrowUp, Download, CheckSquare, Square } from 'lucide-react';
 import { AlertModal } from '../../../components/ui/AlertModal';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 import { createPortal } from 'react-dom';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -1357,50 +1357,177 @@ export function Organograma() {
                 return;
             }
 
-            const excelData = data.map(c => {
-                const leaderName = c.leader_id ? data.find(l => l.id === c.leader_id)?.name : 'Sem subordinação';
-                
-                return {
-                    'Identificação': c.id,
-                    'Nome': c.name,
-                    'Cargo': c.role,
-                    'Equipe / Área': c.equipe,
-                    'Atuação': c.atuacao || '-',
-                    'Localidade': c.local,
-                    'Líder Direto': leaderName,
-                    'Email': c.fullData?.email || 'Não informado',
-                    'Celular': c.fullData?.phone || 'Não informado',
-                    'Competências': c.competencias || ''
+            // Check if we're on a Cotta partner tab
+            const cottaRoot = data.find(c => c.isSocio && c.name.toLowerCase().includes('cotta'));
+            const isCottaExport = activeTab === 'JURIDICO' && cottaRoot && (
+                selectedPartner === cottaRoot.id || 
+                (selectedPartner === 'ALL' && data.filter(c => c.isSocio).length === 1)
+            );
+
+            if (isCottaExport && cottaRoot) {
+                // === COTTA EXPORT: Blocos Sócio → Local → Líder → Colaboradores ===
+                const getRank = (rStr: string) => {
+                    const r = rStr.trim();
+                    const index = JURIDICO_HIERARCHY.findIndex(h => h.toLowerCase() === r.toLowerCase());
+                    return index === -1 ? 999 : index;
                 };
-            });
 
-            const ws = XLSX.utils.json_to_sheet(excelData);
-            
-            // Set basic column widths
-            const colWidths = [
-                { wch: 15 }, // Identificação
-                { wch: 35 }, // Nome
-                { wch: 25 }, // Cargo
-                { wch: 25 }, // Equipe / Área
-                { wch: 20 }, // Atuação
-                { wch: 20 }, // Localidade
-                { wch: 35 }, // Líder Direto
-                { wch: 35 }, // Email
-                { wch: 20 }, // Celular
-                { wch: 60 }  // Competências
-            ];
-            ws['!cols'] = colWidths;
+                const allSubs = (subordinatesMap.get(cottaRoot.id) || [])
+                    .filter(c => !c.isSocio && c.isJuridico)
+                    .sort((a, b) => getRank(a.role) - getRank(b.role));
 
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Organograma');
-            
-            XLSX.writeFile(wb, 'Organograma_Estrutura.xlsx');
-            showAlert('Sucesso', 'Estrutura exportada em Excel com sucesso!', 'success');
+                // Group by Local
+                const localGroups = new Map<string, ColaboradorCard[]>();
+                allSubs.forEach(sub => {
+                    const key = sub.local || 'Sem Local';
+                    if (!localGroups.has(key)) localGroups.set(key, []);
+                    localGroups.get(key)!.push(sub);
+                });
+                const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                // Build blocks
+                const blocks: { localName: string, leaders: ColaboradorCard[], members: ColaboradorCard[] }[] = [];
+                localEntries.forEach(([localName, localColabs]) => {
+                    const leaders: ColaboradorCard[] = [];
+                    const directMembers: ColaboradorCard[] = [];
+                    localColabs.forEach(c => {
+                        const subs = (subordinatesMap.get(c.id) || []).filter(s => !s.isSocio && s.isJuridico);
+                        if (subs.length > 0) leaders.push(c);
+                        else directMembers.push(c);
+                    });
+                    if (leaders.length > 0) {
+                        const leaderGroups = new Map<string, ColaboradorCard[]>();
+                        leaders.forEach(leader => {
+                            const leaderSubs = (subordinatesMap.get(leader.id) || []).filter(s => !s.isSocio && s.isJuridico);
+                            const sig = leaderSubs.map(s => s.id).sort().join('|');
+                            if (!leaderGroups.has(sig)) leaderGroups.set(sig, []);
+                            leaderGroups.get(sig)!.push(leader);
+                        });
+                        leaderGroups.forEach((groupLeaders) => {
+                            const leaderSubs = (subordinatesMap.get(groupLeaders[0].id) || [])
+                                .filter(s => !s.isSocio && s.isJuridico)
+                                .sort((a, b) => getRank(a.role) - getRank(b.role));
+                            blocks.push({ localName, leaders: groupLeaders, members: leaderSubs });
+                        });
+                        if (directMembers.length > 0) blocks.push({ localName, leaders: [], members: directMembers });
+                    } else {
+                        blocks.push({ localName, leaders: [], members: directMembers });
+                    }
+                });
+
+                // Excel styles
+                const headerStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 13 }, fill: { fgColor: { rgb: '0A192F' } }, alignment: { horizontal: 'center' as const } };
+                const socioStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }, fill: { fgColor: { rgb: '7C3AED' } }, alignment: { horizontal: 'left' as const } };
+                const localStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 }, fill: { fgColor: { rgb: '1E3A8A' } }, alignment: { horizontal: 'left' as const } };
+                const leaderStyle = { font: { bold: true, sz: 10 }, fill: { fgColor: { rgb: 'DBEAFE' } }, alignment: { horizontal: 'left' as const } };
+                const memberStyle = { font: { sz: 10 }, alignment: { horizontal: 'left' as const } };
+                const summaryHeaderStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }, fill: { fgColor: { rgb: '0A192F' } }, alignment: { horizontal: 'center' as const } };
+                const summaryLabelStyle = { font: { bold: true, sz: 10 }, fill: { fgColor: { rgb: 'F3F4F6' } }, alignment: { horizontal: 'left' as const } };
+                const summaryValueStyle = { font: { sz: 10 }, fill: { fgColor: { rgb: 'F3F4F6' } }, alignment: { horizontal: 'center' as const } };
+
+                // Build sheet data
+                const rows: { v: string, s?: any }[][] = [];
+
+                // Title row
+                rows.push([{ v: 'ORGANOGRAMA', s: headerStyle }, { v: cottaRoot.name.toUpperCase(), s: headerStyle }]);
+                rows.push([{ v: '' }, { v: '' }]); // empty row
+
+                blocks.forEach((block) => {
+                    // Sócio row
+                    rows.push([{ v: cottaRoot.name, s: socioStyle }, { v: cottaRoot.role || 'Sócio', s: socioStyle }]);
+                    // Local row
+                    rows.push([{ v: `📍 ${block.localName}`, s: localStyle }, { v: '', s: localStyle }]);
+                    // Leader rows
+                    block.leaders.forEach(leader => {
+                        rows.push([{ v: `  👤 ${leader.name}`, s: leaderStyle }, { v: leader.role, s: leaderStyle }]);
+                    });
+                    // Member rows
+                    block.members.forEach(member => {
+                        rows.push([{ v: `      ${member.name}`, s: memberStyle }, { v: member.role, s: memberStyle }]);
+                    });
+                    // Empty separator
+                    rows.push([{ v: '' }, { v: '' }]);
+                });
+
+                // Summary section
+                rows.push([{ v: '' }, { v: '' }]);
+                rows.push([{ v: 'RESUMO POR CARGO', s: summaryHeaderStyle }, { v: 'QUANTIDADE', s: summaryHeaderStyle }]);
+
+                const roleCounts = new Map<string, number>();
+                allSubs.forEach(sub => {
+                    const role = sub.role || 'Sem Cargo';
+                    roleCounts.set(role, (roleCounts.get(role) || 0) + 1);
+                });
+                const sortedRoles = Array.from(roleCounts.entries()).sort((a, b) => getRank(a[0]) - getRank(b[0]));
+                sortedRoles.forEach(([role, count]) => {
+                    rows.push([{ v: role, s: summaryLabelStyle }, { v: String(count), s: summaryValueStyle }]);
+                });
+                rows.push([{ v: 'TOTAL', s: { font: { bold: true, sz: 11 }, fill: { fgColor: { rgb: 'E5E7EB' } }, alignment: { horizontal: 'left' as const } } }, { v: String(allSubs.length), s: { font: { bold: true, sz: 11 }, fill: { fgColor: { rgb: 'E5E7EB' } }, alignment: { horizontal: 'center' as const } } }]);
+
+                // Create worksheet from array
+                const wsData = rows.map(row => row.map(cell => cell.v));
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                // Apply styles
+                rows.forEach((row, rIdx) => {
+                    row.forEach((cell, cIdx) => {
+                        const cellRef = XLSX.utils.encode_cell({ r: rIdx, c: cIdx });
+                        if (ws[cellRef] && cell.s) {
+                            ws[cellRef].s = cell.s;
+                        }
+                    });
+                });
+
+                ws['!cols'] = [{ wch: 45 }, { wch: 30 }];
+
+                // Merge title row
+                ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
+                // Fix title after merge
+                const titleRef = XLSX.utils.encode_cell({ r: 0, c: 0 });
+                if (ws[titleRef]) {
+                    ws[titleRef].v = `ORGANOGRAMA — ${cottaRoot.name.toUpperCase()}`;
+                    ws[titleRef].s = headerStyle;
+                }
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, cottaRoot.name.split(' ')[0]);
+                XLSX.writeFile(wb, `Organograma_${cottaRoot.name.replace(/\s+/g, '_')}.xlsx`);
+                showAlert('Sucesso', 'Organograma exportado em Excel com sucesso!', 'success');
+            } else {
+                // === EXPORTAÇÃO GENÉRICA ===
+                const excelData = data.map(c => {
+                    const leaderName = c.leader_id ? data.find(l => l.id === c.leader_id)?.name : 'Sem subordinação';
+                    return {
+                        'Identificação': c.id,
+                        'Nome': c.name,
+                        'Cargo': c.role,
+                        'Equipe / Área': c.equipe,
+                        'Atuação': c.atuacao || '-',
+                        'Localidade': c.local,
+                        'Líder Direto': leaderName,
+                        'Email': c.fullData?.email || 'Não informado',
+                        'Celular': c.fullData?.phone || 'Não informado',
+                        'Competências': c.competencias || ''
+                    };
+                });
+
+                const ws = XLSX.utils.json_to_sheet(excelData);
+                const colWidths = [
+                    { wch: 15 }, { wch: 35 }, { wch: 25 }, { wch: 25 }, { wch: 20 },
+                    { wch: 20 }, { wch: 35 }, { wch: 35 }, { wch: 20 }, { wch: 60 }
+                ];
+                ws['!cols'] = colWidths;
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Organograma');
+                XLSX.writeFile(wb, 'Organograma_Estrutura.xlsx');
+                showAlert('Sucesso', 'Estrutura exportada em Excel com sucesso!', 'success');
+            }
         } catch (error) {
             console.error('Erro ao exportar para Excel:', error);
             showAlert('Erro', 'Ocorreu um erro ao tentar exportar a planilha.', 'error');
         }
-    }, [data]);
+    }, [data, activeTab, selectedPartner, subordinatesMap]);
 
     const handleExportPDF = async () => {
         try {
