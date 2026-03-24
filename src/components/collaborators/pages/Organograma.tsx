@@ -502,6 +502,250 @@ const OrganogramNode = React.memo(({
     );
 });
 
+const HorizontalOrganogramNode = React.memo(({
+    colab,
+    context,
+    visitedIds,
+    parentId = 'root',
+    level = 0
+}: {
+    colab: ColaboradorCard | ColaboradorCard[],
+    context: any,
+    visitedIds: Set<string>,
+    parentId?: string,
+    level?: number
+}) => {
+    const colabItems = Array.isArray(colab) ? colab : [colab];
+    const firstColab = colabItems[0];
+    
+    // Check circular references
+    const colabId = firstColab.id;
+    if (visitedIds.has(colabId) && level > 0) return null;
+    const nextVisited = new Set(visitedIds);
+    nextVisited.add(colabId);
+
+    // Grouping subordinates of this node (or these nodes if joint)
+    let myColabs: ColaboradorCard[] = [];
+    if (Array.isArray(colab)) {
+        colab.forEach(c => {
+            if (context.subordinatesMap.has(c.id)) {
+                myColabs = myColabs.concat(context.subordinatesMap.get(c.id)!);
+            }
+        });
+        myColabs = Array.from(new Set(myColabs)).sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+        myColabs = context.subordinatesMap.get(colabId) || [];
+    }
+
+    const searchQuery = context.searchQuery || '';
+    const isMatch = !searchQuery || colabItems.some(item => 
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        String(item.role).toLowerCase().includes(searchQuery.toLowerCase()) || 
+        String(item.equipe).toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const groupedSubordinates: (ColaboradorCard | ColaboradorCard[])[] = [];
+    const leaderSignatures = new Map<string, ColaboradorCard[]>();
+
+    myColabs.forEach(sub => {
+        const subSubs = context.subordinatesMap.get(sub.id) || [];
+        if (subSubs.length > 0) {
+            const sig = subSubs.map((s: ColaboradorCard) => s.id).sort().join('|');
+            if (!leaderSignatures.has(sig)) leaderSignatures.set(sig, []);
+            leaderSignatures.get(sig)!.push(sub);
+        } else {
+            groupedSubordinates.push(sub);
+        }
+    });
+
+    leaderSignatures.forEach((leaders) => {
+        if (leaders.length > 1) {
+            groupedSubordinates.push(leaders);
+        } else {
+            groupedSubordinates.push(leaders[0]);
+        }
+    });
+
+    const sortedSubordinates = groupedSubordinates;
+
+    return (
+        <div className={`flex flex-row items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
+            
+            {/* 1. Parent Node(s) Column */}
+            <div className="flex flex-col items-center relative z-10 w-min">
+                {colabItems.length > 1 && (
+                    <div className="absolute top-[25%] bottom-[25%] left-[-16px] w-[2px] bg-gray-300"></div>
+                )}
+                <div className="flex flex-col items-center gap-y-4">
+                    {colabItems.map((currentItem) => (
+                        <div key={currentItem.id} className="relative flex flex-row items-center">
+                            
+                            {colabItems.length > 1 && (
+                                <div className="absolute left-[-16px] w-[16px] h-[2px] bg-gray-300"></div>
+                            )}
+
+                            <Droppable droppableId={currentItem.id} type="COLAB">
+                                {(provided, snapshot) => (
+                                    <div
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                        className={`relative flex flex-col items-center transition-all duration-300 w-[160px] z-10 group hover:z-50 ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
+                                    >
+                                        <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
+
+                                        <Draggable draggableId={`${parentId}_${currentItem.id}`} index={0}>
+                                            {(dragProvided, dragSnapshot) => (
+                                                <div
+                                                    ref={dragProvided.innerRef}
+                                                    {...dragProvided.draggableProps}
+                                                    {...dragProvided.dragHandleProps}
+                                                    className={`flex flex-col items-center cursor-pointer w-full ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
+                                                    onClick={() => context.setSelectedColabForModal(currentItem.fullData)}
+                                                >
+                                                    <div className={`w-20 h-20 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30`}>
+                                                        {currentItem.photo_url ? (
+                                                            <img src={currentItem.photo_url} alt={currentItem.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                                <UserIcon className="w-8 h-8" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className={`mt-3 text-center px-1 flex flex-col items-center gap-1`}>
+                                                        <div>
+                                                            <h4 className={`text-[12px] leading-tight font-black text-[#0a192f] tracking-tight text-center`}>{currentItem.name}</h4>
+                                                            <span className={`text-[9px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center`}>{currentItem.role}</span>
+                                                        </div>
+                                                        {currentItem.equipe && currentItem.equipe !== 'Sem Equipe' && currentItem.equipe !== 'Geral' && (
+                                                            <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-[180px]">
+                                                                {currentItem.equipe}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </Draggable>
+                                        {provided.placeholder}
+                                    </div>
+                                )}
+                            </Droppable>
+
+                            {colabItems.length > 1 && sortedSubordinates.length > 0 && (
+                                <div className="absolute right-[-16px] w-[16px] h-[2px] bg-gray-300"></div>
+                            )}
+
+                        </div>
+                    ))}
+                </div>
+                {colabItems.length > 1 && sortedSubordinates.length > 0 && (
+                    <div className="absolute top-[25%] bottom-[25%] right-[-16px] w-[2px] bg-gray-300"></div>
+                )}
+            </div>
+
+            {/* 2. Subordinates Column */}
+            {sortedSubordinates.length > 0 && (
+                <div className="flex flex-row items-stretch">
+                    <div className="flex flex-col justify-center">
+                        <div className={`w-8 h-[2px] bg-gray-300 ${colabItems.length > 1 ? 'ml-4' : ''}`}></div>
+                    </div>
+
+                    <div className="flex flex-col justify-center relative py-4">
+                        {firstColab.isSocio && context.activeTab === 'JURIDICO' ? (() => {
+                            const localGroups = new Map<string, (ColaboradorCard | ColaboradorCard[])[]>();
+                            sortedSubordinates.forEach(sub => {
+                                const key = Array.isArray(sub) ? (sub[0].local || 'Sem Local') : (sub.local || 'Sem Local');
+                                if (!localGroups.has(key)) localGroups.set(key, []);
+                                localGroups.get(key)!.push(sub);
+                            });
+                            const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                            return (
+                                <div className="flex flex-col items-start relative pb-4 pt-4">
+                                    {localEntries.map(([localName, localColabs], locIdx) => (
+                                        <div key={localName} className="flex flex-row items-stretch relative">
+                                            {localEntries.length > 1 && (
+                                                <div className="absolute left-0 w-[2px] bg-gray-300" style={{
+                                                    top: locIdx === 0 ? '50%' : '0',
+                                                    bottom: locIdx === localEntries.length - 1 ? '50%' : '0'
+                                                }}></div>
+                                            )}
+                                            <div className="flex flex-col justify-center">
+                                                <div className="w-8 h-[2px] bg-gray-300"></div>
+                                            </div>
+
+                                            <div className="flex flex-row items-center relative py-6">
+                                                <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md w-max z-10">
+                                                    <span className="text-[10px] font-black uppercase tracking-[0.15em]">{localName}</span>
+                                                </div>
+
+                                                <div className="flex flex-col justify-center">
+                                                    <div className="w-8 h-[2px] bg-gray-300"></div>
+                                                </div>
+
+                                                <div className="flex flex-col items-start relative">
+                                                    {localColabs.map((sub, subIdx) => (
+                                                        <div key={Array.isArray(sub) ? sub[0].id : sub.id} className="flex flex-row items-stretch relative">
+                                                            {localColabs.length > 1 && (
+                                                                <div className="absolute left-0 w-[2px] bg-gray-300" style={{
+                                                                    top: subIdx === 0 ? '50%' : '0',
+                                                                    bottom: subIdx === localColabs.length - 1 ? '50%' : '0'
+                                                                }}></div>
+                                                            )}
+                                                            <div className="flex flex-col justify-center">
+                                                                <div className="w-8 h-[2px] bg-gray-300"></div>
+                                                            </div>
+                                                            
+                                                            <div className="py-2">
+                                                                <HorizontalOrganogramNode
+                                                                    colab={sub}
+                                                                    context={context}
+                                                                    visitedIds={nextVisited}
+                                                                    parentId={firstColab.id}
+                                                                    level={level + 1}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })() : (
+                            <div className="flex flex-col items-start relative pb-4 pt-4">
+                                {sortedSubordinates.map((sub, idx) => (
+                                    <div key={Array.isArray(sub) ? sub[0].id : sub.id} className="flex flex-row items-stretch relative">
+                                        {sortedSubordinates.length > 1 && (
+                                            <div className="absolute left-0 w-[2px] bg-gray-300" style={{
+                                                top: idx === 0 ? '50%' : '0',
+                                                bottom: idx === sortedSubordinates.length - 1 ? '50%' : '0'
+                                            }}></div>
+                                        )}
+                                        <div className="flex flex-col justify-center">
+                                            <div className="w-8 h-[2px] bg-gray-300"></div>
+                                        </div>
+
+                                        <div className="py-2">
+                                            <HorizontalOrganogramNode
+                                                colab={sub}
+                                                context={context}
+                                                visitedIds={nextVisited}
+                                                parentId={firstColab.id}
+                                                level={level + 1}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+});
 
 
 export function Organograma() {
@@ -1606,19 +1850,33 @@ export function Organograma() {
                                             ? roots.filter(r => selectedPartner.includes(r.id))
                                             : roots;
                                             
-                                        return visibleRoots.map((root, index, arr) => (
-                                            <div key={root.id} id={index === 0 ? 'organogram-root-node' : undefined} className="relative flex flex-col items-center w-full mt-32 first:mt-0">
-                                                <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
-                                            </div>
-                                        ));
+                                        return visibleRoots.map((root, index, arr) => {
+                                            const isCottaRoot = root.name.toLowerCase().includes('cotta');
+                                            return (
+                                                <div key={root.id} id={index === 0 ? 'organogram-root-node' : undefined} className={`relative flex flex-col items-center w-full mt-32 first:mt-0 ${isCottaRoot ? 'scale-90 transform-origin-top' : ''}`}>
+                                                    {isCottaRoot ? (
+                                                        <HorizontalOrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
+                                                    ) : (
+                                                        <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
+                                                    )}
+                                                </div>
+                                            );
+                                        });
                                     }
 
                                     const activePartner = selectedPartner === 'ALL' ? roots[0]?.id : selectedPartner;
                                     const selectedRoot = roots.find(r => r.id === activePartner);
                                     if (!selectedRoot) return null;
+                                    
+                                    const isCottaRoot = selectedRoot.name.toLowerCase().includes('cotta');
+                                    
                                     return (
-                                        <div id="organogram-root-node" className="relative flex flex-col items-center w-full">
-                                            <OrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
+                                        <div id="organogram-root-node" className={`relative flex flex-col items-center w-full ${isCottaRoot ? 'scale-90 transform-origin-top' : ''}`}>
+                                            {isCottaRoot ? (
+                                                <HorizontalOrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
+                                            ) : (
+                                                <OrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
+                                            )}
                                         </div>
                                     );
                                 })()
