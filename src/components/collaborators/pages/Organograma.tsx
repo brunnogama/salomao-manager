@@ -57,7 +57,7 @@ const OrganogramNode = React.memo(({
     isDense = false,
     isSuperDense = false
 }: {
-    colab: ColaboradorCard,
+    colab: ColaboradorCard | ColaboradorCard[],
     context: {
         activeTab: 'JURIDICO' | 'ADMINISTRATIVO',
         searchQuery: string,
@@ -76,26 +76,29 @@ const OrganogramNode = React.memo(({
     isSuperDense?: boolean
 }) => {
     const { activeTab, searchQuery, setSelectedColabForModal, setEditingPosition, setEditingCompetenciasId, setEditingCompetenciasText, subordinatesMap, selectedAtuacao, hasAdministrativeSubordinates } = context;
-    const subordinates = subordinatesMap.get(colab.id) || [];
-    const roleStr = colab.role;
+    const colabItems = Array.isArray(colab) ? colab : [colab];
+    const firstColab = colabItems[0];
+    const colabId = firstColab.id;
 
-    if (visitedIds.has(colab.id)) return null;
-    const nextVisited = new Set<string>(visitedIds).add(colab.id);
+    if (colabItems.some(c => visitedIds.has(c.id))) return null;
+    const nextVisited = new Set<string>(visitedIds);
+    colabItems.forEach(c => nextVisited.add(c.id));
 
     // Visibility logic
-    if (activeTab === 'JURIDICO' && !colab.isJuridico) return null;
-    if (activeTab === 'ADMINISTRATIVO' && !colab.isAdministrativo && !hasAdministrativeSubordinates(colab.id)) return null;
+    if (activeTab === 'JURIDICO' && !firstColab.isJuridico) return null;
+    if (activeTab === 'ADMINISTRATIVO' && !firstColab.isAdministrativo && !hasAdministrativeSubordinates(colabId)) return null;
 
-    const matchesSearch = !searchQuery ||
-        colab.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        roleStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        colab.equipe.toLowerCase().includes(searchQuery.toLowerCase());
+    const isMatch = colabItems.some(item => {
+        const matchesSearch = !searchQuery ||
+            item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.equipe.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesAtuacao = activeTab === 'ADMINISTRATIVO'
-        ? (selectedAtuacao === 'ALL' || colab.atuacao === selectedAtuacao || level === 0)
-        : true;
-
-    const isMatch = matchesSearch && matchesAtuacao;
+        const matchesAtuacao = activeTab === 'ADMINISTRATIVO'
+            ? (selectedAtuacao === 'ALL' || item.atuacao === selectedAtuacao || level === 0)
+            : true;
+        return matchesSearch && matchesAtuacao;
+    });
 
     const getRank = (rStr: string) => {
         const r = rStr.trim();
@@ -103,26 +106,66 @@ const OrganogramNode = React.memo(({
         return index === -1 ? 999 : index;
     };
 
-    const sortedSubordinates = [...subordinates]
-        .filter(c => {
-            if (c.isSocio) return false; // Sócios are always roots, never subordinates visualised under another leader in the tree flow.
+    const subordinates = subordinatesMap.get(colabId) || [];
+    const validSubordinates = [...subordinates].filter(c => {
+        if (c.isSocio) return false;
+        if (activeTab === 'JURIDICO') return c.isJuridico;
+        if (activeTab === 'ADMINISTRATIVO') return (c.isAdministrativo || hasAdministrativeSubordinates(c.id));
+        return true;
+    }).sort((a, b) => getRank(a.role) - getRank(b.role));
+
+    // Grouping by Shared Subordinates (joint headers)
+    const groupedSubordinates: (ColaboradorCard | ColaboradorCard[])[] = [];
+    const processedSignatures = new Set<string>();
+
+    validSubordinates.forEach(sub => {
+        const subSubs = (subordinatesMap.get(sub.id) || []).filter(c => {
+            if (c.isSocio) return false;
             if (activeTab === 'JURIDICO') return c.isJuridico;
             if (activeTab === 'ADMINISTRATIVO') return (c.isAdministrativo || hasAdministrativeSubordinates(c.id));
             return true;
-        })
-        .sort((a, b) => getRank(a.role) - getRank(b.role));
+        });
+
+        if (subSubs.length > 0) {
+            const signature = subSubs.map(s => s.id).sort().join(',');
+            const sharedLeaders = validSubordinates.filter(s => {
+                const sSubs = (subordinatesMap.get(s.id) || []).filter(c => {
+                    if (c.isSocio) return false;
+                    if (activeTab === 'JURIDICO') return c.isJuridico;
+                    if (activeTab === 'ADMINISTRATIVO') return (c.isAdministrativo || hasAdministrativeSubordinates(c.id));
+                    return true;
+                });
+                if (sSubs.length === 0) return false;
+                return sSubs.map(x => x.id).sort().join(',') === signature;
+            });
+
+            if (sharedLeaders.length > 1) {
+                if (!processedSignatures.has(signature)) {
+                    groupedSubordinates.push(sharedLeaders);
+                    processedSignatures.add(signature);
+                }
+            } else {
+                groupedSubordinates.push(sub);
+            }
+        } else {
+            groupedSubordinates.push(sub);
+        }
+    });
+
+    const sortedSubordinates = groupedSubordinates;
 
     // Removed roleGroups logic to show all subordinates horizontally.
 
-    if (colab.isSocio && context.activeTab === 'ADMINISTRATIVO') {
+    if (firstColab.isSocio && context.activeTab === 'ADMINISTRATIVO') {
         const filteredSubs = sortedSubordinates.filter(sub => {
+            const atuacao = Array.isArray(sub) ? sub[0].atuacao : sub.atuacao;
             if (context.selectedAtuacao === 'ALL') return true;
-            return sub.atuacao === context.selectedAtuacao;
+            return atuacao === context.selectedAtuacao;
         });
 
-        const atuacaoGroups = new Map<string, ColaboradorCard[]>();
+        const atuacaoGroups = new Map<string, (ColaboradorCard | ColaboradorCard[])[]>();
         filteredSubs.forEach(sub => {
-            const key = sub.atuacao || 'Sem Atuação';
+            const key = Array.isArray(sub) ? (sub[0].atuacao || 'Sem Atuação') : (sub.atuacao || 'Sem Atuação');
             if (!atuacaoGroups.has(key)) atuacaoGroups.set(key, []);
             atuacaoGroups.get(key)!.push(sub);
         });
@@ -131,15 +174,15 @@ const OrganogramNode = React.memo(({
         return (
             <div className={`flex flex-col items-center w-full gap-y-24 transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
                 {atuacaoEntries.map(([atuacaoName, atuacaoColabs]) => {
-                    const localGroups = new Map<string, ColaboradorCard[]>();
+                    const localGroups = new Map<string, (ColaboradorCard | ColaboradorCard[])[]>();
                     atuacaoColabs.forEach(sub => {
-                        const key = sub.local || 'Sem Local';
+                        const key = Array.isArray(sub) ? (sub[0].local || 'Sem Local') : (sub.local || 'Sem Local');
                         if (!localGroups.has(key)) localGroups.set(key, []);
                         localGroups.get(key)!.push(sub);
                     });
                     const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
-                    const uniqueDroppableId = `root:${colab.id}:${atuacaoName}`;
+                    const uniqueDroppableId = `root:${colabId}:${atuacaoName}`;
                     
                     return (
                         <div key={atuacaoName} className="flex flex-col items-center w-full relative">
@@ -150,12 +193,12 @@ const OrganogramNode = React.memo(({
                                         <div ref={provided.innerRef} {...provided.droppableProps} className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[120px]' : isDense ? 'w-[140px]' : 'w-[160px]'}`}>
                                             <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
                                             
-                                            <Draggable draggableId={`${colab.id}-${atuacaoName}`} index={0} isDragDisabled={true}>
+                                            <Draggable draggableId={`${firstColab.id}-${atuacaoName}`} index={0} isDragDisabled={true}>
                                                 {(dragProvided) => (
-                                                    <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className="flex flex-col items-center w-full cursor-pointer" onClick={() => context.setSelectedColabForModal(colab.fullData)}>
+                                                    <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className="flex flex-col items-center w-full cursor-pointer" onClick={() => context.setSelectedColabForModal(firstColab.fullData)}>
                                                         <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-[#1e3a8a]/30`}>
-                                                            {colab.photo_url ? (
-                                                                <img src={colab.photo_url} alt={colab.name} className="w-full h-full object-cover" />
+                                                            {firstColab.photo_url ? (
+                                                                <img src={firstColab.photo_url} alt={firstColab.name} className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
                                                                     <UserIcon className={isSuperDense ? 'w-6 h-6' : isDense ? 'w-8 h-8' : 'w-10 h-10'} />
@@ -164,8 +207,8 @@ const OrganogramNode = React.memo(({
                                                         </div>
                                                         <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
                                                             <div>
-                                                                <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center`}>{colab.name}</h4>
-                                                                <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center`}>{roleStr}</span>
+                                                                <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center`}>{firstColab.name}</h4>
+                                                                <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center`}>{firstColab.role}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -222,11 +265,11 @@ const OrganogramNode = React.memo(({
                                                             transform: localColabs.length > 12 ? 'scale(0.8)' : localColabs.length > 8 ? 'scale(0.85)' : localColabs.length > 5 ? 'scale(0.95)' : 'scale(1)',
                                                             transformOrigin: 'top center'
                                                         }}>
-                                                            <OrganogramNode
-                                                                colab={sub}
-                                                                context={context}
-                                                                visitedIds={nextVisited}
-                                                                parentId={localColabs.length > 0 ? colab.id : 'root'}
+                                                                <OrganogramNode
+                                                                    colab={sub}
+                                                                    context={context}
+                                                                    visitedIds={nextVisited}
+                                                                    parentId={localColabs.length > 0 ? colabId : 'root'}
                                                                 level={level + 1}
                                                                 isDense={localColabs.length > 5 && localColabs.length <= 8}
                                                                 isSuperDense={localColabs.length > 8}
@@ -248,75 +291,92 @@ const OrganogramNode = React.memo(({
 
     return (
         <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
-            <Droppable droppableId={colab.id} type="COLAB">
-                {(provided, snapshot) => (
-                    <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[120px]' : isDense ? 'w-[140px]' : 'w-[160px]'} z-10 group hover:z-50 ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
-                    >
-                        <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
-
-                        <Draggable draggableId={`${parentId}_${colab.id}`} index={0}>
-                            {(dragProvided, dragSnapshot) => (
+            
+            <div className="flex flex-row items-start justify-center relative">
+                {colabItems.length > 1 && (
+                    <div className="absolute h-[2px] bg-gray-300" style={{
+                        top: '-1rem',
+                        left: '25%',
+                        right: '25%'
+                    }}></div>
+                )}
+                {colabItems.map((currentItem, idx) => (
+                    <div key={currentItem.id} className={`relative flex flex-col items-center ${colabItems.length > 1 ? 'px-4' : ''}`}>
+                        {colabItems.length > 1 && (
+                            <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                        )}
+                        <Droppable droppableId={currentItem.id} type="COLAB">
+                            {(provided, snapshot) => (
                                 <div
-                                    ref={dragProvided.innerRef}
-                                    {...dragProvided.draggableProps}
-                                    {...dragProvided.dragHandleProps}
-                                    className={`flex flex-col items-center cursor-pointer w-full ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
-                                    onClick={() => setSelectedColabForModal(colab.fullData)}
+                                    ref={provided.innerRef}
+                                    {...provided.droppableProps}
+                                    className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[120px]' : isDense ? 'w-[140px]' : 'w-[160px]'} z-10 group hover:z-50 ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
                                 >
-                                    <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30`}>
-                                        {colab.photo_url ? (
-                                            <img src={colab.photo_url} alt={colab.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
-                                                <UserIcon className={isSuperDense ? 'w-6 h-6' : isDense ? 'w-8 h-8' : 'w-10 h-10'} />
+                                    <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
+
+                                    <Draggable draggableId={`${parentId}_${currentItem.id}`} index={0}>
+                                        {(dragProvided, dragSnapshot) => (
+                                            <div
+                                                ref={dragProvided.innerRef}
+                                                {...dragProvided.draggableProps}
+                                                {...dragProvided.dragHandleProps}
+                                                className={`flex flex-col items-center cursor-pointer w-full ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
+                                                onClick={() => setSelectedColabForModal(currentItem.fullData)}
+                                            >
+                                                <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30`}>
+                                                    {currentItem.photo_url ? (
+                                                        <img src={currentItem.photo_url} alt={currentItem.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                            <UserIcon className={isSuperDense ? 'w-6 h-6' : isDense ? 'w-8 h-8' : 'w-10 h-10'} />
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
+                                                    <div>
+                                                        <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center`}>{currentItem.name}</h4>
+                                                        <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center`}>{currentItem.role}</span>
+                                                    </div>
+                                                    {currentItem.equipe && currentItem.equipe !== 'Sem Equipe' && currentItem.equipe !== 'Geral' && !isSuperDense && (
+                                                        <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-[180px]">
+                                                            {currentItem.equipe}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const rect = e.currentTarget.getBoundingClientRect();
+                                                        setEditingPosition({ top: rect.top, left: rect.right + 16 });
+                                                        setEditingCompetenciasId(currentItem.id);
+                                                        setEditingCompetenciasText(currentItem.competencias || '');
+                                                    }}
+                                                    className="absolute -right-2 top-0 p-1.5 bg-white border border-gray-100 rounded-full shadow-sm text-gray-400 hover:text-[#1e3a8a] opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                                >
+                                                    <Tag className="w-3 h-3" />
+                                                </button>
                                             </div>
                                         )}
-                                    </div>
-
-                                    <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
-                                        <div>
-                                            <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center`}>{colab.name}</h4>
-                                            <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center`}>{roleStr}</span>
-                                        </div>
-                                        {colab.equipe && colab.equipe !== 'Sem Equipe' && colab.equipe !== 'Geral' && !isSuperDense && (
-                                            <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-[180px]">
-                                                {colab.equipe}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            setEditingPosition({ top: rect.top, left: rect.right + 16 });
-                                            setEditingCompetenciasId(colab.id);
-                                            setEditingCompetenciasText(colab.competencias || '');
-                                        }}
-                                        className="absolute -right-2 top-0 p-1.5 bg-white border border-gray-100 rounded-full shadow-sm text-gray-400 hover:text-[#1e3a8a] opacity-0 group-hover:opacity-100 transition-opacity z-20"
-                                    >
-                                        <Tag className="w-3 h-3" />
-                                    </button>
+                                    </Draggable>
+                                    {provided.placeholder}
                                 </div>
                             )}
-                        </Draggable>
-                        {provided.placeholder}
+                        </Droppable>
                     </div>
-                )}
-            </Droppable>
+                ))}
+            </div>
 
             {sortedSubordinates.length > 0 && (
                 <div className="flex flex-col items-center mt-2 w-full">
                     <div className="w-[2px] h-8 bg-gray-300"></div>
                     <div className="flex flex-col items-center w-full relative z-10">
-                        {colab.isSocio && activeTab === 'JURIDICO' ? (() => {
+                        {firstColab.isSocio && activeTab === 'JURIDICO' ? (() => {
                             // Sócio: group subordinates by Local
-                            const localGroups = new Map<string, ColaboradorCard[]>();
+                            const localGroups = new Map<string, (ColaboradorCard | ColaboradorCard[])[]>();
                             sortedSubordinates.forEach(sub => {
-                                const key = sub.local || 'Sem Local';
+                                const key = Array.isArray(sub) ? (sub[0].local || 'Sem Local') : (sub.local || 'Sem Local');
                                 if (!localGroups.has(key)) localGroups.set(key, []);
                                 localGroups.get(key)!.push(sub);
                             });
@@ -367,7 +427,7 @@ const OrganogramNode = React.memo(({
                                                                 colab={sub}
                                                                 context={context}
                                                                 visitedIds={nextVisited}
-                                                                parentId={colab.id}
+                                                                parentId={firstColab.id}
                                                                 level={level + 1}
                                                                 isDense={localColabs.length > 5 && localColabs.length <= 8}
                                                                 isSuperDense={localColabs.length > 8}
@@ -402,7 +462,7 @@ const OrganogramNode = React.memo(({
                                                     colab={sub}
                                                     context={context}
                                                     visitedIds={nextVisited}
-                                                    parentId={colab.id}
+                                                    parentId={firstColab.id}
                                                     level={level + 1}
                                                     isDense={sortedSubordinates.length > 5 && sortedSubordinates.length <= 8}
                                                     isSuperDense={sortedSubordinates.length > 8}
