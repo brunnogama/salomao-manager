@@ -440,8 +440,9 @@ export function Organograma() {
     const [exportScope, setExportScope] = useState<string[]>([]);
     const [isExportingPDF, setIsExportingPDF] = useState(false);
 
-    // Pan (Infinite Canvas) Logic — direct DOM translation (bypasses all scrollbar limits)
-    const panRef = useRef({ x: 0, y: 0 });
+    // Pan (Infinite Canvas) Logic
+    const [pan, setPan] = useState({ x: 0, y: 0 });
+    const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
 
     useEffect(() => {
         const container = containerRef.current;
@@ -452,12 +453,6 @@ export function Organograma() {
         let lastX = 0;
         let lastY = 0;
 
-        const applyPan = () => {
-            if (wrapper) {
-                wrapper.style.transform = `translate(${panRef.current.x}px, ${panRef.current.y}px) scale(${zoomLevel})`;
-            }
-        };
-
         const onMouseDown = (e: MouseEvent) => {
             const target = e.target as HTMLElement;
             // Allow panning only when clicking on the background (not nodes, buttons, inputs)
@@ -467,40 +462,38 @@ export function Organograma() {
 
             e.preventDefault();
             isDown = true;
+            setIsDraggingCanvas(true);
             lastX = e.clientX;
             lastY = e.clientY;
             document.body.style.userSelect = 'none';
             container.style.cursor = 'grabbing';
-            wrapper.style.transition = 'none'; // Instant follow
             container.focus();
         };
 
         const onMouseUp = () => {
             if (!isDown) return;
             isDown = false;
+            setIsDraggingCanvas(false);
             document.body.style.userSelect = '';
             container.style.cursor = 'grab';
-            wrapper.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'; // Restore smooth zoom
         };
 
         const onMouseMove = (e: MouseEvent) => {
             if (!isDown) return;
             e.preventDefault();
 
-            panRef.current.x += (e.clientX - lastX);
-            panRef.current.y += (e.clientY - lastY);
+            const dx = e.clientX - lastX;
+            const dy = e.clientY - lastY;
             lastX = e.clientX;
             lastY = e.clientY;
 
-            applyPan();
+            setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
         };
 
         const onWheel = (e: WheelEvent) => {
             // Support trackpads and mouse wheel for panning since overflow is hidden
             e.preventDefault();
-            panRef.current.x -= e.deltaX;
-            panRef.current.y -= e.deltaY;
-            applyPan();
+            setPan(prev => ({ x: prev.x - e.deltaX, y: prev.y - e.deltaY }));
         };
 
         const onKeyDown = (e: KeyboardEvent) => {
@@ -508,27 +501,19 @@ export function Organograma() {
             
             const step = 40;
             let moved = false;
-            if (e.key === 'ArrowUp') { panRef.current.y += step; moved = true; }
-            if (e.key === 'ArrowDown') { panRef.current.y -= step; moved = true; }
-            if (e.key === 'ArrowLeft') { panRef.current.x += step; moved = true; }
-            if (e.key === 'ArrowRight') { panRef.current.x -= step; moved = true; }
+            let dx = 0;
+            let dy = 0;
+
+            if (e.key === 'ArrowUp') { dy = step; moved = true; }
+            if (e.key === 'ArrowDown') { dy = -step; moved = true; }
+            if (e.key === 'ArrowLeft') { dx = step; moved = true; }
+            if (e.key === 'ArrowRight') { dx = -step; moved = true; }
             
             if (moved) {
                 e.preventDefault();
-                wrapper.style.transition = 'transform 0.1s ease-out';
-                applyPan();
-                setTimeout(() => { if (wrapper) wrapper.style.transition = 'none'; }, 100);
+                setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
             }
         };
-
-        container.addEventListener('mousedown', onMouseDown, { capture: true });
-        container.addEventListener('wheel', onWheel, { passive: false });
-        container.addEventListener('keydown', onKeyDown);
-        window.addEventListener('mouseup', onMouseUp);
-        window.addEventListener('mousemove', onMouseMove, { passive: false });
-
-        // On mount or zoom change, ensure transform is applied
-        applyPan();
 
         return () => {
             container.removeEventListener('mousedown', onMouseDown, { capture: true });
@@ -537,14 +522,11 @@ export function Organograma() {
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('mousemove', onMouseMove);
         };
-    }, [zoomLevel]); // Re-bind when zoom changes so applyPan has latest zoomLevel
+    }, []); // Removed zoomLevel dependency since we use setPan directly
 
     // Auto-center pan when changing tabs/filters
     useLayoutEffect(() => {
-        panRef.current = { x: 0, y: 0 };
-        if (treeWrapperRef.current) {
-            treeWrapperRef.current.style.transform = `translate(0px, 0px) scale(${zoomLevel})`;
-        }
+        setPan({ x: 0, y: 0 });
     }, [activeTab, selectedPartner, selectedAtuacao]);
 
     useEffect(() => {
@@ -1366,11 +1348,13 @@ export function Organograma() {
                     <div className="text-center min-w-full inline-block align-top print:w-full h-full">
                         <div
                             ref={treeWrapperRef}
-                            className={`inline-flex flex-col gap-16 p-16 transition-transform duration-300 relative mx-auto ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'}`}
+                            className={`inline-flex flex-col gap-16 p-16 relative mx-auto ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'}`}
                             style={{
+                                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
                                 transformOrigin: 'top center',
                                 width: 'max-content',
-                                minWidth: '100%'
+                                minWidth: '100%',
+                                transition: isDraggingCanvas ? 'none' : 'transform 0.1s ease-out'
                             }}
                         >
                             {roots.length > 0 ? (
