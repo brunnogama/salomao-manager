@@ -799,22 +799,11 @@ export function Organograma() {
 
     useLayoutEffect(() => {
         if (selectedPartner === 'ALL' || selectedAtuacao === 'ALL') {
-            // Give React a frame to paint the DOM with the new size
             const timer = setTimeout(() => {
                 const container = containerRef.current;
-                const wrapper = treeWrapperRef.current;
-                
-                if (container && wrapper) {
-                    // Tree width scaled + padding
-                    const treeWidth = wrapper.getBoundingClientRect().width;
-                    const containerWidth = container.clientWidth;
-                    
-                    if (treeWidth > containerWidth) {
-                        // Center horizontal scroll
-                        container.scrollLeft = (treeWidth - containerWidth) / 2;
-                    } else {
-                        container.scrollLeft = 0;
-                    }
+                if (container) {
+                    // Force scroll to the extreme left so the first item (e.g. Alice) is fully visible
+                    container.scrollLeft = 0;
                 }
             }, 100);
             return () => clearTimeout(timer);
@@ -1260,7 +1249,7 @@ export function Organograma() {
                     <div className="p-8 md:p-16 text-center min-w-full inline-block align-top print:w-full">
                         <div
                             ref={treeWrapperRef}
-                            className="inline-flex flex-col items-center gap-16 pb-32 transition-transform duration-300 relative"
+                            className={`inline-flex flex-col gap-16 pb-32 transition-transform duration-300 relative mx-auto ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'}`}
                             style={{
                                 transform: `scale(${zoomLevel})`,
                                 transformOrigin: 'top center',
