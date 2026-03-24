@@ -20,6 +20,7 @@ export function RHPostos() {
   const [postos, setPostos] = useState<Posto[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [filterLocal, setFilterLocal] = useState<string>('Todos');
 
   const { colaboradores, roles, locations: allLocations } = useColaboradores();
 
@@ -186,8 +187,27 @@ export function RHPostos() {
         </div>
       )}
 
+      {/* FILTER BUTTONS */}
+      {postos.length > 0 && locations.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar max-w-6xl mx-auto w-full">
+          {['Todos', ...locations].map(locOption => (
+            <button
+              key={locOption}
+              onClick={() => setFilterLocal(locOption)}
+              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all shadow-sm ${
+                filterLocal === locOption 
+                  ? 'bg-[#1e3a8a] text-white ring-2 ring-[#1e3a8a] ring-offset-2' 
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#1e3a8a]'
+              }`}
+            >
+              {locOption}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* RENDERIZAR TABELAS POR LOCAL */}
-      {locations.map((local) => {
+      {(filterLocal === 'Todos' ? locations : locations.filter(l => l === filterLocal)).map((local) => {
         const localPostos = groupedPostos[local];
         const totals = localPostos.reduce((acc, current) => ({
           qdeCargos: acc.qdeCargos + (current.qdeCargos || 0),
