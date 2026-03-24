@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Download, FileText, CheckSquare, Square } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export interface ExportSection {
   id: string;
@@ -56,21 +55,15 @@ export function ExportRHModal({ isOpen, onClose, onExport, isExporting }: Export
   const allSelected = selectedIds.length === EXPORT_SECTIONS.length;
 
   return createPortal(
-    <AnimatePresence>
+    <>
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-[#0a192f]/60 backdrop-blur-sm"
+        <div 
+          className="absolute inset-0 bg-[#0a192f]/60 backdrop-blur-sm transition-opacity duration-300"
           onClick={() => !isExporting && onClose()}
         />
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+        <div
+          className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden transition-all duration-300 transform scale-100 opacity-100"
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
@@ -150,9 +143,9 @@ export function ExportRHModal({ isOpen, onClose, onExport, isExporting }: Export
               {isExporting ? 'Exportando...' : 'Gerar PDF'}
             </button>
           </div>
-        </motion.div>
+        </div>
       </div>
-    </AnimatePresence>,
+    </>,
     document.body
   );
 }
