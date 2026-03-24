@@ -634,20 +634,21 @@ const CottaBlockOrganogramNode = React.memo(({
                     {/* Leaders (if any) */}
                     {block.leaders.length > 0 && (
                         <>
-                            <div className={`flex flex-row items-stretch justify-center relative ${block.leaders.length > 1 ? 'pt-4 gap-x-6' : ''}`}>
+                            <div className={`flex flex-row items-stretch justify-center relative ${block.leaders.length > 1 ? 'pt-4' : ''}`}>
+                                {block.leaders.length > 1 && (
+                                    <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2"></div>
+                                )}
                                 {block.leaders.map((leader, lIdx) => (
-                                    <div key={leader.id} className="relative flex flex-col items-center">
-                                        {/* Horizontal connector between leaders */}
+                                    <div key={leader.id} className={`relative flex flex-col items-center ${block.leaders.length > 1 ? 'px-3' : ''}`}>
                                         {block.leaders.length > 1 && (
                                             <div className="absolute h-[2px] bg-gray-300" style={{
-                                                top: 0,
-                                                left: lIdx === 0 ? '50%' : '-0.75rem',
-                                                right: lIdx === block.leaders.length - 1 ? '50%' : '-0.75rem'
+                                                top: '-1rem',
+                                                left: lIdx === 0 ? '50%' : '0',
+                                                right: lIdx === block.leaders.length - 1 ? '50%' : '0'
                                             }}></div>
                                         )}
-                                        {/* Vertical stub from horizontal bar to leader */}
                                         {block.leaders.length > 1 && (
-                                            <div className="w-[2px] h-4 bg-gray-300"></div>
+                                            <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
                                         )}
                                         <Droppable droppableId={leader.id} type="COLAB">
                                             {(provided) => (
@@ -707,7 +708,9 @@ const CottaBlockOrganogramNode = React.memo(({
                                             right: mIdx === block.members.length - 1 ? '50%' : '0'
                                         }}></div>
                                     )}
-                                    <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                    {block.members.length > 1 && (
+                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                    )}
                                     <div style={{
                                         transform: block.members.length > 12 ? 'scale(0.8)' : block.members.length > 8 ? 'scale(0.85)' : block.members.length > 5 ? 'scale(0.95)' : 'scale(1)',
                                         transformOrigin: 'top center'
