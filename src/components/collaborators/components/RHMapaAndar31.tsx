@@ -19,57 +19,64 @@ interface SeatDef {
 
 const W_STD = 50;
 const H_STD = 42;
-const MAP_W = 1450;
-const MAP_H = 750;
+const MAP_W = 1750;
+const MAP_H = 1100;
 
 const SEATS_31_ANDAR: SeatDef[] = [
-  // S1 a S14 (Lado Esq)
+  // Seniores - Lado Esq (S01-S14) - 7 salas de 2
   ...Array.from({length: 14}).map((_, i) => ({
     id: `S${String(i+1).padStart(2,'0')}`, type: 'SÊNIOR',
-    left: 20, top: 40 + (i * (H_STD + 4)), width: W_STD + 10, height: H_STD
+    left: 20, top: 40 + Math.floor(i / 2) * 92 + (i % 2) * 44, width: W_STD + 10, height: H_STD
   })),
 
   { id: 'SC01', type: 'SÓCIO', left: 120, top: 80, width: 90, height: 70 },
 
-  // J01 a J12 (2 colunas x 6 linhas)
+  // J01-J12 (1 bloco 2x6)
   ...Array.from({length: 12}).map((_, i) => ({
     id: `J${String(i+1).padStart(2,'0')}`, type: 'JÚNIOR',
-    left: 100 + ((i % 2) * (W_STD + 4)), top: 460 + (Math.floor(i / 2) * (H_STD + 4)), width: W_STD, height: H_STD
+    left: 100 + ((i % 2) * 58), top: 980 - 46 - ((5 - Math.floor(i / 2)) * 46), width: W_STD, height: H_STD
   })),
 
-  // P01 a P24 (Linha inferior longa)
+  // P01-P24 (Baseline)
   ...Array.from({length: 24}).map((_, i) => ({
     id: `P${String(i+1).padStart(2,'0')}`, type: 'PLENO',
-    left: 100 + (i * (W_STD + 4)), top: 680, width: W_STD, height: H_STD
+    left: 100 + (i * 60), top: 980, width: W_STD, height: H_STD
   })),
 
-  // E01 a E18 (3 colunas x 6 linhas)
+  // E01-E18 (3 blocos de 2x3) -> x starts above P06 (400)
   ...Array.from({length: 18}).map((_, i) => ({
     id: `E${String(i+1).padStart(2,'0')}`, type: 'ESTAGIÁRIO',
-    left: 400 + ((i % 3) * (W_STD + 4)), top: 460 + (Math.floor(i / 3) * (H_STD + 4)), width: W_STD, height: H_STD
+    left: 420 + (Math.floor(i / 6) * 160) + ((i % 6) % 2 * 58), 
+    top: 980 - 46 - ((2 - Math.floor((i % 6) / 2)) * 46), 
+    width: W_STD, height: H_STD
   })),
 
-  // J13 a J44 (4 colunas x 8 linhas)
+  // J13-J44 (4 blocos de 2x4) -> x starts above P13 (820)
   ...Array.from({length: 32}).map((_, i) => ({
     id: `J${String(i+13).padStart(2,'0')}`, type: 'JÚNIOR',
-    left: 700 + ((i % 4) * (W_STD + 4)), top: 370 + (Math.floor(i / 4) * (H_STD + 4)), width: W_STD, height: H_STD
+    left: 920 + (Math.floor(i / 8) * 150) + ((i % 8) % 2 * 58), 
+    top: 980 - 46 - ((3 - Math.floor((i % 8) / 2)) * 46), 
+    width: W_STD, height: H_STD
   })),
 
-  // S16 a S21 (Coluna direita superior)
-  ...Array.from({length: 6}).map((_, i) => ({
-    id: `S${String(i+16).padStart(2,'0')}`, type: 'SÊNIOR',
-    left: 1100, top: 40 + (i * (H_STD + 4)), width: W_STD + 10, height: H_STD
-  })),
-
-  { id: 'SC02', type: 'SÓCIO',     left: 1280, top: 40,  width: 90, height: 60 },
-  { id: 'SC03', type: 'SÓCIO',     left: 1280, top: 120, width: 90, height: 60 },
-  { id: 'CONS01', type: 'CONSULTOR', left: 1280, top: 200, width: 90, height: 60 },
-
-  // A01 a A22 (2 colunas x 11 linhas)
+  // A01-A22 (1 bloco de 2x11) -> x na direita (1580)
   ...Array.from({length: 22}).map((_, i) => ({
     id: `A${String(i+1).padStart(2,'0')}`, type: 'ADMINISTRATIVO',
-    left: 1280 + ((i % 2) * (W_STD + 4)), top: 350 + (Math.floor(i / 2) * (H_STD + 4)), width: W_STD, height: H_STD
+    left: 1580 + ((i % 2) * 58), 
+    top: 980 - 46 - ((10 - Math.floor(i / 2)) * 46), 
+    width: W_STD, height: H_STD
   })),
+
+  // S16-S21 (3 salas de 2 na direita superior)
+  ...Array.from({length: 6}).map((_, i) => ({
+    id: `S${String(i+16).padStart(2,'0')}`, type: 'SÊNIOR',
+    left: 1400, top: 40 + Math.floor(i / 2) * 92 + (i % 2) * 44, width: W_STD + 10, height: H_STD
+  })),
+
+  // Sócios Direita (SC02, SC03, CONS01)
+  { id: 'SC02',     type: 'SÓCIO',     left: 1580, top: 40,  width: 90, height: 60 },
+  { id: 'SC03',     type: 'SÓCIO',     left: 1580, top: 120, width: 90, height: 60 },
+  { id: 'CONS01',   type: 'CONSULTOR', left: 1580, top: 200, width: 90, height: 60 },
 ];
 
 export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: FloorPlanProps) {
@@ -109,11 +116,11 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
       >
         
         {/* Background Decorativo Simulando a Planta */}
-        <div className="absolute top-[80px] left-[150px] w-[350px] h-[350px] border-2 border-gray-100 bg-gray-50/50 pointer-events-none flex items-center justify-center rounded-lg">
-          <span className="text-gray-200 font-bold text-4xl rotate-45 opacity-40">Área Central Esq</span>
+        <div className="absolute top-[80px] left-[250px] w-[500px] h-[450px] border-2 border-dashed border-gray-200 bg-gray-50/50 pointer-events-none flex items-center justify-center rounded-xl">
+          <span className="text-gray-300 font-bold text-5xl rotate-45 opacity-20">Área Central Esq</span>
         </div>
-        <div className="absolute top-[80px] left-[650px] w-[350px] h-[250px] border-2 border-gray-100 bg-gray-50/50 pointer-events-none flex items-center justify-center rounded-lg">
-          <span className="text-gray-200 font-bold text-4xl -rotate-45 opacity-40">Área Central Dir</span>
+        <div className="absolute top-[80px] left-[850px] w-[500px] h-[450px] border-2 border-dashed border-gray-200 bg-gray-50/50 pointer-events-none flex items-center justify-center rounded-xl">
+          <span className="text-gray-300 font-bold text-5xl -rotate-45 opacity-20">Área Central Dir</span>
         </div>
 
         {SEATS_31_ANDAR.map(seat => {
