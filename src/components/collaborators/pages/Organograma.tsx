@@ -1327,11 +1327,18 @@ export function Organograma() {
             >
                 <DragDropContext onDragEnd={handleDragEnd}>
                     {/* MASSIVE INVISIBLE CANVAS PLANE to force massive scroll bounds natively! */}
-                    <div style={{ width: '20000px', height: '10000px', position: 'relative' }}>
+                    <div style={{ 
+                        width: isExportingPDF ? 'auto' : '20000px', 
+                        height: isExportingPDF ? 'auto' : '10000px', 
+                        position: isExportingPDF ? 'static' : 'relative' 
+                    }}>
                         <div
                             ref={treeWrapperRef}
-                            className={`absolute top-16 left-[10000px] inline-flex flex-col gap-16 pb-32 transition-transform duration-300 ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'} print:static print:transform-none`}
-                            style={{
+                            className={`transition-transform duration-300 ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'} print:!static print:!transform-none ${isExportingPDF ? 'inline-flex flex-col gap-16' : 'absolute top-16 inline-flex flex-col gap-16 pb-32'}`}
+                            style={isExportingPDF ? {
+                                width: 'max-content'
+                            } : {
+                                left: '10000px',
                                 transform: `translateX(-50%) scale(${zoomLevel})`,
                                 transformOrigin: 'top center',
                                 width: 'max-content'
