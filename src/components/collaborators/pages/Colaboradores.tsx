@@ -32,7 +32,6 @@ import { HistoricoSection } from '../components/HistoricoSection'
 import { PeriodoAusenciasSection } from '../components/PeriodoAusenciasSection'
 import PerfilSection from '../components/PerfilSection'
 import { TabelasTab } from '../components/TabelasTab'
-import { RHPostos } from './RHPostos'
 import { CollaboratorModalLayout } from '../components/CollaboratorLayouts'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useLocation } from 'react-router-dom'
@@ -121,7 +120,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [filterCargo, setFilterCargo] = useState('')
 
   // New Tabs State
-  const [activeMainTab, setActiveMainTab] = useState<'Colaboradores' | 'Postos' | 'Relatórios' | 'Tabelas'>('Colaboradores');
+  const [activeMainTab, setActiveMainTab] = useState<'Colaboradores' | 'Relatórios' | 'Tabelas'>('Colaboradores');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showExportVTMenu, setShowExportVTMenu] = useState(false);
   const [activeReportView, setActiveReportView] = useState<'menu' | 'filtros' | 'vt'>('menu');
@@ -1775,12 +1774,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
             {!isReadOnly && (
               <>
                 <button
-                  onClick={() => setActiveMainTab('Postos')}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Postos' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  <Building2 className="h-4 w-4" /> Postos
-                </button>
-                <button
                   onClick={() => setActiveMainTab('Relatórios')}
                   className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Relatórios' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                 >
@@ -2210,12 +2203,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
             </div>
           </div>
         </>
-      )}
-
-      {activeMainTab === 'Postos' && (
-        <div className="flex-1 overflow-auto custom-scrollbar animate-in slide-in-from-top-5 duration-600 rounded-xl">
-          <RHPostos />
-        </div>
       )}
 
       {activeMainTab === 'Relatórios' && (

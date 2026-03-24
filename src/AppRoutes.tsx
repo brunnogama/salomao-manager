@@ -37,6 +37,7 @@ import { RHVagas } from './components/collaborators/pages/RHVagas';
 import { RHAcoes } from './components/collaborators/pages/RHAcoes';
 import { Organograma } from './components/collaborators/pages/Organograma';
 import { RHComunicacoesInternas } from './components/collaborators/pages/RHComunicacoesInternas';
+import { RHPostos } from './components/collaborators/pages/RHPostos';
 
 // Financeiro Components
 import { FinanceDashboard } from './components/finance/pages/FinanceDashboard';
@@ -231,6 +232,7 @@ export function AppRoutes() {
                     <Route path="headcount" element={<WithProps Component={RHHeadcount} />} />
                     <Route path="turnover" element={<WithProps Component={RHTurnover} />} />
                     <Route path="vagas" element={<WithProps Component={RHVagas} />} />
+                    <Route path="postos" element={<WithProps Component={RHPostos} />} />
                     <Route path="acoes" element={<WithProps Component={RHAcoes} />} />
                     <Route path="organograma" element={<WithProps Component={Organograma} />} />
                     <Route path="comunicacoes" element={<WithProps Component={RHComunicacoesInternas} />} />

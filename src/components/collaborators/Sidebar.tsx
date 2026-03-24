@@ -13,7 +13,8 @@ import {
   Calendar,
   UserPlus,
   Network,
-  MessageSquare
+  MessageSquare,
+  Building2
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -89,6 +90,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { path: '/rh/colaboradores', label: 'Colaboradores', icon: Users },
     { path: '/rh/comunicacoes', label: 'Comunicações', icon: MessageSquare },
     { path: '/rh/vagas', label: 'Recrutamento', icon: UserPlus },
+    { path: '/rh/postos', label: 'Postos', icon: Building2 },
     { path: '/rh/acoes', label: 'Ações', icon: Megaphone },
     { path: '/rh/organograma', label: 'Organograma', icon: Network },
     { path: '/rh/presencial', label: 'Presencial', icon: MapPin },
