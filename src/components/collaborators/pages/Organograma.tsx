@@ -88,7 +88,7 @@ const OrganogramNode = React.memo(({
         colab.equipe.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesAtuacao = activeTab === 'ADMINISTRATIVO'
-        ? (selectedAtuacao === 'ALL' || colab.atuacao === selectedAtuacao)
+        ? (selectedAtuacao === 'ALL' || colab.atuacao === selectedAtuacao || level === 0)
         : true;
 
     const isMatch = matchesSearch && matchesAtuacao;
