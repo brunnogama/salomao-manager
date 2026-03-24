@@ -520,13 +520,27 @@ export function Organograma() {
     }, []); 
 
     // Auto-center pan when changing tabs/filters
-    useLayoutEffect(() => {
-        if (containerRef.current) {
-            // Scroll to exactly 5000px center of the fixed 10000px plane
-            containerRef.current.scrollLeft = 5000 - (containerRef.current.clientWidth / 2);
-            containerRef.current.scrollTop = 5000 - 100; // Leaves 100px space above the tree
-        }
-    }, [activeTab, selectedPartner, selectedAtuacao]);
+    useEffect(() => {
+        let isCancelled = false;
+        const centerView = () => {
+            if (containerRef.current && !isCancelled) {
+                // Scroll to exactly 5000px center of the fixed 10000px plane
+                containerRef.current.scrollLeft = 5000 - (containerRef.current.clientWidth / 2);
+                containerRef.current.scrollTop = 5000 - 100; // Leaves 100px space above the tree
+            }
+        };
+
+        // Multi-pass guaranteed centering after DOM paint
+        centerView();
+        requestAnimationFrame(() => {
+            if (!isCancelled) centerView();
+            setTimeout(centerView, 50);
+            setTimeout(centerView, 150);
+            setTimeout(centerView, 300); // Failsafe for slow renders
+        });
+        
+        return () => { isCancelled = true; };
+    }, [activeTab, selectedPartner, selectedAtuacao, isMaximized]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -1344,14 +1358,21 @@ export function Organograma() {
                 className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-0 overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
             >
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    {/* The intermediate wrapper is an explicit 10000x10000 plane. This guarantees massive scrollbars and prevents void-alignment bugs. Flexbox automatically centers the tree over the 5000px mark structurally! */}
-                    <div style={{
-                        width: isExportingPDF ? '100%' : '10000px',
-                        height: isExportingPDF ? '100%' : '10000px',
-                        paddingTop: isExportingPDF ? '0' : '5000px',
+                    {/* The intermediate wrapper is an explicit 10000x10000 plane. Flexbox automatically centers the tree over the 5000px mark structurally! */}
+                    <div style={isExportingPDF ? {
+                        width: '100%',
+                        height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: isExportingPDF ? 'flex-start' : 'center',
+                        alignItems: 'flex-start'
+                    } : {
+                        width: '10000px',
+                        minHeight: '10000px',
+                        paddingTop: '5000px',
+                        paddingBottom: '2000px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
                     }}>
                         <div
                             ref={treeWrapperRef}
@@ -1390,10 +1411,9 @@ export function Organograma() {
                                 </div>
                             )}
                         </div>
-                    </div> {/* <--- FECHA O MASSIVE INVISIBLE CANVAS PLANE AQUI */}
 
-                    {/* Unassigned or Orphan Nodes Pool - rendered completely independently of the 20000px canvas */}
-                    <div className="mt-16 pt-8 border-t border-gray-200">
+                    {/* Unassigned or Orphan Nodes Pool - rendered structurally beneath the tree inside the 10000px canvas */}
+                    <div className="mt-16 pt-8 border-t border-gray-200 w-full max-w-7xl px-8 flex flex-col items-center print:hidden">
                         <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6">Colaboradores sem subordinação</h3>
                             <Droppable droppableId="unassigned" direction="horizontal" type="COLAB">
                                 {(provided, snapshot) => (
@@ -1454,14 +1474,15 @@ export function Organograma() {
                                             if (activeTab === 'ADMINISTRATIVO' && !c.isAdministrativo) return false;
                                             return true;
                                         }).length === 0 && (
-                                                <div className="w-full text-center text-xs font-bold text-gray-400 uppercase tracking-widest py-8">
-                                                    Todos estão alocados.
-                                                </div>
-                                            )}
+                                            <div className="w-full text-center text-xs font-bold text-gray-400 uppercase tracking-widest py-8">
+                                                Todos estão alocados.
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </Droppable>
                         </div>
+                    </div> {/* <--- FECHA O MASSIVE INVISIBLE CANVAS PLANE AQUI */}
                 </DragDropContext>
             </div>
 
