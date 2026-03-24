@@ -692,6 +692,7 @@ export function RHEvolucaoPessoal() {
               <Legend />
               <Area
                 type="monotone"
+                stackId="1"
                 dataKey="Administrativo"
                 stroke={COLORS.primary}
                 fillOpacity={1}
@@ -700,10 +701,11 @@ export function RHEvolucaoPessoal() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Administrativo" content={(props) => <CustomDataLabel {...props} fill={COLORS.primary} position="bottom" />} />
+                <LabelList dataKey="Administrativo" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.primary} position="bottom" />} />
               </Area>
               <Area
                 type="monotone"
+                stackId="1"
                 dataKey="Jurídico"
                 stroke={COLORS.secondary}
                 fillOpacity={1}
@@ -716,6 +718,7 @@ export function RHEvolucaoPessoal() {
               </Area>
               <Area
                 type="monotone"
+                stackId="1"
                 dataKey="Terceirizada"
                 stroke={COLORS.terceirizada}
                 fillOpacity={1}
@@ -774,7 +777,7 @@ export function RHEvolucaoPessoal() {
                   />
                   <Bar dataKey="count" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
                     if (data && data.role) {
-                      navigate('/controladoria/colaboradores', { state: { roleFilter: data.role } })
+                      navigate('/rh/colaboradores', { state: { roleFilter: data.role } })
                     }
                   }}>
                     <LabelList dataKey="count" position="right" fill={COLORS.primary} fontSize={10} fontWeight={700} />
@@ -826,7 +829,7 @@ export function RHEvolucaoPessoal() {
                   />
                   <Bar dataKey="count" fill={COLORS.terceirizada} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
                     if (data && data.role) {
-                      navigate('/controladoria/colaboradores', { state: { roleFilter: data.role } })
+                      navigate('/rh/colaboradores', { state: { roleFilter: data.role } })
                     }
                   }}>
                     <LabelList dataKey="count" position="right" fill={COLORS.terceirizada} fontSize={10} fontWeight={700} />
@@ -880,7 +883,7 @@ export function RHEvolucaoPessoal() {
                   />
                   <Bar dataKey="count" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
                     if (data && data.role) {
-                      navigate('/controladoria/colaboradores', { state: { roleFilter: data.role } })
+                      navigate('/rh/colaboradores', { state: { roleFilter: data.role } })
                     }
                   }}>
                     <LabelList dataKey="count" position="right" fill={COLORS.primary} fontSize={10} fontWeight={700} />
@@ -932,7 +935,7 @@ export function RHEvolucaoPessoal() {
                   />
                   <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
                     if (data && data.role) {
-                      navigate('/controladoria/colaboradores', { state: { roleFilter: data.role } })
+                      navigate('/rh/colaboradores', { state: { roleFilter: data.role } })
                     }
                   }}>
                     <LabelList dataKey="count" position="right" fill={COLORS.secondary} fontSize={10} fontWeight={700} />
@@ -984,7 +987,7 @@ export function RHEvolucaoPessoal() {
                   />
                   <Bar dataKey="count" fill={COLORS.terceirizada} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
                     if (data && data.role) {
-                      navigate('/controladoria/colaboradores', { state: { roleFilter: data.role } })
+                      navigate('/rh/colaboradores', { state: { roleFilter: data.role } })
                     }
                   }}>
                     <LabelList dataKey="count" position="right" fill={COLORS.terceirizada} fontSize={10} fontWeight={700} />
