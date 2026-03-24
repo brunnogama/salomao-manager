@@ -670,17 +670,6 @@ const CottaBlockOrganogramNode = React.memo(({
                                                 </div>
                                             )}
                                         </Droppable>
-                                        {/* Bottom join line from each leader - pushed to bottom via mt-auto */}
-                                        {block.leaders.length > 1 && block.members.length > 0 && (
-                                            <div className="mt-auto flex flex-col items-center w-full">
-                                                <div className="w-[2px] h-4 bg-gray-300"></div>
-                                                <div className="absolute h-[2px] bg-gray-300" style={{
-                                                    bottom: 0,
-                                                    left: lIdx === 0 ? '50%' : '0',
-                                                    right: lIdx === block.leaders.length - 1 ? '50%' : '0'
-                                                }}></div>
-                                            </div>
-                                        )}
                                     </div>
                                 ))}
                             </div>
