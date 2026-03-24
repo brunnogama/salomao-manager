@@ -100,18 +100,28 @@ export function RHPostos() {
       });
 
       let qdeCargos = 0;
+      
+      const matchRole = (c: any, matchNames: string[]) => {
+        const rawName = rolesMap[String(c.role)] || '';
+        const safeName = rawName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return matchNames.some(name => {
+          const safeMatch = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          return safeName.includes(safeMatch);
+        });
+      };
+
       if (posto.cargo === 'JUNIOR') {
-        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.includes('Advogado Júnior')).length;
+        qdeCargos = localColaboradores.filter(c => matchRole(c, ['Advogado Junior'])).length;
       } else if (posto.cargo === 'PLENO') {
-        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.includes('Advogado Pleno')).length;
+        qdeCargos = localColaboradores.filter(c => matchRole(c, ['Advogado Pleno'])).length;
       } else if (posto.cargo === 'SENIOR') {
-        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.includes('Advogado Sênior')).length;
+        qdeCargos = localColaboradores.filter(c => matchRole(c, ['Advogado Senior'])).length;
       } else if (posto.cargo === 'SÓCIO') {
-        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.toLowerCase().includes('sócio')).length;
+        qdeCargos = localColaboradores.filter(c => matchRole(c, ['Socio'])).length;
       } else if (posto.cargo === 'CONSULTOR') {
-        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.toLowerCase().includes('consultor')).length;
+        qdeCargos = localColaboradores.filter(c => matchRole(c, ['Consultor'])).length;
       } else if (posto.cargo === 'ESTAG' || posto.cargo === 'ESTAGIÁRIOS') {
-        qdeCargos = localColaboradores.filter(c => rolesMap[String(c.role)]?.toLowerCase().includes('estagiário')).length;
+        qdeCargos = localColaboradores.filter(c => matchRole(c, ['Estagiario'])).length;
       } else if (posto.cargo === 'ADM*' || posto.cargo === 'ADMINISTRATIVO') {
         qdeCargos = localColaboradores.filter(c => getSegment(c) === 'Administrativo').length;
       }
