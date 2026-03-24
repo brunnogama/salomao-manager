@@ -440,74 +440,59 @@ export function Organograma() {
     const [exportScope, setExportScope] = useState<string[]>([]);
     const [isExportingPDF, setIsExportingPDF] = useState(false);
 
-    // Pan (Drag to Scroll) Logic using native events to bypass DragDropContext interception
+    // Pan (Drag to Scroll) — delta approach using clientX/clientY (viewport-relative, always correct)
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
 
         let isDown = false;
-        let startX = 0;
-        let startY = 0;
-        let scrollLeft = 0;
-        let scrollTop = 0;
+        let lastX = 0;
+        let lastY = 0;
 
         const onMouseDown = (e: MouseEvent) => {
             const target = e.target as HTMLElement;
-            // Prevent panning if clicking inside a node, button, or input
+            // Allow panning only when clicking on the background (not nodes, buttons, inputs)
             if (target.closest('button') || target.closest('[data-rbd-draggable-id]') || target.closest('input')) {
                 return;
             }
 
-            e.preventDefault(); // Prevent native text/image selection dragging
+            e.preventDefault();
             isDown = true;
-            container.classList.add('cursor-grabbing');
-            container.classList.remove('cursor-grab');
-            document.body.style.userSelect = 'none'; // globally prevent selection during drag
-            
-            startX = e.pageX - container.offsetLeft;
-            startY = e.pageY - container.offsetTop;
-            scrollLeft = container.scrollLeft;
-            scrollTop = container.scrollTop;
-            container.focus(); // Focus for keyboard navigation
-        };
-
-        const onMouseLeave = () => {
-            isDown = false;
-            container.classList.remove('cursor-grabbing');
-            container.classList.add('cursor-grab');
-            document.body.style.userSelect = '';
+            lastX = e.clientX;
+            lastY = e.clientY;
+            document.body.style.userSelect = 'none';
+            container.style.cursor = 'grabbing';
+            container.focus();
         };
 
         const onMouseUp = () => {
+            if (!isDown) return;
             isDown = false;
-            container.classList.remove('cursor-grabbing');
-            container.classList.add('cursor-grab');
             document.body.style.userSelect = '';
+            container.style.cursor = 'grab';
         };
 
         const onMouseMove = (e: MouseEvent) => {
             if (!isDown) return;
-            e.preventDefault(); // Prevent any fallback selections
+            e.preventDefault();
 
-            const x = e.pageX - container.offsetLeft;
-            const y = e.pageY - container.offsetTop;
-            const walkX = (x - startX) * 1.5;
-            const walkY = (y - startY) * 1.5;
-            container.scrollLeft = scrollLeft - walkX;
-            container.scrollTop = scrollTop - walkY;
+            const dx = e.clientX - lastX;
+            const dy = e.clientY - lastY;
+            lastX = e.clientX;
+            lastY = e.clientY;
+
+            container.scrollLeft -= dx;
+            container.scrollTop -= dy;
         };
 
         container.addEventListener('mousedown', onMouseDown, { capture: true });
-        container.addEventListener('mouseleave', onMouseLeave);
-        // Bind to window to avoid losing drag state on fast mouse sweeps
-        window.addEventListener('mouseup', onMouseUp, { capture: true });
-        window.addEventListener('mousemove', onMouseMove, { capture: true, passive: false });
+        window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('mousemove', onMouseMove, { passive: false });
 
         return () => {
             container.removeEventListener('mousedown', onMouseDown, { capture: true });
-            container.removeEventListener('mouseleave', onMouseLeave);
-            window.removeEventListener('mouseup', onMouseUp, { capture: true });
-            window.removeEventListener('mousemove', onMouseMove, { capture: true } as any);
+            window.removeEventListener('mouseup', onMouseUp);
+            window.removeEventListener('mousemove', onMouseMove);
         };
     }, []);
 
