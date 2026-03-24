@@ -1165,76 +1165,52 @@ export function Organograma() {
                 </div>
             </div>
 
-            {/* Sub-abas por Sócio (Jurídico) */}
-            {activeTab === 'JURIDICO' && roots.length > 0 && (
-                <div className="flex items-center gap-2 mt-2 mb-1 overflow-x-auto pb-2 custom-scrollbar">
+            {/* Floating Filter Sidebar (Right Side) */}
+            <div className="fixed right-6 top-1/2 -translate-y-1/2 z-[90] flex flex-col gap-2 max-h-[80vh] overflow-y-auto custom-scrollbar p-2 bg-white/80 backdrop-blur-md border border-gray-100 rounded-2xl shadow-xl print:hidden">
+                {activeTab === 'JURIDICO' && roots.length > 0 && roots.map((root) => (
                     <button
-                        onClick={() => setSelectedPartner('ALL')}
-                        className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
-                            selectedPartner === 'ALL'
+                        key={root.id}
+                        onClick={() => setSelectedPartner(root.id)}
+                        className={`p-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border flex items-center gap-3 w-48 text-left ${
+                            (selectedPartner === root.id) || (selectedPartner === 'ALL' && roots[0]?.id === root.id)
                                 ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
                                 : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
                         }`}
+                        title={root.name}
                     >
-                        Todos
+                        {root.photo_url && (
+                            <img src={root.photo_url} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+                        )}
+                        <span className="truncate">{root.name}</span>
                     </button>
-                    {roots.map((root) => (
-                        <button
-                            key={root.id}
-                            onClick={() => setSelectedPartner(root.id)}
-                            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border flex items-center gap-2 shrink-0 ${
-                                selectedPartner === root.id
-                                    ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
-                                    : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
-                            }`}
-                        >
-                            {root.photo_url && (
-                                <img src={root.photo_url} alt="" className="w-5 h-5 rounded-full object-cover" />
-                            )}
-                            {root.name}
-                        </button>
-                    ))}
-                </div>
-            )}
+                ))}
 
-            {/* Sub-abas por Atuação (Administrativo) */}
-            {activeTab === 'ADMINISTRATIVO' && (() => {
-                const atuacaoSet = new Set<string>();
-                adminColabs.forEach(c => {
-                    if (c.atuacao) atuacaoSet.add(c.atuacao);
-                });
-                const atuacaoList = Array.from(atuacaoSet)
-                    .filter(a => a.toLowerCase() !== 'administrativo')
-                    .sort((a, b) => a.localeCompare(b));
-                if (atuacaoList.length === 0) return null;
-                return (
-                    <div className="flex items-center gap-2 mt-2 mb-1 overflow-x-auto pb-2 custom-scrollbar">
+                {activeTab === 'ADMINISTRATIVO' && (() => {
+                    const atuacaoSet = new Set<string>();
+                    adminColabs.forEach(c => {
+                        if (c.atuacao) atuacaoSet.add(c.atuacao);
+                    });
+                    const atuacaoList = Array.from(atuacaoSet)
+                        .filter(a => a.toLowerCase() !== 'administrativo')
+                        .sort((a, b) => a.localeCompare(b));
+                    
+                    if (atuacaoList.length === 0) return null;
+                    return atuacaoList.map((atuacao, idx) => (
                         <button
-                            onClick={() => setSelectedAtuacao('ALL')}
-                            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
-                                selectedAtuacao === 'ALL'
+                            key={atuacao}
+                            onClick={() => setSelectedAtuacao(atuacao)}
+                            className={`p-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border w-48 text-left truncate ${
+                                (selectedAtuacao === atuacao) || (selectedAtuacao === 'ALL' && idx === 0)
                                     ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
                                     : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
                             }`}
+                            title={atuacao}
                         >
-                            Todos
+                            {atuacao}
                         </button>
-                        {atuacaoList.map((atuacao) => (
-                            <button
-                                key={atuacao}
-                                onClick={() => setSelectedAtuacao(atuacao)}
-                                className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border shrink-0 ${
-                                    selectedAtuacao === atuacao
-                                        ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
-                                        : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
-                                }`}
-                            >
-                                {atuacao}
-                            </button>
-                        ))}
-                    </div>
-                );
-            })()}
+                    ));
+                })()}
+            </div>
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 mb-2">
                 <div className="text-[11px] font-bold text-gray-400 bg-white border border-gray-100 px-4 py-2 rounded-xl shadow-sm inline-flex items-center gap-2 max-w-fit">
@@ -1258,26 +1234,16 @@ export function Organograma() {
                             }}
                         >
                             {roots.length > 0 ? (
-                                selectedPartner === 'ALL' || Array.isArray(selectedPartner) || activeTab === 'ADMINISTRATIVO' ? (
-                                    roots
-                                        .filter(r => Array.isArray(selectedPartner) && activeTab === 'JURIDICO' ? selectedPartner.includes(r.id) : true)
-                                        .map((root, index, arr) => (
-                                        <div key={root.id} className="relative flex flex-col items-center w-full">
-                                            <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
-                                            {index < arr.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
+                                (() => {
+                                    const activePartner = selectedPartner === 'ALL' ? roots[0]?.id : selectedPartner;
+                                    const selectedRoot = roots.find(r => r.id === activePartner);
+                                    if (!selectedRoot) return null;
+                                    return (
+                                        <div className="relative flex flex-col items-center w-full">
+                                            <OrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
                                         </div>
-                                    ))
-                                ) : (
-                                    (() => {
-                                        const selectedRoot = roots.find(r => r.id === selectedPartner);
-                                        if (!selectedRoot) return null;
-                                        return (
-                                            <div className="relative flex flex-col items-center w-full">
-                                                <OrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
-                                            </div>
-                                        );
-                                    })()
-                                )
+                                    );
+                                })()
                             ) : (
                                 <div className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest">
                                     Nenhuma estrutura principal encontrada.
