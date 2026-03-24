@@ -974,8 +974,17 @@ export function Organograma() {
             const originalTransform = element.style.transform;
             element.style.transform = 'none';
 
+            // Calculate a safe scale to avoid canvas memory limits (max ~268M pixels in Chrome)
+            const MAX_CANVAS_AREA = 160000000; // Safe threshold (~160M pixels)
+            const elementArea = element.scrollWidth * element.scrollHeight;
+            let safeScale = 3;
+            
+            if (elementArea * safeScale * safeScale > MAX_CANVAS_AREA) {
+                safeScale = Math.max(1, Math.floor(Math.sqrt(MAX_CANVAS_AREA / elementArea) * 10) / 10);
+            }
+
             const canvas = await html2canvas(element, {
-                scale: 3, // Alta resolução para fotos não ficarem pixelsadas
+                scale: safeScale, // Alta resolução dinâmica para fotos não ficarem pixeladas
                 useCORS: true,
                 backgroundColor: '#ffffff',
                 windowWidth: element.scrollWidth,
