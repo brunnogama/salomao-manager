@@ -31,12 +31,12 @@ const JURIDICO_HIERARCHY = [
 const getRoleRingColor = (role: string, isSocio: boolean): string => {
     if (isSocio) return '#7C3AED'; // Roxo
     const r = role.toLowerCase();
-    if (r.includes('consultor jurídico') || r.includes('consultor juridico')) return '#1E3A5F'; // Azul escuro
+    if (r.includes('consultor jurídico') || r.includes('consultor juridico')) return '#6B7280'; // Cinza
     if (r.includes('sênior') || r.includes('senior')) return '#1D4ED8'; // Azul Royal
     if (r.includes('pleno')) return '#3B82F6'; // Azul médio
-    if (r.includes('júnior') || r.includes('junior')) return '#60A5FA'; // Azul claro
-    if (r.includes('estagiário') || r.includes('estagiario')) return '#93C5FD'; // Azul mais claro
-    if (r.includes('coordenador')) return '#1E3A5F'; // Azul escuro (mesmo do consultor)
+    if (r.includes('júnior') || r.includes('junior')) return '#93C5FD'; // Azul bebê
+    if (r.includes('estagiário') || r.includes('estagiario')) return '#B8860B'; // Amarelo escuro
+    if (r.includes('coordenador')) return '#6B7280'; // Cinza
     return '#94A3B8'; // Cinza padrão para outros
 };
 
