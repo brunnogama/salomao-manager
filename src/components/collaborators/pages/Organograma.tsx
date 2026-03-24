@@ -440,9 +440,8 @@ export function Organograma() {
     const [exportScope, setExportScope] = useState<string[]>([]);
     const [isExportingPDF, setIsExportingPDF] = useState(false);
 
-    // Pan (Infinite Canvas) Logic
-    const [pan, setPan] = useState({ x: 0, y: 0 });
-    const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
+    // Pan (Massive Canvas) Logic - using native scroll over an invisible massive plane to bypass RBD coordinate bugs
+
 
     useEffect(() => {
         const container = containerRef.current;
@@ -462,18 +461,17 @@ export function Organograma() {
 
             e.preventDefault();
             isDown = true;
-            setIsDraggingCanvas(true);
             lastX = e.clientX;
             lastY = e.clientY;
             document.body.style.userSelect = 'none';
             container.style.cursor = 'grabbing';
             container.focus();
+            container.style.cursor = 'grabbing';
+            container.focus();
         };
 
         const onMouseUp = () => {
-            if (!isDown) return;
             isDown = false;
-            setIsDraggingCanvas(false);
             document.body.style.userSelect = '';
             container.style.cursor = 'grab';
         };
@@ -487,46 +485,29 @@ export function Organograma() {
             lastX = e.clientX;
             lastY = e.clientY;
 
-            setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+            container.scrollLeft -= dx;
+            container.scrollTop -= dy;
         };
 
-        const onWheel = (e: WheelEvent) => {
-            // Support trackpads and mouse wheel for panning since overflow is hidden
-            e.preventDefault();
-            setPan(prev => ({ x: prev.x - e.deltaX, y: prev.y - e.deltaY }));
-        };
-
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (!container.contains(document.activeElement) && document.activeElement !== container) return;
-            
-            const step = 40;
-            let moved = false;
-            let dx = 0;
-            let dy = 0;
-
-            if (e.key === 'ArrowUp') { dy = step; moved = true; }
-            if (e.key === 'ArrowDown') { dy = -step; moved = true; }
-            if (e.key === 'ArrowLeft') { dx = step; moved = true; }
-            if (e.key === 'ArrowRight') { dx = -step; moved = true; }
-            
-            if (moved) {
-                e.preventDefault();
-                setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-            }
-        };
+        container.addEventListener('mousedown', onMouseDown, { capture: true });
+        window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('mousemove', onMouseMove, { passive: false });
 
         return () => {
             container.removeEventListener('mousedown', onMouseDown, { capture: true });
-            container.removeEventListener('wheel', onWheel);
-            container.removeEventListener('keydown', onKeyDown);
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('mousemove', onMouseMove);
         };
-    }, []); // Removed zoomLevel dependency since we use setPan directly
+    }, []); // Empty dependency! Simple and native.
 
     // Auto-center pan when changing tabs/filters
     useLayoutEffect(() => {
-        setPan({ x: 0, y: 0 });
+        if (containerRef.current) {
+            // Center horizontally on the 20000px massive canvas
+            const center = 10000 - (containerRef.current.clientWidth / 2);
+            containerRef.current.scrollLeft = center;
+            containerRef.current.scrollTop = 0;
+        }
     }, [activeTab, selectedPartner, selectedAtuacao]);
 
     useEffect(() => {
@@ -1342,19 +1323,18 @@ export function Organograma() {
             <div 
                 ref={containerRef} 
                 tabIndex={0}
-                className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-hidden w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
+                className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
             >
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    <div className="text-center min-w-full inline-block align-top print:w-full h-full">
+                    {/* MASSIVE INVISIBLE CANVAS PLANE to force massive scroll bounds natively! */}
+                    <div style={{ width: '20000px', height: '10000px', position: 'relative' }}>
                         <div
                             ref={treeWrapperRef}
-                            className={`inline-flex flex-col gap-16 p-16 relative mx-auto ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'}`}
+                            className={`absolute top-16 left-[10000px] inline-flex flex-col gap-16 pb-32 transition-transform duration-300 ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'} print:static print:transform-none`}
                             style={{
-                                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
+                                transform: `translateX(-50%) scale(${zoomLevel})`,
                                 transformOrigin: 'top center',
-                                width: 'max-content',
-                                minWidth: '100%',
-                                transition: isDraggingCanvas ? 'none' : 'transform 0.1s ease-out'
+                                width: 'max-content'
                             }}
                         >
                             {roots.length > 0 ? (
