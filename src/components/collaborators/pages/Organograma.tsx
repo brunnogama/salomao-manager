@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
@@ -796,6 +796,30 @@ export function Organograma() {
         if (activeTab !== 'ADMINISTRATIVO') return [];
         return data.filter(c => c.isAdministrativo && !c.isSocio);
     }, [data, activeTab]);
+
+    useLayoutEffect(() => {
+        if (selectedPartner === 'ALL' || selectedAtuacao === 'ALL') {
+            // Give React a frame to paint the DOM with the new size
+            const timer = setTimeout(() => {
+                const container = containerRef.current;
+                const wrapper = treeWrapperRef.current;
+                
+                if (container && wrapper) {
+                    // Tree width scaled + padding
+                    const treeWidth = wrapper.getBoundingClientRect().width;
+                    const containerWidth = container.clientWidth;
+                    
+                    if (treeWidth > containerWidth) {
+                        // Center horizontal scroll
+                        container.scrollLeft = (treeWidth - containerWidth) / 2;
+                    } else {
+                        container.scrollLeft = 0;
+                    }
+                }
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [selectedPartner, selectedAtuacao, data.length, activeTab]);
 
     useEffect(() => {
         if (isPdfModalOpen) {
