@@ -670,13 +670,24 @@ const CottaBlockOrganogramNode = React.memo(({
                                                 </div>
                                             )}
                                         </Droppable>
+                                        {/* Bottom join line from each leader */}
+                                        {block.leaders.length > 1 && block.members.length > 0 && (
+                                            <>
+                                                <div className="w-[2px] h-4 bg-gray-300 mt-2"></div>
+                                                <div className="absolute h-[2px] bg-gray-300" style={{
+                                                    bottom: 0,
+                                                    left: lIdx === 0 ? '50%' : '0',
+                                                    right: lIdx === block.leaders.length - 1 ? '50%' : '0'
+                                                }}></div>
+                                            </>
+                                        )}
                                     </div>
                                 ))}
                             </div>
 
                             {/* Stem from Leader(s) to Members */}
                             {block.members.length > 0 && (
-                                <div className="w-[2px] h-6 bg-gray-300 mt-2"></div>
+                                <div className="w-[2px] h-6 bg-gray-300"></div>
                             )}
                         </>
                     )}
