@@ -367,7 +367,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   // Options for FilterSelect
   const liderOptions = React.useMemo(() => [
-    ...colaboradores.map((c: Collaborator) => ({ label: c.name, value: String(c.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+    ...colaboradores
+      .filter((c: any) => c.is_team_leader)
+      .map((c: Collaborator) => ({ label: c.name, value: String(c.id) }))
+      .sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [colaboradores])
 
   const partnerOptions = React.useMemo(() => [
