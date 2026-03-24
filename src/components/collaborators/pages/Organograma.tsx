@@ -501,43 +501,50 @@ export function Organograma() {
     const [exportScope, setExportScope] = useState<string[]>([]);
     const [isExportingPDF, setIsExportingPDF] = useState(false);
 
-    // Pan (Drag to Scroll) Logic - Native scroll tracking
+    // Pan (Drag to Scroll) Logic - Modern Pointer Events
     useEffect(() => {
         const container = containerRef.current;
-        const wrapper = treeWrapperRef.current;
-        if (!container || !wrapper) return;
+        if (!container) return;
 
         let isDown = false;
         let lastX = 0;
         let lastY = 0;
 
-        const onMouseDown = (e: MouseEvent) => {
+        const onPointerDown = (e: PointerEvent) => {
             const target = e.target as HTMLElement;
             // Allow panning only when clicking on the background (not nodes, buttons, inputs)
             if (target.closest('button') || target.closest('[data-rbd-draggable-id]') || target.closest('input')) {
                 return;
             }
 
-            e.preventDefault();
+            // Ignora se o clique for nativo da Scrollbar
+            if (e.offsetX > container.clientWidth || e.offsetY > container.clientHeight) {
+                return;
+            }
+
             isDown = true;
             lastX = e.clientX;
             lastY = e.clientY;
-            document.body.style.userSelect = 'none';
+            
+            try {
+                container.setPointerCapture(e.pointerId);
+            } catch (err) {}
+            
             container.style.cursor = 'grabbing';
-            container.focus();
-            container.style.cursor = 'grabbing';
-            container.focus();
+            container.focus({ preventScroll: true }); // garante o foco sem pular a tela
         };
 
-        const onMouseUp = () => {
+        const onPointerUp = (e: PointerEvent) => {
+            if (!isDown) return;
             isDown = false;
-            document.body.style.userSelect = '';
+            try {
+                container.releasePointerCapture(e.pointerId);
+            } catch (err) {}
             container.style.cursor = 'grab';
         };
 
-        const onMouseMove = (e: MouseEvent) => {
+        const onPointerMove = (e: PointerEvent) => {
             if (!isDown) return;
-            e.preventDefault();
 
             const dx = e.clientX - lastX;
             const dy = e.clientY - lastY;
@@ -567,16 +574,18 @@ export function Organograma() {
             }
         };
 
-        container.addEventListener('mousedown', onMouseDown, { capture: true });
+        container.addEventListener('pointerdown', onPointerDown);
+        container.addEventListener('pointerup', onPointerUp);
+        container.addEventListener('pointercancel', onPointerUp);
+        container.addEventListener('pointermove', onPointerMove);
         container.addEventListener('keydown', onKeyDown);
-        window.addEventListener('mouseup', onMouseUp);
-        window.addEventListener('mousemove', onMouseMove, { passive: false });
 
         return () => {
-            container.removeEventListener('mousedown', onMouseDown, { capture: true });
+            container.removeEventListener('pointerdown', onPointerDown);
+            container.removeEventListener('pointerup', onPointerUp);
+            container.removeEventListener('pointercancel', onPointerUp);
+            container.removeEventListener('pointermove', onPointerMove);
             container.removeEventListener('keydown', onKeyDown);
-            window.removeEventListener('mouseup', onMouseUp);
-            window.removeEventListener('mousemove', onMouseMove);
         };
     }, []); 
 
