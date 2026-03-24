@@ -1333,6 +1333,15 @@ export function Organograma() {
                         >
                             {roots.length > 0 ? (
                                 (() => {
+                                    if (activeTab === 'ADMINISTRATIVO') {
+                                        return roots.map((root, index, arr) => (
+                                            <div key={root.id} className="relative flex flex-col items-center w-full">
+                                                <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
+                                                {index < arr.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20 print:hidden"></div>}
+                                            </div>
+                                        ));
+                                    }
+
                                     const activePartner = selectedPartner === 'ALL' ? roots[0]?.id : selectedPartner;
                                     const selectedRoot = roots.find(r => r.id === activePartner);
                                     if (!selectedRoot) return null;
