@@ -1432,7 +1432,6 @@ export function Organograma() {
                                 )}
                             </Droppable>
                         </div>
-                    </div>
                 </DragDropContext>
             </div>
 
