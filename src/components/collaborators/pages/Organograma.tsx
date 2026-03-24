@@ -914,6 +914,25 @@ export function Organograma() {
                 controlsNode.style.display = 'none';
             }
 
+            // Adicionar uma tag de estilo global para quebrar os limites do html2canvas 
+            // - Remover truncamentos de texto para que não sejam cortados
+            // - Remover limites de max-width
+            // - Remover scales (transform) inline para renderizar as divs nos tamanhos 100% reais de alta qualidade
+            const printStyle = document.createElement('style');
+            printStyle.innerHTML = `
+                .pdf-export-mode .truncate {
+                    white-space: normal !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
+                    max-width: none !important;
+                }
+                .pdf-export-mode [style*="transform"] {
+                    transform: none !important;
+                }
+            `;
+            document.head.appendChild(printStyle);
+            element.classList.add('pdf-export-mode');
+
             const canvas = await html2canvas(element, {
                 scale: 3, // Alta resolução para fotos não ficarem pixelsadas
                 useCORS: true,
@@ -923,6 +942,8 @@ export function Organograma() {
             });
             
             // Restore UI
+            element.classList.remove('pdf-export-mode');
+            document.head.removeChild(printStyle);
             element.removeChild(headerDiv);
             element.style.background = originalBackground;
             if (controlsNode && controlsNode instanceof HTMLElement) {
