@@ -585,7 +585,7 @@ const CottaBlockOrganogramNode = React.memo(({
     });
 
     return (
-        <div className="flex flex-row items-start justify-center gap-x-10 flex-wrap gap-y-16">
+        <div className="flex flex-col items-center gap-y-16">
             {blocks.map((block, blockIdx) => (
                 <div key={`block-${blockIdx}`} className="flex flex-col items-center">
                     {/* Sócio photo */}
