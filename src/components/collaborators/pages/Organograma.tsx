@@ -95,7 +95,7 @@ const OrganogramNode = React.memo(({
             item.equipe.toLowerCase().includes(searchQuery.toLowerCase());
 
         const matchesAtuacao = activeTab === 'ADMINISTRATIVO'
-            ? (selectedAtuacao === 'ALL' || item.atuacao === selectedAtuacao || level === 0)
+            ? (selectedAtuacao === 'ALL' || (Array.isArray(selectedAtuacao) ? selectedAtuacao.includes(item.atuacao) : item.atuacao === selectedAtuacao) || level === 0)
             : true;
         return matchesSearch && matchesAtuacao;
     });
@@ -160,7 +160,7 @@ const OrganogramNode = React.memo(({
         const filteredSubs = sortedSubordinates.filter(sub => {
             const atuacao = Array.isArray(sub) ? sub[0].atuacao : sub.atuacao;
             if (context.selectedAtuacao === 'ALL') return true;
-            return atuacao === context.selectedAtuacao;
+            return Array.isArray(context.selectedAtuacao) ? context.selectedAtuacao.includes(atuacao) : atuacao === context.selectedAtuacao;
         });
 
         const atuacaoGroups = new Map<string, (ColaboradorCard | ColaboradorCard[])[]>();
@@ -252,7 +252,7 @@ const OrganogramNode = React.memo(({
                 
                                             <div className="flex justify-center relative pt-4">
                                                 {localColabs.map((sub, idx) => (
-                                                    <div key={sub.id} className={`relative flex flex-col items-center ${localColabs.length > 8 ? 'px-0' : localColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
+                                                    <div key={Array.isArray(sub) ? sub[0].id : sub.id} className={`relative flex flex-col items-center ${localColabs.length > 8 ? 'px-0' : localColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
                                                         {localColabs.length > 1 && (
                                                             <div className="absolute h-[2px] bg-gray-300" style={{
                                                                 top: '-1rem',
@@ -408,7 +408,7 @@ const OrganogramNode = React.memo(({
                                             {/* Collaborators under this Local */}
                                             <div className="flex justify-center relative pt-4">
                                                 {localColabs.map((sub, idx) => (
-                                                    <div key={sub.id} className={`relative flex flex-col items-center ${localColabs.length > 8 ? 'px-0' : localColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
+                                                    <div key={Array.isArray(sub) ? sub[0].id : sub.id} className={`relative flex flex-col items-center ${localColabs.length > 8 ? 'px-0' : localColabs.length > 5 ? 'px-0.5' : 'px-3'}`}>
                                                         {/* Per-child horizontal segment */}
                                                         {localColabs.length > 1 && (
                                                             <div className="absolute h-[2px] bg-gray-300" style={{
@@ -445,7 +445,7 @@ const OrganogramNode = React.memo(({
                             <div className="flex flex-col items-center w-full relative pb-16">
                                 <div className="flex justify-center relative pt-4 w-full">
                                     {sortedSubordinates.map((sub, idx) => (
-                                        <div key={sub.id} className={`relative flex flex-col items-center ${sortedSubordinates.length > 8 ? 'px-0' : sortedSubordinates.length > 5 ? 'px-0.5' : 'px-4'}`}>
+                                        <div key={Array.isArray(sub) ? sub[0].id : sub.id} className={`relative flex flex-col items-center ${sortedSubordinates.length > 8 ? 'px-0' : sortedSubordinates.length > 5 ? 'px-0.5' : 'px-4'}`}>
                                             {sortedSubordinates.length > 1 && (
                                                 <div className="absolute h-[2px] bg-gray-300" style={{
                                                     top: '-1rem',
@@ -1571,9 +1571,22 @@ export function Organograma() {
                                 (() => {
                                     if (activeTab === 'ADMINISTRATIVO') {
                                         return roots.map((root, index, arr) => (
-                                            <div key={root.id} id={index === 0 ? 'organogram-root-node' : undefined} className="relative flex flex-col items-center w-full">
+                                            <div key={root.id} id={index === 0 ? 'organogram-root-node' : undefined} className="relative flex flex-col items-center w-full mt-24 first:mt-0">
                                                 <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
                                                 {index < arr.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20 print:hidden"></div>}
+                                            </div>
+                                        ));
+                                    }
+
+                                    // Multi-sócio export (Jurídico)
+                                    if (Array.isArray(selectedPartner) || (isExportingPDF && selectedPartner === 'ALL')) {
+                                        const visibleRoots = Array.isArray(selectedPartner) 
+                                            ? roots.filter(r => selectedPartner.includes(r.id))
+                                            : roots;
+                                            
+                                        return visibleRoots.map((root, index, arr) => (
+                                            <div key={root.id} id={index === 0 ? 'organogram-root-node' : undefined} className="relative flex flex-col items-center w-full mt-32 first:mt-0">
+                                                <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
                                             </div>
                                         ));
                                     }
