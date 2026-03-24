@@ -29,7 +29,7 @@ interface Role {
 
 interface TagData {
     tag: string;
-    area?: 'Jurídica' | 'Administrativa' | 'Ambas';
+    area?: 'Jurídica' | 'Administrativa' | 'Ambas' | 'Terceirizada';
     created_at?: string;
 }
 
@@ -62,9 +62,10 @@ export function TabelasTab() {
     // Derived state for Roles
     const [rolesJuridico, setRolesJuridico] = useState<Role[]>([]);
     const [rolesAdmin, setRolesAdmin] = useState<Role[]>([]);
+    const [rolesTerceirizado, setRolesTerceirizado] = useState<Role[]>([]);
     
     // UI state for separated tabs and filters
-    const [cargosTab, setCargosTab] = useState<'Judiciário' | 'Administrativo'>('Judiciário');
+    const [cargosTab, setCargosTab] = useState<'Judiciário' | 'Administrativo' | 'Terceirizada'>('Judiciário');
     const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
     const [selectedLeaderId, setSelectedLeaderId] = useState<string>('');
     const [leadersList, setLeadersList] = useState<{id: string, name: string}[]>([]);
@@ -72,7 +73,7 @@ export function TabelasTab() {
     // Tags Management State
     const [tagDataList, setTagDataList] = useState<TagData[]>([]);
     const [isTagModalOpen, setIsTagModalOpen] = useState(false);
-    const [editingTag, setEditingTag] = useState<{ oldTag: string, newTag: string, area?: 'Jurídica' | 'Administrativa' | 'Ambas' } | null>(null);
+    const [editingTag, setEditingTag] = useState<{ oldTag: string, newTag: string, area?: 'Jurídica' | 'Administrativa' | 'Ambas' | 'Terceirizada' } | null>(null);
     const [tagToDelete, setTagToDelete] = useState<string | null>(null);
     const [isDeleteTagModalOpen, setIsDeleteTagModalOpen] = useState(false);
 
@@ -144,6 +145,7 @@ export function TabelasTab() {
             // Separação entre Jurídico e Administrativo
             const jud = [];
             const adm = [];
+            const terc = [];
 
             for (const r of rolesData) {
                 if (r.area) {
@@ -154,6 +156,8 @@ export function TabelasTab() {
                     } else if (r.area === 'Ambos' || r.area === 'Ambas') {
                         jud.push(r);
                         adm.push(r);
+                    } else if (r.area === 'Terceirizada') {
+                        terc.push(r);
                     }
                     continue;
                 }
@@ -169,6 +173,8 @@ export function TabelasTab() {
                     lower.includes('juridico');
                 if (isJuridico) {
                     jud.push(r);
+                } else if (lower.includes('terceiriz') || lower.includes('limpeza') || lower.includes('segurança') || lower.includes('manutenção')) {
+                    terc.push(r);
                 } else {
                     adm.push(r);
                 }
@@ -176,6 +182,7 @@ export function TabelasTab() {
 
             setRolesJuridico(jud);
             setRolesAdmin(adm);
+            setRolesTerceirizado(terc);
 
         } catch (error) {
             console.error('Erro ao buscar cargos:', error);
@@ -384,8 +391,9 @@ export function TabelasTab() {
             // Save tags to perfil_tags dictionary if they are new
             if (editingTagsValue) {
                 // Determine the area of this role
-                const isJuridico = rolesJuridico.some(r => r.id === editingRole.id);
-                const area = isJuridico ? 'Jurídica' : 'Administrativa';
+                let area = 'Administrativa';
+                if (rolesJuridico.some(r => r.id === editingRole.id)) area = 'Jurídica';
+                else if (rolesTerceirizado.some(r => r.id === editingRole.id)) area = 'Terceirizada';
 
                 const lines = editingTagsValue.split('\n').map(l => l.trim()).filter(l => l.length > 0);
                 if (lines.length > 0) {
@@ -640,6 +648,7 @@ export function TabelasTab() {
                             <div className="flex space-x-4 mb-6 border-b border-gray-100">
                                 <button onClick={() => setCargosTab('Judiciário')} className={cargosTab === 'Judiciário' ? "py-2 border-b-2 border-[#1e3a8a] text-[#1e3a8a] font-bold transition-all" : "py-2 text-gray-500 font-medium hover:text-[#1e3a8a] transition-all"}>Área Judiciária</button>
                                 <button onClick={() => setCargosTab('Administrativo')} className={cargosTab === 'Administrativo' ? "py-2 border-b-2 border-[#1e3a8a] text-[#1e3a8a] font-bold transition-all" : "py-2 text-gray-500 font-medium hover:text-[#1e3a8a] transition-all"}>Área Administrativa</button>
+                                <button onClick={() => setCargosTab('Terceirizada')} className={cargosTab === 'Terceirizada' ? "py-2 border-b-2 border-[#1e3a8a] text-[#1e3a8a] font-bold transition-all" : "py-2 text-gray-500 font-medium hover:text-[#1e3a8a] transition-all"}>Área Terceirizada</button>
                             </div>
 
                             {/* Judiciária */}
@@ -760,6 +769,52 @@ export function TabelasTab() {
                                 </div>
                             </div>
                             )}
+
+                            {/* Terceirizada */}
+                            {cargosTab === 'Terceirizada' && (
+                            <div className="mb-8 animate-in fade-in duration-300">
+                                <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm mt-8">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-50 border-b border-gray-200">
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider w-1/3">Cargo</th>
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">Tags (Perfil Padrão)</th>
+                                                <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider text-right w-24">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {rolesTerceirizado.map((role) => (
+                                                <tr key={role.id} className="hover:bg-blue-50/30 transition-colors">
+                                                    <td className="px-6 py-4 text-sm font-bold text-[#0a192f]">{role.name}</td>
+                                                    <td className="px-6 py-4">
+                                                        {role.default_tags ? (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {role.default_tags.split('\n').filter(l => l.trim()).map((tag, i) => (
+                                                                    <span key={i} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 max-w-xs truncate">
+                                                                        {tag.trim()}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xs text-gray-400 italic">Nenhuma tag cadastrada</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <button
+                                                            onClick={() => handleOpenRoleModal(role)}
+                                                            className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                                            title="Editar Tags"
+                                                        >
+                                                            <Edit2 className="h-4 w-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            )}
                         </div>
                     )}
 
@@ -815,6 +870,11 @@ export function TabelasTab() {
                                                             {tagItem.area === 'Administrativa' && (
                                                                 <span className="px-2 py-1 bg-orange-50 text-orange-600 border border-orange-200 text-[10px] font-bold uppercase tracking-wider rounded-lg">
                                                                     Administrativa
+                                                                </span>
+                                                            )}
+                                                            {tagItem.area === 'Terceirizada' && (
+                                                                <span className="px-2 py-1 bg-teal-50 text-teal-600 border border-teal-200 text-[10px] font-bold uppercase tracking-wider rounded-lg">
+                                                                    Terceirizada
                                                                 </span>
                                                             )}
                                                             {tagItem.area === 'Ambas' && (
@@ -1127,6 +1187,17 @@ export function TabelasTab() {
                                                 className="text-purple-600 focus:ring-purple-500 w-4 h-4"
                                             />
                                             <span className="text-sm font-medium text-gray-700">Administrativa</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="tagArea"
+                                                value="Terceirizada"
+                                                checked={editingTag?.area === 'Terceirizada'}
+                                                onChange={() => setEditingTag({ ...editingTag!, area: 'Terceirizada' })}
+                                                className="text-purple-600 focus:ring-purple-500 w-4 h-4"
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">Terceirizada</span>
                                         </label>
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <input

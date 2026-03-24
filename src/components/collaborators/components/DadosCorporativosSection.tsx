@@ -8,7 +8,7 @@ import { differenceInMonths, differenceInYears } from 'date-fns'
 import { TransporteSection } from './TransporteSection'
 import { supabase } from '../../../lib/supabase'
 import { getInternScholarshipValue, formatDbMoneyToDisplay } from '../utils/colaboradoresUtils'
-import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA } from '../utils/cargosAtuacoesUtils'
+import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA, ATUACOES_TERCEIRIZADA, CARGOS_TERCEIRIZADA } from '../utils/cargosAtuacoesUtils'
 
 interface DadosCorporativosSectionProps {
   formData: Partial<Collaborator>
@@ -278,7 +278,8 @@ export function DadosCorporativosSection({
                 }}
                 options={[
                   { id: 'Administrativa', name: 'Administrativa' },
-                  { id: 'Jurídica', name: 'Jurídica' }
+                  { id: 'Jurídica', name: 'Jurídica' },
+                  { id: 'Terceirizada', name: 'Terceirizada' }
                 ]}
                 uppercase={false}
                 disabled={isViewMode}
@@ -295,6 +296,7 @@ export function DadosCorporativosSection({
                   const name = item.name || item;
                   if (formData.area === 'Jurídica') return ATUACOES_JURIDICA.includes(name);
                   if (formData.area === 'Administrativa') return ATUACOES_ADMINISTRATIVA.includes(name);
+                  if (formData.area === 'Terceirizada') return ATUACOES_TERCEIRIZADA.includes(name);
                   return true;
                 }}
               />
@@ -311,6 +313,7 @@ export function DadosCorporativosSection({
                   options: [
                     { id: 'Jurídica', name: 'Jurídica' },
                     { id: 'Administrativa', name: 'Administrativa' },
+                    { id: 'Terceirizada', name: 'Terceirizada' },
                     { id: 'Ambas', name: 'Ambas' }
                   ]
                 }]}
@@ -321,6 +324,7 @@ export function DadosCorporativosSection({
                   const roleName = item.name;
                   if (formData.area === 'Jurídica') return CARGOS_JURIDICA.includes(roleName);
                   if (formData.area === 'Administrativa') return CARGOS_ADMINISTRATIVA.includes(roleName);
+                  if (formData.area === 'Terceirizada') return CARGOS_TERCEIRIZADA.includes(roleName);
                   return true;
                 }}
                 disabled={isViewMode}

@@ -168,7 +168,7 @@ export interface Collaborator {
   termination_reason_id?: string;
 
   // New Field: Area
-  area?: 'Administrativa' | 'Jurídica';
+  area?: 'Administrativa' | 'Jurídica' | 'Terceirizada';
 
   // Transporte
   transportes?: {

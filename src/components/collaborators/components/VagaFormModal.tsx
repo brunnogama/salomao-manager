@@ -36,7 +36,7 @@ import { ManagedSelect } from '../../crm/ManagedSelect'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { differenceInDays, differenceInMonths, isValid } from 'date-fns'
-import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA } from '../utils/cargosAtuacoesUtils'
+import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA, ATUACOES_TERCEIRIZADA, CARGOS_TERCEIRIZADA } from '../utils/cargosAtuacoesUtils'
 import { parseRoleTags } from '../utils/colaboradoresUtils'
 import { CollaboratorModalLayout } from './CollaboratorLayouts'
 
@@ -101,6 +101,8 @@ const getRoleAppearance = (roleName: string, atuacaoStr?: string, areaStr?: stri
       return { Icon, colorClass: 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-lg shadow-blue-300/50' };
     } else if (areaNorm.includes('administrativa') || areaNorm.includes('administrativo')) {
       return { Icon, colorClass: 'bg-amber-600 text-white border-amber-600 shadow-lg shadow-amber-300/50' };
+    } else if (areaNorm.includes('terceirizada') || areaNorm.includes('terceirizado')) {
+      return { Icon, colorClass: 'bg-teal-600 text-white border-teal-600 shadow-lg shadow-teal-300/50' };
     }
     
     return { Icon, colorClass: 'bg-slate-500 text-white border-slate-400 shadow-lg shadow-slate-200/50' };
@@ -151,7 +153,8 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
 
     const areaOptions = [
         { id: 'Administrativa', name: 'Administrativa' },
-        { id: 'Jurídica', name: 'Jurídica' }
+        { id: 'Jurídica', name: 'Jurídica' },
+        { id: 'Terceirizada', name: 'Terceirizada' }
     ]
 
     const tipoOptions = [
@@ -694,6 +697,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                                                         options: [
                                                             { id: 'Jurídica', name: 'Jurídica' },
                                                             { id: 'Administrativa', name: 'Administrativa' },
+                                                            { id: 'Terceirizada', name: 'Terceirizada' },
                                                             { id: 'Ambas', name: 'Ambas' }
                                                         ]
                                                     }]}
@@ -705,6 +709,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                                                         const roleName = item.name;
                                                         if (formData.area === 'Jurídica') return CARGOS_JURIDICA.includes(roleName);
                                                         if (formData.area === 'Administrativa') return CARGOS_ADMINISTRATIVA.includes(roleName);
+                                                        if (formData.area === 'Terceirizada') return CARGOS_TERCEIRIZADA.includes(roleName);
                                                         return true;
                                                     }}
                                                 />
@@ -720,6 +725,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                                                         const name = item.name || item;
                                                         if (formData.area === 'Jurídica') return ATUACOES_JURIDICA.includes(name);
                                                         if (formData.area === 'Administrativa') return ATUACOES_ADMINISTRATIVA.includes(name);
+                                                        if (formData.area === 'Terceirizada') return ATUACOES_TERCEIRIZADA.includes(name);
                                                         return true;
                                                     }}
                                                 />

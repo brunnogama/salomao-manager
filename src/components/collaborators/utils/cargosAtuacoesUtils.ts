@@ -87,3 +87,18 @@ export const CARGOS_JURIDICA = [
   'Paralegal',
   'Sócio'
 ];
+
+export const ATUACOES_TERCEIRIZADA = [
+  'Terceirizado',
+  'Limpeza',
+  'Segurança',
+  'Manutenção'
+];
+
+export const CARGOS_TERCEIRIZADA = [
+  'Auxiliar de Limpeza',
+  'Segurança',
+  'Técnico de Manutenção',
+  'Terceirizado Administrativo',
+  'Terceirizado Operacional'
+];
