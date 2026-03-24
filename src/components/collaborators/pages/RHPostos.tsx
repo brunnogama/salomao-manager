@@ -95,7 +95,7 @@ export function RHPostos() {
     return postos.map(posto => {
       const localName = posto.local || 'Sem Escritório Vinculado';
       const localColaboradores = activeColaboradores.filter(c => {
-        const cLocName = c.location?.name || allLocations.find(l => String(l.id) === String(c.local) || String(l.id) === String(c.location_id))?.name;
+        const cLocName = (c as any).locations?.name || allLocations.find(l => String(l.id) === String(c.local) || String(l.id) === String(c.location_id))?.name || c.local;
         // Tratar null/undefined para strings consistentes
         return (cLocName || 'Sem Escritório Vinculado') === localName;
       });
@@ -189,7 +189,7 @@ export function RHPostos() {
 
       {/* FILTER BUTTONS */}
       {postos.length > 0 && locations.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar max-w-6xl mx-auto w-full">
+        <div className="flex items-center gap-3 overflow-x-auto py-2 px-1 max-w-6xl mx-auto w-full no-scrollbar shrink-0">
           {['Todos', ...locations].map(locOption => (
             <button
               key={locOption}
