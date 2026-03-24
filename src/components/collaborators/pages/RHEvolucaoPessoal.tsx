@@ -601,7 +601,7 @@ export function RHEvolucaoPessoal() {
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-[#1e3a8a]"></div>
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Jurídico</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Jurídicos</p>
             <p className="text-3xl font-black text-[#1e3a8a] mt-1">{totalActiveLegal}</p>
           </div>
           <div className="p-3 bg-[#1e3a8a]/10 rounded-xl">
@@ -613,7 +613,7 @@ export function RHEvolucaoPessoal() {
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-[#ea580c]"></div>
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Administrativo</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Administrativos</p>
             <p className="text-3xl font-black text-[#ea580c] mt-1">{totalActiveAdmin}</p>
           </div>
           <div className="p-3 bg-[#ea580c]/10 rounded-xl">
@@ -625,7 +625,7 @@ export function RHEvolucaoPessoal() {
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-[#0d9488]"></div>
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Terceirizada</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Terceirizados</p>
             <p className="text-3xl font-black text-[#0d9488] mt-1">{totalActiveTerceirizada}</p>
           </div>
           <div className="p-3 bg-[#0d9488]/10 rounded-xl">
