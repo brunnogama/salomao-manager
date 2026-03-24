@@ -522,6 +522,7 @@ export function Organograma() {
     // Auto-center pan when changing tabs/filters
     useLayoutEffect(() => {
         if (containerRef.current) {
+            // Scroll to center the 50vw padding so the tree is in the middle of the screen
             containerRef.current.scrollLeft = (containerRef.current.scrollWidth - containerRef.current.clientWidth) / 2;
             containerRef.current.scrollTop = 0;
         }
@@ -1340,11 +1341,11 @@ export function Organograma() {
             <div 
                 ref={containerRef} 
                 tabIndex={0}
-                className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
+                className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-0 overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
             >
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    {/* The intermediate wrapper must be able to stretch in both directions (w-max h-max equivalent logic) to allow native scrollbars when zoom increases */}
-                    <div className="w-max min-w-full min-h-full p-8 md:p-16 mx-auto flex flex-col items-center justify-start print:w-full print:p-0">
+                    {/* The intermediate wrapper with 50vw padding acts as a "Native Infinite Canvas". It gives 50% screen width of void space on both sides, making horizontal dragging ALWAYS possible, while keeping RBD natively functional */}
+                    <div className="w-max min-h-full mx-auto flex flex-col items-center justify-start pt-16 pb-32 px-[50vw] print:px-0 print:py-0 print:w-full">
                         <div
                             ref={treeWrapperRef}
                             className={`transition-all duration-300 ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'} print:!static print:!transform-none ${isExportingPDF ? 'inline-flex flex-col gap-16' : 'inline-flex flex-col gap-16 pb-32'}`}
