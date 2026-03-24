@@ -538,6 +538,11 @@ export function Organograma() {
                         isJuridico = true;
                     }
 
+                    // Explicit override
+                    if (c.name === 'Felipe Dornelas Aniceto') {
+                        isJuridico = false;
+                    }
+
                     return {
                         id: c.id,
                         name: c.name,
@@ -1161,7 +1166,9 @@ export function Organograma() {
                 adminColabs.forEach(c => {
                     if (c.atuacao) atuacaoSet.add(c.atuacao);
                 });
-                const atuacaoList = Array.from(atuacaoSet).sort((a, b) => a.localeCompare(b));
+                const atuacaoList = Array.from(atuacaoSet)
+                    .filter(a => a.toLowerCase() !== 'administrativo')
+                    .sort((a, b) => a.localeCompare(b));
                 if (atuacaoList.length === 0) return null;
                 return (
                     <div className="flex items-center gap-2 mt-2 mb-1 overflow-x-auto pb-2 custom-scrollbar">
