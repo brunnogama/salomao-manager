@@ -560,8 +560,10 @@ export function RHHeadcount() {
                 <Tooltip content={RHChartTooltip} />
                 <Legend />
                 <Bar dataKey="Administrativo" stackId="a" fill={COLORS.primary} radius={[0, 0, 4, 4]}>
+                  <LabelList dataKey="Administrativo" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
                 <Bar dataKey="Jurídico" stackId="a" fill={COLORS.secondary} radius={[4, 4, 0, 0]}>
+                  <LabelList dataKey="Jurídico" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                   <LabelList dataKey="Total" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} />
                 </Bar>
               </BarChart>
@@ -588,8 +590,11 @@ export function RHHeadcount() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
                 <Tooltip content={RHChartTooltip} />
                 <Legend />
-                <Bar dataKey="Advogados" stackId="a" fill={COLORS.secondary} radius={[0, 0, 4, 4]} />
+                <Bar dataKey="Advogados" stackId="a" fill={COLORS.secondary} radius={[0, 0, 4, 4]}>
+                  <LabelList dataKey="Advogados" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
+                </Bar>
                 <Bar dataKey="Estagiários" stackId="a" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                  <LabelList dataKey="Estagiários" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                   <LabelList dataKey="Total" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} />
                 </Bar>
               </BarChart>
