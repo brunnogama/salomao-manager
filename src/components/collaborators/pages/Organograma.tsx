@@ -1161,56 +1161,86 @@ export function Organograma() {
                             <span className="hidden md:inline">PDF</span>
                         </button>
 
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Floating Filter Sidebar (Right Side) */}
-            <div className="fixed right-6 top-1/2 -translate-y-1/2 z-[90] flex flex-col gap-2 max-h-[80vh] overflow-y-auto custom-scrollbar p-2 bg-white/80 backdrop-blur-md border border-gray-100 rounded-2xl shadow-xl print:hidden">
-                {activeTab === 'JURIDICO' && roots.length > 0 && roots.map((root) => (
-                    <button
-                        key={root.id}
-                        onClick={() => setSelectedPartner(root.id)}
-                        className={`p-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border flex items-center gap-3 w-48 text-left ${
-                            (selectedPartner === root.id) || (selectedPartner === 'ALL' && roots[0]?.id === root.id)
-                                ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
-                                : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
-                        }`}
-                        title={root.name}
-                    >
-                        {root.photo_url && (
-                            <img src={root.photo_url} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
-                        )}
-                        <span className="truncate">{root.name}</span>
-                    </button>
-                ))}
+                {/* Sub-abas por Sócio/Atuação (Condensadas no Topo sem rolagem) */}
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-4 px-4 w-full print:hidden">
+                    {activeTab === 'JURIDICO' && roots.length > 0 && roots.map((root) => {
+                        // Função para condensar e padronizar os nomes conforme solicitado
+                        const getShortName = (name: string) => {
+                            const lower = name.toLowerCase();
+                            if (lower.includes('alice')) return 'Alice Studart';
+                            if (lower.includes('bernardo kaiuca')) return 'Bernardo Kaiuca';
+                            if (lower.includes('eduardo abrahão')) return 'Eduardo Abrahão';
+                            if (lower.includes('lívia') && lower.includes('sancio')) return 'Lívia Sancio';
+                            if (lower.includes('luis felipe') && lower.includes('salomão')) return 'Luis Salomão';
+                            if (lower.includes('luiz felipe pavan')) return 'Luiz Pavan';
+                            if (lower.includes('marcus lívio')) return 'Marcus Lívio';
+                            if (lower.includes('paulo de souza salomão')) return 'Paulo Salomão';
+                            if (lower.includes('pedro neiva')) return 'Pedro Neiva';
+                            if (lower.includes('rodrigo de magalhães cotta')) return 'Rodrigo Cotta';
+                            if (lower.includes('rodrigo raposo')) return 'Rodrigo Raposo';
+                            if (lower.includes('rodrigo salomão')) return 'Rodrigo Salomão';
+                            
+                            // Fallback caso encontre algo não mapeado
+                            const parts = name.split(' ');
+                            return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1]}` : name;
+                        };
 
-                {activeTab === 'ADMINISTRATIVO' && (() => {
-                    const atuacaoSet = new Set<string>();
-                    adminColabs.forEach(c => {
-                        if (c.atuacao) atuacaoSet.add(c.atuacao);
-                    });
-                    const atuacaoList = Array.from(atuacaoSet)
-                        .filter(a => a.toLowerCase() !== 'administrativo')
-                        .sort((a, b) => a.localeCompare(b));
-                    
-                    if (atuacaoList.length === 0) return null;
-                    return atuacaoList.map((atuacao, idx) => (
-                        <button
-                            key={atuacao}
-                            onClick={() => setSelectedAtuacao(atuacao)}
-                            className={`p-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border w-48 text-left truncate ${
-                                (selectedAtuacao === atuacao) || (selectedAtuacao === 'ALL' && idx === 0)
-                                    ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/15'
-                                    : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a]'
-                            }`}
-                            title={atuacao}
-                        >
-                            {atuacao}
-                        </button>
-                    ));
-                })()}
-            </div>
+                        const shortName = getShortName(root.name);
+                        const isActive = (selectedPartner === root.id) || (selectedPartner === 'ALL' && roots[0]?.id === root.id);
+
+                        return (
+                            <button
+                                key={root.id}
+                                onClick={() => setSelectedPartner(root.id)}
+                                className={`px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all border shadow-sm flex items-center gap-2 ${
+                                    isActive
+                                        ? 'bg-gradient-to-r from-[#1e3a8a] to-[#0a192f] text-white border-transparent shadow-md shadow-blue-900/20 z-10 scale-105'
+                                        : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/40 hover:text-[#1e3a8a] hover:bg-blue-50/50 hover:shadow-md'
+                                }`}
+                                title={root.name}
+                            >
+                                {root.photo_url && (
+                                    <img src={root.photo_url} alt="" className={`w-5 h-5 rounded-full object-cover shrink-0 ${isActive ? 'ring-2 ring-white/50' : ''}`} />
+                                )}
+                                <span className="whitespace-nowrap">{shortName}</span>
+                            </button>
+                        );
+                    })}
+
+                    {activeTab === 'ADMINISTRATIVO' && (() => {
+                        const atuacaoSet = new Set<string>();
+                        adminColabs.forEach(c => {
+                            if (c.atuacao) atuacaoSet.add(c.atuacao);
+                        });
+                        const atuacaoList = Array.from(atuacaoSet)
+                            .filter(a => a.toLowerCase() !== 'administrativo')
+                            .sort((a, b) => a.localeCompare(b));
+                        
+                        if (atuacaoList.length === 0) return null;
+                        
+                        return atuacaoList.map((atuacao, idx) => {
+                            const isActive = (selectedAtuacao === atuacao) || (selectedAtuacao === 'ALL' && idx === 0);
+                            return (
+                                <button
+                                    key={atuacao}
+                                    onClick={() => setSelectedAtuacao(atuacao)}
+                                    className={`px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all border shadow-sm ${
+                                        isActive
+                                            ? 'bg-gradient-to-r from-[#1e3a8a] to-[#0a192f] text-white border-transparent shadow-md shadow-blue-900/20 z-10 scale-105'
+                                            : 'bg-white text-gray-500 border-gray-200 hover:border-[#1e3a8a]/40 hover:text-[#1e3a8a] hover:bg-blue-50/50 hover:shadow-md'
+                                    }`}
+                                    title={atuacao}
+                                >
+                                    <span className="whitespace-nowrap">{atuacao}</span>
+                                </button>
+                            );
+                        });
+                    })()}
+                </div>
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 mb-2">
                 <div className="text-[11px] font-bold text-gray-400 bg-white border border-gray-100 px-4 py-2 rounded-xl shadow-sm inline-flex items-center gap-2 max-w-fit">
