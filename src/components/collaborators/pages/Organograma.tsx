@@ -440,6 +440,49 @@ export function Organograma() {
     const [exportScope, setExportScope] = useState<string[]>([]);
     const [isExportingPDF, setIsExportingPDF] = useState(false);
 
+    // Pan (Drag to Scroll) State
+    const [isDragging, setIsDragging] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [startY, setStartY] = useState(0);
+    const [scrollLeftPos, setScrollLeftPos] = useState(0);
+    const [scrollTopPos, setScrollTopPos] = useState(0);
+
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        // Prevent panning if clicking inside a node, button, or input to respect native drag & drop / interactions
+        const target = e.target as HTMLElement;
+        if (target.closest('button') || target.closest('[data-rbd-draggable-id]') || target.closest('input')) {
+            return;
+        }
+
+        if (!containerRef.current) return;
+        setIsDragging(true);
+        setStartX(e.pageX - containerRef.current.offsetLeft);
+        setStartY(e.pageY - containerRef.current.offsetTop);
+        setScrollLeftPos(containerRef.current.scrollLeft);
+        setScrollTopPos(containerRef.current.scrollTop);
+        
+        containerRef.current.focus();
+    }, []);
+
+    const handleMouseLeave = useCallback(() => {
+        setIsDragging(false);
+    }, []);
+
+    const handleMouseUp = useCallback(() => {
+        setIsDragging(false);
+    }, []);
+
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
+        if (!isDragging || !containerRef.current) return;
+        e.preventDefault();
+        const x = e.pageX - containerRef.current.offsetLeft;
+        const y = e.pageY - containerRef.current.offsetTop;
+        const walkX = (x - startX) * 1.5; // Scroll-fast multiplier
+        const walkY = (y - startY) * 1.5;
+        containerRef.current.scrollLeft = scrollLeftPos - walkX;
+        containerRef.current.scrollTop = scrollTopPos - walkY;
+    }, [isDragging, startX, startY, scrollLeftPos, scrollTopPos]);
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') setIsPdfModalOpen(false);
@@ -1250,7 +1293,15 @@ export function Organograma() {
             </div>
 
             {/* Main Drag Drop Context Area */}
-            <div ref={containerRef} className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''}`}>
+            <div 
+                ref={containerRef} 
+                tabIndex={0}
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            >
                 <DragDropContext onDragEnd={handleDragEnd}>
                     <div className="p-8 md:p-16 text-center min-w-full inline-block align-top print:w-full">
                         <div
