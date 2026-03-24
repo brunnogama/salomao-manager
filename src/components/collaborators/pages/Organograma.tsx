@@ -1344,7 +1344,7 @@ export function Organograma() {
             >
                 <DragDropContext onDragEnd={handleDragEnd}>
                     {/* The intermediate wrapper must be able to stretch in both directions (w-max h-max equivalent logic) to allow native scrollbars when zoom increases */}
-                    <div className="p-8 md:p-16 text-center min-w-full min-h-full w-max h-max inline-flex flex-col items-center justify-start align-top print:w-full print:p-0">
+                    <div className="w-max min-w-full min-h-full p-8 md:p-16 mx-auto flex flex-col items-center justify-start print:w-full print:p-0">
                         <div
                             ref={treeWrapperRef}
                             className={`transition-all duration-300 ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'} print:!static print:!transform-none ${isExportingPDF ? 'inline-flex flex-col gap-16' : 'inline-flex flex-col gap-16 pb-32'}`}
@@ -1352,7 +1352,6 @@ export function Organograma() {
                                 width: 'max-content'
                             } : {
                                 width: 'max-content',
-                                minWidth: '100%',
                                 zoom: zoomLevel // Uses native browser reflow scaling! Perfect for Drag-Drop and Scrollbars!
                             } as React.CSSProperties}
                         >
