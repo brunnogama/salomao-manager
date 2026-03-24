@@ -292,19 +292,27 @@ const OrganogramNode = React.memo(({
     return (
         <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
             
-            <div className="flex flex-row items-start justify-center relative">
+            <div className={`flex flex-row items-start justify-center relative w-full ${colabItems.length > 1 ? 'pt-4' : ''}`}>
+                {/* 1. Tronco superior vindo do pai */}
                 {colabItems.length > 1 && (
-                    <div className="absolute h-[2px] bg-gray-300" style={{
-                        top: '-1rem',
-                        left: '25%',
-                        right: '25%'
-                    }}></div>
+                    <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2"></div>
                 )}
+                
                 {colabItems.map((currentItem, idx) => (
-                    <div key={currentItem.id} className={`relative flex flex-col items-center ${colabItems.length > 1 ? 'px-4' : ''}`}>
+                    <div key={currentItem.id} className={`relative flex flex-col items-center ${colabItems.length > 1 ? 'px-6' : ''}`}>
+                        {/* 2. Divisão horizontal no topo (Fork) */}
                         {colabItems.length > 1 && (
-                            <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                top: 0,
+                                left: idx === 0 ? '50%' : '0',
+                                right: idx === colabItems.length - 1 ? '50%' : '0'
+                            }}></div>
                         )}
+                        {/* 3. Linha descendo para o card */}
+                        {colabItems.length > 1 && (
+                            <div className="w-[2px] h-4 bg-gray-300"></div>
+                        )}
+                        
                         <Droppable droppableId={currentItem.id} type="COLAB">
                             {(provided, snapshot) => (
                                 <div
@@ -364,12 +372,26 @@ const OrganogramNode = React.memo(({
                                 </div>
                             )}
                         </Droppable>
+
+                        {/* 4. Linha descendo do card para o join inferior */}
+                        {colabItems.length > 1 && sortedSubordinates.length > 0 && (
+                            <div className="w-[2px] h-4 bg-gray-300 mt-2"></div>
+                        )}
+                        {/* 5. Agrupamento horizontal na base (Join) */}
+                        {colabItems.length > 1 && sortedSubordinates.length > 0 && (
+                            <div className="absolute h-[2px] bg-gray-300" style={{
+                                bottom: 0,
+                                left: idx === 0 ? '50%' : '0',
+                                right: idx === colabItems.length - 1 ? '50%' : '0'
+                            }}></div>
+                        )}
                     </div>
                 ))}
             </div>
 
+            {/* 6. Tronco principal descendo para os subordinados  */}
             {sortedSubordinates.length > 0 && (
-                <div className="flex flex-col items-center mt-2 w-full">
+                <div className={`flex flex-col items-center w-full ${colabItems.length === 1 ? 'mt-2' : ''}`}>
                     <div className="w-[2px] h-8 bg-gray-300"></div>
                     <div className="flex flex-col items-center w-full relative z-10">
                         {firstColab.isSocio && activeTab === 'JURIDICO' ? (() => {
