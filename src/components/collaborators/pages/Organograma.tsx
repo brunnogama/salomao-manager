@@ -622,7 +622,7 @@ const CottaBlockOrganogramNode = React.memo(({
                     {/* Leaders (if any) */}
                     {block.leaders.length > 0 && (
                         <>
-                            <div className={`flex flex-row items-start justify-center relative ${block.leaders.length > 1 ? 'pt-4' : ''}`}>
+                            <div className={`flex flex-row items-stretch justify-center relative ${block.leaders.length > 1 ? 'pt-4' : ''}`}>
                                 {block.leaders.length > 1 && (
                                     <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2"></div>
                                 )}
@@ -640,7 +640,7 @@ const CottaBlockOrganogramNode = React.memo(({
                                         )}
                                         <Droppable droppableId={leader.id} type="COLAB">
                                             {(provided) => (
-                                                <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col items-center">
+                                                <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col items-center flex-1">
                                                     <Draggable draggableId={`${colabId}_${leader.id}`} index={0}>
                                                         {(dragProvided, dragSnapshot) => (
                                                             <div
@@ -670,16 +670,16 @@ const CottaBlockOrganogramNode = React.memo(({
                                                 </div>
                                             )}
                                         </Droppable>
-                                        {/* Bottom join line from each leader */}
+                                        {/* Bottom join line from each leader - pushed to bottom via mt-auto */}
                                         {block.leaders.length > 1 && block.members.length > 0 && (
-                                            <>
-                                                <div className="w-[2px] h-4 bg-gray-300 mt-2"></div>
+                                            <div className="mt-auto flex flex-col items-center w-full">
+                                                <div className="w-[2px] h-4 bg-gray-300"></div>
                                                 <div className="absolute h-[2px] bg-gray-300" style={{
                                                     bottom: 0,
                                                     left: lIdx === 0 ? '50%' : '0',
                                                     right: lIdx === block.leaders.length - 1 ? '50%' : '0'
                                                 }}></div>
-                                            </>
+                                            </div>
                                         )}
                                     </div>
                                 ))}
