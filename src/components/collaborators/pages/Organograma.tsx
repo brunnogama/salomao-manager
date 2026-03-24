@@ -448,27 +448,53 @@ export function Organograma() {
     const [treeWidth, setTreeWidth] = useState<number>(0);
 
     useLayoutEffect(() => {
-        if (!treeWrapperRef.current) return;
-        const observer = new ResizeObserver((entries) => {
-            if (entries[0]) {
-                setTreeWidth(entries[0].target.scrollWidth);
+        const top = topScrollRef.current;
+        const main = containerRef.current;
+        if (!top || !main) return;
+
+        let isSyncingLeft = false;
+        let isSyncingRight = false;
+
+        const onTopScroll = () => {
+            if (!isSyncingLeft) {
+                isSyncingRight = true;
+                main.scrollLeft = top.scrollLeft;
+            }
+            isSyncingLeft = false;
+        };
+
+        const onMainScroll = () => {
+            if (!isSyncingRight) {
+                isSyncingLeft = true;
+                top.scrollLeft = main.scrollLeft;
+            }
+            isSyncingRight = false;
+        };
+
+        top.addEventListener('scroll', onTopScroll, { passive: true });
+        main.addEventListener('scroll', onMainScroll, { passive: true });
+
+        const observer = new ResizeObserver(() => {
+            if (main) {
+                setTreeWidth(main.scrollWidth);
             }
         });
-        observer.observe(treeWrapperRef.current);
-        return () => observer.disconnect();
-    }, [data, zoomLevel, isMaximized]);
-
-    const handleTopScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        if (containerRef.current && containerRef.current.scrollLeft !== e.currentTarget.scrollLeft) {
-            containerRef.current.scrollLeft = e.currentTarget.scrollLeft;
+        observer.observe(main);
+        if (treeWrapperRef.current) {
+            observer.observe(treeWrapperRef.current);
         }
-    };
 
-    const handleMainScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        if (topScrollRef.current && topScrollRef.current.scrollLeft !== e.currentTarget.scrollLeft) {
-            topScrollRef.current.scrollLeft = e.currentTarget.scrollLeft;
-        }
-    };
+        // Trigger initial measure
+        setTimeout(() => {
+            if (main) setTreeWidth(main.scrollWidth);
+        }, 100);
+
+        return () => {
+            top.removeEventListener('scroll', onTopScroll);
+            main.removeEventListener('scroll', onMainScroll);
+            observer.disconnect();
+        };
+    }, [data, zoomLevel, isMaximized, activeTab, selectedPartner, selectedAtuacao]);
 
     // Export PDF Modal State
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
@@ -1424,17 +1450,15 @@ export function Organograma() {
             {/* Sync Top Scrollbar */}
             <div 
                 ref={topScrollRef}
-                onScroll={handleTopScroll}
                 className="custom-scrollbar w-full overflow-x-auto rounded-xl border border-blue-100 bg-blue-50/20 shadow-inner mb-1"
-                style={{ height: '14px' }}
+                style={{ height: '16px', overflowY: 'hidden' }}
             >
-                <div style={{ width: treeWidth > 0 ? `${treeWidth + 128}px` : '200%', height: '1px' }}></div>
+                <div style={{ width: treeWidth > 0 ? `${treeWidth}px` : '100%', height: '1px' }}></div>
             </div>
 
             {/* Main Drag Drop Context Area */}
             <div 
                 ref={containerRef} 
-                onScroll={handleMainScroll}
                 tabIndex={0}
                 className={`custom-scrollbar hide-horizontal-scrollbar bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[500px] overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
             >
