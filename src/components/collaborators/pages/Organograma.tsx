@@ -1269,7 +1269,6 @@ export function Organograma() {
 
     return (
         <div
-            ref={containerRef}
             className={`${isMaximized ? 'fixed inset-0 z-[100] bg-white w-full h-full p-6 space-y-6 overflow-auto' : 'p-8 w-full space-y-8'} animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen print:p-0 print:bg-white`}>
 
             {/* Header Section (Padrão Recrutamento) */}
