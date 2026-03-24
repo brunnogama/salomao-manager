@@ -440,21 +440,28 @@ export function Organograma() {
     const [exportScope, setExportScope] = useState<string[]>([]);
     const [isExportingPDF, setIsExportingPDF] = useState(false);
 
-    // Pan (Drag to Scroll) — delta approach using clientX/clientY (viewport-relative, always correct)
+    // Pan (Infinite Canvas) Logic — direct DOM translation (bypasses all scrollbar limits)
+    const panRef = useRef({ x: 0, y: 0 });
+
     useEffect(() => {
         const container = containerRef.current;
-        if (!container) return;
+        const wrapper = treeWrapperRef.current;
+        if (!container || !wrapper) return;
 
         let isDown = false;
         let lastX = 0;
         let lastY = 0;
 
+        const applyPan = () => {
+            if (wrapper) {
+                wrapper.style.transform = `translate(${panRef.current.x}px, ${panRef.current.y}px) scale(${zoomLevel})`;
+            }
+        };
+
         const onMouseDown = (e: MouseEvent) => {
-            console.log("Organograma PAN: mousedown on", e.target);
             const target = e.target as HTMLElement;
             // Allow panning only when clicking on the background (not nodes, buttons, inputs)
             if (target.closest('button') || target.closest('[data-rbd-draggable-id]') || target.closest('input')) {
-                console.log("Organograma PAN: mousedown blocked by interactive element", target);
                 return;
             }
 
@@ -464,46 +471,81 @@ export function Organograma() {
             lastY = e.clientY;
             document.body.style.userSelect = 'none';
             container.style.cursor = 'grabbing';
+            wrapper.style.transition = 'none'; // Instant follow
             container.focus();
-            console.log("Organograma PAN: drag started", { lastX, lastY, scrollLeft: container.scrollLeft, scrollTop: container.scrollTop });
         };
 
         const onMouseUp = () => {
             if (!isDown) return;
-            console.log("Organograma PAN: mouseup, drag ended");
             isDown = false;
             document.body.style.userSelect = '';
             container.style.cursor = 'grab';
+            wrapper.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'; // Restore smooth zoom
         };
 
         const onMouseMove = (e: MouseEvent) => {
             if (!isDown) return;
             e.preventDefault();
 
-            const dx = e.clientX - lastX;
-            const dy = e.clientY - lastY;
+            panRef.current.x += (e.clientX - lastX);
+            panRef.current.y += (e.clientY - lastY);
             lastX = e.clientX;
             lastY = e.clientY;
 
-            // Only log if there was actual movement to avoid flooding console with 0s
-            if (dx !== 0 || dy !== 0) {
-                console.log("Organograma PAN: mousemoved", { dx, dy, beforeLeft: container.scrollLeft, beforeTop: container.scrollTop });
-            }
+            applyPan();
+        };
 
-            container.scrollLeft -= dx;
-            container.scrollTop -= dy;
+        const onWheel = (e: WheelEvent) => {
+            // Support trackpads and mouse wheel for panning since overflow is hidden
+            e.preventDefault();
+            panRef.current.x -= e.deltaX;
+            panRef.current.y -= e.deltaY;
+            applyPan();
+        };
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (!container.contains(document.activeElement) && document.activeElement !== container) return;
+            
+            const step = 40;
+            let moved = false;
+            if (e.key === 'ArrowUp') { panRef.current.y += step; moved = true; }
+            if (e.key === 'ArrowDown') { panRef.current.y -= step; moved = true; }
+            if (e.key === 'ArrowLeft') { panRef.current.x += step; moved = true; }
+            if (e.key === 'ArrowRight') { panRef.current.x -= step; moved = true; }
+            
+            if (moved) {
+                e.preventDefault();
+                wrapper.style.transition = 'transform 0.1s ease-out';
+                applyPan();
+                setTimeout(() => { if (wrapper) wrapper.style.transition = 'none'; }, 100);
+            }
         };
 
         container.addEventListener('mousedown', onMouseDown, { capture: true });
+        container.addEventListener('wheel', onWheel, { passive: false });
+        container.addEventListener('keydown', onKeyDown);
         window.addEventListener('mouseup', onMouseUp);
         window.addEventListener('mousemove', onMouseMove, { passive: false });
 
+        // On mount or zoom change, ensure transform is applied
+        applyPan();
+
         return () => {
             container.removeEventListener('mousedown', onMouseDown, { capture: true });
+            container.removeEventListener('wheel', onWheel);
+            container.removeEventListener('keydown', onKeyDown);
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('mousemove', onMouseMove);
         };
-    }, []);
+    }, [zoomLevel]); // Re-bind when zoom changes so applyPan has latest zoomLevel
+
+    // Auto-center pan when changing tabs/filters
+    useLayoutEffect(() => {
+        panRef.current = { x: 0, y: 0 };
+        if (treeWrapperRef.current) {
+            treeWrapperRef.current.style.transform = `translate(0px, 0px) scale(${zoomLevel})`;
+        }
+    }, [activeTab, selectedPartner, selectedAtuacao]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -1318,15 +1360,14 @@ export function Organograma() {
             <div 
                 ref={containerRef} 
                 tabIndex={0}
-                className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
+                className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-hidden w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
             >
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    <div className="p-8 md:p-16 text-center min-w-full inline-block align-top print:w-full">
+                    <div className="text-center min-w-full inline-block align-top print:w-full h-full">
                         <div
                             ref={treeWrapperRef}
-                            className={`inline-flex flex-col gap-16 pb-32 transition-transform duration-300 relative mx-auto ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'}`}
+                            className={`inline-flex flex-col gap-16 p-16 transition-transform duration-300 relative mx-auto ${selectedPartner === 'ALL' || selectedAtuacao === 'ALL' ? 'items-start' : 'items-center'}`}
                             style={{
-                                transform: `scale(${zoomLevel})`,
                                 transformOrigin: 'top center',
                                 width: 'max-content',
                                 minWidth: '100%'
