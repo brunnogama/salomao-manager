@@ -14,18 +14,6 @@ interface Posto {
   ordem: number;
 }
 
-const CARGO_COLORS: Record<string, string> = {
-  'JUNIOR': 'text-sky-600 font-bold',
-  'PLENO': 'text-green-600 font-bold',
-  'SENIOR': 'text-red-600 font-bold',
-  'SÓCIO': 'text-pink-400 font-bold',
-  'CONSULTOR': 'text-cyan-500 font-bold',
-  'ESTAG': 'text-orange-500 font-bold',
-  'ESTAGIÁRIOS': 'text-orange-500 font-bold',
-  'ADM*': 'text-purple-600 font-bold',
-  'ADMINISTRATIVO': 'text-purple-600 font-bold',
-  'TOTAL': 'text-red-600 text-lg font-black'
-};
 
 export function RHPostos() {
   const [postos, setPostos] = useState<Posto[]>([]);
@@ -180,9 +168,9 @@ export function RHPostos() {
             <thead>
               <tr className="bg-gray-50">
                 <th className="py-4 px-6 font-black text-gray-800 border-b border-gray-200 text-base uppercase tracking-wider w-1/5 whitespace-nowrap text-center">Postos</th>
-                <th className="py-4 px-6 font-black text-gray-800 border-b border-gray-200 text-base uppercase tracking-wider w-[15%] text-center whitespace-nowrap">Postos Totais</th>
-                <th className="py-4 px-6 font-black text-gray-800 border-b border-gray-200 text-base uppercase tracking-wider w-[15%] text-center whitespace-nowrap">Postos<br/>Ocupados</th>
-                <th className="py-4 px-6 font-black text-gray-800 border-b border-gray-200 text-base uppercase tracking-wider w-[15%] text-center whitespace-nowrap">Postos<br/>Disponíveis</th>
+                <th className="py-4 px-6 font-black text-gray-800 border-b border-gray-200 text-base uppercase tracking-wider w-[15%] text-center whitespace-nowrap">Totais</th>
+                <th className="py-4 px-6 font-black text-gray-800 border-b border-gray-200 text-base uppercase tracking-wider w-[15%] text-center whitespace-nowrap">Ocupados</th>
+                <th className="py-4 px-6 font-black text-gray-800 border-b border-gray-200 text-base uppercase tracking-wider w-[15%] text-center whitespace-nowrap">Disponíveis</th>
                 <th className="py-4 px-6 font-black text-gray-800 border-b border-gray-200 text-base uppercase tracking-wider w-[35%]">OBS</th>
               </tr>
             </thead>
@@ -190,11 +178,20 @@ export function RHPostos() {
               {displayPostos.map((posto) => {
                 const isSaving = saving[posto.id];
                 const disponiveis = (posto.total || 0) - (posto.ocupados || 0);
-                const displayCargo = posto.cargo === 'ESTAG' ? 'ESTAGIÁRIOS' : (posto.cargo === 'ADM*' || posto.cargo === 'ADM') ? 'ADMINISTRATIVO' : posto.cargo;
+                
+                let displayCargo = posto.cargo;
+                if (posto.cargo === 'JUNIOR') displayCargo = 'Juniores';
+                else if (posto.cargo === 'PLENO') displayCargo = 'Plenos';
+                else if (posto.cargo === 'SENIOR') displayCargo = 'Seniores';
+                else if (posto.cargo === 'SÓCIO') displayCargo = 'Sócios';
+                else if (posto.cargo === 'CONSULTOR') displayCargo = 'Consultores';
+                else if (posto.cargo === 'ESTAG' || posto.cargo === 'ESTAGIÁRIOS') displayCargo = 'Estagiários';
+                else if (posto.cargo === 'ADM*' || posto.cargo === 'ADMINISTRATIVO') displayCargo = 'Administrativos';
+
                 return (
                   <tr key={posto.id} className="hover:bg-blue-50/50 transition-colors group">
                     <td className="py-3 px-6 border-r border-gray-100/50 text-center align-middle">
-                      <span className={`text-base tracking-wide ${CARGO_COLORS[posto.cargo] || 'text-gray-700 font-bold'}`}>
+                      <span className="text-base tracking-wide text-gray-700 font-bold">
                         {displayCargo}
                       </span>
                     </td>
