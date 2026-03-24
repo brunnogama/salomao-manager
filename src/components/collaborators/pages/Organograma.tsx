@@ -635,21 +635,18 @@ const CottaBlockOrganogramNode = React.memo(({
                     {block.leaders.length > 0 && (
                         <>
                             <div className={`flex flex-row items-stretch justify-center relative ${block.leaders.length > 1 ? 'pt-4' : ''}`}>
-                                {block.leaders.length > 1 && (
-                                    <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2"></div>
-                                )}
                                 {block.leaders.map((leader, lIdx) => (
                                     <div key={leader.id} className={`relative flex flex-col items-center ${block.leaders.length > 1 ? 'px-4' : ''}`}>
+                                        {/* Horizontal connector between leaders */}
                                         {block.leaders.length > 1 && (
                                             <div className="absolute h-[2px] bg-gray-300" style={{
-                                                top: 0,
+                                                top: '-1rem',
                                                 left: lIdx === 0 ? '50%' : '0',
                                                 right: lIdx === block.leaders.length - 1 ? '50%' : '0'
                                             }}></div>
                                         )}
-                                        {block.leaders.length > 1 && (
-                                            <div className="w-[2px] h-4 bg-gray-300"></div>
-                                        )}
+                                        {/* Vertical stub from horizontal bar to leader */}
+                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
                                         <Droppable droppableId={leader.id} type="COLAB">
                                             {(provided) => (
                                                 <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col items-center flex-1">
