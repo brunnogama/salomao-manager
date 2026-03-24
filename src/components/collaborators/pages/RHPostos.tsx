@@ -124,7 +124,23 @@ export function RHPostos() {
       } else if (posto.cargo === 'ESTAG' || posto.cargo === 'ESTAGIÁRIOS') {
         qdeCargos = localColaboradores.filter(c => matchRole(c, ['Estagiario'])).length;
       } else if (posto.cargo === 'ADM*' || posto.cargo === 'ADMINISTRATIVO') {
-        qdeCargos = localColaboradores.filter(c => getSegment(c) === 'Administrativo').length;
+        const excludedAdminRoles = [
+          'Auxiliar de Servicos Gerais',
+          'Copeira',
+          'Mensageiro',
+          'Motorista',
+          'Portador',
+          'Recepcionista',
+          'Secretaria'
+        ].map(r => r.toLowerCase());
+
+        qdeCargos = localColaboradores.filter(c => {
+          const isAdm = getSegment(c) === 'Administrativo';
+          const rawRole = rolesMap[String(c.role)] || '';
+          const safeRole = rawRole.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const isExcluded = excludedAdminRoles.some(ex => safeRole.includes(ex));
+          return isAdm && !isExcluded;
+        }).length;
       }
 
       return {
@@ -316,6 +332,13 @@ export function RHPostos() {
                   </tfoot>
                 )}
               </table>
+            </div>
+            {/* Disclaimer para Administrativos */}
+            <div className="bg-blue-50/50 border-t border-blue-100 px-6 py-3.5 text-xs text-[#1e3a8a] flex items-start gap-2">
+              <span className="font-bold text-lg leading-none mt-[-2px]">*</span>
+              <p className="leading-snug opacity-90">
+                A contagem de <strong className="font-bold">Administrativos</strong> exclui: Auxiliar de Serviços Gerais, Copeira, Mensageiro, Motorista, Portador, Recepcionista e Secretária.
+              </p>
             </div>
           </div>
         );
