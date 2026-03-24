@@ -497,16 +497,17 @@ export function Organograma() {
             container.scrollTop = scrollTop - walkY;
         };
 
-        container.addEventListener('mousedown', onMouseDown);
+        container.addEventListener('mousedown', onMouseDown, { capture: true });
         container.addEventListener('mouseleave', onMouseLeave);
-        container.addEventListener('mouseup', onMouseUp);
-        container.addEventListener('mousemove', onMouseMove);
+        // Bind to window to avoid losing drag state on fast mouse sweeps
+        window.addEventListener('mouseup', onMouseUp, { capture: true });
+        window.addEventListener('mousemove', onMouseMove, { capture: true, passive: false });
 
         return () => {
-            container.removeEventListener('mousedown', onMouseDown);
+            container.removeEventListener('mousedown', onMouseDown, { capture: true });
             container.removeEventListener('mouseleave', onMouseLeave);
-            container.removeEventListener('mouseup', onMouseUp);
-            container.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp, { capture: true });
+            window.removeEventListener('mousemove', onMouseMove, { capture: true } as any);
         };
     }, []);
 
