@@ -634,19 +634,21 @@ const CottaBlockOrganogramNode = React.memo(({
                     {/* Leaders (if any) */}
                     {block.leaders.length > 0 && (
                         <>
-                            <div className={`flex flex-row items-stretch justify-center relative ${block.leaders.length > 1 ? 'pt-4' : ''}`}>
+                            <div className={`flex flex-row items-stretch justify-center relative ${block.leaders.length > 1 ? 'pt-4 gap-x-6' : ''}`}>
                                 {block.leaders.map((leader, lIdx) => (
-                                    <div key={leader.id} className={`relative flex flex-col items-center ${block.leaders.length > 1 ? 'px-4' : ''}`}>
+                                    <div key={leader.id} className="relative flex flex-col items-center">
                                         {/* Horizontal connector between leaders */}
                                         {block.leaders.length > 1 && (
                                             <div className="absolute h-[2px] bg-gray-300" style={{
-                                                top: '-1rem',
-                                                left: lIdx === 0 ? '50%' : '0',
-                                                right: lIdx === block.leaders.length - 1 ? '50%' : '0'
+                                                top: 0,
+                                                left: lIdx === 0 ? '50%' : '-0.75rem',
+                                                right: lIdx === block.leaders.length - 1 ? '50%' : '-0.75rem'
                                             }}></div>
                                         )}
                                         {/* Vertical stub from horizontal bar to leader */}
-                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                        {block.leaders.length > 1 && (
+                                            <div className="w-[2px] h-4 bg-gray-300"></div>
+                                        )}
                                         <Droppable droppableId={leader.id} type="COLAB">
                                             {(provided) => (
                                                 <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col items-center flex-1">
@@ -1357,63 +1359,19 @@ export function Organograma() {
                 return;
             }
 
-            // Check if we're on a Cotta partner tab
-            const cottaRoot = data.find(c => c.isSocio && c.name.toLowerCase().includes('cotta'));
-            const isCottaExport = activeTab === 'JURIDICO' && cottaRoot && (
-                selectedPartner === cottaRoot.id || 
-                (selectedPartner === 'ALL' && data.filter(c => c.isSocio).length === 1)
-            );
+            if (activeTab === 'JURIDICO') {
+                // === EXPORTAÇÃO JURÍDICO: Blocos para TODOS os sócios ===
+                const allSocios = data.filter(c => c.isSocio);
+                if (allSocios.length === 0) {
+                    showAlert('Aviso', 'Nenhum sócio encontrado.', 'info');
+                    return;
+                }
 
-            if (isCottaExport && cottaRoot) {
-                // === COTTA EXPORT: Blocos Sócio → Local → Líder → Colaboradores ===
                 const getRank = (rStr: string) => {
                     const r = rStr.trim();
                     const index = JURIDICO_HIERARCHY.findIndex(h => h.toLowerCase() === r.toLowerCase());
                     return index === -1 ? 999 : index;
                 };
-
-                const allSubs = (subordinatesMap.get(cottaRoot.id) || [])
-                    .filter(c => !c.isSocio && c.isJuridico)
-                    .sort((a, b) => getRank(a.role) - getRank(b.role));
-
-                // Group by Local
-                const localGroups = new Map<string, ColaboradorCard[]>();
-                allSubs.forEach(sub => {
-                    const key = sub.local || 'Sem Local';
-                    if (!localGroups.has(key)) localGroups.set(key, []);
-                    localGroups.get(key)!.push(sub);
-                });
-                const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-
-                // Build blocks
-                const blocks: { localName: string, leaders: ColaboradorCard[], members: ColaboradorCard[] }[] = [];
-                localEntries.forEach(([localName, localColabs]) => {
-                    const leaders: ColaboradorCard[] = [];
-                    const directMembers: ColaboradorCard[] = [];
-                    localColabs.forEach(c => {
-                        const subs = (subordinatesMap.get(c.id) || []).filter(s => !s.isSocio && s.isJuridico);
-                        if (subs.length > 0) leaders.push(c);
-                        else directMembers.push(c);
-                    });
-                    if (leaders.length > 0) {
-                        const leaderGroups = new Map<string, ColaboradorCard[]>();
-                        leaders.forEach(leader => {
-                            const leaderSubs = (subordinatesMap.get(leader.id) || []).filter(s => !s.isSocio && s.isJuridico);
-                            const sig = leaderSubs.map(s => s.id).sort().join('|');
-                            if (!leaderGroups.has(sig)) leaderGroups.set(sig, []);
-                            leaderGroups.get(sig)!.push(leader);
-                        });
-                        leaderGroups.forEach((groupLeaders) => {
-                            const leaderSubs = (subordinatesMap.get(groupLeaders[0].id) || [])
-                                .filter(s => !s.isSocio && s.isJuridico)
-                                .sort((a, b) => getRank(a.role) - getRank(b.role));
-                            blocks.push({ localName, leaders: groupLeaders, members: leaderSubs });
-                        });
-                        if (directMembers.length > 0) blocks.push({ localName, leaders: [], members: directMembers });
-                    } else {
-                        blocks.push({ localName, leaders: [], members: directMembers });
-                    }
-                });
 
                 // Excel styles
                 const headerStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 13 }, fill: { fgColor: { rgb: '0A192F' } }, alignment: { horizontal: 'center' as const } };
@@ -1424,51 +1382,91 @@ export function Organograma() {
                 const summaryHeaderStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }, fill: { fgColor: { rgb: '0A192F' } }, alignment: { horizontal: 'center' as const } };
                 const summaryLabelStyle = { font: { bold: true, sz: 10 }, fill: { fgColor: { rgb: 'F3F4F6' } }, alignment: { horizontal: 'left' as const } };
                 const summaryValueStyle = { font: { sz: 10 }, fill: { fgColor: { rgb: 'F3F4F6' } }, alignment: { horizontal: 'center' as const } };
+                const totalStyle = { font: { bold: true, sz: 11 }, fill: { fgColor: { rgb: 'E5E7EB' } } };
 
-                // Build sheet data
                 const rows: { v: string, s?: any }[][] = [];
 
-                // Title row
-                rows.push([{ v: 'ORGANOGRAMA', s: headerStyle }, { v: cottaRoot.name.toUpperCase(), s: headerStyle }]);
-                rows.push([{ v: '' }, { v: '' }]); // empty row
+                // Title
+                rows.push([{ v: 'ORGANOGRAMA — JURÍDICO', s: headerStyle }, { v: '', s: headerStyle }]);
+                rows.push([{ v: '' }, { v: '' }]);
 
-                blocks.forEach((block) => {
-                    // Sócio row
-                    rows.push([{ v: cottaRoot.name, s: socioStyle }, { v: cottaRoot.role || 'Sócio', s: socioStyle }]);
-                    // Local row
-                    rows.push([{ v: `📍 ${block.localName}`, s: localStyle }, { v: '', s: localStyle }]);
-                    // Leader rows
-                    block.leaders.forEach(leader => {
-                        rows.push([{ v: `  👤 ${leader.name}`, s: leaderStyle }, { v: leader.role, s: leaderStyle }]);
+                allSocios.forEach(socio => {
+                    const allSubs = (subordinatesMap.get(socio.id) || [])
+                        .filter(c => !c.isSocio && c.isJuridico)
+                        .sort((a, b) => getRank(a.role) - getRank(b.role));
+
+                    // Group by Local
+                    const localGroups = new Map<string, ColaboradorCard[]>();
+                    allSubs.forEach(sub => {
+                        const key = sub.local || 'Sem Local';
+                        if (!localGroups.has(key)) localGroups.set(key, []);
+                        localGroups.get(key)!.push(sub);
                     });
-                    // Member rows
-                    block.members.forEach(member => {
-                        rows.push([{ v: `      ${member.name}`, s: memberStyle }, { v: member.role, s: memberStyle }]);
+                    const localEntries = Array.from(localGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                    // Build blocks for this socio
+                    const blocks: { localName: string, leaders: ColaboradorCard[], members: ColaboradorCard[] }[] = [];
+                    localEntries.forEach(([localName, localColabs]) => {
+                        const leaders: ColaboradorCard[] = [];
+                        const directMembers: ColaboradorCard[] = [];
+                        localColabs.forEach(c => {
+                            const subs = (subordinatesMap.get(c.id) || []).filter(s => !s.isSocio && s.isJuridico);
+                            if (subs.length > 0) leaders.push(c);
+                            else directMembers.push(c);
+                        });
+                        if (leaders.length > 0) {
+                            const leaderGroups = new Map<string, ColaboradorCard[]>();
+                            leaders.forEach(leader => {
+                                const leaderSubs = (subordinatesMap.get(leader.id) || []).filter(s => !s.isSocio && s.isJuridico);
+                                const sig = leaderSubs.map(s => s.id).sort().join('|');
+                                if (!leaderGroups.has(sig)) leaderGroups.set(sig, []);
+                                leaderGroups.get(sig)!.push(leader);
+                            });
+                            leaderGroups.forEach((groupLeaders) => {
+                                const leaderSubs = (subordinatesMap.get(groupLeaders[0].id) || [])
+                                    .filter(s => !s.isSocio && s.isJuridico)
+                                    .sort((a, b) => getRank(a.role) - getRank(b.role));
+                                blocks.push({ localName, leaders: groupLeaders, members: leaderSubs });
+                            });
+                            if (directMembers.length > 0) blocks.push({ localName, leaders: [], members: directMembers });
+                        } else {
+                            blocks.push({ localName, leaders: [], members: directMembers });
+                        }
                     });
-                    // Empty separator
+
+                    // Render blocks
+                    blocks.forEach((block) => {
+                        rows.push([{ v: socio.name, s: socioStyle }, { v: socio.role || 'Sócio', s: socioStyle }]);
+                        rows.push([{ v: `📍 ${block.localName}`, s: localStyle }, { v: '', s: localStyle }]);
+                        block.leaders.forEach(leader => {
+                            rows.push([{ v: `  👤 ${leader.name}`, s: leaderStyle }, { v: leader.role, s: leaderStyle }]);
+                        });
+                        block.members.forEach(member => {
+                            rows.push([{ v: `      ${member.name}`, s: memberStyle }, { v: member.role, s: memberStyle }]);
+                        });
+                        rows.push([{ v: '' }, { v: '' }]);
+                    });
+
+                    // Summary for this socio
+                    rows.push([{ v: `RESUMO — ${socio.name.toUpperCase()}`, s: summaryHeaderStyle }, { v: 'QUANTIDADE', s: summaryHeaderStyle }]);
+                    const roleCounts = new Map<string, number>();
+                    allSubs.forEach(sub => {
+                        const role = sub.role || 'Sem Cargo';
+                        roleCounts.set(role, (roleCounts.get(role) || 0) + 1);
+                    });
+                    const sortedRoles = Array.from(roleCounts.entries()).sort((a, b) => getRank(a[0]) - getRank(b[0]));
+                    sortedRoles.forEach(([role, count]) => {
+                        rows.push([{ v: role, s: summaryLabelStyle }, { v: String(count), s: summaryValueStyle }]);
+                    });
+                    rows.push([{ v: 'TOTAL', s: { ...totalStyle, alignment: { horizontal: 'left' as const } } }, { v: String(allSubs.length), s: { ...totalStyle, alignment: { horizontal: 'center' as const } } }]);
+                    rows.push([{ v: '' }, { v: '' }]);
                     rows.push([{ v: '' }, { v: '' }]);
                 });
 
-                // Summary section
-                rows.push([{ v: '' }, { v: '' }]);
-                rows.push([{ v: 'RESUMO POR CARGO', s: summaryHeaderStyle }, { v: 'QUANTIDADE', s: summaryHeaderStyle }]);
-
-                const roleCounts = new Map<string, number>();
-                allSubs.forEach(sub => {
-                    const role = sub.role || 'Sem Cargo';
-                    roleCounts.set(role, (roleCounts.get(role) || 0) + 1);
-                });
-                const sortedRoles = Array.from(roleCounts.entries()).sort((a, b) => getRank(a[0]) - getRank(b[0]));
-                sortedRoles.forEach(([role, count]) => {
-                    rows.push([{ v: role, s: summaryLabelStyle }, { v: String(count), s: summaryValueStyle }]);
-                });
-                rows.push([{ v: 'TOTAL', s: { font: { bold: true, sz: 11 }, fill: { fgColor: { rgb: 'E5E7EB' } }, alignment: { horizontal: 'left' as const } } }, { v: String(allSubs.length), s: { font: { bold: true, sz: 11 }, fill: { fgColor: { rgb: 'E5E7EB' } }, alignment: { horizontal: 'center' as const } } }]);
-
-                // Create worksheet from array
+                // Create worksheet
                 const wsData = rows.map(row => row.map(cell => cell.v));
                 const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-                // Apply styles
                 rows.forEach((row, rIdx) => {
                     row.forEach((cell, cIdx) => {
                         const cellRef = XLSX.utils.encode_cell({ r: rIdx, c: cIdx });
@@ -1479,19 +1477,16 @@ export function Organograma() {
                 });
 
                 ws['!cols'] = [{ wch: 45 }, { wch: 30 }];
-
-                // Merge title row
                 ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
-                // Fix title after merge
                 const titleRef = XLSX.utils.encode_cell({ r: 0, c: 0 });
                 if (ws[titleRef]) {
-                    ws[titleRef].v = `ORGANOGRAMA — ${cottaRoot.name.toUpperCase()}`;
+                    ws[titleRef].v = 'ORGANOGRAMA — JURÍDICO';
                     ws[titleRef].s = headerStyle;
                 }
 
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, cottaRoot.name.split(' ')[0]);
-                XLSX.writeFile(wb, `Organograma_${cottaRoot.name.replace(/\s+/g, '_')}.xlsx`);
+                XLSX.utils.book_append_sheet(wb, ws, 'Organograma');
+                XLSX.writeFile(wb, 'Organograma_Juridico.xlsx');
                 showAlert('Sucesso', 'Organograma exportado em Excel com sucesso!', 'success');
             } else {
                 // === EXPORTAÇÃO GENÉRICA ===
@@ -1527,7 +1522,7 @@ export function Organograma() {
             console.error('Erro ao exportar para Excel:', error);
             showAlert('Erro', 'Ocorreu um erro ao tentar exportar a planilha.', 'error');
         }
-    }, [data, activeTab, selectedPartner, subordinatesMap]);
+    }, [data, activeTab, subordinatesMap]);
 
     const handleExportPDF = async () => {
         try {
