@@ -521,25 +521,17 @@ export function Organograma() {
 
     // Auto-center pan when changing tabs/filters
     useEffect(() => {
-        let isCancelled = false;
         const centerView = () => {
-            if (containerRef.current && !isCancelled) {
-                // Scroll to exactly 5000px center of the fixed 10000px plane
-                containerRef.current.scrollLeft = 5000 - (containerRef.current.clientWidth / 2);
-                containerRef.current.scrollTop = 5000 - 100; // Leaves 100px space above the tree
+            if (containerRef.current) {
+                // Scroll to center the content naturally so the tree is perfectly in view, starting from the top.
+                containerRef.current.scrollLeft = (containerRef.current.scrollWidth - containerRef.current.clientWidth) / 2;
+                containerRef.current.scrollTop = 0; 
             }
         };
 
-        // Multi-pass guaranteed centering after DOM paint
         centerView();
-        requestAnimationFrame(() => {
-            if (!isCancelled) centerView();
-            setTimeout(centerView, 50);
-            setTimeout(centerView, 150);
-            setTimeout(centerView, 300); // Failsafe for slow renders
-        });
-        
-        return () => { isCancelled = true; };
+        const timeout = setTimeout(centerView, 100);
+        return () => clearTimeout(timeout);
     }, [activeTab, selectedPartner, selectedAtuacao, isMaximized]);
 
     useEffect(() => {
@@ -1355,25 +1347,31 @@ export function Organograma() {
             <div 
                 ref={containerRef} 
                 tabIndex={0}
-                className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-0 overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
+                className={`custom-scrollbar bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-0 overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
             >
+                <style>{`
+                    .custom-scrollbar::-webkit-scrollbar {
+                        height: 14px;
+                        width: 14px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-track {
+                        background: rgba(0,0,0,0.03);
+                        border-radius: 12px;
+                        margin: 16px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-thumb {
+                        background: rgba(30, 58, 138, 0.25);
+                        border-radius: 12px;
+                        border: 3px solid transparent;
+                        background-clip: padding-box;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                        background: rgba(30, 58, 138, 0.45);
+                    }
+                `}</style>
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    {/* The intermediate wrapper is an explicit 10000x10000 plane. Flexbox automatically centers the tree over the 5000px mark structurally! */}
-                    <div style={isExportingPDF ? {
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start'
-                    } : {
-                        width: '10000px',
-                        minHeight: '10000px',
-                        paddingTop: '5000px',
-                        paddingBottom: '2000px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                    }}>
+                    {/* Organic wrapper that stretches fully to support native CSS zoom, with graceful padding */}
+                    <div className="w-max min-w-full min-h-full mx-auto flex flex-col items-center justify-start pt-8 pb-16 px-8 print:w-full print:p-0">
                         <div
                             ref={treeWrapperRef}
                             className={`transition-all duration-300 ${isExportingPDF ? 'inline-flex flex-col gap-16' : 'inline-flex flex-col gap-16 pb-32'} print:!static print:!transform-none`}
@@ -1381,8 +1379,8 @@ export function Organograma() {
                                 width: 'max-content'
                             } : {
                                 width: 'max-content',
-                                transform: `scale(${zoomLevel})`,
-                                transformOrigin: 'top center' // Native transform scale! No more CSS zoom breaks.
+                                minWidth: 'min-content',
+                                zoom: zoomLevel // Restores true native scaling
                             } as React.CSSProperties}
                         >
                             {roots.length > 0 ? (
