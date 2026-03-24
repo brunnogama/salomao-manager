@@ -509,7 +509,20 @@ export function Organograma() {
                     const roleStr = typeof c.roles === 'object' ? (c.roles as any)?.name : (c.role as string);
                     const roleLower = String(roleStr || '').toLowerCase();
                     const isSocio = roleLower.includes('sócio') || roleLower.includes('socio') || roleLower.includes('diretor financeiro');
-                    const isJuridico = JURIDICO_HIERARCHY.some(h => roleLower.includes(h.toLowerCase())) ||
+                    
+                    const atuacaoId = String((c as any).atuacao || '');
+                    const atuacaoName = atuacoesMap.get(atuacaoId) || atuacaoId || '';
+                    const equipeName = (typeof c.teams === 'object' ? (c.teams as any)?.name : c.equipe) || 'Geral';
+                    
+                    const equipeLower = String(equipeName).toLowerCase();
+                    const atuacaoLower = String(atuacaoName).toLowerCase();
+
+                    const explicitlyAdminEquipes = ['rh', 'recurso', 'financeiro', 'adm', 'administra', 'ti ', 'tecnologia', 'marketing', 'comunica', 'inova', 'facilities', 'recep', 'controladoria'];
+                    const explicitlyAdmin = explicitlyAdminEquipes.some(term => equipeLower.includes(term) || atuacaoLower.includes(term));
+
+                    const isLegalTeam = ['cível', 'civel', 'tributário', 'tributario', 'trabalhista', 'societário', 'societario', 'contencioso', 'estratégico', 'estrategico', 'empresarial', 'penal', 'público', 'publico'].some(term => equipeLower.includes(term) || atuacaoLower.includes(term));
+
+                    let isJuridico = JURIDICO_HIERARCHY.some(h => roleLower.includes(h.toLowerCase())) ||
                         isSocio ||
                         roleLower.includes('advogado') ||
                         roleLower.includes('estagiário') ||
@@ -517,18 +530,16 @@ export function Organograma() {
                         roleLower.includes('jurídico') ||
                         roleLower.includes('juridico');
 
-                    // Specific check for Admin even if name contains 'Juridico'
-                    const explicitlyAdmin = (String(c.equipe || '').toLowerCase().includes('adm') ||
-                        String(c.atuacao || '').toLowerCase().includes('adm'));
-
-                    const atuacaoId = String((c as any).atuacao || '');
-                    const atuacaoName = atuacoesMap.get(atuacaoId) || atuacaoId || '';
+                    // Rescue legal team members and coordinators who were missing from string matches
+                    if (!isJuridico && !explicitlyAdmin && (isLegalTeam || roleLower.includes('coordenador') || roleLower.includes('paralegal') || roleLower.includes('consultor') || roleLower.includes('assistente'))) {
+                        isJuridico = true;
+                    }
 
                     return {
                         id: c.id,
                         name: c.name,
                         role: roleStr || 'Sem Cargo',
-                        equipe: (typeof c.teams === 'object' ? (c.teams as any)?.name : c.equipe) || 'Geral',
+                        equipe: equipeName,
                         atuacao: atuacaoName,
                         local: (typeof c.locations === 'object' ? (c.locations as any)?.name : c.local) || 'Sem Local',
                         leader_id: c.leader_id || undefined,
