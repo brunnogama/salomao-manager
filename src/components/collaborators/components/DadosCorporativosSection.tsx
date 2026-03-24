@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Briefcase, Calendar, Clock, Crown, GraduationCap } from 'lucide-react'
+import { Briefcase, Calendar, Clock, Crown, GraduationCap, MapPin } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
@@ -401,6 +401,23 @@ export function DadosCorporativosSection({
                 tableName="locations"
                 disabled={isViewMode}
               />
+
+              <div className="md:col-span-1 animate-in fade-in slide-in-from-right-2 duration-300">
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2" title="Código da Mesa no Mapa Físico">Posto (Mesa)</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    className={`w-full pl-9 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-bold uppercase tracking-wider ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    value={formData.posto || ''}
+                    onChange={e => setFormData({ ...formData, posto: e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase() })}
+                    placeholder="Ex: J19"
+                    maxLength={5}
+                    disabled={isViewMode}
+                    readOnly={isViewMode}
+                  />
+                </div>
+              </div>
 
               {isEstagiario && (
                 <div className="md:col-span-3 bg-[#1e3a8a]/5 border border-[#1e3a8a]/20 p-5 rounded-xl mt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">

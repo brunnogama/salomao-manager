@@ -56,6 +56,7 @@ export interface Collaborator {
   gender?: string;
   photo_url?: string;
   foto_url?: string; // Legacy/DB field support
+  posto?: string; // Código do Posto/Mesa no formato LetraNumeral (ex: J19)
 
   // Endereço
   zip_code?: string;

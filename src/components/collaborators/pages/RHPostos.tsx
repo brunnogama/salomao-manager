@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Building2, Loader2, RefreshCw, MapPin } from 'lucide-react';
+import { Building2, Loader2, RefreshCw, MapPin, Layout, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { getSegment } from '../utils/rhChartUtils';
+import { RHMapaAndar31 } from '../components/RHMapaAndar31';
 
 interface Posto {
   id: string;
@@ -21,6 +22,8 @@ export function RHPostos() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [filterLocal, setFilterLocal] = useState<string>('Todos');
+  const [viewMode, setViewMode] = useState<'table' | 'map'>('table');
+  const [localSeatOverrides, setLocalSeatOverrides] = useState<Record<string, string>>({});
 
   const { colaboradores, roles, locations: allLocations } = useColaboradores();
 
@@ -167,6 +170,38 @@ export function RHPostos() {
     return a.localeCompare(b);
   });
 
+  // --- MAPA LOGIC ---
+  const mapCollaborators = useMemo(() => {
+    return activeColaboradores.map(c => ({
+      ...c,
+      posto: localSeatOverrides[c.id] !== undefined ? localSeatOverrides[c.id] : c.posto
+    }));
+  }, [activeColaboradores, localSeatOverrides]);
+
+  const unassignedColabs = useMemo(() => {
+    // Para simplificar no MVP, como o mapa 1 é de RJ, filtramos do RJ
+    return mapCollaborators.filter(c => {
+      const cLocName = (c as any).locations?.name || allLocations.find(l => String(l.id) === String(c.local))?.name || c.local;
+      return cLocName === 'Rio de Janeiro' && !c.posto;
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }, [mapCollaborators, allLocations]);
+
+  const handleAssignSeat = async (colabId: string, seatId: string) => {
+    setLocalSeatOverrides(prev => ({ ...prev, [colabId]: seatId }));
+    const { error } = await supabase.from('collaborators').update({ posto: seatId }).eq('id', colabId);
+    if (error) {
+      toast.error('Erro ao salvar posto no banco');
+    } else {
+      toast.success('Mesa atualizada!');
+    }
+  };
+
+  const handleRemoveSeat = async (colabId: string) => {
+    setLocalSeatOverrides(prev => ({ ...prev, [colabId]: '' }));
+    await supabase.from('collaborators').update({ posto: null }).eq('id', colabId);
+    toast.success('Colaborador removido da mesa!');
+  };
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-8 relative p-4 sm:p-6 pb-20 overflow-y-auto no-scrollbar">
       {/* PAGE HEADER */}
@@ -186,15 +221,30 @@ export function RHPostos() {
             </p>
           </div>
         </div>
-        
-        <button
-          onClick={fetchPostos}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 hover:text-[#1e3a8a] transition-all font-bold text-sm shadow-sm active:scale-95 disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Atualizar Dados
-        </button>
+        <div className="flex flex-col items-end gap-3 shrink-0">
+          <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold transition-all ${viewMode === 'table' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <List className="w-4 h-4" /> Tabelas
+            </button>
+            <button
+              onClick={() => setViewMode('map')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold transition-all ${viewMode === 'map' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Layout className="w-4 h-4" /> Mapa Dinâmico
+            </button>
+          </div>
+          <button
+            onClick={fetchPostos}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 hover:text-[#1e3a8a] transition-all font-bold text-sm shadow-sm active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar Dados
+          </button>
+        </div>
       </div>
 
       {postos.length === 0 && !loading && (
@@ -205,9 +255,9 @@ export function RHPostos() {
         </div>
       )}
 
-      {/* FILTER BUTTONS */}
-      {postos.length > 0 && locations.length > 0 && (
-        <div className="flex items-center gap-3 overflow-x-auto py-2 px-1 max-w-6xl mx-auto w-full no-scrollbar shrink-0">
+      {/* FILTER BUTTONS (Apenas na visão Tabela) */}
+      {viewMode === 'table' && postos.length > 0 && locations.length > 0 && (
+        <div className="flex items-center gap-3 overflow-x-auto py-2 px-1 max-w-6xl mx-auto w-full no-scrollbar shrink-0 animate-in fade-in duration-300">
           {['Todos', ...locations].map(locOption => (
             <button
               key={locOption}
@@ -224,8 +274,78 @@ export function RHPostos() {
         </div>
       )}
 
-      {/* RENDERIZAR TABELAS POR LOCAL */}
-      {(filterLocal === 'Todos' ? locations : locations.filter(l => l === filterLocal)).map((local) => {
+      {/* RENDERIZAR VISÃO MAPA */}
+      {viewMode === 'map' && (
+        <div className="flex flex-col lg:flex-row gap-6 max-w-[1400px] mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500 flex-1 min-h-[600px]">
+          {/* Lado Esquerdo: Colaboradores sem mesa */}
+          <div className="w-full lg:w-72 shrink-0 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[600px] lg:h-auto overflow-hidden">
+            <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+              <h2 className="text-sm font-black text-[#1e3a8a] uppercase tracking-wide">Sem Mesa (RJ)</h2>
+              <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded-full">{unassignedColabs.length}</span>
+            </div>
+            
+            <div 
+              className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/30"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const colabId = e.dataTransfer.getData('colabId');
+                if (colabId) handleRemoveSeat(colabId); // Remove do Posto ao arrastar pra lista
+              }}
+            >
+              {unassignedColabs.length === 0 ? (
+                <div className="text-center p-6 text-gray-400 font-medium text-xs">Todos possuem mesas designadas no RJ.</div>
+              ) : (
+                unassignedColabs.map(c => (
+                  <div
+                    key={c.id}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('colabId', String(c.id));
+                    }}
+                    className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-300 hover:shadow transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
+                        {c.foto_url || c.photo_url ? (
+                          <img src={c.foto_url || c.photo_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xs font-bold text-gray-400">{(c.name || '').charAt(0)}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-gray-800 truncate">{c.name}</p>
+                        <p className="text-[10px] text-gray-500 truncate">{c.roles?.name || c.role}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Lado Direito: Mapa Principal */}
+          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col items-center">
+            <div className="w-full flex justify-between items-center mb-6">
+              <h2 className="text-xl font-black text-gray-800 tracking-tight">31º Andar <span className="text-gray-400 font-medium">• Rio de Janeiro</span></h2>
+              <div className="flex gap-4">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase"><div className="w-2 h-2 rounded-full bg-[#1e3a8a]"></div>Jurídico</div>
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase"><div className="w-2 h-2 rounded-full bg-orange-500"></div>ADM</div>
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase"><div className="w-2 h-2 rounded-full bg-emerald-500"></div>Terceiro</div>
+              </div>
+            </div>
+
+            <RHMapaAndar31 
+              collaborators={mapCollaborators}
+              onAssignSeat={handleAssignSeat}
+              onRemoveSeat={handleRemoveSeat}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* RENDERIZAR VISÃO TABELAS */}
+      {viewMode === 'table' && (filterLocal === 'Todos' ? locations : locations.filter(l => l === filterLocal)).map((local) => {
         const localPostos = groupedPostos[local];
         const totals = localPostos.reduce((acc, current) => ({
           qdeCargos: acc.qdeCargos + (current.qdeCargos || 0),
