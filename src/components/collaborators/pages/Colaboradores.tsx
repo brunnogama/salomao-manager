@@ -182,9 +182,21 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const location = useLocation()
 
   useEffect(() => {
-    if (location.state?.roleFilter) {
-      setAdvFilterRole(location.state.roleFilter)
-      setActiveMainTab('Colaboradores')
+    if (location.state?.roleFilter && roles.length > 0) {
+      const roleFilterStr = location.state.roleFilter;
+      if (roleFilterStr === 'Não definido') {
+        setFilterCargo('unassigned');
+      } else {
+        const foundRole = roles.find(r => r.name === roleFilterStr);
+        if (foundRole) {
+          setFilterCargo(String(foundRole.id));
+        }
+      }
+      setActiveMainTab('Colaboradores');
+      // Clear location state so it doesn't get stuck on refresh
+      const newState = { ...location.state };
+      delete newState.roleFilter;
+      window.history.replaceState(newState, document.title);
     }
     if (location.state?.cadastrarCandidato) {
       const candidato = location.state.cadastrarCandidato;
@@ -438,7 +450,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       chips.push({ key: 'local', label: `Local: ${label}`, onClear: () => setFilterLocal('') });
     }
     if (filterCargo) {
-      const label = roleOptions.find(r => r.value === filterCargo)?.label || filterCargo;
+      const label = filterCargo === 'unassigned' ? 'Não definido' : roleOptions.find(r => r.value === filterCargo)?.label || filterCargo;
       chips.push({ key: 'cargo', label: `Cargo: ${label}`, onClear: () => setFilterCargo('') });
     }
     return chips;
@@ -1108,7 +1120,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const matchLider = filterLider ? String(c.leader_id) === filterLider : true
     const matchPartner = filterPartner ? String(c.partner_id) === filterPartner : true
     const matchLocal = filterLocal ? String(c.local) === filterLocal : true
-    const matchCargo = filterCargo ? String(c.role) === filterCargo : true
+    const matchCargo = filterCargo ? (filterCargo === 'unassigned' ? (!c.role || String(c.role) === 'Não definido' || String(c.role) === 'null') : String(c.role) === filterCargo) : true
     const matchUpdated = showUpdatedOnly ? c.cadastro_atualizado === true : true
     return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchUpdated
   })
