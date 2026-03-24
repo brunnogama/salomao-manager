@@ -292,7 +292,7 @@ const OrganogramNode = React.memo(({
     return (
         <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
             
-            <div className={`flex flex-row items-start justify-center relative w-full ${colabItems.length > 1 ? 'pt-4' : ''}`}>
+            <div className={`flex flex-row items-stretch justify-center relative w-full ${colabItems.length > 1 ? 'pt-4' : ''}`}>
                 {/* 1. Tronco superior vindo do pai */}
                 {colabItems.length > 1 && (
                     <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -translate-x-1/2"></div>
@@ -375,7 +375,7 @@ const OrganogramNode = React.memo(({
 
                         {/* 4. Linha descendo do card para o join inferior */}
                         {colabItems.length > 1 && sortedSubordinates.length > 0 && (
-                            <div className="w-[2px] h-4 bg-gray-300 mt-2"></div>
+                            <div className="w-[2px] bg-gray-300 mt-2 flex-1 min-h-[1rem]"></div>
                         )}
                         {/* 5. Agrupamento horizontal na base (Join) */}
                         {colabItems.length > 1 && sortedSubordinates.length > 0 && (
