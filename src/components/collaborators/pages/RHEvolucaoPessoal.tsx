@@ -10,6 +10,8 @@ import {
   X
 } from 'lucide-react'
 import {
+  LineChart,
+  Line,
   AreaChart,
   Area,
   XAxis,
@@ -670,21 +672,7 @@ export function RHEvolucaoPessoal() {
         </div>
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={headcountChartData} margin={{ top: 50, right: 40, left: 10, bottom: 50 }}>
-              <defs>
-                <linearGradient id="colorAdmin" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.1} />
-                  <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="colorLegal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.1} />
-                  <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="colorTerceirizada" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.terceirizada} stopOpacity={0.1} />
-                  <stop offset="95%" stopColor={COLORS.terceirizada} stopOpacity={0} />
-                </linearGradient>
-              </defs>
+            <LineChart data={headcountChartData} margin={{ top: 50, right: 40, left: 10, bottom: 50 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
               <XAxis
                 dataKey="name"
@@ -702,43 +690,37 @@ export function RHEvolucaoPessoal() {
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
-              <Area
+              <Line
                 type="monotone"
                 dataKey="Jurídico"
                 stroke={hasLegalHeadcount ? COLORS.secondary : 'transparent'}
-                fillOpacity={hasLegalHeadcount ? 1 : 0}
-                fill="url(#colorLegal)"
                 strokeWidth={hasLegalHeadcount ? 3 : 0}
                 dot={hasLegalHeadcount ? { r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 } : false}
                 activeDot={hasLegalHeadcount ? { r: 6, fill: COLORS.secondary, strokeWidth: 0 } : false}
               >
                 {hasLegalHeadcount && <LabelList dataKey="Jurídico" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.secondary} position="top" />} />}
-              </Area>
-              <Area
+              </Line>
+              <Line
                 type="monotone"
                 dataKey="Administrativo"
                 stroke={hasAdminHeadcount ? COLORS.primary : 'transparent'}
-                fillOpacity={hasAdminHeadcount ? 1 : 0}
-                fill="url(#colorAdmin)"
                 strokeWidth={hasAdminHeadcount ? 3 : 0}
                 dot={hasAdminHeadcount ? { r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 } : false}
                 activeDot={hasAdminHeadcount ? { r: 6, fill: COLORS.primary, strokeWidth: 0 } : false}
               >
                 {hasAdminHeadcount && <LabelList dataKey="Administrativo" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.primary} position="bottom" />} />}
-              </Area>
-              <Area
+              </Line>
+              <Line
                 type="monotone"
                 dataKey="Terceirizada"
                 stroke={hasTerceirizadaHeadcount ? COLORS.terceirizada : 'transparent'}
-                fillOpacity={hasTerceirizadaHeadcount ? 1 : 0}
-                fill="url(#colorTerceirizada)"
                 strokeWidth={hasTerceirizadaHeadcount ? 3 : 0}
                 dot={hasTerceirizadaHeadcount ? { r: 4, fill: '#ffffff', stroke: COLORS.terceirizada, strokeWidth: 2 } : false}
                 activeDot={hasTerceirizadaHeadcount ? { r: 6, fill: COLORS.terceirizada, strokeWidth: 0 } : false}
               >
                 {hasTerceirizadaHeadcount && <LabelList dataKey="Terceirizada" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.terceirizada} position="top" />} />}
-              </Area>
-            </AreaChart>
+              </Line>
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
