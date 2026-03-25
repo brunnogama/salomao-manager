@@ -87,7 +87,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const mainItems = [
     { path: '/rh/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/rh/calendario', label: 'Agenda', icon: Calendar },
-    { path: '/rh/colaboradores', label: 'Colaboradores', icon: Users },
+    { path: '/rh/colaboradores', label: 'Integrantes', icon: Users },
     { path: '/rh/comunicacoes', label: 'Comunicações', icon: MessageSquare },
     { path: '/rh/vagas', label: 'Recrutamento', icon: UserPlus },
     { path: '/rh/postos', label: 'Postos', icon: Building2 },
