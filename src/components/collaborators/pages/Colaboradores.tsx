@@ -36,6 +36,7 @@ import { TabelasTab } from '../components/TabelasTab'
 import { CollaboratorModalLayout } from '../components/CollaboratorLayouts'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useLocation } from 'react-router-dom'
+import { getSegment } from '../utils/rhChartUtils'
 
 import {
   ESTADOS_BRASIL,
@@ -152,11 +153,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterPartnerType, setAdvFilterPartnerType] = useState('');
   const [advFilterLocal, setAdvFilterLocal] = useState('');
   const [advFilterTransporteTipo, setAdvFilterTransporteTipo] = useState('');
+  const [advFilterSegment, setAdvFilterSegment] = useState('');
 
   // Escolares
   const [advFilterGraduationComplete, setAdvFilterGraduationComplete] = useState<'sim' | 'nao' | ''>('');
   const [advFilterPostGraduationComplete, setAdvFilterPostGraduationComplete] = useState<'sim' | 'nao' | ''>('');
-  
+
   const [advFilterGraduationExpected, setAdvFilterGraduationExpected] = useState('');
   const [advFilterGraduationCompletion, setAdvFilterGraduationCompletion] = useState('');
   const [advFilterGraduationUF, setAdvFilterGraduationUF] = useState('');
@@ -183,21 +185,75 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const location = useLocation()
 
   useEffect(() => {
-    if (location.state?.roleFilter && roles.length > 0) {
-      const roleFilterStr = location.state.roleFilter;
-      if (roleFilterStr === 'Não definido') {
-        setFilterCargo('unassigned');
-      } else {
-        const foundRole = roles.find(r => r.name === roleFilterStr);
-        if (foundRole) {
-          setFilterCargo(String(foundRole.id));
+    if (location.state) {
+      let changed = false;
+
+      // Filter by Role
+      if (location.state.roleFilter && roles.length > 0) {
+        const roleFilterStr = location.state.roleFilter;
+        if (roleFilterStr === 'Não definido') {
+          setFilterCargo('unassigned');
+        } else {
+          const foundRole = roles.find(r => r.name === roleFilterStr);
+          if (foundRole) {
+            setFilterCargo(String(foundRole.id));
+          }
         }
+        changed = true;
       }
-      setActiveMainTab('Integrantes');
-      // Clear location state so it doesn't get stuck on refresh
-      const newState = { ...location.state };
-      delete newState.roleFilter;
-      window.history.replaceState(newState, document.title);
+
+      // Filter by Leader/Sócio
+      if (location.state.leaderFilter && partners.length > 0) {
+        const leaderStr = location.state.leaderFilter;
+        const foundLeader = partners.find(p => p.name === leaderStr);
+        if (foundLeader) {
+          setAdvFilterLeader(String(foundLeader.id));
+          setIsFiltersExpanded(true);
+        }
+        changed = true;
+      }
+
+      // Filter by Segment
+      if (location.state.segmentFilter) {
+        setAdvFilterSegment(location.state.segmentFilter);
+        setIsFiltersExpanded(true);
+        changed = true;
+      }
+
+      // Filter by Local
+      if (location.state.localFilter && locations.length > 0) {
+        const localStr = location.state.localFilter;
+        const foundLocal = locations.find(l => l.name === localStr);
+        if (foundLocal) {
+          setAdvFilterLocal(String(foundLocal.id));
+          setIsFiltersExpanded(true);
+        }
+        changed = true;
+      }
+
+      // Filter by Gender
+      if (location.state.genderFilter) {
+        let genderCode = '';
+        if (location.state.genderFilter === 'Masculino') genderCode = 'M';
+        if (location.state.genderFilter === 'Feminino') genderCode = 'F';
+        if (genderCode) {
+          setAdvFilterGender(genderCode);
+          setIsFiltersExpanded(true);
+        }
+        changed = true;
+      }
+
+      if (changed) {
+        setActiveMainTab('Integrantes');
+        // Custom cleanup replacing state
+        const newState = { ...location.state };
+        delete newState.roleFilter;
+        delete newState.leaderFilter;
+        delete newState.segmentFilter;
+        delete newState.localFilter;
+        delete newState.genderFilter;
+        window.history.replaceState(newState, document.title);
+      }
     }
     if (location.state?.cadastrarCandidato) {
       const candidato = location.state.cadastrarCandidato;
@@ -225,7 +281,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       // Clear the state so it doesn't reopen on refresh
       window.history.replaceState({}, document.title)
     }
-  }, [location.state])
+  }, [location.state, roles, partners])
 
   const handleClearAdvancedFilters = () => {
     setAdvFilterGender('');
@@ -250,6 +306,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setAdvFilterPartnerType('');
     setAdvFilterLocal('');
     setAdvFilterTransporteTipo('');
+    setAdvFilterSegment('');
     setAdvFilterGraduationComplete('');
     setAdvFilterPostGraduationComplete('');
     setAdvFilterGraduationComplete('');
@@ -329,7 +386,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     if (isHRUser && totalNotifications > 0 && !hasShownInitialModal && !loading) {
       const todayStr = new Date().toISOString().split('T')[0];
       const lastSeenDate = localStorage.getItem('rh_notifications_last_seen');
-      
+
       if (lastSeenDate !== todayStr) {
         setShowNotificationsModal(true);
       }
@@ -1193,6 +1250,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (!safeCompare(advFilterPartnerType, c.contract_type)) return false; // Reusing contract_type for partner type
       if (!safeCompare(advFilterLocal, c.local, (c as any).locations?.name)) return false;
       if (!safeIncludes(advFilterTransporteTipo, c.transportes?.map(t => t.tipo).join(', '))) return false;
+      if (advFilterSegment && getSegment(c) !== advFilterSegment) return false;
 
       // Escolares
       if (advFilterGraduationComplete) {
@@ -1247,7 +1305,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const currentAdvancedFiltered = React.useMemo(() => getAdvancedFiltered(), [
     colaboradores, advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
     advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterTerminationStart, advFilterTerminationEnd, advFilterActivePeriodStart, advFilterActivePeriodEnd, advFilterPartner, advFilterLeader,
-    advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal, advFilterTransporteTipo,
+    advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal, advFilterTransporteTipo, advFilterSegment,
     advFilterGraduationComplete, advFilterPostGraduationComplete,
     advFilterGraduationExpected, advFilterGraduationCompletion, advFilterGraduationUF, advFilterGraduationInstitution,
     advFilterPostGraduationExpected, advFilterPostGraduationCompletion, advFilterPostGraduationUF, advFilterPostGraduationInstitution
@@ -2506,12 +2564,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           />
                         </div>
                         <div className="relative z-[112]">
-                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">UF (Graduação)</label>
-                           <SearchableSelect value={advFilterGraduationUF} onChange={(v) => { setAdvFilterGraduationUF(v); setAdvFilterGraduationInstitution(''); }} options={ESTADOS_BRASIL.map(e => ({id: e.sigla, label: e.nome, value: e.sigla}))} placeholder="Todos..." />
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">UF (Graduação)</label>
+                          <SearchableSelect value={advFilterGraduationUF} onChange={(v) => { setAdvFilterGraduationUF(v); setAdvFilterGraduationInstitution(''); }} options={ESTADOS_BRASIL.map(e => ({ id: e.sigla, label: e.nome, value: e.sigla }))} placeholder="Todos..." />
                         </div>
                         <div className="relative z-[111]">
-                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Instituição</label>
-                           <SearchableSelect value={advFilterGraduationInstitution} onChange={setAdvFilterGraduationInstitution} options={graduationInstitutionOptions} placeholder="Todas..." disabled={!advFilterGraduationUF}/>
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Instituição</label>
+                          <SearchableSelect value={advFilterGraduationInstitution} onChange={setAdvFilterGraduationInstitution} options={graduationInstitutionOptions} placeholder="Todas..." disabled={!advFilterGraduationUF} />
                         </div>
                         <div className="relative z-[110]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano Prev. Conclusão</label>
@@ -2539,12 +2597,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           />
                         </div>
                         <div className="relative z-[107]">
-                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">UF (Pós)</label>
-                           <SearchableSelect value={advFilterPostGraduationUF} onChange={(v) => { setAdvFilterPostGraduationUF(v); setAdvFilterPostGraduationInstitution(''); }} options={ESTADOS_BRASIL.map(e => ({id: e.sigla, label: e.nome, value: e.sigla}))} placeholder="Todos..." />
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">UF (Pós)</label>
+                          <SearchableSelect value={advFilterPostGraduationUF} onChange={(v) => { setAdvFilterPostGraduationUF(v); setAdvFilterPostGraduationInstitution(''); }} options={ESTADOS_BRASIL.map(e => ({ id: e.sigla, label: e.nome, value: e.sigla }))} placeholder="Todos..." />
                         </div>
                         <div className="relative z-[106]">
-                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Instituição</label>
-                           <SearchableSelect value={advFilterPostGraduationInstitution} onChange={setAdvFilterPostGraduationInstitution} options={postGraduationInstitutionOptions} placeholder="Todas..." disabled={!advFilterPostGraduationUF}/>
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Instituição</label>
+                          <SearchableSelect value={advFilterPostGraduationInstitution} onChange={setAdvFilterPostGraduationInstitution} options={postGraduationInstitutionOptions} placeholder="Todas..." disabled={!advFilterPostGraduationUF} />
                         </div>
                         <div className="relative z-[105]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano Prev. Conclusão</label>
@@ -3068,7 +3126,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
           () => setSelectedColaborador(null),
           activeDetailTab,
           setActiveDetailTab,
-          activeDetailTab === 4 
+          activeDetailTab === 4
             ? <div className="contents">{renderModalContent(activeDetailTab, true, selectedColaborador)}</div>
             : <fieldset disabled className="contents">{renderModalContent(activeDetailTab, true, selectedColaborador)}</fieldset>,
           (

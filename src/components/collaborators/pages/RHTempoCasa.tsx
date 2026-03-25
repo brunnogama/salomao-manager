@@ -29,6 +29,7 @@ import {
 import { useColaboradores } from '../hooks/useColaboradores'
 import { Collaborator } from '../../../types/controladoria'
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
+import { useNavigate } from 'react-router-dom'
 
 import {
   getSegment,
@@ -51,6 +52,7 @@ export function RHTempoCasa() {
     locations: masterLocations,
     partners: masterPartners
   } = useColaboradores()
+  const navigate = useNavigate()
 
   // --- State for Filters ---
   const [filterYear, setFilterYear] = useState<string>('todos')
@@ -636,7 +638,7 @@ export function RHTempoCasa() {
                       width={250}
                     />
                     <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                    <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
+                    <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos" className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { leaderFilter: data.name } })}>
                       <LabelList dataKey="avg" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
                     </Bar>
                   </BarChart>
@@ -662,7 +664,7 @@ export function RHTempoCasa() {
                       width={250}
                     />
                     <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                    <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
+                    <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos" className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { leaderFilter: data.name } })}>
                       <LabelList dataKey="avg" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
                     </Bar>
                   </BarChart>

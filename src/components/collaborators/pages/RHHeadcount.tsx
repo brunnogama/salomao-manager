@@ -27,6 +27,7 @@ import {
 import { useColaboradores } from '../hooks/useColaboradores'
 import { Collaborator } from '../../../types/controladoria'
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
+import { useNavigate } from 'react-router-dom'
 
 import {
   getSegment,
@@ -47,6 +48,7 @@ export function RHHeadcount() {
     locations: masterLocations,
     partners: masterPartners
   } = useColaboradores()
+  const navigate = useNavigate()
 
   // --- State for Filters ---
   const [filterYear, setFilterYear] = useState<string>('todos')
@@ -539,10 +541,10 @@ export function RHHeadcount() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
                 <Tooltip content={RHChartTooltip} />
                 <Legend />
-                <Bar dataKey="Administrativo" stackId="a" fill={COLORS.primary} radius={[0, 0, 4, 4]}>
+                <Bar dataKey="Administrativo" stackId="a" fill={COLORS.primary} radius={[0, 0, 4, 4]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Administrativo' } })}>
                   <LabelList dataKey="Administrativo" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
-                <Bar dataKey="Jurídico" stackId="a" fill={COLORS.secondary} radius={[4, 4, 0, 0]}>
+                <Bar dataKey="Jurídico" stackId="a" fill={COLORS.secondary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
                   <LabelList dataKey="Jurídico" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                   <LabelList dataKey="Total" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} />
                 </Bar>
@@ -570,10 +572,10 @@ export function RHHeadcount() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
                 <Tooltip content={RHChartTooltip} />
                 <Legend />
-                <Bar dataKey="Advogados" stackId="a" fill={COLORS.secondary} radius={[0, 0, 4, 4]}>
+                <Bar dataKey="Advogados" stackId="a" fill={COLORS.secondary} radius={[0, 0, 4, 4]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
                   <LabelList dataKey="Advogados" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
-                <Bar dataKey="Estagiários" stackId="a" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="Estagiários" stackId="a" fill="#3b82f6" radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
                   <LabelList dataKey="Estagiários" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                   <LabelList dataKey="Total" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} />
                 </Bar>
@@ -613,7 +615,7 @@ export function RHHeadcount() {
                       width={250}
                     />
                     <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                    <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
+                    <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6" className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { leaderFilter: data.name } })}>
                       <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
                     </Bar>
                   </BarChart>
@@ -639,7 +641,7 @@ export function RHHeadcount() {
                       width={250}
                     />
                     <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                    <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
+                    <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6" className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { leaderFilter: data.name } })}>
                       <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
                     </Bar>
                   </BarChart>
@@ -724,6 +726,11 @@ export function RHHeadcount() {
                     );
                   }}
                   labelLine={false}
+                  onClick={(_, index) => {
+                    const payloadName = genderData[index]?.name;
+                    if (payloadName) navigate('/rh/colaboradores', { state: { genderFilter: payloadName } });
+                  }}
+                  className="cursor-pointer"
                 >
                   {genderData.map((entry, index) => {
                     let color = COLORS.pieGender[2]
@@ -776,6 +783,8 @@ export function RHHeadcount() {
                   fill={COLORS.pyramid.male}
                   radius={[0, 4, 4, 0]}
                   barSize={15}
+                  className="cursor-pointer"
+                  onClick={() => navigate('/rh/colaboradores', { state: { segmentFilter: 'Jurídico', genderFilter: 'Masculino' } })}
                 >
                   <LabelList dataKey="Masculino" position="right" fill={COLORS.pyramid.male} fontSize={10} fontWeight={700} offset={8} />
                 </Bar>
@@ -784,6 +793,8 @@ export function RHHeadcount() {
                   fill={COLORS.pyramid.female}
                   radius={[0, 4, 4, 0]}
                   barSize={15}
+                  className="cursor-pointer"
+                  onClick={() => navigate('/rh/colaboradores', { state: { segmentFilter: 'Jurídico', genderFilter: 'Feminino' } })}
                 >
                   <LabelList dataKey="Feminino" position="right" fill={COLORS.pyramid.female} fontSize={10} fontWeight={700} offset={8} />
                 </Bar>
@@ -828,6 +839,8 @@ export function RHHeadcount() {
                   fill="#0369a1"
                   radius={[0, 4, 4, 0]}
                   barSize={15}
+                  className="cursor-pointer"
+                  onClick={() => navigate('/rh/colaboradores', { state: { segmentFilter: 'Administrativo', genderFilter: 'Masculino' } })}
                 >
                   <LabelList dataKey="Masculino" position="right" fill="#0369a1" fontSize={10} fontWeight={700} offset={8} />
                 </Bar>
@@ -836,6 +849,8 @@ export function RHHeadcount() {
                   fill="#db2777"
                   radius={[0, 4, 4, 0]}
                   barSize={15}
+                  className="cursor-pointer"
+                  onClick={() => navigate('/rh/colaboradores', { state: { segmentFilter: 'Administrativo', genderFilter: 'Feminino' } })}
                 >
                   <LabelList dataKey="Feminino" position="right" fill="#db2777" fontSize={10} fontWeight={700} offset={8} />
                 </Bar>
