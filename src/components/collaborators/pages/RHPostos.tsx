@@ -203,47 +203,71 @@ export function RHPostos() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-8 relative p-4 sm:p-6 pb-20 overflow-y-auto no-scrollbar">
-      {/* PAGE HEADER */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group shrink-0">
-        <div className="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-blue-50 to-transparent opacity-50 pointer-events-none" />
-        <div className="flex items-center gap-5 relative z-10">
-          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shadow-blue-900/20 shrink-0 transform transition-transform group-hover:scale-105">
-            <Building2 className="h-7 w-7 text-white" />
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24 overflow-y-auto no-scrollbar">
+      {/* PAGE HEADER COMPLETO - Título + Actions */}
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500 shrink-0">
+        {/* Left: Título e Ícone */}
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
+            <Building2 className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1.5 flex items-center gap-3">
-              Gestão de Postos Físicos
-              {loading && <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />}
-            </h1>
-            <p className="text-sm font-semibold text-gray-500 tracking-wide">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none flex items-center gap-3">
+                Gestão de Postos Físicos
+                {loading && <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />}
+              </h1>
+            </div>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
               Controle de painel de estações de trabalho divididas por escritório
             </p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-3 shrink-0">
-          <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 xl:pb-0 w-full xl:w-auto justify-end mt-2 xl:mt-0 custom-scrollbar">
+          
+          {/* Locais Tabs */}
+          {viewMode === 'table' && postos.length > 0 && locations.length > 0 && (
+            <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0 mr-1 sm:mr-2">
+              {['Todos', ...locations].map(locOption => (
+                <button
+                  key={locOption}
+                  onClick={() => setFilterLocal(locOption)}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${filterLocal === locOption ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <MapPin className="h-4 w-4" /> {locOption}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* View Mode */}
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
             <button
               onClick={() => setViewMode('table')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold transition-all ${viewMode === 'table' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${viewMode === 'table' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <List className="w-4 h-4" /> Tabelas
+              <List className="h-4 w-4" /> Tabelas
             </button>
             <button
               onClick={() => setViewMode('map')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold transition-all ${viewMode === 'map' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${viewMode === 'map' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <Layout className="w-4 h-4" /> Mapa Dinâmico
+              <Layout className="h-4 w-4" /> Mapa
             </button>
           </div>
-          <button
-            onClick={fetchPostos}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 hover:text-[#1e3a8a] transition-all font-bold text-sm shadow-sm active:scale-95 disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar Dados
-          </button>
+
+          <div className="flex items-center gap-3 border-l border-gray-100 pl-4 ml-2">
+            <button
+              onClick={fetchPostos}
+              disabled={loading}
+              className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-blue-800 transition-all shadow-lg shadow-blue-500/30 shrink-0"
+              title="Atualizar Dados"
+            >
+              <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -252,25 +276,6 @@ export function RHPostos() {
           <Building2 className="w-12 h-12 text-gray-300 mb-3" />
           <p className="text-gray-500 font-medium">Nenhum dado encontrado na tabela rh_postos.</p>
           <p className="text-xs text-gray-400 mt-1">Execute o script do banco de dados para popular os postos de Rio e SP.</p>
-        </div>
-      )}
-
-      {/* FILTER BUTTONS (Apenas na visão Tabela) */}
-      {viewMode === 'table' && postos.length > 0 && locations.length > 0 && (
-        <div className="flex items-center gap-3 overflow-x-auto py-2 px-1 max-w-6xl mx-auto w-full no-scrollbar shrink-0 animate-in fade-in duration-300">
-          {['Todos', ...locations].map(locOption => (
-            <button
-              key={locOption}
-              onClick={() => setFilterLocal(locOption)}
-              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all shadow-sm ${
-                filterLocal === locOption 
-                  ? 'bg-[#1e3a8a] text-white ring-2 ring-[#1e3a8a] ring-offset-2' 
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#1e3a8a]'
-              }`}
-            >
-              {locOption}
-            </button>
-          ))}
         </div>
       )}
 
