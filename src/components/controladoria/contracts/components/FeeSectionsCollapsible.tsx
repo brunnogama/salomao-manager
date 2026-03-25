@@ -186,6 +186,16 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                 onToggleReady={() => setFormData({ ...formData, [readyField]: !(formData as any)[readyField] })}
                             />
                             {renderInstallmentBreakdown(title, valueField, breakdownField, installmentsField)}
+                            <div className="mt-2 bg-gray-50/50 p-2.5 rounded-lg border border-gray-200">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center mb-1.5">Regra para recebimento:</label>
+                                <textarea
+                                    className="w-full text-xs p-2 border border-gray-300 rounded bg-white focus:border-salomao-blue outline-none resize-none leading-relaxed"
+                                    placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
+                                    rows={2}
+                                    value={(formData as any)[ruleField] || ''}
+                                    onChange={(e) => setFormData({ ...formData, [ruleField]: e.target.value })}
+                                />
+                            </div>
                             <div className="flex justify-end mt-3">
                                 <button
                                     type="button"
@@ -279,6 +289,16 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                 onToggleReady={() => setInterimReady?.(!interimReady)}
                             />
                             {renderInterimBreakdownEditable()}
+                            <div className="mt-2 bg-gray-50/50 p-2.5 rounded-lg border border-gray-200">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center mb-1.5">Regra para recebimento:</label>
+                                <textarea
+                                    className="w-full text-xs p-2 border border-gray-300 rounded bg-white focus:border-salomao-blue outline-none resize-none leading-relaxed"
+                                    placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
+                                    rows={2}
+                                    value={interimRule || ''}
+                                    onChange={(e) => setInterimRule?.(e.target.value)}
+                                />
+                            </div>
                             <div className="flex justify-end mt-3">
                                 <button
                                     type="button"
