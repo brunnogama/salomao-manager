@@ -385,24 +385,29 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-gray-800">{formatMoney(financials.totalProLabore)}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.pro_labore) > 0 && (
-                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
+                      {parseCurrency(contract.pro_labore) > 0 && (contract.pro_labore_rule || contract.pro_labore_ready) && (
+                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
                           <div className="flex justify-between items-start">
-                             <span className="font-semibold text-gray-700">Principal - {contract.pro_labore}</span>
+                             <span className="font-semibold text-gray-700">Regra Principal</span>
                              {contract.pro_labore_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
                           </div>
                           {contract.pro_labore_rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{contract.pro_labore_rule}</span>}
                         </div>
                       )}
-                      {(contract as any).pro_labore_extras && Array.isArray((contract as any).pro_labore_extras) && (contract as any).pro_labore_extras.filter((v: string) => parseCurrency(v) > 0).map((val: string, idx: number) => (
-                        <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
-                          <div className="flex justify-between items-start">
-                             <span className="font-semibold text-gray-700">Extra {idx + 1} - {val}</span>
-                             {(contract as any).pro_labore_extras_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                      {(contract as any).pro_labore_extras && Array.isArray((contract as any).pro_labore_extras) && (contract as any).pro_labore_extras.map((val: string, idx: number) => {
+                         const rule = (contract as any).pro_labore_extras_rules?.[idx];
+                         const ready = (contract as any).pro_labore_extras_ready?.[idx];
+                         if (parseCurrency(val) === 0 || (!rule && !ready)) return null;
+                         return (
+                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
+                            <div className="flex justify-between items-start">
+                               <span className="font-semibold text-gray-700">Regra Adicional {idx + 1}</span>
+                               {ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                            </div>
+                            {rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{rule}</span>}
                           </div>
-                          {(contract as any).pro_labore_extras_rules?.[idx] && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{(contract as any).pro_labore_extras_rules[idx]}</span>}
-                        </div>
-                      ))}
+                         );
+                      })}
                     </div>
                  </div>
                )}
@@ -414,15 +419,20 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-blue-900">{formatMoney(financials.intermediateTotal)}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {contract.intermediate_fees && Array.isArray(contract.intermediate_fees) && contract.intermediate_fees.filter((v: string) => parseCurrency(v) > 0).map((val: string, idx: number) => (
-                        <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-blue-100">
-                          <div className="flex justify-between items-start">
-                             <span className="font-semibold text-blue-800">Fase {idx + 1} - {val}</span>
-                             {(contract as any).intermediate_fees_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                      {contract.intermediate_fees && Array.isArray(contract.intermediate_fees) && contract.intermediate_fees.map((val: string, idx: number) => {
+                         const rule = (contract as any).intermediate_fees_rules?.[idx];
+                         const ready = (contract as any).intermediate_fees_ready?.[idx];
+                         if (parseCurrency(val) === 0 || (!rule && !ready)) return null;
+                         return (
+                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-blue-100 mt-1">
+                            <div className="flex justify-between items-start">
+                               <span className="font-semibold text-blue-800">Regra Fase {idx + 1}</span>
+                               {ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                            </div>
+                            {rule && <span className="text-[10px] text-blue-600/80 italic mt-1 bg-blue-50/50 p-1.5 rounded">{rule}</span>}
                           </div>
-                          {(contract as any).intermediate_fees_rules?.[idx] && <span className="text-[10px] text-blue-600/80 italic mt-1 bg-blue-50/50 p-1.5 rounded">{(contract as any).intermediate_fees_rules[idx]}</span>}
-                        </div>
-                      ))}
+                         );
+                      })}
                     </div>
                  </div>
                )}
@@ -434,24 +444,29 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-green-900">{formatMoney(financials.totalFinalFee)}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.final_success_fee) > 0 && (
-                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-green-100">
+                      {parseCurrency(contract.final_success_fee) > 0 && (contract.final_success_fee_rule || contract.final_success_ready) && (
+                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-green-100 mt-1">
                           <div className="flex justify-between items-start">
-                             <span className="font-semibold text-green-800">Principal - {contract.final_success_fee}</span>
+                             <span className="font-semibold text-green-800">Regra Principal</span>
                              {contract.final_success_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
                           </div>
                           {contract.final_success_fee_rule && <span className="text-[10px] text-green-700/80 italic mt-1 bg-green-50/50 p-1.5 rounded">{contract.final_success_fee_rule}</span>}
                         </div>
                       )}
-                      {(contract as any).final_success_extras && Array.isArray((contract as any).final_success_extras) && (contract as any).final_success_extras.filter((v: string) => parseCurrency(v) > 0).map((val: string, idx: number) => (
-                        <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-green-100">
-                          <div className="flex justify-between items-start">
-                             <span className="font-semibold text-green-800">Extra {idx + 1} - {val}</span>
-                             {(contract as any).final_success_extras_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                      {(contract as any).final_success_extras && Array.isArray((contract as any).final_success_extras) && (contract as any).final_success_extras.map((val: string, idx: number) => {
+                         const rule = (contract as any).final_success_extras_rules?.[idx];
+                         const ready = (contract as any).final_success_extras_ready?.[idx];
+                         if (parseCurrency(val) === 0 || (!rule && !ready)) return null;
+                         return (
+                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-green-100 mt-1">
+                            <div className="flex justify-between items-start">
+                               <span className="font-semibold text-green-800">Regra Adicional {idx + 1}</span>
+                               {ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                            </div>
+                            {rule && <span className="text-[10px] text-green-700/80 italic mt-1 bg-green-50/50 p-1.5 rounded">{rule}</span>}
                           </div>
-                          {(contract as any).final_success_extras_rules?.[idx] && <span className="text-[10px] text-green-700/80 italic mt-1 bg-green-50/50 p-1.5 rounded">{(contract as any).final_success_extras_rules[idx]}</span>}
-                        </div>
-                      ))}
+                         );
+                      })}
                     </div>
                  </div>
                )}
@@ -463,24 +478,29 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-gray-800">{formatMoney(financials.totalFixedMonthly)}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.fixed_monthly_fee) > 0 && (
-                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
+                      {parseCurrency(contract.fixed_monthly_fee) > 0 && (contract.fixed_monthly_fee_rule || contract.fixed_monthly_ready) && (
+                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
                           <div className="flex justify-between items-start">
-                             <span className="font-semibold text-gray-700">Principal - {contract.fixed_monthly_fee}</span>
+                             <span className="font-semibold text-gray-700">Regra Principal</span>
                              {contract.fixed_monthly_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
                           </div>
                           {contract.fixed_monthly_fee_rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{contract.fixed_monthly_fee_rule}</span>}
                         </div>
                       )}
-                      {(contract as any).fixed_monthly_extras && Array.isArray((contract as any).fixed_monthly_extras) && (contract as any).fixed_monthly_extras.filter((v: string) => parseCurrency(v) > 0).map((val: string, idx: number) => (
-                        <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
-                          <div className="flex justify-between items-start">
-                             <span className="font-semibold text-gray-700">Extra {idx + 1} - {val}</span>
-                             {(contract as any).fixed_monthly_extras_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                      {(contract as any).fixed_monthly_extras && Array.isArray((contract as any).fixed_monthly_extras) && (contract as any).fixed_monthly_extras.map((val: string, idx: number) => {
+                         const rule = (contract as any).fixed_monthly_extras_rules?.[idx];
+                         const ready = (contract as any).fixed_monthly_extras_ready?.[idx];
+                         if (parseCurrency(val) === 0 || (!rule && !ready)) return null;
+                         return (
+                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
+                            <div className="flex justify-between items-start">
+                               <span className="font-semibold text-gray-700">Regra Adicional {idx + 1}</span>
+                               {ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                            </div>
+                            {rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{rule}</span>}
                           </div>
-                          {(contract as any).fixed_monthly_extras_rules?.[idx] && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{(contract as any).fixed_monthly_extras_rules[idx]}</span>}
-                        </div>
-                      ))}
+                         );
+                      })}
                     </div>
                  </div>
                )}
@@ -492,24 +512,29 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-gray-800">{formatMoney(financials.totalOtherFees)}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.other_fees) > 0 && (
-                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
+                      {parseCurrency(contract.other_fees) > 0 && (contract.other_fees_rule || contract.other_fees_ready) && (
+                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
                           <div className="flex justify-between items-start">
-                             <span className="font-semibold text-gray-700">Principal - {contract.other_fees}</span>
+                             <span className="font-semibold text-gray-700">Regra Principal</span>
                              {contract.other_fees_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
                           </div>
                           {contract.other_fees_rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{contract.other_fees_rule}</span>}
                         </div>
                       )}
-                      {(contract as any).other_fees_extras && Array.isArray((contract as any).other_fees_extras) && (contract as any).other_fees_extras.filter((v: string) => parseCurrency(v) > 0).map((val: string, idx: number) => (
-                        <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
-                          <div className="flex justify-between items-start">
-                             <span className="font-semibold text-gray-700">Extra {idx + 1} - {val}</span>
-                             {(contract as any).other_fees_extras_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                      {(contract as any).other_fees_extras && Array.isArray((contract as any).other_fees_extras) && (contract as any).other_fees_extras.map((val: string, idx: number) => {
+                         const rule = (contract as any).other_fees_extras_rules?.[idx];
+                         const ready = (contract as any).other_fees_extras_ready?.[idx];
+                         if (parseCurrency(val) === 0 || (!rule && !ready)) return null;
+                         return (
+                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
+                            <div className="flex justify-between items-start">
+                               <span className="font-semibold text-gray-700">Regra Adicional {idx + 1}</span>
+                               {ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                            </div>
+                            {rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{rule}</span>}
                           </div>
-                          {(contract as any).other_fees_extras_rules?.[idx] && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{(contract as any).other_fees_extras_rules[idx]}</span>}
-                        </div>
-                      ))}
+                         );
+                      })}
                     </div>
                  </div>
                )}
@@ -521,24 +546,29 @@ export function ContractDetailsModal({
                        <span className="text-[10px] font-bold text-yellow-800 uppercase">Valores em %</span>
                     </div>
                     <div className="flex flex-col gap-2 mt-1">
-                      {contract.final_success_percent && (
-                         <div className="text-xs flex flex-col bg-white p-2 rounded border border-yellow-100">
+                      {contract.final_success_percent && (contract.final_success_percent_rule || contract.final_success_percent_ready) && (
+                         <div className="text-xs flex flex-col bg-white p-2 rounded border border-yellow-100 mt-1">
                            <div className="flex justify-between items-start">
-                             <span className="font-black text-yellow-900">{contract.final_success_percent} <span className="font-medium text-yellow-700">(Principal)</span></span>
+                             <span className="font-black text-yellow-900">Regra Principal</span>
                              {contract.final_success_percent_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
                            </div>
                            {contract.final_success_percent_rule && <span className="text-[10px] text-yellow-800/80 italic mt-1 bg-yellow-50/50 p-1.5 rounded">{contract.final_success_percent_rule}</span>}
                          </div>
                       )}
-                      {validPercentExtras.map((val: string, idx: number) => (
-                         <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-yellow-100">
-                           <div className="flex justify-between items-start">
-                             <span className="font-black text-yellow-900">{val} <span className="font-medium text-yellow-700">(Extra {idx + 1})</span></span>
-                             {(contract as any).percent_extras_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                           </div>
-                           {(contract as any).percent_extras_rules?.[idx] && <span className="text-[10px] text-yellow-800/80 italic mt-1 bg-yellow-50/50 p-1.5 rounded">{(contract as any).percent_extras_rules[idx]}</span>}
-                         </div>
-                      ))}
+                      {validPercentExtras.map((val: string, idx: number) => {
+                         const rule = (contract as any).percent_extras_rules?.[idx];
+                         const ready = (contract as any).percent_extras_ready?.[idx];
+                         if (!rule && !ready) return null;
+                         return (
+                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-yellow-100 mt-1">
+                            <div className="flex justify-between items-start">
+                              <span className="font-black text-yellow-900">Regra Adicional {idx + 1}</span>
+                              {ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                            </div>
+                            {rule && <span className="text-[10px] text-yellow-800/80 italic mt-1 bg-yellow-50/50 p-1.5 rounded">{rule}</span>}
+                          </div>
+                         );
+                      })}
                     </div>
                  </div>
                )}
