@@ -312,18 +312,32 @@ export interface Contract {
   probono_date?: string;
   pro_labore?: string;
   pro_labore_clause?: string;
+  pro_labore_rule?: string;
+  pro_labore_ready?: boolean;
   pro_labore_extras?: string[];
   pro_labore_extras_clauses?: string[];
+  pro_labore_extras_rules?: string[];
+  pro_labore_extras_ready?: boolean[];
   other_fees?: string;
   other_fees_clause?: string;
+  other_fees_rule?: string;
+  other_fees_ready?: boolean;
   fixed_monthly_fee?: string;
   fixed_monthly_fee_clause?: string;
+  fixed_monthly_fee_rule?: string;
+  fixed_monthly_ready?: boolean;
   intermediate_fees?: string[];
   intermediate_fees_clauses?: string[];
+  intermediate_fees_rules?: string[];
+  intermediate_fees_ready?: boolean[];
   final_success_fee?: string;
   final_success_fee_clause?: string;
+  final_success_fee_rule?: string;
+  final_success_ready?: boolean;
   final_success_extras?: string[];
   final_success_extras_clauses?: string[];
+  final_success_extras_rules?: string[];
+  final_success_extras_ready?: boolean[];
   hon_number?: string;
   physical_signature?: boolean;
   observations?: string;
@@ -358,12 +372,20 @@ export interface Contract {
 
   percent_extras?: string[];
   percent_extras_clauses?: string[];
+  percent_extras_rules?: string[];
+  percent_extras_ready?: boolean[];
   final_success_percent?: string;
   final_success_percent_clause?: string;
+  final_success_percent_rule?: string;
+  final_success_percent_ready?: boolean;
 
   // Additional fields for calculations
   fixed_monthly_extras?: string[];
+  fixed_monthly_extras_rules?: string[];
+  fixed_monthly_extras_ready?: boolean[];
   other_fees_extras?: string[];
+  other_fees_extras_rules?: string[];
+  other_fees_extras_ready?: boolean[];
   cases?: ContractCase[];
   responsavel_socio?: string;
   rejection_source?: string;

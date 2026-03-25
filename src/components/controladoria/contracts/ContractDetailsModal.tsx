@@ -375,48 +375,169 @@ export function ContractDetailsModal({
            {/* Box 1: Valores das Fases */}
            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 text-xs font-bold text-gray-600 uppercase">
-                Composição e Fases
+                Detalhes das Fases e Honorários
              </div>
              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                {financials.totalProLabore > 0 && (
-                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase">Pró-Labore</span>
-                    <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalProLabore)}</span>
+                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
+                    <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
+                       <span className="text-[10px] font-bold text-gray-500 uppercase">Pró-Labore (Total)</span>
+                       <span className="text-sm font-black text-gray-800">{formatMoney(financials.totalProLabore)}</span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {parseCurrency(contract.pro_labore) > 0 && (
+                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
+                          <div className="flex justify-between items-start">
+                             <span className="font-semibold text-gray-700">Principal - {contract.pro_labore}</span>
+                             {contract.pro_labore_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                          </div>
+                          {contract.pro_labore_rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{contract.pro_labore_rule}</span>}
+                        </div>
+                      )}
+                      {(contract as any).pro_labore_extras && Array.isArray((contract as any).pro_labore_extras) && (contract as any).pro_labore_extras.filter((v: string) => parseCurrency(v) > 0).map((val: string, idx: number) => (
+                        <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
+                          <div className="flex justify-between items-start">
+                             <span className="font-semibold text-gray-700">Extra {idx + 1} - {val}</span>
+                             {(contract as any).pro_labore_extras_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                          </div>
+                          {(contract as any).pro_labore_extras_rules?.[idx] && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{(contract as any).pro_labore_extras_rules[idx]}</span>}
+                        </div>
+                      ))}
+                    </div>
                  </div>
                )}
+
                {financials.intermediateTotal > 0 && (
-                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex flex-col">
-                    <span className="text-[10px] font-bold text-blue-600 uppercase">Ex. Intermediário</span>
-                    <span className="text-sm font-black text-blue-800 mt-1">{formatMoney(financials.intermediateTotal)}</span>
+                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 flex flex-col shadow-sm">
+                    <div className="flex justify-between items-center border-b border-blue-200 pb-2 mb-2">
+                       <span className="text-[10px] font-bold text-blue-700 uppercase">Ex. Intermediário (Total)</span>
+                       <span className="text-sm font-black text-blue-900">{formatMoney(financials.intermediateTotal)}</span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {contract.intermediate_fees && Array.isArray(contract.intermediate_fees) && contract.intermediate_fees.filter((v: string) => parseCurrency(v) > 0).map((val: string, idx: number) => (
+                        <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-blue-100">
+                          <div className="flex justify-between items-start">
+                             <span className="font-semibold text-blue-800">Fase {idx + 1} - {val}</span>
+                             {(contract as any).intermediate_fees_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                          </div>
+                          {(contract as any).intermediate_fees_rules?.[idx] && <span className="text-[10px] text-blue-600/80 italic mt-1 bg-blue-50/50 p-1.5 rounded">{(contract as any).intermediate_fees_rules[idx]}</span>}
+                        </div>
+                      ))}
+                    </div>
                  </div>
                )}
+
                {financials.totalFinalFee > 0 && (
-                 <div className="bg-green-50 p-3 rounded-lg border border-green-100 flex flex-col">
-                    <span className="text-[10px] font-bold text-green-700 uppercase">Êxito Final</span>
-                    <span className="text-sm font-black text-green-900 mt-1">{formatMoney(financials.totalFinalFee)}</span>
+                 <div className="bg-green-50 p-3 rounded-lg border border-green-200 flex flex-col shadow-sm">
+                    <div className="flex justify-between items-center border-b border-green-200 pb-2 mb-2">
+                       <span className="text-[10px] font-bold text-green-800 uppercase">Êxito Final (Total)</span>
+                       <span className="text-sm font-black text-green-900">{formatMoney(financials.totalFinalFee)}</span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {parseCurrency(contract.final_success_fee) > 0 && (
+                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-green-100">
+                          <div className="flex justify-between items-start">
+                             <span className="font-semibold text-green-800">Principal - {contract.final_success_fee}</span>
+                             {contract.final_success_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                          </div>
+                          {contract.final_success_fee_rule && <span className="text-[10px] text-green-700/80 italic mt-1 bg-green-50/50 p-1.5 rounded">{contract.final_success_fee_rule}</span>}
+                        </div>
+                      )}
+                      {(contract as any).final_success_extras && Array.isArray((contract as any).final_success_extras) && (contract as any).final_success_extras.filter((v: string) => parseCurrency(v) > 0).map((val: string, idx: number) => (
+                        <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-green-100">
+                          <div className="flex justify-between items-start">
+                             <span className="font-semibold text-green-800">Extra {idx + 1} - {val}</span>
+                             {(contract as any).final_success_extras_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                          </div>
+                          {(contract as any).final_success_extras_rules?.[idx] && <span className="text-[10px] text-green-700/80 italic mt-1 bg-green-50/50 p-1.5 rounded">{(contract as any).final_success_extras_rules[idx]}</span>}
+                        </div>
+                      ))}
+                    </div>
                  </div>
                )}
+
                {financials.totalFixedMonthly > 0 && (
-                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase">Fixo Mensal</span>
-                    <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalFixedMonthly)}</span>
+                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
+                    <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
+                       <span className="text-[10px] font-bold text-gray-500 uppercase">Fixo Mensal (Total)</span>
+                       <span className="text-sm font-black text-gray-800">{formatMoney(financials.totalFixedMonthly)}</span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {parseCurrency(contract.fixed_monthly_fee) > 0 && (
+                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
+                          <div className="flex justify-between items-start">
+                             <span className="font-semibold text-gray-700">Principal - {contract.fixed_monthly_fee}</span>
+                             {contract.fixed_monthly_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                          </div>
+                          {contract.fixed_monthly_fee_rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{contract.fixed_monthly_fee_rule}</span>}
+                        </div>
+                      )}
+                      {(contract as any).fixed_monthly_extras && Array.isArray((contract as any).fixed_monthly_extras) && (contract as any).fixed_monthly_extras.filter((v: string) => parseCurrency(v) > 0).map((val: string, idx: number) => (
+                        <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
+                          <div className="flex justify-between items-start">
+                             <span className="font-semibold text-gray-700">Extra {idx + 1} - {val}</span>
+                             {(contract as any).fixed_monthly_extras_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                          </div>
+                          {(contract as any).fixed_monthly_extras_rules?.[idx] && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{(contract as any).fixed_monthly_extras_rules[idx]}</span>}
+                        </div>
+                      ))}
+                    </div>
                  </div>
                )}
+
                {financials.totalOtherFees > 0 && (
-                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase">Outros Honorários</span>
-                    <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalOtherFees)}</span>
+                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
+                    <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
+                       <span className="text-[10px] font-bold text-gray-500 uppercase">Outros Honorários (Total)</span>
+                       <span className="text-sm font-black text-gray-800">{formatMoney(financials.totalOtherFees)}</span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {parseCurrency(contract.other_fees) > 0 && (
+                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
+                          <div className="flex justify-between items-start">
+                             <span className="font-semibold text-gray-700">Principal - {contract.other_fees}</span>
+                             {contract.other_fees_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                          </div>
+                          {contract.other_fees_rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{contract.other_fees_rule}</span>}
+                        </div>
+                      )}
+                      {(contract as any).other_fees_extras && Array.isArray((contract as any).other_fees_extras) && (contract as any).other_fees_extras.filter((v: string) => parseCurrency(v) > 0).map((val: string, idx: number) => (
+                        <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100">
+                          <div className="flex justify-between items-start">
+                             <span className="font-semibold text-gray-700">Extra {idx + 1} - {val}</span>
+                             {(contract as any).other_fees_extras_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                          </div>
+                          {(contract as any).other_fees_extras_rules?.[idx] && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{(contract as any).other_fees_extras_rules[idx]}</span>}
+                        </div>
+                      ))}
+                    </div>
                  </div>
                )}
                
                {/* Exibir Extras de Percentual se houver */}
                {hasPercent && (
-                 <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 flex flex-col">
-                    <span className="text-[10px] font-bold text-yellow-700 uppercase">Valores em %</span>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {contract.final_success_percent && <span className="text-xs font-black text-yellow-900">{contract.final_success_percent} (Final)</span>}
+                 <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 flex flex-col shadow-sm">
+                    <div className="flex justify-between items-center border-b border-yellow-200 pb-2 mb-2">
+                       <span className="text-[10px] font-bold text-yellow-800 uppercase">Valores em %</span>
+                    </div>
+                    <div className="flex flex-col gap-2 mt-1">
+                      {contract.final_success_percent && (
+                         <div className="text-xs flex flex-col bg-white p-2 rounded border border-yellow-100">
+                           <div className="flex justify-between items-start">
+                             <span className="font-black text-yellow-900">{contract.final_success_percent} <span className="font-medium text-yellow-700">(Principal)</span></span>
+                             {contract.final_success_percent_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                           </div>
+                           {contract.final_success_percent_rule && <span className="text-[10px] text-yellow-800/80 italic mt-1 bg-yellow-50/50 p-1.5 rounded">{contract.final_success_percent_rule}</span>}
+                         </div>
+                      )}
                       {validPercentExtras.map((val: string, idx: number) => (
-                        <span key={idx} className="text-xs font-black text-yellow-900">{val} (Extra)</span>
+                         <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-yellow-100">
+                           <div className="flex justify-between items-start">
+                             <span className="font-black text-yellow-900">{val} <span className="font-medium text-yellow-700">(Extra {idx + 1})</span></span>
+                             {(contract as any).percent_extras_ready?.[idx] && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+                           </div>
+                           {(contract as any).percent_extras_rules?.[idx] && <span className="text-[10px] text-yellow-800/80 italic mt-1 bg-yellow-50/50 p-1.5 rounded">{(contract as any).percent_extras_rules[idx]}</span>}
+                         </div>
                       ))}
                     </div>
                  </div>

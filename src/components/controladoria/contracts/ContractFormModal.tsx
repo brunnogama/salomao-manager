@@ -426,7 +426,11 @@ export function ContractFormModal(props: Props) {
         other_fees: isTimesheet ? 0 : safeParseFloat(formData.other_fees),
         pro_labore_extras: (formData as any).pro_labore_extras, final_success_extras: (formData as any).final_success_extras, fixed_monthly_extras: (formData as any).fixed_monthly_extras, other_fees_extras: (formData as any).other_fees_extras, timesheet: (formData as any).timesheet,
         pro_labore_clause: (formData as any).pro_labore_clause, final_success_fee_clause: (formData as any).final_success_fee_clause, fixed_monthly_fee_clause: (formData as any).fixed_monthly_fee_clause, other_fees_clause: (formData as any).other_fees_clause,
-        pro_labore_extras_clauses: ensureArray((formData as any).pro_labore_extras_clauses), final_success_extras_clauses: ensureArray((formData as any).final_success_extras_clauses), fixed_monthly_extras_clauses: ensureArray((formData as any).fixed_monthly_extras_clauses), other_fees_extras_clauses: ensureArray((formData as any).other_fees_extras_clauses), intermediate_fees_clauses: ensureArray((formData as any).intermediate_fees_clauses),
+        pro_labore_rule: formData.pro_labore_rule, final_success_fee_rule: formData.final_success_fee_rule, fixed_monthly_fee_rule: formData.fixed_monthly_fee_rule, other_fees_rule: formData.other_fees_rule, final_success_percent_rule: formData.final_success_percent_rule,
+        pro_labore_ready: formData.pro_labore_ready, final_success_ready: formData.final_success_ready, fixed_monthly_ready: formData.fixed_monthly_ready, other_fees_ready: formData.other_fees_ready, final_success_percent_ready: formData.final_success_percent_ready,
+        pro_labore_extras_clauses: ensureArray((formData as any).pro_labore_extras_clauses), final_success_extras_clauses: ensureArray((formData as any).final_success_extras_clauses), fixed_monthly_extras_clauses: ensureArray((formData as any).fixed_monthly_extras_clauses), other_fees_extras_clauses: ensureArray((formData as any).other_fees_extras_clauses), intermediate_fees_clauses: ensureArray((formData as any).intermediate_fees_clauses), percent_extras_clauses: ensureArray((formData as any).percent_extras_clauses),
+        pro_labore_extras_rules: ensureArray((formData as any).pro_labore_extras_rules), final_success_extras_rules: ensureArray((formData as any).final_success_extras_rules), fixed_monthly_extras_rules: ensureArray((formData as any).fixed_monthly_extras_rules), other_fees_extras_rules: ensureArray((formData as any).other_fees_extras_rules), intermediate_fees_rules: ensureArray((formData as any).intermediate_fees_rules), percent_extras_rules: ensureArray((formData as any).percent_extras_rules),
+        pro_labore_extras_ready: ensureArray((formData as any).pro_labore_extras_ready), final_success_extras_ready: ensureArray((formData as any).final_success_extras_ready), fixed_monthly_extras_ready: ensureArray((formData as any).fixed_monthly_extras_ready), other_fees_extras_ready: ensureArray((formData as any).other_fees_extras_ready), intermediate_fees_ready: ensureArray((formData as any).intermediate_fees_ready), percent_extras_ready: ensureArray((formData as any).percent_extras_ready),
         pro_labore_extras_installments: ensureArray((formData as any).pro_labore_extras_installments), final_success_extras_installments: ensureArray((formData as any).final_success_extras_installments), fixed_monthly_extras_installments: ensureArray((formData as any).fixed_monthly_extras_installments), other_fees_extras_installments: ensureArray((formData as any).other_fees_extras_installments), intermediate_fees_installments: ensureArray((formData as any).intermediate_fees_installments),
         pro_labore_breakdown: (formData as any).pro_labore_breakdown, final_success_fee_breakdown: (formData as any).final_success_fee_breakdown, fixed_monthly_fee_breakdown: (formData as any).fixed_monthly_fee_breakdown, other_fees_breakdown: (formData as any).other_fees_breakdown,
         co_partner_ids: formData.co_partner_ids || [],
@@ -535,15 +539,46 @@ export function ContractFormModal(props: Props) {
     const promise = (async () => {
       try {
         let valuesHtml = '';
-        const formatVal = (label: string, value: any) => {
+        const formatItem = (label: string, value: any, ready?: boolean, rule?: string) => {
           if (value && value !== 'R$ 0,00' && value !== '') {
-            valuesHtml += `<li style="margin-bottom: 4px;"><strong>${label}:</strong> ${value}</li>`;
+             let html = `<li style="margin-bottom: 8px; font-family: sans-serif;"><strong>${label}:</strong> ${value}`;
+             if (ready) html += ` <span style="background-color: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; border: 1px solid #bbf7d0; margin-left: 8px;">PRONTO PARA FATURAR</span>`;
+             if (rule) html += `<br><span style="color: #6b7280; font-size: 12px; display: block; margin-top: 4px; padding-left: 8px; border-left: 2px solid #e5e7eb;"><i>${rule}</i></span>`;
+             html += `</li>`;
+             valuesHtml += html;
           }
         };
-        formatVal('Pró-Labore', formData.pro_labore);
-        formatVal('Fixo Mensal', formData.fixed_monthly_fee);
-        formatVal('Êxito', formData.final_success_fee);
-        formatVal('Outras Taxas', formData.other_fees);
+
+        const safeEnsureArray = (arr: any) => Array.isArray(arr) ? arr : [];
+
+        formatItem('Pró-Labore', formData.pro_labore, formData.pro_labore_ready, formData.pro_labore_rule);
+        safeEnsureArray((formData as any).pro_labore_extras).forEach((val, idx) => {
+           formatItem(`Pró-Labore (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).pro_labore_extras_ready)[idx], safeEnsureArray((formData as any).pro_labore_extras_rules)[idx]);
+        });
+
+        formatItem('Fixo Mensal', formData.fixed_monthly_fee, formData.fixed_monthly_ready, formData.fixed_monthly_fee_rule);
+        safeEnsureArray((formData as any).fixed_monthly_extras).forEach((val, idx) => {
+           formatItem(`Fixo Mensal (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).fixed_monthly_extras_ready)[idx], safeEnsureArray((formData as any).fixed_monthly_extras_rules)[idx]);
+        });
+
+        safeEnsureArray(formData.intermediate_fees).forEach((val, idx) => {
+           formatItem(`Êxito Intermediário ${idx + 1}`, val, safeEnsureArray((formData as any).intermediate_fees_ready)[idx], safeEnsureArray((formData as any).intermediate_fees_rules)[idx]);
+        });
+
+        formatItem('Êxito Final (R$)', formData.final_success_fee, formData.final_success_ready, formData.final_success_fee_rule);
+        safeEnsureArray((formData as any).final_success_extras).forEach((val, idx) => {
+           formatItem(`Êxito Final (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).final_success_extras_ready)[idx], safeEnsureArray((formData as any).final_success_extras_rules)[idx]);
+        });
+
+        formatItem('Êxito (%)', formData.final_success_percent, formData.final_success_percent_ready, formData.final_success_percent_rule);
+        safeEnsureArray((formData as any).percent_extras).forEach((val, idx) => {
+           formatItem(`Êxito % (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).percent_extras_ready)[idx], safeEnsureArray((formData as any).percent_extras_rules)[idx]);
+        });
+
+        formatItem('Outros Honorários', formData.other_fees, formData.other_fees_ready, formData.other_fees_rule);
+        safeEnsureArray((formData as any).other_fees_extras).forEach((val, idx) => {
+           formatItem(`Outros Honorários (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).other_fees_extras_ready)[idx], safeEnsureArray((formData as any).other_fees_extras_rules)[idx]);
+        });
         if (!valuesHtml) valuesHtml = '<li><i>Nenhum valor financeiro atrelado.</i></li>';
 
         let attachmentsHtml = '<li><i>Sem documentos anexos no momento do cadastro.</i></li>';

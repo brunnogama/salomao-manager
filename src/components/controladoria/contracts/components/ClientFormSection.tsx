@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Settings, AlertCircle, Link as LinkIcon } from 'lucide-react';
+import { Search, Settings, AlertCircle, Link as LinkIcon, X } from 'lucide-react';
 import { Contract } from '../../../../types/controladoria'; 
 import { CustomSelect } from '../../ui/CustomSelect'; 
 import { CustomMultiSelect } from '../../ui/CustomMultiSelect'; 
@@ -26,6 +26,8 @@ export function ClientFormSection(props: ClientFormSectionProps) {
     duplicateClientCases, getStatusLabel, areaOptions,
     partnerSelectOptions, onOpenPartnerManager
   } = props;
+
+  const filteredPartnerOptions = partnerSelectOptions.filter(o => o.value !== '' && o.value !== formData.partner_id);
 
   return (
     <section className="space-y-5">
@@ -118,12 +120,33 @@ export function ClientFormSection(props: ClientFormSectionProps) {
               label="Sócios Adicionais" 
               values={formData.co_partner_ids || []} 
               onChange={(vals: string[]) => setFormData({...formData, co_partner_ids: vals})} 
-              options={partnerSelectOptions.filter(o => o.value !== '')} 
+              options={filteredPartnerOptions} 
               onAction={onOpenPartnerManager} 
               actionIcon={Settings} 
               actionLabel="Gerenciar Sócios" 
-              placeholder="Opcional"
+              placeholder="Adicionar sócio"
             />
+            
+            {formData.co_partner_ids && formData.co_partner_ids.length > 0 && (
+              <div className="flex flex-col gap-1.5 mt-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
+                {formData.co_partner_ids.map(id => {
+                  const partner = partnerSelectOptions.find(p => p.value === id);
+                  return (
+                    <div key={id} className="flex items-center justify-between bg-blue-50 text-salomao-blue text-xs px-2.5 py-1.5 rounded-md border border-blue-100 animate-in fade-in zoom-in-95 duration-200">
+                      <span className="font-medium truncate" title={partner?.label || id}>{partner?.label || id}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData({...formData, co_partner_ids: formData.co_partner_ids!.filter(p => p !== id)})}
+                        className="p-0.5 hover:bg-blue-100 rounded text-blue-400 hover:text-blue-600 transition-colors"
+                        title="Remover sócio"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
     </section>

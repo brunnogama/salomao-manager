@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, ChevronDown } from 'lucide-react';
+import { Plus, ChevronDown, CheckCircle } from 'lucide-react';
 import { maskMoney, maskPercent } from '../../utils/masks';
 
 const MinimalSelect = ({ value, onChange, options }: { value: string, onChange: (val: string) => void, options: string[] }) => {
@@ -28,12 +28,17 @@ interface FinancialInputProps {
   onAdd?: () => void;
   clause?: string;
   onChangeClause?: (val: string) => void;
+  rule?: string;
+  onChangeRule?: (val: string) => void;
+  readyToInvoice?: boolean;
+  onToggleReady?: () => void;
 }
 
 export const FinancialInputWithInstallments = ({
-  label, value, onChangeValue, installments, onChangeInstallments, onAdd, clause, onChangeClause
+  label, value, onChangeValue, installments, onChangeInstallments, onAdd, clause, onChangeClause, rule, onChangeRule, readyToInvoice, onToggleReady
 }: FinancialInputProps) => {
   const installmentOptions = Array.from({ length: 24 }, (_, i) => `${i + 1}x`);
+  const showRule = !!rule;
 
   // Decide whether the current value looks like a percentage
   const isPercentInitial = value?.includes('%');
@@ -112,6 +117,36 @@ export const FinancialInputWithInstallments = ({
           </button>
         )}
       </div>
+      
+      {/* Container da Regra e Faturar */}
+      {(showRule || onChangeRule) && (
+        <div className="mt-2 bg-gray-50 p-2 rounded-lg border border-gray-200 shadow-sm animate-in fade-in slide-in-from-top-1">
+          <div className="flex flex-col gap-2 relative">
+            {onChangeRule && (
+              <textarea
+                className="w-full text-sm p-2 border border-gray-300 rounded-md bg-white focus:border-salomao-blue outline-none resize-none"
+                placeholder="Exemplo de Regra: Somente cobrar após trânsito em julgado..."
+                rows={2}
+                value={rule || ''}
+                onChange={(e) => onChangeRule(e.target.value)}
+              />
+            )}
+            
+            {onToggleReady && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={onToggleReady}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all shadow-sm border ${readyToInvoice ? 'bg-green-100 text-green-800 border-green-200 ring-1 ring-green-500/50' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-100'}`}
+                >
+                  <CheckCircle className={`w-3.5 h-3.5 ${readyToInvoice ? 'text-green-600' : 'text-gray-400'}`} />
+                  {readyToInvoice ? 'Pronto para Faturar!' : 'Faturar'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
