@@ -457,11 +457,11 @@ export function Presencial() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-                Controle Presencial
+                Presencial
               </h1>
             </div>
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
-              Gestão de presença e frequência dos colaboradores
+              Gestão de presença
             </p>
           </div>
         </div>
