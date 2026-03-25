@@ -199,7 +199,7 @@ export function RHPostos() {
   const handleRemoveSeat = async (colabId: string) => {
     setLocalSeatOverrides(prev => ({ ...prev, [colabId]: '' }));
     await supabase.from('collaborators').update({ posto: null }).eq('id', colabId);
-    toast.success('Colaborador removido da mesa!');
+    toast.success('Integrante removido da mesa!');
   };
 
   return (
@@ -282,7 +282,7 @@ export function RHPostos() {
       {/* RENDERIZAR VISÃO MAPA */}
       {viewMode === 'map' && (
         <div className="flex flex-col lg:flex-row gap-6 mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500 flex-1 min-h-[600px] overflow-hidden">
-          {/* Lado Esquerdo: Colaboradores sem mesa */}
+          {/* Lado Esquerdo: Integrantes sem mesa */}
           <div className="w-full lg:w-72 shrink-0 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[600px] lg:h-auto overflow-hidden">
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
               <h2 className="text-sm font-black text-[#1e3a8a] uppercase tracking-wide">Sem Mesa (RJ)</h2>

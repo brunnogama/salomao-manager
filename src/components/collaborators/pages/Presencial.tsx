@@ -149,7 +149,7 @@ export function Presencial() {
       },
       {
         key: 'colaborador',
-        label: 'Colaborador',
+        label: 'Integrante',
         icon: User,
         type: 'single',
         options: colaboradorOptions,
@@ -171,7 +171,7 @@ export function Presencial() {
   const activeFilterChips = useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
     if (filterSocio) chips.push({ key: 'socio', label: `Sócio: ${filterSocio}`, onClear: () => setFilterSocio('') });
-    if (filterColaborador) chips.push({ key: 'colaborador', label: `Colab: ${filterColaborador}`, onClear: () => setFilterColaborador('') });
+    if (filterColaborador) chips.push({ key: 'colaborador', label: `Integ: ${filterColaborador}`, onClear: () => setFilterColaborador('') });
     if (filterMes) {
       const [y, m] = filterMes.split('-');
       const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -366,7 +366,7 @@ export function Presencial() {
         const uniqueRules = new Map<string, any>();
         data.forEach((row: any) => {
           let socio = findValue(row, ['socio', 'sócio', 'responsavel', 'gestor', 'partner']) || 'Não Definido'
-          let colab = findValue(row, ['nome', 'colaborador', 'funcionario']) || 'Desconhecido'
+          let colab = findValue(row, ['nome', 'colaborador', 'integrante', 'funcionario']) || 'Desconhecido'
           if (typeof socio === 'string') socio = socio.trim(); if (typeof colab === 'string') colab = colab.trim();
           if (colab === 'Desconhecido') return;
           const meta = findValue(row, ['meta', 'dias', 'regra']) || 3
@@ -410,7 +410,7 @@ export function Presencial() {
   }
 
   const handleDeleteRule = async (id: string) => {
-    if (!confirm("Remover regra deste colaborador?")) return;
+    if (!confirm("Remover regra deste integrante?")) return;
     setLoading(true);
     // Atualizado: Zera a regra na tabela collaborators em vez de deletar o registro
     await supabase.from('collaborators').update({ partner_id: null, weekly_goal: null }).eq('id', id);
@@ -427,7 +427,7 @@ export function Presencial() {
     const totalExcedente = hasSingleColaborador ? somaTemposFormatoHoras(registrosHoras.map(r => r.excedente || '00:00')) : '00:00';
 
     const dataToExport = registrosHoras.map(item => ({
-      'Colaborador': item.colaborador,
+      'Integrante': item.colaborador,
       'Data': item.data,
       'Entrada': item.entrada,
       'Saída Almoço': item.saida_almoco || '-',
@@ -442,7 +442,7 @@ export function Presencial() {
 
     if (hasSingleColaborador) {
         dataToExport.push({
-            'Colaborador': 'Totais',
+            'Integrante': 'Totais',
             'Data': '',
             'Entrada': '',
             'Saída Almoço': '',
