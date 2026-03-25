@@ -1,6 +1,7 @@
 // src/components/collaborators/components/HorasTable.tsx
 
 import { RegistroDiario } from '../types/presencial'
+import { somaTemposFormatoHoras } from '../utils/presencialUtils'
 
 interface HorasTableProps {
   registros: RegistroDiario[]
@@ -15,6 +16,10 @@ export function HorasTable({ registros, tableRef }: HorasTableProps) {
       </div>
     )
   }
+
+  const hasSingleColaborador = registros.length > 0 && new Set(registros.map(r => r.colaborador)).size === 1;
+  const totalTempoUtil = hasSingleColaborador ? somaTemposFormatoHoras(registros.map(r => r.tempo_util)) : '00:00';
+  const totalExcedente = hasSingleColaborador ? somaTemposFormatoHoras(registros.map(r => r.excedente || '00:00')) : '00:00';
 
   return (
     <div className="flex-1 overflow-auto custom-scrollbar">
@@ -31,6 +36,7 @@ export function HorasTable({ registros, tableRef }: HorasTableProps) {
               <th className="px-4 py-3 text-center text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">Intervalo 2</th>
               <th className="px-4 py-3 text-center text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">Saída</th>
               <th className="px-4 py-3 text-center text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">Tempo Útil</th>
+              <th className="px-4 py-3 text-center text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">Excedente</th>
               <th className="px-4 py-3 text-left text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">Observações</th>
             </tr>
           </thead>
@@ -63,10 +69,29 @@ export function HorasTable({ registros, tableRef }: HorasTableProps) {
                 <td className={`px-4 py-3 text-center text-sm font-mono font-black whitespace-nowrap ${reg.tem_inconsistencia ? 'text-red-600' : 'text-[#1e3a8a]'}`}>
                   {reg.tempo_util}
                 </td>
+                <td className="px-4 py-3 text-center text-sm font-mono font-black whitespace-nowrap text-amber-600">
+                  {reg.excedente || '00:00'}
+                </td>
                 <td className="px-4 py-3 text-sm text-gray-600 min-w-[200px]">{reg.observacoes}</td>
               </tr>
             ))}
           </tbody>
+          {hasSingleColaborador && (
+            <tfoot className="bg-gray-100 border-t-2 border-gray-200">
+              <tr>
+                <td colSpan={8} className="px-4 py-3 text-right text-sm font-black text-[#0a192f] uppercase tracking-wider">
+                  Totais
+                </td>
+                <td className="px-4 py-3 text-center text-lg font-mono font-black text-[#1e3a8a] bg-blue-50/50">
+                  {totalTempoUtil}
+                </td>
+                <td className="px-4 py-3 text-center text-lg font-mono font-black text-amber-600 bg-amber-50/50">
+                  {totalExcedente}
+                </td>
+                <td className="px-4 py-3"></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     </div>

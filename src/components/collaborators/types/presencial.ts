@@ -30,6 +30,7 @@ export interface RegistroDiario {
   saida?: string
   saidas_extras?: string[]
   tempo_util: string
+  excedente?: string
   observacoes: string
   tem_inconsistencia: boolean
 }

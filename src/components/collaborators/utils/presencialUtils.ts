@@ -77,6 +77,37 @@ export const calcularTempoUtil = (
   return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`
 }
 
+export const calcularExcedente = (tempoUtil: string): string => {
+  if (!tempoUtil || tempoUtil === '00:00' || tempoUtil === '-') return '00:00'
+  const parts = tempoUtil.split(':')
+  if (parts.length !== 2) return '00:00'
+  
+  const totalMinutos = (parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10)
+  const MINUTOS_8_HORAS = 8 * 60
+  
+  if (totalMinutos <= MINUTOS_8_HORAS) return '00:00'
+  
+  const condMin = totalMinutos - MINUTOS_8_HORAS
+  const h = Math.floor(condMin / 60)
+  const m = condMin % 60
+  
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+export const somaTemposFormatoHoras = (tempos: string[]): string => {
+  let totalMins = 0;
+  for (const t of tempos) {
+    if (!t || t === '-' || t === '00:00') continue;
+    const parts = t.split(':');
+    if (parts.length === 2) {
+      totalMins += (parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10);
+    }
+  }
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
 // Remove duplicatas de marcações no mesmo minuto
 const removerDuplicatasPorMinuto = (marcacoes: MarcacaoPonto[]): MarcacaoPonto[] => {
   const mapa = new Map<string, MarcacaoPonto>()
@@ -108,7 +139,7 @@ export const processarMarcacoesDiarias = (marcacoes: MarcacaoPonto[]): RegistroD
   
   const registros: RegistroDiario[] = []
   
-  registrosPorDia.forEach((marcacoesDia, key) => {
+  registrosPorDia.forEach((marcacoesDia) => {
     // Remove duplicatas por minuto
     const marcacoesSemDuplicatas = removerDuplicatasPorMinuto(marcacoesDia)
     
@@ -198,6 +229,7 @@ export const processarMarcacoesDiarias = (marcacoes: MarcacaoPonto[]): RegistroD
     }
     
     let tempo_util = '00:00'
+    let excedente = '00:00'
     if (saida) {
       const entradaDate = datas[0]
       const saidaDate = datas[datas.length - 1]
@@ -207,6 +239,7 @@ export const processarMarcacoesDiarias = (marcacoes: MarcacaoPonto[]): RegistroD
       const intervalo2Date = intervalo2 && datas.length > 4 ? datas[4] : undefined
       
       tempo_util = calcularTempoUtil(entradaDate, saidaDate, saidaAlmocoDate, voltaAlmocoDate, intervalo1Date, intervalo2Date)
+      excedente = calcularExcedente(tempo_util)
     }
     
     registros.push({
@@ -220,6 +253,7 @@ export const processarMarcacoesDiarias = (marcacoes: MarcacaoPonto[]): RegistroD
       saida,
       saidas_extras,
       tempo_util,
+      excedente,
       observacoes: observacoes.join(', ') || '-',
       tem_inconsistencia
     })

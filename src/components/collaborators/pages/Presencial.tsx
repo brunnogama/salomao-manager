@@ -18,7 +18,8 @@ import {
   findValue,
   getFirstDayOfMonth,
   getLastDayOfMonth,
-  processarMarcacoesDiarias
+  processarMarcacoesDiarias,
+  somaTemposFormatoHoras
 } from '../utils/presencialUtils'
 import { SocioRuleModal } from '../components/SocioRuleModal'
 import { DescriptiveTable } from '../components/DescriptiveTable'
@@ -421,6 +422,10 @@ export function Presencial() {
   const handleExportXLSX = () => {
     if (viewMode !== 'horas' || registrosHoras.length === 0) return;
 
+    const hasSingleColaborador = registrosHoras.length > 0 && new Set(registrosHoras.map(r => r.colaborador)).size === 1;
+    const totalTempoUtil = hasSingleColaborador ? somaTemposFormatoHoras(registrosHoras.map(r => r.tempo_util)) : '00:00';
+    const totalExcedente = hasSingleColaborador ? somaTemposFormatoHoras(registrosHoras.map(r => r.excedente || '00:00')) : '00:00';
+
     const dataToExport = registrosHoras.map(item => ({
       'Colaborador': item.colaborador,
       'Data': item.data,
@@ -431,8 +436,25 @@ export function Presencial() {
       'Intervalo 2': item.intervalo2 || '-',
       'Saída': item.saida || '-',
       'Tempo Útil': item.tempo_util,
+      'Excedente': item.excedente || '-',
       'Observações': item.observacoes
     }));
+
+    if (hasSingleColaborador) {
+        dataToExport.push({
+            'Colaborador': 'Totais',
+            'Data': '',
+            'Entrada': '',
+            'Saída Almoço': '',
+            'Volta Almoço': '',
+            'Intervalo 1': '',
+            'Intervalo 2': '',
+            'Saída': '',
+            'Tempo Útil': totalTempoUtil,
+            'Excedente': totalExcedente,
+            'Observações': ''
+        });
+    }
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
@@ -448,7 +470,7 @@ export function Presencial() {
       <input type="file" accept=".xlsx" ref={socioInputRef} onChange={handleSocioUpload} className="hidden" />
 
       {/* PAGE HEADER - Título + Abas + Ações */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500 relative z-40">
         {/* Left: Título e Ícone */}
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
