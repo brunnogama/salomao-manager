@@ -234,51 +234,46 @@ export function RHHeadcount() {
 
   // 3. Collaborators per Team Leader
   const { leaderJuridicoSocios, leaderJuridicoLideres } = useMemo(() => {
-    const leaderMap = new Map<string, { count: number, members: Collaborator[] }>()
+    const leaderMap = new Map<string, { count: number, members: Collaborator[], leaderObj: Collaborator }>()
+
+    // Populate all official team leaders
+    colaboradores.forEach(c => {
+      if (c.is_team_leader) {
+        leaderMap.set(normalizeString(c.name), { count: 0, members: [], leaderObj: c })
+      }
+    })
+
     activeData.forEach(c => {
-      const leaderName = c.leader?.name || 'Não Definido'
-      if (!leaderMap.has(leaderName)) leaderMap.set(leaderName, { count: 0, members: [] })
-      const entry = leaderMap.get(leaderName)!
-      entry.count++
-      entry.members.push(c)
+      const leaderName = c.leader?.name
+      if (!leaderName) return
+
+      const normalizedLeaderName = normalizeString(leaderName)
+      if (leaderMap.has(normalizedLeaderName)) {
+        const entry = leaderMap.get(normalizedLeaderName)!
+        entry.count++
+        entry.members.push(c)
+      }
     })
 
     const allLeaders = Array.from(leaderMap.entries())
-      .filter(([name]) => name !== 'Não Definido')
-      .map(([name, data]) => {
+      .map(([, data]) => {
         let category: 'Jurídico - Sócios' | 'Jurídico - Líderes' | 'Administrativo' = 'Administrativo'
-        const normalizedLeaderName = normalizeString(name)
-        const leaderObj = colaboradores.find(c => normalizeString(c.name) === normalizedLeaderName)
+        const leaderObj = data.leaderObj
 
-        if (leaderObj) {
-          const segment = getSegment(leaderObj)
-          if (segment === 'Jurídico') {
-            const roleName = normalizeString(leaderObj.roles?.name || String(leaderObj.role || ''))
-            if (roleName.includes('socio') || roleName.includes('sócio')) {
-              category = 'Jurídico - Sócios'
-            } else {
-              category = 'Jurídico - Líderes'
-            }
+        const segment = getSegment(leaderObj)
+        if (segment === 'Jurídico') {
+          const roleName = normalizeString(leaderObj.roles?.name || String(leaderObj.role || ''))
+          if (roleName.includes('socio') || roleName.includes('sócio')) {
+            category = 'Jurídico - Sócios'
           } else {
-            category = 'Administrativo'
+            category = 'Jurídico - Líderes'
           }
         } else {
-          // Fallback based on team members
-          let juridicoCount = 0;
-          let adminCount = 0;
-          data.members.forEach(m => {
-            if (getSegment(m) === 'Jurídico') juridicoCount++;
-            else adminCount++;
-          })
-          if (juridicoCount > adminCount) {
-            category = 'Jurídico - Líderes'
-          } else {
-            category = 'Administrativo'
-          }
+          category = 'Administrativo'
         }
 
         return {
-          name,
+          name: leaderObj.name,
           category,
           value: data.count
         }
