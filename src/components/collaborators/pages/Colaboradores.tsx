@@ -281,17 +281,25 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return colaboradores.filter(c => {
-      if (c.status !== 'active' || !c.hire_date || c.mochila_entregue) return false;
-      const hireDate = new Date(c.hire_date);
-      // Completing exactly 3 months (or more if not delivered)
-      const threeMonthsDate = new Date(hireDate);
-      threeMonthsDate.setMonth(hireDate.getMonth() + 3);
-      threeMonthsDate.setHours(0, 0, 0, 0);
+    return colaboradores
+      .filter(c => {
+        if (c.status !== 'active' || !c.hire_date || c.mochila_entregue) return false;
+        const hireDate = new Date(c.hire_date);
+        // Completing exactly 3 months (or more if not delivered)
+        const threeMonthsDate = new Date(hireDate);
+        threeMonthsDate.setMonth(hireDate.getMonth() + 3);
+        threeMonthsDate.setHours(0, 0, 0, 0);
 
-      // Check if the 3-month mark is today or in the past (and not yet delivered)
-      return today >= threeMonthsDate;
-    });
+        // Check if the 3-month mark is today or in the past (and not yet delivered)
+        return today >= threeMonthsDate;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.hire_date!);
+        dateA.setMonth(dateA.getMonth() + 3);
+        const dateB = new Date(b.hire_date!);
+        dateB.setMonth(dateB.getMonth() + 3);
+        return dateB.getTime() - dateA.getTime(); // Mais recentes primeiro
+      });
   }, [colaboradores, isHRUser]);
 
   const pendingBirthdays = React.useMemo(() => {
@@ -301,18 +309,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const currentMonth = today.getMonth() + 1;
     const currentDay = today.getDate();
 
-    return colaboradores.filter(c => {
-      if (c.status !== 'active' || !c.birthday) return false;
-      if (c.ultimo_aniversario_parabenizado === currentYear) return false;
+    return colaboradores
+      .filter(c => {
+        if (c.status !== 'active' || !c.birthday) return false;
+        if (c.ultimo_aniversario_parabenizado === currentYear) return false;
 
-      // Extract month and day from YYYY-MM-DD
-      const [_, bMonth, bDay] = c.birthday.split('-').map(Number);
+        // Extract month and day from YYYY-MM-DD
+        const [_, bMonth, bDay] = c.birthday.split('-').map(Number);
 
-      // If the birthday is today or in the past (for THIS year) and not congratulated yet
-      if (currentMonth > bMonth) return true;
-      if (currentMonth === bMonth && currentDay >= bDay) return true;
-      return false;
-    });
+        // If the birthday is exactly today and not congratulated yet
+        return currentMonth === bMonth && currentDay === bDay;
+      })
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }, [colaboradores, isHRUser]);
 
   const totalNotifications = pendingBackpacks.length + pendingBirthdays.length;
