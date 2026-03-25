@@ -126,5 +126,75 @@ export const MODULE_CONFIG = {
       'gestao-familia': 'Controle e suporte à Família Salomão.',
       ged: 'Documentos e arquivos da secretaria.'
     }
+  },
+  controladoria: {
+    icons: {
+      dashboard: LayoutDashboard,
+      contratos: BookOpen,
+      clientes: Users,
+      kanban: KanbanSquare,
+      financeiro: Receipt,
+      ged: FolderSearch,
+      propostas: BookOpen,
+      compliance: Gavel,
+      sucumbencias: Gavel,
+      jurimetria: BarChart3,
+      volumetria: TrendingUp,
+      historico: History,
+      configuracoes: LayoutDashboard
+    },
+    titles: {
+      dashboard: 'Dashboard da Controladoria',
+      contratos: 'Contratos',
+      clientes: 'Clientes Vínculo',
+      kanban: 'Quadro Kanban',
+      financeiro: 'Financeiro e Faturas',
+      ged: 'GED Controladoria',
+      propostas: 'Propostas e Honorários',
+      compliance: 'Compliance',
+      sucumbencias: 'Sucumbências',
+      jurimetria: 'Jurimetria',
+      volumetria: 'Volumetria Prática',
+      historico: 'Auditoria e Histórico',
+      configuracoes: 'Ajustes Controladoria'
+    },
+    descriptions: {
+      dashboard: 'Visão macro da controladoria',
+      contratos: 'Gestão de vínculos e minutas',
+      clientes: 'Base de clientes vinculados',
+      kanban: 'Controle de tarefas e andamento',
+      financeiro: 'Gestão de receitas de contencioso',
+      ged: 'Documentos da controladoria',
+      propostas: 'Controle de honorários e propostas',
+      compliance: 'Acompanhamento do setor de integridade',
+      sucumbencias: 'Gerenciamento de verbas e honorários',
+      jurimetria: 'Análise descritiva e dados judiciais',
+      volumetria: 'Estatísticas e contagem processual',
+      historico: 'Acesso a logs da controladoria',
+      configuracoes: 'Ajuste de flags e configurações'
+    }
+  },
+  operational: {
+    icons: {
+      dashboard: LayoutDashboard,
+      produtos: Truck,
+      estoque: FolderSearch,
+      imobiliario: Home,
+      compras: Receipt
+    },
+    titles: {
+      dashboard: 'Dashboard Operações',
+      produtos: 'Produtos e Insumos',
+      estoque: 'Controle de Estoque',
+      imobiliario: 'Gestão Imobiliária & Frota',
+      compras: 'Gestão de Compras'
+    },
+    descriptions: {
+      dashboard: 'Visão de insumos e compras',
+      produtos: 'Catálogo e serviços de fornecedores',
+      estoque: 'Balanço de estoque e itens gerais',
+      imobiliario: 'Gerenciamento predial e carros',
+      compras: 'Requisições e controle de suprimentos'
+    }
   }
 };
