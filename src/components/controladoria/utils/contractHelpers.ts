@@ -4,7 +4,7 @@ import { addDays, addMonths } from 'date-fns';
 export const formatForInput = (val: string | number | undefined) => {
   if (val === undefined || val === null) return '';
   if (typeof val === 'number') return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  if (typeof val === 'string' && !val.includes('R$') && !isNaN(parseFloat(val)) && val.trim() !== '') {
+  if (typeof val === 'string' && !val.includes('R$') && !val.includes('%') && !isNaN(parseFloat(val)) && val.trim() !== '') {
       return parseFloat(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
   return val;

@@ -5,6 +5,7 @@ import { CustomSelect } from '../../ui/CustomSelect';
 import { FinancialInputWithInstallments } from './FinancialInputWithInstallments';
 import { maskMoney, parseCurrency, maskPercent } from '../../utils/masks';
 import { addMonths } from 'date-fns';
+import { toast } from 'sonner';
 
 interface StatusAndDatesSectionProps {
     formData: Contract;
@@ -579,34 +580,51 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                                     );
                                 })}
                             </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            {/* % rule support since it doesn't use standard FinancialInput component */}
+                            {/* Regras e Faturar para % */}
                             {(formData.final_success_percent || (formData as any).percent_extras?.length > 0) && (
-                                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 shadow-sm animate-in fade-in slide-in-from-top-1">
-                                    <div className="flex flex-col gap-2 relative">
+                                <>
+                                    <div className="mt-2 bg-gray-50/50 p-2.5 rounded-lg border border-gray-200">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center mb-1.5">
+                                            Regra para recebimento:
+                                        </label>
                                         <textarea
-                                            className="w-full text-sm p-2 border border-gray-300 rounded-md bg-white focus:border-salomao-blue outline-none resize-none"
-                                            placeholder="Exemplo de Regra para o valor principal: Somente cobrar após trânsito em julgado..."
+                                            className="w-full text-xs p-2 border border-gray-300 rounded bg-white focus:border-salomao-blue outline-none resize-none leading-relaxed"
+                                            placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
                                             rows={2}
                                             value={formData.final_success_percent_rule || ''}
                                             onChange={(e) => setFormData({ ...formData, final_success_percent_rule: e.target.value })}
                                         />
-                                        <div className="flex justify-end">
+                                        <div className="flex justify-end mt-2">
                                             <button
-                                              type="button"
-                                              onClick={() => setFormData({ ...formData, final_success_percent_ready: !formData.final_success_percent_ready })}
-                                              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all shadow-sm border ${formData.final_success_percent_ready ? 'bg-green-100 text-green-800 border-green-200 ring-1 ring-green-500/50' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-100'}`}
+                                                type="button"
+                                                onClick={() => toast.success("Regra vinculada provisoriamente. Conclua clicando em 'Salvar Caso' no fim da tela!", { duration: 4000 })}
+                                                className="flex items-center gap-1 px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider text-salomao-blue bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-colors"
                                             >
-                                              <CheckCircle className={`w-3.5 h-3.5 ${formData.final_success_percent_ready ? 'text-green-600' : 'text-gray-400'}`} />
-                                              {formData.final_success_percent_ready ? 'Pronto para Faturar!' : 'Faturar'}
+                                                <CheckCircle className="w-3 h-3" />
+                                                Vincular Regra
                                             </button>
                                         </div>
                                     </div>
-                                </div>
-                            )}
 
+                                    <div className="mt-2 flex items-center justify-between border border-green-200 bg-green-50/50 px-3 py-2 rounded-lg">
+                                        <label htmlFor="faturar-exito-percent" className="flex items-center gap-2 cursor-pointer w-full group">
+                                            <input
+                                                type="checkbox"
+                                                id="faturar-exito-percent"
+                                                checked={formData.final_success_percent_ready || false}
+                                                onChange={() => setFormData({ ...formData, final_success_percent_ready: !formData.final_success_percent_ready })}
+                                                className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 transition-all cursor-pointer"
+                                            />
+                                            <span className="text-xs font-bold text-green-800 group-hover:text-green-900 transition-colors">
+                                                Pronto para Faturar (Notificar no envio do e-mail)
+                                            </span>
+                                        </label>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
                             <FinancialInputWithInstallments 
                                 label="Outros Honorários (R$)" 
                                 value={safeString(formatForInput(formData.other_fees))} 
