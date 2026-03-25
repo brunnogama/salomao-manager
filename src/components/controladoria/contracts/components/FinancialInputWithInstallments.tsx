@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, ChevronDown, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { maskMoney, maskPercent } from '../../utils/masks';
 
 const MinimalSelect = ({ value, onChange, options }: { value: string, onChange: (val: string) => void, options: string[] }) => {
@@ -38,8 +39,6 @@ export const FinancialInputWithInstallments = ({
   label, value, onChangeValue, installments, onChangeInstallments, onAdd, clause, onChangeClause, rule, onChangeRule, readyToInvoice, onToggleReady
 }: FinancialInputProps) => {
   const installmentOptions = Array.from({ length: 24 }, (_, i) => `${i + 1}x`);
-  const showRule = !!rule;
-
   // Decide whether the current value looks like a percentage
   const isPercentInitial = value?.includes('%');
   const [format, setFormat] = useState<'R$' | '%'>((isPercentInitial) ? '%' : 'R$');
@@ -131,6 +130,18 @@ export const FinancialInputWithInstallments = ({
             value={rule || ''}
             onChange={(e) => onChangeRule(e.target.value)}
           />
+          <div className="flex justify-end mt-2">
+            <button
+              type="button"
+              onClick={() => {
+                toast.success("Regra vinculada provisoriamente. Conclua clicando em 'Salvar Caso' no fim da tela!", { duration: 4000 });
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider text-salomao-blue bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-colors"
+            >
+              <CheckCircle className="w-3 h-3" />
+              Vincular Regra
+            </button>
+          </div>
         </div>
       )}
 
