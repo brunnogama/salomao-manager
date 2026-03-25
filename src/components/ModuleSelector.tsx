@@ -3,7 +3,6 @@ import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings,
 import { useNavigate } from 'react-router-dom'
 import { logAction } from '../lib/logger'
 
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
 interface ModuleSelectorProps {
@@ -12,67 +11,63 @@ interface ModuleSelectorProps {
 }
 
 export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
-  const { signOut } = useAuth()
+  const { signOut, userRole, allowedModules, pagePermissions, user } = useAuth()
   const navigate = useNavigate()
-  const [allowedModules, setAllowedModules] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [isPending, setIsPending] = useState(false)
+  
+  const isAdmin = userRole === 'admin'
+  const isPending = !isAdmin && allowedModules.length === 0 && Object.keys(pagePermissions).length === 0
 
-  // --- State Setup ---
   useEffect(() => {
-    async function fetchPermissions() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
+    if (loading) {
+       if (!isAdmin && !isPending) {
+           const modulesCount = allowedModules.length;
+           const pagesCount = Object.values(pagePermissions).flat().length;
 
-        if (user) {
-          const { data, error } = await supabase
-            .from('user_profiles')
-            .select('allowed_modules, role')
-            .eq('email', user.email)
-            .maybeSingle()
-
-          if (data && !error) {
-            const userRole = data.role || ''
-            const isUserAdmin = userRole.toLowerCase() === 'admin'
-
-            setIsAdmin(isUserAdmin)
-
-            if (isUserAdmin) {
-              setAllowedModules(['crm', 'collaborators', 'operational', 'financial', 'executive', 'controladoria'])
-              setIsPending(false)
-            } else {
-              const modules = data.allowed_modules || []
-              setAllowedModules(modules)
-              setIsPending(modules.length === 0)
-
-              // Notifica o administrador se for o primeiro acesso (Sem módulos liberados)
-              if (modules.length === 0) {
-                const hasNotified = localStorage.getItem(`notified_pending_${user.id}`)
-                if (!hasNotified) {
-                  await logAction('NOVO_ACESSO_PENDENTE', 'AUTH', `Novo usuário (${user.email}) aguardando aprovação de acesso`, 'ModuleSelector')
-                  localStorage.setItem(`notified_pending_${user.id}`, 'true')
+           // Auto-redirect se tiver apenas 1 módulo liberado
+           if (modulesCount === 1 && pagesCount === 0) {
+                const map: Record<string, string> = {
+                    crm: '/crm/dashboard',
+                    collaborators: '/rh/dashboard',
+                    operational: '/operational/dashboard',
+                    financial: '/financeiro/dashboard',
+                    executive: '/executivo/dashboard',
+                    controladoria: '/controladoria/dashboard',
+                    settings: '/configuracoes'
+                };
+                const path = map[allowedModules[0]];
+                if (path) {
+                    navigate(path, { replace: true });
+                    return;
                 }
-              }
-            }
-          } else {
-            console.warn('Perfil de usuário não encontrado.')
-            setAllowedModules([])
-            setIsAdmin(false)
-            setIsPending(true)
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao buscar permissões:', error)
-        setAllowedModules([])
-        setIsAdmin(false)
-      } finally {
-        setLoading(false)
-      }
-    }
+           // Auto-redirect se tiver apenas 1 página específica e nenhum módulo completo
+           } else if (modulesCount === 0 && Object.keys(pagePermissions).length === 1 && pagesCount === 1) {
+                const mod = Object.keys(pagePermissions)[0];
+                const page = pagePermissions[mod][0];
+                const mapRoute: Record<string, string> = {
+                    crm: 'crm',
+                    collaborators: 'rh',
+                    operational: 'operational',
+                    financial: 'financeiro',
+                    executive: 'executivo',
+                    controladoria: 'controladoria'
+                };
+                navigate(`/${mapRoute[mod] || mod}/${page}`, { replace: true });
+                return;
+           }
+       }
+       
+       if (isPending && user) {
+           const hasNotified = localStorage.getItem(`notified_pending_${user.id}`);
+           if (!hasNotified) {
+               logAction('NOVO_ACESSO_PENDENTE', 'AUTH', `Novo usuário (${user.email}) aguardando aprovação`, 'ModuleSelector').catch(console.error);
+               localStorage.setItem(`notified_pending_${user.id}`, 'true');
+           }
+       }
 
-    fetchPermissions()
-  }, [])
+       setLoading(false);
+    }
+  }, [loading, isAdmin, isPending, allowedModules, pagePermissions, navigate, user])
 
   const handleLogout = async () => {
     await signOut()
@@ -80,7 +75,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
   const isModuleAllowed = (moduleKey: string) => {
     if (isAdmin) return true
-    return allowedModules.includes(moduleKey)
+    return allowedModules.includes(moduleKey) || !!pagePermissions[moduleKey]
   }
 
   const renderCard = (

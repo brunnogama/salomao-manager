@@ -3,14 +3,14 @@ import {
   Shield, Users, History as HistoryIcon, Code,
   Briefcase, EyeOff, LayoutGrid, DollarSign, Grid,
   CheckCircle, AlertCircle, Trash2, AlertTriangle,
-  UserCircle, LogOut, Settings as SettingsIcon, Layout, Info, Database
+  UserCircle, LogOut, Settings as SettingsIcon, Layout, Info, Database, Lock
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
 import { History } from './settings/History'
 
-// Importação dos Novos Módulos
 import { UserManagement } from './settings/UserManagement'
+import { PermissionsSection } from './settings/PermissionsSection'
 import { UserModal } from './settings/UserModal'
 import { CRMSection } from './settings/CRMSection'
 import { MaintenanceSection } from './settings/MaintenanceSection'
@@ -51,7 +51,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   // --- STATES ---
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
-  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup' | 'operacoes'>('menu')
+  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'permissoes' | 'crm' | 'juridico' | 'rh' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup' | 'operacoes'>('menu')
 
   const [users, setUsers] = useState<AppUser[]>([])
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
@@ -333,7 +333,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   // I'll add 'controladoria' to the keyMap or just allow it for admins
   const hasAccessToModule = (modId: string) => {
     if (isSuperAdmin || isAdmin) return true;
-    if (['menu', 'historico', 'juridico', 'geral', 'about'].includes(modId)) return true;
+    if (['menu', 'historico', 'juridico', 'geral', 'about', 'permissoes'].includes(modId)) return true;
     const keyMap: any = { crm: 'crm', rh: 'collaborators', financial: 'financial', controladoria: 'controladoria', operacoes: 'operational' }; // Assumes user permission might track it, but for now mostly Admin
 
     // If it's pure Admin module, only admins should see it (already handled by !item.adminOnly check in menu render)
@@ -342,6 +342,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
 
   const menuItems = [
     { id: 'geral', label: 'Usuários', icon: Shield },
+    { id: 'permissoes', label: 'Permissões', icon: Lock, adminOnly: true },
     { id: 'crm', label: 'CRM Brindes', icon: Briefcase },
     { id: 'operacoes', label: 'Operações', icon: LayoutGrid, adminOnly: true },
     { id: 'controladoria', label: 'Controladoria', icon: Layout, adminOnly: true }, // NEW ITEM
@@ -462,6 +463,14 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
                 setIsUserModalOpen(true);
               }}
               onDeleteUser={handleDeleteUser}
+            />
+          )}
+
+          {activeModule === 'permissoes' && (
+            <PermissionsSection 
+               users={users} 
+               isAdmin={isAdmin} 
+               onRefreshUsers={fetchUsers} 
             />
           )}
 

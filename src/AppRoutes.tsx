@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { ShieldAlert, LogOut } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import { MainLayout } from './layouts/MainLayout';
@@ -120,6 +120,46 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     return children;
 };
 
+const RouteGuard = ({ children }: { children: JSX.Element }) => {
+    const { userRole, allowedModules, pagePermissions } = useAuth();
+    const location = useLocation();
+
+    const pathParts = location.pathname.split('/').filter(Boolean);
+    if (pathParts.length < 2) return children;
+
+    const routeModule = pathParts[0];
+    const routePage = pathParts[1];
+
+    const moduleMap: Record<string, string> = {
+        'crm': 'crm',
+        'rh': 'collaborators',
+        'financeiro': 'financial',
+        'executivo': 'executive',
+        'controladoria': 'controladoria',
+        'operational': 'operational'
+    };
+
+    const internalModule = moduleMap[routeModule];
+    if (!internalModule) return children;
+
+    if (userRole === 'admin') return children;
+
+    const hasFullModule = allowedModules.includes(internalModule) && (!pagePermissions[internalModule] || pagePermissions[internalModule].length === 0);
+    const hasSpecificPage = pagePermissions[internalModule] && pagePermissions[internalModule].includes(routePage);
+
+    if (!hasFullModule && !hasSpecificPage) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+               <h2 className="text-2xl font-bold text-gray-800">Acesso Restrito</h2>
+               <p className="text-gray-500 mt-2">Você não tem permissão para acessar esta página.</p>
+               <button onClick={() => window.location.href = '/'} className="mt-4 px-4 py-2 bg-[#d4af37] text-white rounded font-bold hover:bg-yellow-600 transition-colors uppercase tracking-widest text-xs">Voltar ao Menu</button>
+            </div>
+        );
+    }
+
+    return children;
+};
+
 // Component helper to inject frequent props
 const WithProps = ({ Component, extraProps = {} }: { Component: any, extraProps?: any }) => {
     const { user, signOut } = useAuth();
@@ -189,7 +229,7 @@ export function AppRoutes() {
             <Route path="/public/demandas" element={<PublicDemandas />} />
 
             {/* Protected Routes */}
-            <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+            <Route element={<ProtectedRoute><RouteGuard><MainLayout /></RouteGuard></ProtectedRoute>}>
 
                 {/* Home / Module Selector */}
                 <Route path="/" element={

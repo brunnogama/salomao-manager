@@ -11,6 +11,8 @@ interface AuthContextType {
     user: any; // Using any to match existing usage in App.tsx temporarily, should be refined
     isAuthorized: boolean | null;
     userRole: string | null;
+    allowedModules: string[];
+    pagePermissions: Record<string, string[]>;
 }
 
 const SESSION_COOKIE_NAME = 'app_session_active';
@@ -36,6 +38,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isResettingPassword, setIsResettingPassword] = useState(false);
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [allowedModules, setAllowedModules] = useState<string[]>([]);
+    const [pagePermissions, setPagePermissions] = useState<Record<string, string[]>>({});
 
     const checkAuthorization = async (currentSession: Session | null) => {
         console.log('🔍 [AuthContext] checkAuthorization init. Session exists:', !!currentSession);
@@ -58,6 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (email === 'marcio.gama@salomaoadv.com.br') {
             setIsAuthorized(true);
             setUserRole('admin');
+            setAllowedModules(['crm', 'collaborators', 'operational', 'financial', 'executive', 'controladoria', 'settings']);
+            setPagePermissions({});
             setLoading(false);
             return;
         }
@@ -65,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const { data, error } = await supabase
                 .from('user_profiles')
-                .select('user_id, role')
+                .select('user_id, role, allowed_modules')
                 .eq('email', email)
                 .maybeSingle();
 
@@ -76,6 +82,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // Tem perfil e o user_id não é nulo -> Autorizado
                 setIsAuthorized(true);
                 setUserRole(data.role as string || 'user');
+
+                const rawModules = data.allowed_modules || [];
+                const parsedModules: string[] = [];
+                const parsedPages: Record<string, string[]> = {};
+
+                rawModules.forEach((item: string) => {
+                    if (item.includes(':')) {
+                        const [mod, page] = item.split(':');
+                        if (!parsedPages[mod]) parsedPages[mod] = [];
+                        parsedPages[mod].push(page);
+                    } else {
+                        parsedModules.push(item);
+                    }
+                });
+
+                setAllowedModules(parsedModules);
+                setPagePermissions(parsedPages);
             } else if (data && !data.user_id) {
                 // Tem perfil mas user_id é nulo -> Pendente na fila
                 setIsAuthorized(false);
@@ -226,7 +249,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isResettingPassword,
         user: session?.user ?? null,
         isAuthorized,
-        userRole
+        userRole,
+        allowedModules,
+        pagePermissions
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
