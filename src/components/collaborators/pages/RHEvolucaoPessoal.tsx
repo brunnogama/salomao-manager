@@ -35,7 +35,8 @@ import {
   getSegment,
   isActiveAtDate,
   getYearFromDate,
-  Segment
+  Segment,
+  getJuridicoRoleWeight
 } from '../utils/rhChartUtils'
 
 const formatCompact = (val: number | undefined | null) => {
@@ -307,7 +308,12 @@ export function RHEvolucaoPessoal() {
     // Convert to array and sort
     const data = Array.from(roleCounts.entries())
       .map(([role, count]) => ({ role, count }))
-      .sort((a, b) => b.count - a.count) // Descending
+      .sort((a, b) => {
+        if (targetSegment === 'Jurídico') {
+          return getJuridicoRoleWeight(a.role) - getJuridicoRoleWeight(b.role)
+        }
+        return b.count - a.count // Descending
+      })
 
     return data
   }, [filteredData, filterYear, filterMonth])

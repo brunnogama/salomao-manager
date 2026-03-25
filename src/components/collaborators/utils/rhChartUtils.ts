@@ -2,6 +2,29 @@ import { Collaborator } from '../../../types/controladoria'
 
 export type Segment = 'Administrativo' | 'Jurídico' | 'Terceirizada'
 
+export const JURIDICO_ROLES_ORDER = [
+    'socio',
+    'consultor juridico',
+    'advogado senior i',
+    'advogado senior ii',
+    'advogado senior iii',
+    'advogado pleno i',
+    'advogado pleno ii',
+    'advogado pleno iii',
+    'advogado junior i',
+    'advogado junior ii',
+    'advogado junior iii',
+    'estagiario',
+    'auxiliar juridico',
+    'nao definido'
+]
+
+export const getJuridicoRoleWeight = (roleName: string) => {
+    const norm = normalizeString(roleName)
+    const index = JURIDICO_ROLES_ORDER.findIndex(r => norm === r || norm.startsWith(r))
+    return index !== -1 ? index : 999
+}
+
 export const normalizeString = (str?: string) => {
     if (!str) return ''
     return str.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')

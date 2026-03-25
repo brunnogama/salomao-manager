@@ -38,7 +38,8 @@ import {
   isActiveAtDate,
   getYearFromDate,
   calculateAge,
-  normalizeString
+  normalizeString,
+  getJuridicoRoleWeight
 } from '../utils/rhChartUtils'
 import { RHChartTooltip } from '../components/RHChartTooltip'
 
@@ -305,7 +306,7 @@ export function RHHeadcount() {
 
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
+      .sort((a, b) => getJuridicoRoleWeight(a.name) - getJuridicoRoleWeight(b.name))
   }, [activeData])
 
   // 5. Legal Level Distribution (Nível do Jurídico)

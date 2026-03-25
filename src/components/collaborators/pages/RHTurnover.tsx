@@ -41,7 +41,8 @@ import {
   getYearFromDate,
   calculateTenure,
   wasActiveInMonth,
-  formatYears
+  formatYears,
+  normalizeString
 } from '../utils/rhChartUtils'
 import { RHChartTooltip } from '../components/RHChartTooltip'
 import { RHChartDataLabel } from '../components/RHChartDataLabel'
@@ -544,7 +545,13 @@ export function RHTurnover() {
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 9, fontWeight: 600 }} width={120} />
                   <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                  <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 4, 4, 0]} barSize={15} name="Qtd">
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={15} name="Qtd">
+                    {terminationsByRole.map((entry, index) => {
+                      const norm = normalizeString(entry.name);
+                      // Check if it's Estagiário or Juridico roles
+                      const isJuridico = norm.includes('estagiari') || getSegment({ roles: { name: entry.name } } as any) === 'Jurídico';
+                      return <Cell key={`cell-${index}`} fill={isJuridico ? COLORS.primary : COLORS.secondary} />;
+                    })}
                     <LabelList dataKey="count" position="right" fill={COLORS.text} fontSize={10} fontWeight={700} />
                   </Bar>
                 </BarChart>
