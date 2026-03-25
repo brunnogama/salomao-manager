@@ -1,24 +1,6 @@
-import React, { useState } from 'react';
-import { Plus, ChevronDown, CheckCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState, useRef, useEffect } from 'react';
+import { Plus, ChevronDown } from 'lucide-react';
 import { maskMoney, maskPercent } from '../../utils/masks';
-
-const MinimalSelect = ({ value, onChange, options }: { value: string, onChange: (val: string) => void, options: string[] }) => {
-  return (
-    <div className="relative h-full w-full">
-      <select
-        className="w-full h-full appearance-none bg-transparent pl-3 pr-8 text-xs font-medium text-gray-700 outline-none cursor-pointer focus:bg-gray-50 transition-colors"
-        value={value || '1x'}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {options.map(opt => (
-          <option key={opt} value={opt}>{opt}</option>
-        ))}
-      </select>
-      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 pointer-events-none" />
-    </div>
-  );
-};
 
 interface FinancialInputProps {
   label: string;
@@ -35,10 +17,93 @@ interface FinancialInputProps {
   onToggleReady?: () => void;
 }
 
+// Custom dropdown para parcelas - design moderno
+const InstallmentDropdown = ({ value, onChange }: { value: string; onChange: (val: string) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const options = Array.from({ length: 24 }, (_, i) => `${i + 1}x`);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative h-full">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="h-full w-16 flex items-center justify-between px-2.5 bg-transparent text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors outline-none"
+      >
+        <span>{value || '1x'}</span>
+        <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 w-20 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1 max-h-[180px] overflow-y-auto scrollbar-thin">
+          {options.map(opt => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => { onChange(opt); setIsOpen(false); }}
+              className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${opt === (value || '1x') ? 'bg-[#1e3a8a] text-white font-bold' : 'text-gray-700 hover:bg-gray-50 font-medium'}`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Custom dropdown para formato R$/% - design moderno
+const FormatDropdown = ({ value, onChange }: { value: 'R$' | '%'; onChange: (val: 'R$' | '%') => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative h-full">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="h-full px-2.5 flex items-center gap-1 bg-transparent text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors outline-none"
+        title="Formato do valor"
+      >
+        <span>{value}</span>
+        <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isOpen && (
+        <div className="absolute left-0 top-full mt-1 w-16 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1">
+          {(['R$', '%'] as const).map(opt => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => { onChange(opt); setIsOpen(false); }}
+              className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${opt === value ? 'bg-[#1e3a8a] text-white font-bold' : 'text-gray-700 hover:bg-gray-50 font-medium'}`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const FinancialInputWithInstallments = ({
   label, value, onChangeValue, installments, onChangeInstallments, onAdd, clause, onChangeClause, rule, onChangeRule, readyToInvoice, onToggleReady
 }: FinancialInputProps) => {
-  const installmentOptions = Array.from({ length: 24 }, (_, i) => `${i + 1}x`);
   // Decide whether the current value looks like a percentage
   const isPercentInitial = value?.includes('%');
   const [format, setFormat] = useState<'R$' | '%'>((isPercentInitial) ? '%' : 'R$');
@@ -68,7 +133,7 @@ export const FinancialInputWithInstallments = ({
   return (
     <div>
       <label className="text-xs font-medium block mb-1 text-gray-600">{label}</label>
-      <div className="flex rounded-lg shadow-sm">
+      <div className="flex items-stretch rounded-lg shadow-sm">
         {onChangeClause && (
           <input
             type="text"
@@ -80,30 +145,39 @@ export const FinancialInputWithInstallments = ({
           />
         )}
 
-        {/* Currency/Percent Prefix Toggle */}
-        <div className={`relative ${!onChangeClause ? 'rounded-l-lg' : ''} border border-gray-300 border-r-0 bg-gray-50 hover:bg-gray-100 transition-colors`}>
-          <select
-            value={format}
-            onChange={(e) => handleFormatChange(e.target.value as 'R$' | '%')}
-            className="h-full pl-2 pr-6 appearance-none bg-transparent outline-none text-sm font-semibold text-gray-600 cursor-pointer"
-            title="Formato do valor"
-          >
-            <option value="R$">R$</option>
-            <option value="%">%</option>
-          </select>
-          <ChevronDown className="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+        {/* Currency/Percent Prefix Toggle - Custom Dropdown */}
+        <div className={`${!onChangeClause ? 'rounded-l-lg' : ''} border border-gray-300 border-r-0 bg-gray-50 hover:bg-gray-100 transition-colors`}>
+          <FormatDropdown value={format} onChange={handleFormatChange} />
         </div>
 
         <input
           type="text"
-          className={`flex-1 border border-gray-300 p-2.5 text-sm bg-white focus:border-salomao-blue outline-none min-w-0 ${!onAdd ? 'rounded-r-none border-r-0' : ''}`}
+          className="flex-1 border border-gray-300 p-2.5 text-sm bg-white focus:border-salomao-blue outline-none min-w-0"
           value={value || ''}
           onChange={handleValueChange}
           placeholder={format === 'R$' ? "0,00" : "0,00%"}
         />
 
+        {/* Pronto para Faturar - ao lado do valor */}
+        {onToggleReady && (
+          <label
+            className={`flex items-center gap-1.5 px-3 border-y border-gray-300 cursor-pointer select-none transition-colors ${readyToInvoice ? 'bg-green-50 border-green-200' : 'bg-gray-50 hover:bg-gray-100'}`}
+            title="Pronto para Faturar"
+          >
+            <input
+              type="checkbox"
+              checked={readyToInvoice || false}
+              onChange={onToggleReady}
+              className="w-3.5 h-3.5 rounded border-gray-300 text-green-600 focus:ring-green-500 transition-all cursor-pointer"
+            />
+            <span className={`text-[10px] font-bold whitespace-nowrap ${readyToInvoice ? 'text-green-700' : 'text-gray-500'}`}>
+              Faturar
+            </span>
+          </label>
+        )}
+
         <div className={`w-16 border-y border-r border-gray-300 bg-gray-50 ${!onAdd ? 'rounded-r-lg' : ''}`}>
-          <MinimalSelect value={installments || '1x'} onChange={onChangeInstallments} options={installmentOptions} />
+          <InstallmentDropdown value={installments || '1x'} onChange={onChangeInstallments} />
         </div>
         {onAdd && (
           <button
@@ -117,7 +191,7 @@ export const FinancialInputWithInstallments = ({
         )}
       </div>
       
-      {/* Caixa da Regra Separada */}
+      {/* Caixa da Regra Separada - sem botão Vincular Regra */}
       {onChangeRule && (
         <div className="mt-2 bg-gray-50/50 p-2.5 rounded-lg border border-gray-200">
           <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center mb-1.5">
@@ -130,36 +204,6 @@ export const FinancialInputWithInstallments = ({
             value={rule || ''}
             onChange={(e) => onChangeRule(e.target.value)}
           />
-          <div className="flex justify-end mt-2">
-            <button
-              type="button"
-              onClick={() => {
-                toast.success("Regra vinculada provisoriamente. Conclua clicando em 'Salvar Caso' no fim da tela!", { duration: 4000 });
-              }}
-              className="flex items-center gap-1 px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider text-salomao-blue bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-colors"
-            >
-              <CheckCircle className="w-3 h-3" />
-              Vincular Regra
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Caixa Faturar como Checkbox "Tick" separada */}
-      {onToggleReady && (
-        <div className="mt-2 flex items-center justify-between border border-green-200 bg-green-50/50 px-3 py-2 rounded-lg">
-          <label htmlFor={`faturar-${label.replace(/\s+/g, '-')}`} className="flex items-center gap-2 cursor-pointer w-full group">
-            <input
-              type="checkbox"
-              id={`faturar-${label.replace(/\s+/g, '-')}`}
-              checked={readyToInvoice || false}
-              onChange={onToggleReady}
-              className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 transition-all cursor-pointer"
-            />
-            <span className="text-xs font-bold text-green-800 group-hover:text-green-900 transition-colors">
-              Pronto para Faturar (Notificar no envio do e-mail)
-            </span>
-          </label>
         </div>
       )}
     </div>
