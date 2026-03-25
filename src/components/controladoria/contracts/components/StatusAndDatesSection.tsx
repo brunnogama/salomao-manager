@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
-import { Plus, X, Settings, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
+import { Plus, Settings, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Contract } from '../../../../types/controladoria';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { FinancialInputWithInstallments } from './FinancialInputWithInstallments';
-import { maskMoney, parseCurrency, maskPercent } from '../../utils/masks';
+import { parseCurrency } from '../../utils/masks';
 import { addMonths } from 'date-fns';
-import { toast } from 'sonner';
+import { FeeSectionsCollapsible } from './FeeSectionsCollapsible';
+import { maskMoney } from '../../utils/masks';
 
 interface StatusAndDatesSectionProps {
     formData: Contract;
@@ -369,312 +369,37 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
             )}
 
             {(formData.status === 'proposal' || formData.status === 'active') && (
-                <div className="space-y-6 animate-in slide-in-from-top-2 pt-4 border-t border-gray-100">
-                    {formData.status === 'active' && (
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end mb-4 animate-in fade-in">
-                            <div className="md:col-span-4">
-                                <label className="text-xs font-medium block mb-1 text-green-800">Número HON <span className="text-red-500">*</span></label>
-                                <input type="text" className={`w-full border-2 p-2.5 rounded-lg font-mono font-bold bg-white outline-none ${duplicateHonCase ? 'border-yellow-400 text-yellow-800 bg-yellow-50' : 'border-green-200 text-green-900 focus:border-green-500'}`} placeholder="00.000.000/000" value={formData.hon_number} onChange={e => setFormData({ ...formData, hon_number: maskHon(e.target.value) })} />
-                                {duplicateHonCase && (
-                                    <div className="flex items-center gap-1 mt-1 text-xs text-yellow-700 font-medium whitespace-nowrap overflow-hidden text-ellipsis" title={`ID: ${duplicateHonCase.display_id} - ${duplicateHonCase.client_name} (${getStatusLabel(duplicateHonCase.status)})`}>
-                                        <AlertTriangle className="w-3 h-3 flex-shrink-0" />
-                                        <span>Em uso por: {duplicateHonCase.display_id} - {duplicateHonCase.client_name} ({getStatusLabel(duplicateHonCase.status)})</span>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="md:col-span-4"><CustomSelect label="Local Faturamento *" value={formData.billing_location || ''} onChange={(val: string) => setFormData({ ...formData, billing_location: val })} options={billingOptions} onAction={() => setActiveManager('location')} actionLabel="Gerenciar Locais" actionIcon={Settings} /></div>
-                            <div className="md:col-span-4"><CustomSelect label="Possui Assinatura Física? *" value={formData.physical_signature === true ? 'true' : formData.physical_signature === false ? 'false' : ''} onChange={(val: string) => { setFormData({ ...formData, physical_signature: val === 'true' ? true : val === 'false' ? false : undefined }); }} options={signatureOptions} /></div>
-                        </div>
-                    )}
-
-                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-5 items-start ${isTimesheet ? 'opacity-40 pointer-events-none filter grayscale' : ''}`}>
-                        <div className="space-y-2">
-                            <FinancialInputWithInstallments 
-                                label="Pró-Labore (R$)" 
-                                value={safeString(formatForInput(formData.pro_labore))} 
-                                onChangeValue={(v: any) => setFormData({ ...formData, pro_labore: v })} 
-                                installments={formData.pro_labore_installments} 
-                                onChangeInstallments={(v: any) => setFormData({ ...formData, pro_labore_installments: v })} 
-                                onAdd={() => handleAddToList('pro_labore_extras', 'pro_labore', 'pro_labore_extras_installments', 'pro_labore_installments', 'pro_labore_extras_rules', 'pro_labore_rule', 'pro_labore_extras_ready', 'pro_labore_ready')} 
-                                clause={(formData as any).pro_labore_clause} 
-                                onChangeClause={(v: any) => setFormData({ ...formData, pro_labore_clause: v } as any)} 
-                                rule={formData.pro_labore_rule}
-                                onChangeRule={(v: any) => setFormData({ ...formData, pro_labore_rule: v })}
-                                readyToInvoice={formData.pro_labore_ready}
-                                onToggleReady={() => setFormData({ ...formData, pro_labore_ready: !formData.pro_labore_ready })}
-                            />
-                            <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
-                                {ensureArray((formData as any).pro_labore_extras).map((val: string, idx: number) => {
-                                    const clauses = ensureArray((formData as any).pro_labore_extras_clauses);
-                                    const installments = ensureArray((formData as any).pro_labore_extras_installments);
-                                    const rules = ensureArray((formData as any).pro_labore_extras_rules);
-                                    const readyFlags = (formData as any).pro_labore_extras_ready || [];
-                                    const isReady = readyFlags[idx];
-                                    return (
-                                        <div key={idx} onClick={() => handleEditExtra('pro_labore_extras', 'pro_labore', 'pro_labore_extras_installments', 'pro_labore_installments', 'pro_labore_extras_clauses', 'pro_labore_clause', 'pro_labore_extras_rules', 'pro_labore_rule', 'pro_labore_extras_ready', 'pro_labore_ready', idx)} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-1">
-                                                    {clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}
-                                                    <span className="font-medium">{val}</span>
-                                                    {installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}
-                                                    {isReady && <span title="Pronto para Faturar"><CheckCircle className="w-3 h-3 text-green-500 ml-1" /></span>}
-                                                </div>
-                                                {rules[idx] && <span className="text-[10px] text-gray-500 line-clamp-1 italic mt-0.5">{rules[idx]}</span>}
-                                            </div>
-                                            <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            {renderInstallmentBreakdown('Pró-Labore', 'pro_labore', 'pro_labore_breakdown', 'pro_labore_installments')}
-                        </div>
-
-                        <div className="space-y-2">
-                            <FinancialInputWithInstallments 
-                                label="Fixo Mensal (R$)" 
-                                value={safeString(formatForInput(formData.fixed_monthly_fee))} 
-                                onChangeValue={(v: any) => setFormData({ ...formData, fixed_monthly_fee: v })} 
-                                installments={formData.fixed_monthly_fee_installments} 
-                                onChangeInstallments={(v: any) => setFormData({ ...formData, fixed_monthly_fee_installments: v })} 
-                                onAdd={() => handleAddToList('fixed_monthly_extras', 'fixed_monthly_fee', 'fixed_monthly_extras_installments', 'fixed_monthly_fee_installments', 'fixed_monthly_extras_rules', 'fixed_monthly_fee_rule', 'fixed_monthly_extras_ready', 'fixed_monthly_ready')} 
-                                clause={(formData as any).fixed_monthly_fee_clause} 
-                                onChangeClause={(v: any) => setFormData({ ...formData, fixed_monthly_fee_clause: v } as any)} 
-                                rule={formData.fixed_monthly_fee_rule}
-                                onChangeRule={(v: any) => setFormData({ ...formData, fixed_monthly_fee_rule: v })}
-                                readyToInvoice={formData.fixed_monthly_ready}
-                                onToggleReady={() => setFormData({ ...formData, fixed_monthly_ready: !formData.fixed_monthly_ready })}
-                            />
-                            <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
-                                {ensureArray((formData as any).fixed_monthly_extras).map((val: string, idx: number) => {
-                                    const clauses = ensureArray((formData as any).fixed_monthly_extras_clauses);
-                                    const installments = ensureArray((formData as any).fixed_monthly_extras_installments);
-                                    const rules = ensureArray((formData as any).fixed_monthly_extras_rules);
-                                    const readyFlags = (formData as any).fixed_monthly_extras_ready || [];
-                                    const isReady = readyFlags[idx];
-                                    return (
-                                        <div key={idx} onClick={() => handleEditExtra('fixed_monthly_extras', 'fixed_monthly_fee', 'fixed_monthly_extras_installments', 'fixed_monthly_fee_installments', 'fixed_monthly_extras_clauses', 'fixed_monthly_fee_clause', 'fixed_monthly_extras_rules', 'fixed_monthly_fee_rule', 'fixed_monthly_extras_ready', 'fixed_monthly_ready', idx)} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-1">
-                                                    {clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}
-                                                    <span className="font-medium">{val}</span>
-                                                    {installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}
-                                                    {isReady && <span title="Pronto para Faturar"><CheckCircle className="w-3 h-3 text-green-500 ml-1" /></span>}
-                                                </div>
-                                                {rules[idx] && <span className="text-[10px] text-gray-500 line-clamp-1 italic mt-0.5">{rules[idx]}</span>}
-                                            </div>
-                                            <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            {renderInstallmentBreakdown('Fixo Mensal', 'fixed_monthly_fee', 'fixed_monthly_fee_breakdown', 'fixed_monthly_fee_installments')}
-                        </div>
-
-                        <div className="space-y-2">
-                            <FinancialInputWithInstallments 
-                                label="Êxito Intermediário" 
-                                value={newIntermediateFee} 
-                                onChangeValue={setNewIntermediateFee} 
-                                installments={interimInstallments} 
-                                onChangeInstallments={setInterimInstallments} 
-                                onAdd={handleAddIntermediateFee} 
-                                clause={interimClause} 
-                                onChangeClause={setInterimClause} 
-                                rule={interimRule}
-                                onChangeRule={setInterimRule}
-                                readyToInvoice={interimReady}
-                                onToggleReady={() => setInterimReady?.(!interimReady)}
-                            />
-                            <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
-                                {ensureArray(formData.intermediate_fees).map((fee: string, idx: number) => {
-                                    const clauses = ensureArray((formData as any).intermediate_fees_clauses);
-                                    const installments = ensureArray((formData as any).intermediate_fees_installments);
-                                    const rules = ensureArray((formData as any).intermediate_fees_rules);
-                                    const readyFlags = (formData as any).intermediate_fees_ready || [];
-                                    const isReady = readyFlags[idx];
-                                    return (
-                                        <div key={idx} onClick={() => { setNewIntermediateFee(fee); setInterimInstallments(installments[idx] || '1x'); setInterimClause(clauses[idx] || ''); setInterimRule?.(rules[idx] || ''); setInterimReady?.(readyFlags[idx] || false); handleRemoveIntermediateFee(idx); }} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-1">
-                                                    {clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}
-                                                    <span className="font-medium">{fee}</span>
-                                                    {installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}
-                                                    {isReady && <span title="Pronto para Faturar"><CheckCircle className="w-3 h-3 text-green-500 ml-1" /></span>}
-                                                </div>
-                                                {rules[idx] && <span className="text-[10px] text-gray-500 line-clamp-1 italic mt-0.5">{rules[idx]}</span>}
-                                            </div>
-                                            <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            {renderInterimBreakdownEditable()}
-                        </div>
-
-                        <div className="space-y-2">
-                            <FinancialInputWithInstallments 
-                                label="Êxito Final (R$)" 
-                                value={safeString(formatForInput(formData.final_success_fee))} 
-                                onChangeValue={(v: any) => setFormData({ ...formData, final_success_fee: v })} 
-                                installments={formData.final_success_fee_installments} 
-                                onChangeInstallments={(v: any) => setFormData({ ...formData, final_success_fee_installments: v })} 
-                                onAdd={() => handleAddToList('final_success_extras', 'final_success_fee', 'final_success_extras_installments', 'final_success_fee_installments', 'final_success_extras_rules', 'final_success_fee_rule', 'final_success_extras_ready', 'final_success_ready')} 
-                                clause={(formData as any).final_success_fee_clause} 
-                                onChangeClause={(v: any) => setFormData({ ...formData, final_success_fee_clause: v } as any)} 
-                                rule={formData.final_success_fee_rule}
-                                onChangeRule={(v: any) => setFormData({ ...formData, final_success_fee_rule: v })}
-                                readyToInvoice={formData.final_success_ready}
-                                onToggleReady={() => setFormData({ ...formData, final_success_ready: !formData.final_success_ready })}
-                            />
-                            <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
-                                {ensureArray((formData as any).final_success_extras).map((val: string, idx: number) => {
-                                    const clauses = ensureArray((formData as any).final_success_extras_clauses);
-                                    const installments = ensureArray((formData as any).final_success_extras_installments);
-                                    const rules = ensureArray((formData as any).final_success_extras_rules);
-                                    const readyFlags = (formData as any).final_success_extras_ready || [];
-                                    const isReady = readyFlags[idx];
-                                    return (
-                                        <div key={idx} onClick={() => handleEditExtra('final_success_extras', 'final_success_fee', 'final_success_extras_installments', 'final_success_fee_installments', 'final_success_extras_clauses', 'final_success_fee_clause', 'final_success_extras_rules', 'final_success_fee_rule', 'final_success_extras_ready', 'final_success_ready', idx)} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-1">
-                                                    {clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}
-                                                    <span className="font-medium">{val}</span>
-                                                    {installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}
-                                                    {isReady && <span title="Pronto para Faturar"><CheckCircle className="w-3 h-3 text-green-500 ml-1" /></span>}
-                                                </div>
-                                                {rules[idx] && <span className="text-[10px] text-gray-500 line-clamp-1 italic mt-0.5">{rules[idx]}</span>}
-                                            </div>
-                                            <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            {renderInstallmentBreakdown('Êxito Final', 'final_success_fee', 'final_success_fee_breakdown', 'final_success_fee_installments')}
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium block mb-1">Êxito %</label>
-                            <div className="flex rounded-lg shadow-sm">
-                                <input type="text" className="w-14 border border-gray-300 rounded-l-lg p-2.5 text-sm bg-gray-50 outline-none border-r-0 text-center" value={(formData as any).final_success_percent_clause || ''} onChange={(e) => setFormData({ ...formData, final_success_percent_clause: e.target.value } as any)} placeholder="Cl." />
-                                <input type="text" className="flex-1 border border-gray-300 p-2.5 text-sm bg-white outline-none" placeholder="Ex: 20,00%" value={formData.final_success_percent} onChange={e => setFormData({ ...formData, final_success_percent: maskPercent(e.target.value) })} />
-                                <button className="bg-salomao-blue text-white px-3 rounded-r-lg hover:bg-blue-900" type="button" onClick={() => handleAddToList('percent_extras', 'final_success_percent', undefined, undefined, 'percent_extras_rules', 'final_success_percent_rule', 'percent_extras_ready', 'final_success_percent_ready')}><Plus className="w-4 h-4" /></button>
-                            </div>
-                            <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
-                                {ensureArray((formData as any).percent_extras).map((val: string, idx: number) => {
-                                    const clauses = ensureArray((formData as any).percent_extras_clauses);
-                                    const rules = ensureArray((formData as any).percent_extras_rules);
-                                    const readyFlags = (formData as any).percent_extras_ready || [];
-                                    const isReady = readyFlags[idx];
-                                    return (
-                                        <div key={idx} onClick={() => { const newList = [...(formData as any).percent_extras]; const newClausesList = [...ensureArray((formData as any).percent_extras_clauses)]; const newRulesList = [...ensureArray((formData as any).percent_extras_rules)]; const newReadyList = (formData as any).percent_extras_ready ? [...(formData as any).percent_extras_ready] : []; const valToEdit = newList[idx]; const clauseToEdit = newClausesList[idx]; const ruleToEdit = newRulesList[idx]; const readyToEdit = newReadyList[idx]; newList.splice(idx, 1); newClausesList.splice(idx, 1); if(newRulesList.length > idx) newRulesList.splice(idx, 1); if(newReadyList.length > idx) newReadyList.splice(idx, 1); setFormData({ ...formData, final_success_percent: valToEdit, final_success_percent_clause: clauseToEdit, final_success_percent_rule: ruleToEdit, final_success_percent_ready: readyToEdit, percent_extras: newList, percent_extras_clauses: newClausesList, percent_extras_rules: newRulesList, percent_extras_ready: newReadyList } as any); }} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-1">
-                                                    {clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}
-                                                    <span className="font-medium">{val}</span>
-                                                    {isReady && <span title="Pronto para Faturar"><CheckCircle className="w-3 h-3 text-green-500 ml-1" /></span>}
-                                                </div>
-                                                {rules[idx] && <span className="text-[10px] text-gray-500 line-clamp-1 italic mt-0.5">{rules[idx]}</span>}
-                                            </div>
-                                            <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            {/* Regras e Faturar para % */}
-                            {(formData.final_success_percent || (formData as any).percent_extras?.length > 0) && (
-                                <>
-                                    <div className="mt-2 bg-gray-50/50 p-2.5 rounded-lg border border-gray-200">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center mb-1.5">
-                                            Regra para recebimento:
-                                        </label>
-                                        <textarea
-                                            className="w-full text-xs p-2 border border-gray-300 rounded bg-white focus:border-salomao-blue outline-none resize-none leading-relaxed"
-                                            placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
-                                            rows={2}
-                                            value={formData.final_success_percent_rule || ''}
-                                            onChange={(e) => setFormData({ ...formData, final_success_percent_rule: e.target.value })}
-                                        />
-                                        <div className="flex justify-end mt-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => toast.success("Regra vinculada provisoriamente. Conclua clicando em 'Salvar Caso' no fim da tela!", { duration: 4000 })}
-                                                className="flex items-center gap-1 px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider text-salomao-blue bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-colors"
-                                            >
-                                                <CheckCircle className="w-3 h-3" />
-                                                Vincular Regra
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-2 flex items-center justify-between border border-green-200 bg-green-50/50 px-3 py-2 rounded-lg">
-                                        <label htmlFor="faturar-exito-percent" className="flex items-center gap-2 cursor-pointer w-full group">
-                                            <input
-                                                type="checkbox"
-                                                id="faturar-exito-percent"
-                                                checked={formData.final_success_percent_ready || false}
-                                                onChange={() => setFormData({ ...formData, final_success_percent_ready: !formData.final_success_percent_ready })}
-                                                className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 transition-all cursor-pointer"
-                                            />
-                                            <span className="text-xs font-bold text-green-800 group-hover:text-green-900 transition-colors">
-                                                Pronto para Faturar (Notificar no envio do e-mail)
-                                            </span>
-                                        </label>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <FinancialInputWithInstallments 
-                                label="Outros Honorários (R$)" 
-                                value={safeString(formatForInput(formData.other_fees))} 
-                                onChangeValue={(v: any) => setFormData({ ...formData, other_fees: v })} 
-                                installments={formData.other_fees_installments} 
-                                onChangeInstallments={(v: any) => setFormData({ ...formData, other_fees_installments: v })} 
-                                onAdd={() => handleAddToList('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments', 'other_fees_extras_rules', 'other_fees_rule', 'other_fees_extras_ready', 'other_fees_ready')} 
-                                clause={(formData as any).other_fees_clause} 
-                                onChangeClause={(v: any) => setFormData({ ...formData, other_fees_clause: v } as any)} 
-                                rule={formData.other_fees_rule}
-                                onChangeRule={(v: any) => setFormData({ ...formData, other_fees_rule: v })}
-                                readyToInvoice={formData.other_fees_ready}
-                                onToggleReady={() => setFormData({ ...formData, other_fees_ready: !formData.other_fees_ready })}
-                            />
-                            <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
-                                {ensureArray((formData as any).other_fees_extras).map((val: string, idx: number) => {
-                                    const clauses = ensureArray((formData as any).other_fees_extras_clauses);
-                                    const installments = ensureArray((formData as any).other_fees_extras_installments);
-                                    const rules = ensureArray((formData as any).other_fees_extras_rules);
-                                    const readyFlags = (formData as any).other_fees_extras_ready || [];
-                                    const isReady = readyFlags[idx];
-                                    return (
-                                        <div key={idx} onClick={() => handleEditExtra('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments', 'other_fees_extras_clauses', 'other_fees_clause', 'other_fees_extras_rules', 'other_fees_rule', 'other_fees_extras_ready', 'other_fees_ready', idx)} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-1">
-                                                    {clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}
-                                                    <span className="font-medium">{val}</span>
-                                                    {installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}
-                                                    {isReady && <span title="Pronto para Faturar"><CheckCircle className="w-3 h-3 text-green-500 ml-1" /></span>}
-                                                </div>
-                                                {rules[idx] && <span className="text-[10px] text-gray-500 line-clamp-1 italic mt-0.5">{rules[idx]}</span>}
-                                            </div>
-                                            <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            {renderInstallmentBreakdown('Outros', 'other_fees', 'other_fees_breakdown', 'other_fees_installments')}
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="text-xs font-medium block mb-1">Timesheet</label>
-                        <div className="flex items-center h-[42px] border border-gray-300 rounded-lg px-3 bg-white">
-                            <input type="checkbox" id="timesheet_check" checked={(formData as any).timesheet || false} onChange={(e) => setFormData({ ...formData, timesheet: e.target.checked } as any)} className="w-4 h-4 text-salomao-blue rounded cursor-pointer" />
-                            <label htmlFor="timesheet_check" className="ml-2 text-sm text-gray-700 cursor-pointer select-none">Utilizar Timesheet</label>
-                        </div>
-                        {isTimesheet && <p className="text-[10px] text-orange-600 mt-1 ml-1 animate-in fade-in">* Ao ativar o Timesheet, os honorários fixos serão zerados no salvamento.</p>}
-                    </div>
-                </div>
+                <FeeSectionsCollapsible
+                    formData={formData}
+                    setFormData={setFormData}
+                    isTimesheet={isTimesheet}
+                    safeString={safeString}
+                    formatForInput={formatForInput}
+                    handleAddToList={handleAddToList}
+                    handleEditExtra={handleEditExtra}
+                    ensureArray={ensureArray}
+                    newIntermediateFee={newIntermediateFee}
+                    setNewIntermediateFee={setNewIntermediateFee}
+                    interimInstallments={interimInstallments}
+                    setInterimInstallments={setInterimInstallments}
+                    handleAddIntermediateFee={handleAddIntermediateFee}
+                    interimClause={interimClause}
+                    setInterimClause={setInterimClause}
+                    interimRule={interimRule}
+                    setInterimRule={setInterimRule}
+                    interimReady={interimReady}
+                    setInterimReady={setInterimReady}
+                    handleRemoveIntermediateFee={handleRemoveIntermediateFee}
+                    renderInstallmentBreakdown={renderInstallmentBreakdown}
+                    renderInterimBreakdownEditable={renderInterimBreakdownEditable}
+                    billingOptions={billingOptions}
+                    maskHon={maskHon}
+                    setActiveManager={setActiveManager}
+                    signatureOptions={signatureOptions}
+                    duplicateHonCase={duplicateHonCase}
+                    getStatusLabel={getStatusLabel}
+                    partnerSelectOptions={partnerSelectOptions}
+                />
             )}
         </div>
     );
