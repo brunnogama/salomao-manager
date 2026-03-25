@@ -404,28 +404,6 @@ export function RHHeadcount() {
     return dataMap
   }, [activeData])
 
-  // 8. Generational Diversity Data
-  const generationalData = useMemo(() => {
-    const counts = {
-      'Baby Boomers (55+)': 0,
-      'Geração X (45-54)': 0,
-      'Millennials (25-44)': 0,
-      'Geração Z (< 25)': 0
-    }
-
-    activeData.forEach(c => {
-      const age = calculateAge(c.birthday)
-      if (age === null) return
-
-      if (age >= 55) counts['Baby Boomers (55+)']++
-      else if (age >= 45) counts['Geração X (45-54)']++
-      else if (age >= 25) counts['Millennials (25-44)']++
-      else counts['Geração Z (< 25)']++
-    })
-
-    return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  }, [activeData])
-
   // --- Constants ---
   const COLORS = {
     primary: '#ea580c',   // Admin (Dark Orange)
@@ -888,7 +866,7 @@ export function RHHeadcount() {
       </div>
 
       {/* 6. Chart Row 4: Legal Specifics */}
-      <div id="export-headcount-cargos" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div id="export-headcount-cargos" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Legal Roles */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
@@ -948,31 +926,7 @@ export function RHHeadcount() {
             </ResponsiveContainer>
           </div>
         </div>
-        {/* Diversidade Geracional (Mini Gráfico) */}
-        <div className="bg-[#1e3a8a] text-white p-6 rounded-2xl flex flex-col shadow-sm">
-          <div className="mb-6 flex items-center gap-3">
-            <div>
-              <h3 className="text-lg font-black tracking-tight" style={{ color: 'white' }}>Diversidade Geracional</h3>
-              <p className="text-[10px] font-bold text-blue-200 uppercase tracking-wider">Distribuição por Geração</p>
-            </div>
-          </div>
-          <div className="h-[400px] w-full flex flex-col space-y-4 overflow-y-auto pr-2">
-            {generationalData.map((item, idx) => (
-              <div key={idx} className="flex flex-col space-y-2">
-                <div className="flex justify-between text-xs font-bold uppercase tracking-widest opacity-80">
-                  <span>{item.name}</span>
-                  <span>{item.value}</span>
-                </div>
-                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-amber-400 rounded-full transition-all duration-500"
-                    style={{ width: `${(item.value / totalActive * 100) || 0}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+
 
       </div>
 
