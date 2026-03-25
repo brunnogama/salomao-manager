@@ -671,14 +671,14 @@ export function ContractFormModal(props: Props) {
 
   const handleDownload = async (path: string) => {
     try {
-      const { data, error } = await supabase.storage.from('ged-documentos').createSignedUrl(path, 60, { download: true });
+      const { data, error } = await supabase.storage.from('ged-documentos').createSignedUrl(path, 60);
       if (error) throw error;
       
-      const a = document.createElement('a');
-      a.href = data.signedUrl;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+      } else {
+        alert('Erro ao gerar link de download.');
+      }
     } catch (error: any) {
       alert('Erro ao baixar documento: ' + error.message);
     }

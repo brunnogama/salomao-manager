@@ -106,14 +106,14 @@ export function CertificateDetailsModal({
                 filePath = filePath.split('/public/ged-documentos/')[1];
             }
 
-            const { data, error } = await supabase.storage.from('ged-documentos').createSignedUrl(filePath, 60, { download: true });
+            const { data, error } = await supabase.storage.from('ged-documentos').createSignedUrl(filePath, 60);
             if (error) throw error;
             
-            const a = document.createElement('a');
-            a.href = data.signedUrl;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            if (data?.signedUrl) {
+                window.open(data.signedUrl, '_blank');
+            } else {
+                throw new Error('Erro ao gerar link de download.');
+            }
             toast.success('Download concluído', { id: toastId });
         } catch (error: any) {
             toast.error('Erro ao baixar documento: ' + error.message, { id: toastId });

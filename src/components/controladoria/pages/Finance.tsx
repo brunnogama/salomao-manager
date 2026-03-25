@@ -293,15 +293,15 @@ export function Finance() {
 
       const { data: fileData, error: downloadError } = await supabase.storage
         .from('ged-documentos')
-        .createSignedUrl(doc.file_path, 60, { download: true });
+        .createSignedUrl(doc.file_path, 60);
 
       if (downloadError) throw downloadError;
 
-      const a = document.createElement('a');
-      a.href = fileData.signedUrl;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      if (fileData?.signedUrl) {
+        window.open(fileData.signedUrl, '_blank');
+      } else {
+        throw new Error('Erro ao gerar link de download.');
+      }
 
       toast.dismiss(loadingToast);
       toast.success('Download concluído!');
