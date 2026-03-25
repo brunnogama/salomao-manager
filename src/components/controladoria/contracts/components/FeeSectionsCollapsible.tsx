@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, CheckCircle, DollarSign, Award, Hash, Save, Edit, Trash2, Settings, AlertTriangle } from 'lucide-react';
+import { Plus, CheckCircle, DollarSign, Award, Save, Edit, Trash2, Settings, AlertTriangle } from 'lucide-react';
 import { Contract } from '../../../../types/controladoria';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { FinancialInputWithInstallments } from './FinancialInputWithInstallments';
-import { maskPercent } from '../../utils/masks';
 
 interface FeeSectionsCollapsibleProps {
     formData: Contract;
@@ -300,130 +299,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
         );
     };
 
-    // Renderiza a seção do Êxito Final % (lógica especial)
-    const renderPercentSection = () => {
-        const percentExtras = ensureArray((formData as any).percent_extras);
-        const percentClauses = ensureArray((formData as any).percent_extras_clauses);
-        const percentRules = ensureArray((formData as any).percent_extras_rules);
-        const percentReady = (formData as any).percent_extras_ready || [];
-        const isOpen = openSections['percent'] || false;
 
-        return (
-            <div className="border border-gray-200 rounded-xl overflow-hidden bg-white/80 backdrop-blur-sm">
-                <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
-                    <div className="flex items-center gap-2.5">
-                        <Hash className="w-4 h-4 text-[#1e3a8a]" />
-                        <span className="text-sm font-bold text-[#0a192f]">Êxito Final (%)</span>
-                        {percentExtras.length > 0 && <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{percentExtras.length}</span>}
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => toggleSection('percent')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-200"
-                    >
-                        <Plus className="w-3.5 h-3.5" />
-                        Adicionar Êxito %
-                    </button>
-                </div>
-
-                <div className="px-5 py-3">
-                    {percentExtras.length > 0 && (
-                        <div className="flex flex-col gap-2 mb-3">
-                            {percentExtras.map((val: string, idx: number) => (
-                                <SavedFeeItem
-                                    key={idx}
-                                    val={val}
-                                    clause={percentClauses[idx]}
-                                    rule={percentRules[idx]}
-                                    isReady={percentReady[idx]}
-                                    onEdit={() => {
-                                        const newList = [...(formData as any).percent_extras];
-                                        const newClausesList = [...ensureArray((formData as any).percent_extras_clauses)];
-                                        const newRulesList = [...ensureArray((formData as any).percent_extras_rules)];
-                                        const newReadyList = (formData as any).percent_extras_ready ? [...(formData as any).percent_extras_ready] : [];
-                                        const valToEdit = newList[idx]; const clauseToEdit = newClausesList[idx]; const ruleToEdit = newRulesList[idx]; const readyToEdit = newReadyList[idx];
-                                        newList.splice(idx, 1); newClausesList.splice(idx, 1);
-                                        if (newRulesList.length > idx) newRulesList.splice(idx, 1);
-                                        if (newReadyList.length > idx) newReadyList.splice(idx, 1);
-                                        setFormData({ ...formData, final_success_percent: valToEdit, final_success_percent_clause: clauseToEdit, final_success_percent_rule: ruleToEdit, final_success_percent_ready: readyToEdit, percent_extras: newList, percent_extras_clauses: newClausesList, percent_extras_rules: newRulesList, percent_extras_ready: newReadyList } as any);
-                                        setOpenSections(prev => ({ ...prev, percent: true }));
-                                    }}
-                                    onDelete={() => {
-                                        const newList = [...(formData as any).percent_extras];
-                                        const newClausesList = [...ensureArray((formData as any).percent_extras_clauses)];
-                                        const newRulesList = [...ensureArray((formData as any).percent_extras_rules)];
-                                        const newReadyList = (formData as any).percent_extras_ready ? [...(formData as any).percent_extras_ready] : [];
-                                        newList.splice(idx, 1); newClausesList.splice(idx, 1);
-                                        if (newRulesList.length > idx) newRulesList.splice(idx, 1);
-                                        if (newReadyList.length > idx) newReadyList.splice(idx, 1);
-                                        setFormData({ ...formData, percent_extras: newList, percent_extras_clauses: newClausesList, percent_extras_rules: newRulesList, percent_extras_ready: newReadyList } as any);
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    )}
-
-                    {percentExtras.length === 0 && !isOpen && (
-                        <p className="text-xs text-gray-400 italic">Nenhum valor cadastrado.</p>
-                    )}
-
-                    {isOpen && (
-                        <div className="animate-in fade-in slide-in-from-top-2 duration-200 bg-gray-50/50 border border-gray-200 rounded-lg p-4 mt-1">
-                            <div>
-                                <label className="text-xs font-medium block mb-1 text-gray-600">Valor - Êxito %</label>
-                                <div className="flex rounded-lg shadow-sm">
-                                    <input type="text" className="w-14 border border-gray-300 rounded-l-lg p-2.5 text-sm bg-gray-50 outline-none border-r-0 text-center" value={(formData as any).final_success_percent_clause || ''} onChange={(e) => setFormData({ ...formData, final_success_percent_clause: e.target.value } as any)} placeholder="Cl." />
-                                    <input type="text" className="flex-1 border border-gray-300 p-2.5 text-sm bg-white outline-none rounded-r-lg" placeholder="Ex: 20,00%" value={formData.final_success_percent} onChange={e => setFormData({ ...formData, final_success_percent: maskPercent(e.target.value) })} />
-                                </div>
-                            </div>
-
-                            <div className="mt-2 bg-white/50 p-2.5 rounded-lg border border-gray-200">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center mb-1.5">
-                                    Regra para recebimento:
-                                </label>
-                                <textarea
-                                    className="w-full text-xs p-2 border border-gray-300 rounded bg-white focus:border-salomao-blue outline-none resize-none leading-relaxed"
-                                    placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
-                                    rows={2}
-                                    value={formData.final_success_percent_rule || ''}
-                                    onChange={(e) => setFormData({ ...formData, final_success_percent_rule: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="mt-2 flex items-center justify-between border border-green-200 bg-green-50/50 px-3 py-2 rounded-lg">
-                                <label htmlFor="faturar-exito-percent-collapsible" className="flex items-center gap-2 cursor-pointer w-full group">
-                                    <input
-                                        type="checkbox"
-                                        id="faturar-exito-percent-collapsible"
-                                        checked={formData.final_success_percent_ready || false}
-                                        onChange={() => setFormData({ ...formData, final_success_percent_ready: !formData.final_success_percent_ready })}
-                                        className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 transition-all cursor-pointer"
-                                    />
-                                    <span className="text-xs font-bold text-green-800 group-hover:text-green-900 transition-colors">
-                                        Pronto para Faturar
-                                    </span>
-                                </label>
-                            </div>
-
-                            <div className="flex justify-end mt-3">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        handleAddToList('percent_extras', 'final_success_percent', undefined, undefined, 'percent_extras_rules', 'final_success_percent_rule', 'percent_extras_ready', 'final_success_percent_ready');
-                                        toggleSection('percent');
-                                    }}
-                                    className="flex items-center gap-1.5 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-sm"
-                                >
-                                    <Save className="w-3.5 h-3.5" />
-                                    Salvar
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    };
 
     return (
         <div className="space-y-6 animate-in slide-in-from-top-2 pt-4 border-t border-gray-100">
@@ -489,7 +365,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                     breakdownField: 'other_fees_breakdown'
                 })}
 
-                {renderPercentSection()}
+
             </div>
 
             {/* Timesheet */}
