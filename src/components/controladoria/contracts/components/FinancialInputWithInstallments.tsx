@@ -118,33 +118,37 @@ export const FinancialInputWithInstallments = ({
         )}
       </div>
       
-      {/* Container da Regra e Faturar */}
-      {(showRule || onChangeRule) && (
-        <div className="mt-2 bg-gray-50 p-2 rounded-lg border border-gray-200 shadow-sm animate-in fade-in slide-in-from-top-1">
-          <div className="flex flex-col gap-2 relative">
-            {onChangeRule && (
-              <textarea
-                className="w-full text-sm p-2 border border-gray-300 rounded-md bg-white focus:border-salomao-blue outline-none resize-none"
-                placeholder="Exemplo de Regra: Somente cobrar após trânsito em julgado..."
-                rows={2}
-                value={rule || ''}
-                onChange={(e) => onChangeRule(e.target.value)}
-              />
-            )}
-            
-            {onToggleReady && (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={onToggleReady}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all shadow-sm border ${readyToInvoice ? 'bg-green-100 text-green-800 border-green-200 ring-1 ring-green-500/50' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-100'}`}
-                >
-                  <CheckCircle className={`w-3.5 h-3.5 ${readyToInvoice ? 'text-green-600' : 'text-gray-400'}`} />
-                  {readyToInvoice ? 'Pronto para Faturar!' : 'Faturar'}
-                </button>
-              </div>
-            )}
-          </div>
+      {/* Caixa da Regra Separada */}
+      {onChangeRule && (
+        <div className="mt-2 bg-gray-50/50 p-2.5 rounded-lg border border-gray-200">
+          <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center mb-1.5">
+            Regra para recebimento:
+          </label>
+          <textarea
+            className="w-full text-xs p-2 border border-gray-300 rounded bg-white focus:border-salomao-blue outline-none resize-none leading-relaxed"
+            placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
+            rows={2}
+            value={rule || ''}
+            onChange={(e) => onChangeRule(e.target.value)}
+          />
+        </div>
+      )}
+
+      {/* Caixa Faturar como Checkbox "Tick" separada */}
+      {onToggleReady && (
+        <div className="mt-2 flex items-center justify-between border border-green-200 bg-green-50/50 px-3 py-2 rounded-lg">
+          <label htmlFor={`faturar-${label.replace(/\s+/g, '-')}`} className="flex items-center gap-2 cursor-pointer w-full group">
+            <input
+              type="checkbox"
+              id={`faturar-${label.replace(/\s+/g, '-')}`}
+              checked={readyToInvoice || false}
+              onChange={onToggleReady}
+              className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 transition-all cursor-pointer"
+            />
+            <span className="text-xs font-bold text-green-800 group-hover:text-green-900 transition-colors">
+              Pronto para Faturar (Notificar no envio do e-mail)
+            </span>
+          </label>
         </div>
       )}
     </div>
