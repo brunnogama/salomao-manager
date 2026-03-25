@@ -90,27 +90,33 @@ export const MODULE_CONFIG = {
   financial: {
     icons: {
       dashboard: LayoutDashboard,
+      calendario: Calendar,
       'contas-pagar': ArrowUpCircle,
+      'emissao-nf': Receipt,
       'contas-receber': ArrowDownCircle,
+      oab: Briefcase,
       'gestao-aeronave': Plane,
-      ged: FolderSearch,
-      historico: History
+      ged: FolderSearch
     },
     titles: {
       dashboard: 'Dashboard Financeiro',
+      calendario: 'Calendário',
       'contas-pagar': 'Contas a Pagar',
+      'emissao-nf': 'Emissão de NF',
       'contas-receber': 'Contas a Receber',
+      oab: 'OAB',
       'gestao-aeronave': 'Gestão da Aeronave',
-      ged: 'Gestão Eletrônica de Documentos',
-      historico: 'Histórico'
+      ged: 'Gestão Eletrônica de Documentos'
     },
     descriptions: {
       dashboard: 'Visão geral do fluxo de caixa e indicadores.',
+      calendario: 'Calendário financeiro e vencimentos.',
       'contas-pagar': 'Gestão de despesas e obrigações.',
+      'emissao-nf': 'Emissão e registro de notas fiscais.',
       'contas-receber': 'Controle de receitas e faturamentos.',
+      oab: 'Controle de anuidades e registros OAB.',
       'gestao-aeronave': 'Controle de custos e manutenção da aeronave.',
-      ged: 'Arquivo digital e organização de documentos.',
-      historico: 'Log de transações e atividades financeiras.'
+      ged: 'Arquivo digital e organização de documentos.'
     }
   },
   executive: {
