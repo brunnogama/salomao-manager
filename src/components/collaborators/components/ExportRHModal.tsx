@@ -42,7 +42,7 @@ export const EXPORT_SECTIONS: ExportSection[] = [
     charts: [
       { id: 'export-kpis-headcount', label: 'Headcount: KPIs' },
       { id: 'export-headcount-mapa', label: 'Distribuição por Local' },
-      { id: 'export-headcount-lideres', label: 'Colaboradores por Líder' },
+      { id: 'export-headcount-lideres', label: 'Integrantes por Líder' },
       { id: 'export-headcount-demografico', label: 'Gênero e Faixa Etária' },
       { id: 'export-headcount-cargos', label: 'Distribuição por Cargo e Nível' },
       { id: 'export-insights-headcount', label: 'Insights e Ações Estratégicas' },

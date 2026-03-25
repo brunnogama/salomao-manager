@@ -484,7 +484,7 @@ export function RHHeadcount() {
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-gray-800"></div>
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Colaboradores</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Integrantes</p>
             <p className="text-3xl font-black text-gray-800 mt-1">{totalActive}</p>
           </div>
           <div className="p-3 bg-gray-100 rounded-xl">
@@ -591,7 +591,7 @@ export function RHHeadcount() {
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-gray-800 tracking-tight">Colaboradores por Líder</h3>
+            <h3 className="text-lg font-black text-gray-800 tracking-tight">Integrantes por Líder</h3>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lideranças</p>
           </div>
         </div>
