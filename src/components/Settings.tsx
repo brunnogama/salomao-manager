@@ -56,7 +56,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   const [users, setUsers] = useState<AppUser[]>([])
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<AppUser | null>(null)
-  const [userForm, setUserForm] = useState<{ nome: string, email: string, cargo: string, allowed_modules: string[] }>({ nome: '', email: '', cargo: 'Colaborador', allowed_modules: ['crm'] })
+  const [userForm, setUserForm] = useState<{ nome: string, email: string, cargo: string, allowed_modules: string[] }>({ nome: '', email: '', cargo: 'Colaborador', allowed_modules: [] })
 
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('')
   const [currentUserRole, setCurrentUserRole] = useState<string>('')
@@ -459,7 +459,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
               isAdmin={isAdmin}
               onOpenModal={(user) => {
                 setEditingUser(user || null);
-                setUserForm(user ? { nome: user.nome, email: user.email, cargo: user.cargo, allowed_modules: user.allowed_modules } : { nome: '', email: '', cargo: 'Colaborador', allowed_modules: ['crm'] });
+                setUserForm(user ? { nome: user.nome, email: user.email, cargo: user.cargo, allowed_modules: user.allowed_modules || [] } : { nome: '', email: '', cargo: 'Colaborador', allowed_modules: [] });
                 setIsUserModalOpen(true);
               }}
               onDeleteUser={handleDeleteUser}
@@ -575,12 +575,6 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
       <UserModal
         isOpen={isUserModalOpen} loading={loading} editingUser={editingUser} userForm={userForm}
         setUserForm={setUserForm} onClose={() => setIsUserModalOpen(false)} onSave={handleSaveUser}
-        onToggleModule={(mod) => {
-          const mods = [...userForm.allowed_modules];
-          const idx = mods.indexOf(mod);
-          idx > -1 ? mods.splice(idx, 1) : mods.push(mod);
-          setUserForm({ ...userForm, allowed_modules: mods });
-        }}
       />
 
       {resetModal?.isOpen && (

@@ -10,11 +10,10 @@ interface UserModalProps {
   setUserForm: (form: any) => void;
   onClose: () => void;
   onSave: () => void;
-  onToggleModule: (moduleKey: string) => void;
 }
 
 export function UserModal({
-  isOpen, loading, editingUser, userForm, setUserForm, onClose, onSave, onToggleModule
+  isOpen, loading, editingUser, userForm, setUserForm, onClose, onSave
 }: UserModalProps) {
   useEscKey(isOpen, onClose)
   if (!isOpen) return null;
@@ -70,27 +69,25 @@ export function UserModal({
             <label className="text-xs font-bold text-gray-900 uppercase flex items-center gap-2 mb-3">
               <Lock className="h-3 w-3" /> Módulos Permitidos
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              {['crm', 'controladoria', 'collaborators', 'financial', 'operational', 'executive'].map(m => (
-                <label key={m} className="flex items-center gap-2 p-2 bg-white border border-gray-200 rounded cursor-pointer hover:bg-blue-50 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={userForm.allowed_modules.includes(m)}
-                    onChange={() => onToggleModule(m)}
-                    className="text-blue-600 rounded"
-                  />
-                  <span className="text-sm font-medium text-gray-700 capitalize">
-                    {m === 'collaborators' ? 'RH' :
-                      m === 'financial' ? 'Financeiro' :
-                        m === 'operational' ? 'Operacional' :
-                          m === 'controladoria' ? 'Controladoria' :
-                            m === 'executive' ? 'Secretaria Executiva' :
-                              m === 'crm' ? 'CRM Brindes' : m}
-                  </span>
-                </label>
-              ))}
+            <div className="mb-3 text-xs text-gray-500 bg-blue-50 p-2 rounded border border-blue-100">
+              Para adicionar ou remover acessos, acesse a aba <b>Permissões</b>. Este painel apenas espelha os acessos atuais do usuário.
             </div>
-
+            {userForm.allowed_modules && userForm.allowed_modules.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {userForm.allowed_modules.map((m: string) => (
+                  <span key={m} className="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-700 shadow-sm capitalize">
+                      {m === 'collaborators' ? 'RH' :
+                        m === 'financial' ? 'Financeiro' :
+                          m === 'operational' ? 'Operacional' :
+                            m === 'controladoria' ? 'Controladoria' :
+                              m === 'executive' ? 'Secretaria Executiva' :
+                                m === 'crm' ? 'CRM Brindes' : m}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 italic">Usuário sem módulos liberados.</p>
+            )}
           </div>
         </div>
 
