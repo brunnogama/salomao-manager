@@ -185,6 +185,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                 readyToInvoice={(formData as any)[readyField]}
                                 onToggleReady={() => setFormData({ ...formData, [readyField]: !(formData as any)[readyField] })}
                             />
+                            {renderInstallmentBreakdown(title, valueField, breakdownField, installmentsField)}
                             <div className="flex justify-end mt-3">
                                 <button
                                     type="button"
@@ -198,7 +199,6 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     Salvar
                                 </button>
                             </div>
-                            {renderInstallmentBreakdown(title, valueField, breakdownField, installmentsField)}
                         </div>
                     )}
                 </div>
@@ -278,6 +278,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                 readyToInvoice={interimReady}
                                 onToggleReady={() => setInterimReady?.(!interimReady)}
                             />
+                            {renderInterimBreakdownEditable()}
                             <div className="flex justify-end mt-3">
                                 <button
                                     type="button"
@@ -291,7 +292,6 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     Salvar
                                 </button>
                             </div>
-                            {renderInterimBreakdownEditable()}
                         </div>
                     )}
                 </div>
