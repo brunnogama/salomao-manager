@@ -88,52 +88,29 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   ) => {
     const allowed = isModuleAllowed(key)
 
+    if (!allowed) return null;
 
     return (
       <div
         key={key}
-
-        onClick={() => allowed && onSelect(key)}
-        className={`
-          relative overflow-hidden rounded-xl border transition-all duration-300 flex flex-col items-center text-center justify-between group
-          ${allowed
-            ? 'bg-white/5 backdrop-blur-md shadow-lg border-white/10 hover:shadow-2xl hover:bg-white/10 hover:-translate-y-1 cursor-pointer hover:border-[#d4af37]/50'
-            : 'bg-gray-100/5 backdrop-blur-sm border-white/5 opacity-50 cursor-not-allowed grayscale'
-          }
-          h-[220px] w-full
-        `}
+        onClick={() => onSelect(key)}
+        className="relative overflow-hidden rounded-xl border transition-all duration-300 flex flex-col items-center text-center justify-between group bg-white/5 backdrop-blur-md shadow-lg border-white/10 hover:shadow-2xl hover:bg-white/10 hover:-translate-y-1 cursor-pointer hover:border-[#d4af37]/50 h-[220px] w-full"
       >
         {/* Background Gradients */}
         <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-0 group-hover:opacity-20 transition-opacity duration-300`} />
 
         {/* Top Highlight Line */}
-        {allowed && (
-          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        )}
-
-        {/* Lock Badge */}
-        {!allowed && (
-          <div className="absolute top-4 right-4 p-1.5 rounded-lg bg-gray-900/50 backdrop-blur-md">
-            <Lock className="h-3.5 w-3.5 text-gray-400" />
-          </div>
-        )}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
         {/* Content Container */}
         <div className="flex flex-col items-center justify-center flex-1 p-5 w-full z-10">
 
           {/* Icon Container with Glow */}
-          <div className={`
-            relative p-4 rounded-xl mb-4 transition-all duration-300 group-hover:scale-105
-            ${allowed
-              ? `bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-lg shadow-${gradientFrom}/20`
-              : 'bg-gray-800/50 text-gray-500'}
-          `}>
+          <div className={`relative p-4 rounded-xl mb-4 transition-all duration-300 group-hover:scale-105 bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-lg shadow-${gradientFrom}/20`}>
             <Icon className="h-8 w-8" strokeWidth={1.5} />
 
             {/* Inner Glow Effect */}
-            {allowed && (
-              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
-            )}
+            <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
           </div>
 
           <h2 className="text-base font-bold text-white mb-2 tracking-wide group-hover:text-[#d4af37] transition-colors">
@@ -204,6 +181,14 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
     )
   }
 
+
+  const visibleCount = ['crm', 'executive', 'collaborators', 'operational', 'financial', 'controladoria'].filter(key => isModuleAllowed(key)).length;
+
+  const gridClasses = visibleCount === 1 
+    ? "grid-cols-1 max-w-sm" 
+    : visibleCount === 2 || visibleCount === 4
+      ? "grid-cols-1 md:grid-cols-2 max-w-3xl" 
+      : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl";
 
   return (
     <div className="h-screen w-screen bg-[#0a192f] flex flex-col relative overflow-hidden">
@@ -305,7 +290,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         </div>
 
         {/* Modules Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl w-full">
+        <div className={`grid gap-5 w-full mx-auto ${gridClasses}`}>
 
           {renderCard(
             'crm',
