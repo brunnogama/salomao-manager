@@ -541,7 +541,7 @@ export function ContractFormModal(props: Props) {
           }
         };
         formatVal('Pró-Labore', formData.pro_labore);
-        formatVal('Mensalidade', formData.fixed_monthly_fee);
+        formatVal('Fixo Mensal', formData.fixed_monthly_fee);
         formatVal('Êxito', formData.final_success_fee);
         formatVal('Outras Taxas', formData.other_fees);
         if (!valuesHtml) valuesHtml = '<li><i>Nenhum valor financeiro atrelado.</i></li>';
