@@ -39,6 +39,7 @@ export function Finance() {
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [selectedInstallment, setSelectedInstallment] = useState<FinancialInstallment | null>(null);
   const [billingDate, setBillingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [nfNumber, setNfNumber] = useState('');
 
   const [isDueDateModalOpen, setIsDueDateModalOpen] = useState(false);
   const [installmentToEdit, setInstallmentToEdit] = useState<FinancialInstallment | null>(null);
@@ -235,12 +236,22 @@ export function Finance() {
   const handleMarkAsPaid = (installment: FinancialInstallment) => {
     setSelectedInstallment(installment);
     setBillingDate(todayStr);
+    setNfNumber(installment.nf_number || '');
     setIsDateModalOpen(true);
   };
 
   const confirmPayment = async () => {
     if (!selectedInstallment) return;
-    await supabase.from('financial_installments').update({ status: 'paid', paid_at: billingDate }).eq('id', selectedInstallment.id);
+    
+    // Atualiza a parcela com a data de pagamento, status de pago e número da NF
+    await supabase.from('financial_installments')
+      .update({ 
+        status: 'paid', 
+        paid_at: billingDate,
+        nf_number: nfNumber || null
+      })
+      .eq('id', selectedInstallment.id);
+      
     setIsDateModalOpen(false);
     toast.success('Faturamento confirmado!');
     fetchData();
@@ -316,7 +327,8 @@ export function Finance() {
       'Valor': i.amount,
       'Vencimento': new Date(i.due_date!).toLocaleDateString(),
       'Status': i.status === 'paid' ? 'Faturado' : 'Pendente',
-      'Data Faturamento': i.paid_at ? new Date(i.paid_at).toLocaleDateString() : '-'
+      'Data Faturamento': i.paid_at ? new Date(i.paid_at).toLocaleDateString() : '-',
+      'Nota Fiscal': i.nf_number || '-'
     }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -662,6 +674,27 @@ export function Finance() {
               <div>
                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Data do Recebimento</label>
                 <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={billingDate} onChange={(e) => setBillingDate(e.target.value)} />
+              </div>
+              
+              <div>
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Nota Fiscal (Opcional)</label>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder="Busque por CNPJ ou nome, ou preencha o número 000..." 
+                    className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-300 placeholder:font-normal" 
+                    value={nfNumber} 
+                    onChange={(e) => setNfNumber(e.target.value)} 
+                    list="nf-suggestions"
+                  />
+                  <datalist id="nf-suggestions">
+                    {/* Aqui entrarão as opções de NFs do backend quando a integração estiver pronta */}
+                    <option value="Emitir nova NF pelo portal" />
+                  </datalist>
+                </div>
+                <p className="mt-1.5 text-[8.5px] font-bold text-gray-400 uppercase tracking-wide">
+                  Dica: Você pode digitar livremente caso não encontre na busca.
+                </p>
               </div>
             </div>
 

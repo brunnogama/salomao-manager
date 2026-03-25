@@ -433,6 +433,7 @@ export interface FinancialInstallment {
   paid_at?: string | null;
   status: 'pending' | 'paid';
   clause?: string;
+  nf_number?: string;
   contract?: {
     id: string;
     seq_id?: number;
