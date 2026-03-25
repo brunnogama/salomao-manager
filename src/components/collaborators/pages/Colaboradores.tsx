@@ -121,7 +121,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [filterCargo, setFilterCargo] = useState('')
 
   // New Tabs State
-  const [activeMainTab, setActiveMainTab] = useState<'Colaboradores' | 'Relatórios' | 'Tabelas'>('Colaboradores');
+  const [activeMainTab, setActiveMainTab] = useState<'Integrantes' | 'Relatórios' | 'Tabelas'>('Integrantes');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showExportVTMenu, setShowExportVTMenu] = useState(false);
   const [activeReportView, setActiveReportView] = useState<'menu' | 'filtros' | 'vt'>('menu');
@@ -193,7 +193,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
           setFilterCargo(String(foundRole.id));
         }
       }
-      setActiveMainTab('Colaboradores');
+      setActiveMainTab('Integrantes');
       // Clear location state so it doesn't get stuck on refresh
       const newState = { ...location.state };
       delete newState.roleFilter;
@@ -221,7 +221,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         })) || []
       });
       setShowFormModal(true);
-      setActiveMainTab('Colaboradores');
+      setActiveMainTab('Integrantes');
       // Clear the state so it doesn't reopen on refresh
       window.history.replaceState({}, document.title)
     }
@@ -856,7 +856,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     if (!colaboradorToDelete) return
     const { error } = await supabase.from('collaborators').delete().eq('id', colaboradorToDelete.id)
     if (!error) {
-      await logAction('EXCLUIR', 'RH', `Excluiu colaborador: ${colaboradorToDelete.name}`, 'Colaboradores')
+      await logAction('EXCLUIR', 'RH', `Excluiu colaborador: ${colaboradorToDelete.name}`, 'Integrantes')
       fetchColaboradores()
       if (selectedColaborador) setSelectedColaborador(null)
       showAlert('Sucesso', 'Colaborador excluído com sucesso.', 'success')
@@ -980,12 +980,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
         const { error } = await supabase.from('collaborators').update(payload).eq('id', formData.id)
         if (error) throw error
-        await logAction('EDITAR', 'RH', `Editou colaborador: ${formData.name}`, 'Colaboradores')
+        await logAction('EDITAR', 'RH', `Editou colaborador: ${formData.name}`, 'Integrantes')
       } else {
         const { data, error } = await supabase.from('collaborators').insert(payload).select().single()
         if (error) throw error
         savedColabId = data.id;
-        await logAction('CRIAR', 'RH', `Criou novo colaborador: ${formData.name}`, 'Colaboradores')
+        await logAction('CRIAR', 'RH', `Criou novo colaborador: ${formData.name}`, 'Integrantes')
 
         // Handle Pending GEDs
         if (data && pendingGedDocs.length > 0) {
@@ -1752,8 +1752,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
           </div>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-                Colaboradores
+              <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Integrantes
               </h1>
             </div>
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
@@ -1777,8 +1776,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
               </button>
             )}
             <button
-              onClick={() => setActiveMainTab('Colaboradores')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Colaboradores' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveMainTab('Integrantes')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Integrantes' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <Users className="h-4 w-4" /> Equipe
             </button>
@@ -1800,7 +1799,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
             )}
           </div>
 
-          {activeMainTab === 'Colaboradores' ? (
+          {activeMainTab === 'Integrantes' ? (
             <div className="flex items-center gap-4 border-l border-gray-100 pl-4 ml-2">
 
               <div className="flex items-center gap-1.5 p-1 bg-white border border-gray-100 rounded-xl shadow-sm">
@@ -1858,7 +1857,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     setShowFormModal(true)
                   }}
                   className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
-                  title="Novo Colaborador"
+                  title="Novo Integrante"
                 >
                   <Plus className="h-5 w-5" />
                 </button>
@@ -1966,7 +1965,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
 
 
-      {activeMainTab === 'Colaboradores' && (
+      {activeMainTab === 'Integrantes' && (
         <>
           {!isReadOnly && (
             <div className="flex flex-col lg:flex-row items-stretch gap-4">
@@ -2014,7 +2013,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                         checked={filtered.filter(c => c.status === 'active').length > 0 && selectedIds.length === filtered.filter(c => c.status === 'active').length}
                       />
                     </th>
-                    <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Colaborador</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Integrante</th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Cargo</th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Sócio</th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Líder</th>
@@ -2858,7 +2857,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                                 <table className="w-full text-left border-collapse">
                                   <thead>
                                     <tr className="bg-gradient-to-r from-blue-50 to-white text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest border-b border-blue-100">
-                                      <th className="p-4">Colaborador</th>
+                                      <th className="p-4">Integrante</th>
                                       <th className="p-4 text-center">Vínculo</th>
                                       {groupConfig.type === 'CLT' && (
                                         <th className="p-4 text-center">Líder Direto</th>
@@ -3113,7 +3112,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       {/* FORM PAGE (Full Page Layout) */}
       {
         showFormModal && renderPageLayout(
-          formData.id ? 'Editar Colaborador' : 'Novo Colaborador',
+          formData.id ? 'Editar Colaborador' : 'Novo Integrante',
           () => setShowFormModal(false),
           activeFormTab,
           setActiveFormTab,
@@ -3396,7 +3395,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         isOpen={!!colaboradorToDelete}
         onClose={() => setColaboradorToDelete(null)}
         onConfirm={confirmDeleteColaborador}
-        title="Excluir Colaborador"
+        title="Excluir Integrante"
         description={`Tem certeza que deseja excluir o colaborador "${colaboradorToDelete?.name}" permanentemente? Todas as informações vinculadas a ele serão removidas.`}
         confirmText="Excluir"
         cancelText="Cancelar"
