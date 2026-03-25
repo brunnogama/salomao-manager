@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, Loader2, UserPlus,
@@ -1735,18 +1736,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
                 Colaboradores
               </h1>
-              {isHRUser && totalNotifications > 0 && (
-                <button
-                  onClick={() => setShowNotificationsModal(true)}
-                  className="relative p-2 rounded-full bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors animate-pulse hover:animate-none flex items-center justify-center shrink-0"
-                  title={`${totalNotifications} Notificações de RH`}
-                >
-                  <BellRing className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-white">
-                    {totalNotifications}
-                  </span>
-                </button>
-              )}
             </div>
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
               Gerencie o time, edite perfis e controle acessos
@@ -1796,6 +1785,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
             <div className="flex items-center gap-4 border-l border-gray-100 pl-4 ml-2">
 
               <div className="flex items-center gap-1.5 p-1 bg-white border border-gray-100 rounded-xl shadow-sm">
+                {isHRUser && totalNotifications > 0 && (
+                  <button
+                    onClick={() => setShowNotificationsModal(true)}
+                    className="relative p-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors animate-pulse hover:animate-none flex items-center justify-center shrink-0"
+                    title={`${totalNotifications} Notificações de RH`}
+                  >
+                    <BellRing className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-white">
+                      {totalNotifications}
+                    </span>
+                  </button>
+                )}
                 <button
                   onClick={async () => {
                     setLoading(true)
@@ -3145,7 +3146,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
       {/* LINKS MODAL */}
       {
-        showLinksModal && (
+        showLinksModal && createPortal(
           <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
             <div className="bg-white rounded-2xl w-full max-w-3xl flex flex-col overflow-hidden shadow-2xl relative">
               <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
@@ -3249,13 +3250,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )
       }
 
       {/* HR NOTIFICATIONS MODAL */}
       {
-        showNotificationsModal && (
+        showNotificationsModal && createPortal(
           <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
             <div className="bg-white rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden shadow-2xl relative">
               <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
@@ -3346,7 +3348,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )
       }
 
