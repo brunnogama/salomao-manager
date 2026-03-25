@@ -704,20 +704,6 @@ export function RHEvolucaoPessoal() {
               <Legend />
               <Area
                 type="monotone"
-                stackId="1"
-                dataKey="Administrativo"
-                stroke={hasAdminHeadcount ? COLORS.primary : 'transparent'}
-                fillOpacity={hasAdminHeadcount ? 1 : 0}
-                fill="url(#colorAdmin)"
-                strokeWidth={hasAdminHeadcount ? 3 : 0}
-                dot={hasAdminHeadcount ? { r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 } : false}
-                activeDot={hasAdminHeadcount ? { r: 6, fill: COLORS.primary, strokeWidth: 0 } : false}
-              >
-                {hasAdminHeadcount && <LabelList dataKey="Administrativo" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.primary} position="bottom" />} />}
-              </Area>
-              <Area
-                type="monotone"
-                stackId="1"
                 dataKey="Jurídico"
                 stroke={hasLegalHeadcount ? COLORS.secondary : 'transparent'}
                 fillOpacity={hasLegalHeadcount ? 1 : 0}
@@ -730,7 +716,18 @@ export function RHEvolucaoPessoal() {
               </Area>
               <Area
                 type="monotone"
-                stackId="1"
+                dataKey="Administrativo"
+                stroke={hasAdminHeadcount ? COLORS.primary : 'transparent'}
+                fillOpacity={hasAdminHeadcount ? 1 : 0}
+                fill="url(#colorAdmin)"
+                strokeWidth={hasAdminHeadcount ? 3 : 0}
+                dot={hasAdminHeadcount ? { r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 } : false}
+                activeDot={hasAdminHeadcount ? { r: 6, fill: COLORS.primary, strokeWidth: 0 } : false}
+              >
+                {hasAdminHeadcount && <LabelList dataKey="Administrativo" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.primary} position="bottom" />} />}
+              </Area>
+              <Area
+                type="monotone"
                 dataKey="Terceirizada"
                 stroke={hasTerceirizadaHeadcount ? COLORS.terceirizada : 'transparent'}
                 fillOpacity={hasTerceirizadaHeadcount ? 1 : 0}
