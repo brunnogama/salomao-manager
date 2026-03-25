@@ -21,7 +21,18 @@ export const JURIDICO_ROLES_ORDER = [
 
 export const getJuridicoRoleWeight = (roleName: string) => {
     const norm = normalizeString(roleName)
-    const index = JURIDICO_ROLES_ORDER.findIndex(r => norm === r || norm.startsWith(r))
+    const exactIndex = JURIDICO_ROLES_ORDER.indexOf(norm)
+    if (exactIndex !== -1) return exactIndex;
+
+    const index = JURIDICO_ROLES_ORDER.findIndex(r => {
+        if (norm.startsWith(r)) {
+            const nextChar = norm[r.length];
+            if (!nextChar || nextChar === ' ' || nextChar === '-') {
+                return true;
+            }
+        }
+        return false;
+    });
     return index !== -1 ? index : 999
 }
 

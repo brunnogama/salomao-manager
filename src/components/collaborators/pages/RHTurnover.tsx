@@ -10,11 +10,7 @@ import {
   BarChart2,
   PieChart as PieChartIcon,
   Activity,
-  UserCheck,
-  Lightbulb,
-  AlertTriangle,
-  GraduationCap,
-  Heart
+  UserCheck
 } from 'lucide-react'
 import {
   AreaChart,
@@ -577,68 +573,6 @@ export function RHTurnover() {
           </div>
         </div>
 
-      </div>
-
-      {/* 5. Strategic HR Insights & Actions */}
-      <div id="export-insights-turnover" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col space-y-6">
-        <div className="pb-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
-            <Lightbulb className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-xl font-black text-gray-800 tracking-tight">Insights e Ações Estratégicas de RH</h3>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Métricas Analíticas e Planos de Ação</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-
-          {/* Custo de Reposição e Onboarding */}
-          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
-            <div className="flex items-center gap-2 text-red-600 mb-2">
-              <AlertTriangle size={20} />
-              <h4 className="font-black text-sm uppercase tracking-tight">Custo de Reposição (Early Attrition)</h4>
-            </div>
-            <p className="text-xs text-gray-600 leading-relaxed font-medium">
-              <span className="font-bold text-gray-800">Cenário Adverso:</span> Desligamentos precoces (- de 1 ano) indicam desalinhamento cultural ou falha no perfil esperado no recrutamento. O custo em HH para recontratar e treinar é elevado.
-            </p>
-            <div className="mt-auto pt-3 border-t border-gray-200">
-              <p className="text-[10px] font-black text-blue-900 uppercase">Ação Recomendada:</p>
-              <p className="text-xs text-blue-900">Validar os requisitos de job description com os líderes e estruturar um plano de acompanhamento mais severo nos primeiros 90 dias (Período de Experiência).</p>
-            </div>
-          </div>
-
-          {/* Risco em Plenos/Sêniores */}
-          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
-            <div className="flex items-center gap-2 text-pink-600 mb-2">
-              <Heart size={20} />
-              <h4 className="font-black text-sm uppercase tracking-tight">Risco em Plenos / Seniores</h4>
-            </div>
-            <p className="text-xs text-gray-600 leading-relaxed font-medium">
-              <span className="font-bold text-gray-800">Engajamento de Vetores Críticos:</span> Saídas de colaboradores com {'>'} 3 anos ocorrem geralmente por estagnação, teto salarial ou propostas agressivas da concorrência.
-            </p>
-            <div className="mt-auto pt-3 border-t border-gray-200">
-              <p className="text-[10px] font-black text-pink-800 uppercase">Ação Recomendada:</p>
-              <p className="text-xs text-pink-800">Aplicar política sistemática de Feedbacks e Planos de Desenvolvimento Individual (PDIs). Criar projetos-desafio para mapear sucessores.</p>
-            </div>
-          </div>
-
-          {/* Custos por Equipe Liderança */}
-          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
-            <div className="flex items-center gap-2 text-indigo-600 mb-2">
-              <GraduationCap size={20} />
-              <h4 className="font-black text-sm uppercase tracking-tight">Turnover por Liderança</h4>
-            </div>
-            <p className="text-xs text-gray-600 leading-relaxed font-medium">
-              <span className="font-bold text-gray-800">Gestão e Clima:</span> Picos de turnover isolados em uma equipe ou abaixo de uma liderança indicam necessidades fortes de treinamento, ou desgaste de gestão.
-            </p>
-            <div className="mt-auto pt-3 border-t border-gray-200">
-              <p className="text-[10px] font-black text-indigo-800 uppercase">Ação Recomendada:</p>
-              <p className="text-xs text-indigo-800">Treinar lideranças sobre Gestão e Inteligência Emocional. Estruturar "One-on-Ones" rotineiras e avaliar pulso de clima da equipe com HRBP.</p>
-            </div>
-          </div>
-
-        </div>
       </div>
 
     </div>
