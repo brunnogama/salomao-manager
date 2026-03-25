@@ -365,6 +365,97 @@ export function ContractDetailsModal({
     </div>
   );
 
+  const renderFinancials = () => {
+    if (!financials.showTotals) return null;
+    return (
+      <div className="space-y-4">
+         <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-black/5 pb-2">Resumo Financeiro</h3>
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+           
+           {/* Box 1: Valores das Fases */}
+           <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 text-xs font-bold text-gray-600 uppercase">
+                Composição e Fases
+             </div>
+             <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+               {financials.totalProLabore > 0 && (
+                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase">Pró-Labore</span>
+                    <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalProLabore)}</span>
+                 </div>
+               )}
+               {financials.intermediateTotal > 0 && (
+                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex flex-col">
+                    <span className="text-[10px] font-bold text-blue-600 uppercase">Ex. Intermediário</span>
+                    <span className="text-sm font-black text-blue-800 mt-1">{formatMoney(financials.intermediateTotal)}</span>
+                 </div>
+               )}
+               {financials.totalFinalFee > 0 && (
+                 <div className="bg-green-50 p-3 rounded-lg border border-green-100 flex flex-col">
+                    <span className="text-[10px] font-bold text-green-700 uppercase">Êxito Final</span>
+                    <span className="text-sm font-black text-green-900 mt-1">{formatMoney(financials.totalFinalFee)}</span>
+                 </div>
+               )}
+               {financials.totalFixedMonthly > 0 && (
+                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase">Fixo Mensal</span>
+                    <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalFixedMonthly)}</span>
+                 </div>
+               )}
+               {financials.totalOtherFees > 0 && (
+                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase">Outros Honorários</span>
+                    <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalOtherFees)}</span>
+                 </div>
+               )}
+               
+               {/* Exibir Extras de Percentual se houver */}
+               {hasPercent && (
+                 <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 flex flex-col">
+                    <span className="text-[10px] font-bold text-yellow-700 uppercase">Valores em %</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {contract.final_success_percent && <span className="text-xs font-black text-yellow-900">{contract.final_success_percent} (Final)</span>}
+                      {validPercentExtras.map((val: string, idx: number) => (
+                        <span key={idx} className="text-xs font-black text-yellow-900">{val} (Extra)</span>
+                      ))}
+                    </div>
+                 </div>
+               )}
+             </div>
+           </div>
+
+           {/* Box 2: Totais e Pagamentos */}
+           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm flex flex-col">
+             <div className="bg-[#1e3a8a] px-4 py-3 text-xs font-bold text-white uppercase text-center">
+                Saldo e Totais
+             </div>
+             <div className="p-4 flex-1 flex flex-col gap-4">
+               <div className="text-center">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total do Contrato</p>
+                  <p className="text-2xl font-black text-[#0a192f] mt-1">{formatMoney(financials.grandTotal)}</p>
+               </div>
+               
+               {contract.status === 'active' && (
+                 <>
+                   <div className="h-px bg-gray-100 w-full" />
+                   <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-200">
+                     <span className="text-xs font-bold text-gray-600">Total Pago:</span>
+                     <span className="text-sm font-bold text-green-600">{formatMoney(totalPaid)}</span>
+                   </div>
+                   <div className="flex justify-between items-center bg-red-50 p-2 rounded-lg border border-red-100">
+                     <span className="text-xs font-bold text-red-600">Falta Quitar:</span>
+                     <span className="text-sm font-bold text-red-700">{formatMoney(financials.lackToPay)}</span>
+                   </div>
+                 </>
+               )}
+             </div>
+           </div>
+
+         </div>
+      </div>
+    );
+  };
+
   return createPortal(
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-[95vw] xl:max-w-[1300px] h-[95vh] flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
@@ -470,93 +561,7 @@ export function ContractDetailsModal({
                 </div>
 
                 {/* Área Financeira (apenas Fechado/Ativo ou Proposta) */}
-                {financials.showTotals && (
-                  <div className="space-y-4">
-                     <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-black/5 pb-2">Resumo Financeiro</h3>
-                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                       
-                       {/* Box 1: Valores das Fases */}
-                       <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                         <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 text-xs font-bold text-gray-600 uppercase">
-                            Composição e Fases
-                         </div>
-                         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                           {financials.totalProLabore > 0 && (
-                             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
-                                <span className="text-[10px] font-bold text-gray-500 uppercase">Pró-Labore</span>
-                                <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalProLabore)}</span>
-                             </div>
-                           )}
-                           {financials.intermediateTotal > 0 && (
-                             <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex flex-col">
-                                <span className="text-[10px] font-bold text-blue-600 uppercase">Ex. Intermediário</span>
-                                <span className="text-sm font-black text-blue-800 mt-1">{formatMoney(financials.intermediateTotal)}</span>
-                             </div>
-                           )}
-                           {financials.totalFinalFee > 0 && (
-                             <div className="bg-green-50 p-3 rounded-lg border border-green-100 flex flex-col">
-                                <span className="text-[10px] font-bold text-green-700 uppercase">Êxito Final</span>
-                                <span className="text-sm font-black text-green-900 mt-1">{formatMoney(financials.totalFinalFee)}</span>
-                             </div>
-                           )}
-                           {financials.totalFixedMonthly > 0 && (
-                             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
-                                <span className="text-[10px] font-bold text-gray-500 uppercase">Fixo Mensal</span>
-                                <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalFixedMonthly)}</span>
-                             </div>
-                           )}
-                           {financials.totalOtherFees > 0 && (
-                             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col">
-                                <span className="text-[10px] font-bold text-gray-500 uppercase">Outros Honorários</span>
-                                <span className="text-sm font-black text-gray-800 mt-1">{formatMoney(financials.totalOtherFees)}</span>
-                             </div>
-                           )}
-                           
-                           {/* Exibir Extras de Percentual se houver */}
-                           {hasPercent && (
-                             <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 flex flex-col">
-                                <span className="text-[10px] font-bold text-yellow-700 uppercase">Valores em %</span>
-                                <div className="mt-1 flex flex-wrap gap-1">
-                                  {contract.final_success_percent && <span className="text-xs font-black text-yellow-900">{contract.final_success_percent} (Final)</span>}
-                                  {validPercentExtras.map((val: string, idx: number) => (
-                                    <span key={idx} className="text-xs font-black text-yellow-900">{val} (Extra)</span>
-                                  ))}
-                                </div>
-                             </div>
-                           )}
-                         </div>
-                       </div>
-
-                       {/* Box 2: Totais e Pagamentos */}
-                       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm flex flex-col">
-                         <div className="bg-[#1e3a8a] px-4 py-3 text-xs font-bold text-white uppercase text-center">
-                            Saldo e Totais
-                         </div>
-                         <div className="p-4 flex-1 flex flex-col gap-4">
-                           <div className="text-center">
-                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total do Contrato</p>
-                              <p className="text-2xl font-black text-[#0a192f] mt-1">{formatMoney(financials.grandTotal)}</p>
-                           </div>
-                           
-                           {contract.status === 'active' && (
-                             <>
-                               <div className="h-px bg-gray-100 w-full" />
-                               <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                 <span className="text-xs font-bold text-gray-600">Total Pago:</span>
-                                 <span className="text-sm font-bold text-green-600">{formatMoney(totalPaid)}</span>
-                               </div>
-                               <div className="flex justify-between items-center bg-red-50 p-2 rounded-lg border border-red-100">
-                                 <span className="text-xs font-bold text-red-600">Falta Quitar:</span>
-                                 <span className="text-sm font-bold text-red-700">{formatMoney(financials.lackToPay)}</span>
-                               </div>
-                             </>
-                           )}
-                         </div>
-                       </div>
-
-                     </div>
-                  </div>
-                )}
+                {renderFinancials()}
 
                 {/* Sub-lista de Objetos do Resumo */}
                 <div className="space-y-4">
@@ -678,6 +683,7 @@ export function ContractDetailsModal({
                     </div>
                   )}
                 </div>
+                {renderFinancials()}
                 {renderTimeline()}
               </div>
             )}
