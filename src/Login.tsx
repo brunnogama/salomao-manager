@@ -17,7 +17,8 @@ export default function Login() {
     setError('')
 
     try {
-      const email = `${emailPrefix}@salomaoadv.com.br`
+      const cleanPrefix = emailPrefix.split('@')[0]
+      const email = `${cleanPrefix}@salomaoadv.com.br`
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
