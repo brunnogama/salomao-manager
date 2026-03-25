@@ -182,7 +182,7 @@ const WithProps = ({ Component, extraProps = {} }: { Component: any, extraProps?
 
 export function AppRoutes() {
     const navigate = useNavigate();
-    const { session } = useAuth();
+    const { session, userRole, allowedModules, pagePermissions } = useAuth();
     // State for CRM Filters (passing down to Clients from Dashboard)
     const [clientFilters, setClientFilters] = useState<{ socio?: string; brinde?: string }>({});
 
@@ -234,7 +234,25 @@ export function AppRoutes() {
                 <Route path="/" element={
                     <WithProps Component={ModuleSelector} extraProps={{
                         onSelect: (m: string) => {
-                            const path = moduleRoutes[m];
+                            let path = moduleRoutes[m];
+                            
+                            const isAdmin = userRole === 'admin';
+                            const hasFullAccess = isAdmin || allowedModules.includes(m);
+                            
+                            if (!hasFullAccess && pagePermissions && pagePermissions[m] && pagePermissions[m].length > 0) {
+                                const mapRoute: Record<string, string> = {
+                                    crm: 'crm',
+                                    collaborators: 'rh',
+                                    operational: 'operational',
+                                    financial: 'financeiro',
+                                    executive: 'executivo',
+                                    controladoria: 'controladoria'
+                                };
+                                const routePrefix = mapRoute[m] || m;
+                                const firstPage = pagePermissions[m][0];
+                                path = `/${routePrefix}/${firstPage}`;
+                            }
+
                             console.log(`[AppRoutes] Navigating to module: ${m} -> ${path}`);
                             if (path) {
                                 navigate(path);
