@@ -209,8 +209,8 @@ export function Presencial() {
       if (filterColaborador && nameFormatted !== filterColaborador) return false
       if (searchText) {
         const lowerSearch = searchText.toLowerCase()
-        const matchesName = record.nome_colaborador.toLowerCase().includes(lowerSearch)
-        const matchesSocio = socioRaw.toLowerCase().includes(lowerSearch)
+        const matchesName = String(record.nome_colaborador || '').toLowerCase().includes(lowerSearch)
+        const matchesSocio = String(socioRaw || '').toLowerCase().includes(lowerSearch)
         if (!matchesName && !matchesSocio) return false
       }
       return true
@@ -234,7 +234,7 @@ export function Presencial() {
       if (filterColaborador && nameFormatted !== filterColaborador) return false
       if (searchText) {
         const lowerSearch = searchText.toLowerCase()
-        const matchesName = marcacao.nome_colaborador.toLowerCase().includes(lowerSearch)
+        const matchesName = String(marcacao.nome_colaborador || '').toLowerCase().includes(lowerSearch)
         if (!matchesName) return false
       }
       return true
@@ -248,7 +248,9 @@ export function Presencial() {
       if (filterColaborador && nameFormatted !== filterColaborador) return false
       if (searchText) {
         const lowerSearch = searchText.toLowerCase()
-        return (rule.name || rule.nome_colaborador).toLowerCase().includes(lowerSearch) || (rule.partner_name || rule.socio_responsavel).toLowerCase().includes(lowerSearch)
+        const ruleName = String(rule.name || rule.nome_colaborador || '')
+        const partnerName = String(rule.partner_name || rule.socio_responsavel || '')
+        return ruleName.toLowerCase().includes(lowerSearch) || partnerName.toLowerCase().includes(lowerSearch)
       }
       return true
     })
