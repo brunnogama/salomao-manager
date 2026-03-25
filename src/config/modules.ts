@@ -12,9 +12,7 @@ export const MODULE_CONFIG = {
       magistrados: Gavel,
       incompletos: FileWarning,
       logistica: Truck,
-      kanban: KanbanSquare,
-      historico: History,
-      manual: BookOpen
+      kanban: KanbanSquare
     },
     titles: {
       dashboard: 'Dashboard',
@@ -22,9 +20,7 @@ export const MODULE_CONFIG = {
       magistrados: 'Autoridades',
       incompletos: 'Cadastros Incompletos',
       logistica: 'Logística',
-      kanban: 'Kanban',
-      historico: 'Histórico de Atividades',
-      manual: 'Manual do Sistema'
+      kanban: 'Kanban'
     },
     descriptions: {
       dashboard: 'Visão geral de performance e indicadores chave.',
@@ -32,9 +28,7 @@ export const MODULE_CONFIG = {
       magistrados: 'Área restrita para relacionamento com Autoridades.',
       incompletos: 'Atenção: Cadastros que necessitam de preenchimento.',
       logistica: 'Gestão de entregas e controle logístico.',
-      kanban: 'Gerencie suas tarefas de forma visual.',
-      historico: 'Audit Log: Rastreabilidade de ações no sistema.',
-      manual: 'Documentação completa e guias de uso.'
+      kanban: 'Gerencie suas tarefas de forma visual.'
     }
   },
   collaborators: {

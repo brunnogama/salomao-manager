@@ -20,7 +20,6 @@ import { Dashboard as CrmDashboard } from './components/crm/Dashboard';
 import { Clients } from './components/crm/Clients';
 import { Magistrados } from './components/crm/Magistrados';
 import { IncompleteClients } from './components/crm/IncompleteClients';
-import { Manual } from './components/crm/Manual';
 import { Kanban as CrmKanban } from './components/crm/Kanban';
 import { Settings } from './components/Settings';
 
@@ -256,7 +255,6 @@ export function AppRoutes() {
                     <Route path="clientes" element={<WithProps Component={Clients} extraProps={{ initialFilters: clientFilters }} />} />
                     <Route path="magistrados" element={<WithProps Component={Magistrados} />} />
                     <Route path="incompletos" element={<WithProps Component={IncompleteClients} />} />
-                    <Route path="manual" element={<Manual />} />
                     <Route path="kanban" element={<WithProps Component={CrmKanban} />} />
                     <Route path="logistica" element={<div className="p-8 text-center text-gray-500">Módulo Logística em construção</div>} />
                 </Route>
