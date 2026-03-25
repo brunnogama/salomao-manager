@@ -141,7 +141,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
 
         <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
           <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
-            {collaborator ? 'Editar Colaborador' : 'Novo Colaborador'}
+            {collaborator ? 'Editar Colaborador' : 'Novo Integrante'}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-all">
             <X className="w-6 h-6 text-gray-400" />

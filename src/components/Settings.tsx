@@ -56,7 +56,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   const [users, setUsers] = useState<AppUser[]>([])
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<AppUser | null>(null)
-  const [userForm, setUserForm] = useState<{ nome: string, email: string, cargo: string, allowed_modules: string[] }>({ nome: '', email: '', cargo: 'Colaborador', allowed_modules: [] })
+  const [userForm, setUserForm] = useState<{ nome: string, email: string, cargo: string, allowed_modules: string[] }>({ nome: '', email: '', cargo: 'Integrante', allowed_modules: [] })
 
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('')
   const [currentUserRole, setCurrentUserRole] = useState<string>('')
@@ -109,7 +109,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
     if (data) {
       setUsers(data.map((u: any) => ({
         id: u.id, user_id: u.user_id, nome: u.email.split('@')[0],
-        email: u.email, cargo: u.role === 'admin' ? 'Administrador' : (u.role === 'readonly' ? 'Visualização' : 'Colaborador'),
+        email: u.email, cargo: u.role === 'admin' ? 'Administrador' : (u.role === 'readonly' ? 'Visualização' : 'Integrante'),
         role: u.role || 'user', ativo: !!u.user_id, allowed_modules: u.allowed_modules || []
       })))
     }
@@ -459,7 +459,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
               isAdmin={isAdmin}
               onOpenModal={(user) => {
                 setEditingUser(user || null);
-                setUserForm(user ? { nome: user.nome, email: user.email, cargo: user.cargo, allowed_modules: user.allowed_modules || [] } : { nome: '', email: '', cargo: 'Colaborador', allowed_modules: [] });
+                setUserForm(user ? { nome: user.nome, email: user.email, cargo: user.cargo, allowed_modules: user.allowed_modules || [] } : { nome: '', email: '', cargo: 'Integrante', allowed_modules: [] });
                 setIsUserModalOpen(true);
               }}
               onDeleteUser={handleDeleteUser}
@@ -549,7 +549,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
             <RHSection
               isAdmin={isAdmin}
               onReset={() => openResetModal('presenca_portaria', 'Presencial', 'Resetou presenças', 'Remove todos os registros de presença da portaria')}
-              onResetSecondary={() => openResetModal('colaboradores', 'Colaboradores', 'Resetou colaboradores', 'Remove todos os dados cadastrais de colaboradores')}
+              onResetSecondary={() => openResetModal('colaboradores', 'Integrantes', 'Resetou integrantes', 'Remove todos os dados cadastrais de integrantes')}
               onResetTertiary={() => openResetModal('marcacoes_ponto', 'Controle de Horas', 'Resetou marcações de ponto', 'Remove todos os registros de marcações de ponto')}
             />
           )}

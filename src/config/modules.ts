@@ -52,7 +52,7 @@ export const MODULE_CONFIG = {
       dashboard: 'Dashboard RH',
       calendario: 'Agenda',
       presencial: 'Controle Presencial',
-      colaboradores: 'Colaboradores',
+      colaboradores: 'Integrantes',
       comunicacoes: 'Comunicações',
       vagas: 'Recrutamento',
       postos: 'Postos de Trabalho',

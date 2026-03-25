@@ -326,7 +326,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
                     <textarea
                         value={competencias}
                         onChange={(e) => setCompetencias(e.target.value)}
-                        placeholder="Descreva as competências deste colaborador..."
+                        placeholder="Descreva as competências deste integrante..."
                         className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none font-medium transition-all shadow-sm h-32 resize-none"
                     />
                     <p className="text-[10px] text-gray-400 mt-2 ml-1 font-medium">

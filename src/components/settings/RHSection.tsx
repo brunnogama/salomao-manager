@@ -265,7 +265,7 @@ export function RHSection({ isAdmin, onReset, onResetSecondary, onResetTertiary 
                     </div>
                     <div>
                         <h3 className="font-bold text-gray-900 text-base">Importação e Exportação</h3>
-                        <p className="text-xs text-gray-500">Gerencie a base de colaboradores via planilha</p>
+                        <p className="text-xs text-gray-500">Gerencie a base de integrantes via planilha</p>
                     </div>
                 </div>
 
@@ -395,8 +395,8 @@ export function RHSection({ isAdmin, onReset, onResetSecondary, onResetTertiary 
 
                         <div className="flex items-center justify-between p-4 border border-red-100 rounded-lg bg-red-50/30">
                             <div>
-                                <h4 className="font-bold text-gray-900 text-sm">Resetar Colaboradores</h4>
-                                <p className="text-xs text-gray-500">Remove todos os dados cadastrais de colaboradores</p>
+                                <h4 className="font-bold text-gray-900 text-sm">Resetar Integrantes</h4>
+                                <p className="text-xs text-gray-500">Remove todos os dados cadastrais de integrantes</p>
                             </div>
                             <button
                                 onClick={onResetSecondary}

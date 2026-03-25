@@ -73,7 +73,7 @@ export function CollaboratorManagerModal({ isOpen, onClose, onUpdate }: Props) {
             <input
               type="text"
               className="flex-1 bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
-              placeholder="Nome do colaborador/líder"
+              placeholder="Nome do integrante/líder"
               value={newName}
               onChange={e => setNewName(e.target.value)}
             />

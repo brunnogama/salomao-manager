@@ -633,7 +633,7 @@ export function TabelasTab() {
                                     </table>
                                 </div>
                                 <p className="text-xs text-gray-500 mt-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                    <strong>* Como funciona:</strong> O sistema utiliza a coluna <strong>Ano</strong> comparando com a Data de Admissão do colaborador.
+                                    <strong>* Como funciona:</strong> O sistema utiliza a coluna <strong>Ano</strong> comparando com a Data de Admissão do integrante.
                                     A coluna <strong>Período</strong> é obtida através do campo <em>"Período Atual"</em> na aba Dados de Escolaridade (Nível Graduação, com status Cursando).
                                     A combinação dessas duas variáveis define o valor sugerido da bolsa na aba Dados Corporativos.
                                 </p>

@@ -35,7 +35,7 @@ export function MaintenanceSection({ type, isAdmin, onReset, onResetSecondary, o
           action: onReset
         },
         {
-          title: 'Colaboradores',
+          title: 'Integrantes',
           description: 'Remove todos os dados cadastrais de colaboradores',
           table: 'colaboradores',
           buttonLabel: 'Resetar Colaboradores',

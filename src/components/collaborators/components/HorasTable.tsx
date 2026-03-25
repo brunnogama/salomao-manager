@@ -27,7 +27,7 @@ export function HorasTable({ registros, tableRef }: HorasTableProps) {
         <table className="w-full">
           <thead className="bg-[#112240] sticky top-0 z-10">
             <tr>
-              <th className="px-4 py-3 text-left text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">Colaborador</th>
+              <th className="px-4 py-3 text-left text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">Integrante</th>
               <th className="px-4 py-3 text-left text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">Data</th>
               <th className="px-4 py-3 text-center text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">Entrada</th>
               <th className="px-4 py-3 text-center text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">Saída Almoço</th>

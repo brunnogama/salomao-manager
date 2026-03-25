@@ -1335,7 +1335,7 @@ export function Calendario() {
                           {/* COLABORADORES */}
                           <div>
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                              <Users className="h-3 w-3" /> Convidados (Colaborador)
+                              <Users className="h-3 w-3" /> Convidados (Integrante)
                             </label>
                             <SearchableSelect
                               options={collaborators.map(c => ({ value: c.id, label: formatName(c.name) }))}
@@ -1345,7 +1345,7 @@ export function Calendario() {
                                   setNovoEvento({ ...novoEvento, participantes_internos: [...novoEvento.participantes_internos, val] })
                                 }
                               }}
-                              placeholder="Adicionar colaborador..."
+                              placeholder="Adicionar integrante..."
                             />
                             {novoEvento.participantes_internos.length > 0 && (
                               <div className="flex gap-2 flex-wrap mt-2">

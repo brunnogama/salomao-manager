@@ -43,8 +43,8 @@ export function SocioRuleModal({
           
           {/* Colaborador - Seleção via Tabela */}
           <SearchableSelect 
-            label="Colaborador"
-            placeholder="Selecione o colaborador"
+            label="Integrante"
+            placeholder="Selecione o integrante"
             value={editingRule.colaborador_id || ''}
             onChange={val => setEditingRule({...editingRule, colaborador_id: val})}
             table="collaborators"

@@ -30,9 +30,7 @@ export function DescriptiveTable({ descriptiveData, socioMap }: DescriptiveTable
           {/* THEAD - Design System */}
           <thead className="bg-[#112240] sticky top-0 z-10">
             <tr>
-              <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">
-                Colaborador
-              </th>
+              <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">Integrante</th>
               <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">
                 Sócio
               </th>

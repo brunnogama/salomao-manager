@@ -861,7 +861,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (selectedColaborador) setSelectedColaborador(null)
       showAlert('Sucesso', 'Colaborador excluído com sucesso.', 'success')
     } else {
-      showAlert('Erro', 'Erro ao excluir colaborador: ' + error.message, 'error')
+      showAlert('Erro', 'Erro ao Excluir Integrante: ' + error.message, 'error')
     }
     setColaboradorToDelete(null)
   }
@@ -1416,7 +1416,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         </div>
         <div>
           <p className="text-amber-800 text-xs font-bold">Atualizado via Link Mágico{data.magic_link_updated_at ? ` em ${new Date(data.magic_link_updated_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}</p>
-          <p className="text-amber-600 text-[10px] mt-0.5">Os campos com <span className="inline-block w-2 h-2 bg-amber-400 rounded-full mx-0.5 align-middle"></span> borda dourada foram alterados pelo colaborador.</p>
+          <p className="text-amber-600 text-[10px] mt-0.5">Os campos com <span className="inline-block w-2 h-2 bg-amber-400 rounded-full mx-0.5 align-middle"></span> borda dourada foram alterados pelo integrante.</p>
         </div>
       </div>
     ) : null;
@@ -1454,7 +1454,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
               className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium min-h-[80px] ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={currentData.observacoes || ''}
               onChange={e => currentSetData({ ...currentData, observacoes: e.target.value })}
-              placeholder="Observações gerais sobre o colaborador..."
+              placeholder="Observações gerais sobre o integrante..."
               disabled={isViewMode}
               readOnly={isViewMode}
             />
@@ -2026,14 +2026,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center">
                         <Loader2 className="h-8 w-8 text-[#1e3a8a] animate-spin mx-auto mb-2" />
-                        <p className="text-gray-400 text-xs font-medium">Carregando colaboradores...</p>
+                        <p className="text-gray-400 text-xs font-medium">Carregando integrantes...</p>
                       </td>
                     </tr>
                   ) : filtered.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
                         <UserX className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-xs font-medium">Nenhum colaborador encontrado.</p>
+                        <p className="text-xs font-medium">Nenhum integrante encontrado.</p>
                       </td>
                     </tr>
                   ) : (
@@ -3174,7 +3174,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-[#0a192f]">Links de Atualização Copiáveis</h3>
-                    <p className="text-xs text-gray-500 font-medium">Envie estes links únicos para cada colaborador.</p>
+                    <p className="text-xs text-gray-500 font-medium">Envie estes links únicos para cada integrante.</p>
                   </div>
                 </div>
                 <button
@@ -3188,7 +3188,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4">
                 <div className="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm mb-4 border border-blue-100 flex items-start gap-3">
                   <CheckCircle2 className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                  <p>Nesta seção você tem acesso aos links únicos. <strong>Atenção:</strong> Os links expiram em exatos 7 dias contados a partir de agora. Após expirarem, o colaborador precisará que você gere e envie um novo link.</p>
+                  <p>Nesta seção você tem acesso aos links únicos. <strong>Atenção:</strong> Os links expiram em exatos 7 dias contados a partir de agora. Após expirarem, o integrante precisará que você gere e envie um novo link.</p>
                 </div>
 
                 {generatedLinks.map((link, idx) => {

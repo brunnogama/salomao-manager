@@ -414,7 +414,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                         ) : (
                             <div className="text-center py-12">
                                 <History className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-gray-500">Nenhum histórico encontrado para este colaborador.</p>
+                                <p className="text-sm font-medium text-gray-500">Nenhum histórico encontrado para este integrante.</p>
                             </div>
                         )}
                     </div>
@@ -566,7 +566,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                 ) : (
                                     <div className="text-center py-12">
                                         <Users className="w-12 h-12 text-gray-300 mx-auto mb-3 opacity-50" />
-                                        <p className="text-sm font-medium text-gray-500">Nenhum evento de recrutamento encontrado para este colaborador.</p>
+                                        <p className="text-sm font-medium text-gray-500">Nenhum evento de recrutamento encontrado para este integrante.</p>
                                         <p className="text-xs text-gray-400 mt-1">Isso ocorre quando o e-mail não corresponde ao cadastro do candidato.</p>
                                     </div>
                                 )}
@@ -587,7 +587,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Histórico de Anotações</label>
                                 <textarea
                                     className={`w-full bg-yellow-50/30 border border-gray-200 rounded-xl p-6 text-sm min-h-[300px] focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all resize-none font-medium leading-relaxed ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                    placeholder="Digite aqui observações gerais, anotações de reuniões ou pontos de atenção sobre o colaborador..."
+                                    placeholder="Digite aqui observações gerais, anotações de reuniões ou pontos de atenção sobre o integrante..."
                                     value={obsText}
                                     onChange={e => setObsText(e.target.value)}
                                     disabled={isViewMode}

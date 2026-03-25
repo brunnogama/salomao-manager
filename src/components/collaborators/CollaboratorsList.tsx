@@ -49,7 +49,7 @@ export function CollaboratorsList() {
       <table className="w-full text-left border-collapse">
         <thead>
           <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-            <th className="p-5 text-[10px] font-black text-white uppercase tracking-widest">Colaborador</th>
+            <th className="p-5 text-[10px] font-black text-white uppercase tracking-widest">Integrante</th>
             <th className="p-5 text-[10px] font-black text-white uppercase tracking-widest">Sócio Responsável</th>
             <th className="p-5 text-[10px] font-black text-white uppercase tracking-widest">Líder Direto</th>
             <th className="p-5 text-[10px] font-black text-white uppercase tracking-widest">Status</th>

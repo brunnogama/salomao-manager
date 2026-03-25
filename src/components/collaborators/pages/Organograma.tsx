@@ -1997,7 +1997,7 @@ export function Organograma() {
 
                     {/* Unassigned or Orphan Nodes Pool - rendered structurally beneath the tree inside the 10000px canvas */}
                     <div className="mt-16 pt-8 border-t border-gray-200 w-full max-w-7xl px-8 flex flex-col items-center print:hidden">
-                        <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6">Colaboradores sem subordinação</h3>
+                        <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6">Integrantes sem subordinação</h3>
                             <Droppable droppableId="unassigned" direction="horizontal" type="COLAB">
                                 {(provided, snapshot) => (
                                     <div
@@ -2196,7 +2196,7 @@ export function Organograma() {
                                 saveCompetencias(editingCompetenciasId, editingCompetenciasText);
                                 setEditingCompetenciasId(null);
                             }}
-                            placeholder="Descreva as competências deste colaborador..."
+                            placeholder="Descreva as competências deste integrante..."
                             className="w-full text-xs p-3 rounded-2xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 outline-none transition-all resize-none min-h-[120px] text-[#0a192f] leading-relaxed"
                             autoFocus
                         />
@@ -2215,7 +2215,7 @@ export function Organograma() {
                             </div>
                             <h3 className="text-xl font-black text-[#0a192f] tracking-tight mb-2">Alterar Hierarquia?</h3>
                             <p className="text-gray-500 text-sm leading-relaxed mb-8">
-                                Você está prestes a alterar o líder direto de <strong className="text-[#1e3a8a]">{data.find(c => c.id === pendingDragResult.draggableId)?.name}</strong>. Esta mudança será refletida automaticamente no cadastro oficial do colaborador.
+                                Você está prestes a alterar o líder direto de <strong className="text-[#1e3a8a]">{data.find(c => c.id === pendingDragResult.draggableId)?.name}</strong>. Esta mudança será refletida automaticamente no cadastro oficial do integrante.
                             </p>
                             <div className="flex gap-3">
                                 <button

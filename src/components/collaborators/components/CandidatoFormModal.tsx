@@ -1529,7 +1529,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                                 Candidato Aprovado!
                             </h3>
                             <p className="text-sm text-gray-500 font-medium pb-2">
-                                Deseja ir para a tela de pré-cadastro de <span className="text-[#1e3a8a] font-bold">Colaborador</span> agora?
+                                Deseja ir para a tela de pré-cadastro de <span className="text-[#1e3a8a] font-bold">Integrante</span> agora?
                             </p>
                         </div>
                         <div className="px-6 py-5 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">

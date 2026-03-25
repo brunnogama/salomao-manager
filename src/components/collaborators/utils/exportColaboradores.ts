@@ -188,7 +188,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
     ws['!cols'] = wscols;
 
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Colaboradores");
+    XLSX.utils.book_append_sheet(wb, ws, "Integrantes");
     XLSX.writeFile(wb, finalFileName);
 };
 

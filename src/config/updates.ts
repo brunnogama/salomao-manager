@@ -79,7 +79,7 @@ export const APP_UPDATES: AppUpdate[] = [
             'Adição do histórico de mudança de cargos no perfil dos Colaboradores.',
             'Ajuste no layout do Calendário: os cards de "Aniversariantes" e "Eventos" agora ficam lado a lado, otimizando o espaço da tela.',
             'Melhoria na exibição do gráfico de "Colaboradores por Líder" segmentado por "Jurídico - Sócios", "Jurídico - Líderes" e "Administrativo".',
-            'A página "Colaboradores" agora está agrupada dentro do painel "Dashboard" para melhor organização da barra lateral.'
+            'A página "Integrantes" agora está agrupada dentro do painel "Dashboard" para melhor organização da barra lateral.'
         ],
         fixes: [
             'Correção no envio de e-mails via Make.com que estava apresentando erro 410.',

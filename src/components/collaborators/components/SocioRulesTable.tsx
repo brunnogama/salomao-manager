@@ -28,9 +28,7 @@ export function SocioRulesTable({ filteredRules, onEdit, onDelete }: SocioRulesT
         {/* THEAD - Design System */}
         <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
           <tr>
-            <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
-              Colaborador
-            </th>
+            <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">Integrante</th>
             <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
               Sócio Responsável
             </th>
