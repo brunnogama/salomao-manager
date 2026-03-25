@@ -269,13 +269,18 @@ export function RHEvolucaoPessoal() {
 
     const data = Array.from(roleCounts.entries())
       .map(([role, count]) => ({ role, count }))
-      .sort((a, b) => b.count - a.count)
+      .sort((a, b) => {
+        if (targetSegment === 'Jurídico') {
+          return getJuridicoRoleWeight(a.role) - getJuridicoRoleWeight(b.role)
+        }
+        return b.count - a.count
+      })
 
     return data
   }, [filteredData])
 
   const roleDistributionAdmin = useMemo(() => processRoleDistribution('Administrativo'), [processRoleDistribution])
-  const roleDistributionTerceirizada = useMemo(() => processRoleDistribution('Terceirizada'), [processRoleDistribution])
+  const roleDistributionJuridico = useMemo(() => processRoleDistribution('Jurídico'), [processRoleDistribution])
   // 2. Hiring Ranking by Role (Horizontal Bar)
   const processHiringRanking = useCallback((targetSegment: Segment) => {
     const roleCounts = new Map<string, number>()
@@ -795,21 +800,21 @@ export function RHEvolucaoPessoal() {
           </div>
         </div>
 
-        {/* Terceirizada Distribution */}
+        {/* Juridico Distribution */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#0d9488]/10 text-[#0d9488]">
-              <Users className="w-5 h-5" />
+            <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
+              <Scale className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Cargo (Terc)</h3>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Cargo (Jurídico)</h3>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fotografia Atual dos Ativos</p>
             </div>
           </div>
           <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
-            <div className="w-full" style={{ height: Math.max(300, roleDistributionTerceirizada.length * 35) }}>
+            <div className="w-full" style={{ height: Math.max(300, roleDistributionJuridico.length * 35) }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={roleDistributionTerceirizada} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                <BarChart data={roleDistributionJuridico} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
                   <XAxis type="number" hide />
                   <YAxis
@@ -825,21 +830,21 @@ export function RHEvolucaoPessoal() {
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-white p-2 border border-[#0d9488]/20 shadow-lg rounded-lg">
+                          <div className="bg-white p-2 border border-[#1e3a8a]/20 shadow-lg rounded-lg">
                             <p className="text-xs font-bold text-gray-700">{payload[0].payload.role}</p>
-                            <p className="text-sm font-black text-[#0d9488]">{payload[0].value} ativos</p>
+                            <p className="text-sm font-black text-[#1e3a8a]">{payload[0].value} ativos</p>
                           </div>
                         )
                       }
                       return null
                     }}
                   />
-                  <Bar dataKey="count" fill={COLORS.terceirizada} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
+                  <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
                     if (data && data.role) {
                       navigate('/rh/colaboradores', { state: { roleFilter: data.role } })
                     }
                   }}>
-                    <LabelList dataKey="count" position="right" fill={COLORS.terceirizada} fontSize={10} fontWeight={700} />
+                    <LabelList dataKey="count" position="right" fill={COLORS.secondary} fontSize={10} fontWeight={700} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

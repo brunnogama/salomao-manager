@@ -33,8 +33,7 @@ import {
   isActiveAtDate,
   getYearFromDate,
   calculateAge,
-  normalizeString,
-  getJuridicoRoleWeight
+  normalizeString
 } from '../utils/rhChartUtils'
 import { RHChartTooltip } from '../components/RHChartTooltip'
 
@@ -290,19 +289,6 @@ export function RHHeadcount() {
       leaderJuridicoLideres: allLeaders.filter(l => l.category === 'Jurídico - Líderes')
     }
   }, [activeData, colaboradores])
-
-  // 4. Legal Role Distribution (Cargo do Jurídico)
-  const legalRoleData = useMemo(() => {
-    const map = new Map<string, number>()
-    activeData.filter(c => getSegment(c) === 'Jurídico').forEach(c => {
-      const role = c.roles?.name || String(c.role || 'Não Definido')
-      map.set(role, (map.get(role) || 0) + 1)
-    })
-
-    return Array.from(map.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => getJuridicoRoleWeight(a.name) - getJuridicoRoleWeight(b.name))
-  }, [activeData])
 
   // 5. Legal Level Distribution (Nível do Jurídico)
   const legalLevelData = useMemo(() => {
@@ -866,40 +852,8 @@ export function RHHeadcount() {
       </div>
 
       {/* 6. Chart Row 4: Legal Specifics */}
-      <div id="export-headcount-cargos" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div id="export-headcount-cargos" className="grid grid-cols-1 gap-6">
 
-        {/* Legal Roles */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
-              <Scale className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Cargo (Jurídico)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Detalhamento de Funções</p>
-            </div>
-          </div>
-          <div className="h-[400px] w-full bg-scroll overflow-y-auto">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={legalRoleData.slice(0, 15)} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-                <XAxis type="number" hide />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                  width={140}
-                />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                <Bar dataKey="value" name="Qtd" radius={[0, 4, 4, 0]} barSize={20} fill={COLORS.secondary}>
-                  <LabelList dataKey="value" position="right" fill={COLORS.secondary} fontSize={10} fontWeight={700} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
 
         {/* Legal Levels */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
