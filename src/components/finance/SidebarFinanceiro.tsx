@@ -10,7 +10,8 @@ import {
   Folder,
   X,
   GraduationCap,
-  Receipt
+  Receipt,
+  DollarSign
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -73,6 +74,7 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
     { path: '/financeiro/calendario', label: 'Calendário', icon: Calendar },
     { path: '/financeiro/contas-pagar', label: 'Contas a Pagar', icon: ArrowUpCircle },
     { path: '/financeiro/emissao-nf', label: 'Emissão de NF', icon: Receipt },
+    { path: '/financeiro/controle-financeiro', label: 'Controle Financeiro', icon: DollarSign },
     { path: '/financeiro/contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle },
     { path: '/financeiro/oab', label: 'OAB', icon: GraduationCap },
     { path: '/financeiro/gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane },

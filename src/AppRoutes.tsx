@@ -300,6 +300,7 @@ export function AppRoutes() {
                     <Route path="calendario" element={<WithProps Component={CalendarioFinanceiro} />} />
                     <Route path="contas-pagar" element={<WithProps Component={FinanceContasPagar} />} />
                     <Route path="emissao-nf" element={<WithProps Component={EmissaoNF} />} />
+                    <Route path="controle-financeiro" element={<WithProps Component={ControlFinance} />} />
                     <Route path="contas-receber" element={<WithProps Component={FinanceContasReceber} />} />
                     <Route path="oab" element={<WithProps Component={ListaOAB} />} />
                     <Route path="gestao-aeronave" element={<WithProps Component={GestaoAeronave} />} />
@@ -322,7 +323,6 @@ export function AppRoutes() {
                     <Route path="contratos" element={<WithProps Component={ControlContracts} />} />
                     <Route path="clientes" element={<WithProps Component={ControlClients} />} />
                     <Route path="kanban" element={<WithProps Component={ControlKanban} />} />
-                    <Route path="financeiro" element={<WithProps Component={ControlFinance} />} />
                     <Route path="ged" element={<WithProps Component={ControlGED} />} />
                     <Route path="propostas" element={<WithProps Component={ControlProposals} />} />
                     <Route path="compliance" element={<WithProps Component={ControlCompliance} />} />
