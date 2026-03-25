@@ -327,10 +327,21 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   useEffect(() => {
     if (isHRUser && totalNotifications > 0 && !hasShownInitialModal && !loading) {
-      setShowNotificationsModal(true);
+      const todayStr = new Date().toISOString().split('T')[0];
+      const lastSeenDate = localStorage.getItem('rh_notifications_last_seen');
+      
+      if (lastSeenDate !== todayStr) {
+        setShowNotificationsModal(true);
+      }
       setHasShownInitialModal(true);
     }
   }, [isHRUser, totalNotifications, hasShownInitialModal, loading]);
+
+  const handleCloseNotifications = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    localStorage.setItem('rh_notifications_last_seen', todayStr);
+    setShowNotificationsModal(false);
+  };
 
   const handleMarkBackpackDelivered = async (colabId: string) => {
     try {
@@ -3279,7 +3290,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   </div>
                 </div>
                 <button
-                  onClick={() => setShowNotificationsModal(false)}
+                  onClick={handleCloseNotifications}
                   className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Fechar"
                 >
@@ -3349,7 +3360,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
                 <button
-                  onClick={() => setShowNotificationsModal(false)}
+                  onClick={handleCloseNotifications}
                   className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-[#112240] transition-colors shadow-lg"
                 >
                   Fechar
