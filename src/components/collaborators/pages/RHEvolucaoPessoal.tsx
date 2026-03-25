@@ -10,10 +10,6 @@ import {
   X
 } from 'lucide-react'
 import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -480,44 +476,6 @@ export function RHEvolucaoPessoal() {
     return null
   }
 
-  // --- Custom Label (Replicação do balão azul do Datalabels) ---
-  const CustomDataLabel = (props: any) => {
-    const { x, y, value, fill, position } = props;
-
-    // Explicit positioning logic
-    let yOffset = -25 // Default Up (Top)
-
-    if (position === 'bottom') {
-      yOffset = 10 // Shift down below the point
-    } else {
-      yOffset = -25 // Shift up above the point
-    }
-
-    return (
-      <g>
-        <rect
-          x={x - 15}
-          y={y + yOffset} // Adjusted Y
-          width={30}
-          height={18}
-          rx={4}
-          fill={fill}
-        />
-        <text
-          x={x}
-          y={y + yOffset + 12} // Centered in rect
-          fill="white"
-          textAnchor="middle"
-          fontSize="10px"
-          fontWeight="bold"
-        >
-          {formatCompact(value)}
-        </text>
-      </g>
-    );
-  };
-
-
 
   if (loading) {
     return (
@@ -672,7 +630,7 @@ export function RHEvolucaoPessoal() {
         </div>
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={headcountChartData} margin={{ top: 50, right: 40, left: 10, bottom: 50 }}>
+            <BarChart data={headcountChartData} margin={{ top: 50, right: 40, left: 10, bottom: 50 }} barGap={2} barCategoryGap="20%">
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
               <XAxis
                 dataKey="name"
@@ -681,46 +639,24 @@ export function RHEvolucaoPessoal() {
                 tick={{ fill: COLORS.text, fontSize: 11 }}
                 dy={25}
                 height={60}
-                padding={{ left: 30, right: 30 }} // Add padding to X-axis to prevent label clipping
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }}
               />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="Jurídico"
-                stroke={hasLegalHeadcount ? COLORS.secondary : 'transparent'}
-                strokeWidth={hasLegalHeadcount ? 3 : 0}
-                dot={hasLegalHeadcount ? { r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 } : false}
-                activeDot={hasLegalHeadcount ? { r: 6, fill: COLORS.secondary, strokeWidth: 0 } : false}
-              >
-                {hasLegalHeadcount && <LabelList dataKey="Jurídico" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.secondary} position="top" />} />}
-              </Line>
-              <Line
-                type="monotone"
-                dataKey="Administrativo"
-                stroke={hasAdminHeadcount ? COLORS.primary : 'transparent'}
-                strokeWidth={hasAdminHeadcount ? 3 : 0}
-                dot={hasAdminHeadcount ? { r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 } : false}
-                activeDot={hasAdminHeadcount ? { r: 6, fill: COLORS.primary, strokeWidth: 0 } : false}
-              >
-                {hasAdminHeadcount && <LabelList dataKey="Administrativo" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.primary} position="bottom" />} />}
-              </Line>
-              <Line
-                type="monotone"
-                dataKey="Terceirizada"
-                stroke={hasTerceirizadaHeadcount ? COLORS.terceirizada : 'transparent'}
-                strokeWidth={hasTerceirizadaHeadcount ? 3 : 0}
-                dot={hasTerceirizadaHeadcount ? { r: 4, fill: '#ffffff', stroke: COLORS.terceirizada, strokeWidth: 2 } : false}
-                activeDot={hasTerceirizadaHeadcount ? { r: 6, fill: COLORS.terceirizada, strokeWidth: 0 } : false}
-              >
-                {hasTerceirizadaHeadcount && <LabelList dataKey="Terceirizada" content={(props: any) => <CustomDataLabel {...props} fill={COLORS.terceirizada} position="top" />} />}
-              </Line>
-            </LineChart>
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6' }} />
+              <Legend wrapperStyle={{ paddingTop: '20px' }} />
+              <Bar dataKey="Jurídico" fill={COLORS.secondary} radius={[4, 4, 0, 0]} maxBarSize={40}>
+                {hasLegalHeadcount && <LabelList dataKey="Jurídico" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(v: number) => v > 0 ? formatCompact(v) : ''} />}
+              </Bar>
+              <Bar dataKey="Administrativo" fill={COLORS.primary} radius={[4, 4, 0, 0]} maxBarSize={40}>
+                {hasAdminHeadcount && <LabelList dataKey="Administrativo" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(v: number) => v > 0 ? formatCompact(v) : ''} />}
+              </Bar>
+              <Bar dataKey="Terceirizada" fill={COLORS.terceirizada} radius={[4, 4, 0, 0]} maxBarSize={40}>
+                {hasTerceirizadaHeadcount && <LabelList dataKey="Terceirizada" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(v: number) => v > 0 ? formatCompact(v) : ''} />}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -1002,63 +938,22 @@ export function RHEvolucaoPessoal() {
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={yearlyHiringFlow} margin={{ top: 50, right: 30, left: 10, bottom: 35 }}>
-                <defs>
-                  <linearGradient id="colorAdminFlow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorLegalFlow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorTerceirizadaFlow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.terceirizada} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={COLORS.terceirizada} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
+              <BarChart data={yearlyHiringFlow} margin={{ top: 50, right: 30, left: 10, bottom: 35 }} barGap={2} barCategoryGap="20%">
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} dy={20} height={60} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} dy={10} height={40} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                <Area
-                  type="monotone"
-                  dataKey="Administrativo"
-                  stroke={COLORS.primary}
-                  fillOpacity={1}
-                  fill="url(#colorAdminFlow)"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
-                >
-                  <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} position="bottom" />} />
-                </Area>
-                <Area
-                  type="monotone"
-                  dataKey="Jurídico"
-                  stroke={COLORS.secondary}
-                  fillOpacity={1}
-                  fill="url(#colorLegalFlow)"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
-                >
-                  <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="top" />} />
-                </Area>
-                <Area
-                  type="monotone"
-                  dataKey="Terceirizada"
-                  stroke={COLORS.terceirizada}
-                  fillOpacity={1}
-                  fill="url(#colorTerceirizadaFlow)"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.terceirizada, strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: COLORS.terceirizada, strokeWidth: 0 }}
-                >
-                  <LabelList dataKey="Terceirizada" content={<CustomDataLabel fill={COLORS.terceirizada} position="top" />} />
-                </Area>
-              </AreaChart>
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6' }} />
+                <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                <Bar dataKey="Jurídico" fill={COLORS.secondary} radius={[4, 4, 0, 0]} maxBarSize={30}>
+                  <LabelList dataKey="Jurídico" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(v: number) => v > 0 ? formatCompact(v) : ''} />
+                </Bar>
+                <Bar dataKey="Administrativo" fill={COLORS.primary} radius={[4, 4, 0, 0]} maxBarSize={30}>
+                  <LabelList dataKey="Administrativo" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(v: number) => v > 0 ? formatCompact(v) : ''} />
+                </Bar>
+                <Bar dataKey="Terceirizada" fill={COLORS.terceirizada} radius={[4, 4, 0, 0]} maxBarSize={30}>
+                  <LabelList dataKey="Terceirizada" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(v: number) => v > 0 ? formatCompact(v) : ''} />
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -1071,63 +966,22 @@ export function RHEvolucaoPessoal() {
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={yearlyTurnoverFlow} margin={{ top: 50, right: 30, left: 10, bottom: 35 }}>
-                <defs>
-                  <linearGradient id="colorAdminTurn" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorLegalTurn" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorTerceirizadaTurn" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.terceirizada} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={COLORS.terceirizada} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
+              <BarChart data={yearlyTurnoverFlow} margin={{ top: 50, right: 30, left: 10, bottom: 35 }} barGap={2} barCategoryGap="20%">
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} dy={20} height={60} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} dy={10} height={40} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                <Area
-                  type="monotone"
-                  dataKey="Administrativo"
-                  stroke={COLORS.primary}
-                  fillOpacity={1}
-                  fill="url(#colorAdminTurn)"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
-                >
-                  <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} position="bottom" />} />
-                </Area>
-                <Area
-                  type="monotone"
-                  dataKey="Jurídico"
-                  stroke={COLORS.secondary}
-                  fillOpacity={1}
-                  fill="url(#colorLegalTurn)"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
-                >
-                  <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="top" />} />
-                </Area>
-                <Area
-                  type="monotone"
-                  dataKey="Terceirizada"
-                  stroke={COLORS.terceirizada}
-                  fillOpacity={1}
-                  fill="url(#colorTerceirizadaTurn)"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.terceirizada, strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: COLORS.terceirizada, strokeWidth: 0 }}
-                >
-                  <LabelList dataKey="Terceirizada" content={<CustomDataLabel fill={COLORS.terceirizada} position="top" />} />
-                </Area>
-              </AreaChart>
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6' }} />
+                <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                <Bar dataKey="Jurídico" fill={COLORS.secondary} radius={[4, 4, 0, 0]} maxBarSize={30}>
+                  <LabelList dataKey="Jurídico" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(v: number) => v > 0 ? formatCompact(v) : ''} />
+                </Bar>
+                <Bar dataKey="Administrativo" fill={COLORS.primary} radius={[4, 4, 0, 0]} maxBarSize={30}>
+                  <LabelList dataKey="Administrativo" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(v: number) => v > 0 ? formatCompact(v) : ''} />
+                </Bar>
+                <Bar dataKey="Terceirizada" fill={COLORS.terceirizada} radius={[4, 4, 0, 0]} maxBarSize={30}>
+                  <LabelList dataKey="Terceirizada" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(v: number) => v > 0 ? formatCompact(v) : ''} />
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
