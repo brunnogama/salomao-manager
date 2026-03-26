@@ -171,21 +171,25 @@ export function PeriodoAusenciasSection({
                 alert('Formulário enviado com sucesso! O integrante receberá o link no e-mail corporativo.');
             }
 
+            const webhookPayload = {
+                event: 'hr_requested',
+                colaborador_nome: formData.name,
+                colaborador_email: formData.email,
+                lider_id: primaryLeaderId,
+                link_magico_integrante: `${window.location.origin}/solicitacao-ferias/${data.employee_token}`,
+                periodo_aquisitivo_inicio: "",
+                periodo_aquisitivo_fim: "",
+                email_rh: 'rh@salomaoadv.com.br'
+            };
+
+            console.log("PAYLOAD ENVIADO PARA O MAKE:", webhookPayload);
+
             // Disparar Webhook para o Make.com enviar o e-mail ao integrante
             try {
                 await fetch('https://hook.us2.make.com/xklqclzckk2723dwejxueuy65ketmb4k', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        event: 'hr_requested',
-                        colaborador_nome: formData.name,
-                        colaborador_email: formData.email,
-                        lider_id: primaryLeaderId,
-                        link_magico_integrante: `${window.location.origin}/solicitacao-ferias/${data.employee_token}`,
-                        periodo_aquisitivo_inicio: null,
-                        periodo_aquisitivo_fim: null,
-                        email_rh: 'rh@salomaoadv.com.br'
-                    })
+                    body: JSON.stringify(webhookPayload)
                 });
             } catch (err) {
                 console.error('Erro ao notificar Make:', err);
