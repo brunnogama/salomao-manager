@@ -35,6 +35,7 @@ import PerfilSection from '../components/PerfilSection'
 import { TabelasTab } from '../components/TabelasTab'
 import { CollaboratorModalLayout, CollaboratorPageLayout } from '../components/CollaboratorLayouts'
 import { ExportColumnSelectModal } from '../components/ExportColumnSelectModal'
+import { ReportTemplatesList, ReportTemplate } from '../components/ReportTemplatesList'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useLocation } from 'react-router-dom'
 import { getSegment } from '../utils/rhChartUtils'
@@ -129,6 +130,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [activeReportView, setActiveReportView] = useState<'menu' | 'filtros' | 'vt'>('menu');
   const [showColumnSelectModal, setShowColumnSelectModal] = useState(false);
   const [exportTargetList, setExportTargetList] = useState<'active' | 'inactive' | 'all' | 'search' | null>(null);
+  const [refreshTemplates, setRefreshTemplates] = useState(0);
 
   // Advanced Filters State
   // Pessoais
@@ -436,7 +438,53 @@ export function Colaboradores({ }: ColaboradoresProps) {
     advFilterPostGraduationExpected, advFilterPostGraduationCompletion, advFilterPostGraduationUF, advFilterPostGraduationInstitution
   }).some(val => val !== '');
 
-  const handleExportConfirm = (selectedColumns: string[]) => {
+  const handleApplyTemplate = (template: ReportTemplate) => {
+    const tempFiltered = getAdvancedFiltered(''); // applies current filters block
+    const fd = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    if (tempFiltered.length > 0) {
+      exportColaboradoresXLSX({
+        filtered: tempFiltered,
+        rateios,
+        hiringReasons,
+        partners,
+        colaboradores,
+        terminationInitiatives,
+        terminationTypes,
+        terminationReasons,
+        roles,
+        locations,
+        teams,
+        atuacoes,
+        fileName: `Relatorio_${template.name.replace(/\s+/g, '_')}_${fd}`,
+        selectedColumns: template.columns
+      });
+    } else {
+      setAlertConfig({
+        isOpen: true,
+        title: 'Sem Dados',
+        description: 'Nenhum integrante encontrado com os filtros atuais para exportar este relatório.',
+        variant: 'info'
+      });
+    }
+  };
+
+  const handleExportConfirm = async (selectedColumns: string[], templateName?: string) => {
+    if (templateName) {
+      try {
+        const { error } = await supabase
+          .from('rh_export_templates')
+          .insert({
+            name: templateName,
+            columns: selectedColumns,
+            created_by: user?.id
+          });
+        if (error) throw error;
+        setRefreshTemplates(prev => prev + 1);
+      } catch (err) {
+        console.error('Erro ao salvar template:', err);
+      }
+    }
+
     setShowColumnSelectModal(false);
     let tempFiltered: any[] = [];
     let fileName = '';
@@ -2416,38 +2464,49 @@ export function Colaboradores({ }: ColaboradoresProps) {
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600 flex-1 overflow-auto custom-scrollbar">
 
           {activeReportView === 'menu' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-fit">
-              <button
-                onClick={() => setActiveReportView('filtros')}
-                className="group relative flex flex-col p-8 bg-white rounded-2xl border border-gray-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-300 text-left overflow-hidden h-full"
-              >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
-                <div className="relative z-10 w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                  <Filter className="h-7 w-7" />
-                </div>
-                <h3 className="relative z-10 text-xl font-black text-[#1e3a8a] mb-2 group-hover:text-[#112240]">Opções de Filtro</h3>
-                <p className="relative z-10 text-sm text-gray-500 font-medium flex-1">Gere relatórios customizados avançados utilizando múltiplos critérios de filtragem para toda a equipe.</p>
+            <div className="flex flex-col gap-10">
+              {/* Repositório de Relatórios na primeira linha (Logo abaixo do titulo/header implícito da aba) */}
+              <div>
+                <h3 className="text-xl font-black text-[#1e3a8a] mb-2">Modelos de Relatório Salvos</h3>
+                <p className="text-sm text-gray-500 mb-6">Selecione um dos reporatórios abaixo para exportar a planilha imediatamente, respeitando os filtros avançados ativos caso tenha algum aplicado.</p>
+                <ReportTemplatesList onApplyTemplate={handleApplyTemplate} refreshTrigger={refreshTemplates} />
+              </div>
 
-                <div className="relative z-10 mt-8 flex items-center gap-2 text-blue-600 font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                  Acessar Filtros <ArrowRight className="h-4 w-4" />
-                </div>
-              </button>
+              {/* Grid de opções originais logo abaixo */}
+              <div className="pt-2 border-t border-gray-100">
+                <h3 className="text-xl font-black text-[#1e3a8a] mb-6 mt-4">Ferramentas de Análise</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-fit">
+                  <button
+                    onClick={() => setActiveReportView('filtros')}
+                    className="group relative flex flex-col p-8 bg-white rounded-2xl border border-gray-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-300 text-left overflow-hidden h-full"
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                    <div className="relative z-10 w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                      <Filter className="h-7 w-7" />
+                    </div>
+                    <h3 className="relative z-10 text-xl font-black text-[#1e3a8a] mb-2 group-hover:text-[#112240]">Opções de Filtro</h3>
+                    <p className="relative z-10 text-sm text-gray-500 font-medium flex-1">Gere relatórios customizados avançados utilizando múltiplos critérios de filtragem para toda a equipe.</p>
+                    <div className="relative z-10 mt-8 flex items-center gap-2 text-blue-600 font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                      Acessar Filtros <ArrowRight className="h-4 w-4" />
+                    </div>
+                  </button>
 
-              <button
-                onClick={() => setActiveReportView('vt')}
-                className="group relative flex flex-col p-8 bg-white rounded-2xl border border-gray-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-300 text-left overflow-hidden h-full"
-              >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
-                <div className="relative z-10 w-14 h-14 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-6 shadow-inner group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
-                  <Bus className="h-7 w-7" />
+                  <button
+                    onClick={() => setActiveReportView('vt')}
+                    className="group relative flex flex-col p-8 bg-white rounded-2xl border border-gray-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-300 text-left overflow-hidden h-full"
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                    <div className="relative z-10 w-14 h-14 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-6 shadow-inner group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                      <Bus className="h-7 w-7" />
+                    </div>
+                    <h3 className="relative z-10 text-xl font-black text-[#1e3a8a] mb-2 group-hover:text-[#112240]">Custo de Vale Transporte</h3>
+                    <p className="relative z-10 text-sm text-gray-500 font-medium flex-1">Análise, comparativo e projeção de custos com transportes para o mês vigente (CLT e Estagiários).</p>
+                    <div className="relative z-10 mt-8 flex items-center gap-2 text-emerald-600 font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                      Acessar Relatório <ArrowRight className="h-4 w-4" />
+                    </div>
+                  </button>
                 </div>
-                <h3 className="relative z-10 text-xl font-black text-[#1e3a8a] mb-2 group-hover:text-[#112240]">Custo de Vale Transporte</h3>
-                <p className="relative z-10 text-sm text-gray-500 font-medium flex-1">Análise, comparativo e projeção de custos com transportes para o mês vigente (CLT e Estagiários).</p>
-
-                <div className="relative z-10 mt-8 flex items-center gap-2 text-emerald-600 font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                  Acessar Relatório <ArrowRight className="h-4 w-4" />
-                </div>
-              </button>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300 relative">

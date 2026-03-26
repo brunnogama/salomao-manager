@@ -17,7 +17,7 @@ import {
 interface ExportColumnSelectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (selectedColumns: string[]) => void;
+  onConfirm: (selectedColumns: string[], templateName?: string) => void;
 }
 
 const EXPORT_COLUMN_CATEGORIES = [
@@ -69,6 +69,8 @@ const EXPORT_COLUMN_CATEGORIES = [
 
 export function ExportColumnSelectModal({ isOpen, onClose, onConfirm }: ExportColumnSelectModalProps) {
   const [selectedCols, setSelectedCols] = useState<Set<string>>(new Set());
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
 
   // Initialize with all columns selected when opened
   useEffect(() => {
@@ -78,6 +80,8 @@ export function ExportColumnSelectModal({ isOpen, onClose, onConfirm }: ExportCo
         cat.columns.forEach(col => allCols.add(col));
       });
       setSelectedCols(allCols);
+      setIsSavingTemplate(false);
+      setTemplateName('');
     }
   }, [isOpen]);
 
@@ -123,7 +127,11 @@ export function ExportColumnSelectModal({ isOpen, onClose, onConfirm }: ExportCo
   };
 
   const handleConfirm = () => {
-    onConfirm(Array.from(selectedCols));
+    if (isSavingTemplate && !templateName.trim()) {
+      alert('Por favor, digite um nome para o modelo de relatório.');
+      return;
+    }
+    onConfirm(Array.from(selectedCols), isSavingTemplate ? templateName.trim() : undefined);
   };
 
   let totalCols = 0;
@@ -255,20 +263,50 @@ export function ExportColumnSelectModal({ isOpen, onClose, onConfirm }: ExportCo
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 bg-white flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleConfirm}
-            className="px-5 py-2.5 text-sm font-medium text-white bg-[#2A3F54] rounded-xl hover:bg-[#1a2835] transition-colors flex items-center gap-2 shadow-sm"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            Gerar Relatório Excel
-          </button>
+        <div className="p-6 border-t border-gray-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                className="w-4 h-4 rounded text-[#2A3F54] border-gray-300 focus:ring-[#2A3F54] cursor-pointer"
+                checked={isSavingTemplate}
+                onChange={(e) => {
+                  setIsSavingTemplate(e.target.checked);
+                  if (!e.target.checked) setTemplateName('');
+                }}
+              />
+              <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">
+                Salvar como Modelo
+              </span>
+            </label>
+            
+            {isSavingTemplate && (
+              <input
+                type="text"
+                placeholder="Nome do Modelo (Ex: Aniversariantes)"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                className="text-sm border-gray-300 rounded-lg shadow-sm focus:border-[#2A3F54] focus:ring-[#2A3F54] w-full max-w-[280px]"
+                autoFocus
+              />
+            )}
+          </div>
+          
+          <div className="flex justify-end gap-3 w-full sm:w-auto">
+            <button
+              onClick={onClose}
+              className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleConfirm}
+              className="px-5 py-2.5 text-sm font-medium text-white bg-[#2A3F54] rounded-xl hover:bg-[#1a2835] transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Gerar Relatório
+            </button>
+          </div>
         </div>
       </div>
     </div>,
