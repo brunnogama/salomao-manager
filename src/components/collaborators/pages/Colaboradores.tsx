@@ -34,6 +34,7 @@ import { PeriodoAusenciasSection } from '../components/PeriodoAusenciasSection'
 import PerfilSection from '../components/PerfilSection'
 import { TabelasTab } from '../components/TabelasTab'
 import { CollaboratorModalLayout, CollaboratorPageLayout } from '../components/CollaboratorLayouts'
+import { ExportColumnSelectModal } from '../components/ExportColumnSelectModal'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useLocation } from 'react-router-dom'
 import { getSegment } from '../utils/rhChartUtils'
@@ -126,6 +127,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showExportVTMenu, setShowExportVTMenu] = useState(false);
   const [activeReportView, setActiveReportView] = useState<'menu' | 'filtros' | 'vt'>('menu');
+  const [showColumnSelectModal, setShowColumnSelectModal] = useState(false);
+  const [exportTargetList, setExportTargetList] = useState<'active' | 'inactive' | 'all' | 'search' | null>(null);
 
   // Advanced Filters State
   // Pessoais
@@ -432,6 +435,47 @@ export function Colaboradores({ }: ColaboradoresProps) {
     advFilterGraduationExpected, advFilterGraduationCompletion, advFilterGraduationUF, advFilterGraduationInstitution,
     advFilterPostGraduationExpected, advFilterPostGraduationCompletion, advFilterPostGraduationUF, advFilterPostGraduationInstitution
   }).some(val => val !== '');
+
+  const handleExportConfirm = (selectedColumns: string[]) => {
+    setShowColumnSelectModal(false);
+    let tempFiltered: any[] = [];
+    let fileName = '';
+    const d = new Date();
+    const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
+
+    if (exportTargetList === 'active') {
+      tempFiltered = getAdvancedFiltered('active');
+      fileName = `Colaboradores_Ativos_${fd}`;
+    } else if (exportTargetList === 'inactive') {
+      tempFiltered = getAdvancedFiltered('inactive');
+      fileName = `Colaboradores_Inativos_${fd}`;
+    } else if (exportTargetList === 'all') {
+      tempFiltered = getAdvancedFiltered('');
+      fileName = `Colaboradores_Todos_${fd}`;
+    } else if (exportTargetList === 'search') {
+      tempFiltered = getAdvancedFiltered('');
+      fileName = `Colaboradores_Pesquisa_${fd}`;
+    }
+
+    if (tempFiltered.length > 0) {
+      exportColaboradoresXLSX({
+        filtered: tempFiltered,
+        rateios,
+        hiringReasons,
+        partners,
+        colaboradores,
+        terminationInitiatives,
+        terminationTypes,
+        terminationReasons,
+        roles,
+        locations,
+        teams,
+        atuacoes,
+        fileName,
+        selectedColumns
+      });
+    }
+  };
 
 
 
@@ -2028,9 +2072,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           setShowExportMenu(false);
                           const tempFiltered = getAdvancedFiltered('active');
                           if (tempFiltered.length > 0) {
-                            const d = new Date();
-                            const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
-                            exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes, fileName: `Colaboradores_Ativos_${fd}` });
+                            setExportTargetList('active');
+                            setShowColumnSelectModal(true);
                           }
                         }}
                         className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
@@ -2044,9 +2087,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           setShowExportMenu(false);
                           const tempFiltered = getAdvancedFiltered('inactive');
                           if (tempFiltered.length > 0) {
-                            const d = new Date();
-                            const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
-                            exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes, fileName: `Colaboradores_Inativos_${fd}` });
+                            setExportTargetList('inactive');
+                            setShowColumnSelectModal(true);
                           }
                         }}
                         className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
@@ -2062,9 +2104,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           setShowExportMenu(false);
                           const tempFiltered = getAdvancedFiltered('');
                           if (tempFiltered.length > 0) {
-                            const d = new Date();
-                            const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
-                            exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes, fileName: `Colaboradores_Todos_${fd}` });
+                            setExportTargetList('all');
+                            setShowColumnSelectModal(true);
                           }
                         }}
                         className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-bold"
@@ -2709,9 +2750,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
                         onClick={() => {
                           const tempFiltered = getAdvancedFiltered('');
                           if (tempFiltered.length > 0) {
-                            const d = new Date();
-                            const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
-                            exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes, fileName: `Colaboradores_Pesquisa_${fd}` });
+                            setExportTargetList('search');
+                            setShowColumnSelectModal(true);
                           } else {
                             alert('Nenhum integrante encontrado com os filtros informados.');
                           }
@@ -3551,7 +3591,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
         cancelText="Cancelar"
         variant="danger"
       />
-    </div >
+
+      {showColumnSelectModal && (
+        <ExportColumnSelectModal
+          isOpen={showColumnSelectModal}
+          onClose={() => setShowColumnSelectModal(false)}
+          onConfirm={handleExportConfirm}
+        />
+      )}
+    </div>
   )
 
   // --- SUB-COMPONENTS ---

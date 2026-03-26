@@ -1,6 +1,5 @@
 import XLSX from 'xlsx-js-style'
 import { Collaborator, Partner } from '../../../types/controladoria'
-import { formatDateToDisplay, formatMonthYearDateToDisplay } from './colaboradoresUtils'
 
 interface ExportOptions {
     filtered: Collaborator[];
@@ -16,6 +15,7 @@ interface ExportOptions {
     teams?: { id: string | number; name: string }[];
     atuacoes?: { id: string | number; name: string }[];
     fileName?: string;
+    selectedColumns?: string[];
 }
 
 const getLookupName = (list: { id: string | number; name: string }[], id?: string | number) => {
@@ -63,8 +63,9 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         return a.status === 'active' ? -1 : 1;
     });
 
-    const dataToExport = sortedData.map(c => ({
-        'ID': c.matricula_interna || c.id,
+    const dataToExport = sortedData.map(c => {
+        const fullObj = {
+        'ID': `COL - ${c.matricula_interna || c.id}`,
         'Nome Completo': c.name,
         'CPF': c.cpf,
         'RG': c.rg,
@@ -147,7 +148,21 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Tipo Desligamento': getLookupName(terminationTypes, c.termination_type_id),
         'Motivo Desligamento': getLookupName(terminationReasons, c.termination_reason_id),
         'Observações Histórico': c.history_observations
-    }));
+        };
+
+        if (options.selectedColumns) {
+            const allowedCols = new Set(['ID', 'Nome Completo', ...options.selectedColumns]);
+            const filteredObj: any = {};
+            Object.keys(fullObj).forEach(key => {
+                if (allowedCols.has(key)) {
+                    filteredObj[key] = (fullObj as any)[key];
+                }
+            });
+            return filteredObj;
+        }
+
+        return fullObj;
+    });
 
     const now = new Date();
     const formattedDate = now.toLocaleDateString('pt-BR').replace(/\//g, '-');
@@ -168,8 +183,13 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         const isInactive = sortedData[R - 1]?.status !== 'active';
 
         if (isInactive) {
-            // Encode cell address for 'Nome Completo' (Column A -> 0)
-            const cellAddress = XLSX.utils.encode_cell({ r: R, c: 0 }); // 0 is Name column index
+            // Find cell address for 'Nome Completo' dynamically
+            const keys = Object.keys(dataToExport[0] || {});
+            const nameColIndex = keys.indexOf('Nome Completo');
+            
+            if (nameColIndex === -1) continue;
+            
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: nameColIndex }); 
 
             if (!ws[cellAddress]) continue;
 
