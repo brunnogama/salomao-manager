@@ -6,11 +6,17 @@ import { ManagedMultiSelect } from '../../crm/ManagedMultiSelect'
 
 interface PeriodoAusenciasSectionProps {
     formData: Partial<Collaborator>
-    maskDate: (v: string) => string
     isViewMode?: boolean
+    maskDate: (value: string) => string
+    showAlert?: (title: string, message: string, type?: 'success' | 'error' | 'info') => void
 }
 
-export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false }: PeriodoAusenciasSectionProps) {
+export function PeriodoAusenciasSection({
+    formData,
+    isViewMode = false,
+    maskDate,
+    showAlert
+}: PeriodoAusenciasSectionProps) {
     const [activeTab, setActiveTab] = useState<'historico_ferias' | 'registrar' | 'historico_atestados'>('historico_ferias')
     const [loading, setLoading] = useState(false)
     const [fetching, setFetching] = useState(false)
@@ -78,8 +84,11 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
         try {
             await supabase.from('collaborator_absences').delete().eq('id', id)
             fetchAbsences()
+            if (showAlert) showAlert('Sucesso', 'Registro de ausência excluído com sucesso!', 'success')
+            else alert('Registro de ausência excluído com sucesso!')
         } catch (e: any) {
-            alert('Erro ao excluir: ' + e.message)
+            if (showAlert) showAlert('Erro', 'Erro ao excluir: ' + e.message, 'error')
+            else alert('Erro ao excluir: ' + e.message)
         }
     }
 
@@ -124,13 +133,16 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
             })
 
             if (error) throw error
-            alert('Ausência registrada!')
+            if (showAlert) showAlert('Sucesso', 'Ausência registrada com sucesso!', 'success')
+            else alert('Ausência registrada!')
+            
             setAbsenceStart('')
             setAbsenceEnd('')
             setAbsenceObs('')
             fetchAbsences()
         } catch (e: any) {
-            alert('Erro ao salvar: ' + e.message)
+            if (showAlert) showAlert('Erro', 'Erro ao salvar: ' + e.message, 'error')
+            else alert('Erro ao salvar: ' + e.message)
         } finally {
             setLoading(false)
         }
@@ -153,7 +165,11 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
 
             if (error) throw error;
 
-            alert('Formulário enviado com sucesso! O integrante receberá o link no e-mail corporativo.');
+            if (showAlert) {
+                showAlert('Sucesso', 'Formulário enviado! O integrante receberá o link no e-mail corporativo.', 'success');
+            } else {
+                alert('Formulário enviado com sucesso! O integrante receberá o link no e-mail corporativo.');
+            }
 
             // Disparar Webhook para o Make.com enviar o e-mail ao integrante
             try {
@@ -164,7 +180,7 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                         event: 'hr_requested',
                         colaborador_nome: formData.name,
                         colaborador_email: formData.email,
-                        lider_id: reqLeaderIds, // array de líderes
+                        lider_id: primaryLeaderId,
                         link_magico_integrante: `${window.location.origin}/solicitacao-ferias/${data.employee_token}`,
                         email_rh: 'rh@salomaoadv.com.br'
                     })
@@ -176,7 +192,8 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
             setReqLeaderIds(formData.leader_id ? [formData.leader_id] : []);
             setActiveTab('historico_ferias');
         } catch (e: any) {
-            alert('Erro ao gerar link mágico: ' + e.message);
+            if (showAlert) showAlert('Erro', 'Erro ao gerar link mágico: ' + e.message, 'error');
+            else alert('Erro ao gerar link mágico: ' + e.message);
         } finally {
             setLoading(false);
         }

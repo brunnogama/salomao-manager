@@ -1758,6 +1758,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
             formData={currentData}
             maskDate={maskDate}
             isViewMode={isViewMode}
+            showAlert={showAlert}
           />
         </div>
       )
