@@ -45,6 +45,16 @@ const formatValueFallback = (val: any) => {
     return val || '';
 }
 
+const formatContractType = (ct?: string) => {
+    if (!ct) return '';
+    if (ct.toUpperCase() === 'CLT') return 'CLT';
+    
+    return ct.toLowerCase().split(' ').map(word => {
+        if (word.length === 0) return word;
+        return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+}
+
 const parseDateForExcel = (isoDate: string | undefined | null): Date | string => {
     if (!isoDate) return '';
     if (isoDate.includes('/')) {
@@ -147,7 +157,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Rateio': getLookupName(rateios, c.rateio_id),
         'Data Admissão': parseDateForExcel(c.hire_date),
         'Motivo Contratação': getLookupName(hiringReasons, c.hiring_reason_id),
-        'Tipo Contrato': c.contract_type,
+        'Tipo Contrato': formatContractType(c.contract_type),
         'Email Corporativo': c.email,
         'Email Pessoal': c.email_pessoal,
         'Telefone': c.telefone,
