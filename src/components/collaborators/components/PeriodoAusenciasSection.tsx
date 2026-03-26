@@ -179,9 +179,11 @@ export function PeriodoAusenciasSection({
                     body: JSON.stringify({
                         event: 'hr_requested',
                         colaborador_nome: formData.name,
-                        colaborador_email: formData.email,
-                        lider_id: reqLeaderIds,
+                        colaborador_email: formData.email_pessoal || formData.email,
+                        lider_id: primaryLeaderId,
                         link_magico_integrante: `${window.location.origin}/solicitacao-ferias/${data.employee_token}`,
+                        periodo_aquisitivo_inicio: null,
+                        periodo_aquisitivo_fim: null,
                         email_rh: 'rh@salomaoadv.com.br'
                     })
                 });
