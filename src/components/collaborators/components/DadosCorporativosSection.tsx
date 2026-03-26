@@ -383,6 +383,7 @@ export function DadosCorporativosSection({
                   value={formData.contract_type || ''}
                   onChange={(v) => setFormData({ ...formData, contract_type: v })}
                   options={[
+                    { id: 'ADVOGADO ASSOCIADO', name: 'ADVOGADO ASSOCIADO' },
                     { id: 'CLT', name: 'CLT' },
                     { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' },
                     { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' },

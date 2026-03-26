@@ -2451,6 +2451,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             value={advFilterContractType}
                             onChange={setAdvFilterContractType}
                             options={[
+                              { id: 'ADVOGADO ASSOCIADO', label: 'Advogado Associado', value: 'ADVOGADO ASSOCIADO' },
                               { id: 'CLT', label: 'CLT', value: 'CLT' },
                               { id: 'Sócio', label: 'Sócio', value: 'Sócio' },
                               { id: 'Associado', label: 'Associado', value: 'Associado' },
