@@ -126,7 +126,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   // New Tabs State
   const [activeMainTab, setActiveMainTab] = useState<'Integrantes' | 'Relatórios' | 'Tabelas'>('Integrantes');
   const [showExportVTMenu, setShowExportVTMenu] = useState(false);
-  const [activeReportView, setActiveReportView] = useState<'menu' | 'filtros' | 'vt'>('menu');
+  const [activeReportView, setActiveReportView] = useState<'menu' | 'filtros' | 'vt' | 'modelos'>('menu');
   const [showColumnSelectModal, setShowColumnSelectModal] = useState(false);
   const [exportTargetList, setExportTargetList] = useState<'active' | 'inactive' | 'all' | 'search' | null>(null);
   const [refreshTemplates, setRefreshTemplates] = useState(0);
@@ -2424,18 +2424,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600 flex-1 overflow-auto custom-scrollbar">
 
           {activeReportView === 'menu' ? (
-            <div className="flex flex-col gap-10">
-              {/* Repositório de Relatórios na primeira linha (Logo abaixo do titulo/header implícito da aba) */}
-              <div>
-                <h3 className="text-xl font-black text-[#1e3a8a] mb-2">Modelos de Relatório Salvos</h3>
-                <p className="text-sm text-gray-500 mb-6">Selecione um dos reporatórios abaixo para exportar a planilha imediatamente, respeitando os filtros avançados ativos caso tenha algum aplicado.</p>
-                <ReportTemplatesList onApplyTemplate={handleApplyTemplate} refreshTrigger={refreshTemplates} />
-              </div>
+            <div className="flex flex-col h-full">
 
-              {/* Grid de opções originais logo abaixo */}
-              <div className="pt-2 border-t border-gray-100">
-                <h3 className="text-xl font-black text-[#1e3a8a] mb-6 mt-4">Ferramentas de Análise</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-fit">
+              {/* Grid de opções originais e Modelos Salvos */}
+              <div>
+                <h3 className="text-xl font-black text-[#1e3a8a] mb-6 mt-4">Ferramentas e Relatórios</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 h-fit">
                   <button
                     onClick={() => setActiveReportView('filtros')}
                     className="group relative flex flex-col p-8 bg-white rounded-2xl border border-gray-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-300 text-left overflow-hidden h-full"
@@ -2463,6 +2457,22 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     <p className="relative z-10 text-sm text-gray-500 font-medium flex-1">Análise, comparativo e projeção de custos com transportes para o mês vigente (CLT e Estagiários).</p>
                     <div className="relative z-10 mt-8 flex items-center gap-2 text-emerald-600 font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity">
                       Acessar Relatório <ArrowRight className="h-4 w-4" />
+                    </div>
+                  </button>
+
+                  {/* NOVO BOTÃO: Modelos Salvos */}
+                  <button
+                    onClick={() => setActiveReportView('modelos')}
+                    className="group relative flex flex-col p-8 bg-white rounded-2xl border border-gray-200 hover:border-indigo-500 hover:shadow-2xl transition-all duration-300 text-left overflow-hidden h-full"
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                    <div className="relative z-10 w-14 h-14 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-6 shadow-inner group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+                      <FileSpreadsheet className="h-7 w-7" />
+                    </div>
+                    <h3 className="relative z-10 text-xl font-black text-[#1e3a8a] mb-2 group-hover:text-[#112240]">Modelos Salvos</h3>
+                    <p className="relative z-10 text-sm text-gray-500 font-medium flex-1">Repositório de colunas e relatórios customizados salvos. Gere planilhas formatadas na hora.</p>
+                    <div className="relative z-10 mt-8 flex items-center gap-2 text-indigo-600 font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                      Acessar Repositório <ArrowRight className="h-4 w-4" />
                     </div>
                   </button>
                 </div>
@@ -2787,6 +2797,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
               )}
 
               {/* Relatório de VT (CLT e Estagiários) */}
+              {activeReportView === 'modelos' && (
+                <div className="space-y-6 animate-in fade-in duration-500 flex flex-col h-full">
+                  <div className="flex flex-col">
+                    <h3 className="text-xl font-black text-[#1e3a8a] mb-2">Modelos de Relatório Salvos</h3>
+                    <p className="text-sm text-gray-500 mb-6">Selecione um dos modelos abaixo para exportar a planilha imediatamente, respeitando os filtros avançados ativos caso tenha algum aplicado.</p>
+                  </div>
+                  <div className="flex-1 min-h-0 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <ReportTemplatesList onApplyTemplate={handleApplyTemplate} refreshTrigger={refreshTemplates} />
+                  </div>
+                </div>
+              )}
+
               {activeReportView === 'vt' && (
                 <div className="flex flex-col h-full animate-in fade-in duration-500">
                   <div className="flex justify-between items-center mb-6">

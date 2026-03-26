@@ -101,61 +101,81 @@ export function ReportTemplatesList({ onApplyTemplate, refreshTrigger = 0 }: Rep
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {templates.map(template => {
-        const isAuthor = user?.id === template.created_by;
-        
-        return (
-          <div 
-            key={template.id}
-            className="group relative bg-white border border-gray-200 rounded-xl p-5 hover:border-[#1e3a8a]/30 hover:shadow-md transition-all cursor-pointer flex flex-col h-full"
-            onClick={() => onApplyTemplate(template)}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-2.5 bg-[#1e3a8a]/5 text-[#1e3a8a] rounded-lg group-hover:bg-[#1e3a8a] group-hover:text-white transition-colors">
-                <FileSpreadsheet className="w-5 h-5" />
-              </div>
-              
-              {isAuthor && (
-                <button 
-                  onClick={(e) => handleDelete(e, template.id)}
-                  disabled={deletingId === template.id}
-                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
-                  title="Excluir Modelo"
-                >
-                  {deletingId === template.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                </button>
-              )}
-            </div>
-
-            <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2" title={template.name}>
-              {template.name}
-            </h3>
+    <div className="overflow-x-auto w-full">
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr className="bg-gray-50 border-b border-gray-100">
+            <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Nome do Relatório</th>
+            <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Data de Criação</th>
+            <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Quem Criou</th>
+            <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Qde de Colunas</th>
+            <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest text-right">Ações</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {templates.map(template => {
+            const isAuthor = user?.id === template.created_by;
             
-            <p className="text-xs font-medium text-gray-500 mb-4">
-              {template.columns.length} colunas mapeadas
-            </p>
-
-            <div className="mt-auto pt-4 border-t border-gray-100 space-y-2">
-              <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                <User className="w-3.5 h-3.5" />
-                <span className="truncate">{template.author_name}</span>
-              </div>
-              <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>{new Date(template.created_at).toLocaleDateString('pt-BR')}</span>
-              </div>
-            </div>
-
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/90 to-transparent p-5 pt-8 flex items-end justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              <span className="flex items-center gap-2 text-sm font-semibold text-[#1e3a8a] bg-blue-50 px-4 py-2 rounded-full border border-blue-100 shadow-sm pointer-events-auto">
-                <Download className="w-4 h-4" />
-                Gerar Relatório
-              </span>
-            </div>
-          </div>
-        );
-      })}
+            return (
+              <tr 
+                key={template.id}
+                className="group hover:bg-[#1e3a8a]/5 cursor-pointer transition-colors"
+                onClick={() => onApplyTemplate(template)}
+              >
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                      <FileSpreadsheet className="w-4 h-4" />
+                    </div>
+                    <span className="font-bold text-[#0a192f] group-hover:text-[#1e3a8a] transition-colors">{template.name}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    {new Date(template.created_at).toLocaleDateString('pt-BR')}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span className="truncate max-w-[150px]">{template.author_name}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">
+                    {template.columns.length}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onApplyTemplate(template);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#1e3a8a] hover:bg-[#1e3a8a] hover:text-white rounded-lg transition-colors text-xs font-bold"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Gerar
+                    </button>
+                    {isAuthor && (
+                      <button 
+                        onClick={(e) => handleDelete(e, template.id)}
+                        disabled={deletingId === template.id}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Excluir Modelo"
+                      >
+                        {deletingId === template.id ? <Loader2 className="w-4 h-4 animate-spin text-red-500" /> : <Trash2 className="w-4 h-4" />}
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
