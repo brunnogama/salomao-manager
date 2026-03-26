@@ -16,6 +16,7 @@ interface ExportOptions {
     atuacoes?: { id: string | number; name: string }[];
     fileName?: string;
     selectedColumns?: string[];
+    activeFilterColNames?: string[];
 }
 
 const getLookupName = (list: { id: string | number; name: string }[], id?: string | number) => {
@@ -224,10 +225,18 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         };
 
         if (options.selectedColumns) {
-            const allowedCols = new Set(['ID', 'Nome Completo', ...options.selectedColumns]);
+            const baseCols = ['ID', 'Nome Completo'];
+            const activeCols = options.activeFilterColNames || [];
+            
+            // Remove activeCols and baseCols from selectedColumns to avoid duplication
+            const remainingSelected = options.selectedColumns.filter(c => !activeCols.includes(c) && !baseCols.includes(c));
+            
+            // The final order is: Identifiers -> Active Filters -> Remaining Selected Columns
+            const finalOrder = [...baseCols, ...activeCols, ...remainingSelected];
+            
             const filteredObj: any = {};
-            Object.keys(fullObj).forEach(key => {
-                if (allowedCols.has(key)) {
+            finalOrder.forEach(key => {
+                if ((fullObj as any)[key] !== undefined) {
                     filteredObj[key] = (fullObj as any)[key];
                 }
             });
@@ -247,44 +256,54 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
     const ws = XLSX.utils.json_to_sheet(dataToExport, { cellDates: true, dateNF: 'dd/mm/yyyy' });
 
     // Apply Styles
-    // Range gives us the dimensions Ex: "A1:Z100"
     const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
 
-    // Iterate rows (skipping header 0)
-    for (let R = 1; R <= range.e.r; ++R) {
-        // Check status in the data source (sortedData[R-1])
-        const isInactive = sortedData[R - 1]?.status !== 'active';
-
-        if (isInactive) {
-            // Find cell address for 'Nome Completo' dynamically
-            const keys = Object.keys(dataToExport[0] || {});
-            const nameColIndex = keys.indexOf('Nome Completo');
-            
-            if (nameColIndex === -1) continue;
-            
-            const cellAddress = XLSX.utils.encode_cell({ r: R, c: nameColIndex }); 
-
-            if (!ws[cellAddress]) continue;
-
-            // Apply Red Font Style
-            ws[cellAddress].s = {
-                font: {
-                    color: { rgb: "FF0000" },
-                    bold: true
-                }
-            };
+    // Identify which column indices are active filters to highlight
+    const activeFilterColIndices = new Set<number>();
+    if (options.activeFilterColNames && options.activeFilterColNames.length > 0) {
+        for (let C = 0; C <= range.e.c; ++C) {
+            const cellRef = XLSX.utils.encode_cell({ r: 0, c: C });
+            const cell = ws[cellRef];
+            if (cell && cell.v && options.activeFilterColNames.includes(cell.v.toString())) {
+                activeFilterColIndices.add(C);
+            }
         }
     }
 
-    // Style Header Row (Dark Blue background, White text)
-    for (let C = 0; C <= range.e.c; ++C) {
-        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
-        if (!ws[cellAddress]) continue;
-        ws[cellAddress].s = {
-            font: { bold: true, color: { rgb: "FFFFFF" } },
-            fill: { fgColor: { rgb: "1E3A8A" } },
-            alignment: { vertical: "center", horizontal: "center" }
-        };
+    const keysMap = Object.keys(dataToExport[0] || {});
+    const nameColIndex = keysMap.indexOf('Nome Completo');
+
+    for (let R = 0; R <= range.e.r; ++R) {
+        for (let C = 0; C <= range.e.c; ++C) {
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+            if (!ws[cellAddress]) continue;
+
+            const isFilterCol = activeFilterColIndices.has(C);
+
+            if (R === 0) {
+                ws[cellAddress].s = {
+                    font: { bold: true, color: { rgb: "FFFFFF" } },
+                    fill: { fgColor: { rgb: "1E3A8A" } }, // You could differentiate headers: isFilterCol ? "4B5563" : "1E3A8A"
+                    alignment: { vertical: "center", horizontal: "center" }
+                };
+            } else {
+                const isInactive = sortedData[R - 1]?.status !== 'active';
+                const isNameCol = C === nameColIndex;
+                const cellStyle: any = {};
+                
+                if (isInactive && isNameCol) {
+                    cellStyle.font = { color: { rgb: "FF0000" }, bold: true };
+                }
+                
+                if (isFilterCol) {
+                    cellStyle.fill = { fgColor: { rgb: "F3F4F6" } }; // Light gray background
+                }
+                
+                if (Object.keys(cellStyle).length > 0) {
+                    ws[cellAddress].s = cellStyle;
+                }
+            }
+        }
     }
 
     // Freeze Header Row

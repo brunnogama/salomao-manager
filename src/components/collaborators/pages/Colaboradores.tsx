@@ -437,6 +437,32 @@ export function Colaboradores({ }: ColaboradoresProps) {
     advFilterPostGraduationExpected, advFilterPostGraduationCompletion, advFilterPostGraduationUF, advFilterPostGraduationInstitution
   }).some(val => val !== '');
 
+  const getActiveFilterColNames = (): string[] => {
+    const cols: string[] = [];
+    if (advFilterStatus) cols.push('Status');
+    if (advFilterRateio) cols.push('Rateio');
+    if (advFilterAdmissionStart || advFilterAdmissionEnd) cols.push('Data Admissão');
+    if (advFilterTerminationStart || advFilterTerminationEnd) cols.push('Data Desligamento');
+    if (advFilterPartner && advFilterPartner.length > 0) cols.push('Sócio Responsável');
+    if (advFilterLeader && advFilterLeader.length > 0) cols.push('Líder Direto');
+    if (advFilterArea) cols.push('Área');
+    if (advFilterTeam) cols.push('Equipe');
+    if (advFilterRole) cols.push('Cargo');
+    if (advFilterContractType || advFilterPartnerType) cols.push('Tipo Contrato');
+    if (advFilterLocal) cols.push('Local');
+    if (advFilterTransporteTipo) cols.push('Tipo Transporte');
+    
+    if (advFilterGender) cols.push('Gênero');
+    if (advFilterBirthStart || advFilterBirthEnd) cols.push('Data Nascimento');
+    if (advFilterChildren) cols.push('Possui Filhos?');
+    if (advFilterStateHome) cols.push('Estado');
+    
+    if (advFilterGraduationComplete || advFilterGraduationExpected || advFilterGraduationCompletion || advFilterGraduationUF || advFilterGraduationInstitution || advFilterPostGraduationComplete || advFilterPostGraduationExpected || advFilterPostGraduationCompletion || advFilterPostGraduationUF || advFilterPostGraduationInstitution) {
+      cols.push('Nível Escolaridade', 'Instituição', 'Curso');
+    }
+    return cols;
+  };
+
   const handleApplyTemplate = (template: ReportTemplate) => {
     const tempFiltered = getAdvancedFiltered(''); // applies current filters block
     const now = new Date();
@@ -463,7 +489,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
         teams,
         atuacoes,
         fileName: `${template.name} - ${dateTimeStr}`,
-        selectedColumns: template.columns
+        selectedColumns: template.columns,
+        activeFilterColNames: getActiveFilterColNames()
       });
     } else {
       setAlertConfig({
@@ -534,7 +561,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
         teams,
         atuacoes,
         fileName,
-        selectedColumns
+        selectedColumns,
+        activeFilterColNames: getActiveFilterColNames()
       });
     }
   };
