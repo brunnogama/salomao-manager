@@ -631,6 +631,63 @@ export function Colaboradores({ }: ColaboradoresProps) {
   useEffect(() => {
     fetchColaboradores()
     fetchPartners()
+
+    // ONE-OFF MIGRATION: Update contract_type to 'ADVOGADO ASSOCIADO' and 'ESTAGIÁRIO'
+    const runMigration = async () => {
+      try {
+        const { data: rolesData } = await supabase.from('roles').select('id, name');
+        if (!rolesData) return;
+        
+        let advogadoUpdated = 0;
+        let estagiarioUpdated = 0;
+
+        // 1. Advogados / Sócios / Consultor Jurídico -> ADVOGADO ASSOCIADO
+        const advRoleIds = rolesData.filter(r => {
+          if (!r.name) return false;
+          const n = r.name.toLowerCase();
+          return n.includes('advogad') || n.includes('sóci') || n.includes('soci') || n === 'consultor jurídico';
+        }).map(r => String(r.id));
+
+        if (advRoleIds.length > 0) {
+          const { data: cols } = await supabase.from('collaborators').select('id, role, contract_type').in('role', advRoleIds);
+          if (cols) {
+            const toUpdate = cols.filter(c => c.contract_type !== 'ADVOGADO ASSOCIADO');
+            if (toUpdate.length > 0) {
+              const updates = toUpdate.map(c => supabase.from('collaborators').update({ contract_type: 'ADVOGADO ASSOCIADO' }).eq('id', c.id));
+              await Promise.all(updates);
+              advogadoUpdated = toUpdate.length;
+            }
+          }
+        }
+
+        // 2. Estagiários -> ESTAGIÁRIO
+        const estRoleIds = rolesData.filter(r => {
+          if (!r.name) return false;
+          const n = r.name.toLowerCase();
+          return n.includes('estagiário') || n.includes('estagiario') || n.includes('estágio') || n.includes('estagio');
+        }).map(r => String(r.id));
+
+        if (estRoleIds.length > 0) {
+          const { data: cols } = await supabase.from('collaborators').select('id, role, contract_type').in('role', estRoleIds);
+          if (cols) {
+            const toUpdate = cols.filter(c => c.contract_type !== 'ESTAGIÁRIO');
+            if (toUpdate.length > 0) {
+              const updates = toUpdate.map(c => supabase.from('collaborators').update({ contract_type: 'ESTAGIÁRIO' }).eq('id', c.id));
+              await Promise.all(updates);
+              estagiarioUpdated = toUpdate.length;
+            }
+          }
+        }
+
+        if (advogadoUpdated > 0 || estagiarioUpdated > 0) {
+          console.log(`Migration complete. Advogados: ${advogadoUpdated}, Estagiários: ${estagiarioUpdated}`);
+          fetchColaboradores();
+        }
+      } catch (e) {
+        console.error('Migration error', e);
+      }
+    };
+    runMigration();
   }, [])
 
   useDatabaseSync(() => {
