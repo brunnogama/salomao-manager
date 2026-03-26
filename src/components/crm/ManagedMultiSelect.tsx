@@ -13,7 +13,8 @@ interface ManagedMultiSelectProps {
   label?: string;
   value: string[]; // Array of UUIDs
   onChange: (value: string[]) => void;
-  tableName: string;
+  tableName?: string;
+  options?: Option[];
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -29,6 +30,7 @@ export function ManagedMultiSelect({
   value,
   onChange,
   tableName,
+  options: externalOptions,
   placeholder = "Selecione...",
   disabled = false,
   className = "",
@@ -54,12 +56,15 @@ export function ManagedMultiSelect({
   const isDisabled = disabled || isFieldsetDisabled;
 
   useEffect(() => {
-    if ((isOpen || selectedValuesArray.length > 0)) {
+    if (externalOptions) {
+      setOptions(externalOptions);
+    } else if (tableName && (isOpen || selectedValuesArray.length > 0)) {
       fetchOptions();
     }
-  }, [tableName, isOpen, filter?.value]);
+  }, [tableName, isOpen, filter?.value, externalOptions]);
 
   const fetchOptions = async () => {
+    if (!tableName) return;
     setLoading(true);
     try {
       let query = supabase

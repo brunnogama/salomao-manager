@@ -22,6 +22,28 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
     const [absenceSubtype, setAbsenceSubtype] = useState('Descanso')
 
     const [reqLeaderIds, setReqLeaderIds] = useState<string[]>([])
+    const [destinatariosList, setDestinatariosList] = useState<any[]>([])
+
+    useEffect(() => {
+        const fetchDestinatarios = async () => {
+            const { data: leadersData } = await supabase
+                .from('collaborators')
+                .select('id, name')
+                .eq('status', 'active')
+                .eq('is_team_leader', true)
+            
+            const { data: partnersData } = await supabase
+                .from('partners')
+                .select('id, name')
+                
+            const combined = [...(leadersData || []), ...(partnersData || [])]
+            const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
+            unique.sort((a, b) => a.name.localeCompare(b.name))
+            
+            setDestinatariosList(unique)
+        }
+        fetchDestinatarios()
+    }, [])
 
     useEffect(() => {
         if (formData.id) fetchAbsences()
@@ -287,9 +309,9 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                                         <ManagedMultiSelect
                                             value={reqLeaderIds}
                                             onChange={v => setReqLeaderIds(v)}
-                                            tableName="collaborators"
+                                            options={destinatariosList}
                                             placeholder="Selecione..."
-                                            disabled={isViewMode}
+                                            disabled={false}
                                             className="!border-none"
                                         />
                                     </div>
