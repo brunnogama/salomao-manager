@@ -57,6 +57,8 @@ export function ContractFormModal(props: Props) {
   const [clientExtraData, setClientExtraData] = useState({ address: '', number: '', complement: '', city: '', email: '', is_person: false });
   const [interimInstallments, setInterimInstallments] = useState('1x');
   const [interimClause, setInterimClause] = useState('');
+  const [interimRule, setInterimRule] = useState('');
+  const [interimReady, setInterimReady] = useState(false);
 
   const [activeManager, setActiveManager] = useState<string | null>(null);
   const [isManagerOpen, setIsManagerOpen] = useState(false);
@@ -338,25 +340,66 @@ export function ContractFormModal(props: Props) {
     }
   };
 
-  const handleAddToList = (listField: string, valueField: keyof Contract, installmentsListField?: string, installmentsSourceField?: keyof Contract) => {
+  const handleAddToList = (
+    listField: string, 
+    valueField: keyof Contract, 
+    installmentsListField?: string, 
+    installmentsSourceField?: keyof Contract,
+    ruleListField?: string,
+    ruleSourceField?: keyof Contract,
+    readyListField?: string,
+    readySourceField?: keyof Contract
+  ) => {
     const value = (formData as any)[valueField], clauseValue = (formData as any)[valueField + '_clause'];
     if (!value || value === 'R$ 0,00' || value === '') return;
+    
     const currentList = (formData as any)[listField] || [];
     const currentClausesList = ensureArray((formData as any)[listField + '_clauses']);
-    const updates: any = { [listField]: [...currentList, value], [listField + '_clauses']: [...currentClausesList, clauseValue || ''], [valueField]: '', [valueField + '_clause']: '' };
+    
+    const updates: any = { 
+        [listField]: [...currentList, value], 
+        [listField + '_clauses']: [...currentClausesList, clauseValue || ''], 
+        [valueField]: '', 
+        [valueField + '_clause']: '' 
+    };
+    
     if (installmentsListField && installmentsSourceField) {
       updates[installmentsListField] = [...ensureArray((formData as any)[installmentsListField]), (formData as any)[installmentsSourceField] || '1x'];
       updates[installmentsSourceField] = '1x';
     }
+
+    if (ruleListField && ruleSourceField) {
+      updates[ruleListField] = [...ensureArray((formData as any)[ruleListField]), (formData as any)[ruleSourceField] || ''];
+      updates[ruleSourceField] = '';
+    }
+
+    if (readyListField && readySourceField) {
+      updates[readyListField] = [...((formData as any)[readyListField] || []), (formData as any)[readySourceField] || false];
+      updates[readySourceField] = false;
+    }
+
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
   const removeExtra = (field: string, index: number, installmentsListField?: string) => {
     setFormData((prev: any) => {
-      const newList = [...(prev[field] || [])], newClausesList = [...ensureArray(prev[field + '_clauses'])];
+      const newList = [...(prev[field] || [])];
+      const newClausesList = [...ensureArray(prev[field + '_clauses'])];
+      const newRulesList = [...ensureArray(prev[field + '_rules'])];
+      const newReadyList = prev[field + '_ready'] ? [...prev[field + '_ready']] : [];
+
       newList.splice(index, 1);
       if (newClausesList.length > index) newClausesList.splice(index, 1);
-      const updates: any = { [field]: newList, [field + '_clauses']: newClausesList };
+      if (newRulesList.length > index) newRulesList.splice(index, 1);
+      if (newReadyList.length > index) newReadyList.splice(index, 1);
+
+      const updates: any = { 
+          [field]: newList, 
+          [field + '_clauses']: newClausesList,
+          [field + '_rules']: newRulesList,
+          [field + '_ready']: newReadyList
+      };
+      
       if (installmentsListField) {
         const newInstList = [...ensureArray(prev[installmentsListField])];
         if (newInstList.length > index) newInstList.splice(index, 1);
@@ -369,18 +412,36 @@ export function ContractFormModal(props: Props) {
   const handleAddIntermediateFee = () => {
     if (!newIntermediateFee) return;
     addIntermediateFee();
-    setFormData(prev => ({ ...prev, intermediate_fees_clauses: [...ensureArray((prev as any).intermediate_fees_clauses), interimClause], intermediate_fees_installments: [...ensureArray((prev as any).intermediate_fees_installments), interimInstallments] } as any));
+    setFormData(prev => ({ 
+        ...prev, 
+        intermediate_fees_clauses: [...ensureArray((prev as any).intermediate_fees_clauses), interimClause], 
+        intermediate_fees_installments: [...ensureArray((prev as any).intermediate_fees_installments), interimInstallments],
+        intermediate_fees_rules: [...ensureArray((prev as any).intermediate_fees_rules), interimRule || ''],
+        intermediate_fees_ready: [...((prev as any).intermediate_fees_ready || []), interimReady || false]
+    } as any));
     setInterimClause('');
     setInterimInstallments('1x');
+    setInterimRule('');
+    setInterimReady(false);
   };
 
   const handleRemoveIntermediateFee = (index: number) => {
     const parsed = ensureArray((formData as any).intermediate_fees_installments);
     if (!parsed || parsed.length <= index) return;
     removeIntermediateFee(index);
+    
     const currentClauses = [...ensureArray((formData as any).intermediate_fees_clauses)]; currentClauses.splice(index, 1);
     const currentInst = [...ensureArray((formData as any).intermediate_fees_installments)]; currentInst.splice(index, 1);
-    setFormData(prev => ({ ...prev, intermediate_fees_clauses: currentClauses, intermediate_fees_installments: currentInst } as any));
+    const currentRules = [...ensureArray((formData as any).intermediate_fees_rules)]; currentRules.splice(index, 1);
+    const currentReady = [...((formData as any).intermediate_fees_ready || [])]; currentReady.splice(index, 1);
+    
+    setFormData(prev => ({ 
+        ...prev, 
+        intermediate_fees_clauses: currentClauses, 
+        intermediate_fees_installments: currentInst,
+        intermediate_fees_rules: currentRules,
+        intermediate_fees_ready: currentReady
+    } as any));
   };
 
   const handleSaveWithIntegrations = async () => {
@@ -541,9 +602,18 @@ export function ContractFormModal(props: Props) {
         let valuesHtml = '';
         const formatItem = (label: string, value: any, ready?: boolean, rule?: string) => {
           if (value && value !== 'R$ 0,00' && value !== '') {
-             let html = `<li style="margin-bottom: 8px; font-family: sans-serif;"><strong>${label}:</strong> ${value}`;
-             if (ready) html += ` <span style="background-color: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; border: 1px solid #bbf7d0; margin-left: 8px;">PRONTO PARA FATURAR</span>`;
-             if (rule) html += `<br><span style="color: #6b7280; font-size: 12px; display: block; margin-top: 4px; padding-left: 8px; border-left: 2px solid #e5e7eb;"><i>${rule}</i></span>`;
+             let html = `<li style="margin-bottom: 12px; font-family: sans-serif; padding: 12px; border-radius: 8px; list-style-type: none; ${ready ? 'background-color: #f0fdf4; border: 2px solid #4ade80;' : 'background-color: #f8fafc; border: 1px solid #e2e8f0;'}">`;
+             
+             if (ready) {
+                html += `<div style="margin-bottom: 8px;"><span style="background-color: #16a34a; color: #ffffff; padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: bold; letter-spacing: 0.5px; display: inline-block;">✅ PRONTO PARA FATURAR</span></div>`;
+             }
+             
+             html += `<div style="font-size: 15px;"><strong style="color: #334155;">${label}:</strong> <span style="color: #0f172a; font-weight: 900; font-size: 16px;">${value}</span></div>`;
+             
+             if (rule) {
+                 html += `<div style="color: #475569; font-size: 13px; margin-top: 8px; padding-left: 10px; border-left: 3px solid ${ready ? '#86efac' : '#cbd5e1'};"><i>${rule}</i></div>`;
+             }
+             
              html += `</li>`;
              valuesHtml += html;
           }
