@@ -125,7 +125,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   // New Tabs State
   const [activeMainTab, setActiveMainTab] = useState<'Integrantes' | 'Relatórios' | 'Tabelas'>('Integrantes');
-  const [showExportMenu, setShowExportMenu] = useState(false);
   const [showExportVTMenu, setShowExportVTMenu] = useState(false);
   const [activeReportView, setActiveReportView] = useState<'menu' | 'filtros' | 'vt'>('menu');
   const [showColumnSelectModal, setShowColumnSelectModal] = useState(false);
@@ -440,7 +439,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   const handleApplyTemplate = (template: ReportTemplate) => {
     const tempFiltered = getAdvancedFiltered(''); // applies current filters block
-    const fd = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    const dateTimeStr = `${dd}.${mm}.${yyyy} - ${hh}-${min}-${ss}`;
+    
     if (tempFiltered.length > 0) {
       exportColaboradoresXLSX({
         filtered: tempFiltered,
@@ -455,7 +462,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         locations,
         teams,
         atuacoes,
-        fileName: `Relatorio_${template.name.replace(/\s+/g, '_')}_${fd}`,
+        fileName: `${template.name} - ${dateTimeStr}`,
         selectedColumns: template.columns
       });
     } else {
@@ -488,21 +495,25 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setShowColumnSelectModal(false);
     let tempFiltered: any[] = [];
     let fileName = '';
-    const d = new Date();
-    const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    const dateTimeStr = `${dd}.${mm}.${yyyy} - ${hh}-${min}-${ss}`;
+    const fd = `${dd}-${mm}-${yyyy}`;
 
-    if (exportTargetList === 'active') {
+    if (exportTargetList === 'search' || exportTargetList === 'all') {
+      tempFiltered = getAdvancedFiltered('');
+      fileName = templateName ? `${templateName} - ${dateTimeStr}` : `Colaboradores_${fd}`;
+    } else if (exportTargetList === 'active') {
       tempFiltered = getAdvancedFiltered('active');
       fileName = `Colaboradores_Ativos_${fd}`;
     } else if (exportTargetList === 'inactive') {
       tempFiltered = getAdvancedFiltered('inactive');
       fileName = `Colaboradores_Inativos_${fd}`;
-    } else if (exportTargetList === 'all') {
-      tempFiltered = getAdvancedFiltered('');
-      fileName = `Colaboradores_Todos_${fd}`;
-    } else if (exportTargetList === 'search') {
-      tempFiltered = getAdvancedFiltered('');
-      fileName = `Colaboradores_Pesquisa_${fd}`;
     }
 
     if (tempFiltered.length > 0) {
@@ -2104,66 +2115,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
               <div className="relative z-[150]">
                 <button
-                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  onClick={() => {
+                    setExportTargetList('search');
+                    setShowColumnSelectModal(true);
+                  }}
                   className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
-                  title={`Exportar`}
+                  title="Exportar Planilha"
                 >
                   <FileDown className="h-5 w-5" />
                 </button>
-
-                {showExportMenu && (
-                  <>
-                    <div className="fixed inset-0 z-[190]" onClick={() => setShowExportMenu(false)}></div>
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-[200] overflow-hidden py-1">
-                      <button
-                        onClick={() => {
-                          setShowExportMenu(false);
-                          const tempFiltered = getAdvancedFiltered('active');
-                          if (tempFiltered.length > 0) {
-                            setExportTargetList('active');
-                            setShowColumnSelectModal(true);
-                          }
-                        }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
-                      >
-                        <User className="h-4 w-4 text-emerald-600" />
-                        Ativos ({colaboradores.filter(c => c.status === 'active').length})
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setShowExportMenu(false);
-                          const tempFiltered = getAdvancedFiltered('inactive');
-                          if (tempFiltered.length > 0) {
-                            setExportTargetList('inactive');
-                            setShowColumnSelectModal(true);
-                          }
-                        }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
-                      >
-                        <UserX className="h-4 w-4 text-red-500" />
-                        Inativos ({colaboradores.filter(c => c.status === 'inactive').length})
-                      </button>
-
-                      <div className="border-t border-gray-100 my-1"></div>
-
-                      <button
-                        onClick={() => {
-                          setShowExportMenu(false);
-                          const tempFiltered = getAdvancedFiltered('');
-                          if (tempFiltered.length > 0) {
-                            setExportTargetList('all');
-                            setShowColumnSelectModal(true);
-                          }
-                        }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-bold"
-                      >
-                        <Users className="h-4 w-4 text-[#1e3a8a]" />
-                        Todos os Status ({colaboradores.length})
-                      </button>
-                    </div>
-                  </>
-                )}
               </div>
             </div>
           )}

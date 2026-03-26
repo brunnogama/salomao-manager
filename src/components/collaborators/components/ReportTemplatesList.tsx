@@ -29,23 +29,19 @@ export function ReportTemplatesList({ onApplyTemplate, refreshTrigger = 0 }: Rep
     try {
       setLoading(true);
       
-      // We will perform a basic fetch. Ideally, we should join with users table but auth.users isn't easily joined unless there's a profiles table.
-      // Assuming a profiles table or we just show the user ID if not available, OR we join with 'partners' if they are partners, but we can't be sure who saves exactly.
+      // The 'profiles' relationship might not exist or be accessible directly via standard RLS, 
+      // so we select * and gracefully handle author mapping.
       const { data, error } = await supabase
         .from('rh_export_templates')
-        .select(`
-          *,
-          profiles:created_by (full_name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // If profiles join fails or doesn't exist, we just map safely
       const mapped = (data || []).map((t: any) => ({
         ...t,
-        author_name: t.profiles?.full_name || 'Usuário',
-        author_email: t.profiles?.email || 'N/A'
+        author_name: 'Usuário', // Standard fallback as profiles table is not consistently linked
+        author_email: 'N/A'
       }));
 
       setTemplates(mapped);
