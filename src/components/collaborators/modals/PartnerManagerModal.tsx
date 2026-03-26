@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Loader2, Search, UserCheck, UserMinus } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Partner } from '../../../types/controladoria';
+import { createPortal } from 'react-dom';
 import { useEscKey } from '../../../hooks/useEscKey';
 
 interface Props {
@@ -57,7 +58,7 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100">
 
@@ -140,6 +141,7 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

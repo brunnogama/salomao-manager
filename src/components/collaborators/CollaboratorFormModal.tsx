@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Settings2, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Collaborator, Partner } from '../../types/controladoria';
+import { createPortal } from 'react-dom';
 import { useEscKey } from '../../hooks/useEscKey';
 import { ManagedMultiSelect } from '../crm/ManagedMultiSelect';
 import { PartnerManagerModal } from './modals/PartnerManagerModal';
@@ -135,7 +136,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
 
@@ -255,6 +256,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
         onClose={() => setIsLeaderModalOpen(false)}
         onUpdate={fetchData}
       />
-    </div>
+    </div>,
+    document.body
   );
 }
