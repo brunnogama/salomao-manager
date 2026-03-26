@@ -22,6 +22,7 @@ import { StatusAndDatesSection } from './components/StatusAndDatesSection';
 import { ClientFormSection } from './components/ClientFormSection';
 import { LegalProcessForm } from './components/LegalProcessForm';
 import { LegalProcessList } from './components/LegalProcessList';
+import { AlertModal } from '../../ui/AlertModal';
 
 // Utilitários e Hooks
 import { formatForInput, ensureDateValue, localMaskCNJ, safeParseFloat, ensureArray, getThemeBackground } from '../utils/contractHelpers';
@@ -59,6 +60,12 @@ export function ContractFormModal(props: Props) {
   const [interimClause, setInterimClause] = useState('');
   const [interimRule, setInterimRule] = useState('');
   const [interimReady, setInterimReady] = useState(false);
+
+  const [validationAlert, setValidationAlert] = useState<{isOpen: boolean, title: string, message: string, type: 'error' | 'warning' | 'info' | 'success', onConfirm?: () => void}>({isOpen: false, title: '', message: '', type: 'error'});
+
+  const showAlert = (message: string, type: 'error' | 'warning' | 'info' | 'success' = 'error', title = 'Atenção', onConfirm?: () => void) => {
+    setValidationAlert({ isOpen: true, title, message, type, onConfirm });
+  };
 
   const [activeManager, setActiveManager] = useState<string | null>(null);
   const [isManagerOpen, setIsManagerOpen] = useState(false);
@@ -289,13 +296,13 @@ export function ContractFormModal(props: Props) {
     const newLabel = window.prompt("Digite o nome do novo Status:");
     if (!newLabel) return;
     const newValue = newLabel.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
-    if (statusOptions.some(s => s.value === newValue)) return alert("Este status já existe.");
+    if (statusOptions.some(s => s.value === newValue)) return showAlert("Este status já existe.", 'warning');
     try {
       const { error } = await supabase.from('contract_statuses').insert({ label: toTitleCase(newLabel.trim()), value: newValue, color: 'bg-gray-100 text-gray-800 border-gray-200' });
       if (error) throw error;
       await fetchStatuses();
       setFormData({ ...formData, status: newValue as any });
-    } catch (err) { alert("Erro ao criar status."); }
+    } catch (err) { showAlert("Erro ao criar status.", 'error'); }
   };
 
   const fetchDocuments = async () => {
@@ -460,15 +467,15 @@ export function ContractFormModal(props: Props) {
   };
 
   const executeSave = async () => {
-    if (!formData.client_name) return alert('O "Nome do Cliente" é obrigatório.');
-    if (!formData.partner_id) return alert('O "Responsável (Sócio)" é obrigatório.');
-    if (formData.status === 'analysis' && !formData.prospect_date) return alert('A "Data Prospect" é obrigatória para contratos em Análise.');
-    if (formData.status === 'proposal' && !formData.proposal_date) return alert('A "Data Proposta" é obrigatória para Propostas Enviadas.');
+    if (!formData.client_name) return showAlert('O "Nome do Cliente" é obrigatório.', "warning");
+    if (!formData.partner_id) return showAlert('O "Responsável (Sócio)" é obrigatório.', "warning");
+    if (formData.status === 'analysis' && !formData.prospect_date) return showAlert('A "Data Prospect" é obrigatória para contratos em Análise.', "warning");
+    if (formData.status === 'proposal' && !formData.proposal_date) return showAlert('A "Data Proposta" é obrigatória para Propostas Enviadas.', "warning");
     if (formData.status === 'active') {
-      if (!formData.contract_date) return alert('A "Data Assinatura" é obrigatória para Contratos Fechados.');
-      if (!formData.hon_number) return alert('O "Número HON" é obrigatório para Contratos Fechados.');
-      if (!formData.billing_location) return alert('O "Local Faturamento" é obrigatório para Contratos Fechados.');
-      if (formData.physical_signature === undefined || formData.physical_signature === null || (formData.physical_signature as any) === '') return alert('Informe se "Possui Assinatura Física" para Contratos Fechados.');
+      if (!formData.contract_date) return showAlert('A "Data Assinatura" é obrigatória para Contratos Fechados.', "warning");
+      if (!formData.hon_number) return showAlert('O "Número HON" é obrigatório para Contratos Fechados.', "warning");
+      if (!formData.billing_location) return showAlert('O "Local Faturamento" é obrigatório para Contratos Fechados.', "warning");
+      if (formData.physical_signature === undefined || formData.physical_signature === null || (formData.physical_signature as any) === '') return showAlert('Informe se "Possui Assinatura Física" para Contratos Fechados.', "warning");
     }
 
     setLocalLoading(true);
@@ -577,10 +584,10 @@ export function ContractFormModal(props: Props) {
         if (duplicateHonCase) {
           msg += `\n\n - ID: ${duplicateHonCase.display_id}\n - Cliente: ${duplicateHonCase.client_name}\n - Status: ${getStatusLabel(duplicateHonCase.status)}`;
         }
-        alert(msg);
+        showAlert(msg, 'error', '⚠️ Duplicidade de Caso Detectada');
       }
-      else if (error.code === 'PGRST204') alert(`Erro Técnico: Tentativa de salvar campo inválido.\n\nSOLUÇÃO: Rode o SQL fornecido no Supabase.`);
-      else alert(`Não foi possível salvar as alterações.\n\n${error.message} `);
+      else if (error.code === 'PGRST204') showAlert(`Tentativa de salvar campo inválido.\n\nSOLUÇÃO: Verifique os campos ou recarregue a página.`, 'error', 'Erro Técnico');
+      else showAlert(`Não foi possível salvar as alterações.\n\n${error.message}`, 'error', 'Erro ao Salvar');
     } finally {
       setLocalLoading(false);
     }
@@ -723,7 +730,7 @@ export function ContractFormModal(props: Props) {
   const handleCNPJSearch = async () => {
     if (!formData.cnpj || formData.has_no_cnpj) return;
     const cnpjLimpo = (formData.cnpj || '').replace(/\D/g, '');
-    if (cnpjLimpo.length !== 14) return alert('CNPJ inválido. Digite 14 dígitos.');
+    if (cnpjLimpo.length !== 14) return showAlert('CNPJ inválido. Digite 14 dígitos.', 'warning');
 
     setLocalLoading(true);
     try {
@@ -735,7 +742,7 @@ export function ContractFormModal(props: Props) {
 
       const { data: existingClient } = await supabase.from('clients').select('id, name').eq('cnpj', cnpjLimpo).maybeSingle();
       if (existingClient) setFormData(prev => ({ ...prev, client_id: existingClient.id }));
-    } catch (error: any) { alert(`❌ ${error.message}\n\n💡 Você pode preencher manualmente.`); } finally { setLocalLoading(false); }
+    } catch (error: any) { showAlert(`❌ ${error.message}\n\n💡 Você pode preencher manualmente.`, 'info', 'Aviso CNPJ'); } finally { setLocalLoading(false); }
   };
 
   const handleCNJSearch = async () => {
@@ -788,7 +795,7 @@ export function ContractFormModal(props: Props) {
       const { data: docData, error: dbError } = await supabase.from('contract_documents').insert({ contract_id: formData.id, file_name: file.name, file_path: filePath, file_type: type }).select().single();
       if (dbError) throw dbError;
       if (docData) setDocuments(prev => [docData, ...prev]);
-    } catch (error: any) { alert("Erro ao anexar arquivo: " + error.message); } finally { setUploading(false); e.target.value = ''; }
+    } catch (error: any) { showAlert("Erro ao anexar arquivo: " + error.message, 'error', 'Erro Upload'); } finally { setUploading(false); e.target.value = ''; }
   };
 
   const handleDownload = async (path: string) => {
@@ -799,10 +806,10 @@ export function ContractFormModal(props: Props) {
       if (data?.signedUrl) {
         window.open(data.signedUrl, '_blank');
       } else {
-        alert('Erro ao gerar link de download.');
+        showAlert('Erro ao gerar link de download.', 'error');
       }
     } catch (error: any) {
-      alert('Erro ao baixar documento: ' + error.message);
+      showAlert('Erro ao baixar documento: ' + error.message, 'error');
     }
   };
 
@@ -811,13 +818,14 @@ export function ContractFormModal(props: Props) {
   };
 
   const handleDeleteDocument = async (id: string, path: string) => {
-    if (!confirm("Tem certeza que deseja excluir este documento?")) return;
-    try {
-      await supabase.storage.from('ged-documentos').remove([path]);
-      const { error: dbError } = await supabase.from('contract_documents').delete().eq('id', id);
-      if (dbError) throw dbError;
-      setDocuments(prev => prev.filter(d => d.id !== id));
-    } catch (error: any) { alert("Erro ao excluir documento: " + error.message); }
+    showAlert("Tem certeza que deseja excluir este documento permanentemente da aba GED?", 'warning', 'Atenção Exclusão', async () => {
+      try {
+        await supabase.storage.from('ged-documentos').remove([path]);
+        const { error: dbError } = await supabase.from('contract_documents').delete().eq('id', id);
+        if (dbError) throw dbError;
+        setDocuments(prev => prev.filter(d => d.id !== id));
+      } catch (error: any) { showAlert("Erro ao excluir documento: " + error.message, 'error'); }
+    });
   };
 
   const handleClientChange = async (name: string) => {
@@ -911,6 +919,18 @@ export function ContractFormModal(props: Props) {
           >
             <X className="w-5 h-5" />
           </button>
+
+          {/* Validation Alert */}
+          <AlertModal 
+             isOpen={validationAlert.isOpen} 
+             onClose={() => setValidationAlert(prev => ({...prev, isOpen: false}))}
+             title={validationAlert.title}
+             description={validationAlert.message}
+             variant={validationAlert.type}
+             onConfirm={validationAlert.onConfirm}
+             confirmText={validationAlert.onConfirm ? "Sim, Excluir" : "OK"}
+             cancelText="Cancelar"
+          />
 
           {/* Scrollable Body */}
           <div className="flex-1 overflow-y-auto px-4 py-6 md:px-10 md:py-8 custom-scrollbar">

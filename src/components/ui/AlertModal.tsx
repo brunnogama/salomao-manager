@@ -97,7 +97,7 @@ export function AlertModal({
                     </div>
 
                     {description && (
-                        <p className="text-sm font-medium text-gray-600 leading-relaxed mb-6">
+                        <p className="text-sm font-medium text-gray-600 leading-relaxed mb-6 whitespace-pre-wrap text-left">
                             {description}
                         </p>
                     )}
