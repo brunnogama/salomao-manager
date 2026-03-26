@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Users } from 'lucide-react'
+import { X, Users, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface LayoutProps {
     title: React.ReactNode
@@ -12,6 +12,8 @@ interface LayoutProps {
     sidebarContent?: React.ReactNode
     isEditMode?: boolean
     currentSteps: { id: number; label: string; icon: any }[]
+    onPrev?: () => void
+    onNext?: () => void
 }
 
 // Layout Original em Modal (Exclusivo para Visualização)
@@ -24,7 +26,9 @@ export const CollaboratorModalLayout = ({
     footer,
     sidebarContent,
     isEditMode = false,
-    currentSteps
+    currentSteps,
+    onPrev,
+    onNext
 }: LayoutProps) => {
     const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -77,7 +81,19 @@ export const CollaboratorModalLayout = ({
                 <div className="flex-1 flex flex-col min-w-0 bg-[#fafafa]">
                     {/* Content Header (Title + Close) */}
                     <div className="px-12 py-8 pb-2 flex justify-between items-center shrink-0">
-                        <h2 className="text-3xl font-black text-[#0a192f] tracking-tight">{title}</h2>
+                        <div className="flex items-center gap-4">
+                            {onPrev && (
+                                <button onClick={onPrev} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-[#1e3a8a] border border-transparent hover:border-gray-200" title="Anterior">
+                                    <ChevronLeft className="h-6 w-6" />
+                                </button>
+                            )}
+                            <h2 className="text-3xl font-black text-[#0a192f] tracking-tight">{title}</h2>
+                            {onNext && (
+                                <button onClick={onNext} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-[#1e3a8a] border border-transparent hover:border-gray-200" title="Próximo">
+                                    <ChevronRight className="h-6 w-6" />
+                                </button>
+                            )}
+                        </div>
                         <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-all text-gray-400 hover:text-red-500">
                             <X className="h-6 w-6" />
                         </button>
@@ -109,7 +125,9 @@ export const CollaboratorPageLayout = ({
     footer,
     sidebarContent,
     isEditMode = false,
-    currentSteps
+    currentSteps,
+    onPrev,
+    onNext
 }: LayoutProps) => {
     const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -135,13 +153,25 @@ export const CollaboratorPageLayout = ({
                         <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
                             <Users className="h-6 w-6 text-white" />
                         </div>
-                        <div>
-                            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-                                {title}
-                            </h1>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">
-                                {isEditMode ? 'Formulário de Cadastro' : 'Visualização de Perfil'}
-                            </p>
+                        <div className="flex items-center gap-3">
+                            {onPrev && (
+                                <button onClick={onPrev} className="p-1.5 hover:bg-gray-100 rounded-lg transition-all text-gray-400 hover:text-[#1e3a8a]" title="Anterior">
+                                    <ChevronLeft className="h-5 w-5" />
+                                </button>
+                            )}
+                            <div>
+                                <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+                                    {title}
+                                </h1>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">
+                                    {isEditMode ? 'Formulário de Cadastro' : 'Visualização de Perfil'}
+                                </p>
+                            </div>
+                            {onNext && (
+                                <button onClick={onNext} className="p-1.5 hover:bg-gray-100 rounded-lg transition-all text-gray-400 hover:text-[#1e3a8a]" title="Próximo">
+                                    <ChevronRight className="h-5 w-5" />
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

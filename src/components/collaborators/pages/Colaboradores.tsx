@@ -33,7 +33,7 @@ import { HistoricoSection } from '../components/HistoricoSection'
 import { PeriodoAusenciasSection } from '../components/PeriodoAusenciasSection'
 import PerfilSection from '../components/PerfilSection'
 import { TabelasTab } from '../components/TabelasTab'
-import { CollaboratorModalLayout } from '../components/CollaboratorLayouts'
+import { CollaboratorModalLayout, CollaboratorPageLayout } from '../components/CollaboratorLayouts'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useLocation } from 'react-router-dom'
 import { getSegment } from '../utils/rhChartUtils'
@@ -116,10 +116,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [showUpdatedOnly, setShowUpdatedOnly] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterLider, setFilterLider] = useState('')
-  const [filterPartner, setFilterPartner] = useState('')
-  const [filterLocal, setFilterLocal] = useState('')
-  const [filterCargo, setFilterCargo] = useState('')
+  const [filterLider, setFilterLider] = useState<string[]>([])
+  const [filterPartner, setFilterPartner] = useState<string[]>([])
+  const [filterLocal, setFilterLocal] = useState<string[]>([])
+  const [filterCargo, setFilterCargo] = useState<string[]>([])
 
   // New Tabs State
   const [activeMainTab, setActiveMainTab] = useState<'Integrantes' | 'Relatórios' | 'Tabelas'>('Integrantes');
@@ -175,7 +175,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   // Expanded States for VT Tables
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
-  const [isVtSectionExpanded, setIsVtSectionExpanded] = useState(false);
   const [isVtEstagioExpanded, setIsVtEstagioExpanded] = useState(false);
   const [isVtCltExpanded, setIsVtCltExpanded] = useState(false);
 
@@ -192,11 +191,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (location.state.roleFilter && roles.length > 0) {
         const roleFilterStr = location.state.roleFilter;
         if (roleFilterStr === 'Não definido') {
-          setFilterCargo('unassigned');
+          setFilterCargo(['unassigned']);
         } else {
           const foundRole = roles.find(r => r.name === roleFilterStr);
           if (foundRole) {
-            setFilterCargo(String(foundRole.id));
+            setFilterCargo([String(foundRole.id)]);
           }
         }
         changed = true;
@@ -432,7 +431,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   const hasActiveAdvancedFilters = Object.values({
     advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
-    advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterPartner,
+    advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterTerminationStart, advFilterTerminationEnd, advFilterPartner,
     advFilterLeader, advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterPartnerType, advFilterLocal,
     advFilterTransporteTipo, advFilterGraduationComplete, advFilterPostGraduationComplete,
     advFilterGraduationExpected, advFilterGraduationCompletion, advFilterGraduationUF, advFilterGraduationInstitution,
@@ -462,17 +461,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
     ...roles.map((r: Role) => ({ label: r.name, value: String(r.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [roles])
 
-  const activeCount = React.useMemo(() =>
-    colaboradores.filter(c => c.status === 'active').length
-    , [colaboradores])
-
-  // Categorias de filtro para a FilterBar
   const filterCategories = React.useMemo((): FilterCategory[] => [
     {
       key: 'lider',
       label: 'Líder',
       icon: User,
-      type: 'single',
+      type: 'multi',
       options: liderOptions,
       value: filterLider,
       onChange: setFilterLider,
@@ -481,7 +475,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       key: 'partner',
       label: 'Sócio',
       icon: Users,
-      type: 'single',
+      type: 'multi',
       options: partnerOptions,
       value: filterPartner,
       onChange: setFilterPartner,
@@ -490,7 +484,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       key: 'local',
       label: 'Local',
       icon: Building2,
-      type: 'single',
+      type: 'multi',
       options: locationOptions,
       value: filterLocal,
       onChange: setFilterLocal,
@@ -499,7 +493,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       key: 'cargo',
       label: 'Cargo',
       icon: Briefcase,
-      type: 'single',
+      type: 'multi',
       options: roleOptions,
       value: filterCargo,
       onChange: setFilterCargo,
@@ -507,40 +501,35 @@ export function Colaboradores({ }: ColaboradoresProps) {
   ], [filterLider, filterPartner, filterLocal, filterCargo, liderOptions, partnerOptions, locationOptions, roleOptions]);
 
   const activeFilterCount = React.useMemo(() => {
-    let count = 0;
-    if (filterLider) count++;
-    if (filterPartner) count++;
-    if (filterLocal) count++;
-    if (filterCargo) count++;
-    return count;
+    return filterLider.length + filterPartner.length + filterLocal.length + filterCargo.length;
   }, [filterLider, filterPartner, filterLocal, filterCargo]);
 
   const activeFilterChips = React.useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
-    if (filterLider) {
-      const label = liderOptions.find(l => l.value === filterLider)?.label || filterLider;
-      chips.push({ key: 'lider', label: `Líder: ${label}`, onClear: () => setFilterLider('') });
-    }
-    if (filterPartner) {
-      const label = partnerOptions.find(p => p.value === filterPartner)?.label || filterPartner;
-      chips.push({ key: 'partner', label: `Sócio: ${label}`, onClear: () => setFilterPartner('') });
-    }
-    if (filterLocal) {
-      const label = locationOptions.find(l => l.value === filterLocal)?.label || filterLocal;
-      chips.push({ key: 'local', label: `Local: ${label}`, onClear: () => setFilterLocal('') });
-    }
-    if (filterCargo) {
-      const label = filterCargo === 'unassigned' ? 'Não definido' : roleOptions.find(r => r.value === filterCargo)?.label || filterCargo;
-      chips.push({ key: 'cargo', label: `Cargo: ${label}`, onClear: () => setFilterCargo('') });
-    }
+    filterLider.forEach(id => {
+      const label = liderOptions.find(l => l.value === id)?.label || id;
+      chips.push({ key: `lider-${id}`, label: `Líder: ${label}`, onClear: () => setFilterLider(prev => prev.filter(v => v !== id)) });
+    });
+    filterPartner.forEach(id => {
+      const label = partnerOptions.find(p => p.value === id)?.label || id;
+      chips.push({ key: `partner-${id}`, label: `Sócio: ${label}`, onClear: () => setFilterPartner(prev => prev.filter(v => v !== id)) });
+    });
+    filterLocal.forEach(id => {
+      const label = locationOptions.find(l => l.value === id)?.label || id;
+      chips.push({ key: `local-${id}`, label: `Local: ${label}`, onClear: () => setFilterLocal(prev => prev.filter(v => v !== id)) });
+    });
+    filterCargo.forEach(id => {
+      const label = id === 'unassigned' ? 'Não definido' : roleOptions.find(r => r.value === id)?.label || id;
+      chips.push({ key: `cargo-${id}`, label: `Cargo: ${label}`, onClear: () => setFilterCargo(prev => prev.filter(v => v !== id)) });
+    });
     return chips;
   }, [filterLider, filterPartner, filterLocal, filterCargo, liderOptions, partnerOptions, locationOptions, roleOptions]);
 
   const clearAllFilters = () => {
-    setFilterLider('');
-    setFilterPartner('');
-    setFilterLocal('');
-    setFilterCargo('');
+    setFilterLider([]);
+    setFilterPartner([]);
+    setFilterLocal([]);
+    setFilterCargo([]);
   };
 
   // Inicializa estado vazio por padrão conforme solicitado
@@ -1254,10 +1243,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const normalizer = (str: string) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '';
     const term = normalizer(searchTerm);
     const matchSearch = normalizer(c.name).includes(term) || normalizer(c.email || '').includes(term);
-    const matchLider = filterLider ? String(c.leader_id) === filterLider : true
-    const matchPartner = filterPartner ? String(c.partner_id) === filterPartner : true
-    const matchLocal = filterLocal ? String(c.local) === filterLocal : true
-    const matchCargo = filterCargo ? (filterCargo === 'unassigned' ? (!c.role || String(c.role) === 'Não definido' || String(c.role) === 'null') : String(c.role) === filterCargo) : true
+    const matchLider = filterLider.length > 0 ? filterLider.includes(String(c.leader_id)) : true
+    const matchPartner = filterPartner.length > 0 ? filterPartner.includes(String(c.partner_id)) : true
+    const matchLocal = filterLocal.length > 0 ? filterLocal.includes(String(c.local)) : true
+    const matchCargo = filterCargo.length > 0 ? filterCargo.some(fc => fc === 'unassigned' ? (!c.role || String(c.role) === 'Não definido' || String(c.role) === 'null') : String(c.role) === fc) : true
     const matchUpdated = showUpdatedOnly ? c.cadastro_atualizado === true : true
     return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchUpdated
   })
@@ -1361,8 +1350,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   const currentAdvancedFiltered = React.useMemo(() => getAdvancedFiltered(), [
     colaboradores, advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
-    advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterTerminationStart, advFilterTerminationEnd, advFilterActivePeriodStart, advFilterActivePeriodEnd, advFilterPartner, advFilterLeader,
-    advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal, advFilterTransporteTipo, advFilterSegment,
+    advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterPartner, advFilterLeader,
+    advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterPartnerType, advFilterLocal, advFilterTransporteTipo, advFilterSegment,
     advFilterGraduationComplete, advFilterPostGraduationComplete,
     advFilterGraduationExpected, advFilterGraduationCompletion, advFilterGraduationUF, advFilterGraduationInstitution,
     advFilterPostGraduationExpected, advFilterPostGraduationCompletion, advFilterPostGraduationUF, advFilterPostGraduationInstitution
@@ -1714,6 +1703,17 @@ export function Colaboradores({ }: ColaboradoresProps) {
     isEditMode: boolean = false,
     currentData: Partial<Collaborator> = {}
   ) => {
+    let onPrev, onNext;
+    if (currentData?.id) {
+      const idx = filtered.findIndex(c => c.id === currentData.id);
+      if (idx > 0) {
+        onPrev = () => handleRowClick(filtered[idx - 1]);
+      }
+      if (idx !== -1 && idx < filtered.length - 1) {
+        onNext = () => handleRowClick(filtered[idx + 1]);
+      }
+    }
+
     return (
       <CollaboratorModalLayout
         title={title}
@@ -1725,6 +1725,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
         sidebarContent={sidebarContent}
         isEditMode={isEditMode}
         currentSteps={getFormSteps(currentData)}
+        onPrev={onPrev}
+        onNext={onNext}
       />
     )
   }
@@ -1741,8 +1743,19 @@ export function Colaboradores({ }: ColaboradoresProps) {
     isEditMode: boolean = false,
     currentData: Partial<Collaborator> = {}
   ) => {
+    let onPrev, onNext;
+    if (currentData?.id) {
+      const idx = filtered.findIndex(c => c.id === currentData.id);
+      if (idx > 0) {
+        onPrev = () => handleEdit(filtered[idx - 1], activeTab);
+      }
+      if (idx !== -1 && idx < filtered.length - 1) {
+        onNext = () => handleEdit(filtered[idx + 1], activeTab);
+      }
+    }
+
     return (
-      <CollaboratorModalLayout
+      <CollaboratorPageLayout
         title={title}
         onClose={onClose}
         activeTab={activeTab}
@@ -1752,6 +1765,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
         sidebarContent={sidebarContent}
         isEditMode={isEditMode}
         currentSteps={getFormSteps(currentData)}
+        onPrev={onPrev}
+        onNext={onNext}
       />
     )
   }
