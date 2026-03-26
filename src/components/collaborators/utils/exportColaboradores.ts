@@ -23,6 +23,28 @@ const getLookupName = (list: { id: string | number; name: string }[], id?: strin
     return list.find(i => String(i.id) === String(id))?.name || ''
 }
 
+const formatGender = (g?: string) => {
+    if (g === 'M') return 'Masculino';
+    if (g === 'F') return 'Feminino';
+    return g || '';
+}
+
+const formatCivilStatus = (cs?: string) => {
+    if (!cs) return '';
+    const map: Record<string, string> = {
+        'solteiro': 'Solteiro(a)',
+        'casado': 'Casado(a)',
+        'divorciado': 'Divorciado(a)',
+        'viuvo': 'Viúvo(a)',
+        'uniao_estavel': 'União Estável'
+    };
+    return map[cs.toLowerCase()] || cs;
+}
+
+const formatValueFallback = (val: any) => {
+    return val || '';
+}
+
 const parseDateForExcel = (isoDate: string | undefined | null): Date | string => {
     if (!isoDate) return '';
     if (isoDate.includes('/')) {
@@ -70,8 +92,8 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'CPF': c.cpf,
         'RG': c.rg,
         'Data Nascimento': parseDateForExcel(c.birthday),
-        'Gênero': c.gender,
-        'Estado Civil': c.civil_status,
+        'Gênero': formatGender(c.gender),
+        'Estado Civil': formatCivilStatus(c.civil_status),
         'Possui Filhos?': c.has_children ? 'Sim' : 'Não',
         'Quantidade de Filhos': c.children_count || 0,
         'Nome Emergência': c.emergencia_nome,
@@ -132,10 +154,10 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Área': c.area,
         'Sócio Responsável': (c as any).partner?.name || getLookupName(partners as any[], c.partner_id),
         'Líder Direto': (c as any).leader?.name || getLookupName(colaboradores as any[], c.leader_id),
-        'Equipe': (c as any).teams?.name || getLookupName(teams, c.equipe) || c.equipe,
-        'Cargo': (c as any).roles?.name || getLookupName(roles, c.role) || c.role,
-        'Atuação': getLookupName(atuacoes, c.atuacao) || c.atuacao,
-        'Local': (c as any).locations?.name || getLookupName(locations, c.local) || c.local,
+        'Equipe': (c as any).teams?.name || getLookupName(teams, c.equipe) || formatValueFallback(c.equipe),
+        'Cargo': (c as any).roles?.name || getLookupName(roles, c.role) || formatValueFallback(c.role),
+        'Atuação': getLookupName(atuacoes, c.atuacao) || formatValueFallback(c.atuacao),
+        'Local': (c as any).locations?.name || getLookupName(locations, c.local) || formatValueFallback(c.local),
         'Tipo Transporte': c.transportes?.map((t: any) => t.tipo).join(', ') || '',
         'Quantidade Ida': c.transportes?.reduce((sum: number, t: any) => sum + (t.ida_qtd || 0), 0) || 0,
         'Quantidade Volta': c.transportes?.reduce((sum: number, t: any) => sum + (t.volta_qtd || 0), 0) || 0,
