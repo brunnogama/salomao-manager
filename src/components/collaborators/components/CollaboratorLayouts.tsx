@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { X, Users } from 'lucide-react'
 
 interface LayoutProps {
-    title: string
+    title: React.ReactNode
     onClose: () => void
     activeTab: number
     setActiveTab: (id: number) => void

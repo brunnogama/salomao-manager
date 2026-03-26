@@ -41,7 +41,7 @@ export function SocioRuleModal({
         {/* Body */}
         <div className="px-8 py-6 space-y-5">
           
-          {/* Colaborador - Seleção via Tabela */}
+          {/* Integrante - Seleção via Tabela */}
           <SearchableSelect 
             label="Integrante"
             placeholder="Selecione o integrante"

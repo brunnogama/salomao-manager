@@ -377,7 +377,7 @@ export function Presencial() {
         if (confirm(`Substituir base?`)) {
           // Atualizado: socios_regras -> collaborators
           await supabase.from('collaborators').update({ partner_id: null, weekly_goal: 3 }).neq('id', '00000000-0000-0000-0000-000000000000')
-          // Nota: No novo esquema, a "regra" faz parte do cadastro do colaborador. 
+          // Nota: No novo esquema, a "regra" faz parte do cadastro do integrante. 
           // Para importação em lote, seria necessário um script de match por nome.
           alert("Recurso em transição para tabela de colaboradores.");
         }

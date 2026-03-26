@@ -453,7 +453,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                                             };
                                                             setFormData({ ...formData, contract_partners: newPartners });
 
-                                                            // Busca as OABs preexistentes do colaborador
+                                                            // Busca as OABs preexistentes do integrante
                                                             if (collaboratorId) {
                                                                 fetchPartnerOabs(pIndex, collaboratorId);
                                                             }

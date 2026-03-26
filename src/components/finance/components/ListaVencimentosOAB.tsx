@@ -40,7 +40,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
   const fetchVencimentos = async () => {
     setLoading(true)
     try {
-      // 1. Busca Colaboradores e tabelas de mapeamento
+      // 1. Busca Integrantes e tabelas de mapeamento
       const [colabRes, rolesRes, teamsRes] = await Promise.all([
         supabase.from('collaborators').select('*'),
         supabase.from('roles').select('id, name'),

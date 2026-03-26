@@ -614,7 +614,7 @@ export function RHVagas() {
 
     const contratadosIds = new Set(colabLinks?.map(cl => cl.candidato_id).filter(Boolean))
 
-    // Filtrar candidatos que já são colaboradores
+    // Filtrar candidatos que já são integrantees
     let talentosAbertos = (candData || []).filter(c => !contratadosIds.has(c.id))
 
     // Ordenar: candidatos recém-avaliados pelo líder (data_avaliacao) no topo
@@ -1656,7 +1656,7 @@ export function RHVagas() {
 
 
                           // Ocultar se já for colaborador (estamos em uma página de recrutamento/vagas ativos)
-                          // Nota: Precisamos carregar a lista de IDs de candidatos que já são colaboradores se quisermos ser precisos,
+                          // Nota: Precisamos carregar a lista de IDs de candidatos que já são integrantees se quisermos ser precisos,
                           // ou checar se existe um colaborador vinculado via query mais robusta. 
                           // Para o MVP solicitado: "Quando o candidato é aprovado, pode retirar da lista de talentos"
                           // Vou assumir que se ele está marcado como "Aprovado" ou vinculado a uma vaga fechada, ou se já existe na tabela de collaborators.

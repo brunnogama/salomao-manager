@@ -52,7 +52,7 @@ const MOCK_COMUNICACOES: Comunicacao[] = [
   {
     id: '2',
     titulo: 'Política de Home Office',
-    conteudo: 'Foi aprovada a nova política de trabalho híbrido. Os colaboradores poderão trabalhar remotamente até 2 vezes por semana, mediante aprovação da liderança.',
+    conteudo: 'Foi aprovada a nova política de trabalho híbrido. Os integrantes poderão trabalhar remotamente até 2 vezes por semana, mediante aprovação da liderança.',
     categoria: 'Política',
     publico: 'Todos',
     data_publicacao: '2026-03-15',

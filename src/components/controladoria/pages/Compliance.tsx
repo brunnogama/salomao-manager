@@ -466,8 +466,8 @@ export function Compliance() {
             }
           }
         } catch (syncError) {
-          console.error('Erro ao sincronizar OABs com os colaboradores:', syncError);
-          toast.error('Certidão salva, mas houve erro ao atualizar OABs dos colaboradores.');
+          console.error('Erro ao sincronizar OABs com os integrantes:', syncError);
+          toast.error('Certidão salva, mas houve erro ao atualizar OABs dos integrantes.');
         }
       }
 

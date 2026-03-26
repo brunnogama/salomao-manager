@@ -1099,7 +1099,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         const { data, error } = await supabase.from('collaborators').insert(payload).select().single()
         if (error) throw error
         savedColabId = data.id;
-        await logAction('CRIAR', 'RH', `Criou novo colaborador: ${formData.name}`, 'Integrantes')
+        await logAction('CRIAR', 'RH', `Criou novo integrante: ${formData.name}`, 'Integrantes')
 
         // Handle Pending GEDs
         if (data && pendingGedDocs.length > 0) {
@@ -1704,7 +1704,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   // Layout Original em Modal (Exclusivo para Visualização)
   const renderModalLayout = (
-    title: string,
+    title: React.ReactNode,
     onClose: () => void,
     activeTab: number,
     setActiveTab: (id: number) => void,
@@ -1731,7 +1731,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   // Layout Espaçoso em Tela Cheia (Exclusivo para Formulários)
   const renderPageLayout = (
-    title: string,
+    title: React.ReactNode,
     onClose: () => void,
     activeTab: number,
     setActiveTab: (id: number) => void,
@@ -2684,7 +2684,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             const fd = d.toLocaleDateString('pt-BR').replace(/\//g, '-');
                             exportColaboradoresXLSX({ filtered: tempFiltered, rateios, hiringReasons, partners, colaboradores, terminationInitiatives, terminationTypes, terminationReasons, roles, locations, teams, atuacoes, fileName: `Colaboradores_Pesquisa_${fd}` });
                           } else {
-                            alert('Nenhum colaborador encontrado com os filtros informados.');
+                            alert('Nenhum integrante encontrado com os filtros informados.');
                           }
                         }}
                         className="flex items-center gap-2 px-8 py-3 bg-[#1e3a8a] text-white rounded-xl font-black uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-lg active:scale-95 text-sm cursor-pointer"
@@ -2901,7 +2901,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                         const workingDays = getWorkingDaysInCurrentMonth();
                         const activeColabs = colaboradores.filter(c => c.status === 'active');
 
-                        // Filtra os colaboradores do grupo atual (Estágio vs CLT)
+                        // Filtra os integrantes do grupo atual (Estágio vs CLT)
                         const groupColaboradores = activeColabs
                           .filter(c => {
                             if (groupConfig.type === 'Estágio') {
@@ -3228,7 +3228,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
       {/* FORM PAGE (Full Page Layout) */}
       {
         showFormModal && renderPageLayout(
-          formData.id ? 'Editar Colaborador' : 'Novo Integrante',
+          formData.id ? (
+            <span className="flex items-baseline gap-3">
+              <span>{formData.name || 'Sem Nome'}</span>
+              <span className="text-sm sm:text-base font-bold text-gray-400 tracking-normal normal-case">Editando Integrante</span>
+            </span>
+          ) : 'Novo Integrante',
           () => setShowFormModal(false),
           activeFormTab,
           setActiveFormTab,
@@ -3328,7 +3333,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             const colabEmail = colaboradores.find(c => c.name === link.name)?.email;
 
                             if (!colabEmail) {
-                              showAlert('Erro', `O colaborador ${link.name} não possui um e-mail corporativo cadastrado.`, 'error');
+                              showAlert('Erro', `O integrante ${link.name} não possui um e-mail corporativo cadastrado.`, 'error');
                               return;
                             }
 
@@ -3512,7 +3517,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         onClose={() => setColaboradorToDelete(null)}
         onConfirm={confirmDeleteColaborador}
         title="Excluir Integrante"
-        description={`Tem certeza que deseja excluir o colaborador "${colaboradorToDelete?.name}" permanentemente? Todas as informações vinculadas a ele serão removidas.`}
+        description={`Tem certeza que deseja excluir o integrante "${colaboradorToDelete?.name}" permanentemente? Todas as informações vinculadas a ele serão removidas.`}
         confirmText="Excluir"
         cancelText="Cancelar"
         variant="danger"

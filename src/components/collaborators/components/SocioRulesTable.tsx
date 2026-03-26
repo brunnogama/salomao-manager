@@ -54,7 +54,7 @@ export function SocioRulesTable({ filteredRules, onEdit, onDelete }: SocioRulesT
             return (
               <tr key={rule.id} className="hover:bg-blue-50/30 transition-colors group">
 
-                {/* Colaborador com Avatar Navy */}
+                {/* Integrante com Avatar Navy */}
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white font-black text-sm shadow-md">

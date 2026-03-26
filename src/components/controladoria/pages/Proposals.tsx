@@ -290,7 +290,7 @@ export function Proposals() {
     } else {
       // Fallback: If partner table has info (it usually doesn't have details like OAB/Civil Status fully populated in types but let's check runtime)
       // For now, if not found, we just use partner data.
-      toast.warning(`Dados detalhados não encontrados em Colaboradores para ${partner.name}.`);
+      toast.warning(`Dados detalhados não encontrados em Integrantes para ${partner.name}.`);
     }
 
     setProposalData(prev => ({
@@ -1620,7 +1620,7 @@ export function Proposals() {
                       msgs.push(`O sócio ${p.name} não possui OAB ativa para ${proposalData.contractLocation} (${targetUf}). A OAB principal será utilizada na proposta.`);
                     }
                   } else if (p.collaboratorData) {
-                    // Sem registros de OAB no perfil do colaborador mas tem dados de colaborador
+                    // Sem registros de OAB no perfil do integrante mas tem dados de colaborador
                     // Não é um erro gravíssimo, mas ele vai pegar a principal
                     // Silenciando se quiser apenas "não tem a OAB desse local"
                   }

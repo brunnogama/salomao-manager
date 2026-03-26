@@ -202,13 +202,13 @@ export const exportVTXLSX = (options: ExportOptions) => {
 
     const dataToExport = sortedData.map(c => {
         const lider = (c as any).leader?.name || getLookupName(colaboradores as any[], c.leader_id) || '-';
-        // Use custom mapped currentVtTotal if available (from Colaboradores page UI logic), otherwise fallback to 0 calculation
+        // Use custom mapped currentVtTotal if available (from Integrantes page UI logic), otherwise fallback to 0 calculation
         const transporte = (c as any).currentVtTotal !== undefined
             ? (c as any).currentVtTotal
             : 0;
 
         return {
-            'Nome (do colaborador)': c.name,
+            'Nome (do integrante)': c.name,
             'Líder Direto': lider,
             'Previsão de Formatura': parseDateForExcel(c.previsao_formatura) || '-',
             'Término Contrato': parseDateForExcel(c.termino_contrato_estagio) || '-',

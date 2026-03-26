@@ -37,7 +37,7 @@ export interface RegistroDiario {
 
 export interface SocioRule {
   id?: string
-  colaborador_id?: string // UUID do colaborador
+  colaborador_id?: string // UUID do integrante
   partner_id?: string // UUID do sócio (tabela partners)
   weekly_goal?: number // Meta semanal (dias)
   

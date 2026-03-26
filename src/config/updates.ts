@@ -108,8 +108,8 @@ export const APP_UPDATES: AppUpdate[] = [
         ],
         fixes: [
             'Migração de Configurações da Controladoria',
-            'Correção no Display de Colaboradores (Nomes ao invés de IDs)',
-            'Recuperação de Dados de Colaboradores (Fix Join Query)'
+            'Correção no Display de Integrantes (Nomes ao invés de IDs)',
+            'Recuperação de Dados de Integrantes (Fix Join Query)'
         ]
     },
     {

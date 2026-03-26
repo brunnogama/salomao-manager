@@ -356,7 +356,7 @@ export function DadosCorporativosSection({
                     />
                   </div>
                   <p className="text-[9px] text-gray-500 mt-1 font-medium">
-                    Informe a data em que o colaborador assumirá o novo cargo.
+                    Informe a data em que o integrante assumirá o novo cargo.
                   </p>
                 </div>
               )}

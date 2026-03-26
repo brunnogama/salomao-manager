@@ -135,7 +135,7 @@ export function CollaboratorManagerModal({ isOpen, onClose, onUpdate }: Props) {
 
         <div className="px-8 py-4 bg-gray-50 text-center border-t border-gray-100">
           <p className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">
-            Central de Colaboradores e Líderes
+            Central de Integrantes e Líderes
           </p>
         </div>
       </div>

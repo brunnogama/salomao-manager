@@ -141,13 +141,13 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
 
     const handleExtractResumeAI = async () => {
         if (!collaboratorId || collaboratorId === 'novo') {
-            if (showAlert) showAlert('Atenção', 'Você precisa salvar o colaborador antes de usar a IA.', 'info');
+            if (showAlert) showAlert('Atenção', 'Você precisa salvar o integrante antes de usar a IA.', 'info');
             return;
         }
 
         try {
             setExtractingAI(true);
-            if (showAlert) showAlert('IA Analisando...', 'A IA está lendo o currículo do colaborador (Isso pode levar alguns segundos).', 'info');
+            if (showAlert) showAlert('IA Analisando...', 'A IA está lendo o currículo do integrante (Isso pode levar alguns segundos).', 'info');
 
             const { data: { session } } = await supabase.auth.getSession();
 
@@ -205,7 +205,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
                         <div>
                             <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-tight">Perfil e Habilidades</h3>
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
-                                Gerencie as competências e histórico técnico do colaborador
+                                Gerencie as competências e histórico técnico do integrante
                             </p>
                         </div>
                     </div>
@@ -315,7 +315,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId, showAlert
                     <AlertCircle className="h-5 w-5 shrink-0" />
                     <div className="text-[10px] font-medium leading-relaxed uppercase tracking-wider">
                         As tags inseridas aqui ajudam no cruzamento de dados para futuras promoções ou realocações de equipe.
-                        Elas foram migradas automaticamente da fase de recrutamento se o colaborador foi aprovado pelo sistema.
+                        Elas foram migradas automaticamente da fase de recrutamento se o integrante foi aprovado pelo sistema.
                     </div>
                 </div>
 

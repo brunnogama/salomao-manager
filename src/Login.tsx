@@ -336,7 +336,7 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Colaboradores */}
+            {/* Integrantes */}
             <div className="relative z-10 flex items-start gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 backdrop-blur-md group hover:-translate-y-0.5">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/10 flex items-center justify-center border border-green-500/20 group-hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all shrink-0">
                 <UserCog className="w-4 h-4 text-green-400" />

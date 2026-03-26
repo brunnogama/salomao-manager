@@ -78,7 +78,7 @@ export function RHGED() {
             </div>
             <h2 className="text-xl font-black text-[#0a192f]">Nenhum arquivo digitalizado</h2>
             <p className="text-gray-500 max-w-sm mt-2">
-              Comece fazendo o upload de contratos, termos ou documentos de identificação dos colaboradores.
+              Comece fazendo o upload de contratos, termos ou documentos de identificação dos integrantes.
             </p>
           </div>
         </div>
