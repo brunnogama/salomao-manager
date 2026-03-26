@@ -180,7 +180,7 @@ export function PeriodoAusenciasSection({
                         event: 'hr_requested',
                         colaborador_nome: formData.name,
                         colaborador_email: formData.email,
-                        lider_id: primaryLeaderId,
+                        lider_id: reqLeaderIds,
                         link_magico_integrante: `${window.location.origin}/solicitacao-ferias/${data.employee_token}`,
                         email_rh: 'rh@salomaoadv.com.br'
                     })
