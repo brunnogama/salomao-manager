@@ -174,7 +174,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [customVt2, setCustomVt2] = useState<number>(300);
 
   // Expanded States for VT Tables
-  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
   const [isVtEstagioExpanded, setIsVtEstagioExpanded] = useState(false);
   const [isVtCltExpanded, setIsVtCltExpanded] = useState(false);
 
@@ -1348,14 +1347,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     });
   };
 
-  const currentAdvancedFiltered = React.useMemo(() => getAdvancedFiltered(), [
-    colaboradores, advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
-    advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterPartner, advFilterLeader,
-    advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterPartnerType, advFilterLocal, advFilterTransporteTipo, advFilterSegment,
-    advFilterGraduationComplete, advFilterPostGraduationComplete,
-    advFilterGraduationExpected, advFilterGraduationCompletion, advFilterGraduationUF, advFilterGraduationInstitution,
-    advFilterPostGraduationExpected, advFilterPostGraduationCompletion, advFilterPostGraduationUF, advFilterPostGraduationInstitution
-  ]);
+
 
   const graduationInstitutionOptions = React.useMemo(() => {
     if (!advFilterGraduationUF) return [];
@@ -2209,7 +2201,20 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
-                            <p className="text-[10px] text-gray-400 font-medium">{toTitleCase((c as any).atuacoes?.name || c.atuacao || '')}</p>
+                            {(() => {
+                              const atu = (c as any).atuacoes?.name || c.atuacao || '';
+                              const tags = atu.split(',').filter((t: string) => t.trim().length > 0);
+                              if (tags.length > 1) {
+                                return (
+                                  <div className="flex mt-1">
+                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 rounded text-[9px] font-bold uppercase tracking-widest">
+                                      {tags.length} tags
+                                    </span>
+                                  </div>
+                                );
+                              }
+                              return <p className="text-[10px] text-gray-400 font-medium mt-0.5 leading-snug">{toTitleCase(atu)}</p>;
+                            })()}
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
@@ -2275,7 +2280,20 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
-                            <p className="text-[10px] text-gray-400 font-medium">{toTitleCase((c as any).atuacoes?.name || c.atuacao || '')}</p>
+                            {(() => {
+                              const atu = (c as any).atuacoes?.name || c.atuacao || '';
+                              const tags = atu.split(',').filter((t: string) => t.trim().length > 0);
+                              if (tags.length > 1) {
+                                return (
+                                  <div className="flex mt-1">
+                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 rounded text-[9px] font-bold uppercase tracking-widest">
+                                      {tags.length} tags
+                                    </span>
+                                  </div>
+                                );
+                              }
+                              return <p className="text-[10px] text-gray-400 font-medium mt-0.5 leading-snug">{toTitleCase(atu)}</p>;
+                            })()}
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
