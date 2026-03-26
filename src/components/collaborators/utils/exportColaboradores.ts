@@ -106,14 +106,17 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Estado Civil': formatCivilStatus(c.civil_status),
         'Possui Filhos?': c.has_children ? 'Sim' : 'Não',
         'Quantidade de Filhos': c.children_count || 0,
+        'Filhos (Nome e Nascimento)': c.children_data?.map((f: any) => `${f.name} (${parseDateForExcel(f.birth_date)})`).join(' | ') || '',
         'Nome Emergência': c.emergencia_nome,
         'Telefone Emergência': c.emergencia_telefone,
         'Parentesco Emergência': c.emergencia_parentesco,
+        'Contatos de Emergência': c.emergency_contacts?.map((e: any) => `${e.nome} - ${e.telefone} (${e.parentesco})`).join(' | ') || '',
         'Nome da Mãe': c.mae,
         'Nome do Pai': c.pai,
         'Nacionalidade': c.nacionalidade,
         'Naturalidade (Cidade)': c.naturalidade_cidade,
         'Naturalidade (UF)': c.naturalidade_uf,
+        'CNH': c.cnh || '',
         'Observações': c.observacoes,
         'CEP': c.zip_code,
         'Endereço': c.address,
@@ -136,6 +139,12 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'CTPS': c.ctps || c.ctps_numero,
         'Série CTPS': c.ctps_serie,
         'UF CTPS': c.ctps_uf,
+        
+        'Resumo CV': c.resumo_cv || '',
+        'Idiomas': c.idiomas || '',
+        'Atividades Acadêmicas': c.atividades_academicas || '',
+        'Competências Técnicas/Perfil': c.perfil || '',
+        'Indicado Por': c.indicado_por || '',
 
         'Nível Escolaridade': c.escolaridade_nivel,
         'Subnível': c.escolaridade_subnivel,
@@ -144,6 +153,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Matrícula Escolar': c.escolaridade_matricula,
         'Semestre': c.escolaridade_semestre,
         'Previsão Conclusão': parseDateForExcel(c.escolaridade_previsao_conclusao),
+        'Formação Histórica': c.education_history?.map((e: any) => `${e.nivel} em ${e.curso} - ${e.instituicao} (${e.status})`).join(' | ') || '',
 
         'Forma de Pagamento': c.forma_pagamento,
         'Nome do Banco': c.banco_nome,
@@ -168,6 +178,9 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Cargo': (c as any).roles?.name || getLookupName(roles, c.role) || formatValueFallback(c.role),
         'Atuação': getLookupName(atuacoes, c.atuacao) || formatValueFallback(c.atuacao),
         'Local': (c as any).locations?.name || getLookupName(locations, c.local) || formatValueFallback(c.local),
+        'Horário Entrada': c.work_schedule_start || '',
+        'Horário Saída': c.work_schedule_end || '',
+        'Posto / Mesa': c.posto || '',
         'Tipo Transporte': c.transportes?.map((t: any) => t.tipo).join(', ') || '',
         'Quantidade Ida': c.transportes?.reduce((sum: number, t: any) => sum + (t.ida_qtd || 0), 0) || 0,
         'Quantidade Volta': c.transportes?.reduce((sum: number, t: any) => sum + (t.volta_qtd || 0), 0) || 0,
@@ -235,8 +248,34 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         }
     }
 
-    // Auto-width for columns (Optional but good)
-    const wscols = Object.keys(dataToExport[0] || {}).map(() => ({ wch: 20 }));
+    // Style Header Row (Royal Blue background, White text)
+    for (let C = 0; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
+        if (!ws[cellAddress]) continue;
+        ws[cellAddress].s = {
+            font: { bold: true, color: { rgb: "FFFFFF" } },
+            fill: { fgColor: { rgb: "4169E1" } },
+            alignment: { vertical: "center", horizontal: "center" }
+        };
+    }
+
+    // Freeze Header Row
+    if (!ws['!views']) ws['!views'] = [];
+    ws['!views'].push({ state: 'frozen', xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' });
+
+    // Auto-width for columns dynamically based on content
+    const keys = Object.keys(dataToExport[0] || {});
+    const wscols = keys.map(key => {
+        let maxLen = key.length;
+        dataToExport.forEach(row => {
+            const val = (row as any)[key];
+            if (val !== undefined && val !== null) {
+                const len = String(val).length;
+                if (len > maxLen) maxLen = len;
+            }
+        });
+        return { wch: Math.min(Math.max(maxLen + 2, 10), 60) };
+    });
     ws['!cols'] = wscols;
 
     const wb = XLSX.utils.book_new();
@@ -282,8 +321,36 @@ export const exportVTXLSX = (options: ExportOptions) => {
 
     const ws = XLSX.utils.json_to_sheet(dataToExport, { cellDates: true, dateNF: 'dd/mm/yyyy' });
 
-    // Auto-width for columns
-    const wscols = Object.keys(dataToExport[0] || {}).map(() => ({ wch: 20 }));
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+
+    // Style Header Row (Royal Blue background, White text)
+    for (let C = 0; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
+        if (!ws[cellAddress]) continue;
+        ws[cellAddress].s = {
+            font: { bold: true, color: { rgb: "FFFFFF" } },
+            fill: { fgColor: { rgb: "4169E1" } },
+            alignment: { vertical: "center", horizontal: "center" }
+        };
+    }
+
+    // Freeze Header Row
+    if (!ws['!views']) ws['!views'] = [];
+    ws['!views'].push({ state: 'frozen', xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' });
+
+    // Auto-width for columns dynamically based on content
+    const keys = Object.keys(dataToExport[0] || {});
+    const wscols = keys.map(key => {
+        let maxLen = key.length;
+        dataToExport.forEach(row => {
+            const val = (row as any)[key];
+            if (val !== undefined && val !== null) {
+                const len = String(val).length;
+                if (len > maxLen) maxLen = len;
+            }
+        });
+        return { wch: Math.min(Math.max(maxLen + 2, 10), 60) };
+    });
     ws['!cols'] = wscols;
 
     const wb = XLSX.utils.book_new();

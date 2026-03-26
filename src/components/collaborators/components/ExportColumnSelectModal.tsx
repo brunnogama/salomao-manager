@@ -26,8 +26,8 @@ const EXPORT_COLUMN_CATEGORIES = [
     icon: User,
     columns: [
       'CPF', 'RG', 'Data Nascimento', 'Gênero', 'Estado Civil', 'Possui Filhos?',
-      'Quantidade de Filhos', 'Nome Emergência', 'Telefone Emergência', 'Parentesco Emergência',
-      'Nome da Mãe', 'Nome do Pai', 'Nacionalidade', 'Naturalidade (Cidade)', 'Naturalidade (UF)',
+      'Quantidade de Filhos', 'Filhos (Nome e Nascimento)', 'Nome Emergência', 'Telefone Emergência', 'Parentesco Emergência', 'Contatos de Emergência',
+      'Nome da Mãe', 'Nome do Pai', 'Nacionalidade', 'Naturalidade (Cidade)', 'Naturalidade (UF)', 'CNH',
       'Observações', 'CEP', 'Endereço', 'Número', 'Complemento', 'Bairro', 'Cidade', 'Estado',
       'Forma de Pagamento', 'Nome do Banco', 'Tipo de Conta', 'Agência', 'Conta', 'Tipo PIX', 'Chave PIX'
     ]
@@ -37,14 +37,15 @@ const EXPORT_COLUMN_CATEGORIES = [
     icon: Briefcase,
     columns: [
       'PIS/PASEP', 'Título de Eleitor', 'Matrícula e-Social', 'Dispensa Militar/Reservista',
-      'CTPS', 'Série CTPS', 'UF CTPS', 'OAB Número', 'OAB UF', 'OAB Emissão', 'OAB Validade', 'Tipo Inscrição OAB'
+      'CTPS', 'Série CTPS', 'UF CTPS', 'OAB Número', 'OAB UF', 'OAB Emissão', 'OAB Validade', 'Tipo Inscrição OAB',
+      'Resumo CV', 'Idiomas', 'Atividades Acadêmicas', 'Competências Técnicas/Perfil', 'Indicado Por'
     ]
   },
   {
     name: 'Dados de Escolaridade',
     icon: GraduationCap,
     columns: [
-      'Nível Escolaridade', 'Subnível', 'Instituição', 'Curso', 'Matrícula Escolar', 'Semestre', 'Previsão Conclusão'
+      'Nível Escolaridade', 'Subnível', 'Instituição', 'Curso', 'Matrícula Escolar', 'Semestre', 'Previsão Conclusão', 'Formação Histórica'
     ]
   },
   {
@@ -53,7 +54,7 @@ const EXPORT_COLUMN_CATEGORIES = [
     columns: [
       'Status', 'Rateio', 'Data Admissão', 'Motivo Contratação', 'Tipo Contrato',
       'Email Corporativo', 'Email Pessoal', 'Telefone', 'Área', 'Sócio Responsável',
-      'Líder Direto', 'Equipe', 'Cargo', 'Atuação', 'Local', 'Tipo Transporte',
+      'Líder Direto', 'Equipe', 'Cargo', 'Atuação', 'Local', 'Horário Entrada', 'Horário Saída', 'Posto / Mesa', 'Tipo Transporte',
       'Quantidade Ida', 'Quantidade Volta', 'Total Ida', 'Total Volta', 'Custo Total Transporte'
     ]
   },
