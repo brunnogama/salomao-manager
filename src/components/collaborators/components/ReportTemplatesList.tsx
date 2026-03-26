@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { FileSpreadsheet, Download, Calendar, Trash2, Loader2, User } from 'lucide-react';
+import { FileSpreadsheet, Trash2, Download, Loader2, Calendar, User } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { AlertModal } from '../../../components/ui/AlertModal';
 
 export interface ReportTemplate {
   id: string;
@@ -24,6 +25,7 @@ export function ReportTemplatesList({ onApplyTemplate, refreshTrigger = 0 }: Rep
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<ReportTemplate | null>(null);
 
   const fetchTemplates = async () => {
     try {
@@ -46,7 +48,7 @@ export function ReportTemplatesList({ onApplyTemplate, refreshTrigger = 0 }: Rep
 
       setTemplates(mapped);
     } catch (err) {
-      console.error('Erro ao buscar templates de relatórios:', err);
+      console.error('Erro ao buscar modelos:', err);
     } finally {
       setLoading(false);
     }
@@ -56,23 +58,29 @@ export function ReportTemplatesList({ onApplyTemplate, refreshTrigger = 0 }: Rep
     fetchTemplates();
   }, [refreshTrigger]);
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
+  const confirmDelete = (e: React.MouseEvent, template: ReportTemplate) => {
     e.stopPropagation();
-    if (!window.confirm('Tem certeza que deseja excluir este modelo de relatório?')) return;
+    setTemplateToDelete(template);
+  };
+
+  const executeDelete = async () => {
+    if (!templateToDelete) return;
     
     try {
-      setDeletingId(id);
+      setDeletingId(templateToDelete.id);
       const { error } = await supabase
         .from('rh_export_templates')
         .delete()
-        .eq('id', id)
-        .eq('created_by', user?.id); // Extra safety, RLS already handles it
+        .eq('id', templateToDelete.id)
+        .eq('created_by', user?.id);
 
       if (error) throw error;
-      setTemplates(prev => prev.filter(t => t.id !== id));
+      setTemplates(prev => prev.filter(t => t.id !== templateToDelete.id));
+      setTemplateToDelete(null);
     } catch (err) {
       console.error('Erro ao deletar modelo:', err);
       alert('Não foi possível excluir o modelo. Verifique se você é o autor.');
+      setTemplateToDelete(null);
     } finally {
       setDeletingId(null);
     }
@@ -161,7 +169,7 @@ export function ReportTemplatesList({ onApplyTemplate, refreshTrigger = 0 }: Rep
                     </button>
                     {isAuthor && (
                       <button 
-                        onClick={(e) => handleDelete(e, template.id)}
+                        onClick={(e) => confirmDelete(e, template)}
                         disabled={deletingId === template.id}
                         className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         title="Excluir Modelo"
@@ -176,6 +184,16 @@ export function ReportTemplatesList({ onApplyTemplate, refreshTrigger = 0 }: Rep
           })}
         </tbody>
       </table>
+
+      <AlertModal
+        isOpen={!!templateToDelete}
+        onClose={() => setTemplateToDelete(null)}
+        title="Excluir Modelo de Relatório"
+        description={`Tem certeza que deseja excluir o modelo "${templateToDelete?.name}"? A configuração não poderá ser recuperada.`}
+        variant="warning"
+        confirmText="Excluir Modelo"
+        onConfirm={executeDelete}
+      />
     </div>
   );
 }

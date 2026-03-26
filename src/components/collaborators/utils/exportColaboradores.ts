@@ -124,8 +124,11 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
     });
 
     const dataToExport = sortedData.map(c => {
+        const matriculaStr = c.matricula_interna ? String(c.matricula_interna) : String(c.id);
+        const formatID = matriculaStr.startsWith('COL -') ? matriculaStr : `COL - ${matriculaStr}`;
+
         const fullObj = {
-        'ID': `COL - ${c.matricula_interna || c.id}`,
+        'ID': formatID,
         'Nome Completo': c.name,
         'CPF': c.cpf,
         'RG': c.rg,
@@ -231,8 +234,8 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
             // Remove activeCols and baseCols from selectedColumns to avoid duplication
             const remainingSelected = options.selectedColumns.filter(c => !activeCols.includes(c) && !baseCols.includes(c));
             
-            // The final order is: Identifiers -> Active Filters -> Remaining Selected Columns
-            const finalOrder = [...baseCols, ...activeCols, ...remainingSelected];
+            // The final order is: Active Filters -> Identifiers -> Remaining Selected Columns
+            const finalOrder = [...activeCols, ...baseCols, ...remainingSelected];
             
             const filteredObj: any = {};
             finalOrder.forEach(key => {
@@ -282,8 +285,8 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
 
             if (R === 0) {
                 ws[cellAddress].s = {
-                    font: { bold: true, color: { rgb: "FFFFFF" } },
-                    fill: { fgColor: { rgb: "1E3A8A" } }, // You could differentiate headers: isFilterCol ? "4B5563" : "1E3A8A"
+                    font: { bold: true, color: { rgb: isFilterCol ? "000000" : "FFFFFF" } },
+                    fill: { fgColor: { rgb: isFilterCol ? "FDE047" : "1E3A8A" } }, // Yellow header for filter cols
                     alignment: { vertical: "center", horizontal: "center" }
                 };
             } else {
@@ -296,7 +299,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
                 }
                 
                 if (isFilterCol) {
-                    cellStyle.fill = { fgColor: { rgb: "F3F4F6" } }; // Light gray background
+                    cellStyle.fill = { fgColor: { rgb: "FEF3C7" } }; // Light yellow data cell background
                 }
                 
                 if (Object.keys(cellStyle).length > 0) {
