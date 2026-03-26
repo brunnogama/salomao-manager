@@ -1877,7 +1877,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     }
 
     return (
-      <CollaboratorPageLayout
+      <CollaboratorModalLayout
         title={title}
         onClose={onClose}
         activeTab={activeTab}
