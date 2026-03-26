@@ -40,7 +40,7 @@ export function ReportTemplatesList({ onApplyTemplate, refreshTrigger = 0 }: Rep
       
       const mapped = (data || []).map((t: any) => ({
         ...t,
-        author_name: 'Usuário', // Standard fallback as profiles table is not consistently linked
+        author_name: t.author_name || 'Usuário', // Will use the newly inserted author_name column
         author_email: 'N/A'
       }));
 

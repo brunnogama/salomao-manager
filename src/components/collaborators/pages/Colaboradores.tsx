@@ -478,12 +478,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const handleExportConfirm = async (selectedColumns: string[], templateName?: string) => {
     if (templateName) {
       try {
+        const authorNameStr = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
+        
         const { error } = await supabase
           .from('rh_export_templates')
           .insert({
             name: templateName,
             columns: selectedColumns,
-            created_by: user?.id
+            created_by: user?.id,
+            author_name: authorNameStr
           });
         if (error) throw error;
         setRefreshTemplates(prev => prev + 1);
