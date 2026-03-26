@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Clock, Save, Loader2, Calendar as CalendarIcon, FilePlus2, Stethoscope, Trash2 } from 'lucide-react'
+import { Clock, Save, Loader2, Calendar as CalendarIcon, FilePlus2, Stethoscope, Trash2, Send } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { Collaborator } from '../../../types/controladoria'
 
@@ -10,7 +10,7 @@ interface PeriodoAusenciasSectionProps {
 }
 
 export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false }: PeriodoAusenciasSectionProps) {
-    const [activeTab, setActiveTab] = useState<'registrar' | 'historico_ferias' | 'historico_atestados'>('registrar')
+    const [activeTab, setActiveTab] = useState<'registrar' | 'historico_ferias' | 'historico_atestados' | 'solicitar_link_magico'>('registrar')
     const [loading, setLoading] = useState(false)
     const [fetching, setFetching] = useState(false)
     const [absences, setAbsences] = useState<any[]>([])
@@ -20,9 +20,20 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
     const [absenceObs, setAbsenceObs] = useState('')
     const [absenceSubtype, setAbsenceSubtype] = useState('Descanso')
 
+    const [reqAquiStart, setReqAquiStart] = useState('')
+    const [reqAquiEnd, setReqAquiEnd] = useState('')
+    const [reqLeaderId, setReqLeaderId] = useState('')
+    const [leadersList, setLeadersList] = useState<any[]>([])
+
     useEffect(() => {
         if (formData.id) fetchAbsences()
+        fetchLeaders()
     }, [formData.id])
+
+    const fetchLeaders = async () => {
+        const { data } = await supabase.from('collaborators').select('id, name').order('name');
+        if (data) setLeadersList(data);
+    }
 
     const fetchAbsences = async () => {
         if (!formData.id) return
@@ -99,6 +110,57 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
         }
     }
 
+    const handleSendMagicLink = async () => {
+        if (!formData.id || !reqLeaderId || !reqAquiStart || !reqAquiEnd) return;
+        setLoading(true);
+        try {
+            const formatToISO = (dateStr: string) => {
+                const [d, m, y] = dateStr.split('/');
+                return `${y}-${m}-${d}`;
+            };
+            
+            const { data, error } = await supabase.rpc('create_vacation_request', {
+                p_collaborator_id: formData.id,
+                p_leader_id: reqLeaderId,
+                p_aquisitive_period_start: formatToISO(reqAquiStart),
+                p_aquisitive_period_end: formatToISO(reqAquiEnd)
+            });
+
+            if (error) throw error;
+
+            alert('Solicitação criada com sucesso! O Link Mágico pode ser enviado agora.');
+
+            // Disparar Webhook para o Make.com enviar o e-mail ao integrante
+            try {
+                await fetch('https://hook.us2.make.com/xklqclzckk2723dwejxueuy65ketmb4k', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event: 'hr_requested',
+                        colaborador_nome: formData.name,
+                        colaborador_email: formData.email_pessoal || formData.email,
+                        lider_id: reqLeaderId,
+                        link_magico_integrante: `${window.location.origin}/solicitacao-ferias/${data.employee_token}`,
+                        periodo_aquisitivo_inicio: reqAquiStart,
+                        periodo_aquisitivo_fim: reqAquiEnd,
+                        email_rh: 'rh@salomaoadv.com.br'
+                    })
+                });
+            } catch (err) {
+                console.error('Erro ao notificar Make:', err);
+            }
+            
+            setReqAquiStart('');
+            setReqAquiEnd('');
+            setReqLeaderId('');
+            setActiveTab('historico_ferias');
+        } catch (e: any) {
+            alert('Erro ao gerar link mágico: ' + e.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     return (
         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             <div className="flex items-center gap-3 border-b border-blue-100 pb-4 mb-6">
@@ -125,6 +187,12 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'historico_atestados' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
                 >
                     <Stethoscope className="h-4 w-4" /> Atestados Médicos
+                </button>
+                <button
+                    onClick={() => setActiveTab('solicitar_link_magico')}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'solicitar_link_magico' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
+                >
+                    <Send className="h-4 w-4" /> Enviar Link (Integrante)
                 </button>
             </div>
 
@@ -203,6 +271,75 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                             >
                                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                 Registrar Ausência
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'solicitar_link_magico' && (
+                <div className="grid grid-cols-1 gap-6 max-w-3xl animate-in fade-in duration-300">
+                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 flex items-start gap-4">
+                        <div className="bg-blue-100 p-2 rounded-lg text-[#1e3a8a] shrink-0"><Send className="h-5 w-5" /></div>
+                        <div>
+                            <h5 className="font-bold text-[#1e3a8a] text-sm">Solicitação via Link Mágico</h5>
+                            <p className="text-xs text-[#1e3a8a]/80 mt-1">
+                                Preencha os dados básicos abaixo. O sistema enviará um e-mail com um link único para o integrante <strong>{formData.name}</strong> escolher o período de gozo desejado. Em seguida, o pedido será encaminhado ao líder escolhido para aprovação.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Início do Período Aquisitivo</label>
+                            <input
+                                type="text"
+                                className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none"
+                                placeholder="DD/MM/AAAA"
+                                maxLength={10}
+                                value={reqAquiStart}
+                                onChange={e => setReqAquiStart(maskDate(e.target.value))}
+                                disabled={isViewMode}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fim do Período Aquisitivo</label>
+                            <input
+                                type="text"
+                                className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none"
+                                placeholder="DD/MM/AAAA"
+                                maxLength={10}
+                                value={reqAquiEnd}
+                                onChange={e => setReqAquiEnd(maskDate(e.target.value))}
+                                disabled={isViewMode}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Líder para Aprovação</label>
+                        <select
+                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none"
+                            value={reqLeaderId}
+                            onChange={e => setReqLeaderId(e.target.value)}
+                            disabled={isViewMode}
+                        >
+                            <option value="">Selecione quem irá aprovar...</option>
+                            {leadersList.map(l => (
+                                <option key={l.id} value={l.id}>{l.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {!isViewMode && (
+                        <div className="flex justify-end pt-4">
+                            <button
+                                onClick={handleSendMagicLink}
+                                disabled={loading || !reqAquiStart || !reqAquiEnd || !reqLeaderId}
+                                className="flex items-center gap-2 px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-[#112240] hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                Criar e Notificar Integrante
                             </button>
                         </div>
                     )}
