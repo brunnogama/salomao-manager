@@ -10,7 +10,7 @@ interface PeriodoAusenciasSectionProps {
 }
 
 export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false }: PeriodoAusenciasSectionProps) {
-    const [activeTab, setActiveTab] = useState<'registrar' | 'historico_ferias' | 'historico_atestados' | 'solicitar_link_magico'>('registrar')
+    const [activeTab, setActiveTab] = useState<'historico_ferias' | 'registrar' | 'historico_atestados'>('historico_ferias')
     const [loading, setLoading] = useState(false)
     const [fetching, setFetching] = useState(false)
     const [absences, setAbsences] = useState<any[]>([])
@@ -171,28 +171,22 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
             {/* TABS CONTAINER */}
             <div className="flex bg-gray-100 p-1.5 rounded-xl gap-2 overflow-x-auto w-full mb-6">
                 <button
-                    onClick={() => setActiveTab('registrar')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'registrar' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
-                >
-                    <FilePlus2 className="h-4 w-4" /> Registrar Ausência
-                </button>
-                <button
                     onClick={() => setActiveTab('historico_ferias')}
                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'historico_ferias' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
                 >
                     <CalendarIcon className="h-4 w-4" /> Histórico Férias/Recesso
                 </button>
                 <button
+                    onClick={() => setActiveTab('registrar')}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'registrar' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
+                >
+                    <FilePlus2 className="h-4 w-4" /> Registrar Ausência Manual
+                </button>
+                <button
                     onClick={() => setActiveTab('historico_atestados')}
                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'historico_atestados' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
                 >
                     <Stethoscope className="h-4 w-4" /> Atestados Médicos
-                </button>
-                <button
-                    onClick={() => setActiveTab('solicitar_link_magico')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'solicitar_link_magico' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
-                >
-                    <Send className="h-4 w-4" /> Enviar Link (Integrante)
                 </button>
             </div>
 
@@ -277,77 +271,85 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                 </div>
             )}
 
-            {activeTab === 'solicitar_link_magico' && (
-                <div className="grid grid-cols-1 gap-6 max-w-3xl animate-in fade-in duration-300">
-                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 flex items-start gap-4">
-                        <div className="bg-blue-100 p-2 rounded-lg text-[#1e3a8a] shrink-0"><Send className="h-5 w-5" /></div>
-                        <div>
-                            <h5 className="font-bold text-[#1e3a8a] text-sm">Solicitação via Link Mágico</h5>
-                            <p className="text-xs text-[#1e3a8a]/80 mt-1">
-                                Preencha os dados básicos abaixo. O sistema enviará um e-mail com um link único para o integrante <strong>{formData.name}</strong> escolher o período de gozo desejado. Em seguida, o pedido será encaminhado ao líder escolhido para aprovação.
-                            </p>
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Início do Período Aquisitivo</label>
-                            <input
-                                type="text"
-                                className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none"
-                                placeholder="DD/MM/AAAA"
-                                maxLength={10}
-                                value={reqAquiStart}
-                                onChange={e => setReqAquiStart(maskDate(e.target.value))}
-                                disabled={isViewMode}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fim do Período Aquisitivo</label>
-                            <input
-                                type="text"
-                                className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none"
-                                placeholder="DD/MM/AAAA"
-                                maxLength={10}
-                                value={reqAquiEnd}
-                                onChange={e => setReqAquiEnd(maskDate(e.target.value))}
-                                disabled={isViewMode}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Líder para Aprovação</label>
-                        <select
-                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none"
-                            value={reqLeaderId}
-                            onChange={e => setReqLeaderId(e.target.value)}
-                            disabled={isViewMode}
-                        >
-                            <option value="">Selecione quem irá aprovar...</option>
-                            {leadersList.map(l => (
-                                <option key={l.id} value={l.id}>{l.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {!isViewMode && (
-                        <div className="flex justify-end pt-4">
-                            <button
-                                onClick={handleSendMagicLink}
-                                disabled={loading || !reqAquiStart || !reqAquiEnd || !reqLeaderId}
-                                className="flex items-center gap-2 px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-[#112240] hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                Criar e Notificar Integrante
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
 
             {(activeTab === 'historico_ferias' || activeTab === 'historico_atestados') && (
-                <div className="space-y-4 animate-in fade-in duration-300">
+                <div className="space-y-6 animate-in fade-in duration-300">
+                    
+                    {/* ENVIAR FORMULÁRIO DE FÉRIAS (Only in Historico de Férias tab) */}
+                    {activeTab === 'historico_ferias' && (
+                        <div className="grid grid-cols-1 gap-6 max-w-3xl mb-8 p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
+                            <div className="flex items-start gap-4">
+                                <div className="bg-[#1e3a8a] p-2.5 rounded-xl text-white shadow-md shrink-0"><Send className="h-5 w-5" /></div>
+                                <div>
+                                    <h5 className="font-black text-[#1e3a8a] text-base mb-1">Enviar Formulário ao Integrante</h5>
+                                    <p className="text-xs text-[#1e3a8a]/70 max-w-xl font-medium">
+                                        Preencha o período aquisitivo e defina o líder que irá aprovar o pedido. O sistema enviará um e-mail automaticamente com o link seguro e exclusivo para que <strong>{formData.name}</strong> possa escolher a data desejada para o seu descanso.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-blue-900/50 uppercase tracking-widest">Início Aquisitivo</label>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-white border border-blue-200/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none shadow-sm transition-all"
+                                        placeholder="DD/MM/AAAA"
+                                        maxLength={10}
+                                        value={reqAquiStart}
+                                        onChange={e => setReqAquiStart(maskDate(e.target.value))}
+                                        disabled={isViewMode}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-blue-900/50 uppercase tracking-widest">Fim Aquisitivo</label>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-white border border-blue-200/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none shadow-sm transition-all"
+                                        placeholder="DD/MM/AAAA"
+                                        maxLength={10}
+                                        value={reqAquiEnd}
+                                        onChange={e => setReqAquiEnd(maskDate(e.target.value))}
+                                        disabled={isViewMode}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-blue-900/50 uppercase tracking-widest">Líder para Aprovação</label>
+                                <select
+                                    className="w-full bg-white border border-blue-200/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none shadow-sm transition-all text-gray-700"
+                                    value={reqLeaderId}
+                                    onChange={e => setReqLeaderId(e.target.value)}
+                                    disabled={isViewMode}
+                                >
+                                    <option value="">Selecione o líder responsável...</option>
+                                    {leadersList.map(l => (
+                                        <option key={l.id} value={l.id}>{l.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {!isViewMode && (
+                                <div className="flex justify-end pt-2 border-t border-blue-100/50 mt-2">
+                                    <button
+                                        onClick={handleSendMagicLink}
+                                        disabled={loading || !reqAquiStart || !reqAquiEnd || !reqLeaderId}
+                                        className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black uppercase text-xs tracking-wider hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                                    >
+                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                        Gerar Link e Disparar E-mail
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    
+                    {/* HISTÓRICO LIST */}
+                    {activeTab === 'historico_ferias' && (
+                         <h5 className="font-black text-[#0a192f] text-sm mb-4 px-2 tracking-tight">Histórico Cadastrado</h5>
+                    )}
                     {fetching ? (
                         <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 text-[#1e3a8a] animate-spin" /></div>
                     ) : (
