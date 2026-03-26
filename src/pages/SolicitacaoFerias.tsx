@@ -38,7 +38,11 @@ const calculateDays = (start: string, end: string) => {
 };
 
 export default function SolicitacaoFerias() {
-    const { token } = useParams<{ token: string }>();
+    const rawToken = useParams<{ token: string }>().token;
+    // Extract genuine UUID if a textual slug was prefixed
+    const uuidMatch = rawToken?.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+    const token = uuidMatch ? uuidMatch[0] : rawToken;
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -50,8 +54,10 @@ export default function SolicitacaoFerias() {
     // Form fields
     const [aquiStart, setAquiStart] = useState('');
     const [aquiEnd, setAquiEnd] = useState('');
-    const [vacationStart, setVacationStart] = useState('');
-    const [vacationEnd, setVacationEnd] = useState('');
+    
+    // Multiple Periods Support (up to 3)
+    const [periods, setPeriods] = useState<{ start: string; end: string }[]>([{ start: '', end: '' }]);
+
     const [sellVacation, setSellVacation] = useState(false);
     const [sellVacationDays, setSellVacationDays] = useState('');
     const [observation, setObservation] = useState('');
@@ -83,8 +89,16 @@ export default function SolicitacaoFerias() {
                 // Pre-fill if already set
                 if (data.request.aquisitive_period_start) setAquiStart(isoToDisplayDate(data.request.aquisitive_period_start));
                 if (data.request.aquisitive_period_end) setAquiEnd(isoToDisplayDate(data.request.aquisitive_period_end));
-                if (data.request.vacation_start) setVacationStart(isoToDisplayDate(data.request.vacation_start));
-                if (data.request.vacation_end) setVacationEnd(isoToDisplayDate(data.request.vacation_end));
+                
+                // Note: Prefill for periods is challenging since we aggregate them into observation to keep standard columns,
+                // but we will prefill the main ones on the first period anyway if available
+                if (data.request.vacation_start || data.request.vacation_end) {
+                    setPeriods([{
+                        start: isoToDisplayDate(data.request.vacation_start) || '',
+                        end: isoToDisplayDate(data.request.vacation_end) || ''
+                    }]);
+                }
+
                 if (data.request.sell_vacation) setSellVacation(data.request.sell_vacation);
                 if (data.request.sell_vacation_days) setSellVacationDays(String(data.request.sell_vacation_days));
                 if (data.request.employee_observation) setObservation(data.request.employee_observation);
@@ -102,30 +116,77 @@ export default function SolicitacaoFerias() {
 
     const handleSave = async () => {
         try {
-            if (!aquiStart || !aquiEnd || !vacationStart || !vacationEnd) {
-                setError('Preencha todas as datas (Período aquisitivo e Gozo).');
+            // Validation
+            if (!aquiStart || !aquiEnd) {
+                setError('Preencha o Período aquisitivo.');
                 return;
             }
-            if (aquiStart.length !== 10 || aquiEnd.length !== 10 || vacationStart.length !== 10 || vacationEnd.length !== 10) {
-                setError('Preencha as datas no formato correto (DD/MM/AAAA).');
+            if (aquiStart.length !== 10 || aquiEnd.length !== 10) {
+                setError('Preencha o período aquisitivo no formato correto (DD/MM/AAAA).');
                 return;
             }
+
+            let totalDaysCount = 0;
+            let firstStartDate: Date | null = null;
+            let lastEndDate: Date | null = null;
+            let firstIsoStart = '';
+            let lastIsoEnd = '';
+            let periodsText = '=== [Registro de Fragmentação de Férias] ===\n';
+
+            for (let i = 0; i < periods.length; i++) {
+                const p = periods[i];
+                if (!p.start || !p.end) {
+                    setError(`Preencha as datas de início e fim do Período ${i + 1} do Gozo de Férias.`);
+                    return;
+                }
+                if (p.start.length !== 10 || p.end.length !== 10) {
+                    setError(`Datas do Período ${i + 1} incompletas (DD/MM/AAAA).`);
+                    return;
+                }
+                const isoStart = unmaskDateToISO(p.start);
+                const isoEnd = unmaskDateToISO(p.end);
+                if (!isoStart || !isoEnd) {
+                    setError(`Datas do Período ${i + 1} inválidas.`);
+                    return;
+                }
+
+                const d1 = new Date(isoStart + 'T00:00:00');
+                const d2 = new Date(isoEnd + 'T00:00:00');
+                if (d2 < d1) {
+                    setError(`A data de fim do Período ${i + 1} não pode ser menor que a data de início.`);
+                    return;
+                }
+
+                const dias = calculateDays(p.start, p.end);
+                totalDaysCount += dias;
+                periodsText += `> Período ${i + 1}: ${p.start} a ${p.end} (${dias} dias)\n`;
+
+                if (!firstStartDate || d1 < firstStartDate) {
+                    firstStartDate = d1;
+                    firstIsoStart = isoStart;
+                }
+                if (!lastEndDate || d2 > lastEndDate) {
+                    lastEndDate = d2;
+                    lastIsoEnd = isoEnd;
+                }
+            }
+            periodsText += `> Total Fracionado: ${totalDaysCount} dias\n============================================\n`;
+
             if (sellVacation && (!sellVacationDays || parseInt(sellVacationDays) <= 0)) {
-                setError('Informe a quantidade de dias para o abono pecuniário.');
+                setError('Informe a quantidade de dias válidos para o abono pecuniário.');
                 return;
             }
             if (!accepted) {
-                setError('Você deve confirmar a veracidade das informações com a sua assinatura digital (caixa de seleção).');
+                setError('Você deve confirmar a veracidade das informações na caixa de seleção (Assinatura Digital).');
                 return;
             }
 
             const isoAquiStart = unmaskDateToISO(aquiStart);
             const isoAquiEnd = unmaskDateToISO(aquiEnd);
-            const isoVacStart = unmaskDateToISO(vacationStart);
-            const isoVacEnd = unmaskDateToISO(vacationEnd);
 
-            // Calculate vacation_days_count automatically
-            const daysCount = calculateDays(vacationStart, vacationEnd);
+            const finalObservation = observation.trim().length > 0 
+                ? `${periodsText}\nObservações Extras do Integrante:\n${observation}`
+                : periodsText;
 
             setSaving(true);
             setError(null);
@@ -139,12 +200,12 @@ export default function SolicitacaoFerias() {
             // Then call RPC to update and progress status to pending_leader
             const { error: updateError } = await supabase.rpc('update_vacation_request_employee', {
                 p_token: token,
-                p_vacation_start: isoVacStart,
-                p_vacation_end: isoVacEnd,
-                p_vacation_days_count: daysCount,
+                p_vacation_start: firstIsoStart,
+                p_vacation_end: lastIsoEnd,
+                p_vacation_days_count: totalDaysCount,
                 p_sell_vacation: sellVacation,
                 p_sell_vacation_days: sellVacation ? parseInt(sellVacationDays) : null,
-                p_observation: observation
+                p_observation: finalObservation
             });
 
             if (updateError) throw updateError;
@@ -233,14 +294,23 @@ export default function SolicitacaoFerias() {
         );
     }
 
-    const calculatedDays = calculateDays(vacationStart, vacationEnd);
+    // Calculate total days aggregated across all periods
+    const calculatedDaysTotal = periods.reduce((acc, p) => acc + calculateDays(p.start, p.end), 0);
+
+    const handleAddPeriod = () => {
+        if (periods.length < 3) setPeriods([...periods, { start: '', end: '' }]);
+    };
+
+    const handleRemovePeriod = (indexToRemove: number) => {
+        setPeriods(periods.filter((_, index) => index !== indexToRemove));
+    };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-10 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col justify-between py-10 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-4xl mx-auto w-full">
                 <div className="flex flex-col items-center gap-5 mb-8 text-center">
-                    <div className="shrink-0 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 w-full max-w-[200px] flex justify-center">
-                        <img src="/logo-salomao.png" alt="Salomão" className="h-[55px] object-contain" />
+                    <div className="shrink-0 w-full max-w-[240px] flex justify-center">
+                        <img src="/logo-salomao.png" alt="Salomão" className="h-[70px] object-contain bg-transparent" />
                     </div>
                     <div>
                         <h1 className="text-2xl sm:text-3xl font-black text-[#0a192f] tracking-tight leading-none mb-2">Solicitação de {fullTermType}</h1>
@@ -248,14 +318,14 @@ export default function SolicitacaoFerias() {
                     </div>
                 </div>
 
-                <div className="bg-emerald-50 border border-emerald-200 shadow-sm rounded-2xl p-4 sm:p-5 flex items-start gap-4 mb-8 transition-transform duration-300 max-w-2xl mx-auto">
+                <div className="bg-emerald-50 border border-emerald-200 shadow-sm rounded-2xl p-4 sm:p-5 flex items-center justify-center gap-4 mb-8 transition-transform duration-300 max-w-3xl mx-auto text-center">
                     <div className="bg-emerald-100 p-2.5 rounded-full text-emerald-600 shrink-0 shadow-inner">
                         <ShieldCheck className="w-6 h-6" />
                     </div>
                     <div className="pt-0.5">
                         <h3 className="text-emerald-900 font-bold text-sm mb-1">Processo Integrado (RH)</h3>
                         <p className="text-emerald-700/90 text-xs sm:text-sm leading-relaxed">
-                            Ao finalizar, os dados serão enviados para seu líder e farão parte de seu histórico gerencial oficial.
+                            Ao finalizar, os dados serão enviados para seu líder e farão parte de seu histórico gerencial oficial sem quebra do fluxo.
                         </p>
                     </div>
                 </div>
@@ -267,20 +337,15 @@ export default function SolicitacaoFerias() {
                         {/* Identificação */}
                         <section className="space-y-4">
                             <h3 className="text-lg font-black text-[#0a192f] border-b border-gray-100 pb-2">Identificação do Integrante</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo</label>
-                                    <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-700">
-                                        {collaborator?.name || '-'}
+                            <div className="flex flex-col sm:flex-row flex-wrap gap-6 items-start">
+                                <div className="flex-1 w-full min-w-[250px] max-w-[450px]">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Colaborador</label>
+                                    <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-700 break-words flex flex-wrap gap-2 items-center">
+                                        <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded font-black shrink-0">COL - {collaborator?.matricula_interna || 'S/N'}</span>
+                                        <span className="font-bold text-[#0a192f]">{collaborator?.name || '-'}</span>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cargo / Função</label>
-                                    <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-700">
-                                        {collaborator?.role || collaborator?.contract_type || '-'}
-                                    </div>
-                                </div>
-                                <div>
+                                <div className="flex-1 min-w-[150px] max-w-[250px]">
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">CPF / Matrícula</label>
                                     <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-700">
                                         {collaborator?.cpf || '-'}
@@ -324,37 +389,92 @@ export default function SolicitacaoFerias() {
                             </div>
                         </section>
 
-                        {/* Gozo de Férias */}
+                        {/* Gozo de Férias com Múltiplos Períodos */}
                         <section className="space-y-4">
-                            <h3 className="text-lg font-black text-[#0a192f] border-b border-gray-100 pb-2">Gozo de {termType}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Data de Início</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-[#1e3a8a]"
-                                        value={vacationStart}
-                                        onChange={e => setVacationStart(maskDate(e.target.value))}
-                                        placeholder="DD/MM/AAAA"
-                                        maxLength={10}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Data de Término</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-[#1e3a8a]"
-                                        value={vacationEnd}
-                                        onChange={e => setVacationEnd(maskDate(e.target.value))}
-                                        placeholder="DD/MM/AAAA"
-                                        maxLength={10}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Total de Dias</label>
-                                    <div className="w-full bg-gray-100 border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-500 text-center">
-                                        {calculatedDays > 0 ? `${calculatedDays} dias` : '-'}
-                                    </div>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 pb-2 gap-3">
+                                <h3 className="text-lg font-black text-[#0a192f]">Gozo de {termType}</h3>
+                                {periods.length < 3 && (
+                                    <button 
+                                        onClick={handleAddPeriod}
+                                        className="text-[10px] bg-[#1e3a8a] text-white hover:bg-[#112240] px-4 py-1.5 rounded-lg flex items-center gap-1.5 font-bold uppercase transition-all shadow-sm active:scale-95"
+                                    >
+                                        <span>+ Adicionar Período</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="space-y-4">
+                                {periods.map((period, index) => {
+                                    const cDays = calculateDays(period.start, period.end);
+                                    return (
+                                        <div key={index} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 bg-white border border-gray-100 shadow-[0_2px_8px_rgb(0,0,0,0.04)] p-4 rounded-2xl relative animate-in slide-in-from-bottom-2">
+                                            {periods.length > 1 && (
+                                                <button
+                                                    onClick={() => handleRemovePeriod(index)}
+                                                    title={`Remover Período ${index + 1}`}
+                                                    className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-1.5 hover:bg-red-600 hover:text-white transition-all shadow border-2 border-white"
+                                                >
+                                                    <span className="block w-2.5 h-[2px] bg-current rounded-full" />
+                                                </button>
+                                            )}
+                                            
+                                            <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4 md:gap-6">
+                                                <div className="flex-1">
+                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Data de Início (Período {index + 1})</label>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-[#1e3a8a]"
+                                                        value={period.start}
+                                                        onChange={e => {
+                                                            const newPeriods = [...periods];
+                                                            newPeriods[index].start = maskDate(e.target.value);
+                                                            setPeriods(newPeriods);
+                                                        }}
+                                                        placeholder="DD/MM/AAAA"
+                                                        maxLength={10}
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Data de Término (Período {index + 1})</label>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-[#1e3a8a]"
+                                                        value={period.end}
+                                                        onChange={e => {
+                                                            const newPeriods = [...periods];
+                                                            newPeriods[index].end = maskDate(e.target.value);
+                                                            setPeriods(newPeriods);
+                                                        }}
+                                                        placeholder="DD/MM/AAAA"
+                                                        maxLength={10}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex-1">
+                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1 text-center sm:text-left">Dias no Período</label>
+                                                <div className="w-full bg-gray-100 border border-gray-200 rounded-xl p-3 text-sm font-black text-gray-600 text-center">
+                                                    {cDays > 0 ? `${cDays} dias` : '-'}
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Show Aggregate Total only on the first row's column equivalent to save space, or global row */}
+                                            {index === 0 && (
+                                                <div className="flex-1 border-l border-gray-200 pl-4 hidden md:block">
+                                                    <label className="block text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2 text-center">Total Resgatado</label>
+                                                    <div className="w-full bg-blue-50 border border-blue-200 rounded-xl p-3 text-lg leading-none font-black text-[#1e3a8a] text-center flex items-center justify-center h-[46px] shadow-inner">
+                                                        {calculatedDaysTotal > 0 ? `${calculatedDaysTotal}` : '0'} d
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                                
+                                {/* Mobile view total days summary block since it stays hidden in rows after 1 or on small screens */}
+                                <div className="md:hidden flex items-center justify-between bg-blue-50 border border-blue-200 p-4 rounded-xl shadow-inner mt-4">
+                                    <span className="text-xs font-black text-[#1e3a8a] uppercase tracking-widest">Total Geral Solicitado:</span>
+                                    <span className="text-lg leading-none font-black text-[#1e3a8a]">{calculatedDaysTotal > 0 ? `${calculatedDaysTotal}` : '0'} d</span>
                                 </div>
                             </div>
                         </section>
@@ -444,6 +564,12 @@ export default function SolicitacaoFerias() {
                             {saving ? 'Enviando...' : 'Salvar e Enviar ao Líder'}
                         </button>
                     </div>
+                </div>
+
+                <div className="mt-8 text-center px-4 w-full">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
+                        Formulário protegido gerado de forma segura através do <span className="text-[#1e3a8a]">Salomão Manager</span>
+                    </p>
                 </div>
             </div>
         </div>

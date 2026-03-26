@@ -171,12 +171,14 @@ export function PeriodoAusenciasSection({
                 alert('Formulário enviado com sucesso! O integrante receberá o link no e-mail corporativo.');
             }
 
+            const nameSlug = formData.name ? formData.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : 'colaborador';
+            
             const webhookPayload = {
                 event: 'hr_requested',
                 colaborador_nome: formData.name,
                 colaborador_email: formData.email,
                 lider_id: primaryLeaderId,
-                link_magico_integrante: `${window.location.origin}/solicitacao-ferias/${data.employee_token}`,
+                link_magico_integrante: `${window.location.origin}/solicitacao-ferias/${nameSlug}-${data.employee_token}`,
                 periodo_aquisitivo_inicio: "",
                 periodo_aquisitivo_fim: "",
                 email_rh: 'rh@salomaoadv.com.br'
