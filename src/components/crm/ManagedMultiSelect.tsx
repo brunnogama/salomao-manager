@@ -23,6 +23,7 @@ interface ManagedMultiSelectProps {
   align?: 'left' | 'right';
   icon?: React.ReactNode;
   filter?: { column: string; value: any };
+  forceEnabled?: boolean;
 }
 
 export function ManagedMultiSelect({
@@ -38,7 +39,8 @@ export function ManagedMultiSelect({
   dropdownWidth,
   align = 'left',
   icon,
-  filter
+  filter,
+  forceEnabled = false
 }: ManagedMultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,7 +55,7 @@ export function ManagedMultiSelect({
   const selectedValuesArray = Array.isArray(value) ? value : [];
 
   const isFieldsetDisabled = dropdownRef.current?.closest('fieldset[disabled]') !== null && dropdownRef.current?.closest('fieldset[disabled]') !== undefined;
-  const isDisabled = disabled || isFieldsetDisabled;
+  const isDisabled = forceEnabled ? false : (disabled || isFieldsetDisabled);
 
   useEffect(() => {
     if (externalOptions) {

@@ -28,9 +28,8 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
         const fetchDestinatarios = async () => {
             const { data: leadersData } = await supabase
                 .from('collaborators')
-                .select('id, name')
+                .select('id, name, team_leader!inner(id)')
                 .eq('status', 'active')
-                .eq('is_team_leader', true)
             
             const { data: partnersData } = await supabase
                 .from('partners')
@@ -312,6 +311,7 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                                             options={destinatariosList}
                                             placeholder="Selecione..."
                                             disabled={false}
+                                            forceEnabled={true}
                                             className="!border-none"
                                         />
                                     </div>
