@@ -619,21 +619,22 @@ export function ContractFormModal(props: Props) {
         const formatItem = (label: string, value: any, ready?: boolean, rule?: string) => {
           if (value && value !== 'R$ 0,00' && value !== '') {
              let html = `
-               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px; font-family: Arial, sans-serif;">
+               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 0px; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; border-bottom: 1px solid #f1f5f9;">
                  <tr>
-                   <td style="font-size: 14px; color: #000; vertical-align: middle;">
-                     <strong>${label}:</strong> ${value}
+                   <td style="padding: 14px 10px; font-size: 14px; font-weight: 500; color: #475569; vertical-align: middle;">
+                     ${label}
                    </td>
-                   <td align="right" style="width: 170px; vertical-align: middle;">
-                     ${ready ? `<span style="background-color: #16a34a; color: #ffffff; padding: 3px 10px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; display: inline-block; text-transform: uppercase;">PRONTO PARA FATURAR</span>` : ''}
+                   <td align="right" style="padding: 14px 10px; font-size: 15px; font-weight: 700; color: #0f172a; vertical-align: top;">
+                     ${value}
+                     ${ready ? `<div style="margin-top: 6px;"><span style="background-color: #22c55e; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; display: inline-block; text-transform: uppercase;">✔ PRONTO PARA FATURAR</span></div>` : ''}
                    </td>
                  </tr>
                `;
              if (rule) {
                  html += `
                  <tr>
-                   <td colspan="2" style="font-size: 13px; color: #555; padding-top: 4px; font-style: italic;">
-                     Regra: ${rule}
+                   <td colspan="2" style="font-size: 13px; color: #64748b; padding: 0 10px 14px 10px; font-style: italic; line-height: 1.4;">
+                     <span style="color: #94a3b8; font-weight: 600;">↳ Regra:</span> ${rule}
                    </td>
                  </tr>
                  `;
@@ -673,9 +674,9 @@ export function ContractFormModal(props: Props) {
         safeEnsureArray((formData as any).other_fees_extras).forEach((val, idx) => {
            formatItem(`Outros Honorários (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).other_fees_extras_ready)[idx], safeEnsureArray((formData as any).other_fees_extras_rules)[idx]);
         });
-        if (!valuesHtml) valuesHtml = '<div style="font-family: Arial, sans-serif; font-size: 14px; font-style: italic;">Nenhum valor financeiro atrelado.</div>';
+        if (!valuesHtml) valuesHtml = '<div style="font-family: Arial, sans-serif; font-size: 14px; font-style: italic; padding: 10px; color: #64748b;">Nenhum valor financeiro atrelado.</div>';
 
-        let attachmentsHtml = '<div style="font-family: Arial, sans-serif; font-size: 14px; font-style: italic;">Sem documentos anexos.</div>';
+        let attachmentsHtml = '<div style="font-family: Arial, sans-serif; font-size: 14px; font-style: italic; color: #64748b;">Sem documentos anexos.</div>';
         
         try {
           if (savedContractId) {
@@ -688,7 +689,7 @@ export function ContractFormModal(props: Props) {
                 
               if (!urlsError && signedUrls) {
                 attachmentsHtml = signedUrls.map((u, i) =>
-                  `<div style="margin-bottom: 6px; font-family: Arial, sans-serif; font-size: 14px; font-weight: bold;"><a href="${u.signedUrl}" style="color: #000; text-decoration: none;">Baixar: ${docs[i].file_name || `Anexo ${i + 1}`}</a></div>`
+                  `<div style="margin-bottom: 8px; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600;"><a href="${u.signedUrl}" style="color: #0ea5e9; text-decoration: none; display: flex; align-items: center;">📎 Baixar: ${docs[i].file_name || `Anexo ${i + 1}`}</a></div>`
                 ).join('');
               }
             }
@@ -701,40 +702,59 @@ export function ContractFormModal(props: Props) {
         const honDisplay = formData.hon_number || 'Não informado';
         const referenceDisplay = (formData as any).reference || 'Não informada';
 
-        // Constroi o e-mail completo rigorosamente igual a imagem aprovada pelo usuario
+        // Constroi o e-mail completo rigorosamente igual a imagem aprovada pelo usuario, mas com design super elegante
         const masterHtmlBody = `
-          <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0; padding: 20px; color: #000; background-color: #fff;">
+          <div style="font-family: 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px 10px; background-color: #f8fafc; color: #0f172a; border-radius: 12px;">
             
-            <h1 style="font-size: 28px; font-weight: bold; margin: 0 0 15px 0; color: #000;">${clientNameDisplay}</h1>
-            
-            <div style="font-size: 16px; font-weight: bold; margin-bottom: 25px; color: #000;">
-              Número HON <span style="font-weight: normal; margin-left: 5px;">${honDisplay}</span>
+            <div style="background-color: #ffffff; border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); border: 1px solid #e2e8f0;">
+              
+              <div style="border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 28px;">
+                <h1 style="font-size: 26px; font-weight: 800; margin: 0 0 10px 0; color: #0f172a; letter-spacing: -0.5px; line-height: 1.2;">${clientNameDisplay}</h1>
+                <div style="font-size: 14px; color: #64748b; font-weight: 500; display: flex; align-items: center;">
+                  Número HON: <span style="background-color: #f1f5f9; color: #334155; font-weight: 700; padding: 4px 8px; border-radius: 6px; margin-left: 6px; font-size: 13px;">${honDisplay}</span>
+                </div>
+              </div>
+
+              <!-- Referência -->
+              <div style="margin-bottom: 28px;">
+                <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Referência</div>
+                <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 0 6px 6px 0; font-size: 15px; color: #334155; line-height: 1.6;">
+                  ${referenceDisplay}
+                </div>
+              </div>
+
+              <!-- Honorários -->
+              <div style="margin-bottom: 28px;">
+                <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Quadro Financeiro</div>
+                <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                  ${valuesHtml}
+                </div>
+              </div>
+
+              <!-- Sócios -->
+              <div style="margin-bottom: 28px;">
+                <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Sócios Responsáveis</div>
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 8px; font-size: 15px; color: #166534; font-weight: 600;">
+                  ${allPartners}
+                </div>
+              </div>
+
+              <!-- Anexos -->
+              <div style="margin-bottom: 10px;">
+                <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Documentos Anexos</div>
+                <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; border-radius: 8px;">
+                  ${attachmentsHtml}
+                </div>
+              </div>
+
             </div>
             
-            <div style="font-size: 15px; font-weight: bold; margin-bottom: 5px; color: #000;">Referência</div>
-            <div style="border: 3px solid #000; padding: 15px; margin-bottom: 30px; font-size: 14px; color: #000;">
-              ${referenceDisplay}
+            <div style="text-align: center; margin-top: 24px;">
+              <p style="color: #94a3b8; font-size: 12px; font-weight: 600; margin: 0; letter-spacing: 0.3px;">
+                ENVIO AUTOMÁTICO ATRAVÉS DO <span style="color: #64748b;">SALOMÃO MANAGER</span>
+              </p>
             </div>
 
-            <div style="font-size: 15px; font-weight: bold; margin-bottom: 5px; color: #000;">Honorários</div>
-            <div style="border: 3px solid #000; padding: 15px 15px 3px 15px; margin-bottom: 30px;">
-              ${valuesHtml}
-            </div>
-
-            <div style="font-size: 15px; font-weight: bold; margin-bottom: 5px; color: #000;">Sócios Responsáveis</div>
-            <div style="border: 3px solid #000; padding: 15px; margin-bottom: 30px; font-size: 14px; color: #000;">
-              ${allPartners}
-            </div>
-
-            <div style="font-size: 15px; font-weight: bold; margin-bottom: 5px; color: #000;">Arquivo</div>
-            <div style="border: 3px solid #000; padding: 15px; margin-bottom: 40px; font-size: 14px; color: #000;">
-              ${attachmentsHtml}
-            </div>
-
-            <div style="text-align: center; color: #1e3a8a; font-size: 12px; font-weight: bold; margin-top: 20px;">
-              Envio automático através do Salomão Manager
-            </div>
-            
           </div>
         `;
 
