@@ -165,77 +165,79 @@ export function FilterBar({
 
                 {/* Popover / Dropdown para esta categoria específica */}
                 {isOpen && (
-                  <div className="absolute top-full right-0 sm:left-0 sm:right-auto mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
-                    {/* Busca interna */}
-                    <div className="p-2 border-b border-gray-100 bg-gray-50/50">
-                      <input
-                        type="text"
-                        autoFocus
-                        placeholder={`Buscar ${cat.label.toLowerCase()}...`}
-                        value={optionSearch}
-                        onChange={(e) => setOptionSearch(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-full bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all"
-                      />
-                    </div>
-
-                    {/* Lista de opções */}
-                    <div className="max-h-60 overflow-y-auto py-1 custom-scrollbar">
-                      {(() => {
-                        const filteredOptions = cat.options.filter((opt) =>
-                          opt.label.toLowerCase().includes(optionSearch.toLowerCase())
-                        );
-
-                        if (filteredOptions.length === 0) {
-                          return (
-                            <div className="px-3 py-4 text-[10px] font-black uppercase tracking-widest text-center text-gray-400">
-                              Nenhum resultado
-                            </div>
+                  <div className="absolute top-full right-0 sm:left-0 sm:right-auto z-[9999]" style={{ width: 0, height: 0 }}>
+                    <div className="mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden relative">
+                      {/* Busca interna */}
+                      <div className="p-2 border-b border-gray-100 bg-gray-50/50">
+                        <input
+                          type="text"
+                          autoFocus
+                          placeholder={`Buscar ${cat.label.toLowerCase()}...`}
+                          value={optionSearch}
+                          onChange={(e) => setOptionSearch(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all"
+                        />
+                      </div>
+  
+                      {/* Lista de opções */}
+                      <div className="max-h-60 overflow-y-auto py-1 custom-scrollbar w-full bg-white">
+                        {(() => {
+                          const filteredOptions = cat.options.filter((opt) =>
+                            opt.label.toLowerCase().includes(optionSearch.toLowerCase())
                           );
-                        }
-
-                        if (cat.type === 'single') {
-                          return filteredOptions.map((opt) => {
-                            const isSelected = cat.value === opt.value;
+  
+                          if (filteredOptions.length === 0) {
                             return (
-                              <div
-                                key={opt.value}
-                                className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-blue-50 transition-colors truncate ${
-                                  isSelected ? 'bg-blue-50 text-[#1e3a8a]' : 'text-gray-600'
-                                }`}
-                                onClick={() => handleSelectSingleOption(cat, opt.value)}
-                              >
-                                {opt.label}
+                              <div className="px-3 py-4 text-[10px] font-black uppercase tracking-widest text-center text-gray-400">
+                                Nenhum resultado
                               </div>
                             );
-                          });
-                        } else {
-                          return filteredOptions.map((opt) => {
-                            const isSelected = Array.isArray(cat.value) && cat.value.includes(opt.value);
-                            return (
-                              <div
-                                key={opt.value}
-                                className={`flex items-center px-4 py-2.5 text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-blue-50 transition-colors ${
-                                  isSelected ? 'bg-blue-50/50 text-[#1e3a8a]' : 'text-gray-600'
-                                }`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleToggleMultiOption(cat, opt.value);
-                                }}
-                              >
+                          }
+  
+                          if (cat.type === 'single') {
+                            return filteredOptions.map((opt) => {
+                              const isSelected = cat.value === opt.value;
+                              return (
                                 <div
-                                  className={`w-4 h-4 rounded border flex items-center justify-center mr-3 flex-shrink-0 transition-colors ${
-                                    isSelected ? 'bg-[#1e3a8a] border-[#1e3a8a]' : 'border-gray-300'
+                                  key={opt.value}
+                                  className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-blue-50 transition-colors truncate ${
+                                    isSelected ? 'bg-blue-50 text-[#1e3a8a]' : 'text-gray-600'
                                   }`}
+                                  onClick={() => handleSelectSingleOption(cat, opt.value)}
                                 >
-                                  {isSelected && <Check className="w-3 h-3 text-white" />}
+                                  {opt.label}
                                 </div>
-                                <span className="truncate">{opt.label}</span>
-                              </div>
-                            );
-                          });
-                        }
-                      })()}
+                              );
+                            });
+                          } else {
+                            return filteredOptions.map((opt) => {
+                              const isSelected = Array.isArray(cat.value) && cat.value.includes(opt.value);
+                              return (
+                                <div
+                                  key={opt.value}
+                                  className={`flex items-center px-4 py-2.5 text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-blue-50 transition-colors ${
+                                    isSelected ? 'bg-blue-50/50 text-[#1e3a8a]' : 'text-gray-600'
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleMultiOption(cat, opt.value);
+                                  }}
+                                >
+                                  <div
+                                    className={`w-4 h-4 rounded border flex items-center justify-center mr-3 flex-shrink-0 transition-colors ${
+                                      isSelected ? 'bg-[#1e3a8a] border-[#1e3a8a]' : 'border-gray-300'
+                                    }`}
+                                  >
+                                    {isSelected && <Check className="w-3 h-3 text-white" />}
+                                  </div>
+                                  <span className="truncate">{opt.label}</span>
+                                </div>
+                              );
+                            });
+                          }
+                        })()}
+                      </div>
                     </div>
                   </div>
                 )}
