@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Clock, Save, Loader2, Calendar as CalendarIcon, FilePlus2, Stethoscope, Trash2, Send } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { Collaborator } from '../../../types/controladoria'
+import { ManagedMultiSelect } from '../../crm/ManagedMultiSelect'
 
 interface PeriodoAusenciasSectionProps {
     formData: Partial<Collaborator>
@@ -20,25 +21,17 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
     const [absenceObs, setAbsenceObs] = useState('')
     const [absenceSubtype, setAbsenceSubtype] = useState('Descanso')
 
-
-    const [reqLeaderId, setReqLeaderId] = useState('')
-    const [leadersList, setLeadersList] = useState<any[]>([])
+    const [reqLeaderIds, setReqLeaderIds] = useState<string[]>([])
 
     useEffect(() => {
         if (formData.id) fetchAbsences()
-        fetchLeaders()
     }, [formData.id])
 
     useEffect(() => {
-        if (formData.leader_id && !reqLeaderId) {
-            setReqLeaderId(formData.leader_id)
+        if (formData.leader_id && reqLeaderIds.length === 0) {
+            setReqLeaderIds([formData.leader_id])
         }
     }, [formData.leader_id])
-
-    const fetchLeaders = async () => {
-        const { data } = await supabase.from('collaborators').select('id, name').order('name');
-        if (data) setLeadersList(data);
-    }
 
     const fetchAbsences = async () => {
         if (!formData.id) return
@@ -116,12 +109,16 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
     }
 
     const handleSendMagicLink = async () => {
-        if (!formData.id || !reqLeaderId) return;
+        if (!formData.id || reqLeaderIds.length === 0) return;
         setLoading(true);
         try {
+            // A RPC atual recebe apenas um líder (p_leader_id).
+            // Usaremos o primeiro líder da lista selecionada.
+            const primaryLeaderId = reqLeaderIds[0];
+
             const { data, error } = await supabase.rpc('create_vacation_request', {
                 p_collaborator_id: formData.id,
-                p_leader_id: reqLeaderId,
+                p_leader_id: primaryLeaderId,
                 p_aquisitive_period_start: null,
                 p_aquisitive_period_end: null
             });
@@ -139,7 +136,7 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                         event: 'hr_requested',
                         colaborador_nome: formData.name,
                         colaborador_email: formData.email,
-                        lider_id: reqLeaderId,
+                        lider_id: reqLeaderIds, // array de líderes
                         link_magico_integrante: `${window.location.origin}/solicitacao-ferias/${data.employee_token}`,
                         email_rh: 'rh@salomaoadv.com.br'
                     })
@@ -148,7 +145,7 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                 console.error('Erro ao notificar Make:', err);
             }
             
-            setReqLeaderId(formData.leader_id || '');
+            setReqLeaderIds(formData.leader_id ? [formData.leader_id] : []);
             setActiveTab('historico_ferias');
         } catch (e: any) {
             alert('Erro ao gerar link mágico: ' + e.message);
@@ -274,37 +271,38 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                     
                     {/* ENVIAR FORMULÁRIO DE FÉRIAS (Only in Historico de Férias tab) */}
                     {activeTab === 'historico_ferias' && (
-                        <div className="flex items-center gap-4 max-w-3xl mb-8 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                            <div className="bg-[#1e3a8a] p-2.5 rounded-xl text-white shadow-md shrink-0"><Send className="h-5 w-5" /></div>
-                            <div className="flex-1 min-w-0">
-                                <h5 className="font-black text-[#1e3a8a] text-sm mb-0.5">Enviar Formulário ao Integrante</h5>
-                                <p className="text-[11px] text-[#1e3a8a]/60 font-medium truncate">O link será enviado ao e-mail corporativo de <strong>{formData.name}</strong></p>
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0">
-                                <div className="space-y-1">
-                                    <label className="text-[9px] font-black text-blue-900/40 uppercase tracking-widest">Líder Destinatário</label>
-                                    <select
-                                        className="bg-white border border-blue-200/60 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none shadow-sm transition-all text-gray-700 min-w-[200px]"
-                                        value={reqLeaderId}
-                                        onChange={e => setReqLeaderId(e.target.value)}
-                                        disabled={isViewMode}
-                                    >
-                                        <option value="">Selecione o líder...</option>
-                                        {leadersList.map(l => (
-                                            <option key={l.id} value={l.id}>{l.name}</option>
-                                        ))}
-                                    </select>
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 max-w-4xl mb-8 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                <div className="bg-[#1e3a8a] p-2.5 rounded-xl text-white shadow-md shrink-0"><Send className="h-5 w-5" /></div>
+                                <div className="min-w-0">
+                                    <h5 className="font-black text-[#1e3a8a] text-sm mb-0.5">Enviar Formulário ao Integrante</h5>
+                                    <p className="text-[11px] text-[#1e3a8a]/60 font-medium truncate">O link será enviado ao e-mail corporativo de <strong>{formData.name}</strong></p>
                                 </div>
-                                {!isViewMode && (
-                                    <button
-                                        onClick={handleSendMagicLink}
-                                        disabled={loading || !reqLeaderId}
-                                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black uppercase text-[10px] tracking-wider hover:shadow-lg hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none mt-4"
-                                    >
-                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                        Enviar
-                                    </button>
-                                )}
+                            </div>
+                            
+                            <div className="flex items-center gap-3 shrink-0 flex-wrap justify-end w-full md:w-auto">
+                                <div className="w-full md:w-[280px]">
+                                    <label className="block text-[9px] font-black text-blue-900/40 uppercase tracking-widest mb-1.5 ml-1">Líder Destinatário</label>
+                                    <div className="bg-white rounded-xl shadow-sm border border-blue-200/60">
+                                        <ManagedMultiSelect
+                                            value={reqLeaderIds}
+                                            onChange={v => setReqLeaderIds(v)}
+                                            tableName="collaborators"
+                                            placeholder="Selecione..."
+                                            disabled={isViewMode}
+                                            className="!border-none"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <button
+                                    onClick={handleSendMagicLink}
+                                    disabled={loading || reqLeaderIds.length === 0}
+                                    className="flex items-center justify-center gap-2 px-6 h-[46px] w-full md:w-auto bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black uppercase text-[10px] tracking-wider hover:shadow-lg hover:-translate-y-0.5 transition-all mt-4 md:mt-5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                                >
+                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                    Enviar
+                                </button>
                             </div>
                         </div>
                     )}
