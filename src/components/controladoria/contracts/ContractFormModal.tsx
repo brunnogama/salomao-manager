@@ -615,39 +615,39 @@ export function ContractFormModal(props: Props) {
           .filter(Boolean);
         
         const allPartners = [mainPartnerName, ...coPartnersNames].filter(Boolean).join(', ') || 'Não informado';
-        
-        valuesHtml += `
-          <div style="background-color: #f8fafc; border-left: 4px solid #1e3a8a; padding: 12px 16px; margin-bottom: 20px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-            <p style="margin: 0; font-family: sans-serif; font-size: 14px; color: #475569;">
-              <strong style="color: #1e3a8a;">Sócio(s) Responsável(is):</strong> ${allPartners}
-            </p>
-          </div>
-        `;
 
         const formatItem = (label: string, value: any, ready?: boolean, rule?: string) => {
           if (value && value !== 'R$ 0,00' && value !== '') {
-             let html = `<li style="margin-bottom: 12px; font-family: sans-serif; padding: 12px; border-radius: 8px; list-style-type: none; ${ready ? 'background-color: #f0fdf4; border: 2px solid #4ade80;' : 'background-color: #f8fafc; border: 1px solid #e2e8f0;'}">`;
-             
-             if (ready) {
-                html += `<div style="margin-bottom: 8px;"><span style="background-color: #16a34a; color: #ffffff; padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: bold; letter-spacing: 0.5px; display: inline-block;">✅ PRONTO PARA FATURAR</span></div>`;
-             }
-             
-             html += `<div style="font-size: 15px;"><strong style="color: #334155;">${label}:</strong> <span style="color: #0f172a; font-weight: 900; font-size: 16px;">${value}</span></div>`;
-             
+             let html = `
+               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px; font-family: Arial, sans-serif;">
+                 <tr>
+                   <td style="font-size: 14px; color: #000; vertical-align: middle;">
+                     <strong>${label}:</strong> ${value}
+                   </td>
+                   <td align="right" style="width: 170px; vertical-align: middle;">
+                     ${ready ? `<span style="background-color: #16a34a; color: #ffffff; padding: 3px 10px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; display: inline-block; text-transform: uppercase;">PRONTO PARA FATURAR</span>` : ''}
+                   </td>
+                 </tr>
+               `;
              if (rule) {
-                 html += `<div style="color: #475569; font-size: 13px; margin-top: 8px; padding-left: 10px; border-left: 3px solid ${ready ? '#86efac' : '#cbd5e1'};"><i>${rule}</i></div>`;
+                 html += `
+                 <tr>
+                   <td colspan="2" style="font-size: 13px; color: #555; padding-top: 4px; font-style: italic;">
+                     Regra: ${rule}
+                   </td>
+                 </tr>
+                 `;
              }
-             
-             html += `</li>`;
+             html += `</table>`;
              valuesHtml += html;
           }
         };
 
         const safeEnsureArray = (arr: any) => Array.isArray(arr) ? arr : [];
 
-        formatItem('Pró-Labore', formData.pro_labore, formData.pro_labore_ready, formData.pro_labore_rule);
+        formatItem('Pró-labore', formData.pro_labore, formData.pro_labore_ready, formData.pro_labore_rule);
         safeEnsureArray((formData as any).pro_labore_extras).forEach((val, idx) => {
-           formatItem(`Pró-Labore (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).pro_labore_extras_ready)[idx], safeEnsureArray((formData as any).pro_labore_extras_rules)[idx]);
+           formatItem(`Pró-labore (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).pro_labore_extras_ready)[idx], safeEnsureArray((formData as any).pro_labore_extras_rules)[idx]);
         });
 
         formatItem('Fixo Mensal', formData.fixed_monthly_fee, formData.fixed_monthly_ready, formData.fixed_monthly_fee_rule);
@@ -659,7 +659,7 @@ export function ContractFormModal(props: Props) {
            formatItem(`Êxito Intermediário ${idx + 1}`, val, safeEnsureArray((formData as any).intermediate_fees_ready)[idx], safeEnsureArray((formData as any).intermediate_fees_rules)[idx]);
         });
 
-        formatItem('Êxito Final (R$)', formData.final_success_fee, formData.final_success_ready, formData.final_success_fee_rule);
+        formatItem('Êxito Final', formData.final_success_fee, formData.final_success_ready, formData.final_success_fee_rule);
         safeEnsureArray((formData as any).final_success_extras).forEach((val, idx) => {
            formatItem(`Êxito Final (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).final_success_extras_ready)[idx], safeEnsureArray((formData as any).final_success_extras_rules)[idx]);
         });
@@ -673,11 +673,10 @@ export function ContractFormModal(props: Props) {
         safeEnsureArray((formData as any).other_fees_extras).forEach((val, idx) => {
            formatItem(`Outros Honorários (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).other_fees_extras_ready)[idx], safeEnsureArray((formData as any).other_fees_extras_rules)[idx]);
         });
-        if (!valuesHtml) valuesHtml = '<li><i>Nenhum valor financeiro atrelado.</i></li>';
+        if (!valuesHtml) valuesHtml = '<div style="font-family: Arial, sans-serif; font-size: 14px; font-style: italic;">Nenhum valor financeiro atrelado.</div>';
 
-        let attachmentsHtml = '<li><i>Sem documentos anexos no momento do cadastro.</i></li>';
+        let attachmentsHtml = '<div style="font-family: Arial, sans-serif; font-size: 14px; font-style: italic;">Sem documentos anexos.</div>';
         
-        // Bloqueio try-catch exclusivo para a busca de documentos, evitando que trave o envio
         try {
           if (savedContractId) {
             const { data: docs, error: docsError } = await supabase.from('contract_documents')
@@ -689,7 +688,7 @@ export function ContractFormModal(props: Props) {
                 
               if (!urlsError && signedUrls) {
                 attachmentsHtml = signedUrls.map((u, i) =>
-                  `<li style="margin-bottom: 6px;"><a href="${u.signedUrl}" style="color: #1e3a8a; text-decoration: none; font-weight: bold;">📄 Baixar: ${docs[i].file_name || `Anexo ${i + 1}`}</a></li>`
+                  `<div style="margin-bottom: 6px; font-family: Arial, sans-serif; font-size: 14px; font-weight: bold;"><a href="${u.signedUrl}" style="color: #000; text-decoration: none;">Baixar: ${docs[i].file_name || `Anexo ${i + 1}`}</a></div>`
                 ).join('');
               }
             }
@@ -698,15 +697,58 @@ export function ContractFormModal(props: Props) {
           console.error("Aviso: Falha ao carregar links dos anexos para o e-mail", storageError);
         }
 
+        const clientNameDisplay = formData.client_name;
+        const honDisplay = formData.hon_number || 'Não informado';
+        const referenceDisplay = (formData as any).reference || 'Não informada';
+
+        // Constroi o e-mail completo rigorosamente igual a imagem aprovada pelo usuario
+        const masterHtmlBody = `
+          <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0; padding: 20px; color: #000; background-color: #fff;">
+            
+            <h1 style="font-size: 28px; font-weight: bold; margin: 0 0 15px 0; color: #000;">${clientNameDisplay}</h1>
+            
+            <div style="font-size: 16px; font-weight: bold; margin-bottom: 25px; color: #000;">
+              Número HON <span style="font-weight: normal; margin-left: 5px;">${honDisplay}</span>
+            </div>
+            
+            <div style="font-size: 15px; font-weight: bold; margin-bottom: 5px; color: #000;">Referência</div>
+            <div style="border: 3px solid #000; padding: 15px; margin-bottom: 30px; font-size: 14px; color: #000;">
+              ${referenceDisplay}
+            </div>
+
+            <div style="font-size: 15px; font-weight: bold; margin-bottom: 5px; color: #000;">Honorários</div>
+            <div style="border: 3px solid #000; padding: 15px 15px 3px 15px; margin-bottom: 30px;">
+              ${valuesHtml}
+            </div>
+
+            <div style="font-size: 15px; font-weight: bold; margin-bottom: 5px; color: #000;">Sócios Responsáveis</div>
+            <div style="border: 3px solid #000; padding: 15px; margin-bottom: 30px; font-size: 14px; color: #000;">
+              ${allPartners}
+            </div>
+
+            <div style="font-size: 15px; font-weight: bold; margin-bottom: 5px; color: #000;">Arquivo</div>
+            <div style="border: 3px solid #000; padding: 15px; margin-bottom: 40px; font-size: 14px; color: #000;">
+              ${attachmentsHtml}
+            </div>
+
+            <div style="text-align: center; color: #1e3a8a; font-size: 12px; font-weight: bold; margin-top: 20px;">
+              Envio automático através do Salomão Manager
+            </div>
+            
+          </div>
+        `;
+
         const res = await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            clientName: formData.client_name,
-            honNumber: formData.hon_number || 'Não informado',
-            reference: (formData as any).reference || 'Não informada',
+            clientName: clientNameDisplay,
+            honNumber: honDisplay,
+            reference: referenceDisplay,
             valuesHtml,
-            attachmentsHtml
+            attachmentsHtml,
+            partnersNames: allPartners,
+            htmlBody: masterHtmlBody
           })
         });
         
