@@ -26,7 +26,7 @@ const EXPORT_COLUMN_CATEGORIES = [
     icon: User,
     columns: [
       'CPF', 'RG', 'Data Nascimento', 'Gênero', 'Estado Civil', 'Possui Filhos?',
-      'Quantidade de Filhos', 'Filhos (Nome e Nascimento)', 'Nome Emergência', 'Telefone Emergência', 'Parentesco Emergência', 'Contatos de Emergência',
+      'Quantidade de Filhos', 'Nomes dos Filhos', 'Datas Nasc. Filhos', 'Nome Emergência', 'Telefone Emergência', 'Parentesco Emergência', 'Contatos de Emergência',
       'Nome da Mãe', 'Nome do Pai', 'Nacionalidade', 'Naturalidade (Cidade)', 'Naturalidade (UF)', 'CNH',
       'Observações', 'CEP', 'Endereço', 'Número', 'Complemento', 'Bairro', 'Cidade', 'Estado',
       'Forma de Pagamento', 'Nome do Banco', 'Tipo de Conta', 'Agência', 'Conta', 'Tipo PIX', 'Chave PIX'

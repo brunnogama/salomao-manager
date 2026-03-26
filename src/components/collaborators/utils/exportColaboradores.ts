@@ -55,6 +55,17 @@ const formatContractType = (ct?: string) => {
     }).join(' ');
 }
 
+const formatDateBR = (isoDate: string | undefined | null): string => {
+    if (!isoDate) return '';
+    if (isoDate.includes('/')) return isoDate;
+    const cleanDate = isoDate.split('T')[0];
+    const parts = cleanDate.split('-');
+    if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return isoDate;
+};
+
 const parseDateForExcel = (isoDate: string | undefined | null): Date | string => {
     if (!isoDate) return '';
     if (isoDate.includes('/')) {
@@ -106,7 +117,8 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Estado Civil': formatCivilStatus(c.civil_status),
         'Possui Filhos?': c.has_children ? 'Sim' : 'Não',
         'Quantidade de Filhos': c.children_count || 0,
-        'Filhos (Nome e Nascimento)': c.children_data?.map((f: any) => `${f.name} (${parseDateForExcel(f.birth_date)})`).join(' | ') || '',
+        'Nomes dos Filhos': c.children_data?.map((f: any) => f.name).join(' \r\n ') || '',
+        'Datas Nasc. Filhos': c.children_data?.map((f: any) => formatDateBR(f.birth_date)).join(' \r\n ') || '',
         'Nome Emergência': c.emergencia_nome,
         'Telefone Emergência': c.emergencia_telefone,
         'Parentesco Emergência': c.emergencia_parentesco,
@@ -248,20 +260,19 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         }
     }
 
-    // Style Header Row (Royal Blue background, White text)
+    // Style Header Row (Dark Blue background, White text)
     for (let C = 0; C <= range.e.c; ++C) {
         const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
         if (!ws[cellAddress]) continue;
         ws[cellAddress].s = {
             font: { bold: true, color: { rgb: "FFFFFF" } },
-            fill: { fgColor: { rgb: "4169E1" } },
+            fill: { fgColor: { rgb: "1E3A8A" } },
             alignment: { vertical: "center", horizontal: "center" }
         };
     }
 
     // Freeze Header Row
-    if (!ws['!views']) ws['!views'] = [];
-    ws['!views'].push({ state: 'frozen', xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' });
+    ws['!views'] = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
 
     // Auto-width for columns dynamically based on content
     const keys = Object.keys(dataToExport[0] || {});
@@ -323,20 +334,19 @@ export const exportVTXLSX = (options: ExportOptions) => {
 
     const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
 
-    // Style Header Row (Royal Blue background, White text)
+    // Style Header Row (Dark Blue background, White text)
     for (let C = 0; C <= range.e.c; ++C) {
         const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
         if (!ws[cellAddress]) continue;
         ws[cellAddress].s = {
             font: { bold: true, color: { rgb: "FFFFFF" } },
-            fill: { fgColor: { rgb: "4169E1" } },
+            fill: { fgColor: { rgb: "1E3A8A" } },
             alignment: { vertical: "center", horizontal: "center" }
         };
     }
 
     // Freeze Header Row
-    if (!ws['!views']) ws['!views'] = [];
-    ws['!views'].push({ state: 'frozen', xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' });
+    ws['!views'] = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
 
     // Auto-width for columns dynamically based on content
     const keys = Object.keys(dataToExport[0] || {});
