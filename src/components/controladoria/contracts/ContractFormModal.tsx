@@ -600,6 +600,23 @@ export function ContractFormModal(props: Props) {
     const promise = (async () => {
       try {
         let valuesHtml = '';
+        
+        // Identificar nomes dos sócios
+        const mainPartnerName = partnerSelectOptions.find(p => p.value === formData.partner_id)?.label;
+        const coPartnersNames = (formData.co_partner_ids || [])
+          .map(id => partnerSelectOptions.find(p => p.value === id)?.label)
+          .filter(Boolean);
+        
+        const allPartners = [mainPartnerName, ...coPartnersNames].filter(Boolean).join(', ') || 'Não informado';
+        
+        valuesHtml += `
+          <div style="background-color: #f8fafc; border-left: 4px solid #1e3a8a; padding: 12px 16px; margin-bottom: 20px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <p style="margin: 0; font-family: sans-serif; font-size: 14px; color: #475569;">
+              <strong style="color: #1e3a8a;">Sócio(s) Responsável(is):</strong> ${allPartners}
+            </p>
+          </div>
+        `;
+
         const formatItem = (label: string, value: any, ready?: boolean, rule?: string) => {
           if (value && value !== 'R$ 0,00' && value !== '') {
              let html = `<li style="margin-bottom: 12px; font-family: sans-serif; padding: 12px; border-radius: 8px; list-style-type: none; ${ready ? 'background-color: #f0fdf4; border: 2px solid #4ade80;' : 'background-color: #f8fafc; border: 1px solid #e2e8f0;'}">`;
