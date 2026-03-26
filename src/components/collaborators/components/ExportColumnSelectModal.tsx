@@ -286,7 +286,7 @@ export function ExportColumnSelectModal({ isOpen, onClose, onConfirm }: ExportCo
                 placeholder="Nome do Modelo (Ex: Aniversariantes)"
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
-                className="text-sm border-gray-300 rounded-lg shadow-sm focus:border-[#2A3F54] focus:ring-[#2A3F54] w-full max-w-[280px]"
+                className="flex-1 w-full max-w-[300px] px-3 py-2 text-sm text-gray-800 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2A3F54]/20 focus:border-[#2A3F54] transition-all placeholder:text-gray-400"
                 autoFocus
               />
             )}
