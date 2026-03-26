@@ -619,7 +619,7 @@ export function ContractFormModal(props: Props) {
         const formatItem = (label: string, value: any, ready?: boolean, rule?: string) => {
           if (value && value !== 'R$ 0,00' && value !== '') {
              let html = `
-               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 0px; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; border-bottom: 1px solid #f1f5f9;">
+               <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; border-bottom: 1px solid #f1f5f9; border-collapse: collapse; min-width: 100%; box-sizing: border-box;">
                  <tr>
                    <td style="padding: 14px 10px; font-size: 14px; font-weight: 500; color: #475569; vertical-align: middle;">
                      ${label}
@@ -648,31 +648,31 @@ export function ContractFormModal(props: Props) {
 
         formatItem('Pró-labore', formData.pro_labore, formData.pro_labore_ready, formData.pro_labore_rule);
         safeEnsureArray((formData as any).pro_labore_extras).forEach((val, idx) => {
-           formatItem(`Pró-labore (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).pro_labore_extras_ready)[idx], safeEnsureArray((formData as any).pro_labore_extras_rules)[idx]);
+           formatItem(`Pró-labore`, val, safeEnsureArray((formData as any).pro_labore_extras_ready)[idx], safeEnsureArray((formData as any).pro_labore_extras_rules)[idx]);
         });
 
         formatItem('Fixo Mensal', formData.fixed_monthly_fee, formData.fixed_monthly_ready, formData.fixed_monthly_fee_rule);
         safeEnsureArray((formData as any).fixed_monthly_extras).forEach((val, idx) => {
-           formatItem(`Fixo Mensal (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).fixed_monthly_extras_ready)[idx], safeEnsureArray((formData as any).fixed_monthly_extras_rules)[idx]);
+           formatItem(`Fixo Mensal`, val, safeEnsureArray((formData as any).fixed_monthly_extras_ready)[idx], safeEnsureArray((formData as any).fixed_monthly_extras_rules)[idx]);
         });
 
         safeEnsureArray(formData.intermediate_fees).forEach((val, idx) => {
-           formatItem(`Êxito Intermediário ${idx + 1}`, val, safeEnsureArray((formData as any).intermediate_fees_ready)[idx], safeEnsureArray((formData as any).intermediate_fees_rules)[idx]);
+           formatItem(`Êxito Intermediário`, val, safeEnsureArray((formData as any).intermediate_fees_ready)[idx], safeEnsureArray((formData as any).intermediate_fees_rules)[idx]);
         });
 
         formatItem('Êxito Final', formData.final_success_fee, formData.final_success_ready, formData.final_success_fee_rule);
         safeEnsureArray((formData as any).final_success_extras).forEach((val, idx) => {
-           formatItem(`Êxito Final (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).final_success_extras_ready)[idx], safeEnsureArray((formData as any).final_success_extras_rules)[idx]);
+           formatItem(`Êxito Final`, val, safeEnsureArray((formData as any).final_success_extras_ready)[idx], safeEnsureArray((formData as any).final_success_extras_rules)[idx]);
         });
 
         formatItem('Êxito (%)', formData.final_success_percent, formData.final_success_percent_ready, formData.final_success_percent_rule);
         safeEnsureArray((formData as any).percent_extras).forEach((val, idx) => {
-           formatItem(`Êxito % (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).percent_extras_ready)[idx], safeEnsureArray((formData as any).percent_extras_rules)[idx]);
+           formatItem(`Êxito (%)`, val, safeEnsureArray((formData as any).percent_extras_ready)[idx], safeEnsureArray((formData as any).percent_extras_rules)[idx]);
         });
 
         formatItem('Outros Honorários', formData.other_fees, formData.other_fees_ready, formData.other_fees_rule);
         safeEnsureArray((formData as any).other_fees_extras).forEach((val, idx) => {
-           formatItem(`Outros Honorários (Extra ${idx + 1})`, val, safeEnsureArray((formData as any).other_fees_extras_ready)[idx], safeEnsureArray((formData as any).other_fees_extras_rules)[idx]);
+           formatItem(`Outros Honorários`, val, safeEnsureArray((formData as any).other_fees_extras_ready)[idx], safeEnsureArray((formData as any).other_fees_extras_rules)[idx]);
         });
         if (!valuesHtml) valuesHtml = '<div style="font-family: Arial, sans-serif; font-size: 14px; font-style: italic; padding: 10px; color: #64748b;">Nenhum valor financeiro atrelado.</div>';
 
@@ -704,11 +704,11 @@ export function ContractFormModal(props: Props) {
 
         // Constroi o e-mail completo rigorosamente igual a imagem aprovada pelo usuario, mas com design super elegante
         const masterHtmlBody = `
-          <div style="font-family: 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px 10px; background-color: #f8fafc; color: #0f172a; border-radius: 12px;">
+          <div style="font-family: 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px 10px; background-color: #f8fafc; color: #0f172a; border-radius: 12px; box-sizing: border-box;">
             
-            <div style="background-color: #ffffff; border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); border: 1px solid #e2e8f0;">
+            <div style="background-color: #ffffff; border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); border: 1px solid #e2e8f0; box-sizing: border-box; width: 100%;">
               
-              <div style="border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 28px;">
+              <div style="border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 28px; box-sizing: border-box; width: 100%;">
                 <h1 style="font-size: 26px; font-weight: 800; margin: 0 0 10px 0; color: #0f172a; letter-spacing: -0.5px; line-height: 1.2;">${clientNameDisplay}</h1>
                 <div style="font-size: 14px; color: #64748b; font-weight: 500; display: flex; align-items: center;">
                   Número HON: <span style="background-color: #f1f5f9; color: #334155; font-weight: 700; padding: 4px 8px; border-radius: 6px; margin-left: 6px; font-size: 13px;">${honDisplay}</span>
@@ -716,40 +716,40 @@ export function ContractFormModal(props: Props) {
               </div>
 
               <!-- Referência -->
-              <div style="margin-bottom: 28px;">
+              <div style="margin-bottom: 28px; box-sizing: border-box; width: 100%;">
                 <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Referência</div>
-                <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 0 6px 6px 0; font-size: 15px; color: #334155; line-height: 1.6;">
+                <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 0 6px 6px 0; font-size: 15px; color: #334155; line-height: 1.6; box-sizing: border-box; width: 100%;">
                   ${referenceDisplay}
                 </div>
               </div>
 
               <!-- Honorários -->
-              <div style="margin-bottom: 28px;">
-                <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Quadro Financeiro</div>
-                <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+              <div style="margin-bottom: 28px; box-sizing: border-box; width: 100%;">
+                <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Honorários</div>
+                <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.02); box-sizing: border-box; width: 100%;">
                   ${valuesHtml}
                 </div>
               </div>
 
               <!-- Sócios -->
-              <div style="margin-bottom: 28px;">
+              <div style="margin-bottom: 28px; box-sizing: border-box; width: 100%;">
                 <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Sócios Responsáveis</div>
-                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 8px; font-size: 15px; color: #166534; font-weight: 600;">
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 8px; font-size: 15px; color: #166534; font-weight: 600; box-sizing: border-box; width: 100%;">
                   ${allPartners}
                 </div>
               </div>
 
               <!-- Anexos -->
-              <div style="margin-bottom: 10px;">
+              <div style="margin-bottom: 10px; box-sizing: border-box; width: 100%;">
                 <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Documentos Anexos</div>
-                <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; border-radius: 8px;">
+                <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; border-radius: 8px; box-sizing: border-box; width: 100%;">
                   ${attachmentsHtml}
                 </div>
               </div>
 
             </div>
             
-            <div style="text-align: center; margin-top: 24px;">
+            <div style="text-align: center; margin-top: 24px; box-sizing: border-box; width: 100%;">
               <p style="color: #94a3b8; font-size: 12px; font-weight: 600; margin: 0; letter-spacing: 0.3px;">
                 ENVIO AUTOMÁTICO ATRAVÉS DO <span style="color: #64748b;">SALOMÃO MANAGER</span>
               </p>
