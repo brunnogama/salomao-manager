@@ -36,7 +36,14 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                 .select('id, name')
                 
             const combined = [...(leadersData || []), ...(partnersData || [])]
-            const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
+            const uniqueMap = new Map()
+            for (const item of combined) {
+                const key = item.name.trim().toLowerCase()
+                if (!uniqueMap.has(key)) {
+                    uniqueMap.set(key, item)
+                }
+            }
+            const unique = Array.from(uniqueMap.values())
             unique.sort((a, b) => a.name.localeCompare(b.name))
             
             setDestinatariosList(unique)
@@ -317,14 +324,17 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                                     </div>
                                 </div>
                                 
-                                <button
-                                    onClick={handleSendMagicLink}
-                                    disabled={loading || reqLeaderIds.length === 0}
-                                    className="flex items-center justify-center gap-2 px-6 h-[46px] w-full md:w-auto bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black uppercase text-[10px] tracking-wider hover:shadow-lg hover:-translate-y-0.5 transition-all mt-4 md:mt-5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                                <div
+                                    role="button"
+                                    onClick={() => {
+                                        if (loading || reqLeaderIds.length === 0) return;
+                                        handleSendMagicLink();
+                                    }}
+                                    className={`flex items-center justify-center gap-2 px-6 h-[46px] w-full md:w-auto bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black uppercase text-[10px] tracking-wider transition-all mt-4 md:mt-5 ${loading || reqLeaderIds.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg hover:-translate-y-0.5 active:scale-95 cursor-pointer'}`}
                                 >
                                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                                     Enviar
-                                </button>
+                                </div>
                             </div>
                         </div>
                     )}

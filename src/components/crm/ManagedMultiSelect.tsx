@@ -256,18 +256,19 @@ export function ManagedMultiSelect({
                 <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 text-xs font-semibold text-gray-700 rounded-md shadow-sm max-w-[140px]">
                   <span className="truncate">{name}</span>
                   {!isDisabled && (
-                    <button
+                    <div
+                      role="button"
                       onClick={(e) => removeValue(e, selectedValuesArray[index])}
-                      className="text-gray-400 hover:text-red-500 flex-shrink-0 rounded focus:outline-none"
+                      className="text-gray-400 hover:text-red-500 flex-shrink-0 rounded focus:outline-none cursor-pointer"
                     >
                       <X className="h-3 w-3" />
-                    </button>
+                    </div>
                   )}
                 </span>
               ))}
               {selectedValuesArray.length > 2 && (
-                <button 
-                  type="button"
+                <div 
+                  role="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsTagsExpanded(!isTagsExpanded);
@@ -276,7 +277,7 @@ export function ManagedMultiSelect({
                 >
                   {!isTagsExpanded && <span className="mr-0.5">+{selectedValuesArray.length - 2}</span>}
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isTagsExpanded ? 'rotate-180' : ''}`} />
-                </button>
+                </div>
               )}
             </div>
           ) : (
@@ -288,12 +289,13 @@ export function ManagedMultiSelect({
 
         <div className="flex items-center gap-1 flex-shrink-0">
           {selectedValuesArray.length > 0 && !isDisabled && (
-            <button
+            <div
+              role="button"
               onClick={handleClearSelection}
-              className="p-1 text-gray-400 hover:text-red-500 rounded-full transition-colors"
+              className="p-1 text-gray-400 hover:text-red-500 rounded-full transition-colors cursor-pointer"
             >
               <X className="h-3.5 w-3.5" />
-            </button>
+            </div>
           )}
           <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
         </div>
