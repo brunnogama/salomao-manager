@@ -206,7 +206,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
         const foundLeader = partners.find(p => p.name === leaderStr);
         if (foundLeader) {
           setAdvFilterLeader(String(foundLeader.id));
-          setIsFiltersExpanded(true);
         }
         changed = true;
       }
@@ -214,7 +213,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
       // Filter by Segment
       if (location.state.segmentFilter) {
         setAdvFilterSegment(location.state.segmentFilter);
-        setIsFiltersExpanded(true);
         changed = true;
       }
 
@@ -224,7 +222,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
         const foundLocal = locations.find(l => l.name === localStr);
         if (foundLocal) {
           setAdvFilterLocal(String(foundLocal.id));
-          setIsFiltersExpanded(true);
         }
         changed = true;
       }
@@ -236,7 +233,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
         if (location.state.genderFilter === 'Feminino') genderCode = 'F';
         if (genderCode) {
           setAdvFilterGender(genderCode);
-          setIsFiltersExpanded(true);
         }
         changed = true;
       }

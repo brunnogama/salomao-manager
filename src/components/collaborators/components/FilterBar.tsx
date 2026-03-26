@@ -165,10 +165,9 @@ export function FilterBar({
 
                 {/* Popover / Dropdown para esta categoria específica */}
                 {isOpen && (
-                  <div className="absolute top-full right-0 sm:left-0 sm:right-auto z-[9999]" style={{ width: 0, height: 0 }}>
-                    <div className="mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden relative">
-                      {/* Busca interna */}
-                      <div className="p-2 border-b border-gray-100 bg-gray-50/50">
+                  <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                    {/* Busca interna */}
+                    <div className="p-2 border-b border-gray-100 bg-gray-50/50">
                         <input
                           type="text"
                           autoFocus
@@ -239,7 +238,6 @@ export function FilterBar({
                         })()}
                       </div>
                     </div>
-                  </div>
                 )}
               </div>
             );
