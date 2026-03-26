@@ -66,6 +66,22 @@ const formatDateBR = (isoDate: string | undefined | null): string => {
     return isoDate;
 };
 
+const formatPerfil = (perfil: any): string => {
+    if (!perfil) return '';
+    if (Array.isArray(perfil)) {
+        return perfil.map(p => typeof p === 'object' ? (p.name || p.tag || JSON.stringify(p)) : p).join('; ');
+    }
+    if (typeof perfil === 'string') {
+        try {
+            const parsed = JSON.parse(perfil);
+            if (Array.isArray(parsed)) return parsed.join('; ');
+        } catch {}
+        // Split by standard delimiters and rejoin with semicolon to guarantee separation
+        return perfil.split(/[\n,]+/).map(t => t.trim()).filter(Boolean).join('; ');
+    }
+    return String(perfil);
+};
+
 const parseDateForExcel = (isoDate: string | undefined | null): Date | string => {
     if (!isoDate) return '';
     if (isoDate.includes('/')) {
@@ -155,15 +171,15 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Resumo CV': c.resumo_cv || '',
         'Idiomas': c.idiomas || '',
         'Atividades Acadêmicas': c.atividades_academicas || '',
-        'Competências Técnicas/Perfil': c.perfil || '',
+        'Competências Técnicas/Perfil': formatPerfil(c.perfil),
         'Indicado Por': c.indicado_por || '',
 
-        'Nível Escolaridade': c.escolaridade_nivel,
-        'Subnível': c.escolaridade_subnivel,
-        'Instituição': c.escolaridade_instituicao,
-        'Curso': c.escolaridade_curso,
-        'Matrícula Escolar': c.escolaridade_matricula,
-        'Semestre': c.escolaridade_semestre,
+        'Nível Escolaridade': c.education_history?.length ? c.education_history.map((e: any) => e.nivel).filter(Boolean).join(' \r\n ') : c.escolaridade_nivel,
+        'Subnível': c.education_history?.length ? c.education_history.map((e: any) => e.subnivel).filter(Boolean).join(' \r\n ') : c.escolaridade_subnivel,
+        'Instituição': c.education_history?.length ? c.education_history.map((e: any) => e.instituicao).filter(Boolean).join(' \r\n ') : c.escolaridade_instituicao,
+        'Curso': c.education_history?.length ? c.education_history.map((e: any) => e.curso).filter(Boolean).join(' \r\n ') : c.escolaridade_curso,
+        'Matrícula Escolar': c.education_history?.length ? c.education_history.map((e: any) => e.matricula).filter(Boolean).join(' \r\n ') : c.escolaridade_matricula,
+        'Semestre': c.education_history?.length ? c.education_history.map((e: any) => e.semestre).filter(Boolean).join(' \r\n ') : c.escolaridade_semestre,
         'Previsão Conclusão': parseDateForExcel(c.escolaridade_previsao_conclusao),
         'Formação Histórica': c.education_history?.map((e: any) => `${e.nivel} em ${e.curso} - ${e.instituicao} (${e.status})`).join(' | ') || '',
 
