@@ -20,8 +20,7 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
     const [absenceObs, setAbsenceObs] = useState('')
     const [absenceSubtype, setAbsenceSubtype] = useState('Descanso')
 
-    const [reqAquiStart, setReqAquiStart] = useState('')
-    const [reqAquiEnd, setReqAquiEnd] = useState('')
+
     const [reqLeaderId, setReqLeaderId] = useState('')
     const [leadersList, setLeadersList] = useState<any[]>([])
 
@@ -29,6 +28,12 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
         if (formData.id) fetchAbsences()
         fetchLeaders()
     }, [formData.id])
+
+    useEffect(() => {
+        if (formData.leader_id && !reqLeaderId) {
+            setReqLeaderId(formData.leader_id)
+        }
+    }, [formData.leader_id])
 
     const fetchLeaders = async () => {
         const { data } = await supabase.from('collaborators').select('id, name').order('name');
@@ -111,24 +116,19 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
     }
 
     const handleSendMagicLink = async () => {
-        if (!formData.id || !reqLeaderId || !reqAquiStart || !reqAquiEnd) return;
+        if (!formData.id || !reqLeaderId) return;
         setLoading(true);
         try {
-            const formatToISO = (dateStr: string) => {
-                const [d, m, y] = dateStr.split('/');
-                return `${y}-${m}-${d}`;
-            };
-            
             const { data, error } = await supabase.rpc('create_vacation_request', {
                 p_collaborator_id: formData.id,
                 p_leader_id: reqLeaderId,
-                p_aquisitive_period_start: formatToISO(reqAquiStart),
-                p_aquisitive_period_end: formatToISO(reqAquiEnd)
+                p_aquisitive_period_start: null,
+                p_aquisitive_period_end: null
             });
 
             if (error) throw error;
 
-            alert('Solicitação criada com sucesso! O Link Mágico pode ser enviado agora.');
+            alert('Formulário enviado com sucesso! O integrante receberá o link no e-mail corporativo.');
 
             // Disparar Webhook para o Make.com enviar o e-mail ao integrante
             try {
@@ -138,11 +138,9 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                     body: JSON.stringify({
                         event: 'hr_requested',
                         colaborador_nome: formData.name,
-                        colaborador_email: formData.email_pessoal || formData.email,
+                        colaborador_email: formData.email,
                         lider_id: reqLeaderId,
                         link_magico_integrante: `${window.location.origin}/solicitacao-ferias/${data.employee_token}`,
-                        periodo_aquisitivo_inicio: reqAquiStart,
-                        periodo_aquisitivo_fim: reqAquiEnd,
                         email_rh: 'rh@salomaoadv.com.br'
                     })
                 });
@@ -150,9 +148,7 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                 console.error('Erro ao notificar Make:', err);
             }
             
-            setReqAquiStart('');
-            setReqAquiEnd('');
-            setReqLeaderId('');
+            setReqLeaderId(formData.leader_id || '');
             setActiveTab('historico_ferias');
         } catch (e: any) {
             alert('Erro ao gerar link mágico: ' + e.message);
@@ -278,71 +274,38 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                     
                     {/* ENVIAR FORMULÁRIO DE FÉRIAS (Only in Historico de Férias tab) */}
                     {activeTab === 'historico_ferias' && (
-                        <div className="grid grid-cols-1 gap-6 max-w-3xl mb-8 p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
-                            <div className="flex items-start gap-4">
-                                <div className="bg-[#1e3a8a] p-2.5 rounded-xl text-white shadow-md shrink-0"><Send className="h-5 w-5" /></div>
-                                <div>
-                                    <h5 className="font-black text-[#1e3a8a] text-base mb-1">Enviar Formulário ao Integrante</h5>
-                                    <p className="text-xs text-[#1e3a8a]/70 max-w-xl font-medium">
-                                        Preencha o período aquisitivo e defina o líder que irá aprovar o pedido. O sistema enviará um e-mail automaticamente com o link seguro e exclusivo para que <strong>{formData.name}</strong> possa escolher a data desejada para o seu descanso.
-                                    </p>
-                                </div>
+                        <div className="flex items-center gap-4 max-w-3xl mb-8 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                            <div className="bg-[#1e3a8a] p-2.5 rounded-xl text-white shadow-md shrink-0"><Send className="h-5 w-5" /></div>
+                            <div className="flex-1 min-w-0">
+                                <h5 className="font-black text-[#1e3a8a] text-sm mb-0.5">Enviar Formulário ao Integrante</h5>
+                                <p className="text-[11px] text-[#1e3a8a]/60 font-medium truncate">O link será enviado ao e-mail corporativo de <strong>{formData.name}</strong></p>
                             </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-blue-900/50 uppercase tracking-widest">Início Aquisitivo</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-white border border-blue-200/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none shadow-sm transition-all"
-                                        placeholder="DD/MM/AAAA"
-                                        maxLength={10}
-                                        value={reqAquiStart}
-                                        onChange={e => setReqAquiStart(maskDate(e.target.value))}
+                            <div className="flex items-center gap-3 shrink-0">
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-blue-900/40 uppercase tracking-widest">Líder Destinatário</label>
+                                    <select
+                                        className="bg-white border border-blue-200/60 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none shadow-sm transition-all text-gray-700 min-w-[200px]"
+                                        value={reqLeaderId}
+                                        onChange={e => setReqLeaderId(e.target.value)}
                                         disabled={isViewMode}
-                                    />
+                                    >
+                                        <option value="">Selecione o líder...</option>
+                                        {leadersList.map(l => (
+                                            <option key={l.id} value={l.id}>{l.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-blue-900/50 uppercase tracking-widest">Fim Aquisitivo</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-white border border-blue-200/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none shadow-sm transition-all"
-                                        placeholder="DD/MM/AAAA"
-                                        maxLength={10}
-                                        value={reqAquiEnd}
-                                        onChange={e => setReqAquiEnd(maskDate(e.target.value))}
-                                        disabled={isViewMode}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-blue-900/50 uppercase tracking-widest">Líder para Aprovação</label>
-                                <select
-                                    className="w-full bg-white border border-blue-200/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none shadow-sm transition-all text-gray-700"
-                                    value={reqLeaderId}
-                                    onChange={e => setReqLeaderId(e.target.value)}
-                                    disabled={isViewMode}
-                                >
-                                    <option value="">Selecione o líder responsável...</option>
-                                    {leadersList.map(l => (
-                                        <option key={l.id} value={l.id}>{l.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {!isViewMode && (
-                                <div className="flex justify-end pt-2 border-t border-blue-100/50 mt-2">
+                                {!isViewMode && (
                                     <button
                                         onClick={handleSendMagicLink}
-                                        disabled={loading || !reqAquiStart || !reqAquiEnd || !reqLeaderId}
-                                        className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black uppercase text-xs tracking-wider hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                                        disabled={loading || !reqLeaderId}
+                                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black uppercase text-[10px] tracking-wider hover:shadow-lg hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none mt-4"
                                     >
                                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                        Gerar Link e Disparar E-mail
+                                        Enviar
                                     </button>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     )}
                     
