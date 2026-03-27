@@ -78,7 +78,7 @@ const SEATS_31_ANDAR: SeatDef[] = [
     left: 20, top: 40 + Math.floor(i / 2) * 100 + (i % 2) * 45, width: W_STD + 10, height: H_STD
   })),
 
-  { id: 'SC01', type: 'SÓCIO', left: 100, top: 40, width: 90, height: 70 },
+  { id: 'SC01', type: 'SÓCIO', left: 130, top: 60, width: W_STD, height: H_STD },
 
   // Juniors (J01-J24) - 3 blocos de 2x4
   ...generateBlock('J', 'JÚNIOR', 24, 1, 200, 530),
@@ -95,16 +95,19 @@ const SEATS_31_ANDAR: SeatDef[] = [
   // Administrativos (A01-A22) - Bloco de 2x11 na direita
   ...generateAdmBlock(),
 
-  // S15-S21 (borda direita e canto)
-  ...Array.from({length: 7}).map((_, i) => ({
-    id: `S${String(i+15).padStart(2,'0')}`, type: 'SÊNIOR',
-    left: 1600, top: 40 + Math.floor(i / 2) * 100 + (i % 2) * 45, width: W_STD + 10, height: H_STD
-  })),
+  // S15-S18 Encartados no recorte superior direito
+  { id: 'S15', type: 'SÊNIOR', left: 1470, top: 50,  width: W_STD + 10, height: H_STD },
+  { id: 'S16', type: 'SÊNIOR', left: 1470, top: 105, width: W_STD + 10, height: H_STD },
+  { id: 'S17', type: 'SÊNIOR', left: 1470, top: 160, width: W_STD + 10, height: H_STD },
+  { id: 'S18', type: 'SÊNIOR', left: 1560, top: 105, width: W_STD + 10, height: H_STD },
 
-  // Sócios/Consultores Extrema Direita
-  { id: 'SC02',     type: 'SÓCIO',     left: 1720, top: 40,  width: 90, height: 60 },
-  { id: 'SC03',     type: 'SÓCIO',     left: 1720, top: 140, width: 90, height: 60 },
-  { id: 'CONS01',   type: 'CONSULTOR', left: 1720, top: 240, width: 90, height: 60 },
+  // Corredor Lateral Extrema Direita (Consultor, Sócios, S19-S21)
+  { id: 'CONS01',   type: 'CONSULTOR', left: 1720, top: 40,  width: 90, height: 60 },
+  { id: 'SC02',     type: 'SÓCIO',     left: 1720, top: 120, width: 90, height: 60 },
+  { id: 'SC03',     type: 'SÓCIO',     left: 1720, top: 200, width: 90, height: 60 },
+  { id: 'S19', type: 'SÊNIOR', left: 1720, top: 280, width: W_STD + 10, height: H_STD },
+  { id: 'S20', type: 'SÊNIOR', left: 1720, top: 340, width: W_STD + 10, height: H_STD },
+  { id: 'S21', type: 'SÊNIOR', left: 1720, top: 400, width: W_STD + 10, height: H_STD },
 ];
 
 export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: FloorPlanProps) {
@@ -170,23 +173,25 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
         }}
       >
               {/* Planta Arquitetônica (Paredes) - Esquerda */}
-        <div className="absolute top-[38px] left-[108px] w-[756px] h-1 bg-black z-0 pointer-events-none"></div> {/* Teto Esq */}
-        <div className="absolute top-[490px] left-[108px] w-[756px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão Esq */}
-        <div className="absolute top-[38px] left-[108px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Esq */}
-        <div className="absolute top-[38px] left-[860px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Dir (Centro) */}
-        <div className="absolute top-[110px] left-[108px] w-[90px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão SC01 */}
-        <div className="absolute top-[38px] left-[196px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Corredor Esq */}
+        <div className="absolute top-[38px] left-[98px] w-[756px] h-1 bg-black z-0 pointer-events-none"></div> {/* Teto Esq */}
+        <div className="absolute top-[490px] left-[98px] w-[756px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão Esq */}
+        <div className="absolute top-[38px] left-[98px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Esq */}
+        <div className="absolute top-[38px] left-[853px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Dir (Centro) */}
+        
+        {/* Recorte Integrado SC01 na quina superior esq */}
+        <div className="absolute top-[120px] left-[98px] w-[100px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão SC01 */}
+        <div className="absolute top-[38px] left-[198px] w-1 h-[83px] bg-black z-0 pointer-events-none"></div> {/* Parede Dir SC01 */}
 
         {/* Planta Arquitetônica (Paredes) - Direita */}
-        <div className="absolute top-[38px] left-[1020px] w-[690px] h-1 bg-black z-0 pointer-events-none"></div> {/* Teto Dir */}
-        <div className="absolute top-[490px] left-[1020px] w-[600px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão Dir (até o corredor) */}
-        <div className="absolute top-[38px] left-[1020px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Esq (Centro) */}
-        <div className="absolute top-[38px] left-[1706px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Dir */}
+        <div className="absolute top-[38px] left-[998px] w-[626px] h-1 bg-black z-0 pointer-events-none"></div> {/* Teto Dir */}
+        <div className="absolute top-[490px] left-[998px] w-[626px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão Dir */}
+        <div className="absolute top-[38px] left-[998px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Esq (Centro) */}
+        <div className="absolute top-[38px] left-[1623px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Dir */}
         
-        {/* Recortes Direita (S15-S21 e Consultor) */}
-        <div className="absolute top-[38px] left-[1620px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Corredor Dir */}
-        <div className="absolute top-[130px] left-[1400px] w-[220px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão S15-S18 */}
-        <div className="absolute top-[38px] left-[1550px] w-1 h-[96px] bg-black z-0 pointer-events-none"></div> {/* Divisória S16/S18 */}
+        {/* Recorte Integrado S15-S18 na quina superior direita */}
+        <div className="absolute top-[220px] left-[1448px] w-[176px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão S15-S18 */}
+        <div className="absolute top-[38px] left-[1448px] w-1 h-[183px] bg-black z-0 pointer-events-none"></div> {/* Parede Esq S15-S18 */}
+        <div className="absolute top-[38px] left-[1538px] w-1 h-[183px] bg-black z-0 pointer-events-none"></div> {/* Divisória S15/16/17 e S18 */}
 
         {SEATS_31_ANDAR.map(seat => {
           const occupant = seatsMap.get(seat.id.toUpperCase());
