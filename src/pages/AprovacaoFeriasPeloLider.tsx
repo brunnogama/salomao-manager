@@ -176,6 +176,19 @@ export default function AprovacaoFeriasPeloLider() {
             });
 
             if (updateError) throw updateError;
+            
+            // Pós-processamento para adicionar o nome do líder nas faltas recém-criadas
+            if (intendedActionApprove && collaborator?.id) {
+                const todayStr = new Date().toLocaleDateString('pt-BR');
+                const leaderName = leader?.name || 'Líder';
+                const adminObs = `Aprovado digitalmente via Fluxo de Férias por ${leaderName} em ${todayStr}`;
+                
+                await supabase
+                    .from('collaborator_absences')
+                    .update({ observation: adminObs })
+                    .eq('collaborator_id', collaborator.id)
+                    .eq('observation', 'Aprovado digitalmente via Fluxo de Férias');
+            }
 
             // Trigger Make.com Webhook
             try {

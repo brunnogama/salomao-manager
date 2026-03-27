@@ -3,6 +3,7 @@ import { Clock, Save, Loader2, Calendar as CalendarIcon, FilePlus2, Stethoscope,
 import { supabase } from '../../../lib/supabase'
 import { Collaborator } from '../../../types/controladoria'
 import { ManagedMultiSelect } from '../../crm/ManagedMultiSelect'
+import { AlertModal } from '../../../components/ui/AlertModal'
 
 interface PeriodoAusenciasSectionProps {
     formData: Partial<Collaborator>
@@ -21,6 +22,7 @@ export function PeriodoAusenciasSection({
     const [loading, setLoading] = useState(false)
     const [fetching, setFetching] = useState(false)
     const [absences, setAbsences] = useState<any[]>([])
+    const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
     const [absenceStart, setAbsenceStart] = useState('')
     const [absenceEnd, setAbsenceEnd] = useState('')
@@ -79,16 +81,18 @@ export function PeriodoAusenciasSection({
         setFetching(false)
     }
 
-    const handleDeleteAbsence = async (id: number) => {
-        if (!confirm('Deseja excluir este registro de ausência?')) return
+    const handleDeleteAbsence = async () => {
+        if (!pendingDeleteId) return
         try {
-            await supabase.from('collaborator_absences').delete().eq('id', id)
+            await supabase.from('collaborator_absences').delete().eq('id', pendingDeleteId)
             fetchAbsences()
             if (showAlert) showAlert('Sucesso', 'Registro de ausência excluído com sucesso!', 'success')
             else alert('Registro de ausência excluído com sucesso!')
         } catch (e: any) {
             if (showAlert) showAlert('Erro', 'Erro ao excluir: ' + e.message, 'error')
             else alert('Erro ao excluir: ' + e.message)
+        } finally {
+            setPendingDeleteId(null)
         }
     }
 
@@ -404,7 +408,7 @@ export function PeriodoAusenciasSection({
                                         </div>
                                         {!isViewMode && (
                                             <button
-                                                onClick={() => handleDeleteAbsence(a.id)}
+                                                onClick={() => setPendingDeleteId(a.id)}
                                                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                 title="Excluir"
                                             >
@@ -423,6 +427,16 @@ export function PeriodoAusenciasSection({
                     )}
                 </div>
             )}
+
+            <AlertModal
+                isOpen={pendingDeleteId !== null}
+                onClose={() => setPendingDeleteId(null)}
+                title="Excluir Ausência"
+                description="Tem certeza que deseja excluir permanentemente este registro de ausência? Esta ação não pode ser desfeita."
+                variant="error"
+                confirmText="Excluir"
+                onConfirm={handleDeleteAbsence}
+            />
         </div>
     )
 }
