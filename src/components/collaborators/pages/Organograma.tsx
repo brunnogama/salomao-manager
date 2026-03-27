@@ -1684,9 +1684,9 @@ export function Organograma() {
                 }
 
                 // Calculate scale precisely per page
-                const MAX_CANVAS_AREA = 160000000;
+                const MAX_CANVAS_AREA = 25000000;
                 const elementArea = element.scrollWidth * element.scrollHeight;
-                let safeScale = 5; // Ultra high res for small trees to ensure crisp text
+                let safeScale = 3; // Ultra high res for small trees to ensure crisp text
                 if (elementArea * safeScale * safeScale > MAX_CANVAS_AREA) {
                     safeScale = Math.max(1, Math.floor(Math.sqrt(MAX_CANVAS_AREA / elementArea) * 10) / 10);
                 }
@@ -1706,7 +1706,7 @@ export function Organograma() {
                     isFirstPage = false;
                 }
 
-                const imgData = canvas.toDataURL('image/png', 1.0);
+                const imgData = canvas.toDataURL('image/jpeg', 0.85);
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = pdf.internal.pageSize.getHeight();
                 
@@ -1729,7 +1729,7 @@ export function Organograma() {
                     offsetY = (pdfHeight - finalHeight) / 2;
                 }
 
-                pdf.addImage(imgData, 'PNG', offsetX, offsetY, finalWidth, finalHeight);
+                pdf.addImage(imgData, 'JPEG', offsetX, offsetY, finalWidth, finalHeight, undefined, 'FAST');
 
                 // Restore step UI
                 element.removeChild(headerDiv);
