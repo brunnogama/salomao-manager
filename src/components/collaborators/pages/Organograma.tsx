@@ -522,7 +522,7 @@ const OrganogramNode = React.memo(({
     );
 });
 
-const CottaBlockOrganogramNode = React.memo(({
+const SocioBlockOrganogramNode = React.memo(({
     colab,
     context,
     visitedIds,
@@ -772,57 +772,7 @@ export function Organograma() {
     
     const containerRef = useRef<HTMLDivElement>(null);
     const treeWrapperRef = useRef<HTMLDivElement>(null);
-    const topScrollRef = useRef<HTMLDivElement>(null);
-    const [treeWidth, setTreeWidth] = useState<number>(0);
 
-    useLayoutEffect(() => {
-        const top = topScrollRef.current;
-        const main = containerRef.current;
-        if (!top || !main) return;
-
-        let isSyncingLeft = false;
-        let isSyncingRight = false;
-
-        const onTopScroll = () => {
-            if (!isSyncingLeft) {
-                isSyncingRight = true;
-                main.scrollLeft = top.scrollLeft;
-            }
-            isSyncingLeft = false;
-        };
-
-        const onMainScroll = () => {
-            if (!isSyncingRight) {
-                isSyncingLeft = true;
-                top.scrollLeft = main.scrollLeft;
-            }
-            isSyncingRight = false;
-        };
-
-        top.addEventListener('scroll', onTopScroll, { passive: true });
-        main.addEventListener('scroll', onMainScroll, { passive: true });
-
-        const observer = new ResizeObserver(() => {
-            if (main) {
-                setTreeWidth(main.scrollWidth);
-            }
-        });
-        observer.observe(main);
-        if (treeWrapperRef.current) {
-            observer.observe(treeWrapperRef.current);
-        }
-
-        // Trigger initial measure
-        setTimeout(() => {
-            if (main) setTreeWidth(main.scrollWidth);
-        }, 100);
-
-        return () => {
-            top.removeEventListener('scroll', onTopScroll);
-            main.removeEventListener('scroll', onMainScroll);
-            observer.disconnect();
-        };
-    }, [data, zoomLevel, isMaximized, activeTab, selectedPartner, selectedAtuacao]);
 
     // Export PDF Modal State
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
@@ -1986,42 +1936,19 @@ export function Organograma() {
                 </div>
             </div>
 
-            {/* Sync Top Scrollbar */}
-            <div 
-                ref={topScrollRef}
-                className="custom-scrollbar w-full overflow-x-auto rounded-xl border border-blue-100 bg-blue-50/20 shadow-inner mb-1"
-                style={{ height: '16px', overflowY: 'hidden' }}
-            >
-                <div style={{ width: treeWidth > 0 ? `${treeWidth}px` : '100%', height: '1px' }}></div>
-            </div>
-
             {/* Main Drag Drop Context Area */}
             <div 
                 ref={containerRef} 
                 tabIndex={0}
-                className={`custom-scrollbar hide-horizontal-scrollbar bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[500px] overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
+                className={`custom-scrollbar bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[500px] overflow-auto w-full relative group/container outline-none transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''} cursor-grab`}
             >
                 <style>{`
                     .custom-scrollbar::-webkit-scrollbar {
-                        height: 12px;
-                        width: 12px;
-                    }
-                    .custom-scrollbar::-webkit-scrollbar-track {
-                        background: rgba(0,0,0,0.03);
-                        border-radius: 12px;
-                    }
-                    .custom-scrollbar::-webkit-scrollbar-thumb {
-                        background: rgba(30, 58, 138, 0.25);
-                        border-radius: 12px;
-                        border: 3px solid transparent;
-                        background-clip: padding-box;
-                    }
-                    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                        background: rgba(30, 58, 138, 0.45);
-                    }
-                    /* Esconde apenas o horizontal main mantendo o vertical */
-                    .hide-horizontal-scrollbar::-webkit-scrollbar:horizontal {
                         display: none;
+                    }
+                    .custom-scrollbar {
+                        -ms-overflow-style: none;
+                        scrollbar-width: none;
                     }
                 `}</style>
                 <DragDropContext onDragEnd={handleDragEnd}>
@@ -2056,14 +1983,9 @@ export function Organograma() {
                                             : roots;
                                             
                                         return visibleRoots.map((root, index) => {
-                                            const isCottaRoot = root.name.toLowerCase().includes('cotta');
                                             return (
                                                 <div key={root.id} id={index === 0 ? 'organogram-root-node' : undefined} className="relative flex flex-col items-center w-full mt-32 first:mt-0">
-                                                    {isCottaRoot ? (
-                                                        <CottaBlockOrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
-                                                    ) : (
-                                                        <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
-                                                    )}
+                                                    <SocioBlockOrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
                                                 </div>
                                             );
                                         });
@@ -2073,15 +1995,9 @@ export function Organograma() {
                                     const selectedRoot = roots.find(r => r.id === activePartner);
                                     if (!selectedRoot) return null;
                                     
-                                    const isCottaRoot = selectedRoot.name.toLowerCase().includes('cotta');
-                                    
                                     return (
                                         <div id="organogram-root-node" className="relative flex flex-col items-center w-full">
-                                            {isCottaRoot ? (
-                                                <CottaBlockOrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
-                                            ) : (
-                                                <OrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
-                                            )}
+                                            <SocioBlockOrganogramNode colab={selectedRoot} context={nodeContext} visitedIds={new Set<string>()} />
                                         </div>
                                     );
                                 })()
