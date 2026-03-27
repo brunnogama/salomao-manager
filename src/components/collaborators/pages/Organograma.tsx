@@ -214,7 +214,7 @@ const OrganogramNode = React.memo(({
                                             <Draggable draggableId={`${firstColab.id}-${atuacaoName}`} index={0} isDragDisabled={true}>
                                                 {(dragProvided) => (
                                                     <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className="flex flex-col items-center w-full cursor-pointer" onClick={() => context.setSelectedColabForModal(firstColab.fullData)}>
-                                                        <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:scale-105`} style={{ border: `3px solid ${getRoleRingColor(firstColab.role, firstColab.isSocio)}` }}>
+                                                        <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:scale-105`} style={{ border: context.activeTab === 'ADMINISTRATIVO' ? 'none' : `3px solid ${getRoleRingColor(firstColab.role, firstColab.isSocio)}` }}>
                                                             {firstColab.photo_url ? (
                                                                 <img src={firstColab.photo_url} alt={firstColab.name} className="w-full h-full object-cover" />
                                                             ) : (
