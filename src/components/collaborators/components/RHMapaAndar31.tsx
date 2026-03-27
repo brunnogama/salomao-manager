@@ -23,7 +23,7 @@ interface SeatDef {
 const W_STD = 50;
 const H_STD = 42;
 const MAP_W = 1900;
-const MAP_H = 1100;
+const MAP_H = 1150;
 
 function generateBlock(prefix: string, type: string, count: number, startId: number, startX: number, startY: number, cols: number = 2, rows: number = 4, rowSpacing: number = 45, colSpacing: number = 55, blockSpacingX: number = 135) {
   return Array.from({length: count}).map((_, i) => {
@@ -98,7 +98,7 @@ const SEATS_31_ANDAR: SeatDef[] = [
     const row = 2 - Math.floor(i / 2); 
     return {
       id: `A${String(idNum).padStart(2,'0')}`, type: 'ADMINISTRATIVO',
-      left: 1710 + inRow * 55, top: 490 + row * 45, width: W_STD, height: H_STD
+      left: 1710 + inRow * 55 + 5, top: 490 + row * 45 + 5, width: W_STD, height: H_STD
     }
   }),
 
@@ -182,49 +182,49 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
       >
               {/* Left Seniores Rooms */}
         {Array.from({length: 5}).map((_, i) => (
-          <div key={`room-s-${i}`} className="absolute left-[15px] w-[130px] h-[110px] border-[3px] border-black z-0 pointer-events-none" style={{ top: `${40 + i * 110}px` }}></div>
+          <div key={`room-s-${i}`} className="absolute left-[15px] w-[130px] h-[120px] border-2 border-black z-0 pointer-events-none" style={{ top: `${40 + i * 120}px` }}></div>
         ))}
         
         {/* Decorative Rooms Extra */}
-        <div className="absolute top-[850px] left-[15px] w-[130px] h-[50px] border-[3px] border-black flex items-center justify-center pointer-events-none">
+        <div className="absolute top-[930px] left-[15px] w-[130px] h-[50px] border-2 border-black flex items-center justify-center pointer-events-none">
            <span className="text-[12px] font-bold">Cell</span>
         </div>
-        <div className="absolute top-[900px] left-[15px] w-[130px] h-[70px] border-[3px] border-t-0 border-black flex items-center justify-center pointer-events-none">
+        <div className="absolute top-[980px] left-[15px] w-[130px] h-[70px] border-2 border-t-0 border-black flex items-center justify-center pointer-events-none">
            <span className="text-[12px] font-bold text-center leading-tight">Banheiro<br/>Feminino</span>
         </div>
 
-        <div className="absolute top-[850px] left-[1550px] w-[150px] h-[120px] border-[3px] border-black flex items-center justify-center pointer-events-none">
+        <div className="absolute top-[930px] left-[1550px] w-[150px] h-[120px] border-2 border-black flex items-center justify-center pointer-events-none">
            <span className="text-[14px] font-bold text-center">Sala de Reunião 5</span>
         </div>
-        <div className="absolute top-[850px] left-[1700px] w-[100px] h-[120px] border-[3px] border-l-0 border-black flex items-center justify-center pointer-events-none">
+        <div className="absolute top-[930px] left-[1700px] w-[100px] h-[120px] border-2 border-l-0 border-black flex items-center justify-center pointer-events-none">
            <span className="text-[12px] font-bold text-center leading-tight">Banheiro<br/>Masculino</span>
         </div>
         
         {/* Right Consultant/Senior Rooms */}
         {Array.from({length: 5}).map((_, i) => (
-          <div key={`room-sr-${i}`} className="absolute left-[1700px] w-[100px] h-[80px] border-[3px] border-black z-0 pointer-events-none" style={{ top: `${35 + i * 80}px` }}></div>
+          <div key={`room-sr-${i}`} className="absolute left-[1700px] w-[100px] h-[80px] border-2 border-black z-0 pointer-events-none" style={{ top: `${35 + i * 80}px` }}></div>
         ))}
 
         {/* Central Area Left */}
-        <div className="absolute top-[35px] left-[145px] w-[700px] h-[4px] bg-black pointer-events-none" />
-        <div className="absolute top-[525px] left-[145px] w-[700px] h-[4px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[145px] w-[4px] h-[493px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[845px] w-[4px] h-[493px] bg-black pointer-events-none" />
+        <div className="absolute top-[35px] left-[145px] w-[700px] h-[2px] bg-black pointer-events-none" />
+        <div className="absolute top-[585px] left-[145px] w-[700px] h-[2px] bg-black pointer-events-none" />
+        <div className="absolute top-[35px] left-[145px] w-[2px] h-[552px] bg-black pointer-events-none" />
+        <div className="absolute top-[35px] left-[845px] w-[2px] h-[552px] bg-black pointer-events-none" />
         
         {/* SC01 Walls inside Left Area */}
-        <div className="absolute top-[140px] left-[145px] w-[95px] h-[4px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[240px] w-[4px] h-[109px] bg-black pointer-events-none" />
+        <div className="absolute top-[130px] left-[145px] w-[100px] h-[2px] bg-black pointer-events-none" />
+        <div className="absolute top-[35px] left-[245px] w-[2px] h-[95px] bg-black pointer-events-none" />
 
         {/* Central Area Right */}
-        <div className="absolute top-[35px] left-[930px] w-[680px] h-[4px] bg-black pointer-events-none" />
-        <div className="absolute top-[525px] left-[930px] w-[680px] h-[4px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[930px] w-[4px] h-[493px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[1610px] w-[4px] h-[493px] bg-black pointer-events-none" />
+        <div className="absolute top-[35px] left-[930px] w-[680px] h-[2px] bg-black pointer-events-none" />
+        <div className="absolute top-[585px] left-[930px] w-[680px] h-[2px] bg-black pointer-events-none" />
+        <div className="absolute top-[35px] left-[930px] w-[2px] h-[552px] bg-black pointer-events-none" />
+        <div className="absolute top-[35px] left-[1610px] w-[2px] h-[552px] bg-black pointer-events-none" />
         
         {/* S16-S18 Walls inside Right Area */}
-        <div className="absolute top-[210px] left-[1450px] w-[164px] h-[4px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[1450px] w-[4px] h-[175px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[1530px] w-[4px] h-[175px] bg-black pointer-events-none" />
+        <div className="absolute top-[210px] left-[1450px] w-[160px] h-[2px] bg-black pointer-events-none" />
+        <div className="absolute top-[35px] left-[1450px] w-[2px] h-[175px] bg-black pointer-events-none" />
+        <div className="absolute top-[35px] left-[1535px] w-[2px] h-[175px] bg-black pointer-events-none" />
 
         {SEATS_31_ANDAR.map(seat => {
           const occupant = seatsMap.get(seat.id.toUpperCase());
