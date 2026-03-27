@@ -249,14 +249,18 @@ const OrganogramNode = React.memo(({
                                 </Droppable>
                             </div>
 
-                            {/* Stem linking Socio to Atuação Label */}
-                            <div className="w-[2px] h-8 bg-gray-300 mt-2"></div>
-                            
-                            {/* Atuação Label */}
-                            <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-[#1e3a8a] px-8 py-3 rounded-[1.25rem] shadow-sm mb-6 flex items-center justify-center gap-2 relative z-10 w-max text-center">
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#1e3a8a]"></div>
-                                <span className="text-[13px] font-black uppercase tracking-[0.2em]">{atuacaoName}</span>
-                            </div>
+                            {atuacaoColabs.length > 0 && (
+                                <>
+                                    {/* Stem linking Socio to Atuação Label */}
+                                    <div className="w-[2px] h-8 bg-gray-300 mt-2"></div>
+                                    
+                                    {/* Atuação Label */}
+                                    <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-[#1e3a8a] px-8 py-3 rounded-[1.25rem] shadow-sm mb-6 flex items-center justify-center gap-2 relative z-10 w-max text-center">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-[#1e3a8a]"></div>
+                                        <span className="text-[13px] font-black uppercase tracking-[0.2em]">{atuacaoName}</span>
+                                    </div>
+                                </>
+                            )}
 
                             {localEntries.length > 0 && (
                                 <div className="flex justify-center relative pt-8 w-full gap-x-8">
