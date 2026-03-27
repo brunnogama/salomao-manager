@@ -1596,7 +1596,7 @@ export function Organograma() {
             const originalWidth = element.style.width;
             
             // Hide header logic controls temporarily
-            const controlsNode = element.querySelector('.flex.flex-col.md\\\\:flex-row.items-start');
+            const controlsNode = element.querySelector('.flex.flex-col.md\\:flex-row.items-start');
             let controlsDisplay = '';
             if (controlsNode && controlsNode instanceof HTMLElement) {
                 controlsDisplay = controlsNode.style.display;
