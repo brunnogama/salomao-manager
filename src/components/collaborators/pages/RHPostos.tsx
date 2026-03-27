@@ -23,6 +23,7 @@ export function RHPostos() {
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [filterLocal, setFilterLocal] = useState<string>('Todos');
   const [viewMode, setViewMode] = useState<'table' | 'map'>('table');
+  const [showUnassigned, setShowUnassigned] = useState(true);
   const [localSeatOverrides, setLocalSeatOverrides] = useState<Record<string, string>>({});
 
   const { colaboradores, roles, locations: allLocations } = useColaboradores();
@@ -258,6 +259,17 @@ export function RHPostos() {
             </button>
           </div>
 
+          {viewMode === 'map' && (
+            <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0 ml-2">
+              <button
+                onClick={() => setShowUnassigned(!showUnassigned)}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${!showUnassigned ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                {!showUnassigned ? 'Lista Fechada' : 'Ocultar Lista'}
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center gap-3 border-l border-gray-100 pl-4 ml-2">
             <button
               onClick={fetchPostos}
@@ -283,51 +295,53 @@ export function RHPostos() {
       {viewMode === 'map' && (
         <div className="flex flex-col lg:flex-row gap-6 mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500 flex-1 min-h-[600px] overflow-hidden">
           {/* Lado Esquerdo: Integrantes sem mesa */}
-          <div className="w-full lg:w-72 shrink-0 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[600px] lg:h-auto overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-              <h2 className="text-sm font-black text-[#1e3a8a] uppercase tracking-wide">Sem Mesa (RJ)</h2>
-              <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded-full">{unassignedColabs.length}</span>
-            </div>
-            
-            <div 
-              className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/30"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const colabId = e.dataTransfer.getData('colabId');
-                if (colabId) handleRemoveSeat(colabId); // Remove do Posto ao arrastar pra lista
-              }}
-            >
-              {unassignedColabs.length === 0 ? (
-                <div className="text-center p-6 text-gray-400 font-medium text-xs">Todos possuem mesas designadas no RJ.</div>
-              ) : (
-                unassignedColabs.map(c => (
-                  <div
-                    key={c.id}
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData('colabId', String(c.id));
-                    }}
-                    className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-300 hover:shadow transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
-                        {c.foto_url || c.photo_url ? (
-                          <img src={c.foto_url || c.photo_url} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-xs font-bold text-gray-400">{(c.name || '').charAt(0)}</span>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-gray-800 truncate">{c.name}</p>
-                        <p className="text-[10px] text-gray-500 truncate">{c.roles?.name || c.role}</p>
+          {showUnassigned && (
+            <div className="w-full lg:w-72 shrink-0 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[600px] lg:h-auto overflow-hidden animate-in slide-in-from-left duration-300">
+              <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                <h2 className="text-sm font-black text-[#1e3a8a] uppercase tracking-wide">Sem Mesa (RJ)</h2>
+                <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded-full">{unassignedColabs.length}</span>
+              </div>
+              
+              <div 
+                className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/30"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const colabId = e.dataTransfer.getData('colabId');
+                  if (colabId) handleRemoveSeat(colabId); // Remove do Posto ao arrastar pra lista
+                }}
+              >
+                {unassignedColabs.length === 0 ? (
+                  <div className="text-center p-6 text-gray-400 font-medium text-xs">Todos possuem mesas designadas no RJ.</div>
+                ) : (
+                  unassignedColabs.map(c => (
+                    <div
+                      key={c.id}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('colabId', String(c.id));
+                      }}
+                      className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-300 hover:shadow transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
+                          {c.foto_url || c.photo_url ? (
+                            <img src={c.foto_url || c.photo_url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-xs font-bold text-gray-400">{(c.name || '').charAt(0)}</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-gray-800 truncate">{c.name}</p>
+                          <p className="text-[10px] text-gray-500 truncate">{c.roles?.name || c.role}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Lado Direito: Mapa Principal */}
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 flex flex-col items-center min-w-0">

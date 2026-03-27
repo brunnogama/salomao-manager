@@ -19,10 +19,11 @@ interface SeatDef {
 
 
 
+
 const W_STD = 50;
 const H_STD = 42;
 const MAP_W = 1900;
-const MAP_H = 1000;
+const MAP_H = 1100;
 
 function generateBlock(prefix: string, type: string, count: number, startId: number, startX: number, startY: number, cols: number = 2, rows: number = 4, rowSpacing: number = 45, colSpacing: number = 55, blockSpacingX: number = 135) {
   return Array.from({length: count}).map((_, i) => {
@@ -45,40 +46,40 @@ function generateBlock(prefix: string, type: string, count: number, startId: num
 }
 
 const SEATS_31_ANDAR: SeatDef[] = [
-  // S01-S15 (5 salas x 3 postos na extrema esquerda)
+  // S01-S15 (5 salas x 3 postos)
   ...Array.from({length: 15}).map((_, i) => {
     const idNum = i + 1;
     const room = Math.floor(i / 3);
-    const pos = i % 3; // 0=Top-Left, 1=Bottom-Left, 2=Middle-Right
+    const pos = i % 3; // 0=Top-Left, 1=Bottom-Left, 2=Right
     return {
       id: `S${String(idNum).padStart(2,'0')}`, type: 'SÊNIOR',
       left: pos === 2 ? 80 : 25, 
-      top: 40 + room * 110 + (pos === 0 ? 10 : pos === 1 ? 60 : 35), 
+      top: 40 + room * 120 + (pos === 0 ? 15 : pos === 1 ? 65 : 40), 
       width: W_STD, height: H_STD
     };
   }),
 
-  // J01-J12 (6 linhas x 2 colunas abaixo das salas de Senior - reverso)
+  // J01-J12
   ...Array.from({length: 12}).map((_, i) => {
     const idNum = i + 1; // 1 to 12
     const isOdd = idNum % 2 !== 0; // J01, J03 are right
     const col = isOdd ? 1 : 0;
-    const row = Math.floor((idNum - 1) / 2); // 0 to 5
+    const row = Math.floor((idNum - 1) / 2); 
     return {
       id: `J${String(idNum).padStart(2,'0')}`, type: 'JÚNIOR',
-      left: 20 + col * 55, top: 600 + row * 45, width: W_STD, height: H_STD
+      left: 20 + col * 55, top: 660 + row * 45, width: W_STD, height: H_STD
     };
   }),
 
-  { id: 'SC01', type: 'SÓCIO', left: 165, top: 70, width: W_STD, height: H_STD },
+  { id: 'SC01', type: 'SÓCIO', left: 165, top: 60, width: W_STD, height: H_STD },
 
   // Blocos Centrais (Column Major)
-  ...generateBlock('J', 'JÚNIOR', 16, 13, 180, 580, 2, 4, 45, 55, 136),
-  ...generateBlock('E', 'ESTAGIÁRIO', 40, 1, 180 + 2*136, 580, 2, 4, 45, 55, 136),
-  ...generateBlock('J', 'JÚNIOR', 16, 29, 180 + 7*136, 580, 2, 4, 45, 55, 136),
-  ...generateBlock('A', 'ADMINISTRATIVO', 16, 1, 180 + 9*136, 580, 2, 4, 45, 55, 136),
+  ...generateBlock('J', 'JÚNIOR', 16, 13, 180, 640, 2, 4, 45, 55, 136),
+  ...generateBlock('E', 'ESTAGIÁRIO', 40, 1, 180 + 2*136, 640, 2, 4, 45, 55, 136),
+  ...generateBlock('J', 'JÚNIOR', 16, 29, 180 + 7*136, 640, 2, 4, 45, 55, 136),
+  ...generateBlock('A', 'ADMINISTRATIVO', 16, 1, 180 + 9*136, 640, 2, 4, 45, 55, 136),
 
-  // Plenos (P01-P24) - 6 blocos de 2x2 na base (ordem reversa Print 10)
+  // Plenos (P01-P24)
   ...Array.from({length: 24}).map((_, i) => {
     const idNum = i + 1;
     const block = Math.floor((idNum - 1) / 4);
@@ -86,33 +87,34 @@ const SEATS_31_ANDAR: SeatDef[] = [
     const col = (idNum % 2 !== 0) ? 1 : 0;
     return {
       id: `P${String(idNum).padStart(2,'0')}`, type: 'PLENO',
-      left: 180 + block * 270 + col * 55, top: 860 + row * 45, width: W_STD, height: H_STD
+      left: 180 + block * 270 + col * 55, top: 940 + row * 45, width: W_STD, height: H_STD
     }
   }),
 
-  // A17-A22 (bloco vertical reverso na extrema direita)
+  // A17-A22
   ...Array.from({length: 6}).map((_, i) => {
     const idNum = i + 17;
     const inRow = i % 2; 
     const row = 2 - Math.floor(i / 2); 
     return {
       id: `A${String(idNum).padStart(2,'0')}`, type: 'ADMINISTRATIVO',
-      left: 1710 + inRow * 55, top: 430 + row * 45, width: W_STD, height: H_STD
+      left: 1710 + inRow * 55, top: 490 + row * 45, width: W_STD, height: H_STD
     }
   }),
 
-  // S15 removido da direita, agora é S16-S18
+  // S16-S18 Encartados
   { id: 'S16', type: 'SÊNIOR', left: 1475, top: 60, width: W_STD + 10, height: H_STD },
   { id: 'S17', type: 'SÊNIOR', left: 1475, top: 145, width: W_STD + 10, height: H_STD },
   { id: 'S18', type: 'SÊNIOR', left: 1555, top: 145, width: W_STD + 10, height: H_STD },
 
-  // Corredor Lateral Extrema Direita
+  // Corredor Direito
   { id: 'CONS01',   type: 'CONSULTOR', left: 1720, top: 50,  width: 90, height: H_STD },
   { id: 'SC02',     type: 'SÓCIO',     left: 1720, top: 130, width: 90, height: H_STD },
   { id: 'S19', type: 'SÊNIOR', left: 1720, top: 210, width: W_STD + 10, height: H_STD },
   { id: 'S20', type: 'SÊNIOR', left: 1720, top: 290, width: W_STD + 10, height: H_STD },
   { id: 'S21', type: 'SÊNIOR', left: 1720, top: 370, width: W_STD + 10, height: H_STD },
 ];
+
 
 
 
