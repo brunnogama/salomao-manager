@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { Collaborator } from '../../../types/controladoria';
 import { User, MapPin } from 'lucide-react';
 
@@ -19,67 +19,97 @@ interface SeatDef {
 
 const W_STD = 50;
 const H_STD = 42;
-const MAP_W = 1750;
-const MAP_H = 1100;
+const MAP_W = 1900;
+const MAP_H = 920;
+
+function generateBlock(prefix: string, type: string, count: number, startId: number, startX: number, startY: number, cols: number = 2, blockSpacingX: number = 135) {
+  return Array.from({length: count}).map((_, i) => {
+    const idNum = startId + i;
+    const itemsPerBlock = cols * 4; 
+    const block = Math.floor(i / itemsPerBlock);
+    const inBlock = i % itemsPerBlock;
+    const col = inBlock % cols;
+    const row = Math.floor(inBlock / cols);
+    return {
+      id: `${prefix}${String(idNum).padStart(2,'0')}`, type,
+      left: startX + block * blockSpacingX + col * 55,
+      top: startY + row * 45,
+      width: W_STD, height: H_STD
+    };
+  });
+}
+
+function generatePlenoBlocks() {
+  return Array.from({length: 24}).map((_, i) => {
+    const idNum = i + 1;
+    const itemsPerBlock = 4; 
+    const block = Math.floor(i / itemsPerBlock);
+    const inBlock = i % itemsPerBlock;
+    const col = inBlock % 2;
+    const row = Math.floor(inBlock / 2);
+    // Espaçamento 260 entre os blocos (6 blocos plenos na horizontal)
+    return {
+      id: `P${String(idNum).padStart(2,'0')}`, type: 'PLENO',
+      left: 200 + block * 260 + col * 55, 
+      top: 760 + row * 45,
+      width: W_STD, height: H_STD
+    };
+  });
+}
+
+function generateAdmBlock() {
+  return Array.from({length: 22}).map((_, i) => {
+    const idNum = i + 1;
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    return {
+      id: `A${String(idNum).padStart(2,'0')}`, type: 'ADMINISTRATIVO',
+      left: 1720 + col * 55, 
+      top: 360 + row * 45,
+      width: W_STD, height: H_STD
+    };
+  });
+}
 
 const SEATS_31_ANDAR: SeatDef[] = [
-  // Seniores - Lado Esq (S01-S14) - 7 salas de 2
+  // S01-S14 (7 salas de 2 na borda esquerda)
   ...Array.from({length: 14}).map((_, i) => ({
     id: `S${String(i+1).padStart(2,'0')}`, type: 'SÊNIOR',
-    left: 20, top: 40 + Math.floor(i / 2) * 92 + (i % 2) * 44, width: W_STD + 10, height: H_STD
+    left: 20, top: 40 + Math.floor(i / 2) * 100 + (i % 2) * 45, width: W_STD + 10, height: H_STD
   })),
 
-  { id: 'SC01', type: 'SÓCIO', left: 120, top: 80, width: 90, height: 70 },
+  { id: 'SC01', type: 'SÓCIO', left: 100, top: 40, width: 90, height: 70 },
 
-  // J01-J12 (1 bloco 2x6)
-  ...Array.from({length: 12}).map((_, i) => ({
-    id: `J${String(i+1).padStart(2,'0')}`, type: 'JÚNIOR',
-    left: 100 + ((i % 2) * 58), top: 980 - 46 - ((5 - Math.floor(i / 2)) * 46), width: W_STD, height: H_STD
+  // Juniors (J01-J24) - 3 blocos de 2x4
+  ...generateBlock('J', 'JÚNIOR', 24, 1, 200, 530),
+  
+  // Estagiários (E01-E40) - 5 blocos de 2x4
+  ...generateBlock('E', 'ESTAGIÁRIO', 40, 1, 605, 530),
+
+  // Juniors (J25-J44) - 2 blocos de 2x4 e 1 bloco final de 2x2
+  ...generateBlock('J', 'JÚNIOR', 20, 25, 1280, 530),
+
+  // Plenos (P01-P24) - 6 blocos de 2x2 na base
+  ...generatePlenoBlocks(),
+
+  // Administrativos (A01-A22) - Bloco de 2x11 na direita
+  ...generateAdmBlock(),
+
+  // S15-S21 (borda direita e canto)
+  ...Array.from({length: 7}).map((_, i) => ({
+    id: `S${String(i+15).padStart(2,'0')}`, type: 'SÊNIOR',
+    left: 1400, top: 40 + Math.floor(i / 2) * 100 + (i % 2) * 45, width: W_STD + 10, height: H_STD
   })),
 
-  // P01-P24 (Baseline)
-  ...Array.from({length: 24}).map((_, i) => ({
-    id: `P${String(i+1).padStart(2,'0')}`, type: 'PLENO',
-    left: 100 + (i * 60), top: 980, width: W_STD, height: H_STD
-  })),
-
-  // E01-E18 (3 blocos de 2x3) -> x starts above P06 (400)
-  ...Array.from({length: 18}).map((_, i) => ({
-    id: `E${String(i+1).padStart(2,'0')}`, type: 'ESTAGIÁRIO',
-    left: 420 + (Math.floor(i / 6) * 160) + ((i % 6) % 2 * 58), 
-    top: 980 - 46 - ((2 - Math.floor((i % 6) / 2)) * 46), 
-    width: W_STD, height: H_STD
-  })),
-
-  // J13-J44 (4 blocos de 2x4) -> x starts above P13 (820)
-  ...Array.from({length: 32}).map((_, i) => ({
-    id: `J${String(i+13).padStart(2,'0')}`, type: 'JÚNIOR',
-    left: 920 + (Math.floor(i / 8) * 150) + ((i % 8) % 2 * 58), 
-    top: 980 - 46 - ((3 - Math.floor((i % 8) / 2)) * 46), 
-    width: W_STD, height: H_STD
-  })),
-
-  // A01-A22 (1 bloco de 2x11) -> x na direita (1580)
-  ...Array.from({length: 22}).map((_, i) => ({
-    id: `A${String(i+1).padStart(2,'0')}`, type: 'ADMINISTRATIVO',
-    left: 1580 + ((i % 2) * 58), 
-    top: 980 - 46 - ((10 - Math.floor(i / 2)) * 46), 
-    width: W_STD, height: H_STD
-  })),
-
-  // S16-S21 (3 salas de 2 na direita superior)
-  ...Array.from({length: 6}).map((_, i) => ({
-    id: `S${String(i+16).padStart(2,'0')}`, type: 'SÊNIOR',
-    left: 1400, top: 40 + Math.floor(i / 2) * 92 + (i % 2) * 44, width: W_STD + 10, height: H_STD
-  })),
-
-  // Sócios Direita (SC02, SC03, CONS01)
-  { id: 'SC02',     type: 'SÓCIO',     left: 1580, top: 40,  width: 90, height: 60 },
-  { id: 'SC03',     type: 'SÓCIO',     left: 1580, top: 120, width: 90, height: 60 },
-  { id: 'CONS01',   type: 'CONSULTOR', left: 1580, top: 200, width: 90, height: 60 },
+  // Sócios/Consultores Extrema Direita
+  { id: 'SC02',     type: 'SÓCIO',     left: 1720, top: 40,  width: 90, height: 60 },
+  { id: 'SC03',     type: 'SÓCIO',     left: 1720, top: 140, width: 90, height: 60 },
+  { id: 'CONS01',   type: 'CONSULTOR', left: 1720, top: 240, width: 90, height: 60 },
 ];
 
 export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: FloorPlanProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
   
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -108,23 +138,86 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
     return map;
   }, [collaborators]);
 
+  useEffect(() => {
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width } = entry.contentRect;
+        if (width > 0) {
+          const newScale = Math.min(1, (width - 32) / MAP_W);
+          setScale(Math.max(0.3, newScale));
+        }
+      }
+    });
+
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="w-full h-[650px] overflow-auto border-2 border-gray-200 rounded-lg shadow-inner bg-gray-50/50 cursor-grab active:cursor-grabbing relative custom-scrollbar">
+    <div 
+      ref={containerRef}
+      className="w-full relative flex justify-center items-start bg-gray-50/50 border-2 border-gray-200 rounded-lg shadow-inner overflow-hidden cursor-grab active:cursor-grabbing"
+      style={{ height: `${MAP_H * scale + 32}px`, touchAction: 'none' }}
+    >
       <div 
-        className="relative bg-white shadow-sm shrink-0 select-none overflow-hidden m-4 rounded-xl ring-1 ring-gray-200"
-        style={{ width: MAP_W, height: MAP_H }}
+        className="relative bg-white shrink-0 select-none m-4 rounded-xl shadow-sm ring-1 ring-gray-200"
+        style={{ 
+          width: MAP_W, 
+          height: MAP_H, 
+          transform: `scale(${scale})`, 
+          transformOrigin: 'top center',
+          transition: 'transform 0.1s ease-out'
+        }}
       >
         
         {/* Background Decorativo Simulando a Planta */}
-        <div className="absolute top-[80px] left-[250px] w-[500px] h-[450px] border-2 border-dashed border-gray-200 bg-gray-50/50 pointer-events-none flex items-center justify-center rounded-xl">
+        <div className="absolute top-[80px] left-[200px] w-[550px] h-[400px] border-2 border-dashed border-gray-200 bg-gray-50/50 pointer-events-none flex items-center justify-center rounded-xl">
           <span className="text-gray-300 font-bold text-5xl rotate-45 opacity-20">Área Central Esq</span>
         </div>
-        <div className="absolute top-[80px] left-[850px] w-[500px] h-[450px] border-2 border-dashed border-gray-200 bg-gray-50/50 pointer-events-none flex items-center justify-center rounded-xl">
+        <div className="absolute top-[80px] left-[1020px] w-[550px] h-[400px] border-2 border-dashed border-gray-200 bg-gray-50/50 pointer-events-none flex items-center justify-center rounded-xl">
           <span className="text-gray-300 font-bold text-5xl -rotate-45 opacity-20">Área Central Dir</span>
+        </div>
+
+        {/* Mockup da Tabela Resumo do Print 1 */}
+        <div className="absolute top-[160px] left-[840px] w-[110px] bg-yellow-50 pointer-events-none flex flex-col items-center overflow-hidden shadow-md ring-1 ring-gray-300 scale-125 origin-center">
+          <div className="bg-white w-full text-center border-b border-gray-300 py-0.5 font-bold text-[8px] uppercase text-gray-700">Postos</div>
+          <div className="flex w-full text-[8px] font-bold">
+            <div className="w-2/3 pl-1.5 py-0.5 text-blue-500 uppercase">Junior</div>
+            <div className="w-1/3 text-center py-0.5 font-black">44</div>
+          </div>
+          <div className="flex w-full text-[8px] font-bold">
+            <div className="w-2/3 pl-1.5 py-0.5 text-emerald-500 uppercase">Pleno</div>
+            <div className="w-1/3 text-center py-0.5 font-black">24</div>
+          </div>
+          <div className="flex w-full text-[8px] font-bold">
+            <div className="w-2/3 pl-1.5 py-0.5 text-red-500 uppercase">Senior</div>
+            <div className="w-1/3 text-center py-0.5 font-black">21</div>
+          </div>
+          <div className="flex w-full text-[8px] font-bold">
+            <div className="w-2/3 pl-1.5 py-0.5 text-red-700 uppercase">Sócio</div>
+            <div className="w-1/3 text-center py-0.5 font-black">2</div>
+          </div>
+          <div className="flex w-full text-[8px] font-bold">
+            <div className="w-2/3 pl-1.5 py-0.5 text-amber-500 uppercase">Consultor</div>
+            <div className="w-1/3 text-center py-0.5 font-black">1</div>
+          </div>
+          <div className="flex w-full text-[8px] font-bold">
+            <div className="w-2/3 pl-1.5 py-0.5 text-orange-500 uppercase">Estag</div>
+            <div className="w-1/3 text-center py-0.5 font-black">40</div>
+          </div>
+          <div className="flex w-full text-[8px] font-bold border-b border-gray-400">
+            <div className="w-2/3 pl-1.5 py-0.5 text-purple-600 uppercase">Adm</div>
+            <div className="w-1/3 text-center py-0.5 font-black">22</div>
+          </div>
+          <div className="flex w-full text-[8px] font-black bg-yellow-300 border-2 border-yellow-400">
+            <div className="w-2/3 pl-1.5 py-1 text-black">TOTAL</div>
+            <div className="w-1/3 text-center py-1 text-red-600">154</div>
+          </div>
         </div>
 
         {SEATS_31_ANDAR.map(seat => {
           const occupant = seatsMap.get(seat.id.toUpperCase());
+          const tooltipScale = Math.min(2, 1 / scale);
 
           return (
             <div
@@ -140,8 +233,11 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
                 borderRadius: '4px'
               }}
             >
-               {/* Tooltip Hover Exclusivo */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex flex-col items-center p-3 z-50">
+               {/* Tooltip Counter-Scaled */}
+              <div 
+                className="absolute bottom-full left-[50%] mb-2.5 w-48 bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] ring-1 ring-gray-100 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex flex-col items-center p-3 z-50 origin-bottom"
+                style={{ transform: `translateX(-50%) scale(${tooltipScale})` }}
+              >
                 {occupant ? (
                   <>
                     {occupant.foto_url || occupant.photo_url ? (
@@ -163,7 +259,7 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
                 <div className="w-full h-px bg-gray-100 my-2"></div>
                 <p className="text-[10px] font-black text-[#1e3a8a] uppercase">{seat.id} • {seat.type}</p>
                 
-                {/* Seta do popover */}
+                {/* Seta do popover (seta cresce para baixo) */}
                 <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-b border-r border-gray-200 rotate-45"></div>
               </div>
 
