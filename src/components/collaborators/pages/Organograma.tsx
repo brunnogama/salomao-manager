@@ -184,7 +184,7 @@ const OrganogramNode = React.memo(({
         });
 
         if (atuacaoGroups.size === 0) {
-            atuacaoGroups.set('Sem Atuação', []);
+            atuacaoGroups.set(firstColab.atuacao || 'Sem Atuação', []);
         }
 
         const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
