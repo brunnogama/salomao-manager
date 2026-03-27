@@ -1087,16 +1087,25 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   const confirmDeleteColaborador = async () => {
     if (!colaboradorToDelete) return
-    const { error } = await supabase.from('collaborators').delete().eq('id', colaboradorToDelete.id)
-    if (!error) {
+    try {
+      // Remove dependentes para evitar erro de violação de Foreign Key
+      await supabase.from('vacation_requests').delete().eq('collaborator_id', colaboradorToDelete.id)
+      await supabase.from('ged_colaboradores').delete().eq('colaborador_id', colaboradorToDelete.id)
+
+      const { error } = await supabase.from('collaborators').delete().eq('id', colaboradorToDelete.id)
+      
+      if (error) throw error
+
       await logAction('EXCLUIR', 'RH', `Excluiu colaborador: ${colaboradorToDelete.name}`, 'Integrantes')
       fetchColaboradores()
       if (selectedColaborador) setSelectedColaborador(null)
       showAlert('Sucesso', 'Colaborador excluído com sucesso.', 'success')
-    } else {
-      showAlert('Erro', 'Erro ao Excluir Integrante: ' + error.message, 'error')
+    } catch (error: any) {
+      console.error('Falha ao excluir colaborador:', error)
+      showAlert('Erro', 'Erro ao Excluir Integrante: ' + (error.message || 'Falha nas restrições de banco de dados.'), 'error')
+    } finally {
+      setColaboradorToDelete(null)
     }
-    setColaboradorToDelete(null)
   }
 
 
