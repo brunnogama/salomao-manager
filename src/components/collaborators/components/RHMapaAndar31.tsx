@@ -98,7 +98,7 @@ const SEATS_31_ANDAR: SeatDef[] = [
   // S15-S21 (borda direita e canto)
   ...Array.from({length: 7}).map((_, i) => ({
     id: `S${String(i+15).padStart(2,'0')}`, type: 'SÊNIOR',
-    left: 1400, top: 40 + Math.floor(i / 2) * 100 + (i % 2) * 45, width: W_STD + 10, height: H_STD
+    left: 1600, top: 40 + Math.floor(i / 2) * 100 + (i % 2) * 45, width: W_STD + 10, height: H_STD
   })),
 
   // Sócios/Consultores Extrema Direita
@@ -176,43 +176,6 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
         </div>
         <div className="absolute top-[80px] left-[1020px] w-[550px] h-[400px] border-2 border-dashed border-gray-200 bg-gray-50/50 pointer-events-none flex items-center justify-center rounded-xl">
           <span className="text-gray-300 font-bold text-5xl -rotate-45 opacity-20">Área Central Dir</span>
-        </div>
-
-        {/* Mockup da Tabela Resumo do Print 1 */}
-        <div className="absolute top-[160px] left-[840px] w-[110px] bg-yellow-50 pointer-events-none flex flex-col items-center overflow-hidden shadow-md ring-1 ring-gray-300 scale-125 origin-center">
-          <div className="bg-white w-full text-center border-b border-gray-300 py-0.5 font-bold text-[8px] uppercase text-gray-700">Postos</div>
-          <div className="flex w-full text-[8px] font-bold">
-            <div className="w-2/3 pl-1.5 py-0.5 text-blue-500 uppercase">Junior</div>
-            <div className="w-1/3 text-center py-0.5 font-black">44</div>
-          </div>
-          <div className="flex w-full text-[8px] font-bold">
-            <div className="w-2/3 pl-1.5 py-0.5 text-emerald-500 uppercase">Pleno</div>
-            <div className="w-1/3 text-center py-0.5 font-black">24</div>
-          </div>
-          <div className="flex w-full text-[8px] font-bold">
-            <div className="w-2/3 pl-1.5 py-0.5 text-red-500 uppercase">Senior</div>
-            <div className="w-1/3 text-center py-0.5 font-black">21</div>
-          </div>
-          <div className="flex w-full text-[8px] font-bold">
-            <div className="w-2/3 pl-1.5 py-0.5 text-red-700 uppercase">Sócio</div>
-            <div className="w-1/3 text-center py-0.5 font-black">2</div>
-          </div>
-          <div className="flex w-full text-[8px] font-bold">
-            <div className="w-2/3 pl-1.5 py-0.5 text-amber-500 uppercase">Consultor</div>
-            <div className="w-1/3 text-center py-0.5 font-black">1</div>
-          </div>
-          <div className="flex w-full text-[8px] font-bold">
-            <div className="w-2/3 pl-1.5 py-0.5 text-orange-500 uppercase">Estag</div>
-            <div className="w-1/3 text-center py-0.5 font-black">40</div>
-          </div>
-          <div className="flex w-full text-[8px] font-bold border-b border-gray-400">
-            <div className="w-2/3 pl-1.5 py-0.5 text-purple-600 uppercase">Adm</div>
-            <div className="w-1/3 text-center py-0.5 font-black">22</div>
-          </div>
-          <div className="flex w-full text-[8px] font-black bg-yellow-300 border-2 border-yellow-400">
-            <div className="w-2/3 pl-1.5 py-1 text-black">TOTAL</div>
-            <div className="w-1/3 text-center py-1 text-red-600">154</div>
-          </div>
         </div>
 
         {SEATS_31_ANDAR.map(seat => {
