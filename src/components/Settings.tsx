@@ -3,7 +3,7 @@ import {
   Shield, Users, History as HistoryIcon, Code,
   Briefcase, EyeOff, LayoutGrid, DollarSign, Grid,
   CheckCircle, AlertCircle, Trash2, AlertTriangle,
-  UserCircle, LogOut, Settings as SettingsIcon, Layout, Info, Database, Lock
+  UserCircle, LogOut, Settings as SettingsIcon, Layout, Info, Database, Lock, ShieldCheck
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
@@ -19,6 +19,7 @@ import { SystemSection } from './settings/SystemSection'
 import { ControladoriaSection } from './settings/ControladoriaSection'
 import { OperationalSection } from './settings/OperationalSection'
 import { BackupSection } from './settings/BackupSection'
+import { ValidationSection } from './settings/ValidationSection'
 import { SYSTEM_VERSION } from '../config/version'
 import { APP_UPDATES } from '../config/updates'
 
@@ -51,7 +52,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   // --- STATES ---
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
-  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'permissoes' | 'crm' | 'juridico' | 'rh' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup' | 'operacoes'>('menu')
+  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'permissoes' | 'crm' | 'juridico' | 'rh' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup' | 'operacoes' | 'validacao'>('menu')
 
   const [users, setUsers] = useState<AppUser[]>([])
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
@@ -340,6 +341,11 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
     return currentUserPermissions[keyMap[modId] as keyof UserPermissions] || false;
   }
 
+  // Define which modules a normal user without module-roles can access by default (e.g. audit)
+  const isAccessibleByAnyone = (modId: string) => {
+     return ['menu', 'about', 'validacao'].includes(modId);
+  }
+
   const menuItems = [
     { id: 'geral', label: 'Usuários', icon: Shield },
     { id: 'permissoes', label: 'Permissões', icon: Lock, adminOnly: true },
@@ -348,13 +354,14 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
     { id: 'controladoria', label: 'Controladoria', icon: Layout, adminOnly: true }, // NEW ITEM
     { id: 'rh', label: 'RH', icon: Users },
     { id: 'financial', label: 'Financeiro', icon: DollarSign },
+    { id: 'validacao', label: 'Auditoria & Validação', icon: ShieldCheck },
     { id: 'historico', label: 'Histórico', icon: HistoryIcon },
     { id: 'backup', label: 'Backup', icon: Database, adminOnly: true },
     { id: 'sistema', label: 'Changelog', icon: Code, adminOnly: true },
     { id: 'about', label: 'Sobre', icon: Info },
   ];
 
-  if (activeModule !== 'menu' && !hasAccessToModule(activeModule)) {
+  if (activeModule !== 'menu' && !hasAccessToModule(activeModule) && !isAccessibleByAnyone(activeModule)) {
     return (
       <div className="max-w-7xl mx-auto flex flex-col items-center justify-center h-[500px] bg-white rounded-2xl border text-center">
         <EyeOff className="h-16 w-16 text-red-400 mb-6" />
@@ -418,7 +425,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
             {/* Subtle glow effect behind menu */}
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none"></div>
             {menuItems.map(item => (
-              (!item.adminOnly || isAdmin) && hasAccessToModule(item.id) && (
+              (!item.adminOnly || isAdmin) && (hasAccessToModule(item.id) || isAccessibleByAnyone(item.id)) && (
                 <button
                   key={item.id}
                   onClick={() => setActiveModule(item.id as any)}
@@ -521,6 +528,10 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
                 </ul>
               </div>
             </div>
+          )}
+
+          {activeModule === 'validacao' && (
+             <ValidationSection />
           )}
 
           {activeModule === 'crm' && (
