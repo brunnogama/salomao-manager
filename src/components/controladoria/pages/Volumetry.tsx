@@ -39,6 +39,16 @@ const stateToUf: Record<string, string> = {
   'SÃO PAULO': 'SP', 'SAO PAULO': 'SP', 'SERGIPE': 'SE', 'TOCANTINS': 'TO'
 };
 
+const ufToState: Record<string, string> = {
+  'AC': 'Acre', 'AL': 'Alagoas', 'AP': 'Amapá', 'AM': 'Amazonas', 'BA': 'Bahia',
+  'CE': 'Ceará', 'DF': 'Distrito Federal', 'ES': 'Espírito Santo', 'GO': 'Goiás',
+  'MA': 'Maranhão', 'MT': 'Mato Grosso', 'MS': 'Mato Grosso do Sul', 'MG': 'Minas Gerais',
+  'PA': 'Pará', 'PB': 'Paraíba', 'PR': 'Paraná', 'PE': 'Pernambuco', 'PI': 'Piauí',
+  'RJ': 'Rio de Janeiro', 'RN': 'Rio Grande do Norte', 'RS': 'Rio Grande do Sul',
+  'RO': 'Rondônia', 'RR': 'Roraima', 'SC': 'Santa Catarina', 'SP': 'São Paulo',
+  'SE': 'Sergipe', 'TO': 'Tocantins'
+};
+
 const getUfSigla = (name: string) => {
   const norm = name.toUpperCase().trim();
   if (norm.length === 2) return norm;
@@ -193,7 +203,7 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
         )}
       </div>
 
-      <div className="w-full xl:w-[280px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch">
+      <div className="w-full xl:w-[380px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch">
         <div className="flex items-center gap-2 mb-1">
            <div className="p-1.5 bg-blue-100 rounded-md">
              <MapPin className="w-3.5 h-3.5 text-blue-700" />
@@ -204,10 +214,10 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
         <div className="flex flex-col gap-2">
           {topUfs.map((uf: any, idx: number) => (
             <div key={uf.sigla} className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm group hover:border-blue-200 transition-colors">
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] font-black text-gray-400 w-3">{idx + 1}º</span>
-                <div className="flex flex-col">
-                  <span className="text-xs font-black text-[#0a192f] leading-none">{uf.sigla}</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-[10px] font-black text-gray-400 w-3 shrink-0">{idx + 1}º</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-black text-[#0a192f] leading-none truncate" title={ufToState[uf.sigla] || uf.sigla}>{ufToState[uf.sigla] || uf.sigla}</span>
                   <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{uf.count.toLocaleString('pt-BR')} procs.</span>
                 </div>
               </div>
