@@ -228,7 +228,7 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
 
               {/* Conteúdo da Mesa */}
               <div className="w-full text-center px-0.5 mt-0.5">
-                <span className={`block text-[10px] leading-[10px] font-black tracking-tighter ${occupant ? 'text-gray-800' : 'text-gray-500'}`}>
+                <span className={`block text-sm leading-tight font-black tracking-tighter ${occupant ? 'text-gray-800' : 'text-gray-500'}`}>
                   {seat.id}
                 </span>
                 <span className={`block text-[6px] leading-[8px] font-bold tracking-widest uppercase truncate mt-0.5 ${
