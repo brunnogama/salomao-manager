@@ -221,10 +221,18 @@ const OrganogramNode = React.memo(({
                                                             <div className="flex flex-col items-center justify-start w-full min-h-[42px]">
                                                                 <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5`}>{firstColab.name}</h4>
                                                             </div>
-                                                            <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
-                                                                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(firstColab.role, firstColab.isSocio) }}></div>
-                                                                <span className={`${isSuperDense ? 'text-[7.5px]' : 'text-[8.5px]'} font-bold uppercase tracking-widest text-slate-500 leading-tight`}>{firstColab.role}</span>
-                                                            </div>
+                                                            {context.isExportingPDF ? (
+                                                                <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
+                                                                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(firstColab.role, firstColab.isSocio) }}></div>
+                                                                    <span className={`${isSuperDense ? 'text-[7.5px]' : 'text-[8.5px]'} font-bold uppercase tracking-widest text-slate-500 leading-tight`}>{firstColab.role}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="mt-1 flex items-center justify-center min-h-[20px] w-full">
+                                                                    <div className="px-2 py-0.5 rounded-full text-white shadow-sm flex items-center justify-center max-w-[140px] whitespace-nowrap" style={{ backgroundColor: getRoleRingColor(firstColab.role, firstColab.isSocio) }}>
+                                                                        <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest truncate`}>{firstColab.role}</span>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 )}
@@ -360,10 +368,18 @@ const OrganogramNode = React.memo(({
                                                     <div className="flex flex-col items-center justify-start w-full min-h-[42px]">
                                                         <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5`}>{currentItem.name}</h4>
                                                     </div>
-                                                    <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
-                                                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(currentItem.role, currentItem.isSocio) }}></div>
-                                                        <span className={`${isSuperDense ? 'text-[7.5px]' : 'text-[8.5px]'} font-bold uppercase tracking-widest text-slate-500 leading-tight`}>{currentItem.role}</span>
-                                                    </div>
+                                                    {context.isExportingPDF ? (
+                                                        <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
+                                                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(currentItem.role, currentItem.isSocio) }}></div>
+                                                            <span className={`${isSuperDense ? 'text-[7.5px]' : 'text-[8.5px]'} font-bold uppercase tracking-widest text-slate-500 leading-tight`}>{currentItem.role}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="mt-1 flex items-center justify-center min-h-[20px] w-full">
+                                                            <div className="px-2 py-0.5 rounded-full text-white shadow-sm flex items-center justify-center max-w-[140px] whitespace-nowrap" style={{ backgroundColor: getRoleRingColor(currentItem.role, currentItem.isSocio) }}>
+                                                                <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest truncate`}>{currentItem.role}</span>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                     <div className="mt-1 flex items-start justify-center min-h-[20px] w-full">
                                                         {currentItem.equipe && currentItem.equipe !== 'Sem Equipe' && currentItem.equipe !== 'Geral' && currentItem.equipe.toUpperCase() !== 'JURÍDICO' && currentItem.equipe.toUpperCase() !== 'JURIDICO' && !isSuperDense && (
                                                             <div className="flex items-center justify-center px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full shadow-sm max-w-[180px] whitespace-nowrap">
@@ -625,10 +641,18 @@ const SocioBlockOrganogramNode = React.memo(({
                         <div className="flex flex-col items-center justify-start w-full min-h-[42px]">
                             <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5">{socio.name}</h4>
                         </div>
-                        <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
-                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(socio.role, socio.isSocio) }}></div>
-                            <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-500 leading-tight">{socio.role}</span>
-                        </div>
+                        {context.isExportingPDF ? (
+                            <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
+                                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(socio.role, socio.isSocio) }}></div>
+                                <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-500 leading-tight">{socio.role}</span>
+                            </div>
+                        ) : (
+                            <div className="mt-1 flex items-center justify-center min-h-[20px] w-full">
+                                <div className="px-2 py-0.5 rounded-full text-white shadow-sm flex items-center justify-center max-w-[140px] whitespace-nowrap" style={{ backgroundColor: getRoleRingColor(socio.role, socio.isSocio) }}>
+                                    <span className="text-[9px] font-bold uppercase tracking-widest truncate">{socio.role}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Stem from Sócio to Local */}
@@ -685,10 +709,18 @@ const SocioBlockOrganogramNode = React.memo(({
                                                                 <div className="flex flex-col items-center justify-start w-full min-h-[42px]">
                                                                     <h4 className="text-[12px] leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5">{leader.name}</h4>
                                                                 </div>
-                                                                <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
-                                                                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(leader.role, leader.isSocio) }}></div>
-                                                                    <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-500 leading-tight">{leader.role}</span>
-                                                                </div>
+                                                                {context.isExportingPDF ? (
+                                                                    <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
+                                                                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(leader.role, leader.isSocio) }}></div>
+                                                                        <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-500 leading-tight">{leader.role}</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="mt-1 flex items-center justify-center min-h-[20px] w-full">
+                                                                        <div className="px-2 py-0.5 rounded-full text-white shadow-sm flex items-center justify-center max-w-[140px] whitespace-nowrap" style={{ backgroundColor: getRoleRingColor(leader.role, leader.isSocio) }}>
+                                                                            <span className="text-[9px] font-bold uppercase tracking-widest truncate">{leader.role}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </Draggable>
@@ -1324,8 +1356,9 @@ export function Organograma() {
         setEditingCompetenciasText,
         subordinatesMap,
         selectedAtuacao,
-        hasAdministrativeSubordinates
-    }), [activeTab, searchQuery, subordinatesMap, selectedAtuacao, hasAdministrativeSubordinates]);
+        hasAdministrativeSubordinates,
+        isExportingPDF
+    }), [activeTab, searchQuery, subordinatesMap, selectedAtuacao, hasAdministrativeSubordinates, isExportingPDF]);
 
     const handleExportExcel = useCallback(() => {
         try {
