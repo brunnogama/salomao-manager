@@ -95,14 +95,35 @@ export function useColaboradores() {
   const deleteColaborador = async (id: string, photoUrl?: string) => {
     if (!confirm('Excluir este colaborador?')) return false
 
+    // 1. Remove foto do storage se existir
     if (photoUrl) {
       const path = photoUrl.split('/fotos-colaboradores/')[1]
       if (path) await supabase.storage.from('fotos-colaboradores').remove([`colaboradores/${path}`])
     }
 
-    await supabase.from('collaborators').delete().eq('id', id)
-    await fetchColaboradores()
-    return true
+    try {
+      // 2. Remove registros dependentes para evitar erro de Foreign Key
+      // Remove solicitações de férias vinculadas
+      await supabase.from('vacation_requests').delete().eq('collaborator_id', id)
+      
+      // Remove documentos GED vinculados que possam causar restrição (opcional, dependendo de como a restrição foi criada, mas seguro)
+      await supabase.from('ged_colaboradores').delete().eq('colaborador_id', id)
+
+      // 3. Remove o colaborador em si
+      const { error } = await supabase.from('collaborators').delete().eq('id', id)
+      
+      if (error) {
+        console.error('Erro ao excluir colaborador:', error)
+        throw error
+      }
+
+      await fetchColaboradores()
+      return true
+    } catch (err: any) {
+      console.error('Falha completa ao excluir:', err)
+      alert(`Não foi possível excluir o colaborador. Erro: ${err.message || 'Restrição de banco de dados.'}`)
+      return false
+    }
   }
 
   useEffect(() => { fetchColaboradores() }, [])

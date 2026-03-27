@@ -36,7 +36,18 @@ const stateToUf: Record<string, string> = {
   'PARANÁ': 'PR', 'PARANA': 'PR', 'PERNAMBUCO': 'PE', 'PIAUÍ': 'PI', 'PIAUI': 'PI',
   'RIO DE JANEIRO': 'RJ', 'RIO GRANDE DO NORTE': 'RN', 'RIO GRANDE DO SUL': 'RS',
   'RONDÔNIA': 'RO', 'RONDONIA': 'RO', 'RORAIMA': 'RR', 'SANTA CATARINA': 'SC',
-  'SÃO PAULO': 'SP', 'SAO PAULO': 'SP', 'SERGIPE': 'SE', 'TOCANTINS': 'TO'
+  'SÃO PAULO': 'SP', 'SAO PAULO': 'SP', 'SERGIPE': 'SE', 'TOCANTINS': 'TO',
+  'FEDERAL': 'FE'
+};
+
+const ufToState: Record<string, string> = {
+  'AC': 'Acre', 'AL': 'Alagoas', 'AP': 'Amapá', 'AM': 'Amazonas', 'BA': 'Bahia',
+  'CE': 'Ceará', 'DF': 'Distrito Federal', 'ES': 'Espírito Santo', 'GO': 'Goiás',
+  'MA': 'Maranhão', 'MT': 'Mato Grosso', 'MS': 'Mato Grosso do Sul', 'MG': 'Minas Gerais',
+  'PA': 'Pará', 'PB': 'Paraíba', 'PR': 'Paraná', 'PE': 'Pernambuco', 'PI': 'Piauí',
+  'RJ': 'Rio de Janeiro', 'RN': 'Rio Grande do Norte', 'RS': 'Rio Grande do Sul',
+  'RO': 'Rondônia', 'RR': 'Roraima', 'SC': 'Santa Catarina', 'SP': 'São Paulo',
+  'SE': 'Sergipe', 'TO': 'Tocantins', 'FE': 'Federal'
 };
 
 const getUfSigla = (name: string) => {
@@ -193,7 +204,7 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
         )}
       </div>
 
-      <div className="w-full xl:w-[280px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch">
+      <div className="w-full xl:w-[380px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch">
         <div className="flex items-center gap-2 mb-1">
            <div className="p-1.5 bg-blue-100 rounded-md">
              <MapPin className="w-3.5 h-3.5 text-blue-700" />
@@ -204,10 +215,10 @@ function LifeCycleSection({ processes }: { processes: any[] }) {
         <div className="flex flex-col gap-2">
           {topUfs.map((uf: any, idx: number) => (
             <div key={uf.sigla} className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm group hover:border-blue-200 transition-colors">
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] font-black text-gray-400 w-3">{idx + 1}º</span>
-                <div className="flex flex-col">
-                  <span className="text-xs font-black text-[#0a192f] leading-none">{uf.sigla}</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-[10px] font-black text-gray-400 w-3 shrink-0">{idx + 1}º</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-black text-[#0a192f] leading-none truncate" title={ufToState[uf.sigla] || uf.sigla}>{ufToState[uf.sigla] || uf.sigla}</span>
                   <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{uf.count.toLocaleString('pt-BR')} procs.</span>
                 </div>
               </div>
@@ -441,7 +452,7 @@ function UfChartSection({ processes, isPartnerFiltered, leaderPartners }: { proc
       </div>
 
       {!isPartnerFiltered && (
-      <div className="w-full xl:w-[480px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch overflow-hidden">
+      <div className="w-full xl:w-[620px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch overflow-hidden">
         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200/60 shrink-0">
            <div className="p-1.5 bg-indigo-100 rounded-md">
              <Briefcase className="w-3.5 h-3.5 text-indigo-700" />
@@ -467,7 +478,7 @@ function UfChartSection({ processes, isPartnerFiltered, leaderPartners }: { proc
             <tbody className="divide-y divide-gray-100/60">
               {socioMatrix.map((row: any) => (
                 <tr key={row.socio} className="hover:bg-white transition-colors group">
-                  <td className="py-2 px-2 text-[10px] font-black text-[#0a192f] whitespace-nowrap max-w-[140px] truncate border-r border-gray-50" title={row.socio}>{row.socio}</td>
+                  <td className="py-2 px-2 text-[10px] font-black text-[#0a192f] whitespace-nowrap max-w-[250px] truncate border-r border-gray-50" title={row.socio}>{row.socio}</td>
                   {mainUfNames.map((uf: string) => (
                     <td key={uf} className="py-2 px-2 text-[10px] font-bold text-gray-600 text-center border-r border-gray-50 group-hover:text-amber-600 transition-colors">
                       {row[uf] ? row[uf].toLocaleString('pt-BR') : '-'}

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Clock, Save, Loader2, Calendar as CalendarIcon, FilePlus2, Stethoscope, Trash2, Send } from 'lucide-react'
+import { Clock, Save, Loader2, Calendar as CalendarIcon, FilePlus2, Stethoscope, Trash2, Send, ShieldCheck, Tag, FileText } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { Collaborator } from '../../../types/controladoria'
 import { ManagedMultiSelect } from '../../crm/ManagedMultiSelect'
+import { AlertModal } from '../../../components/ui/AlertModal'
 
 interface PeriodoAusenciasSectionProps {
     formData: Partial<Collaborator>
@@ -21,6 +22,7 @@ export function PeriodoAusenciasSection({
     const [loading, setLoading] = useState(false)
     const [fetching, setFetching] = useState(false)
     const [absences, setAbsences] = useState<any[]>([])
+    const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
     const [absenceStart, setAbsenceStart] = useState('')
     const [absenceEnd, setAbsenceEnd] = useState('')
@@ -79,16 +81,18 @@ export function PeriodoAusenciasSection({
         setFetching(false)
     }
 
-    const handleDeleteAbsence = async (id: number) => {
-        if (!confirm('Deseja excluir este registro de ausência?')) return
+    const handleDeleteAbsence = async () => {
+        if (!pendingDeleteId) return
         try {
-            await supabase.from('collaborator_absences').delete().eq('id', id)
+            await supabase.from('collaborator_absences').delete().eq('id', pendingDeleteId)
             fetchAbsences()
             if (showAlert) showAlert('Sucesso', 'Registro de ausência excluído com sucesso!', 'success')
             else alert('Registro de ausência excluído com sucesso!')
         } catch (e: any) {
             if (showAlert) showAlert('Erro', 'Erro ao excluir: ' + e.message, 'error')
             else alert('Erro ao excluir: ' + e.message)
+        } finally {
+            setPendingDeleteId(null)
         }
     }
 
@@ -326,7 +330,7 @@ export function PeriodoAusenciasSection({
                     {activeTab === 'historico_ferias' && (
                         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 max-w-4xl mb-8 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
-                                <div className="bg-[#1e3a8a] p-2.5 rounded-xl text-white shadow-md shrink-0"><Send className="h-5 w-5" /></div>
+                                <div className="bg-[#1e3a8a] p-2.5 rounded-xl text-white shadow-md shrink-0"><FileText className="h-5 w-5" /></div>
                                 <div className="min-w-0">
                                     <h5 className="font-black text-[#1e3a8a] text-sm mb-0.5">Enviar Formulário ao Integrante</h5>
                                     <p className="text-[11px] text-[#1e3a8a]/60 font-medium truncate">O link será enviado ao e-mail corporativo de <strong>{formData.name}</strong></p>
@@ -368,61 +372,163 @@ export function PeriodoAusenciasSection({
                     {activeTab === 'historico_ferias' && (
                          <h5 className="font-black text-[#0a192f] text-sm mb-4 px-2 tracking-tight">Histórico Cadastrado</h5>
                     )}
-                    {fetching ? (
-                        <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 text-[#1e3a8a] animate-spin" /></div>
-                    ) : (
-                        absences.filter(a => activeTab === 'historico_atestados' ? a.type === 'Atestado Médico' : a.type !== 'Atestado Médico').length > 0 ? (
-                            absences.filter(a => activeTab === 'historico_atestados' ? a.type === 'Atestado Médico' : a.type !== 'Atestado Médico').map(a => {
-                                const formatDateBr = (d: string) => {
-                                    if (!d) return '';
-                                    if (d.includes('/')) return d;
-                                    const [y, m, day] = d.split('T')[0].split('-');
-                                    return `${day}/${m}/${y}`;
-                                };
+                    {(() => {
+                        if (fetching) return <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 text-[#1e3a8a] animate-spin" /></div>;
+
+                        const filtered = absences.filter(a => activeTab === 'historico_atestados' ? a.type === 'Atestado Médico' : a.type !== 'Atestado Médico');
+
+                        if (filtered.length === 0) {
+                            return (
+                                <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                    <p className="text-gray-500 font-medium text-sm">Nenhum registro encontrado nesta categoria.</p>
+                                </div>
+                            );
+                        }
+
+                        // Group digital approvals
+                        const grouped: any[] = [];
+                        const groupMap = new Map();
+
+                        filtered.forEach(a => {
+                            const isDigitalApproval = a.observation && a.observation.includes('Aprovado digitalmente via Fluxo de Férias');
+                            if (isDigitalApproval) {
+                                if (!groupMap.has(a.observation)) {
+                                    const shell = {
+                                        id: 'group-' + a.id,
+                                        isGroup: true,
+                                        type: a.type,
+                                        observation: a.observation,
+                                        periods: [a]
+                                    };
+                                    groupMap.set(a.observation, shell);
+                                    grouped.push(shell);
+                                } else {
+                                    groupMap.get(a.observation).periods.push(a);
+                                }
+                            } else {
+                                grouped.push({ isGroup: false, ...a });
+                            }
+                        });
+
+                        const formatDateBr = (d: string) => {
+                            if (!d) return '';
+                            if (d.includes('/')) return d;
+                            const [y, m, day] = d.split('T')[0].split('-');
+                            return `${day}/${m}/${y}`;
+                        };
+
+                        return grouped.map(item => {
+                            if (item.isGroup) {
+                                const totalDays = item.periods.reduce((acc: number, p: any) => acc + p.days_count, 0);
+                                const obsText = item.observation || '';
+                                const parts = obsText.split('\n');
+                                const hasAquisitive = parts[0].includes('[Período Aquisitivo:');
+                                const aquiText = hasAquisitive ? parts[0].replace(/\[|\]/g, '') : null;
+                                const approvalText = hasAquisitive ? parts[1] : parts[0];
+
                                 return (
-                                    <div key={a.id} className="flex items-start justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-200 transition-colors shadow-sm">
-                                        <div className="flex gap-4">
-                                            <div className={`p-3 rounded-xl mt-1 shrink-0 ${activeTab === 'historico_atestados' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
-                                                {activeTab === 'historico_atestados' ? <Stethoscope className="h-5 w-5" /> : <CalendarIcon className="h-5 w-5" />}
-                                            </div>
-                                            <div>
-                                                <h5 className="font-bold text-[#0a192f] flex items-center gap-2">
-                                                    {a.type}
-                                                    <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider text-gray-600">
-                                                        {a.days_count} dia{a.days_count > 1 ? 's' : ''}
-                                                    </span>
-                                                </h5>
-                                                <p className="text-sm font-medium text-gray-500 mt-1">
-                                                    {formatDateBr(a.start_date)} até {formatDateBr(a.end_date)}
-                                                </p>
-                                                {a.observation && (
-                                                    <p className="text-xs text-gray-400 mt-2 bg-gray-50 p-2 rounded-lg border border-gray-100 italic">
-                                                        "{a.observation}"
-                                                    </p>
-                                                )}
+                                    <div key={item.id} className="flex flex-col p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-200 transition-colors shadow-sm mb-3">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex gap-4 flex-1">
+                                                <div className={`p-3 rounded-xl mt-1 shrink-0 bg-blue-50 text-blue-600`}>
+                                                    <CalendarIcon className="h-5 w-5" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h5 className="font-bold text-[#0a192f] flex items-center gap-2">
+                                                        {item.type} {item.periods.length > 1 ? 'Fracionadas' : ''}
+                                                        <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider text-gray-600">
+                                                            Total de {totalDays} dias
+                                                        </span>
+                                                    </h5>
+                                                    
+                                                    {aquiText && (
+                                                        <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-blue-800 bg-blue-50 px-3 py-1.5 rounded-md border border-blue-100 max-w-fit shadow-sm">
+                                                            <Tag className="h-3 w-3 text-blue-600" />
+                                                            {aquiText}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="mt-3 flex flex-col gap-2 relative pl-3 border-l-2 border-dashed border-gray-200 ml-1">
+                                                        {item.periods.map((p: any, idx: number) => (
+                                                            <div key={p.id} className="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-100 group">
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-gray-700">Período {item.periods.length > 1 ? idx + 1 : 'Único'}</p>
+                                                                    <p className="text-sm font-medium text-gray-500">{formatDateBr(p.start_date)} até {formatDateBr(p.end_date)} ({p.days_count} dias)</p>
+                                                                </div>
+                                                                {!isViewMode && (
+                                                                    <button
+                                                                        onClick={() => setPendingDeleteId(p.id)}
+                                                                        className="p-2 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                                                        title="Excluir este período isolado"
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    <div className="mt-3 flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-3 py-2.5 rounded-lg shadow-sm font-medium w-fit max-w-full">
+                                                        <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
+                                                        <span>{approvalText}</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        {!isViewMode && (
-                                            <button
-                                                onClick={() => handleDeleteAbsence(a.id)}
-                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Excluir"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
-                                        )}
                                     </div>
-                                )
-                            })
-                        ) : (
-                            <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                                <Clock className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-gray-500">Nenhum registro encontrado.</p>
-                            </div>
-                        )
-                    )}
+                                );
+                            }
+
+                            // Single legacy or ad-hoc record rendering
+                            const a = item;
+                            return (
+                                <div key={a.id} className="flex items-start justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-200 transition-colors shadow-sm mb-3">
+                                    <div className="flex gap-4">
+                                        <div className={`p-3 rounded-xl mt-1 shrink-0 ${activeTab === 'historico_atestados' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                                            {activeTab === 'historico_atestados' ? <Stethoscope className="h-5 w-5" /> : <CalendarIcon className="h-5 w-5" />}
+                                        </div>
+                                        <div>
+                                            <h5 className="font-bold text-[#0a192f] flex items-center gap-2">
+                                                {a.type}
+                                                <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider text-gray-600">
+                                                    {a.days_count} dia{a.days_count > 1 ? 's' : ''}
+                                                </span>
+                                            </h5>
+                                            <p className="text-sm font-medium text-gray-500 mt-1">
+                                                {formatDateBr(a.start_date)} até {formatDateBr(a.end_date)}
+                                            </p>
+                                            {a.observation && (
+                                                <p className="text-xs text-gray-500 mt-3 bg-gray-50/80 p-3 rounded-lg border border-gray-100 italic shadow-sm">
+                                                    "{a.observation}"
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {!isViewMode && (
+                                        <button
+                                            onClick={() => setPendingDeleteId(a.id)}
+                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Excluir"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        });
+                    })()}
                 </div>
             )}
+
+            <AlertModal
+                isOpen={pendingDeleteId !== null}
+                onClose={() => setPendingDeleteId(null)}
+                title="Excluir Ausência"
+                description="Tem certeza que deseja excluir permanentemente este registro de ausência? Esta ação não pode ser desfeita."
+                variant="error"
+                confirmText="Excluir"
+                onConfirm={handleDeleteAbsence}
+            />
         </div>
     )
 }

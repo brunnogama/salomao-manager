@@ -6,6 +6,18 @@ import { Collaborator } from '../types/controladoria';
 
 const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10);
 
+const isValidDateDDMMYYYY = (val: string | undefined | null) => {
+    if (!val || val.length !== 10) return false;
+    const [d, m, y] = val.split('/');
+    const day = parseInt(d, 10);
+    const month = parseInt(m, 10);
+    const year = parseInt(y, 10);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+    if (month < 1 || month > 12) return false;
+    const dateObj = new Date(year, month - 1, day);
+    return dateObj.getDate() === day && dateObj.getMonth() === month - 1 && dateObj.getFullYear() === year;
+};
+
 const unmaskDateToISO = (displayDate: string | undefined | null) => {
     if (!displayDate) return null;
     if (displayDate.includes('-')) return displayDate;
@@ -46,6 +58,7 @@ export default function SolicitacaoFerias() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
 
     const [collaborator, setCollaborator] = useState<Partial<Collaborator> | null>(null);
@@ -101,7 +114,25 @@ export default function SolicitacaoFerias() {
 
                 if (data.request.sell_vacation) setSellVacation(data.request.sell_vacation);
                 if (data.request.sell_vacation_days) setSellVacationDays(String(data.request.sell_vacation_days));
-                if (data.request.employee_observation) setObservation(data.request.employee_observation);
+                
+                let obsText = data.request.employee_observation || '';
+                const extraMarker = 'Observações Extras do Integrante:\n';
+                const markerIndex = obsText.lastIndexOf(extraMarker);
+                
+                if (markerIndex !== -1) {
+                    setObservation(obsText.substring(markerIndex + extraMarker.length).trim());
+                } else if (obsText.includes('=== [Registro de Fragmentação de Férias] ===')) {
+                    const endMarker = '============================================\n';
+                    const endIndex = obsText.lastIndexOf(endMarker);
+                    if (endIndex !== -1) {
+                        const possibleObs = obsText.substring(endIndex + endMarker.length).trim();
+                        setObservation(possibleObs.replace(/^=+\s*/g, ''));
+                    } else {
+                        setObservation('');
+                    }
+                } else {
+                    setObservation(obsText);
+                }
 
             } catch (err: any) {
                 console.error('Erro ao buscar dados:', err);
@@ -118,11 +149,11 @@ export default function SolicitacaoFerias() {
         try {
             // Validation
             if (!aquiStart || !aquiEnd) {
-                setError('Preencha o Período aquisitivo.');
+                setFormError('Preencha o Período aquisitivo.');
                 return;
             }
-            if (aquiStart.length !== 10 || aquiEnd.length !== 10) {
-                setError('Preencha o período aquisitivo no formato correto (DD/MM/AAAA).');
+            if (!isValidDateDDMMYYYY(aquiStart) || !isValidDateDDMMYYYY(aquiEnd)) {
+                setFormError('Verifique o Período Aquisitivo: a data informada não existe no calendário (Verifique se trocou o dia pelo mês). E use o padrão DD/MM/AAAA.');
                 return;
             }
 
@@ -136,24 +167,24 @@ export default function SolicitacaoFerias() {
             for (let i = 0; i < periods.length; i++) {
                 const p = periods[i];
                 if (!p.start || !p.end) {
-                    setError(`Preencha as datas de início e fim do Período ${i + 1} do Gozo de Férias.`);
+                    setFormError(`Preencha as datas de início e fim do Período ${i + 1} do Gozo de Férias.`);
                     return;
                 }
-                if (p.start.length !== 10 || p.end.length !== 10) {
-                    setError(`Datas do Período ${i + 1} incompletas (DD/MM/AAAA).`);
+                if (!isValidDateDDMMYYYY(p.start) || !isValidDateDDMMYYYY(p.end)) {
+                    setFormError(`O Período ${i + 1} de gozo contém uma data que não existe no calendário (ex: mês acima de 12). Revise seguindo o padrão DD/MM/AAAA.`);
                     return;
                 }
                 const isoStart = unmaskDateToISO(p.start);
                 const isoEnd = unmaskDateToISO(p.end);
                 if (!isoStart || !isoEnd) {
-                    setError(`Datas do Período ${i + 1} inválidas.`);
+                    setFormError(`Datas do Período ${i + 1} inválidas.`);
                     return;
                 }
 
                 const d1 = new Date(isoStart + 'T00:00:00');
                 const d2 = new Date(isoEnd + 'T00:00:00');
                 if (d2 < d1) {
-                    setError(`A data de fim do Período ${i + 1} não pode ser menor que a data de início.`);
+                    setFormError(`A data de fim do Período ${i + 1} não pode ser menor que a data de início.`);
                     return;
                 }
 
@@ -173,11 +204,11 @@ export default function SolicitacaoFerias() {
             periodsText += `> Total Fracionado: ${totalDaysCount} dias\n============================================\n`;
 
             if (sellVacation && (!sellVacationDays || parseInt(sellVacationDays) <= 0)) {
-                setError('Informe a quantidade de dias válidos para o abono pecuniário.');
+                setFormError('Informe a quantidade de dias válidos para o abono pecuniário.');
                 return;
             }
             if (!accepted) {
-                setError('Você deve confirmar a veracidade das informações na caixa de seleção (Assinatura Digital).');
+                setFormError('Você deve confirmar a veracidade das informações na caixa de seleção (Assinatura Digital).');
                 return;
             }
 
@@ -189,7 +220,7 @@ export default function SolicitacaoFerias() {
                 : periodsText;
 
             setSaving(true);
-            setError(null);
+            setFormError(null);
 
             // First update the aquisitive period on the request directly
             await supabase.from('vacation_requests').update({
@@ -229,7 +260,7 @@ export default function SolicitacaoFerias() {
             setSuccess(true);
         } catch (err: any) {
             console.error('Erro ao salvar:', err);
-            setError(err.message || 'Ocorreu um erro ao enviar sua solicitação. Tente novamente mais tarde.');
+            setFormError(err.message || 'Ocorreu um erro ao enviar sua solicitação. Tente novamente mais tarde.');
         } finally {
             setSaving(false);
         }
@@ -287,7 +318,7 @@ export default function SolicitacaoFerias() {
                         <CheckCircle2 className="h-10 w-10" />
                     </div>
                     <h2 className="text-2xl font-black text-[#0a192f] mb-2 tracking-tight">Formulário Enviado!</h2>
-                    <p className="text-gray-500 mb-8">Sua solicitação de {termType.toLowerCase()} foi enviada com sucesso ao seu Líder Direto. Você receberá uma notificação quando for aprovada ou caso precisem de ajustes.</p>
+                    <p className="text-gray-500 mb-8">Sua solicitação de {termType.toLowerCase()} foi enviada com sucesso ao seu Líder Direto. Você receberá uma notificação quando for aprovada ou caso precise de ajustes.</p>
                     <p className="text-xs text-gray-400">Você já pode fechar esta janela.</p>
                 </div>
             </div>
@@ -516,9 +547,9 @@ export default function SolicitacaoFerias() {
                             />
                         </section>
 
-                        {error && (
+                        {formError && (
                             <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm font-medium animate-in fade-in">
-                                {error}
+                                {formError}
                             </div>
                         )}
 
