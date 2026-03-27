@@ -1,23 +1,21 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+dotenv.config();
+const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
-const supabaseUrl = 'https://iewevhdtwlviudetxgax.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlld2V2aGR0d2x2aXVkZXR4Z2F4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NTMxNzEsImV4cCI6MjA4MzEyOTE3MX0.jQr91dNKSrwypja7UoDnv8oiE29L_dpy-mPQ_3vW5Sw'
-const supabase = createClient(supabaseUrl, supabaseKey)
-
-async function test() {
-  const { data: colabs } = await supabase.from('collaborators').select('id').limit(1)
-  const id = colabs[0].id
-  
-  const { data, error } = await supabase.rpc('create_vacation_request', {
-    p_collaborator_id: id,
-    p_leader_id: id,
-    p_aquisitive_period_start: null,
-    p_aquisitive_period_end: null
-  });
-  
-  console.log("Returned data isArray?:", Array.isArray(data));
-  console.log("data:", data);
-  console.log("data.employee_token:", data?.employee_token);
+async function main() {
+    const { data: requests, error: err } = await supabase.from('vacation_requests').select('*').order('created_at', { ascending: false }).limit(2);
+    if (!requests || requests.length === 0) {
+        console.log('No requests found.');
+        return;
+    }
+    for (const req of requests) {
+        console.log(`\nTesting request ${req.id} (Status: ${req.status})`);
+        const { data: emplData, error: emplErr } = await supabase.rpc('get_vacation_request_by_employee_token', { p_token: req.employee_token });
+        console.log('Employee token result:', emplData ? 'HAS DATA' : 'NO DATA', emplErr || '');
+        
+        const { data: leaderData, error: leaderErr } = await supabase.rpc('get_vacation_request_by_leader_token', { p_token: req.leader_token });
+        console.log('Leader token result:', leaderData ? 'HAS DATA' : 'NO DATA', leaderErr || '');
+    }
 }
-
-test()
+main();

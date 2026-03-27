@@ -67,10 +67,14 @@ export default function AprovacaoFeriasPeloLider() {
                 const marker = '=== [Registro de Fragmentação de Férias] ===';
                 
                 if (obs.includes(marker)) {
+                    // Split to get the LAST block in case of legacy resubmissions piling up
+                    const blocks = obs.split(marker);
+                    const lastBlock = blocks[blocks.length - 1];
+
                     const parsed: ParsedPeriod[] = [];
                     const regex = /> Período (\d+): (\d{2}\/\d{2}\/\d{4}) a (\d{2}\/\d{2}\/\d{4}) \((\d+) dias\)/g;
                     let match;
-                    while ((match = regex.exec(obs)) !== null) {
+                    while ((match = regex.exec(lastBlock)) !== null) {
                         parsed.push({
                             originalText: match[0],
                             index: parseInt(match[1], 10),
@@ -83,11 +87,18 @@ export default function AprovacaoFeriasPeloLider() {
                     setPeriods(parsed);
 
                     const extraMarker = 'Observações Extras do Integrante:\n';
-                    const extraIndex = obs.indexOf(extraMarker);
+                    const extraIndex = lastBlock.lastIndexOf(extraMarker);
                     if (extraIndex !== -1) {
-                        setPureObservation(obs.substring(extraIndex + extraMarker.length).trim());
+                        setPureObservation(lastBlock.substring(extraIndex + extraMarker.length).trim());
                     } else {
-                        setPureObservation('');
+                        const endMarker = '============================================';
+                        const endIndex = lastBlock.lastIndexOf(endMarker);
+                        if (endIndex !== -1) {
+                            const possibleObs = lastBlock.substring(endIndex + endMarker.length).trim();
+                            setPureObservation(possibleObs.replace(/^=+\s*/g, ''));
+                        } else {
+                            setPureObservation('');
+                        }
                     }
                 } else {
                     // Fallback for single period legacy entries or unfragmented

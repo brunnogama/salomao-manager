@@ -102,7 +102,25 @@ export default function SolicitacaoFerias() {
 
                 if (data.request.sell_vacation) setSellVacation(data.request.sell_vacation);
                 if (data.request.sell_vacation_days) setSellVacationDays(String(data.request.sell_vacation_days));
-                if (data.request.employee_observation) setObservation(data.request.employee_observation);
+                
+                let obsText = data.request.employee_observation || '';
+                const extraMarker = 'Observações Extras do Integrante:\n';
+                const markerIndex = obsText.lastIndexOf(extraMarker);
+                
+                if (markerIndex !== -1) {
+                    setObservation(obsText.substring(markerIndex + extraMarker.length).trim());
+                } else if (obsText.includes('=== [Registro de Fragmentação de Férias] ===')) {
+                    const endMarker = '============================================\n';
+                    const endIndex = obsText.lastIndexOf(endMarker);
+                    if (endIndex !== -1) {
+                        const possibleObs = obsText.substring(endIndex + endMarker.length).trim();
+                        setObservation(possibleObs.replace(/^=+\s*/g, ''));
+                    } else {
+                        setObservation('');
+                    }
+                } else {
+                    setObservation(obsText);
+                }
 
             } catch (err: any) {
                 console.error('Erro ao buscar dados:', err);
