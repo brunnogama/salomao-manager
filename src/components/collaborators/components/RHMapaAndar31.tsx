@@ -169,14 +169,24 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
           transition: 'transform 0.1s ease-out'
         }}
       >
+              {/* Planta Arquitetônica (Paredes) - Esquerda */}
+        <div className="absolute top-[38px] left-[108px] w-[756px] h-1 bg-black z-0 pointer-events-none"></div> {/* Teto Esq */}
+        <div className="absolute top-[490px] left-[108px] w-[756px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão Esq */}
+        <div className="absolute top-[38px] left-[108px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Esq */}
+        <div className="absolute top-[38px] left-[860px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Dir (Centro) */}
+        <div className="absolute top-[110px] left-[108px] w-[90px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão SC01 */}
+        <div className="absolute top-[38px] left-[196px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Corredor Esq */}
+
+        {/* Planta Arquitetônica (Paredes) - Direita */}
+        <div className="absolute top-[38px] left-[1020px] w-[690px] h-1 bg-black z-0 pointer-events-none"></div> {/* Teto Dir */}
+        <div className="absolute top-[490px] left-[1020px] w-[600px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão Dir (até o corredor) */}
+        <div className="absolute top-[38px] left-[1020px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Esq (Centro) */}
+        <div className="absolute top-[38px] left-[1706px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Ext Dir */}
         
-        {/* Background Decorativo Simulando a Planta */}
-        <div className="absolute top-[80px] left-[200px] w-[550px] h-[400px] border-2 border-dashed border-gray-200 bg-gray-50/50 pointer-events-none flex items-center justify-center rounded-xl">
-          <span className="text-gray-300 font-bold text-5xl rotate-45 opacity-20">Área Central Esq</span>
-        </div>
-        <div className="absolute top-[80px] left-[1020px] w-[550px] h-[400px] border-2 border-dashed border-gray-200 bg-gray-50/50 pointer-events-none flex items-center justify-center rounded-xl">
-          <span className="text-gray-300 font-bold text-5xl -rotate-45 opacity-20">Área Central Dir</span>
-        </div>
+        {/* Recortes Direita (S15-S21 e Consultor) */}
+        <div className="absolute top-[38px] left-[1620px] w-1 h-[456px] bg-black z-0 pointer-events-none"></div> {/* Parede Corredor Dir */}
+        <div className="absolute top-[130px] left-[1400px] w-[220px] h-1 bg-black z-0 pointer-events-none"></div> {/* Chão S15-S18 */}
+        <div className="absolute top-[38px] left-[1550px] w-1 h-[96px] bg-black z-0 pointer-events-none"></div> {/* Divisória S16/S18 */}
 
         {SEATS_31_ANDAR.map(seat => {
           const occupant = seatsMap.get(seat.id.toUpperCase());
