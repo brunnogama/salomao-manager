@@ -1132,8 +1132,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
       // Prepare data for save: Convert DD/MM/YYYY back to YYYY-MM-DD
       const candidateFormData = formData as any; // Bypass TS linting for Candidate-only fields during map
+      
+      // Mirror the first item from the plural arrays to the singular FK columns for legacy compatibility
+      const derivedLeaderId = formData.leader_ids && formData.leader_ids.length > 0 ? formData.leader_ids[0] : null;
+      const derivedPartnerId = formData.partner_ids && formData.partner_ids.length > 0 ? formData.partner_ids[0] : null;      
+
       const dataToSave = {
         ...formData,
+        leader_id: derivedLeaderId,
+        partner_id: derivedPartnerId,
         linkedin_url: candidateFormData.linkedin || formData.linkedin_url, // map linkedin from candidate
         atuacao: candidateFormData.atuacao_id || formData.atuacao, // map atuacao_id from candidate
         cadastro_atualizado: false,
