@@ -42,21 +42,14 @@ export const ReceiptPDFTemplate = React.forwardRef<HTMLDivElement, ReceiptPDFTem
             color: '#111827'
         }}>
             {/* Cabeçalho */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #1e3a8a', paddingBottom: '20px', marginBottom: '30px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', borderBottom: '2px solid #1e3a8a', paddingBottom: '20px', marginBottom: '30px' }}>
                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                    <img src="/logo-salomao.png" alt="Logo Salomão" crossOrigin="anonymous" style={{ height: '50px', width: 'auto', objectFit: 'contain' }} />
+                    <img src="/logo-salomao.png" alt="Logo Salomão" crossOrigin="anonymous" style={{ height: '35px', width: 'auto', objectFit: 'contain' }} />
                     <div style={{ borderLeft: '2px solid #e5e7eb', paddingLeft: '20px' }}>
-                        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 900, color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 900, color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
                             Recibo de Solicitação de Férias
                         </h1>
-                        <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>
-                            Salomão, Kaiuca, Abrahão, Raposo e Cotta
-                        </p>
                     </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                    <p style={{ margin: 0, fontSize: '10px', color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase' }}>Código de Rastreamento</p>
-                    <p style={{ margin: '2px 0 0 0', fontSize: '11px', fontFamily: 'monospace', color: '#374151' }}>{vacationReq?.id?.substring(0, 18)}...</p>
                 </div>
             </div>
 
@@ -156,7 +149,10 @@ export const ReceiptPDFTemplate = React.forwardRef<HTMLDivElement, ReceiptPDFTem
                 </div>
             </div>
             
-            <div style={{ textAlign: 'center', marginTop: '40px' }}>
+            <div style={{ textAlign: 'center', marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                <p style={{ margin: 0, fontSize: '10px', color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase' }}>
+                    Código de Rastreamento: <span style={{ fontFamily: 'monospace', color: '#6b7280' }}>{vacationReq?.id}</span>
+                </p>
                 <p style={{ margin: 0, fontSize: '9px', color: '#d1d5db', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 800 }}>Salomão Manager Platform</p>
             </div>
         </div>
