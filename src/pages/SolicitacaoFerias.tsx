@@ -395,7 +395,11 @@ export default function SolicitacaoFerias() {
                                 {periods.map((period, index) => {
                                     const cDays = calculateDays(period.start, period.end);
                                     return (
-                                        <div key={index} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 bg-white border border-gray-100 shadow-[0_2px_8px_rgb(0,0,0,0.04)] p-4 rounded-2xl relative animate-in slide-in-from-bottom-2">
+                                        <div key={index} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 bg-white border border-gray-100 shadow-[0_2px_8px_rgb(0,0,0,0.04)] p-4 rounded-2xl relative animate-in slide-in-from-bottom-2 mt-4 md:mt-0">
+                                            <div className="absolute -top-3 left-4 bg-[#1e3a8a] text-white text-[9px] font-black px-3 py-0.5 rounded-full uppercase tracking-widest shadow-sm">
+                                                Período {index + 1}
+                                            </div>
+
                                             {periods.length > 1 && (
                                                 <button
                                                     onClick={() => handleRemovePeriod(index)}
@@ -406,9 +410,9 @@ export default function SolicitacaoFerias() {
                                                 </button>
                                             )}
                                             
-                                            <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4 md:gap-6">
-                                                <div className="flex-1">
-                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Data de Início (Período {index + 1})</label>
+                                            <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4 md:gap-6 pt-2 md:pt-0">
+                                                <div className="flex-1 min-w-0">
+                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1 truncate">Data de Início</label>
                                                     <input
                                                         type="text"
                                                         className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-[#1e3a8a]"
@@ -422,8 +426,8 @@ export default function SolicitacaoFerias() {
                                                         maxLength={10}
                                                     />
                                                 </div>
-                                                <div className="flex-1">
-                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Data de Término (Período {index + 1})</label>
+                                                <div className="flex-1 min-w-0">
+                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1 truncate">Data de Término</label>
                                                     <input
                                                         type="text"
                                                         className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-[#1e3a8a]"
@@ -439,8 +443,8 @@ export default function SolicitacaoFerias() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex-1">
-                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1 text-center sm:text-left">Dias no Período</label>
+                                            <div className="flex-1 min-w-0 pt-2 md:pt-0">
+                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1 text-center sm:text-left truncate">Total de Dias</label>
                                                 <div className="w-full bg-gray-100 border border-gray-200 rounded-xl p-3 text-sm font-black text-gray-600 text-center">
                                                     {cDays > 0 ? `${cDays} dias` : '-'}
                                                 </div>
