@@ -1387,15 +1387,29 @@ export function Organograma() {
                 const summaryValueStyle = { font: { sz: 10 }, fill: { fgColor: { rgb: 'F3F4F6' } }, alignment: { horizontal: 'center' as const } };
                 const totalStyle = { font: { bold: true, sz: 11 }, fill: { fgColor: { rgb: 'E5E7EB' } } };
 
-                const rows: { v: string, s?: any }[][] = [];
+                const wb = XLSX.utils.book_new();
 
-                // Title
-                rows.push([{ v: 'ORGANOGRAMA — JURÍDICO', s: headerStyle }, { v: '', s: headerStyle }]);
-                rows.push([{ v: '' }, { v: '' }]);
+                const getDescendantsRecursive = (leaderId: string, visited = new Set<string>()): ColaboradorCard[] => {
+                    if (visited.has(leaderId)) return [];
+                    visited.add(leaderId);
+                    const directSubs = (subordinatesMap.get(leaderId) || []).filter(s => !s.isSocio && s.isJuridico);
+                    let allDesc = [...directSubs];
+                    directSubs.forEach(s => {
+                        allDesc = allDesc.concat(getDescendantsRecursive(s.id, visited));
+                    });
+                    const unique = new Map<string, ColaboradorCard>();
+                    allDesc.forEach(d => unique.set(d.id, d));
+                    return Array.from(unique.values());
+                };
 
                 allSocios.forEach(socio => {
-                    const allSubs = (subordinatesMap.get(socio.id) || [])
-                        .filter(c => !c.isSocio && c.isJuridico)
+                    const rows: { v: string, s?: any }[][] = [];
+
+                    const sheetTitle = `ORGANOGRAMA — ${socio.name.toUpperCase()}`;
+                    rows.push([{ v: sheetTitle, s: headerStyle }, { v: '', s: headerStyle }]);
+                    rows.push([{ v: '' }, { v: '' }]);
+
+                    const allSubs = getDescendantsRecursive(socio.id)
                         .sort((a, b) => getRank(a.role) - getRank(b.role));
 
                     // Group by Local
@@ -1420,14 +1434,13 @@ export function Organograma() {
                         if (leaders.length > 0) {
                             const leaderGroups = new Map<string, ColaboradorCard[]>();
                             leaders.forEach(leader => {
-                                const leaderSubs = (subordinatesMap.get(leader.id) || []).filter(s => !s.isSocio && s.isJuridico);
+                                const leaderSubs = getDescendantsRecursive(leader.id);
                                 const sig = leaderSubs.map(s => s.id).sort().join('|');
                                 if (!leaderGroups.has(sig)) leaderGroups.set(sig, []);
                                 leaderGroups.get(sig)!.push(leader);
                             });
                             leaderGroups.forEach((groupLeaders) => {
-                                const leaderSubs = (subordinatesMap.get(groupLeaders[0].id) || [])
-                                    .filter(s => !s.isSocio && s.isJuridico)
+                                const leaderSubs = getDescendantsRecursive(groupLeaders[0].id)
                                     .sort((a, b) => getRank(a.role) - getRank(b.role));
                                 blocks.push({ localName, leaders: groupLeaders, members: leaderSubs });
                             });
@@ -1437,15 +1450,21 @@ export function Organograma() {
                         }
                     });
 
+                    const exportedColabsForSocio = new Map<string, ColaboradorCard>();
+
                     // Render blocks
                     blocks.forEach((block) => {
                         rows.push([{ v: socio.name, s: socioStyle }, { v: socio.role || 'Sócio', s: socioStyle }]);
                         rows.push([{ v: `📍 ${block.localName}`, s: localStyle }, { v: '', s: localStyle }]);
                         block.leaders.forEach(leader => {
+                            exportedColabsForSocio.set(leader.id, leader);
                             rows.push([{ v: `  👤 ${leader.name}`, s: leaderStyle }, { v: leader.role, s: leaderStyle }]);
                         });
                         block.members.forEach(member => {
-                            rows.push([{ v: `      ${member.name}`, s: memberStyle }, { v: member.role, s: memberStyle }]);
+                            if (!exportedColabsForSocio.has(member.id)) { // Prevent listing member multiple times if they were also a leader in another branch
+                                exportedColabsForSocio.set(member.id, member);
+                                rows.push([{ v: `      ${member.name}`, s: memberStyle }, { v: member.role, s: memberStyle }]);
+                            }
                         });
                         rows.push([{ v: '' }, { v: '' }]);
                     });
@@ -1453,7 +1472,8 @@ export function Organograma() {
                     // Summary for this socio
                     rows.push([{ v: `RESUMO — ${socio.name.toUpperCase()}`, s: summaryHeaderStyle }, { v: 'QUANTIDADE', s: summaryHeaderStyle }]);
                     const roleCounts = new Map<string, number>();
-                    allSubs.forEach(sub => {
+                    const renderedColabs = Array.from(exportedColabsForSocio.values());
+                    renderedColabs.forEach(sub => {
                         const role = sub.role || 'Sem Cargo';
                         roleCounts.set(role, (roleCounts.get(role) || 0) + 1);
                     });
@@ -1461,34 +1481,50 @@ export function Organograma() {
                     sortedRoles.forEach(([role, count]) => {
                         rows.push([{ v: role, s: summaryLabelStyle }, { v: String(count), s: summaryValueStyle }]);
                     });
-                    rows.push([{ v: 'TOTAL', s: { ...totalStyle, alignment: { horizontal: 'left' as const } } }, { v: String(allSubs.length), s: { ...totalStyle, alignment: { horizontal: 'center' as const } } }]);
+                    rows.push([{ v: 'TOTAL', s: { ...totalStyle, alignment: { horizontal: 'left' as const } } }, { v: String(renderedColabs.length), s: { ...totalStyle, alignment: { horizontal: 'center' as const } } }]);
+                    
                     rows.push([{ v: '' }, { v: '' }]);
                     rows.push([{ v: '' }, { v: '' }]);
-                });
 
-                // Create worksheet
-                const wsData = rows.map(row => row.map(cell => cell.v));
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                    const wsData = rows.map(row => row.map(cell => cell.v));
+                    const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-                rows.forEach((row, rIdx) => {
-                    row.forEach((cell, cIdx) => {
-                        const cellRef = XLSX.utils.encode_cell({ r: rIdx, c: cIdx });
-                        if (ws[cellRef] && cell.s) {
-                            ws[cellRef].s = cell.s;
-                        }
+                    rows.forEach((row, rIdx) => {
+                        row.forEach((cell, cIdx) => {
+                            const cellRef = XLSX.utils.encode_cell({ r: rIdx, c: cIdx });
+                            if (ws[cellRef] && cell.s) {
+                                ws[cellRef].s = cell.s;
+                            }
+                        });
                     });
+
+                    ws['!cols'] = [{ wch: 50 }, { wch: 35 }];
+                    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
+                    const titleRef = XLSX.utils.encode_cell({ r: 0, c: 0 });
+                    if (ws[titleRef]) {
+                        ws[titleRef].v = sheetTitle;
+                        ws[titleRef].s = headerStyle;
+                    }
+
+                    // Handle Excel sheet name limitations
+                    let sheetName = socio.name.toUpperCase();
+                    // Max worksheet name is 31 characters
+                    if(sheetName.length > 31) sheetName = sheetName.substring(0, 31);
+                    // Remove invalid characters for excel sheet names
+                    sheetName = sheetName.replace(/[\\|/|*|?|:|\[|\]]/g, "").trim();
+                    
+                    // Handle duplicates
+                    let finalSheetName = sheetName;
+                    let dupCounter = 1;
+                    while (wb.SheetNames.includes(finalSheetName)) {
+                        const numberedSuffix = `_${dupCounter}`;
+                        finalSheetName = `${sheetName.substring(0, 31 - numberedSuffix.length)}${numberedSuffix}`;
+                        dupCounter++;
+                    }
+
+                    XLSX.utils.book_append_sheet(wb, ws, finalSheetName);
                 });
 
-                ws['!cols'] = [{ wch: 45 }, { wch: 30 }];
-                ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
-                const titleRef = XLSX.utils.encode_cell({ r: 0, c: 0 });
-                if (ws[titleRef]) {
-                    ws[titleRef].v = 'ORGANOGRAMA — JURÍDICO';
-                    ws[titleRef].s = headerStyle;
-                }
-
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Organograma');
                 XLSX.writeFile(wb, 'Organograma_Juridico.xlsx');
                 showAlert('Sucesso', 'Organograma exportado em Excel com sucesso!', 'success');
             } else {
