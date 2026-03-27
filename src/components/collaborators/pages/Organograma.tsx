@@ -561,9 +561,12 @@ const SocioBlockOrganogramNode = React.memo(({
         return index === -1 ? 999 : index;
     };
 
+    const isAdministrativoTab = context.activeTab === 'ADMINISTRATIVO';
+    const isValidColab = (c: ColaboradorCard) => !c.isSocio && (isAdministrativoTab ? c.isAdministrativo : c.isJuridico);
+
     // Get all direct subordinates of this sócio
     const allSubs: ColaboradorCard[] = (context.subordinatesMap.get(colabId) || [])
-        .filter((c: ColaboradorCard) => !c.isSocio && c.isJuridico)
+        .filter(isValidColab)
         .sort((a: ColaboradorCard, b: ColaboradorCard) => getRank(a.role) - getRank(b.role));
 
     // Group by Local
@@ -586,7 +589,7 @@ const SocioBlockOrganogramNode = React.memo(({
 
         localColabs.forEach(c => {
             const subs = (context.subordinatesMap.get(c.id) || [])
-                .filter((s: ColaboradorCard) => !s.isSocio && s.isJuridico);
+                .filter(isValidColab);
             if (subs.length > 0) {
                 leaders.push(c);
             } else {
@@ -599,7 +602,7 @@ const SocioBlockOrganogramNode = React.memo(({
             const leaderGroups = new Map<string, ColaboradorCard[]>();
             leaders.forEach(leader => {
                 const leaderSubs = (context.subordinatesMap.get(leader.id) || [])
-                    .filter((s: ColaboradorCard) => !s.isSocio && s.isJuridico);
+                    .filter(isValidColab);
                 const sig = leaderSubs.map((s: ColaboradorCard) => s.id).sort().join('|');
                 if (!leaderGroups.has(sig)) leaderGroups.set(sig, []);
                 leaderGroups.get(sig)!.push(leader);
@@ -607,7 +610,7 @@ const SocioBlockOrganogramNode = React.memo(({
 
             leaderGroups.forEach((groupLeaders) => {
                 const leaderSubs = (context.subordinatesMap.get(groupLeaders[0].id) || [])
-                    .filter((s: ColaboradorCard) => !s.isSocio && s.isJuridico)
+                    .filter(isValidColab)
                     .sort((a: ColaboradorCard, b: ColaboradorCard) => getRank(a.role) - getRank(b.role));
                 blocks.push({ localName, leaders: groupLeaders, members: leaderSubs });
             });
