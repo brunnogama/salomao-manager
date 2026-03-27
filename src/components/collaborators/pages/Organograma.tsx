@@ -2125,16 +2125,18 @@ export function Organograma() {
                                                         </div>
                                                         <div className="mt-4 text-center w-full px-1 flex flex-col items-center gap-1.5">
                                                             <div className="w-full flex flex-col items-center justify-start min-h-[46px]">
-                                                                <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight truncate w-full text-center line-clamp-2 white-space-normal">{colab.name}</h4>
+                                                                <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight w-full text-center break-words pb-0.5">{colab.name}</h4>
                                                             </div>
                                                             <div className="mt-1 flex items-center justify-center min-h-[24px]">
-                                                                <span className="text-[8.5px] px-2 py-1 font-bold uppercase tracking-widest text-white rounded-md text-center flex justify-center items-center shadow-sm w-max" style={{ backgroundColor: getRoleRingColor(String(colab.role), colab.isSocio) }}>{String(colab.role)}</span>
+                                                                <span className="text-[8.5px] px-2 pt-[4px] pb-[2px] font-bold uppercase tracking-widest text-white rounded-md text-center inline-block shadow-sm w-max" style={{ backgroundColor: getRoleRingColor(String(colab.role), colab.isSocio) }}>{String(colab.role)}</span>
                                                             </div>
-                                                            {colab.equipe && colab.equipe !== 'Sem Equipe' && (
-                                                                <span className="inline-block px-2 py-0.5 bg-gray-100 border border-gray-200 rounded-full text-[8px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate w-full">
-                                                                    {String(colab.equipe)}
-                                                                </span>
-                                                            )}
+                                                            <div className="mt-1 flex items-start justify-center min-h-[20px] w-full">
+                                                                {colab.equipe && colab.equipe !== 'Sem Equipe' && colab.equipe !== 'Geral' && (
+                                                                    <span className="inline-block px-2 pt-[3px] pb-[1px] bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm max-w-[180px] text-center">
+                                                                        {colab.equipe}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
