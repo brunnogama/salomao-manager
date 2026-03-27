@@ -336,7 +336,6 @@ export function RHPostos() {
               <div className="flex gap-4">
                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase"><div className="w-2 h-2 rounded-full bg-[#1e3a8a]"></div>Jurídico</div>
                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase"><div className="w-2 h-2 rounded-full bg-orange-500"></div>ADM</div>
-                <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase"><div className="w-2 h-2 rounded-full bg-emerald-500"></div>Terceiro</div>
               </div>
             </div>
 
