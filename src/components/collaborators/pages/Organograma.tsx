@@ -208,7 +208,7 @@ const OrganogramNode = React.memo(({
                                             <Draggable draggableId={`${firstColab.id}-${atuacaoName}`} index={0} isDragDisabled={true}>
                                                 {(dragProvided) => (
                                                     <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className="flex flex-col items-center w-full cursor-pointer" onClick={() => context.setSelectedColabForModal(firstColab.fullData)}>
-                                                        <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:scale-105`} style={{ borderColor: getRoleRingColor(firstColab.role, firstColab.isSocio) }}>
+                                                        <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl hover:scale-105`} style={{ border: `3px solid ${getRoleRingColor(firstColab.role, firstColab.isSocio)}` }}>
                                                             {firstColab.photo_url ? (
                                                                 <img src={firstColab.photo_url} alt={firstColab.name} className="w-full h-full object-cover" />
                                                             ) : (
@@ -218,9 +218,9 @@ const OrganogramNode = React.memo(({
                                                             )}
                                                         </div>
                                                         <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
-                                                            <div>
+                                                            <div className="flex flex-col items-center justify-center w-full">
                                                                 <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center`}>{firstColab.name}</h4>
-                                                                <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center`}>{firstColab.role}</span>
+                                                                <span className={`${isSuperDense ? 'text-[7.5px] px-1.5 py-0.5' : 'text-[8.5px] px-2 py-1'} font-bold uppercase tracking-widest text-white rounded-md mt-1.5 text-center flex justify-center items-center shadow-sm w-max`} style={{ backgroundColor: getRoleRingColor(firstColab.role, firstColab.isSocio) }}>{firstColab.role}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -236,7 +236,7 @@ const OrganogramNode = React.memo(({
                             <div className="w-[2px] h-8 bg-gray-300 mt-2"></div>
                             
                             {/* Atuação Label */}
-                            <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-[#1e3a8a] px-8 py-3 rounded-[1.25rem] shadow-sm mb-6 flex items-center gap-2 relative z-10 w-max">
+                            <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-[#1e3a8a] px-8 py-3 rounded-[1.25rem] shadow-sm mb-6 flex items-center justify-center gap-2 relative z-10 w-max text-center">
                                 <div className="w-2.5 h-2.5 rounded-full bg-[#1e3a8a]"></div>
                                 <span className="text-[13px] font-black uppercase tracking-[0.2em]">{atuacaoName}</span>
                             </div>
@@ -256,8 +256,8 @@ const OrganogramNode = React.memo(({
                                             )}
                                             <div className="absolute top-0 left-1/2 w-[2px] h-8 bg-gray-300 -mt-8 -translate-x-1/2"></div>
                                             
-                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-2 relative z-10 w-max">
-                                                <span className="text-[10px] font-black uppercase tracking-[0.15em]">{localName}</span>
+                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-2 relative z-10 w-max flex justify-center text-center">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-center">{localName}</span>
                                             </div>
                 
                                             <div className="w-[2px] h-6 bg-gray-300"></div>
@@ -343,7 +343,7 @@ const OrganogramNode = React.memo(({
                                                 className={`flex flex-col items-center cursor-pointer w-full ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
                                                 onClick={() => setSelectedColabForModal(currentItem.fullData)}
                                             >
-                                                <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110`} style={{ borderColor: getRoleRingColor(currentItem.role, currentItem.isSocio) }}>
+                                                <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110`}>
                                                     {currentItem.photo_url ? (
                                                         <img src={currentItem.photo_url} alt={currentItem.name} className="w-full h-full object-cover" />
                                                     ) : (
@@ -354,9 +354,9 @@ const OrganogramNode = React.memo(({
                                                 </div>
 
                                                 <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
-                                                    <div>
+                                                    <div className="flex flex-col items-center justify-center w-full">
                                                         <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center`}>{currentItem.name}</h4>
-                                                        <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center`}>{currentItem.role}</span>
+                                                        <span className={`${isSuperDense ? 'text-[7.5px] px-1.5 py-0.5' : 'text-[8.5px] px-2 py-1'} font-bold uppercase tracking-widest text-white rounded-md mt-1.5 text-center flex justify-center items-center shadow-sm w-max`} style={{ backgroundColor: getRoleRingColor(currentItem.role, currentItem.isSocio) }}>{currentItem.role}</span>
                                                     </div>
                                                     {currentItem.equipe && currentItem.equipe !== 'Sem Equipe' && currentItem.equipe !== 'Geral' && !isSuperDense && (
                                                         <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-[180px]">
@@ -432,8 +432,8 @@ const OrganogramNode = React.memo(({
                                             <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
 
                                             {/* Local Label */}
-                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-2">
-                                                <span className="text-[10px] font-black uppercase tracking-[0.15em]">{localName}</span>
+                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-2 flex justify-center text-center w-max mx-auto">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-center">{localName}</span>
                                             </div>
 
                                             {/* Vertical line from Local label to collaborators */}
@@ -605,7 +605,7 @@ const CottaBlockOrganogramNode = React.memo(({
                         className="flex flex-col items-center cursor-pointer transition-all duration-300 hover:scale-105"
                         onClick={() => context.setSelectedColabForModal(socio.fullData)}
                     >
-                        <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl" style={{ borderColor: getRoleRingColor(socio.role, socio.isSocio) }}>
+                        <div className="w-24 h-24 rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 hover:shadow-xl">
                             {socio.photo_url ? (
                                 <img src={socio.photo_url} alt={socio.name} className="w-full h-full object-cover" />
                             ) : (
@@ -614,9 +614,9 @@ const CottaBlockOrganogramNode = React.memo(({
                                 </div>
                             )}
                         </div>
-                        <div className="mt-3 text-center px-1">
+                        <div className="mt-3 text-center px-1 flex flex-col items-center justify-center w-full">
                             <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight text-center">{socio.name}</h4>
-                            <span className="text-[9px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center">{socio.role}</span>
+                            <span className="text-[8.5px] px-2 py-1 font-bold uppercase tracking-widest text-white rounded-md mt-1.5 text-center flex justify-center items-center shadow-sm w-max" style={{ backgroundColor: getRoleRingColor(socio.role, socio.isSocio) }}>{socio.role}</span>
                         </div>
                     </div>
 
@@ -624,8 +624,8 @@ const CottaBlockOrganogramNode = React.memo(({
                     <div className="w-[2px] h-8 bg-gray-300 mt-2"></div>
 
                     {/* Local Label */}
-                    <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md w-max z-10">
-                        <span className="text-[10px] font-black uppercase tracking-[0.15em]">{block.localName}</span>
+                    <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md w-max z-10 flex justify-center text-center">
+                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-center">{block.localName}</span>
                     </div>
 
                     {/* Stem from Local to Leader or Members */}
@@ -662,7 +662,7 @@ const CottaBlockOrganogramNode = React.memo(({
                                                                 className={`flex flex-col items-center cursor-pointer group ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
                                                                 onClick={() => context.setSelectedColabForModal(leader.fullData)}
                                                             >
-                                                                <div className="w-20 h-20 rounded-full bg-white shadow-md border-[3px] flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110" style={{ borderColor: getRoleRingColor(leader.role, leader.isSocio) }}>
+                                                                <div className="w-20 h-20 rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110">
                                                                     {leader.photo_url ? (
                                                                         <img src={leader.photo_url} alt={leader.name} className="w-full h-full object-cover" />
                                                                     ) : (
@@ -671,9 +671,9 @@ const CottaBlockOrganogramNode = React.memo(({
                                                                         </div>
                                                                     )}
                                                                 </div>
-                                                                <div className="mt-3 text-center px-1 w-[150px]">
+                                                                <div className="mt-3 text-center px-1 w-[150px] flex flex-col items-center justify-center">
                                                                     <h4 className="text-[12px] leading-tight font-black text-[#0a192f] tracking-tight text-center">{leader.name}</h4>
-                                                                    <span className="text-[9px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 text-center">{leader.role}</span>
+                                                                    <span className="text-[8.5px] px-2 py-1 font-bold uppercase tracking-widest text-white rounded-md mt-1.5 text-center flex justify-center items-center shadow-sm w-max" style={{ backgroundColor: getRoleRingColor(leader.role, leader.isSocio) }}>{leader.role}</span>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -1549,16 +1549,40 @@ export function Organograma() {
             let isAllSelected = false;
             if (activeTab === 'JURIDICO') {
                 isAllSelected = exportScope.length === roots.length;
-                setSelectedPartner(isAllSelected ? 'ALL' : exportScope);
             } else {
                 const atuacaoSet = new Set<string>();
                 adminColabs.forEach(c => { if (c.atuacao) atuacaoSet.add(c.atuacao); });
                 isAllSelected = exportScope.length === atuacaoSet.size;
-                setSelectedAtuacao(isAllSelected ? 'ALL' : exportScope);
             }
             
-            // Wait for React to render the new tree layout
-            await new Promise(resolve => setTimeout(resolve, 800));
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a3' // Formato grande, paisagem, para mapas longos
+            });
+            let isFirstPage = true;
+
+            // Se for múltiplos, adicionar capa
+            if (isAllSelected || exportScope.length > 1) {
+                pdf.setFillColor(10, 25, 47); // Azul Escuro Salomao #0a192f
+                pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), 'F');
+                
+                pdf.setTextColor(255, 255, 255);
+                pdf.setFontSize(48);
+                pdf.setFont("helvetica", "bold");
+                const mainTitle = `Organograma - ${activeTab === 'JURIDICO' ? 'Jurídico' : 'Administrativo'}`;
+                const titleWidth = pdf.getStringUnitWidth(mainTitle) * 48 / pdf.internal.scaleFactor;
+                pdf.text(mainTitle, (pdf.internal.pageSize.getWidth() - titleWidth) / 2, pdf.internal.pageSize.getHeight() / 2 - 20);
+                
+                pdf.setTextColor(148, 163, 184); // slate-400
+                pdf.setFontSize(24);
+                pdf.setFont("helvetica", "normal");
+                const subTitle = `Data de Referência: ${new Intl.DateTimeFormat('pt-BR').format(new Date())}`;
+                const subWidth = pdf.getStringUnitWidth(subTitle) * 24 / pdf.internal.scaleFactor;
+                pdf.text(subTitle, (pdf.internal.pageSize.getWidth() - subWidth) / 2, pdf.internal.pageSize.getHeight() / 2 + 10);
+                
+                isFirstPage = false;
+            }
 
             const element = treeWrapperRef.current;
             if (!element) {
@@ -1566,89 +1590,143 @@ export function Organograma() {
                 setIsExportingPDF(false);
                 return;
             }
-            
-            // Append temporary "Executive UI Header" to the element for the snapshot
-            const headerDiv = document.createElement('div');
-            headerDiv.style.padding = '40px 40px 20px 40px';
-            headerDiv.style.display = 'flex';
-            headerDiv.style.alignItems = 'center';
-            headerDiv.style.borderBottom = '4px solid #1e3a8a';
-            headerDiv.style.marginBottom = '20px';
-            headerDiv.style.marginTop = '20px';
-            headerDiv.style.background = 'white';
-            
-            const logoImg = document.createElement('img');
-            logoImg.src = '/logo-salomao.png';
-            logoImg.style.height = '64px';
-            logoImg.style.objectFit = 'contain';
-            
-            const titleDiv = document.createElement('div');
-            titleDiv.style.marginLeft = '24px';
-            titleDiv.style.borderLeft = '2px solid #1e3a8a';
-            titleDiv.style.paddingLeft = '24px';
-            const titleH1 = document.createElement('h1');
-            titleH1.innerText = 'Organograma - Salomão, Kaiuca & Abrahão';
-            titleH1.style.color = '#0a192f';
-            titleH1.style.margin = '0';
-            titleH1.style.fontSize = '26px';
-            titleH1.style.fontFamily = 'Arial, sans-serif';
-            titleH1.style.fontWeight = 'bold';
-            
-            const subtitleP = document.createElement('p');
-            const scopeLabel = isAllSelected ? 'Todos' : `${exportScope.length} itens selecionados`;
-            subtitleP.innerText = `Estrutura: ${activeTab === 'JURIDICO' ? 'Jurídica' : 'Administrativa'} | Foco: ${scopeLabel}`;
-            subtitleP.style.color = '#64748b';
-            subtitleP.style.margin = '8px 0 0 0';
-            subtitleP.style.fontSize = '16px';
-            subtitleP.style.fontFamily = 'Arial, sans-serif';
-            
-            titleDiv.appendChild(titleH1);
-            titleDiv.appendChild(subtitleP);
-            headerDiv.appendChild(logoImg);
-            headerDiv.appendChild(titleDiv);
-            
-            element.insertBefore(headerDiv, element.firstChild);
-            
+
             const originalBackground = element.style.background;
-            element.style.background = '#ffffff';
+            const originalTransform = element.style.transform;
+            const originalWidth = element.style.width;
             
-            // Temporary hide header logic controls
-            const controlsNode = element.querySelector('.flex.flex-col.md\\:flex-row.items-start');
+            // Hide header logic controls temporarily
+            const controlsNode = element.querySelector('.flex.flex-col.md\\\\:flex-row.items-start');
             let controlsDisplay = '';
             if (controlsNode && controlsNode instanceof HTMLElement) {
                 controlsDisplay = controlsNode.style.display;
                 controlsNode.style.display = 'none';
             }
 
-            // Adicionar uma tag de estilo global para quebrar os limites do html2canvas 
-            // - Remover truncamentos de texto para que não sejam cortados
-            // - Remover limites de max-width
-            // - Remover scales (transform) inline para renderizar as divs nos tamanhos 100% reais de alta qualidade
-            // Neutralize inline transform explicitly to capture 100% native scale without clipping
-            const originalTransform = element.style.transform;
-            element.style.transform = 'none';
+            // Para cada item no escopo, geramos uma foto isolada
+            for (const scopeItem of exportScope) {
+                if (activeTab === 'JURIDICO') setSelectedPartner(scopeItem);
+                else setSelectedAtuacao(scopeItem);
 
-            // Calculate a safe scale to avoid canvas memory limits (max ~268M pixels in Chrome)
-            const MAX_CANVAS_AREA = 160000000; // Safe threshold (~160M pixels)
-            const elementArea = element.scrollWidth * element.scrollHeight;
-            let safeScale = 3;
-            
-            if (elementArea * safeScale * safeScale > MAX_CANVAS_AREA) {
-                safeScale = Math.max(1, Math.floor(Math.sqrt(MAX_CANVAS_AREA / elementArea) * 10) / 10);
+                // Esperamos o React renderizar o nó individual
+                await new Promise(resolve => setTimeout(resolve, 600));
+
+                const partnerData = roots.find(r => r.id === scopeItem);
+                const partnerName = partnerData ? partnerData.name : scopeItem;
+
+                const headerDiv = document.createElement('div');
+                headerDiv.style.padding = '40px 40px 20px 40px';
+                headerDiv.style.display = 'flex';
+                headerDiv.style.alignItems = 'center';
+                headerDiv.style.borderBottom = '4px solid #1e3a8a';
+                headerDiv.style.marginBottom = '80px';
+                headerDiv.style.marginTop = '20px';
+                headerDiv.style.background = 'white';
+                headerDiv.style.width = '100%';
+                
+                const logoImg = document.createElement('img');
+                logoImg.src = '/logo-salomao.png';
+                logoImg.style.height = '64px';
+                logoImg.style.objectFit = 'contain';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.style.marginLeft = '24px';
+                titleDiv.style.borderLeft = '2px solid #1e3a8a';
+                titleDiv.style.paddingLeft = '24px';
+                const titleH1 = document.createElement('h1');
+                titleH1.innerText = `${activeTab === 'JURIDICO' ? 'Sócio/Diretoria' : 'Área'}: ${partnerName}`;
+                titleH1.style.color = '#0a192f';
+                titleH1.style.margin = '0';
+                titleH1.style.fontSize = '26px';
+                titleH1.style.fontFamily = 'Arial, sans-serif';
+                titleH1.style.fontWeight = 'bold';
+                
+                titleDiv.appendChild(titleH1);
+                headerDiv.appendChild(logoImg);
+                headerDiv.appendChild(titleDiv);
+                
+                element.insertBefore(headerDiv, element.firstChild);
+                
+                element.style.background = '#ffffff';
+                element.style.transform = 'none';
+                
+                // Força o wrapper a ter um tamanho mínimo generoso para fundo não cortar
+                element.style.width = 'max-content';
+                element.style.minWidth = '2400px'; 
+                element.style.paddingLeft = '100px';
+                element.style.paddingRight = '100px';
+                element.style.paddingBottom = '200px';
+                
+                // Centralizar o nó raiz atual manipulando estilos se possível
+                const rootNodeWrapper = document.getElementById('organogram-root-node');
+                if (rootNodeWrapper) {
+                    rootNodeWrapper.style.margin = '0 auto';
+                }
+
+                // Calculate scale precisely per page
+                const MAX_CANVAS_AREA = 160000000;
+                const elementArea = element.scrollWidth * element.scrollHeight;
+                let safeScale = 3;
+                if (elementArea * safeScale * safeScale > MAX_CANVAS_AREA) {
+                    safeScale = Math.max(1, Math.floor(Math.sqrt(MAX_CANVAS_AREA / elementArea) * 10) / 10);
+                }
+
+                const canvas = await html2canvas(element, {
+                    scale: safeScale,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    windowWidth: element.scrollWidth,
+                    windowHeight: element.scrollHeight,
+                    logging: false
+                });
+
+                if (!isFirstPage) {
+                    pdf.addPage();
+                } else {
+                    isFirstPage = false;
+                }
+
+                const imgData = canvas.toDataURL('image/png', 1.0);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                
+                const canvasRatio = canvas.height / canvas.width;
+                const pdfRatio = pdfHeight / pdfWidth;
+
+                let finalWidth = pdfWidth;
+                let finalHeight = pdfHeight;
+                let offsetX = 0;
+                let offsetY = 0;
+
+                // Fit ao tamanho paisagem contendo nas bordas
+                if (canvasRatio > pdfRatio) {
+                    // Mais alto que o PDF
+                    finalWidth = pdfHeight / canvasRatio;
+                    offsetX = (pdfWidth - finalWidth) / 2;
+                } else {
+                    // Mais largo que o PDF
+                    finalHeight = pdfWidth * canvasRatio;
+                    offsetY = (pdfHeight - finalHeight) / 2;
+                }
+
+                pdf.addImage(imgData, 'PNG', offsetX, offsetY, finalWidth, finalHeight);
+
+                // Restore step UI
+                element.removeChild(headerDiv);
+                if (rootNodeWrapper) {
+                    rootNodeWrapper.style.margin = '';
+                }
             }
 
-            const canvas = await html2canvas(element, {
-                scale: safeScale, // Alta resolução dinâmica para fotos não ficarem pixeladas
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                windowWidth: element.scrollWidth,
-                windowHeight: element.scrollHeight
-            });
-            
-            // Restore UI
+            // Restore global UI once loops finish
             element.style.transform = originalTransform;
-            element.removeChild(headerDiv);
             element.style.background = originalBackground;
+            element.style.width = originalWidth;
+            element.style.minWidth = '';
+            element.style.paddingLeft = '';
+            element.style.paddingRight = '';
+            element.style.paddingBottom = '';
+
             if (controlsNode && controlsNode instanceof HTMLElement) {
                 controlsNode.style.display = controlsDisplay;
             }
@@ -1658,39 +1736,16 @@ export function Organograma() {
             } else {
                 setSelectedAtuacao(prevAtuacao);
             }
-            
-            const imgData = canvas.toDataURL('image/png', 1.0);
-            
-            // Converter tamanho originário em MM para um PDF de tamanho exato (high-res display)
-            const pdfWidth = (canvas.width * 25.4) / 300; // baseado em 300DPI
-            const pdfHeight = (canvas.height * 25.4) / 300; 
-            
-            const pdf = new jsPDF({
-                orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
-                unit: 'mm',
-                format: [pdfWidth, pdfHeight]
-            });
-            
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
             let fileName = 'Organograma.pdf';
-            if (isAllSelected) {
-                fileName = `Organograma - Todos (${activeTab === 'JURIDICO' ? 'Jurídico' : 'Administrativo'}).pdf`;
-            } else if (exportScope.length === 1) {
-                if (activeTab === 'JURIDICO') {
-                    const partner = roots.find(r => r.id === exportScope[0]);
-                    fileName = `Organograma - ${partner?.name || 'Sócio'}.pdf`;
-                } else {
-                    fileName = `Organograma - ${exportScope[0]}.pdf`;
-                }
-            } else {
-                fileName = `Organograma - Seleção Personalizada.pdf`;
-            }
+            if (isAllSelected) fileName = `Organograma - Todos (${activeTab === 'JURIDICO' ? 'Jurídico' : 'Administrativo'}).pdf`;
+            else if (exportScope.length === 1) fileName = `Organograma - ${exportScope[0]}.pdf`;
+            else fileName = `Organograma - Seleção Personalizada.pdf`;
             
             pdf.save(fileName);
-            
             showAlert('Sucesso', 'PDF Exportado com sucesso!', 'success');
             setIsPdfModalOpen(false);
+
         } catch (error) {
             console.error('Erro ao gerar PDF:', error);
             showAlert('Erro', 'Ocorreu um erro ao gerar o PDF.', 'error');
@@ -2025,7 +2080,7 @@ export function Organograma() {
                                                         onClick={() => setSelectedColabForModal(colab.fullData)}
                                                         title="Clique para expandir perfil"
                                                     >
-                                                        <div className="w-20 h-20 rounded-full bg-white shadow-sm border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-lg group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                                                        <div className="w-20 h-20 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-lg group-hover:scale-110">
                                                             {colab.photo_url || colab.foto_url ? (
                                                                 <img src={colab.photo_url || colab.foto_url} alt={colab.name} className="w-full h-full object-cover" />
                                                             ) : (
@@ -2035,9 +2090,9 @@ export function Organograma() {
                                                             )}
                                                         </div>
                                                         <div className="mt-4 text-center w-full px-1 flex flex-col items-center gap-1.5">
-                                                            <div className="w-full">
-                                                                <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight truncate w-full">{colab.name}</h4>
-                                                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate w-full">{String(colab.role)}</span>
+                                                            <div className="w-full flex flex-col items-center justify-center">
+                                                                <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight truncate w-full text-center">{colab.name}</h4>
+                                                                <span className="text-[8.5px] px-2 py-1 font-bold uppercase tracking-widest text-white rounded-md mt-1.5 text-center flex justify-center items-center shadow-sm w-max" style={{ backgroundColor: getRoleRingColor(String(colab.role), colab.isSocio) }}>{String(colab.role)}</span>
                                                             </div>
                                                             {colab.equipe && colab.equipe !== 'Sem Equipe' && (
                                                                 <span className="inline-block px-2 py-0.5 bg-gray-100 border border-gray-200 rounded-full text-[8px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate w-full">
