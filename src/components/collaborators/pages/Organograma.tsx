@@ -1633,10 +1633,11 @@ export function Organograma() {
                 const partnerName = partnerData ? partnerData.name : scopeItem;
 
                 const headerDiv = document.createElement('div');
-                headerDiv.style.padding = '40px 40px 20px 40px';
+                headerDiv.style.padding = '40px';
                 headerDiv.style.display = 'flex';
                 headerDiv.style.alignItems = 'center';
-                headerDiv.style.borderBottom = '4px solid #1e3a8a';
+                headerDiv.style.justifyContent = 'center';
+                headerDiv.style.borderBottom = '8px solid #1e3a8a';
                 headerDiv.style.marginBottom = '80px';
                 headerDiv.style.marginTop = '20px';
                 headerDiv.style.background = 'white';
@@ -1644,20 +1645,34 @@ export function Organograma() {
                 
                 const logoImg = document.createElement('img');
                 logoImg.src = '/logo-salomao.png';
-                logoImg.style.height = '64px';
+                logoImg.style.height = '140px'; // Made logo huge to match large canvases
                 logoImg.style.objectFit = 'contain';
                 
                 const titleDiv = document.createElement('div');
-                titleDiv.style.marginLeft = '24px';
-                titleDiv.style.borderLeft = '2px solid #1e3a8a';
-                titleDiv.style.paddingLeft = '24px';
+                titleDiv.style.marginLeft = '60px';
+                titleDiv.style.borderLeft = '6px solid #1e3a8a';
+                titleDiv.style.paddingLeft = '60px';
+                
+                // Gender heuristic for title
+                let roleLabel = 'Sócio';
+                if (activeTab === 'ADMINISTRATIVO') {
+                    roleLabel = 'Área';
+                } else {
+                    const firstName = partnerName.split(' ')[0].toLowerCase();
+                    const isFemale = partnerData?.role?.toLowerCase().includes('sócia') || 
+                                     firstName.endsWith('a') || 
+                                     ['alice', 'suellen', 'bel', 'ruthe', 'raquel', 'miriam', 'ester', 'isis', 'aline', 'caroline', 'simone'].includes(firstName);
+                    if (isFemale) roleLabel = 'Sócia';
+                }
+                
                 const titleH1 = document.createElement('h1');
-                titleH1.innerText = `${activeTab === 'JURIDICO' ? 'Sócio/Diretoria' : 'Área'}: ${partnerName}`;
+                titleH1.innerText = `${roleLabel}: ${partnerName}`;
                 titleH1.style.color = '#0a192f';
                 titleH1.style.margin = '0';
-                titleH1.style.fontSize = '26px';
-                titleH1.style.fontFamily = 'Arial, sans-serif';
-                titleH1.style.fontWeight = 'bold';
+                titleH1.style.fontSize = '80px'; // Huge elegant font size
+                titleH1.style.fontFamily = 'Inter, Arial, sans-serif';
+                titleH1.style.fontWeight = '900';
+                titleH1.style.letterSpacing = '-0.02em';
                 
                 titleDiv.appendChild(titleH1);
                 headerDiv.appendChild(logoImg);
@@ -1668,12 +1683,13 @@ export function Organograma() {
                 element.style.background = '#ffffff';
                 element.style.transform = 'none';
                 
-                // Força o wrapper a ter um tamanho mínimo generoso para fundo não cortar
+                // Allow dynamic shrink-wrapping instead of forcing 2400px, creating giant scale
+                element.style.display = 'inline-block';
                 element.style.width = 'max-content';
-                element.style.minWidth = '2400px'; 
-                element.style.paddingLeft = '100px';
-                element.style.paddingRight = '100px';
-                element.style.paddingBottom = '200px';
+                element.style.minWidth = 'min-content'; 
+                element.style.paddingLeft = '80px';
+                element.style.paddingRight = '80px';
+                element.style.paddingBottom = '150px';
                 
                 // Centralizar o nó raiz atual manipulando estilos se possível
                 const rootNodeWrapper = document.getElementById('organogram-root-node');
