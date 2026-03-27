@@ -264,7 +264,7 @@ const OrganogramNode = React.memo(({
 
                             {localEntries.length > 0 && (
                                 <div className="flex justify-center relative pt-8 w-full gap-x-8">
-                                    <div className="absolute top-[-1.5rem] left-1/2 w-[2px] h-8 bg-gray-300 -translate-x-1/2"></div>
+                                    <div className="absolute top-[-1.5rem] left-1/2 w-[2px] h-6 bg-gray-300 -translate-x-1/2"></div>
                                     
                                     {localEntries.map(([localName, localColabs], locIdx) => (
                                         <div key={localName} className={`relative flex flex-col items-center ${localEntries.length > 5 ? 'px-1' : 'px-6'}`}>
@@ -277,7 +277,7 @@ const OrganogramNode = React.memo(({
                                             )}
                                             <div className="absolute top-0 left-1/2 w-[2px] h-8 bg-gray-300 -mt-8 -translate-x-1/2"></div>
                                             
-                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md mb-2 relative z-10 w-max mx-auto flex justify-center text-center">
+                                            <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-5 py-2 rounded-xl shadow-md relative z-10 w-max mx-auto flex justify-center text-center">
                                                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-center">{localName}</span>
                                             </div>
                 
