@@ -1031,9 +1031,13 @@ export function Organograma() {
                         isJuridico = true;
                     }
 
+                    let finalIsJuridico = isJuridico && !explicitlyAdmin;
+                    let finalIsAdministrativo = !isJuridico || explicitlyAdmin;
+
                     // Explicit override
-                    if (c.name === 'Felipe Dornelas Aniceto') {
-                        isJuridico = false;
+                    if (c.name.toLowerCase().includes('felipe dornelas') || c.name.toLowerCase().includes('gabriel parreiras horta')) {
+                        finalIsJuridico = false;
+                        finalIsAdministrativo = true;
                     }
 
                     return {
@@ -1049,8 +1053,8 @@ export function Organograma() {
                         competencias: c.competencias || '',
                         photo_url: c.photo_url || c.foto_url,
                         foto_url: c.foto_url,
-                        isJuridico: isJuridico && !explicitlyAdmin,
-                        isAdministrativo: !isJuridico || explicitlyAdmin,
+                        isJuridico: finalIsJuridico,
+                        isAdministrativo: finalIsAdministrativo,
                         isSocio,
                         fullData: c
                     };
