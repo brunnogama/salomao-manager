@@ -196,12 +196,48 @@ export default function AprovacaoFeriasPeloLider() {
                     const aquiEnd = new Date(vacationReq.aquisitive_period_end).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
                     adminObs = `[Período Aquisitivo: ${aquiStart} a ${aquiEnd}]\n${adminObs}`;
                 }
-
-                await supabase
+                // O RPC update_vacation_request_leader cria um registro monolítico com a soma total dos dias
+                // Identificamos e "estilhaçamos" esse bloco nas fatias exatas (Período 1, 2, 3) aprovadas
+                const { data: createdAbsences } = await supabase
                     .from('collaborator_absences')
-                    .update({ observation: adminObs })
+                    .select('*')
                     .eq('collaborator_id', collaborator.id)
                     .eq('observation', 'Aprovado digitalmente via Fluxo de Férias');
+
+                if (createdAbsences && createdAbsences.length > 0) {
+                    for (const abs of createdAbsences) {
+                        if (abs.type === 'Férias' || abs.type === 'Recesso') {
+                            // Deleta o registro condensado do banco gerado no backend
+                            await supabase.from('collaborator_absences').delete().eq('id', abs.id);
+                            
+                            const unmaskToISO = (d: string) => {
+                                if (!d || !d.includes('/')) return d;
+                                const [day, month, year] = d.split('/');
+                                return `${year}-${month}-${day}`;
+                            };
+
+                            // Pegar apenas períodos validados explicitamente
+                            const approvedPeriods = periods.filter(p => p.status === 'approved');
+
+                            if (approvedPeriods.length > 0) {
+                                const fragmentedPayloads = approvedPeriods.map(p => ({
+                                    collaborator_id: collaborator.id,
+                                    type: abs.type,
+                                    start_date: unmaskToISO(p.start),
+                                    end_date: unmaskToISO(p.end),
+                                    days_count: parseInt(p.days.replace(/[^0-9]/g, '')) || 0,
+                                    observation: adminObs
+                                }));
+                                await supabase.from('collaborator_absences').insert(fragmentedPayloads);
+                            }
+                        } else {
+                            // Abono Pecuniário segue sendo 1 único bloco inalterado, apenas ganha a assinatura
+                            await supabase.from('collaborator_absences')
+                                .update({ observation: adminObs })
+                                .eq('id', abs.id);
+                        }
+                    }
+                }
                 
                 // Generates PDF and uploads to GED if reference exists
                 if (receiptRef.current) {
