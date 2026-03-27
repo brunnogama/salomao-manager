@@ -46,6 +46,7 @@ export default function SolicitacaoFerias() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
 
     const [collaborator, setCollaborator] = useState<Partial<Collaborator> | null>(null);
@@ -118,11 +119,11 @@ export default function SolicitacaoFerias() {
         try {
             // Validation
             if (!aquiStart || !aquiEnd) {
-                setError('Preencha o Período aquisitivo.');
+                setFormError('Preencha o Período aquisitivo.');
                 return;
             }
             if (aquiStart.length !== 10 || aquiEnd.length !== 10) {
-                setError('Preencha o período aquisitivo no formato correto (DD/MM/AAAA).');
+                setFormError('Preencha o período aquisitivo no formato correto (DD/MM/AAAA).');
                 return;
             }
 
@@ -136,24 +137,24 @@ export default function SolicitacaoFerias() {
             for (let i = 0; i < periods.length; i++) {
                 const p = periods[i];
                 if (!p.start || !p.end) {
-                    setError(`Preencha as datas de início e fim do Período ${i + 1} do Gozo de Férias.`);
+                    setFormError(`Preencha as datas de início e fim do Período ${i + 1} do Gozo de Férias.`);
                     return;
                 }
                 if (p.start.length !== 10 || p.end.length !== 10) {
-                    setError(`Datas do Período ${i + 1} incompletas (DD/MM/AAAA).`);
+                    setFormError(`Datas do Período ${i + 1} incompletas (DD/MM/AAAA).`);
                     return;
                 }
                 const isoStart = unmaskDateToISO(p.start);
                 const isoEnd = unmaskDateToISO(p.end);
                 if (!isoStart || !isoEnd) {
-                    setError(`Datas do Período ${i + 1} inválidas.`);
+                    setFormError(`Datas do Período ${i + 1} inválidas.`);
                     return;
                 }
 
                 const d1 = new Date(isoStart + 'T00:00:00');
                 const d2 = new Date(isoEnd + 'T00:00:00');
                 if (d2 < d1) {
-                    setError(`A data de fim do Período ${i + 1} não pode ser menor que a data de início.`);
+                    setFormError(`A data de fim do Período ${i + 1} não pode ser menor que a data de início.`);
                     return;
                 }
 
@@ -173,11 +174,11 @@ export default function SolicitacaoFerias() {
             periodsText += `> Total Fracionado: ${totalDaysCount} dias\n============================================\n`;
 
             if (sellVacation && (!sellVacationDays || parseInt(sellVacationDays) <= 0)) {
-                setError('Informe a quantidade de dias válidos para o abono pecuniário.');
+                setFormError('Informe a quantidade de dias válidos para o abono pecuniário.');
                 return;
             }
             if (!accepted) {
-                setError('Você deve confirmar a veracidade das informações na caixa de seleção (Assinatura Digital).');
+                setFormError('Você deve confirmar a veracidade das informações na caixa de seleção (Assinatura Digital).');
                 return;
             }
 
@@ -189,7 +190,7 @@ export default function SolicitacaoFerias() {
                 : periodsText;
 
             setSaving(true);
-            setError(null);
+            setFormError(null);
 
             // First update the aquisitive period on the request directly
             await supabase.from('vacation_requests').update({
@@ -229,7 +230,7 @@ export default function SolicitacaoFerias() {
             setSuccess(true);
         } catch (err: any) {
             console.error('Erro ao salvar:', err);
-            setError(err.message || 'Ocorreu um erro ao enviar sua solicitação. Tente novamente mais tarde.');
+            setFormError(err.message || 'Ocorreu um erro ao enviar sua solicitação. Tente novamente mais tarde.');
         } finally {
             setSaving(false);
         }
@@ -516,9 +517,9 @@ export default function SolicitacaoFerias() {
                             />
                         </section>
 
-                        {error && (
+                        {formError && (
                             <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm font-medium animate-in fade-in">
-                                {error}
+                                {formError}
                             </div>
                         )}
 

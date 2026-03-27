@@ -16,6 +16,7 @@ export default function AprovacaoFeriasPeloLider() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
     const [success, setSuccess] = useState<{ status: 'approved' | 'rejected' } | null>(null);
 
     const [collaborator, setCollaborator] = useState<any>(null);
@@ -62,12 +63,12 @@ export default function AprovacaoFeriasPeloLider() {
     const handleAction = async (approve: boolean) => {
         try {
             if (!approve && !observation.trim()) {
-                setError('Ao reprovar, é OBRIGATÓRIO preencher o motivo nas observações para que o integrante corrija.');
+                setFormError('Ao reprovar, é OBRIGATÓRIO preencher o motivo nas observações para que o integrante corrija.');
                 return;
             }
 
             setSaving(true);
-            setError(null);
+            setFormError(null);
 
             const { error: updateError } = await supabase.rpc('update_vacation_request_leader', {
                 p_token: token,
@@ -98,7 +99,7 @@ export default function AprovacaoFeriasPeloLider() {
             setSuccess({ status: approve ? 'approved' : 'rejected' });
         } catch (err: any) {
             console.error('Erro ao salvar:', err);
-            setError(err.message || 'Ocorreu um erro ao enviar sua decisão. Tente novamente mais tarde.');
+            setFormError(err.message || 'Ocorreu um erro ao enviar sua decisão. Tente novamente mais tarde.');
         } finally {
             setSaving(false);
         }
@@ -239,9 +240,9 @@ export default function AprovacaoFeriasPeloLider() {
                                     onChange={e => setObservation(e.target.value)}
                                 />
                             </div>
-                            {error && (
+                            {formError && (
                                 <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm font-medium animate-in fade-in">
-                                    {error}
+                                    {formError}
                                 </div>
                             )}
                         </section>
