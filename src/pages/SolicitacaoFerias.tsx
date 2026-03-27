@@ -318,7 +318,7 @@ export default function SolicitacaoFerias() {
                         <CheckCircle2 className="h-10 w-10" />
                     </div>
                     <h2 className="text-2xl font-black text-[#0a192f] mb-2 tracking-tight">Formulário Enviado!</h2>
-                    <p className="text-gray-500 mb-8">Sua solicitação de {termType.toLowerCase()} foi enviada com sucesso ao seu Líder Direto. Você receberá uma notificação quando for aprovada ou caso precisem de ajustes.</p>
+                    <p className="text-gray-500 mb-8">Sua solicitação de {termType.toLowerCase()} foi enviada com sucesso ao seu Líder Direto. Você receberá uma notificação quando for aprovada ou caso precise de ajustes.</p>
                     <p className="text-xs text-gray-400">Você já pode fechar esta janela.</p>
                 </div>
             </div>
