@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, X } from 'lucide-react';
 
 interface ConfirmationModalProps {
@@ -22,6 +23,12 @@ export function ConfirmationModal({
     cancelText = 'Cancelar',
     variant = 'warning'
 }: ConfirmationModalProps) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
@@ -38,7 +45,7 @@ export function ConfirmationModal({
         };
     }, [isOpen, onClose]);
 
-    if (!isOpen) return null;
+    if (!isOpen || !mounted) return null;
 
     const getVariantStyles = () => {
         switch (variant) {
@@ -65,8 +72,8 @@ export function ConfirmationModal({
 
     const styles = getVariantStyles();
 
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+    const modalContent = (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div
                 className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
@@ -114,4 +121,6 @@ export function ConfirmationModal({
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }
