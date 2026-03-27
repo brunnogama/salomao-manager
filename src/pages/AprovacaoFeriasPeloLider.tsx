@@ -206,14 +206,15 @@ export default function AprovacaoFeriasPeloLider() {
                 // Generates PDF and uploads to GED if reference exists
                 if (receiptRef.current) {
                     try {
-                        const canvas = await html2canvas(receiptRef.current, { scale: 2 });
-                        const imgData = canvas.toDataURL('image/png');
+                        const canvas = await html2canvas(receiptRef.current, { scale: 1.5, useCORS: true });
+                        const imgData = canvas.toDataURL('image/jpeg', 0.7);
                         const pdf = new jsPDF({
                             orientation: 'portrait',
                             unit: 'px',
-                            format: [canvas.width / 2, canvas.height / 2]
+                            format: [canvas.width / 1.5, canvas.height / 1.5],
+                            compress: true
                         });
-                        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+                        pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 1.5, canvas.height / 1.5, undefined, 'FAST');
                         const pdfBlob = pdf.output('blob');
                         
                         const fileName = `ferias/${collaborator.id}/recibo_ferias_${vacationReq.id}.pdf`;
