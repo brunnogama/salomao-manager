@@ -158,7 +158,10 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     installment={extrasInstallments[idx]}
                                     rule={extrasRules[idx]}
                                     isReady={extrasReady[idx]}
-                                    onEdit={() => handleEditExtra(extrasField, valueField, extrasInstallmentsField, installmentsField, extrasClausesField, clauseField as keyof Contract, extrasRulesField, ruleField, extrasReadyField, readyField, idx)}
+                                    onEdit={() => {
+                                        handleEditExtra(extrasField, valueField, extrasInstallmentsField, installmentsField, extrasClausesField, clauseField as keyof Contract, extrasRulesField, ruleField, extrasReadyField, readyField, idx);
+                                        setOpenSections(prev => ({ ...prev, [key]: true }));
+                                    }}
                                     onDelete={() => removeExtra(extrasField, idx, extrasInstallmentsField)}
                                 />
                             ))}

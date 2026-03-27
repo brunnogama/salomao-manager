@@ -254,6 +254,19 @@ export function ContractFormModal(props: Props) {
 
         (newFormData as any)[breakdownField] = newBreakdown;
         hasChanges = true;
+      } else if (count > 1 && currentBreakdown.length === count) {
+        // Also check if the total value changed significantly compared to the sum of the breakdown
+        const total = safeParseFloat(valStr);
+        const currentTotal = currentBreakdown.reduce((acc: number, curr: any) => acc + safeParseFloat(curr.value), 0);
+        if (Math.abs(currentTotal - total) > 0.1) {
+          const baseValue = total / count;
+          const newBreakdown = Array.from({ length: count }, (_, i) => ({
+            date: addDays(new Date(), i * 30).toISOString().split('T')[0],
+            value: maskMoney(baseValue.toFixed(2))
+          }));
+          (newFormData as any)[breakdownField] = newBreakdown;
+          hasChanges = true;
+        }
       }
     });
 
@@ -383,6 +396,17 @@ export function ContractFormModal(props: Props) {
     if (readyListField && readySourceField) {
       updates[readyListField] = [...((formData as any)[readyListField] || []), (formData as any)[readySourceField] || false];
       updates[readySourceField] = false;
+    }
+
+    // Try to clear the breakdown field if it exists
+    const breakdownFieldMap: Record<string, string> = {
+      'pro_labore': 'pro_labore_breakdown',
+      'final_success_fee': 'final_success_fee_breakdown',
+      'fixed_monthly_fee': 'fixed_monthly_fee_breakdown',
+      'other_fees': 'other_fees_breakdown'
+    };
+    if (breakdownFieldMap[valueField as string]) {
+      updates[breakdownFieldMap[valueField as string]] = [];
     }
 
     setFormData(prev => ({ ...prev, ...updates }));
@@ -1006,7 +1030,7 @@ export function ContractFormModal(props: Props) {
                   handleCNPJSearch={handleCNPJSearch}
                   clientSelectOptions={clientSelectOptions}
                   handleClientChange={handleClientChange}
-                  setActiveManager={setActiveManager}
+                  setActiveManager={openOptionManager}
                   duplicateClientCases={duplicateClientCases}
                   getStatusLabel={getStatusLabel}
                   areaOptions={areaOptions}
@@ -1031,7 +1055,7 @@ export function ContractFormModal(props: Props) {
                   partnerSelectOptions={partnerSelectOptions}
                   billingOptions={billingOptions}
                   maskHon={maskHon}
-                  setActiveManager={setActiveManager}
+                  setActiveManager={openOptionManager}
                   signatureOptions={signatureOptions}
                   formatForInput={formatForInput}
                   handleAddToList={handleAddToList}
@@ -1074,7 +1098,7 @@ export function ContractFormModal(props: Props) {
                     handleProcessAction={handleProcessAction}
                     cancelEditProcess={cancelEditProcess}
                     localMaskCNJ={localMaskCNJ}
-                    setActiveManager={setActiveManager}
+                    setActiveManager={openOptionManager}
                     duplicateProcessData={duplicateProcessData}
                     clientSelectOptions={clientSelectOptions}
                     clientCnpjMap={clientCnpjMap}
