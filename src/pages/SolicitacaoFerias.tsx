@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Loader2, CheckCircle2, User, Save, ShieldCheck, CalendarRange, Info } from 'lucide-react';
+import { Loader2, CheckCircle2, User, Save, CalendarRange, Info } from 'lucide-react';
 import { Collaborator } from '../types/controladoria';
 
 const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10);
@@ -309,24 +309,12 @@ export default function SolicitacaoFerias() {
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col justify-between py-10 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto w-full">
                 <div className="flex flex-col items-center gap-5 mb-8 text-center">
-                    <div className="shrink-0 w-full max-w-[240px] flex justify-center">
-                        <img src="/logo-salomao.png" alt="Salomão" className="h-[70px] object-contain bg-transparent" />
+                    <div className="shrink-0 w-full max-w-[280px] flex justify-center">
+                        <img src="/logo-salomao.png" alt="Salomão" className="h-[95px] object-contain bg-transparent" />
                     </div>
                     <div>
                         <h1 className="text-2xl sm:text-3xl font-black text-[#0a192f] tracking-tight leading-none mb-2">Solicitação de {fullTermType}</h1>
-                        <p className="text-gray-500 text-sm sm:text-base max-w-md mx-auto">Preencha os períodos desejados para aprovação da sua liderança.</p>
-                    </div>
-                </div>
-
-                <div className="bg-emerald-50 border border-emerald-200 shadow-sm rounded-2xl p-4 sm:p-5 flex items-center justify-center gap-4 mb-8 transition-transform duration-300 max-w-3xl mx-auto text-center">
-                    <div className="bg-emerald-100 p-2.5 rounded-full text-emerald-600 shrink-0 shadow-inner">
-                        <ShieldCheck className="w-6 h-6" />
-                    </div>
-                    <div className="pt-0.5">
-                        <h3 className="text-emerald-900 font-bold text-sm mb-1">Processo Integrado (RH)</h3>
-                        <p className="text-emerald-700/90 text-xs sm:text-sm leading-relaxed">
-                            Ao finalizar, os dados serão enviados para seu líder e farão parte de seu histórico gerencial oficial sem quebra do fluxo.
-                        </p>
+                        <p className="text-gray-500 text-sm sm:text-base max-w-md mx-auto">Preencha os períodos desejados para aprovação pela sua liderança.</p>
                     </div>
                 </div>
 
@@ -341,7 +329,7 @@ export default function SolicitacaoFerias() {
                                 <div className="flex-1 w-full min-w-[250px] max-w-[450px]">
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Colaborador</label>
                                     <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-700 break-words flex flex-wrap gap-2 items-center">
-                                        <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded font-black shrink-0">COL - {collaborator?.matricula_interna || 'S/N'}</span>
+                                        <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded font-black shrink-0">{collaborator?.matricula_interna || 'S/N'}</span>
                                         <span className="font-bold text-[#0a192f]">{collaborator?.name || '-'}</span>
                                     </div>
                                 </div>
