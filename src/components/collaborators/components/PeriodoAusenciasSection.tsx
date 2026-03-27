@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Clock, Save, Loader2, Calendar as CalendarIcon, FilePlus2, Stethoscope, Trash2, Send } from 'lucide-react'
+import { Clock, Save, Loader2, Calendar as CalendarIcon, FilePlus2, Stethoscope, Trash2, Send, ShieldCheck, Tag } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { Collaborator } from '../../../types/controladoria'
 import { ManagedMultiSelect } from '../../crm/ManagedMultiSelect'
@@ -399,11 +399,39 @@ export function PeriodoAusenciasSection({
                                                 <p className="text-sm font-medium text-gray-500 mt-1">
                                                     {formatDateBr(a.start_date)} até {formatDateBr(a.end_date)}
                                                 </p>
-                                                {a.observation && (
-                                                    <p className="text-xs text-gray-400 mt-2 bg-gray-50 p-2 rounded-lg border border-gray-100 italic">
-                                                        "{a.observation}"
-                                                    </p>
-                                                )}
+                                                {(() => {
+                                                    const obsText = a.observation || '';
+                                                    const isDigitalApproval = obsText.includes('Aprovado digitalmente via Fluxo de Férias');
+                                                    if (!isDigitalApproval && !obsText) return null;
+
+                                                    if (isDigitalApproval) {
+                                                        const parts = obsText.split('\n');
+                                                        const hasAquisitive = parts[0].includes('[Período Aquisitivo:');
+                                                        const aquiText = hasAquisitive ? parts[0].replace(/\[|\]/g, '') : null;
+                                                        const approvalText = hasAquisitive ? parts[1] : parts[0];
+
+                                                        return (
+                                                            <div className="mt-4 flex flex-col gap-2">
+                                                                {aquiText && (
+                                                                    <div className="flex items-center gap-2 text-[11px] font-bold text-blue-800 bg-blue-50 px-3 py-1.5 rounded-md border border-blue-100 max-w-fit shadow-sm">
+                                                                        <Tag className="h-3 w-3 text-blue-600" />
+                                                                        {aquiText}
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-3 py-2.5 rounded-lg shadow-sm font-medium">
+                                                                    <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
+                                                                    <span>{approvalText}</span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }
+
+                                                    return (
+                                                        <p className="text-xs text-gray-500 mt-3 bg-gray-50/80 p-3 rounded-lg border border-gray-100 italic shadow-sm">
+                                                            "{obsText}"
+                                                        </p>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                         {!isViewMode && (

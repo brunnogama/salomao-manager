@@ -6,6 +6,18 @@ import { Collaborator } from '../types/controladoria';
 
 const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10);
 
+const isValidDateDDMMYYYY = (val: string | undefined | null) => {
+    if (!val || val.length !== 10) return false;
+    const [d, m, y] = val.split('/');
+    const day = parseInt(d, 10);
+    const month = parseInt(m, 10);
+    const year = parseInt(y, 10);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+    if (month < 1 || month > 12) return false;
+    const dateObj = new Date(year, month - 1, day);
+    return dateObj.getDate() === day && dateObj.getMonth() === month - 1 && dateObj.getFullYear() === year;
+};
+
 const unmaskDateToISO = (displayDate: string | undefined | null) => {
     if (!displayDate) return null;
     if (displayDate.includes('-')) return displayDate;
@@ -140,8 +152,8 @@ export default function SolicitacaoFerias() {
                 setFormError('Preencha o Período aquisitivo.');
                 return;
             }
-            if (aquiStart.length !== 10 || aquiEnd.length !== 10) {
-                setFormError('Preencha o período aquisitivo no formato correto (DD/MM/AAAA).');
+            if (!isValidDateDDMMYYYY(aquiStart) || !isValidDateDDMMYYYY(aquiEnd)) {
+                setFormError('Verifique o Período Aquisitivo: a data informada não existe no calendário (Verifique se trocou o dia pelo mês). E use o padrão DD/MM/AAAA.');
                 return;
             }
 
@@ -158,8 +170,8 @@ export default function SolicitacaoFerias() {
                     setFormError(`Preencha as datas de início e fim do Período ${i + 1} do Gozo de Férias.`);
                     return;
                 }
-                if (p.start.length !== 10 || p.end.length !== 10) {
-                    setFormError(`Datas do Período ${i + 1} incompletas (DD/MM/AAAA).`);
+                if (!isValidDateDDMMYYYY(p.start) || !isValidDateDDMMYYYY(p.end)) {
+                    setFormError(`O Período ${i + 1} de gozo contém uma data que não existe no calendário (ex: mês acima de 12). Revise seguindo o padrão DD/MM/AAAA.`);
                     return;
                 }
                 const isoStart = unmaskDateToISO(p.start);

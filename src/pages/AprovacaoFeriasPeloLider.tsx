@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+import ReceiptPDFTemplate from '../components/collaborators/components/ReceiptPDFTemplate';
 import { supabase } from '../lib/supabase';
 import { Loader2, CheckCircle2, User, ShieldCheck, Check, X, CalendarRange } from 'lucide-react';
 
@@ -27,6 +30,7 @@ export default function AprovacaoFeriasPeloLider() {
     const [error, setError] = useState<string | null>(null);
     const [formError, setFormError] = useState<string | null>(null);
     const [success, setSuccess] = useState<{ status: 'approved' | 'rejected' } | null>(null);
+    const receiptRef = useRef<HTMLDivElement>(null);
 
     const [collaborator, setCollaborator] = useState<any>(null);
     const [leader, setLeader] = useState<any>(null);
@@ -177,17 +181,57 @@ export default function AprovacaoFeriasPeloLider() {
 
             if (updateError) throw updateError;
             
+            let publicUrl = '';
+            
             // Pós-processamento para adicionar o nome do líder nas faltas recém-criadas
             if (intendedActionApprove && collaborator?.id) {
-                const todayStr = new Date().toLocaleDateString('pt-BR');
+                const now = new Date();
+                const todayStr = now.toLocaleDateString('pt-BR');
+                const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                 const leaderName = leader?.name || 'Líder';
-                const adminObs = `Aprovado digitalmente via Fluxo de Férias por ${leaderName} em ${todayStr}`;
                 
+                let adminObs = `Aprovado digitalmente via Fluxo de Férias por ${leaderName} em ${todayStr} às ${timeStr}`;
+                if (vacationReq.aquisitive_period_start && vacationReq.aquisitive_period_end) {
+                    const aquiStart = new Date(vacationReq.aquisitive_period_start).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+                    const aquiEnd = new Date(vacationReq.aquisitive_period_end).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+                    adminObs = `[Período Aquisitivo: ${aquiStart} a ${aquiEnd}]\n${adminObs}`;
+                }
+
                 await supabase
                     .from('collaborator_absences')
                     .update({ observation: adminObs })
                     .eq('collaborator_id', collaborator.id)
                     .eq('observation', 'Aprovado digitalmente via Fluxo de Férias');
+                
+                // Generates PDF and uploads to GED if reference exists
+                if (receiptRef.current) {
+                    try {
+                        const canvas = await html2canvas(receiptRef.current, { scale: 2 });
+                        const imgData = canvas.toDataURL('image/png');
+                        const pdf = new jsPDF({
+                            orientation: 'portrait',
+                            unit: 'px',
+                            format: [canvas.width / 2, canvas.height / 2]
+                        });
+                        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+                        const pdfBlob = pdf.output('blob');
+                        
+                        const fileName = `ferias/${collaborator.id}/recibo_ferias_${vacationReq.id}.pdf`;
+                        const { error: uploadError } = await supabase.storage.from('ged-colaboradores').upload(fileName, pdfBlob, {
+                            contentType: 'application/pdf',
+                            upsert: true
+                        });
+                        
+                        if (!uploadError) {
+                            const { data: urlData } = supabase.storage.from('ged-colaboradores').getPublicUrl(fileName);
+                            publicUrl = urlData.publicUrl;
+                        } else {
+                            console.error('Erro de upload PDF:', uploadError);
+                        }
+                    } catch (err) {
+                        console.error('Falha ao gerar PDF de Recibo', err);
+                    }
+                }
             }
 
             // Trigger Make.com Webhook
@@ -203,6 +247,7 @@ export default function AprovacaoFeriasPeloLider() {
                         lider_nome: leader?.name,
                         observacao_lider: finalObservation,
                         link_magico_integrante: `${window.location.origin}/solicitacao-ferias/${vacationReq.employee_token}`,
+                        recibo_pdf_url: publicUrl,
                         email_rh: 'rh@salomaoadv.com.br'
                     })
                 });
@@ -476,6 +521,21 @@ export default function AprovacaoFeriasPeloLider() {
                         )}
                     </div>
                 </div>
+            </div>
+            
+            {/* Hidden Receipt Element for PDF Generation */}
+            <div style={{ overflow: 'hidden', height: 0, width: 0, position: 'absolute', pointerEvents: 'none' }}>
+                <ReceiptPDFTemplate
+                    ref={receiptRef}
+                    collaboratorName={collaborator?.name || ''}
+                    collaboratorCpf={collaborator?.cpf || ''}
+                    contractType={collaborator?.contract_type || ''}
+                    vacationReq={vacationReq}
+                    periods={periods}
+                    leaderName={leader?.name || 'Líder/Gestor'}
+                    approvalDate={new Date().toLocaleDateString('pt-BR')}
+                    approvalTime={new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                />
             </div>
         </div>
     );
