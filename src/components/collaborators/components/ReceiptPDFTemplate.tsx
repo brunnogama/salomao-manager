@@ -43,13 +43,16 @@ export const ReceiptPDFTemplate = React.forwardRef<HTMLDivElement, ReceiptPDFTem
         }}>
             {/* Cabeçalho */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #1e3a8a', paddingBottom: '20px', marginBottom: '30px' }}>
-                <div>
-                    <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 900, color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                        Recibo de Solicitação de Férias
-                    </h1>
-                    <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>
-                        Salomão, Kaiuca, Abrahão, Raposo e Cotta
-                    </p>
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                    <img src="/logo-salomao.png" alt="Logo Salomão" crossOrigin="anonymous" style={{ height: '50px', width: 'auto', objectFit: 'contain' }} />
+                    <div style={{ borderLeft: '2px solid #e5e7eb', paddingLeft: '20px' }}>
+                        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 900, color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                            Recibo de Solicitação de Férias
+                        </h1>
+                        <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>
+                            Salomão, Kaiuca, Abrahão, Raposo e Cotta
+                        </p>
+                    </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                     <p style={{ margin: 0, fontSize: '10px', color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase' }}>Código de Rastreamento</p>
