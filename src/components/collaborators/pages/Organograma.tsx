@@ -121,9 +121,9 @@ const OrganogramNode = React.memo(({
 
     const subordinates = subordinatesMap.get(colabId) || [];
     const validSubordinates = [...subordinates].filter(c => {
-        if (c.isSocio) return false;
+        if (c.isSocio && activeTab === 'JURIDICO') return false;
         if (activeTab === 'JURIDICO') return c.isJuridico;
-        if (activeTab === 'ADMINISTRATIVO') return (c.isAdministrativo || hasAdministrativeSubordinates(c.id));
+        if (activeTab === 'ADMINISTRATIVO') return (c.isSocio || c.isAdministrativo || hasAdministrativeSubordinates(c.id));
         return true;
     }).sort((a, b) => getRank(a.role) - getRank(b.role));
 
@@ -133,9 +133,9 @@ const OrganogramNode = React.memo(({
 
     validSubordinates.forEach(sub => {
         const subSubs = (subordinatesMap.get(sub.id) || []).filter(c => {
-            if (c.isSocio) return false;
+            if (c.isSocio && activeTab === 'JURIDICO') return false;
             if (activeTab === 'JURIDICO') return c.isJuridico;
-            if (activeTab === 'ADMINISTRATIVO') return (c.isAdministrativo || hasAdministrativeSubordinates(c.id));
+            if (activeTab === 'ADMINISTRATIVO') return (c.isSocio || c.isAdministrativo || hasAdministrativeSubordinates(c.id));
             return true;
         });
 
@@ -143,9 +143,9 @@ const OrganogramNode = React.memo(({
             const signature = subSubs.map(s => s.id).sort().join(',');
             const sharedLeaders = validSubordinates.filter(s => {
                 const sSubs = (subordinatesMap.get(s.id) || []).filter(c => {
-                    if (c.isSocio) return false;
+                    if (c.isSocio && activeTab === 'JURIDICO') return false;
                     if (activeTab === 'JURIDICO') return c.isJuridico;
-                    if (activeTab === 'ADMINISTRATIVO') return (c.isAdministrativo || hasAdministrativeSubordinates(c.id));
+                    if (activeTab === 'ADMINISTRATIVO') return (c.isSocio || c.isAdministrativo || hasAdministrativeSubordinates(c.id));
                     return true;
                 });
                 if (sSubs.length === 0) return false;
@@ -1325,6 +1325,12 @@ export function Organograma() {
                 if (c.id === 'COL - 0002' || c.name.toLowerCase().includes('felipe dornelas') || c.id === 'COL - 0161' || c.name.toLowerCase().includes('gabriel parreiras horta')) return true;
                 
                 // Allow Jurídico partners to appear ONLY if they verifiably hold administrative subordinates down their specific chain
+                // And ONLY if they don't have a leader themselves (otherwise they should just appear as subordinates!)
+                const lids = c.leader_ids && c.leader_ids.length > 0 ? c.leader_ids : [c.leader_id];
+                const hasLeader = lids && lids.length > 0 && lids[0] !== null && lids[0] !== undefined;
+
+                if (hasLeader) return false;
+
                 return c.isSocio && hasAdministrativeSubordinates(c.id);
             }
             return false;
