@@ -441,7 +441,7 @@ function UfChartSection({ processes, isPartnerFiltered, leaderPartners }: { proc
       </div>
 
       {!isPartnerFiltered && (
-      <div className="w-full xl:w-[480px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch overflow-hidden">
+      <div className="w-full xl:w-[620px] flex flex-col gap-3 shrink-0 bg-gray-50/50 p-4 rounded-xl border border-gray-100 self-stretch overflow-hidden">
         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200/60 shrink-0">
            <div className="p-1.5 bg-indigo-100 rounded-md">
              <Briefcase className="w-3.5 h-3.5 text-indigo-700" />
@@ -467,7 +467,7 @@ function UfChartSection({ processes, isPartnerFiltered, leaderPartners }: { proc
             <tbody className="divide-y divide-gray-100/60">
               {socioMatrix.map((row: any) => (
                 <tr key={row.socio} className="hover:bg-white transition-colors group">
-                  <td className="py-2 px-2 text-[10px] font-black text-[#0a192f] whitespace-nowrap max-w-[140px] truncate border-r border-gray-50" title={row.socio}>{row.socio}</td>
+                  <td className="py-2 px-2 text-[10px] font-black text-[#0a192f] whitespace-nowrap max-w-[250px] truncate border-r border-gray-50" title={row.socio}>{row.socio}</td>
                   {mainUfNames.map((uf: string) => (
                     <td key={uf} className="py-2 px-2 text-[10px] font-bold text-gray-600 text-center border-r border-gray-50 group-hover:text-amber-600 transition-colors">
                       {row[uf] ? row[uf].toLocaleString('pt-BR') : '-'}
