@@ -182,6 +182,11 @@ const OrganogramNode = React.memo(({
             if (!atuacaoGroups.has(key)) atuacaoGroups.set(key, []);
             atuacaoGroups.get(key)!.push(sub);
         });
+
+        if (atuacaoGroups.size === 0) {
+            atuacaoGroups.set('Sem Atuação', []);
+        }
+
         const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
         return (
@@ -624,6 +629,11 @@ const SocioBlockOrganogramNode = React.memo(({
         }
     });
 
+    // Se o sócio não tem nenhum subordinado mapeado, ainda assim precisamos renderizar a foto dele!
+    if (blocks.length === 0) {
+        blocks.push({ localName: socio.local || 'Sem Local', leaders: [], members: [] });
+    }
+
     return (
         <div className="flex flex-col items-center gap-y-16">
             {blocks.map((block, blockIdx) => (
@@ -1035,11 +1045,13 @@ export function Organograma() {
 
                     let finalIsJuridico = isJuridico && !explicitlyAdmin;
                     let finalIsAdministrativo = !isJuridico || explicitlyAdmin;
+                    let finalIsSocio = isSocio;
 
                     // Explicit override
                     if (c.name.toLowerCase().includes('felipe dornelas') || c.name.toLowerCase().includes('gabriel parreiras horta')) {
                         finalIsJuridico = false;
                         finalIsAdministrativo = true;
+                        finalIsSocio = true;
                     }
 
                     return {
@@ -1057,7 +1069,7 @@ export function Organograma() {
                         foto_url: c.foto_url,
                         isJuridico: finalIsJuridico,
                         isAdministrativo: finalIsAdministrativo,
-                        isSocio,
+                        isSocio: finalIsSocio,
                         fullData: c
                     };
                 });
