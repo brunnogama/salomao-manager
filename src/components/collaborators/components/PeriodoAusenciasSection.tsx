@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Clock, Save, Loader2, Calendar as CalendarIcon, FilePlus2, Stethoscope, Trash2, Send, ShieldCheck, Tag } from 'lucide-react'
+import { Clock, Save, Loader2, Calendar as CalendarIcon, FilePlus2, Stethoscope, Trash2, Send, ShieldCheck, Tag, FileText } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { Collaborator } from '../../../types/controladoria'
 import { ManagedMultiSelect } from '../../crm/ManagedMultiSelect'
@@ -330,7 +330,7 @@ export function PeriodoAusenciasSection({
                     {activeTab === 'historico_ferias' && (
                         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 max-w-4xl mb-8 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
-                                <div className="bg-[#1e3a8a] p-2.5 rounded-xl text-white shadow-md shrink-0"><Send className="h-5 w-5" /></div>
+                                <div className="bg-[#1e3a8a] p-2.5 rounded-xl text-white shadow-md shrink-0"><FileText className="h-5 w-5" /></div>
                                 <div className="min-w-0">
                                     <h5 className="font-black text-[#1e3a8a] text-sm mb-0.5">Enviar Formulário ao Integrante</h5>
                                     <p className="text-[11px] text-[#1e3a8a]/60 font-medium truncate">O link será enviado ao e-mail corporativo de <strong>{formData.name}</strong></p>

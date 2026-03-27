@@ -239,14 +239,17 @@ export default function AprovacaoFeriasPeloLider() {
                                     tamanho: pdfBlob.size,
                                     tipo_arquivo: 'application/pdf'
                                 });
-                            } catch (gedErr) {
+                            } catch (gedErr: any) {
                                 console.error('Erro ao registrar documento no GED', gedErr);
+                                alert("Erro ao registrar PDF no Histórico: " + gedErr.message);
                             }
                         } else {
                             console.error('Erro de upload PDF:', uploadError);
+                            alert("Não foi possível enviar o arquivo para a base: " + uploadError.message);
                         }
-                    } catch (err) {
+                    } catch (err: any) {
                         console.error('Falha ao gerar PDF de Recibo', err);
+                        alert("Falha de processamento PDF: " + err.message);
                     }
                 }
             }
@@ -541,7 +544,7 @@ export default function AprovacaoFeriasPeloLider() {
             </div>
             
             {/* Hidden Receipt Element for PDF Generation */}
-            <div style={{ overflow: 'hidden', height: 0, width: 0, position: 'absolute', pointerEvents: 'none' }}>
+            <div style={{ position: 'fixed', top: 0, left: 0, zIndex: -9999, opacity: 0, pointerEvents: 'none' }}>
                 <ReceiptPDFTemplate
                     ref={receiptRef}
                     collaboratorName={collaborator?.name || ''}
