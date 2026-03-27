@@ -218,13 +218,12 @@ const OrganogramNode = React.memo(({
                                                             )}
                                                         </div>
                                                         <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
-                                                            <div className="flex flex-col items-center justify-start w-full min-h-[52px]">
+                                                            <div className="flex flex-col items-center justify-start w-full min-h-[42px]">
                                                                 <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5`}>{firstColab.name}</h4>
                                                             </div>
-                                                            <div className="mt-1 flex items-center justify-center min-h-[24px]">
-                                                                <div className="flex items-center justify-center px-2 py-1 bg-gray-50 rounded-md shadow-sm w-max whitespace-nowrap" style={{ backgroundColor: getRoleRingColor(firstColab.role, firstColab.isSocio) }}>
-                                                                    <span className={`${isSuperDense ? 'text-[7.5px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-white leading-none pt-[1px]`}>{firstColab.role}</span>
-                                                                </div>
+                                                            <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
+                                                                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(firstColab.role, firstColab.isSocio) }}></div>
+                                                                <span className={`${isSuperDense ? 'text-[7.5px]' : 'text-[8.5px]'} font-bold uppercase tracking-widest text-slate-500 leading-tight`}>{firstColab.role}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -358,13 +357,12 @@ const OrganogramNode = React.memo(({
                                                 </div>
 
                                                 <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
-                                                    <div className="flex flex-col items-center justify-start w-full min-h-[52px]">
+                                                    <div className="flex flex-col items-center justify-start w-full min-h-[42px]">
                                                         <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5`}>{currentItem.name}</h4>
                                                     </div>
-                                                    <div className="mt-1 flex items-center justify-center min-h-[24px]">
-                                                        <div className="flex items-center justify-center px-2 py-1 bg-gray-50 rounded-md shadow-sm w-max whitespace-nowrap" style={{ backgroundColor: getRoleRingColor(currentItem.role, currentItem.isSocio) }}>
-                                                            <span className={`${isSuperDense ? 'text-[7.5px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-white leading-none pt-[1px]`}>{currentItem.role}</span>
-                                                        </div>
+                                                    <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
+                                                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(currentItem.role, currentItem.isSocio) }}></div>
+                                                        <span className={`${isSuperDense ? 'text-[7.5px]' : 'text-[8.5px]'} font-bold uppercase tracking-widest text-slate-500 leading-tight`}>{currentItem.role}</span>
                                                     </div>
                                                     <div className="mt-1 flex items-start justify-center min-h-[20px] w-full">
                                                         {currentItem.equipe && currentItem.equipe !== 'Sem Equipe' && currentItem.equipe !== 'Geral' && currentItem.equipe.toUpperCase() !== 'JURÍDICO' && currentItem.equipe.toUpperCase() !== 'JURIDICO' && !isSuperDense && (
@@ -624,13 +622,12 @@ const CottaBlockOrganogramNode = React.memo(({
                                 </div>
                             )}
                         </div>
-                        <div className="flex flex-col items-center justify-start w-full min-h-[52px]">
+                        <div className="flex flex-col items-center justify-start w-full min-h-[42px]">
                             <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5">{socio.name}</h4>
                         </div>
-                        <div className="mt-1 flex items-center justify-center min-h-[24px]">
-                            <div className="flex items-center justify-center px-2 py-1 bg-gray-50 rounded-md shadow-sm w-max whitespace-nowrap" style={{ backgroundColor: getRoleRingColor(socio.role, socio.isSocio) }}>
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-white leading-none pt-[1px]">{socio.role}</span>
-                            </div>
+                        <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
+                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(socio.role, socio.isSocio) }}></div>
+                            <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-500 leading-tight">{socio.role}</span>
                         </div>
                     </div>
 
@@ -685,13 +682,12 @@ const CottaBlockOrganogramNode = React.memo(({
                                                                         </div>
                                                                     )}
                                                                 </div>
-                                                                <div className="flex flex-col items-center justify-start w-full min-h-[52px]">
+                                                                <div className="flex flex-col items-center justify-start w-full min-h-[42px]">
                                                                     <h4 className="text-[12px] leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5">{leader.name}</h4>
                                                                 </div>
-                                                                <div className="mt-1 flex items-center justify-center min-h-[24px]">
-                                                                    <div className="flex items-center justify-center px-2 py-1 bg-gray-50 rounded-md shadow-sm w-max whitespace-nowrap" style={{ backgroundColor: getRoleRingColor(leader.role, leader.isSocio) }}>
-                                                                        <span className="text-[9px] font-bold uppercase tracking-widest text-white leading-none pt-[1px]">{leader.role}</span>
-                                                                    </div>
+                                                                <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
+                                                                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(leader.role, leader.isSocio) }}></div>
+                                                                    <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-500 leading-tight">{leader.role}</span>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -2136,13 +2132,12 @@ export function Organograma() {
                                                             )}
                                                         </div>
                                                         <div className="mt-4 text-center w-full px-1 flex flex-col items-center gap-1.5">
-                                                            <div className="w-full flex flex-col items-center justify-start min-h-[46px]">
+                                                            <div className="w-full flex flex-col items-center justify-start min-h-[40px]">
                                                                 <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight w-full text-center break-words pb-0.5">{colab.name}</h4>
                                                             </div>
-                                                            <div className="mt-1 flex items-center justify-center min-h-[24px]">
-                                                                <div className="flex items-center justify-center px-3 py-1.5 bg-gray-50 rounded-md shadow-sm w-max whitespace-nowrap" style={{ backgroundColor: getRoleRingColor(String(colab.role), colab.isSocio) }}>
-                                                                    <span className="text-[9.5px] font-bold uppercase tracking-widest text-white leading-none pt-[1px]">{String(colab.role)}</span>
-                                                                </div>
+                                                            <div className="mt-0 flex items-center justify-center min-h-[20px] gap-1.5 w-full whitespace-nowrap">
+                                                                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleRingColor(String(colab.role), colab.isSocio) }}></div>
+                                                                <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-500 leading-tight">{String(colab.role)}</span>
                                                             </div>
                                                             <div className="mt-1 flex items-start justify-center min-h-[20px] w-full">
                                                                 {colab.equipe && colab.equipe !== 'Sem Equipe' && colab.equipe !== 'Geral' && colab.equipe.toUpperCase() !== 'JURÍDICO' && colab.equipe.toUpperCase() !== 'JURIDICO' && (
