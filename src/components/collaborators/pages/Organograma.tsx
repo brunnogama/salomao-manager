@@ -1633,25 +1633,25 @@ export function Organograma() {
                 const partnerName = partnerData ? partnerData.name : scopeItem;
 
                 const headerDiv = document.createElement('div');
-                headerDiv.style.padding = '0px 40px 10px 40px';
+                headerDiv.style.padding = '0px 20px 20px 20px';
                 headerDiv.style.display = 'flex';
                 headerDiv.style.alignItems = 'center';
-                headerDiv.style.justifyContent = 'flex-start';
-                headerDiv.style.borderBottom = '4px solid #1e3a8a';
-                headerDiv.style.marginBottom = '20px';
+                headerDiv.style.justifyContent = 'center';
+                headerDiv.style.borderBottom = '4px solid #0a192f';
+                headerDiv.style.marginBottom = '40px';
                 headerDiv.style.marginTop = '0px';
                 headerDiv.style.background = 'white';
                 headerDiv.style.width = '100%';
                 
                 const logoImg = document.createElement('img');
                 logoImg.src = '/logo-salomao.png';
-                logoImg.style.height = '72px'; 
+                logoImg.style.height = '48px'; 
                 logoImg.style.objectFit = 'contain';
                 
                 const titleDiv = document.createElement('div');
-                titleDiv.style.marginLeft = '32px';
-                titleDiv.style.borderLeft = '3px solid #1e3a8a';
-                titleDiv.style.paddingLeft = '32px';
+                titleDiv.style.marginLeft = '24px';
+                titleDiv.style.borderLeft = '2px solid #0a192f';
+                titleDiv.style.paddingLeft = '24px';
                 
                 // Gender heuristic for title
                 let roleLabel = 'Sócio';
@@ -1669,7 +1669,7 @@ export function Organograma() {
                 titleH1.innerText = `${roleLabel}: ${partnerName}`;
                 titleH1.style.color = '#0a192f';
                 titleH1.style.margin = '0';
-                titleH1.style.fontSize = '40px'; 
+                titleH1.style.fontSize = '24px'; 
                 titleH1.style.fontFamily = 'Inter, Arial, sans-serif';
                 titleH1.style.fontWeight = '900';
                 titleH1.style.letterSpacing = '-0.02em';
@@ -1683,12 +1683,13 @@ export function Organograma() {
                 element.style.background = '#ffffff';
                 element.style.transform = 'none';
                 
-                // Retornando para a largura fixa de 2400px para que todas as fotos fiquem uniformemente pequenas/constantes através de todas as páginas
+                // Wrap content exactly without empty space so that html2canvas creates a tight bounding box
+                element.style.display = 'inline-block';
                 element.style.width = 'max-content';
-                element.style.minWidth = '2400px'; 
-                element.style.paddingLeft = '100px';
-                element.style.paddingRight = '100px';
-                element.style.paddingBottom = '100px';
+                element.style.minWidth = 'min-content'; 
+                element.style.paddingLeft = '40px';
+                element.style.paddingRight = '40px';
+                element.style.paddingBottom = '60px';
                 
                 // Centralizar o nó raiz atual manipulando estilos se possível
                 const rootNodeWrapper = document.getElementById('organogram-root-node');
