@@ -718,6 +718,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     { id: 'Entrevista', name: 'Entrevista' },
     { id: 'PIS/PASEP', name: 'PIS/PASEP' },
     { id: 'Prova', name: 'Prova' },
+    { id: 'Recibo de Férias', name: 'Recibo de Férias' },
     { id: 'Redação', name: 'Redação' },
     { id: 'Título de Eleitor', name: 'Título de Eleitor' },
     { id: 'Outros', name: 'Outros' }

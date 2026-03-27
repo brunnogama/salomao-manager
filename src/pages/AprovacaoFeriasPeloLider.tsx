@@ -225,6 +225,23 @@ export default function AprovacaoFeriasPeloLider() {
                         if (!uploadError) {
                             const { data: urlData } = supabase.storage.from('ged-colaboradores').getPublicUrl(fileName);
                             publicUrl = urlData.publicUrl;
+                            
+                            try {
+                                const pStart = periods.length > 0 ? periods[0].start.replace(/\//g, '-') : '';
+                                const pEnd = periods.length > 0 ? periods[periods.length - 1].end.replace(/\//g, '-') : '';
+                                const docName = `Recibo de Férias-${pStart} a ${pEnd}.pdf`;
+
+                                await supabase.from('ged_colaboradores').insert({
+                                    colaborador_id: collaborator.id,
+                                    nome_arquivo: docName,
+                                    url: publicUrl,
+                                    categoria: 'Recibo de Férias',
+                                    tamanho: pdfBlob.size,
+                                    tipo_arquivo: 'application/pdf'
+                                });
+                            } catch (gedErr) {
+                                console.error('Erro ao registrar documento no GED', gedErr);
+                            }
                         } else {
                             console.error('Erro de upload PDF:', uploadError);
                         }
