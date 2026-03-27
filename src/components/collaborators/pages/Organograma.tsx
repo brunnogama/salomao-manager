@@ -219,10 +219,10 @@ const OrganogramNode = React.memo(({
                                                         </div>
                                                         <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
                                                             <div className="flex flex-col items-center justify-start w-full min-h-[52px]">
-                                                                <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center line-clamp-3`}>{firstColab.name}</h4>
+                                                                <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5`}>{firstColab.name}</h4>
                                                             </div>
                                                             <div className="mt-1 flex items-center justify-center min-h-[24px]">
-                                                                <span className={`${isSuperDense ? 'text-[7.5px] px-1.5 py-0.5' : 'text-[8.5px] px-2 py-1'} font-bold uppercase tracking-widest text-white rounded-md text-center flex justify-center items-center shadow-sm w-max`} style={{ backgroundColor: getRoleRingColor(firstColab.role, firstColab.isSocio) }}>{firstColab.role}</span>
+                                                                <span className={`${isSuperDense ? 'text-[7.5px] px-1.5' : 'text-[8.5px] px-2'} h-[20px] font-bold uppercase tracking-widest text-white rounded-md text-center inline-flex justify-center items-center leading-none shadow-sm w-max`} style={{ backgroundColor: getRoleRingColor(firstColab.role, firstColab.isSocio) }}>{firstColab.role}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -357,14 +357,14 @@ const OrganogramNode = React.memo(({
 
                                                 <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
                                                     <div className="flex flex-col items-center justify-start w-full min-h-[52px]">
-                                                        <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center line-clamp-3`}>{currentItem.name}</h4>
+                                                        <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5`}>{currentItem.name}</h4>
                                                     </div>
                                                     <div className="mt-1 flex items-center justify-center min-h-[24px]">
-                                                        <span className={`${isSuperDense ? 'text-[7.5px] px-1.5 py-0.5' : 'text-[8.5px] px-2 py-1'} font-bold uppercase tracking-widest text-white rounded-md text-center flex justify-center items-center shadow-sm w-max`} style={{ backgroundColor: getRoleRingColor(currentItem.role, currentItem.isSocio) }}>{currentItem.role}</span>
+                                                        <span className={`${isSuperDense ? 'text-[7.5px] px-1.5' : 'text-[8.5px] px-2'} h-[20px] font-bold uppercase tracking-widest text-white rounded-md text-center inline-flex justify-center items-center leading-none shadow-sm w-max`} style={{ backgroundColor: getRoleRingColor(currentItem.role, currentItem.isSocio) }}>{currentItem.role}</span>
                                                     </div>
-                                                    <div className="mt-1.5 flex items-start justify-center min-h-[20px] w-full">
+                                                    <div className="mt-1 flex items-start justify-center min-h-[20px] w-full">
                                                         {currentItem.equipe && currentItem.equipe !== 'Sem Equipe' && currentItem.equipe !== 'Geral' && !isSuperDense && (
-                                                            <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-[180px]">
+                                                            <span className="inline-flex px-2 h-[18px] justify-center items-center leading-none bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm max-w-[180px] text-center">
                                                                 {currentItem.equipe}
                                                             </span>
                                                         )}
@@ -621,10 +621,10 @@ const CottaBlockOrganogramNode = React.memo(({
                             )}
                         </div>
                         <div className="flex flex-col items-center justify-start w-full min-h-[52px]">
-                            <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight text-center line-clamp-3">{socio.name}</h4>
+                            <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5">{socio.name}</h4>
                         </div>
                         <div className="mt-1 flex items-center justify-center min-h-[24px]">
-                            <span className="text-[8.5px] px-2 py-1 font-bold uppercase tracking-widest text-white rounded-md text-center flex justify-center items-center shadow-sm w-max" style={{ backgroundColor: getRoleRingColor(socio.role, socio.isSocio) }}>{socio.role}</span>
+                            <span className="text-[8.5px] px-2 h-[20px] font-bold uppercase tracking-widest text-white rounded-md text-center inline-flex justify-center items-center leading-none shadow-sm w-max" style={{ backgroundColor: getRoleRingColor(socio.role, socio.isSocio) }}>{socio.role}</span>
                         </div>
                     </div>
 
@@ -680,10 +680,10 @@ const CottaBlockOrganogramNode = React.memo(({
                                                                     )}
                                                                 </div>
                                                                 <div className="flex flex-col items-center justify-start w-full min-h-[52px]">
-                                                                    <h4 className="text-[12px] leading-tight font-black text-[#0a192f] tracking-tight text-center line-clamp-3">{leader.name}</h4>
+                                                                    <h4 className="text-[12px] leading-tight font-black text-[#0a192f] tracking-tight text-center break-words pb-0.5">{leader.name}</h4>
                                                                 </div>
                                                                 <div className="mt-1 flex items-center justify-center min-h-[24px]">
-                                                                    <span className="text-[8.5px] px-2 py-1 font-bold uppercase tracking-widest text-white rounded-md text-center flex justify-center items-center shadow-sm w-max" style={{ backgroundColor: getRoleRingColor(leader.role, leader.isSocio) }}>{leader.role}</span>
+                                                                    <span className="text-[8.5px] px-2 h-[20px] font-bold uppercase tracking-widest text-white rounded-md text-center inline-flex justify-center items-center leading-none shadow-sm w-max" style={{ backgroundColor: getRoleRingColor(leader.role, leader.isSocio) }}>{leader.role}</span>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -1633,25 +1633,25 @@ export function Organograma() {
                 const partnerName = partnerData ? partnerData.name : scopeItem;
 
                 const headerDiv = document.createElement('div');
-                headerDiv.style.padding = '0px 20px 20px 20px';
+                headerDiv.style.padding = '20px 0px 40px 0px';
                 headerDiv.style.display = 'flex';
                 headerDiv.style.alignItems = 'center';
-                headerDiv.style.justifyContent = 'center';
+                headerDiv.style.justifyContent = 'flex-start';
                 headerDiv.style.borderBottom = '4px solid #0a192f';
-                headerDiv.style.marginBottom = '40px';
+                headerDiv.style.marginBottom = '60px';
                 headerDiv.style.marginTop = '0px';
                 headerDiv.style.background = 'white';
                 headerDiv.style.width = '100%';
                 
                 const logoImg = document.createElement('img');
                 logoImg.src = '/logo-salomao.png';
-                logoImg.style.height = '48px'; 
+                logoImg.style.height = '64px'; 
                 logoImg.style.objectFit = 'contain';
                 
                 const titleDiv = document.createElement('div');
-                titleDiv.style.marginLeft = '24px';
-                titleDiv.style.borderLeft = '2px solid #0a192f';
-                titleDiv.style.paddingLeft = '24px';
+                titleDiv.style.marginLeft = '40px';
+                titleDiv.style.borderLeft = '3px solid #0a192f';
+                titleDiv.style.paddingLeft = '40px';
                 
                 // Gender heuristic for title
                 let roleLabel = 'Sócio';
@@ -1669,7 +1669,7 @@ export function Organograma() {
                 titleH1.innerText = `${roleLabel}: ${partnerName}`;
                 titleH1.style.color = '#0a192f';
                 titleH1.style.margin = '0';
-                titleH1.style.fontSize = '24px'; 
+                titleH1.style.fontSize = '36px'; 
                 titleH1.style.fontFamily = 'Inter, Arial, sans-serif';
                 titleH1.style.fontWeight = '900';
                 titleH1.style.letterSpacing = '-0.02em';
