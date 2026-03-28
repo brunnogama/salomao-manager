@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileSpreadsheet, ArrowUpCircle, Calendar, User } from 'lucide-react';
+import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileDown, ArrowUpCircle, Calendar, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { AlertModal } from '../../../components/ui/AlertModal';
 import XLSX from 'xlsx-js-style';
@@ -304,10 +304,10 @@ export function ReembolsosTab() {
         <div className="flex items-center">
             <button 
               onClick={handleExportXLSX}
-              title="Exportar XLSX"
-              className="p-3.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all hover:-translate-y-0.5"
+              title="Exportar Planilha"
+              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
             >
-              <FileSpreadsheet className="h-5 w-5" />
+              <FileDown className="h-5 w-5" />
             </button>
         </div>
       </div>
@@ -358,16 +358,16 @@ export function ReembolsosTab() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] uppercase tracking-wider font-bold text-gray-500">
-                  <th className="p-4 pl-6">Data da Despesa</th>
-                  <th className="p-4">Colaborador</th>
-                  <th className="p-4">Descrição</th>
-                  <th className="p-4">Solicitado em</th>
-                  <th className="p-4">Cobrar Cliente?</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Valor</th>
-                  <th className="p-4 pr-6 text-right">Ação</th>
+              <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
+                <tr>
+                  <th className="p-4 pl-6 text-[10px] font-black uppercase text-white tracking-widest">Data da Despesa</th>
+                  <th className="p-4 text-[10px] font-black uppercase text-white tracking-widest">Colaborador</th>
+                  <th className="p-4 text-[10px] font-black uppercase text-white tracking-widest">Descrição</th>
+                  <th className="p-4 text-[10px] font-black uppercase text-white tracking-widest">Solicitado em</th>
+                  <th className="p-4 text-[10px] font-black uppercase text-white tracking-widest">Cobrar Cliente?</th>
+                  <th className="p-4 text-[10px] font-black uppercase text-white tracking-widest">Status</th>
+                  <th className="p-4 text-[10px] font-black uppercase text-white tracking-widest">Valor</th>
+                  <th className="p-4 pr-6 text-[10px] font-black uppercase text-white tracking-widest text-right">Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
