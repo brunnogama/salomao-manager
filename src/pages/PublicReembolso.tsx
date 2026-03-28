@@ -45,16 +45,45 @@ export default function PublicReembolso() {
 
   const fetchCollaborators = async () => {
     try {
-      const { data, error } = await supabase
-        .from('collaborators')
-        .select('id, name')
-        .eq('status', 'Ativo')
-        .order('name');
-        
-      if (error) throw error;
-      if (data) setCollaborators(data);
+      const allNamesMap = new Map<string, Collaborator>();
+
+      const safeFetch = async (table: string) => {
+        // Tenta com status = 'Ativo'
+        const { data, error } = await supabase.from(table).select('id, name').eq('status', 'Ativo');
+        if (error) {
+          // Se falhar (provavelmente a coluna não existe), busca tudo
+          const fallback = await supabase.from(table).select('id, name');
+          return fallback.data || [];
+        }
+        return data || [];
+      };
+
+      const [colabs, partes, lideres] = await Promise.all([
+        safeFetch('collaborators'),
+        safeFetch('partners'),
+        safeFetch('team_leaders')
+      ]);
+
+      const addToList = (list: any[]) => {
+        list.forEach(item => {
+          if (item?.name) {
+            const key = item.name.trim().toLowerCase();
+            if (!allNamesMap.has(key)) {
+              allNamesMap.set(key, { id: item.id, name: item.name.trim() });
+            }
+          }
+        });
+      };
+
+      addToList(colabs);
+      addToList(partes);
+      addToList(lideres);
+
+      const sortedList = Array.from(allNamesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+      setCollaborators(sortedList);
+
     } catch (err) {
-      console.error('Erro ao buscar colaboradores', err);
+      console.error('Erro ao buscar integrantes', err);
     }
   };
 
@@ -178,11 +207,15 @@ export default function PublicReembolso() {
         
         {/* Header Branding */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-[#112240] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
-            <span className="text-2xl font-black text-[#d4af37]">S</span>
+          <div className="flex justify-center mb-6">
+             <img
+               src="/logo-salomao.png"
+               alt="Salomão"
+               className="h-16 md:h-20 w-auto object-contain drop-shadow-sm transition-transform duration-500 hover:scale-[1.02]"
+             />
           </div>
           <h1 className="text-2xl font-black text-[#112240]">Solicitação de Reembolso</h1>
-          <p className="text-gray-500 mt-2">Envie seu comprovante e nossa IA preencherá os dados.</p>
+          <p className="text-gray-500 mt-2">Envie seu comprovante para o financeiro.</p>
         </div>
 
         {/* Form Container */}

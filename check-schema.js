@@ -1,12 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js'
+import dotenv from 'dotenv'
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://iewevhdtwlviudetxgax.supabase.co';
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || '...'; // I need to get this from .env
+dotenv.config()
 
-async function check() {
-  // Let's just read .env
-  const fs = require('fs');
-  const env = fs.readFileSync('.env.local', 'utf8');
-  console.log(env.substring(0, 100));
+const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY)
+
+async function fetchAll() {
+  const c = await supabase.from('collaborators').select('id, name, status, role')
+  const p = await supabase.from('partners').select('*')
+  const t = await supabase.from('team_leaders').select('*').catch(() => null)
+  
+  console.log('Collaborators Count:', c.data?.length)
+  console.log('Partners Count:', p.data?.length)
+  if (p.data && p.data.length > 0) {
+     console.log('Partner keys:', Object.keys(p.data[0]))
+  }
 }
-check();
+fetchAll()
