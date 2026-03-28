@@ -102,7 +102,7 @@ export default function PublicReembolso() {
       setIsExtracting(true);
 
       // 2. Call Make.com Webhook if configured
-      const webhookUrl = import.meta.env.VITE_MAKE_WEBHOOK_REEMBOLSO_EXTRACT;
+      const webhookUrl = import.meta.env.VITE_MAKE_WEBHOOK_REEMBOLSO_EXTRACT || 'https://hook.us2.make.com/8e7s11ns13rgpffbtyduy5kt93zzrf53';
       
       if (webhookUrl && webhookUrl !== 'SUA_URL_DO_MAKE_AQUI') {
         const response = await fetch(webhookUrl, {
