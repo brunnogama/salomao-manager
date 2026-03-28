@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
 
 interface Collaborator {
   id: string;
@@ -81,7 +80,7 @@ export default function PublicReembolso() {
     try {
       // 1. Upload to Supabase Storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
       const filePath = `recibos/${fileName}`;
       
       const { error: uploadError } = await supabase.storage
