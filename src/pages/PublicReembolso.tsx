@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Share2 } from 'lucide-react';
+import { SearchableSelect } from '../components/crm/SearchableSelect';
 
 interface Collaborator {
   id: string;
@@ -262,16 +263,14 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
               
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Quem é você?</label>
-                <select
+                <SearchableSelect
                   value={selectedColab}
-                  onChange={(e) => setSelectedColab(e.target.value)}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none"
-                >
-                  <option value="">Selecione seu nome...</option>
-                  {collaborators.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedColab(val)}
+                  options={collaborators.map(c => ({ id: c.id, name: c.name }))}
+                  placeholder="Selecione seu nome..."
+                  className="bg-gray-50 rounded-xl"
+                  disableFormatting
+                />
               </div>
 
               <div>
