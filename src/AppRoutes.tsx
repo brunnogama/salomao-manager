@@ -12,6 +12,7 @@ import AprovacaoFeriasPeloLider from './pages/AprovacaoFeriasPeloLider';
 import { CandidatoPublicProfile } from './components/collaborators/pages/CandidatoPublicProfile';
 import ReportControladoria from './pages/ReportControladoria';
 import { PublicDemandas } from './components/secretaria/demandas/PublicDemandas';
+import PublicReembolso from './pages/PublicReembolso';
 import { Presentation } from './pages/presentation/Presentation';
 import { KanbanModal } from './components/WelcomeKanbanModal';
 import { BackupService } from './lib/BackupService';
@@ -230,6 +231,7 @@ export function AppRoutes() {
             <Route path="/candidato/perfil/:identifier" element={<CandidatoPublicProfile />} />
             <Route path="/report/controladoria" element={<ReportControladoria />} />
             <Route path="/public/demandas" element={<PublicDemandas />} />
+            <Route path="/reembolsos/solicitar" element={<PublicReembolso />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute><RouteGuard><MainLayout /></RouteGuard></ProtectedRoute>}>
