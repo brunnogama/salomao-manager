@@ -48,10 +48,10 @@ export default function PublicReembolso() {
       const allNamesMap = new Map<string, Collaborator>();
 
       const safeFetch = async (table: string) => {
-        // Tenta com status = 'Ativo'
-        const { data, error } = await supabase.from(table).select('id, name').eq('status', 'Ativo');
+        // Tenta com status = 'active' ou 'Ativo'
+        const { data, error } = await supabase.from(table).select('id, name').in('status', ['active', 'Ativo']);
         if (error) {
-          // Se falhar (provavelmente a coluna não existe), busca tudo
+          // Se falhar (provavelmente a coluna status não existe), busca tudo
           const fallback = await supabase.from(table).select('id, name');
           return fallback.data || [];
         }
@@ -61,7 +61,7 @@ export default function PublicReembolso() {
       const [colabs, partes, lideres] = await Promise.all([
         safeFetch('collaborators'),
         safeFetch('partners'),
-        safeFetch('team_leaders')
+        safeFetch('team_leader')
       ]);
 
       const addToList = (list: any[]) => {
