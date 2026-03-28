@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Search, Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileSpreadsheet } from 'lucide-react';
+import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileSpreadsheet, ArrowUpCircle, Calendar, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { AlertModal } from '../../../components/ui/AlertModal';
 import XLSX from 'xlsx-js-style';
+import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 
 interface Reembolso {
   id: string;
@@ -42,14 +43,14 @@ export function ReembolsosTab() {
     const dataToExport = filtered.map(r => ({
       'Data da Despesa': r.data_despesa ? format(new Date(r.data_despesa), 'dd/MM/yyyy') : '',
       'Colaborador': r.collaborators?.name || '',
+      'Descrição': r.descricao || '',
+      'Solicitado em': r.created_at ? format(new Date(r.created_at), 'dd/MM/yyyy HH:mm') : '',
       'Status': r.status === 'pago' ? 'Pago' : 'Pendente',
       'Fornecedor': r.fornecedor_nome || '',
       'CNPJ': r.fornecedor_cnpj || '',
       'Número Recibo': r.numero_recibo || '',
-      'Descrição': r.descricao || '',
       'Cobrar Cliente?': r.reembolsavel_cliente ? 'Sim' : 'Não',
       'Valor (R$)': r.valor || 0,
-      'Criado em': format(new Date(r.created_at), 'dd/MM/yyyy HH:mm'),
     }));
     const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
@@ -189,38 +190,153 @@ export function ReembolsosTab() {
     }
   };
 
-  const filtered = reembolsos.filter(r => 
-    r.collaborators.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    r.fornecedor_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filters State
+  const [filterStatus, setFilterStatus] = useState<string[]>([]);
+  const [filterSolicitante, setFilterSolicitante] = useState<string[]>([]);
+  const [filterPeriodo, setFilterPeriodo] = useState<string>('todos');
+
+  const solicitanteOptions = React.useMemo(() => {
+    const names = Array.from(new Set(reembolsos.map(r => r.collaborators?.name).filter(Boolean)));
+    return names.map(n => ({ label: n, value: n })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [reembolsos]);
+
+  const categories: FilterCategory[] = React.useMemo(() => [
+    {
+      key: 'status',
+      label: 'Status',
+      icon: Filter,
+      type: 'multi',
+      options: [
+        { label: 'Pendente', value: 'pendente' },
+        { label: 'Pago', value: 'pago' },
+      ],
+      value: filterStatus,
+      onChange: setFilterStatus,
+    },
+    {
+      key: 'solicitante',
+      label: 'Solicitante',
+      icon: User,
+      type: 'multi',
+      options: solicitanteOptions,
+      value: filterSolicitante,
+      onChange: setFilterSolicitante,
+    },
+    {
+      key: 'periodo',
+      label: 'Período',
+      icon: Calendar,
+      type: 'single',
+      options: [
+        { label: 'Todos os Períodos', value: 'todos' },
+        { label: 'Mês Atual', value: 'mes_atual' },
+        { label: 'Últimos 30 Dias', value: 'ultimos_30' },
+      ],
+      value: filterPeriodo,
+      onChange: setFilterPeriodo,
+    }
+  ], [filterStatus, filterSolicitante, filterPeriodo, solicitanteOptions]);
+
+  const activeFilterChips = React.useMemo(() => {
+    const chips: any[] = [];
+    if (filterStatus.length) chips.push({ key: 'status', label: `${filterStatus.length} status`, onClear: () => setFilterStatus([]) });
+    if (filterSolicitante.length) chips.push({ key: 'solicitante', label: `${filterSolicitante.length} solicitantes`, onClear: () => setFilterSolicitante([]) });
+    if (filterPeriodo && filterPeriodo !== 'todos') {
+      const opt = categories.find(c => c.key === 'periodo')?.options.find(o => o.value === filterPeriodo);
+      chips.push({ key: 'periodo', label: opt?.label || '', onClear: () => setFilterPeriodo('todos') });
+    }
+    return chips;
+  }, [filterStatus, filterSolicitante, filterPeriodo, categories]);
+
+  const handleClearAllFilters = () => {
+    setFilterStatus([]);
+    setFilterSolicitante([]);
+    setFilterPeriodo('todos');
+    setSearchTerm('');
+  };
+
+  const filtered = reembolsos.filter(r => {
+    const text = searchTerm.toLowerCase();
+    const matchSearch = searchTerm === '' || 
+      r.collaborators?.name?.toLowerCase().includes(text) || 
+      r.fornecedor_nome?.toLowerCase().includes(text) ||
+      r.descricao?.toLowerCase().includes(text);
+
+    if (!matchSearch) return false;
+
+    if (filterStatus.length && r.status && !filterStatus.includes(r.status)) return false;
+    if (filterSolicitante.length && (!r.collaborators?.name || !filterSolicitante.includes(r.collaborators.name))) return false;
+
+    if (filterPeriodo !== 'todos' && r.created_at) {
+      const d = new Date(r.created_at);
+      const now = new Date();
+      if (filterPeriodo === 'mes_atual') {
+         if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
+      } else if (filterPeriodo === 'ultimos_30') {
+         const limit = new Date(); limit.setDate(limit.getDate() - 30);
+         if (d < limit) return false;
+      }
+    }
+
+    return true;
+  });
+
+  const pendentesCount = filtered.filter(r => r.status === 'pendente').length;
 
   return (
-    <div className="space-y-6">
-
-      <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
-        <div className="relative w-full md:w-96 self-start md:self-auto">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar por colaborador ou despesa..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-xl shadow-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium text-sm"
-          />
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative sm:px-6 sm:py-6 sm:mx-0 -mx-4 px-4 py-4 min-h-screen">
+      
+      {/* PAGE HEADER */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
+            <ArrowUpCircle className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+              Contas a Pagar
+            </h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
+              Gestão de saídas, fornecedores e reembolsos
+            </p>
+          </div>
         </div>
-        <div className="flex gap-3 w-full justify-end md:w-auto">
-          <button 
-            onClick={handleExportXLSX}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-800 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all"
-          >
-            <FileSpreadsheet className="h-4 w-4" /> Exportar XLSX
-          </button>
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-white border border-gray-100 text-[#0a192f] rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-sm hover:bg-gray-50 transition-all">
-            <Filter className="h-4 w-4" /> Filtros
-          </button>
+        <div className="flex items-center">
+            <button 
+              onClick={handleExportXLSX}
+              title="Exportar XLSX"
+              className="p-3.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all hover:-translate-y-0.5"
+            >
+              <FileSpreadsheet className="h-5 w-5" />
+            </button>
         </div>
       </div>
+
+      <div className="w-full space-y-4 sm:space-y-6 flex-1 animate-in fade-in zoom-in-[0.98] duration-300">
+        <div className="flex flex-col lg:flex-row items-stretch gap-4">
+          {/* KPI Card */}
+          <div className="shrink-0 bg-white border border-gray-100 rounded-xl shadow-sm p-4 sm:p-5 flex items-center justify-center lg:justify-start gap-3">
+             <div className="p-3 bg-amber-50 rounded-lg">
+               <Clock className="w-6 h-6 text-amber-600" />
+             </div>
+             <div>
+               <div className="text-2xl font-black text-amber-900 leading-none">{pendentesCount}</div>
+               <div className="text-[10px] font-bold text-amber-700/70 uppercase tracking-widest mt-1">Não Pagos</div>
+             </div>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex-1">
+            <FilterBar 
+               searchTerm={searchTerm}
+               onSearchChange={setSearchTerm}
+               categories={categories}
+               activeFilterChips={activeFilterChips}
+               activeFilterCount={filterStatus.length + filterSolicitante.length + (filterPeriodo !== 'todos' ? 1 : 0)}
+               onClearAll={handleClearAllFilters}
+            />
+          </div>
+        </div>
 
       {loading ? (
         <div className="bg-white rounded-2xl p-12 flex justify-center border border-gray-100 shadow-sm">
@@ -244,9 +360,10 @@ export function ReembolsosTab() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] uppercase tracking-wider font-bold text-gray-500">
-                  <th className="p-4 pl-6">Data</th>
+                  <th className="p-4 pl-6">Data da Despesa</th>
                   <th className="p-4">Colaborador</th>
                   <th className="p-4">Descrição</th>
+                  <th className="p-4">Solicitado em</th>
                   <th className="p-4">Cobrar Cliente?</th>
                   <th className="p-4">Status</th>
                   <th className="p-4">Valor</th>
@@ -260,12 +377,15 @@ export function ReembolsosTab() {
                     className="hover:bg-gray-50/50 transition-colors cursor-pointer"
                     onClick={() => handleOpenModal(r)}
                   >
-                    <td className="p-4 pl-6 text-sm text-gray-600">
+                    <td className="p-4 pl-6 text-sm font-bold text-[#1e3a8a]">
                       {r.data_despesa ? format(new Date(r.data_despesa), 'dd/MM/yyyy') : '--'}
                     </td>
-                    <td className="p-4 font-medium text-[#112240]">{r.collaborators.name}</td>
+                    <td className="p-4 font-medium text-[#112240]">{r.collaborators?.name || 'Sistema'}</td>
                     <td className="p-4 text-sm text-gray-600 max-w-xs truncate" title={r.descricao}>
                       {r.descricao || 'Sem descrição'}
+                    </td>
+                    <td className="p-4 text-xs font-semibold text-gray-500">
+                      {r.created_at ? format(new Date(r.created_at), 'dd/MM/yyyy') : '--'}
                     </td>
                     <td className="p-4">
                       {r.reembolsavel_cliente ? (
@@ -601,6 +721,8 @@ export function ReembolsosTab() {
           </div>
         </div>
       )}
+
+      </div>
 
       {/* Confirmation Modal */}
       <AlertModal
