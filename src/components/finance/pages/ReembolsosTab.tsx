@@ -79,6 +79,9 @@ export function ReembolsosTab() {
     setSavingEdit(true);
     try {
       const updates = { ...editedData };
+      // Remove nested join data before sending to Supabase
+      delete (updates as any).collaborators;
+      
       if (updates.status === 'pendente') {
          updates.comprovante_pagamento_url = null;
       }
@@ -517,14 +520,31 @@ export function ReembolsosTab() {
                   {isEditing && (
                     <div className="col-span-2 p-4 bg-amber-50/50 border border-amber-200 rounded-xl space-y-3 mb-2">
                        <label className="text-xs font-bold text-amber-800 uppercase tracking-wider block">Status do Reembolso</label>
-                       <select
-                         value={editedData.status || 'pendente'}
-                         onChange={(e) => setEditedData({...editedData, status: e.target.value})}
-                         className="w-full p-2.5 bg-white border border-amber-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none"
-                       >
-                         <option value="pendente">Pendente</option>
-                         <option value="pago">Pago</option>
-                       </select>
+                       <div className="flex bg-white border border-amber-200 rounded-xl overflow-hidden w-full shadow-sm">
+                         <button
+                           type="button"
+                           onClick={() => setEditedData({...editedData, status: 'pendente'})}
+                           className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-black uppercase tracking-widest transition-all ${
+                             (editedData.status || 'pendente') === 'pendente'
+                               ? 'bg-amber-100 text-amber-800'
+                               : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                           }`}
+                         >
+                           <Clock className="w-4 h-4" /> Pendente
+                         </button>
+                         <div className="w-px bg-amber-200" />
+                         <button
+                           type="button"
+                           onClick={() => setEditedData({...editedData, status: 'pago'})}
+                           className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-black uppercase tracking-widest transition-all ${
+                             editedData.status === 'pago'
+                               ? 'bg-emerald-100 text-emerald-800'
+                               : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                           }`}
+                         >
+                           <CheckCircle2 className="w-4 h-4" /> Pago
+                         </button>
+                       </div>
                        {editedData.status === 'pendente' && selectedReembolso.status === 'pago' && (
                          <p className="text-xs text-amber-700 italic mt-1">
                            * Ao voltar para Pendente, o comprovante anexado anteriormente será removido.
