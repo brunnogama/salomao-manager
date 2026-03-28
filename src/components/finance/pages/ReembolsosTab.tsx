@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Search, Filter, Eye, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight } from 'lucide-react';
+import { Search, Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
+import { AlertModal } from '../../../components/ui/AlertModal';
+import XLSX from 'xlsx-js-style';
 
 interface Reembolso {
   id: string;
@@ -30,6 +32,68 @@ export function ReembolsosTab() {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
 
+  // Edit / Delete State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedData, setEditedData] = useState<Partial<Reembolso>>({});
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [reembolsoToDelete, setReembolsoToDelete] = useState<Reembolso | null>(null);
+
+  const handleExportXLSX = () => {
+    const dataToExport = filtered.map(r => ({
+      'Data da Despesa': r.data_despesa ? format(new Date(r.data_despesa), 'dd/MM/yyyy') : '',
+      'Colaborador': r.collaborators?.name || '',
+      'Status': r.status === 'pago' ? 'Pago' : 'Pendente',
+      'Fornecedor': r.fornecedor_nome || '',
+      'CNPJ': r.fornecedor_cnpj || '',
+      'Número Recibo': r.numero_recibo || '',
+      'Descrição': r.descricao || '',
+      'Cobrar Cliente?': r.reembolsavel_cliente ? 'Sim' : 'Não',
+      'Valor (R$)': r.valor || 0,
+      'Criado em': format(new Date(r.created_at), 'dd/MM/yyyy HH:mm'),
+    }));
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Reembolsos");
+    XLSX.writeFile(wb, `Reembolsos_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+  };
+
+  const handleDelete = async () => {
+    if (!reembolsoToDelete) return;
+    try {
+      const { error } = await supabase.from('reembolsos').delete().eq('id', reembolsoToDelete.id);
+      if (error) throw error;
+      await fetchReembolsos();
+      setReembolsoToDelete(null);
+      if (selectedReembolso?.id === reembolsoToDelete.id) {
+        handleCloseModal();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao excluir solicitação.');
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedReembolso) return;
+    setSavingEdit(true);
+    try {
+      const updates = { ...editedData };
+      if (updates.status === 'pendente') {
+         updates.comprovante_pagamento_url = null;
+      }
+      const { error } = await supabase.from('reembolsos').update(updates).eq('id', selectedReembolso.id);
+      if (error) throw error;
+      await fetchReembolsos();
+      setSelectedReembolso(prev => prev ? { ...prev, ...updates } : null);
+      setIsEditing(false);
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao salvar edições.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   useEffect(() => {
     fetchReembolsos();
   }, []);
@@ -57,12 +121,14 @@ export function ReembolsosTab() {
   const handleOpenModal = (r: Reembolso) => {
     setSelectedReembolso(r);
     setPaymentFile(null);
+    setIsEditing(false);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedReembolso(null);
+    setIsEditing(false);
   };
 
   const handlePayment = async () => {
@@ -144,6 +210,12 @@ export function ReembolsosTab() {
           />
         </div>
         <div className="flex gap-3 w-full justify-end md:w-auto">
+          <button 
+            onClick={handleExportXLSX}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-800 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all"
+          >
+            <FileSpreadsheet className="h-4 w-4" /> Exportar XLSX
+          </button>
           <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-white border border-gray-100 text-[#0a192f] rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-sm hover:bg-gray-50 transition-all">
             <Filter className="h-4 w-4" /> Filtros
           </button>
@@ -172,24 +244,26 @@ export function ReembolsosTab() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] uppercase tracking-wider font-bold text-gray-500">
-                  <th className="p-4 pl-6">Colaborador</th>
-                  <th className="p-4">Data / Valor</th>
+                  <th className="p-4 pl-6">Data</th>
+                  <th className="p-4">Colaborador</th>
                   <th className="p-4">Descrição</th>
                   <th className="p-4">Cobrar Cliente?</th>
                   <th className="p-4">Status</th>
+                  <th className="p-4">Valor</th>
                   <th className="p-4 pr-6 text-right">Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map(r => (
-                  <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="p-4 pl-6 font-medium text-[#112240]">{r.collaborators.name}</td>
-                    <td className="p-4 text-sm text-gray-600">
-                      <div>{r.data_despesa ? format(new Date(r.data_despesa), 'dd/MM/yyyy') : '--'}</div>
-                      <div className="font-bold text-[#1e3a8a]">
-                        R$ {r.valor ? r.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
-                      </div>
+                  <tr 
+                    key={r.id} 
+                    className="hover:bg-gray-50/50 transition-colors cursor-pointer"
+                    onClick={() => handleOpenModal(r)}
+                  >
+                    <td className="p-4 pl-6 text-sm text-gray-600">
+                      {r.data_despesa ? format(new Date(r.data_despesa), 'dd/MM/yyyy') : '--'}
                     </td>
+                    <td className="p-4 font-medium text-[#112240]">{r.collaborators.name}</td>
                     <td className="p-4 text-sm text-gray-600 max-w-xs truncate" title={r.descricao}>
                       {r.descricao || 'Sem descrição'}
                     </td>
@@ -216,13 +290,16 @@ export function ReembolsosTab() {
                         </span>
                       )}
                     </td>
-                    <td className="p-4 pr-6 text-right">
+                    <td className="p-4 font-bold text-[#1e3a8a]">
+                      R$ {r.valor ? r.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
+                    </td>
+                    <td className="p-4 pr-6 text-right space-x-2">
                       <button 
-                        onClick={() => handleOpenModal(r)}
-                        className="p-2 bg-gray-50 text-gray-600 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-xl transition-all inline-flex shadow-sm border border-gray-100"
-                        title="Ver Detalhes"
+                        onClick={(e) => { e.stopPropagation(); setEditedData({...r}); setIsEditing(true); handleOpenModal(r); }}
+                        className="p-2 bg-gray-50 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all inline-flex shadow-sm border border-gray-100"
+                        title="Editar"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Pencil className="w-4 h-4" />
                       </button>
                     </td>
                   </tr>
@@ -265,19 +342,45 @@ export function ReembolsosTab() {
             {/* Dados e Ações (Direita) */}
             <div className="w-full md:w-1/2 flex flex-col max-h-[90vh]">
               
-              <div className="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+              <div className="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10 shrink-0">
                 <div>
-                  <h2 className="text-xl font-black text-[#112240]">Análise de Reembolso</h2>
-                  <p className="text-sm text-gray-500">Solicitante: {selectedReembolso.collaborators.name}</p>
+                  <h2 className="text-xl font-black text-[#112240]">
+                    {isEditing ? 'Editar Reembolso' : 'Análise de Reembolso'}
+                  </h2>
+                  <p className="text-sm text-gray-500">Solicitante: {selectedReembolso.collaborators?.name}</p>
                 </div>
-                <button onClick={handleCloseModal} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                  <XCircle className="w-6 h-6 text-gray-400" />
-                </button>
+                <div className="flex items-center gap-2">
+                  {!isEditing ? (
+                    <>
+                      <button 
+                        onClick={() => { setEditedData({...selectedReembolso}); setIsEditing(true); }}
+                        className="p-2 hover:bg-amber-50 text-gray-500 hover:text-amber-600 rounded-full transition-colors" title="Editar Solicitação"
+                      >
+                        <Pencil className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={() => setReembolsoToDelete(selectedReembolso)}
+                        className="p-2 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-full transition-colors" title="Deletar Solicitação"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </>
+                  ) : (
+                    <button 
+                      onClick={() => setIsEditing(false)}
+                      className="text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors uppercase tracking-widest mr-2"
+                    >
+                      Cancelar Edição
+                    </button>
+                  )}
+                  <button onClick={handleCloseModal} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <XCircle className="w-6 h-6 text-gray-400" />
+                  </button>
+                </div>
               </div>
 
               <div className="p-5 md:p-6 flex-1 overflow-y-auto space-y-6">
                 
-                {/* Visualização de Recibo Mobile */}
                 <div className="md:hidden">
                    <a 
                     href={selectedReembolso.recibo_url} 
@@ -290,35 +393,118 @@ export function ReembolsosTab() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
+                  
+                  {isEditing && (
+                    <div className="col-span-2 p-4 bg-amber-50/50 border border-amber-200 rounded-xl space-y-3 mb-2">
+                       <label className="text-xs font-bold text-amber-800 uppercase tracking-wider block">Status do Reembolso</label>
+                       <select
+                         value={editedData.status || 'pendente'}
+                         onChange={(e) => setEditedData({...editedData, status: e.target.value})}
+                         className="w-full p-2.5 bg-white border border-amber-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none"
+                       >
+                         <option value="pendente">Pendente</option>
+                         <option value="pago">Pago</option>
+                       </select>
+                       {editedData.status === 'pendente' && selectedReembolso.status === 'pago' && (
+                         <p className="text-xs text-amber-700 italic mt-1">
+                           * Ao voltar para Pendente, o comprovante anexado anteriormente será removido.
+                         </p>
+                       )}
+                    </div>
+                  )}
+
                   <div className="col-span-1">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Número</label>
-                    <div className="font-medium text-gray-800">{selectedReembolso.numero_recibo || '--'}</div>
+                    {isEditing ? (
+                      <input 
+                        type="text" 
+                        value={editedData.numero_recibo || ''} 
+                        onChange={(e) => setEditedData({...editedData, numero_recibo: e.target.value})}
+                        className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      />
+                    ) : (
+                      <div className="font-medium text-gray-800">{selectedReembolso.numero_recibo || '--'}</div>
+                    )}
                   </div>
+                  
                   <div className="col-span-1">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Data</label>
-                    <div className="font-medium text-gray-800">
-                      {selectedReembolso.data_despesa ? format(new Date(selectedReembolso.data_despesa), 'dd/MM/yyyy') : '--'}
-                    </div>
+                    {isEditing ? (
+                      <input 
+                        type="date" 
+                        value={editedData.data_despesa || ''} 
+                        onChange={(e) => setEditedData({...editedData, data_despesa: e.target.value})}
+                        className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      />
+                    ) : (
+                      <div className="font-medium text-gray-800">
+                        {selectedReembolso.data_despesa ? format(new Date(selectedReembolso.data_despesa), 'dd/MM/yyyy') : '--'}
+                      </div>
+                    )}
                   </div>
+                  
                   <div className="col-span-2">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Fornecedor</label>
-                    <div className="font-medium text-gray-800">{selectedReembolso.fornecedor_nome || '--'}</div>
+                    {isEditing ? (
+                      <input 
+                        type="text" 
+                        value={editedData.fornecedor_nome || ''} 
+                        onChange={(e) => setEditedData({...editedData, fornecedor_nome: e.target.value})}
+                        className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      />
+                    ) : (
+                      <div className="font-medium text-gray-800">{selectedReembolso.fornecedor_nome || '--'}</div>
+                    )}
                   </div>
+
+                  {isEditing && (
+                    <div className="col-span-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">CNPJ Fornecedor</label>
+                        <input 
+                          type="text" 
+                          value={editedData.fornecedor_cnpj || ''} 
+                          onChange={(e) => setEditedData({...editedData, fornecedor_cnpj: e.target.value})}
+                          className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                        />
+                    </div>
+                  )}
+
                   <div className="col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Descrição do Solicitante</label>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedReembolso.descricao || 'Nenhuma descrição fornecida.'}</p>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Descrição do Solicitante</label>
+                    {isEditing ? (
+                      <textarea 
+                        value={editedData.descricao || ''} 
+                        onChange={(e) => setEditedData({...editedData, descricao: e.target.value})}
+                        className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm h-24"
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedReembolso.descricao || 'Nenhuma descrição fornecida.'}</p>
+                    )}
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#112240] text-white flex justify-between items-center shadow-lg">
-                  <span className="font-bold text-gray-300">Valor a Reembolsar</span>
-                  <span className="text-2xl font-black text-green-400">
-                    R$ {selectedReembolso.valor ? selectedReembolso.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
-                  </span>
+                <div className={`p-4 rounded-xl ${isEditing ? 'bg-amber-100' : 'bg-[#112240]'} flex justify-between items-center shadow-lg transition-colors`}>
+                  <span className={`font-bold ${isEditing ? 'text-amber-900' : 'text-gray-300'}`}>Valor a Reembolsar</span>
+                  {isEditing ? (
+                    <div className="flex items-center">
+                       <span className="text-amber-900 font-bold mr-2">R$</span>
+                       <input 
+                          type="number" 
+                          step="0.01"
+                          value={editedData.valor || ''}
+                          onChange={(e) => setEditedData({...editedData, valor: parseFloat(e.target.value) || 0})}
+                          className="w-32 p-2 bg-white border border-amber-300 rounded-lg text-lg font-black text-amber-900 text-right"
+                        />
+                    </div>
+                  ) : (
+                    <span className="text-2xl font-black text-green-400">
+                      R$ {selectedReembolso.valor ? selectedReembolso.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
+                    </span>
+                  )}
                 </div>
 
                 {/* Área Financeira */}
-                {selectedReembolso.status !== 'pago' ? (
+                {(!isEditing && selectedReembolso.status !== 'pago') && (
                   <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 space-y-4">
                     <h4 className="font-bold text-[#1e3a8a] mb-2 border-b border-blue-100 pb-2">Ação do Financeiro</h4>
                     
@@ -345,8 +531,25 @@ export function ReembolsosTab() {
                       />
                     </div>
                   </div>
-                ) : (
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-5 text-center">
+                )}
+                
+                {isEditing && (
+                  <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <input
+                      type="checkbox"
+                      id="reembolsar-edit"
+                      className="w-5 h-5 rounded text-[#1e3a8a] focus:ring-[#1e3a8a]"
+                      checked={editedData.reembolsavel_cliente || false}
+                      onChange={(e) => setEditedData({ ...editedData, reembolsavel_cliente: e.target.checked })}
+                    />
+                    <label htmlFor="reembolsar-edit" className="font-bold text-sm text-gray-700 cursor-pointer">
+                      Cobrar do Cliente? (Reembolsável)
+                    </label>
+                  </div>
+                )}
+
+                {(!isEditing && selectedReembolso.status === 'pago') && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-5 text-center relative group">
                     <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
                     <h4 className="font-bold text-green-800">Reembolso Pago</h4>
                     {selectedReembolso.comprovante_pagamento_url && (
@@ -361,26 +564,54 @@ export function ReembolsosTab() {
                     )}
                   </div>
                 )}
-
               </div>
 
               {/* Botões do Rodapé */}
-              {selectedReembolso.status !== 'pago' && (
-                <div className="p-5 border-t border-gray-100 bg-gray-50 sticky bottom-0 z-10">
-                  <button
-                    onClick={handlePayment}
-                    disabled={processingPayment}
-                    className="w-full py-4 bg-[#0a192f] text-white rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg hover:bg-black transition-all disabled:opacity-70 flex justify-center items-center gap-2"
-                  >
-                    {processingPayment ? <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</> : 'Marcar como Pago e Notificar Colaborador'}
-                  </button>
-                </div>
+              {isEditing ? (
+                 <div className="p-5 border-t border-gray-100 bg-gray-50 flex gap-3 shrink-0">
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="flex-1 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-gray-100 transition-all flex justify-center items-center"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={savingEdit}
+                      className="flex-[2] py-3.5 bg-amber-600 text-white rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg hover:bg-amber-700 transition-all disabled:opacity-70 flex justify-center items-center gap-2"
+                    >
+                      {savingEdit ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4" /> Salvar Alterações</>}
+                    </button>
+                 </div>
+              ) : (
+                selectedReembolso.status !== 'pago' && (
+                  <div className="p-5 border-t border-gray-100 bg-gray-50 shrink-0 flex gap-2">
+                    <button
+                      onClick={handlePayment}
+                      disabled={processingPayment}
+                      className="w-full py-4 bg-[#0a192f] text-white rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg hover:bg-black transition-all disabled:opacity-70 flex justify-center items-center gap-2"
+                    >
+                      {processingPayment ? <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</> : 'Marcar como Pago e Notificar Colaborador'}
+                    </button>
+                  </div>
+                )
               )}
             </div>
             
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <AlertModal
+        isOpen={!!reembolsoToDelete}
+        onClose={() => setReembolsoToDelete(null)}
+        title="Excluir Reembolso"
+        description={`Tem certeza que deseja excluir o pedido de reembolso no valor de R$ ${reembolsoToDelete?.valor || 0}? Esta ação não poderá ser desfeita.`}
+        variant="error"
+        confirmText="Excluir Definitivamente"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }
