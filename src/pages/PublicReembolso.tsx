@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Share2 } from 'lucide-react';
+import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Share2, Trash2, Plus } from 'lucide-react';
 import { SearchableSelect } from '../components/crm/SearchableSelect';
 
 interface Collaborator {
@@ -29,14 +29,14 @@ export default function PublicReembolso() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [publicFileUrl, setPublicFileUrl] = useState('');
   
-  const [extractedData, setExtractedData] = useState<ExtractedData>({
+  const [extractedData, setExtractedData] = useState<ExtractedData[]>([{
     numero_recibo: '',
     fornecedor_nome: '',
     fornecedor_cnpj: '',
     data_despesa: '',
     valor: 0,
     descricao: ''
-  });
+  }]);
 
   const [formError, setFormError] = useState('');
 
@@ -161,36 +161,48 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
           }
 
           // Assume the make webhook returns these fields
-          setExtractedData({
-            numero_recibo: makeData.numero_recibo || '',
-            fornecedor_nome: makeData.fornecedor_nome || '',
-            fornecedor_cnpj: makeData.fornecedor_cnpj || '',
-            data_despesa: makeData.data_despesa || '',
-            valor: parseFloat(makeData.valor) || 0,
-            descricao: makeData.descricao || ''
-          });
-        } else {
-          console.warn('Webhook do Make retornou erro de status. Ignorando Extração de IA.');
-          setExtractedData({
+          // Transform response in array in case Make returns single object
+          const dataArray = Array.isArray(makeData) ? makeData : [makeData];
+
+          const formattedData = dataArray.map((item: any) => ({
+            numero_recibo: item.numero_recibo || '',
+            fornecedor_nome: item.fornecedor_nome || '',
+            fornecedor_cnpj: item.fornecedor_cnpj || '',
+            data_despesa: item.data_despesa || '',
+            valor: parseFloat(item.valor) || 0,
+            descricao: item.descricao || ''
+          }));
+
+          setExtractedData(formattedData.length > 0 ? formattedData : [{
             numero_recibo: '',
             fornecedor_nome: '',
             fornecedor_cnpj: '',
             data_despesa: '',
             valor: 0,
             descricao: ''
-          });
+          }]);
+        } else {
+          console.warn('Webhook do Make retornou erro de status. Ignorando Extração de IA.');
+          setExtractedData([{
+            numero_recibo: '',
+            fornecedor_nome: '',
+            fornecedor_cnpj: '',
+            data_despesa: '',
+            valor: 0,
+            descricao: ''
+          }]);
         }
       } else {
         // Mocking extraction delay for demonstration
         await new Promise(resolve => setTimeout(resolve, 2000));
-        setExtractedData({
+        setExtractedData([{
           numero_recibo: 'MOCK-12345',
           fornecedor_nome: 'Fornecedor Exemplo Ltda',
           fornecedor_cnpj: '00.000.000/0001-00',
           data_despesa: new Date().toISOString().split('T')[0],
           valor: 150.00,
           descricao: 'Despesa mockada para teste porque o Webhook não está configurado.'
-        });
+        }]);
       }
 
       setIsExtracting(false);
@@ -207,12 +219,14 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('reembolsos').insert({
+      const payload = extractedData.map(item => ({
         colaborador_id: selectedColab,
         reembolsavel_cliente: reembolsavelCliente,
         recibo_url: publicFileUrl,
-        ...extractedData
-      });
+        ...item
+      }));
+
+      const { error } = await supabase.from('reembolsos').insert(payload);
 
       if (error) {
         throw error;
@@ -227,9 +241,30 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
     }
   };
 
+  const handleUpdateItem = (index: number, field: keyof ExtractedData, value: any) => {
+    const newData = [...extractedData];
+    newData[index] = { ...newData[index], [field]: value };
+    setExtractedData(newData);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setExtractedData(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const handleAddItem = () => {
+    setExtractedData(prev => [...prev, {
+      numero_recibo: '',
+      fornecedor_nome: '',
+      fornecedor_cnpj: '',
+      data_despesa: '',
+      valor: 0,
+      descricao: ''
+    }]);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-xl mx-auto">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 transition-all duration-300">
+      <div className={`w-full transition-all duration-500 mx-auto ${step === 2 ? 'max-w-6xl' : 'max-w-xl'}`}>
         
         {/* Header Branding */}
         <div className="text-center mb-8">
@@ -341,79 +376,128 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
           )}
 
           {step === 2 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-right-4 duration-300">
               
-              <div className="flex items-center gap-3 mb-2">
-                <button onClick={() => setStep(1)} className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
-                   <ArrowLeft className="w-4 h-4 text-gray-600" />
-                </button>
-                <h2 className="text-lg font-bold text-[#112240]">Confira os dados extraídos</h2>
-              </div>
-              
-              <div className="bg-blue-50 p-4 rounded-xl text-sm text-[#1e3a8a] flex gap-3 items-start border border-blue-100">
-                <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-                <p>Nossa inteligência artificial leu seu recibo. Por favor, <strong>confirme e edite</strong> os campos se houver alguma divergência antes de enviar.</p>
+              {/* Esquerda: Visualizador PDF */}
+              <div className="hidden lg:flex flex-col bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden shadow-inner h-[80vh]">
+                <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
+                  <h3 className="font-bold text-[#112240] flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-600" /> Arquivo Original
+                  </h3>
+                </div>
+                <div className="flex-1 overflow-hidden p-0 relative">
+                  {publicFileUrl?.toLowerCase().split('?')[0].endsWith('.pdf') ? (
+                    <iframe src={publicFileUrl} className="absolute inset-0 w-full h-full" title="Visualizador" />
+                  ) : (
+                    <div className="overflow-auto w-full h-full p-4 flex items-start justify-center">
+                      <img src={publicFileUrl} alt="Comprovante" className="max-w-full rounded-xl shadow-sm border border-gray-200" />
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="col-span-1">
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Número do Recibo</label>
-                  <input
-                    type="text"
-                    value={extractedData.numero_recibo}
-                    onChange={(e) => setExtractedData({...extractedData, numero_recibo: e.target.value})}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium"
-                  />
+              {/* Direita: Formulários e Blocos */}
+              <div className="space-y-6 h-auto lg:h-[80vh] lg:overflow-y-auto lg:pr-4">
+                
+                <div className="flex items-center gap-3 mb-2">
+                  <button onClick={() => setStep(1)} className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
+                     <ArrowLeft className="w-4 h-4 text-gray-600" />
+                  </button>
+                  <h2 className="text-lg font-bold text-[#112240]">Confira os dados extraídos</h2>
                 </div>
-                <div className="col-span-1">
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Data</label>
-                  <input
-                    type="date"
-                    value={extractedData.data_despesa}
-                    onChange={(e) => setExtractedData({...extractedData, data_despesa: e.target.value})}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium"
-                  />
+                
+                <div className="bg-blue-50 p-4 rounded-xl text-sm text-[#1e3a8a] flex gap-3 items-start border border-blue-100">
+                  <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+                  <p>Nossa inteligência artificial leu seu recibo. Por favor, <strong>confirme e edite</strong> os campos se houver alguma divergência antes de enviar.</p>
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Fornecedor (Nome)</label>
-                  <input
-                    type="text"
-                    value={extractedData.fornecedor_nome}
-                    onChange={(e) => setExtractedData({...extractedData, fornecedor_nome: e.target.value})}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium"
-                  />
-                </div>
-                <div className="col-span-1 md:col-span-2">
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CNPJ</label>
-                  <input
-                    type="text"
-                    value={extractedData.fornecedor_cnpj}
-                    onChange={(e) => setExtractedData({...extractedData, fornecedor_cnpj: e.target.value})}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Descrição</label>
-                  <textarea
-                    value={extractedData.descricao}
-                    onChange={(e) => setExtractedData({...extractedData, descricao: e.target.value})}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium resize-none h-20"
-                  />
-                </div>
-                <div className="col-span-2 bg-[#112240] p-4 rounded-xl flex items-center justify-between mt-2">
-                  <span className="text-gray-300 font-medium">Valor Total</span>
-                  <div className="flex items-center">
-                    <span className="text-gray-400 font-bold mr-2">R$</span>
-                    <input
-                      type="number"
-                      value={extractedData.valor}
-                      onChange={(e) => setExtractedData({...extractedData, valor: parseFloat(e.target.value)})}
-                      className="bg-transparent text-white text-xl font-black text-right outline-none w-32"
-                      step="0.01"
-                    />
+
+              {extractedData.map((item, index) => (
+                <div key={index} className="bg-white p-5 md:p-6 rounded-2xl border border-gray-200 shadow-sm relative space-y-4">
+                  
+                  <div className="flex justify-between items-center mb-2 pb-3 border-b border-gray-100">
+                    <h3 className="font-bold text-[#112240] flex items-center gap-2">
+                       <FileText className="w-5 h-5 text-blue-600" /> Recibo #{index + 1}
+                    </h3>
+                    {extractedData.length > 1 && (
+                      <button 
+                         onClick={() => handleRemoveItem(index)}
+                         className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors font-bold text-xs flex items-center gap-1.5"
+                         title="Descartar recibo"
+                       >
+                         <Trash2 className="w-4 h-4" /> Descartar
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="col-span-1">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Número do Recibo</label>
+                      <input
+                        type="text"
+                        value={item.numero_recibo}
+                        onChange={(e) => handleUpdateItem(index, 'numero_recibo', e.target.value)}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium"
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Data</label>
+                      <input
+                        type="date"
+                        value={item.data_despesa}
+                        onChange={(e) => handleUpdateItem(index, 'data_despesa', e.target.value)}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Fornecedor (Nome)</label>
+                      <input
+                        type="text"
+                        value={item.fornecedor_nome}
+                        onChange={(e) => handleUpdateItem(index, 'fornecedor_nome', e.target.value)}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium"
+                      />
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CNPJ</label>
+                      <input
+                        type="text"
+                        value={item.fornecedor_cnpj}
+                        onChange={(e) => handleUpdateItem(index, 'fornecedor_cnpj', e.target.value)}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Descrição</label>
+                      <textarea
+                        value={item.descricao}
+                        onChange={(e) => handleUpdateItem(index, 'descricao', e.target.value)}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium resize-none h-20"
+                      />
+                    </div>
+                    <div className="col-span-2 bg-[#112240] p-4 rounded-xl flex items-center justify-between mt-2">
+                      <span className="text-gray-300 font-medium">Valor Total</span>
+                      <div className="flex items-center">
+                        <span className="text-gray-400 font-bold mr-2">R$</span>
+                        <input
+                          type="number"
+                          value={item.valor}
+                          onChange={(e) => handleUpdateItem(index, 'valor', parseFloat(e.target.value) || 0)}
+                          className="bg-transparent text-white text-xl font-black text-right outline-none w-32"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={handleAddItem}
+                className="w-full py-4 border-2 border-dashed border-blue-200 text-blue-600 font-bold rounded-xl hover:bg-blue-50/50 hover:border-blue-300 transition-colors flex items-center justify-center gap-2"
+              >
+                 <Plus className="w-5 h-5" /> Adicionar mais um recibo manualmente
+              </button>
 
               <button
                 onClick={handleSubmit}
@@ -427,6 +511,7 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
                 )}
               </button>
 
+              </div>
             </div>
           )}
 
