@@ -169,10 +169,12 @@ export function FilterBar({
 
                 {/* Popover / Dropdown para esta categoria específica */}
                 {isOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                  <div className={`absolute top-full right-0 mt-2 ${cat.type === 'date_range' ? 'w-[320px]' : 'w-72'} bg-white border border-gray-100 rounded-2xl shadow-xl shadow-[#1e3a8a]/5 z-[9999] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden`}>
                     {cat.type === 'date_range' ? (
-                      <div className="p-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex gap-2 mb-4">
+                      <div className="p-5" onClick={(e) => e.stopPropagation()}>
+                        
+                        {/* Botões Rápidos (Pill Style) */}
+                        <div className="flex bg-gray-100/80 p-1 rounded-xl mb-5 border border-gray-50 shadow-inner">
                           <button
                             onClick={() => {
                               const today = new Date();
@@ -184,7 +186,7 @@ export function FilterBar({
                               cat.onChange({ start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] });
                               setSelectedCategory(null);
                             }}
-                            className="flex-1 py-1.5 bg-gray-50 text-gray-600 border border-gray-200 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-colors"
+                            className="flex-1 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-[#1e3a8a] bg-transparent hover:bg-white rounded-lg transition-all shadow-none hover:shadow-[0_2px_8px_-2px_rgba(30,58,138,0.1)] focus:outline-none"
                           >
                             Semana Atual
                           </button>
@@ -196,36 +198,39 @@ export function FilterBar({
                               cat.onChange({ start: firstDay.toISOString().split('T')[0], end: lastDay.toISOString().split('T')[0] });
                               setSelectedCategory(null);
                             }}
-                            className="flex-1 py-1.5 bg-gray-50 text-gray-600 border border-gray-200 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-colors"
+                            className="flex-1 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-[#1e3a8a] bg-transparent hover:bg-white rounded-lg transition-all shadow-none hover:shadow-[0_2px_8px_-2px_rgba(30,58,138,0.1)] focus:outline-none"
                           >
                             Mês Atual
                           </button>
                         </div>
-                        <div className="flex items-center gap-3">
+                        
+                        {/* Campos de Início e Fim */}
+                        <div className="flex items-center gap-2">
                           <div className="flex-1">
-                            <label className="block text-[10px] font-black uppercase text-gray-400 mb-1.5 text-center">Início</label>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-[#1e3a8a] mb-2 text-center">Início</label>
                             <input
                               type="date"
                               value={cat.value?.start || ''}
                               onChange={(e) => {
                                 cat.onChange({ ...cat.value, start: e.target.value });
                               }}
-                              className="w-full text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg py-1.5 px-2 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all"
+                              className="w-full text-xs font-bold text-gray-700 bg-white border border-gray-200 shadow-sm rounded-xl py-2.5 px-3 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all cursor-pointer hover:border-blue-300"
                             />
                           </div>
-                          <div className="flex-1 opacity-50 flex items-center justify-center mt-5 shrink-0 max-w-[8px]">
-                            {/* Um pequeno traço visual */}
-                            <div className="w-2 h-[1px] bg-gray-400"></div>
+                          
+                          <div className="shrink-0 pt-6 text-gray-300 font-light flex items-center justify-center">
+                            —
                           </div>
+
                           <div className="flex-1">
-                            <label className="block text-[10px] font-black uppercase text-gray-400 mb-1.5 text-center">Fim</label>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-[#1e3a8a] mb-2 text-center">Fim</label>
                             <input
                               type="date"
                               value={cat.value?.end || ''}
                               onChange={(e) => {
                                 cat.onChange({ ...cat.value, end: e.target.value });
                               }}
-                              className="w-full text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg py-1.5 px-2 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all"
+                              className="w-full text-xs font-bold text-gray-700 bg-white border border-gray-200 shadow-sm rounded-xl py-2.5 px-3 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all cursor-pointer hover:border-blue-300"
                             />
                           </div>
                         </div>
