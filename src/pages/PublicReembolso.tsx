@@ -236,7 +236,12 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
         colaborador_id: selectedColab,
         reembolsavel_cliente: reembolsavelCliente,
         recibo_url: publicFileUrl,
-        ...item
+        numero_recibo: item.numero_recibo,
+        fornecedor_nome: item.fornecedor_nome,
+        fornecedor_cnpj: item.fornecedor_cnpj,
+        data_despesa: item.data_despesa,
+        valor: item.valor,
+        descricao: item.descricao
       }));
 
       const { error } = await supabase.from('reembolsos').insert(payload);
@@ -406,7 +411,7 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
                       </div>
                     )}
                     <a href={publicFileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors">
-                       Abrir nova aba <ExternalLink className="w-3.5 h-3.5" />
+                       Visualizar <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
                 </div>
@@ -438,7 +443,7 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
                 
                 <div className="bg-blue-50 p-4 rounded-xl text-sm text-[#1e3a8a] flex gap-3 items-start border border-blue-100">
                   <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-                  <p>Nossa inteligência artificial leu seu recibo. Por favor, <strong>confirme e edite</strong> os campos se houver alguma divergência antes de enviar.</p>
+                  <p>O sistema leu seu recibo, confira e corrija se necessário antes de enviar ao financeiro.</p>
                 </div>
 
               {extractedData.map((item, index) => (
