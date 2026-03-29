@@ -192,7 +192,7 @@ export function FinanceDashboard() {
       const meses = new Set(
         list.map((item) => {
           const d = new Date(item.data_pagamento);
-          return \`\${d.getFullYear()}-\${String(d.getMonth() + 1).padStart(2, '0')}\`;
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         })
       );
       const total = list.reduce((acc, curr) => acc + (curr.valor_pago || 0), 0);
@@ -445,17 +445,17 @@ export function FinanceDashboard() {
                 </div>
               </div>
 
-              <div className={\`p-4 rounded-xl border \${kpiAeronave.isEconomia ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'} flex items-center justify-between\`}>
+              <div className={`p-4 rounded-xl border ${kpiAeronave.isEconomia ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'} flex items-center justify-between`}>
                 <div>
-                  <div className={\`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 \${kpiAeronave.isEconomia ? 'text-green-600' : 'text-amber-600'}\`}>
+                  <div className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 ${kpiAeronave.isEconomia ? 'text-green-600' : 'text-amber-600'}`}>
                     {kpiAeronave.isEconomia ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
                     {kpiAeronave.isEconomia ? 'Economia Mensal' : 'Custo Adicional Mensal'}
                   </div>
-                  <div className={\`text-2xl font-black mt-1 \${kpiAeronave.isEconomia ? 'text-green-900' : 'text-amber-900'}\`}>
+                  <div className={`text-2xl font-black mt-1 ${kpiAeronave.isEconomia ? 'text-green-900' : 'text-amber-900'}`}>
                     {formatCurrency(Math.abs(kpiAeronave.diff))}
                   </div>
                 </div>
-                <div className={\`p-3 rounded-full \${kpiAeronave.isEconomia ? 'bg-green-100' : 'bg-amber-100'}\`}>
+                <div className={`p-3 rounded-full ${kpiAeronave.isEconomia ? 'bg-green-100' : 'bg-amber-100'}`}>
                   {kpiAeronave.isEconomia ? <TrendingDown className="w-6 h-6 text-green-600" /> : <TrendingUp className="w-6 h-6 text-amber-600" />}
                 </div>
               </div>
@@ -482,13 +482,13 @@ export function FinanceDashboard() {
                 <span className="text-[10px] font-black uppercase text-gray-500 tracking-widest mt-1">OAB's Pagas</span>
               </div>
 
-              <div className={\`p-4 rounded-xl border \${kpiOAB.urgentesQty > 0 ? 'border-orange-200 bg-orange-50' : 'border-gray-100 bg-gray-50'} relative overflow-hidden flex flex-col justify-center items-center text-center\`}>
-                <span className={\`text-3xl font-black \${kpiOAB.urgentesQty > 0 ? 'text-orange-600' : 'text-gray-400'}\`}>{kpiOAB.urgentesQty}</span>
+              <div className={`p-4 rounded-xl border ${kpiOAB.urgentesQty > 0 ? 'border-orange-200 bg-orange-50' : 'border-gray-100 bg-gray-50'} relative overflow-hidden flex flex-col justify-center items-center text-center`}>
+                <span className={`text-3xl font-black ${kpiOAB.urgentesQty > 0 ? 'text-orange-600' : 'text-gray-400'}`}>{kpiOAB.urgentesQty}</span>
                 <span className="text-[10px] font-black uppercase text-gray-500 tracking-widest mt-1">Urgente (Até 7 dias)</span>
               </div>
 
-              <div className={\`p-4 rounded-xl border \${kpiOAB.vencidosQty > 0 ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-gray-50'} relative overflow-hidden flex flex-col justify-center items-center text-center\`}>
-                <span className={\`text-3xl font-black \${kpiOAB.vencidosQty > 0 ? 'text-red-600' : 'text-gray-400'}\`}>{kpiOAB.vencidosQty}</span>
+              <div className={`p-4 rounded-xl border ${kpiOAB.vencidosQty > 0 ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-gray-50'} relative overflow-hidden flex flex-col justify-center items-center text-center`}>
+                <span className={`text-3xl font-black ${kpiOAB.vencidosQty > 0 ? 'text-red-600' : 'text-gray-400'}`}>{kpiOAB.vencidosQty}</span>
                 <span className="text-[10px] font-black uppercase text-gray-500 tracking-widest mt-1">Vencimentos Atrás</span>
               </div>
             </div>
