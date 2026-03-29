@@ -30,8 +30,7 @@ export function Finance() {
   const [selectedPartner, setSelectedPartner] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [filterPeriodo, setFilterPeriodo] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
   const [locations, setLocations] = useState<string[]>([]);
 
@@ -132,8 +131,7 @@ export function Finance() {
     setSearchTerm('');
     setSelectedPartner('');
     setSelectedLocation('');
-    setStartDate('');
-    setEndDate('');
+    setFilterPeriodo({ start: '', end: '' });
 
 
     const overdueCount = installments.filter(i => isOverdue(i)).length;
@@ -206,12 +204,12 @@ export function Finance() {
     const matchesLocation = selectedLocation ? i.contract?.billing_location === selectedLocation : true;
 
     let matchesDate = true;
-    if (startDate || endDate) {
+    if (filterPeriodo.start || filterPeriodo.end) {
       const dateToCheck = i.paid_at ? new Date(i.paid_at) : (i.due_date ? new Date(i.due_date) : null);
       if (dateToCheck) {
-        if (startDate && dateToCheck < new Date(startDate)) matchesDate = false;
-        if (endDate) {
-          const end = new Date(endDate);
+        if (filterPeriodo.start && dateToCheck < new Date(filterPeriodo.start)) matchesDate = false;
+        if (filterPeriodo.end) {
+          const end = new Date(filterPeriodo.end);
           end.setHours(23, 59, 59, 999);
           if (dateToCheck > end) matchesDate = false;
         }
@@ -341,12 +339,10 @@ export function Finance() {
     setSelectedPartner('');
     setSelectedLocation('');
     setStatusFilter('all');
-    setStartDate('');
-    setEndDate('');
-
+    setFilterPeriodo({ start: '', end: '' });
   };
 
-  const hasActiveFilters = searchTerm || selectedPartner || selectedLocation || statusFilter !== 'all' || startDate || endDate;
+  const hasActiveFilters = searchTerm || selectedPartner || selectedLocation || statusFilter !== 'all' || filterPeriodo.start || filterPeriodo.end;
 
   const statusOptions = [
     { label: 'Todos Status', value: 'all' },
@@ -385,17 +381,24 @@ export function Finance() {
       value: selectedLocation,
       onChange: (val: string) => setSelectedLocation(val),
     },
-  ], [selectedPartner, statusFilter, selectedLocation, partners, locations]);
+    {
+      key: 'periodo',
+      label: 'Período',
+      icon: CalendarDays,
+      type: 'date_range',
+      value: filterPeriodo,
+      onChange: setFilterPeriodo,
+    },
+  ], [selectedPartner, statusFilter, selectedLocation, filterPeriodo, partners, locations]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (selectedPartner) count++;
     if (statusFilter !== 'all') count++;
     if (selectedLocation) count++;
-    if (startDate) count++;
-    if (endDate) count++;
+    if (filterPeriodo.start || filterPeriodo.end) count++;
     return count;
-  }, [selectedPartner, statusFilter, selectedLocation, startDate, endDate]);
+  }, [selectedPartner, statusFilter, selectedLocation, filterPeriodo]);
 
   const activeFilterChips = useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
@@ -410,14 +413,23 @@ export function Finance() {
     if (selectedLocation) {
       chips.push({ key: 'location', label: `Local: ${selectedLocation}`, onClear: () => setSelectedLocation('') });
     }
-    if (startDate) {
-      chips.push({ key: 'startDate', label: `De: ${new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setStartDate('') });
-    }
-    if (endDate) {
-      chips.push({ key: 'endDate', label: `Até: ${new Date(endDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setEndDate('') });
+    if (filterPeriodo.start || filterPeriodo.end) {
+      let label = 'Período: ';
+      if (filterPeriodo.start && filterPeriodo.end) {
+         label += `${new Date(filterPeriodo.start + 'T12:00:00').toLocaleDateString('pt-BR')} até ${new Date(filterPeriodo.end + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+      } else if (filterPeriodo.start) {
+         label += `A partir de ${new Date(filterPeriodo.start + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+      } else if (filterPeriodo.end) {
+         label += `Até ${new Date(filterPeriodo.end + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+      }
+      chips.push({
+        key: 'periodo',
+        label,
+        onClear: () => setFilterPeriodo({ start: '', end: '' })
+      });
     }
     return chips;
-  }, [selectedPartner, statusFilter, selectedLocation, startDate, endDate, partners]);
+  }, [selectedPartner, statusFilter, selectedLocation, filterPeriodo, partners]);
 
   const clearAllFilters = () => {
     clearFilters();
@@ -515,31 +527,6 @@ export function Finance() {
         activeFilterChips={activeFilterChips}
         activeFilterCount={activeFilterCount}
         onClearAll={clearAllFilters}
-        extraContent={
-          <div className="px-4 py-3 space-y-2">
-            <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Período</div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
-                />
-              </div>
-              <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
-                />
-              </div>
-            </div>
-          </div>
-        }
       />
 
       {/* 4. Área de Conteúdo */}

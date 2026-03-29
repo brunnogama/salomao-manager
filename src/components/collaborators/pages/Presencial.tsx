@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   RefreshCw, Download, Upload,
   Users, Briefcase, FileText,
-  Plus, Clock, MapPin, User
+  Plus, Clock, MapPin, User, Calendar
 } from 'lucide-react'
 import XLSX from 'xlsx-js-style'
 import { exportToStandardXLSX } from '../../../utils/exportUtils'
@@ -42,8 +42,7 @@ export function Presencial() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingRule, setEditingRule] = useState<Partial<SocioRule> | null>(null)
   const [viewMode, setViewMode] = useState<'horas' | 'descriptive' | 'socios'>('horas')
-  const [startDate, setStartDate] = useState(getFirstDayOfMonth())
-  const [endDate, setEndDate] = useState(getLastDayOfMonth())
+  const [filterPeriodo, setFilterPeriodo] = useState<{ start: string; end: string }>({ start: getFirstDayOfMonth(), end: getLastDayOfMonth() })
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [sociosList, setSociosList] = useState<{ id: string, name: string }[]>([]) // Atualizado: nome -> name
 
@@ -57,9 +56,8 @@ export function Presencial() {
     const { data } = await supabase.from('marcacoes_ponto').select('data_hora').order('data_hora', { ascending: false }).limit(1)
     if (data && data.length > 0) {
       const lastDate = new Date(data[0].data_hora)
-      setEndDate(lastDate.toISOString().split('T')[0])
       const firstDate = new Date(lastDate.getFullYear(), lastDate.getMonth(), 1)
-      setStartDate(firstDate.toISOString().split('T')[0])
+      setFilterPeriodo({ start: firstDate.toISOString().split('T')[0], end: lastDate.toISOString().split('T')[0] })
     }
     setIsInitialLoad(false)
   }
@@ -75,7 +73,7 @@ export function Presencial() {
 
     // Buscar dados antigos da tabela presenca_portaria
     while (hasMore) {
-      const { data: presenceData, error } = await supabase.from('presenca_portaria').select('*', { count: 'exact' }).gte('data_hora', startDate + 'T00:00:00').lte('data_hora', endDate + 'T23:59:59').order('data_hora', { ascending: true }).range(from, from + pageSize - 1);
+      const { data: presenceData, error } = await supabase.from('presenca_portaria').select('*', { count: 'exact' }).gte('data_hora', filterPeriodo.start + 'T00:00:00').lte('data_hora', filterPeriodo.end + 'T23:59:59').order('data_hora', { ascending: true }).range(from, from + pageSize - 1);
       if (error) { console.error(error); break; }
       if (presenceData && presenceData.length > 0) { allPresenceData = [...allPresenceData, ...presenceData]; if (presenceData.length < pageSize) { hasMore = false; } else { from += pageSize; } } else { hasMore = false; }
     }
@@ -84,7 +82,7 @@ export function Presencial() {
     from = 0;
     hasMore = true;
     while (hasMore) {
-      const { data: marcacoesData, error } = await supabase.from('marcacoes_ponto').select('*', { count: 'exact' }).gte('data_hora', startDate + 'T00:00:00').lte('data_hora', endDate + 'T23:59:59').order('data_hora', { ascending: true }).range(from, from + pageSize - 1);
+      const { data: marcacoesData, error } = await supabase.from('marcacoes_ponto').select('*', { count: 'exact' }).gte('data_hora', filterPeriodo.start + 'T00:00:00').lte('data_hora', filterPeriodo.end + 'T23:59:59').order('data_hora', { ascending: true }).range(from, from + pageSize - 1);
       if (error) { console.error(error); break; }
       if (marcacoesData && marcacoesData.length > 0) { allMarcacoesData = [...allMarcacoesData, ...marcacoesData]; if (marcacoesData.length < pageSize) { hasMore = false; } else { from += pageSize; } } else { hasMore = false; }
     }
@@ -104,7 +102,7 @@ export function Presencial() {
   }
 
   useEffect(() => { fetchInitialPeriod() }, [])
-  useEffect(() => { if (!isInitialLoad) { fetchRecords() } }, [startDate, endDate, isInitialLoad])
+  useEffect(() => { if (!isInitialLoad) { fetchRecords() } }, [filterPeriodo.start, filterPeriodo.end, isInitialLoad])
   useEffect(() => { fetchSociosList() }, [])
 
   const socioMap = useMemo(() => {
@@ -158,8 +156,18 @@ export function Presencial() {
         onChange: setFilterColaborador,
       },
     ];
+    if (viewMode === 'descriptive' || viewMode === 'horas') {
+      cats.push({
+        key: 'periodo',
+        label: 'Período',
+        icon: Calendar,
+        type: 'date_range',
+        value: filterPeriodo,
+        onChange: setFilterPeriodo,
+      });
+    }
     return cats;
-  }, [filterSocio, filterColaborador, socioOptions, colaboradorOptions]);
+  }, [filterSocio, filterColaborador, filterPeriodo, socioOptions, colaboradorOptions, viewMode]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -178,8 +186,16 @@ export function Presencial() {
       const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
       chips.push({ key: 'mes', label: `Mês: ${meses[parseInt(m) - 1]}/${y}`, onClear: () => setFilterMes('') });
     }
+    if (filterPeriodo.start || filterPeriodo.end) {
+      const label = filterPeriodo.start && filterPeriodo.end 
+        ? `Período: ${new Date(filterPeriodo.start + 'T12:00:00').toLocaleDateString('pt-BR')} até ${new Date(filterPeriodo.end + 'T12:00:00').toLocaleDateString('pt-BR')}`
+        : filterPeriodo.start 
+          ? `A partir de ${new Date(filterPeriodo.start + 'T12:00:00').toLocaleDateString('pt-BR')}`
+          : `Até ${new Date(filterPeriodo.end + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+      chips.push({ key: 'periodo', label, onClear: () => setFilterPeriodo({ start: getFirstDayOfMonth(), end: getLastDayOfMonth() }) });
+    }
     return chips;
-  }, [filterSocio, filterColaborador, filterMes]);
+  }, [filterSocio, filterColaborador, filterMes, filterPeriodo]);
 
   const clearAllFilters = () => {
     setFilterSocio('');
@@ -191,8 +207,8 @@ export function Presencial() {
   const filteredData = useMemo(() => {
     const filteredRecords = records.filter(record => {
       const dateObj = new Date(record.data_hora)
-      const start = new Date(startDate + 'T00:00:00');
-      const end = new Date(endDate + 'T23:59:59');
+      const start = new Date(filterPeriodo.start ? filterPeriodo.start + 'T00:00:00' : '2000-01-01T00:00:00');
+      const end = new Date(filterPeriodo.end ? filterPeriodo.end + 'T23:59:59' : '2099-12-31T23:59:59');
       if (dateObj < start || dateObj > end) return false
 
       // Filtro por mês
@@ -220,8 +236,8 @@ export function Presencial() {
 
     const filteredMarcacoes = marcacoes.filter(marcacao => {
       const dateObj = new Date(marcacao.data_hora)
-      const start = new Date(startDate + 'T00:00:00');
-      const end = new Date(endDate + 'T23:59:59');
+      const start = new Date(filterPeriodo.start ? filterPeriodo.start + 'T00:00:00' : '2000-01-01T00:00:00');
+      const end = new Date(filterPeriodo.end ? filterPeriodo.end + 'T23:59:59' : '2099-12-31T23:59:59');
       if (dateObj < start || dateObj > end) return false
 
       // Filtro por mês
@@ -257,7 +273,7 @@ export function Presencial() {
       return true
     })
     return { filteredRecords, filteredMarcacoes, filteredRules }
-  }, [records, marcacoes, socioRules, startDate, endDate, filterSocio, filterColaborador, filterMes, searchText, socioMap])
+  }, [records, marcacoes, socioRules, filterPeriodo, filterSocio, filterColaborador, filterMes, searchText, socioMap])
 
   const descriptiveData = useMemo(() => {
     return [...filteredData.filteredRecords].sort((a, b) => {
@@ -593,31 +609,6 @@ export function Presencial() {
             activeFilterChips={activeFilterChips}
             activeFilterCount={activeFilterCount}
             onClearAll={clearAllFilters}
-            extraContent={(viewMode === 'descriptive' || viewMode === 'horas') ? (
-              <div className="px-4 py-3 space-y-2">
-                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Período</div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : undefined}
           />
         </div>
       </div>

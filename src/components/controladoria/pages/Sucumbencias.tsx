@@ -220,9 +220,7 @@ export function Sucumbencias() {
     const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
     // Filtros de Data. Default: 1 de Janeiro deste ano até hoje.
-    const [startDate, setStartDate] = useState('');
-
-    const [endDate, setEndDate] = useState('');
+    const [filterPeriodo, setFilterPeriodo] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
     // --- Supabase Actions ---
     const handleAction = async (item: FilteredSucumbencia, status: 'aguardando' | 'descartado' | 'recebido' | 'prescrito') => {
@@ -544,7 +542,37 @@ export function Sucumbencias() {
         
         const matchResp = filterResponsavel === 'Todos' || item.responsavel === filterResponsavel;
 
-        return matchSearch && matchResp;
+        // Date filtering based on andamentos.
+        let matchDate = true;
+        if (filterPeriodo.start || filterPeriodo.end) {
+            matchDate = item.andamentos.some(and => {
+                const parts = and.dataAndamento.split('/');
+                if (parts.length === 3) {
+                    const andDate = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+                    
+                    if (filterPeriodo.start && filterPeriodo.end) {
+                        const start = new Date(filterPeriodo.start);
+                        start.setHours(0,0,0,0);
+                        const end = new Date(filterPeriodo.end);
+                        end.setHours(23,59,59,999);
+                        return andDate >= start && andDate <= end;
+                    } else if (filterPeriodo.start) {
+                         const start = new Date(filterPeriodo.start);
+                         start.setHours(0,0,0,0);
+                         return andDate >= start;
+                    } else if (filterPeriodo.end) {
+                         const end = new Date(filterPeriodo.end);
+                         end.setHours(23,59,59,999);
+                         return andDate <= end;
+                    }
+                }
+                return false;
+            });
+            // If no valid dates and filter is active, exclude it.
+            if (item.andamentos.length === 0) matchDate = false;
+        }
+
+        return matchSearch && matchResp && matchDate;
     });
 
     // Unique responsaveis list for dropdown from current tab explicitly (or all imported)
@@ -565,7 +593,7 @@ export function Sucumbencias() {
     // Reseta a paginação ao mudar qualquer filtro
     useEffect(() => {
         setCurrentPage(1);
-    }, [activeTab, searchTerm, filterResponsavel, startDate, endDate]);
+    }, [activeTab, searchTerm, filterResponsavel, filterPeriodo]);
 
     // Aplica a paginação sobre os dados já filtrados
     const totalPages = Math.ceil(displayedData.length / itemsPerPage);
@@ -587,35 +615,50 @@ export function Sucumbencias() {
             value: filterResponsavel === 'Todos' ? '' : filterResponsavel,
             onChange: (val: string) => setFilterResponsavel(val || 'Todos'),
         },
-    ], [filterResponsavel, responsavelOptions]);
+        {
+            key: 'periodo',
+            label: 'Período',
+            icon: Calendar,
+            type: 'date_range',
+            value: filterPeriodo,
+            onChange: setFilterPeriodo,
+        },
+    ], [filterResponsavel, filterPeriodo, responsavelOptions]);
 
     const activeFilterCount = useMemo(() => {
         let count = 0;
         if (filterResponsavel !== 'Todos') count++;
-        if (startDate) count++;
-        if (endDate) count++;
+        if (filterPeriodo.start || filterPeriodo.end) count++;
         return count;
-    }, [filterResponsavel, startDate, endDate]);
+    }, [filterResponsavel, filterPeriodo]);
 
     const activeFilterChips = useMemo(() => {
         const chips: { key: string; label: string; onClear: () => void }[] = [];
         if (filterResponsavel !== 'Todos') {
             chips.push({ key: 'responsavel', label: `Resp: ${filterResponsavel}`, onClear: () => setFilterResponsavel('Todos') });
         }
-        if (startDate) {
-            chips.push({ key: 'startDate', label: `De: ${new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setStartDate('') });
-        }
-        if (endDate) {
-            chips.push({ key: 'endDate', label: `Até: ${new Date(endDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setEndDate('') });
+        if (filterPeriodo.start || filterPeriodo.end) {
+            let label = 'Período: ';
+            if (filterPeriodo.start && filterPeriodo.end) {
+               label += `${new Date(filterPeriodo.start + 'T12:00:00').toLocaleDateString('pt-BR')} até ${new Date(filterPeriodo.end + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+            } else if (filterPeriodo.start) {
+               label += `A partir de ${new Date(filterPeriodo.start + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+            } else if (filterPeriodo.end) {
+               label += `Até ${new Date(filterPeriodo.end + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+            }
+            chips.push({
+                key: 'periodo',
+                label,
+                onClear: () => setFilterPeriodo({ start: '', end: '' })
+            });
         }
         return chips;
-    }, [filterResponsavel, startDate, endDate]);
+    }, [filterResponsavel, filterPeriodo]);
 
     const clearAllFilters = () => {
         setSearchTerm('');
         setFilterResponsavel('Todos');
-        setStartDate('');
-        setEndDate('');
+        setFilterPeriodo({ start: '', end: '' });
     };
 
     return (
@@ -748,31 +791,6 @@ export function Sucumbencias() {
                     activeFilterChips={activeFilterChips}
                     activeFilterCount={activeFilterCount}
                     onClearAll={clearAllFilters}
-                    extraContent={
-                      <div className="px-4 py-3 space-y-2">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Período</div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
-                            <input
-                              type="date"
-                              value={startDate}
-                              onChange={(e) => setStartDate(e.target.value)}
-                              className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
-                            />
-                          </div>
-                          <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
-                            <input
-                              type="date"
-                              value={endDate}
-                              onChange={(e) => setEndDate(e.target.value)}
-                              className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    }
                   />
                 </div>
               </div>

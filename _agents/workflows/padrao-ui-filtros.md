@@ -43,3 +43,35 @@ O componente `FilterBar` deve unificar a pesquisa em texto, as *tags* (filtros a
       {tags.length} tags
     </span>
     ```
+
+### 5. Filtros Baseados em Tempo (Período/Data)
+Todos os filtros relacionados a recortes de tempo (ex: "Período", "Criado em", "Data de Vencimento") devem, obrigatoriamente, abandonar o esquema antigo de select único estático (`mes_atual`, `todos`) e adotar a categoria `type: 'date_range'` integrada diretamente ao `FilterBar`.
+
+#### Regras:
+1. **Tipagem do Estado**:
+   Deve-se usar um objeto `{ start: string, end: string }` e não strings ou arrays.
+   ```tsx
+   const [filterPeriodo, setFilterPeriodo] = useState<{start: string, end: string}>({ start: '', end: '' });
+   ```
+2. **Definição da Categoria na `FilterBar`**:
+   ```tsx
+   {
+     key: 'periodo',
+     label: 'Período',
+     icon: Calendar,
+     type: 'date_range',
+     value: filterPeriodo,
+     onChange: setFilterPeriodo,
+   }
+   ```
+3. **Pílulas (Chips) Ativos**:
+   Ao renderizar a tag ativa do período acima da barra de busca, use utilitários de formatação de datas (reverter de `YYYY-MM-DD` para `DD/MM/YYYY`) e formule labels descritivas: `"A partir de DD/MM/YYYY"`, `"Até DD/MM/YYYY"` ou o range completo `"DD/MM/YYYY - DD/MM/YYYY"`.
+4. **Resolução do Array Pai (Filtragem)**:
+   A validação de `start` e `end` em dados serializados do Supabase pode ser feita por simple string comparison, extraindo apenas os primeiros 10 caracteres do timestamp:
+   ```tsx
+   if ((filterPeriodo.start || filterPeriodo.end) && row.created_at) {
+      const dateStr = row.created_at.split('T')[0];
+      if (filterPeriodo.start && dateStr < filterPeriodo.start) return false;
+      if (filterPeriodo.end && dateStr > filterPeriodo.end) return false;
+   }
+   ```

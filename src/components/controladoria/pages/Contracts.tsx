@@ -77,8 +77,7 @@ export function Contracts() {
   const location = useLocation();
   const [statusFilter, setStatusFilter] = useState(location.state?.status || '');
   const [partnerFilter, setPartnerFilter] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [filterPeriodo, setFilterPeriodo] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
 
 
@@ -358,23 +357,23 @@ export function Contracts() {
     const matchesPartner = partnerFilter === '' || c.partner_id === partnerFilter;
 
     let matchesDate = true;
-    if (startDate || endDate) {
+    if (filterPeriodo.start || filterPeriodo.end) {
       const relevantDateStr = getRelevantDate(c);
       if (relevantDateStr) {
         const relevantDate = safeDate(relevantDateStr);
         if (relevantDate) {
           relevantDate.setHours(0, 0, 0, 0);
 
-          if (startDate) {
-            const start = safeDate(startDate);
+          if (filterPeriodo.start) {
+            const start = safeDate(filterPeriodo.start);
             if (start) {
               start.setHours(0, 0, 0, 0);
               if (relevantDate < start) matchesDate = false;
             }
           }
 
-          if (endDate) {
-            const end = safeDate(endDate);
+          if (filterPeriodo.end) {
+            const end = safeDate(filterPeriodo.end);
             if (end) {
               end.setHours(23, 59, 59, 999);
               if (relevantDate > end) matchesDate = false;
@@ -575,11 +574,10 @@ export function Contracts() {
     setSearchTerm('');
     setStatusFilter('');
     setPartnerFilter('');
-    setStartDate('');
-    setEndDate('');
+    setFilterPeriodo({ start: '', end: '' });
   };
 
-  const hasActiveFilters = searchTerm !== '' || statusFilter !== '' || partnerFilter !== '' || startDate !== '' || endDate !== '';
+  const hasActiveFilters = searchTerm !== '' || statusFilter !== '' || partnerFilter !== '' || filterPeriodo.start !== '' || filterPeriodo.end !== '';
 
   const statusOptions = [
     { label: 'Sob Análise', value: 'analysis' },
@@ -611,16 +609,23 @@ export function Contracts() {
       value: partnerFilter,
       onChange: setPartnerFilter,
     },
-  ], [statusFilter, partnerFilter, statusOptions, partnerOptions]);
+    {
+      key: 'periodo',
+      label: 'Período',
+      icon: Calendar,
+      type: 'date_range',
+      value: filterPeriodo,
+      onChange: setFilterPeriodo,
+    },
+  ], [statusFilter, partnerFilter, filterPeriodo, statusOptions, partnerOptions]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (statusFilter) count++;
     if (partnerFilter) count++;
-    if (startDate) count++;
-    if (endDate) count++;
+    if (filterPeriodo.start || filterPeriodo.end) count++;
     return count;
-  }, [statusFilter, partnerFilter, startDate, endDate]);
+  }, [statusFilter, partnerFilter, filterPeriodo]);
 
   const activeFilterChips = useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
@@ -632,14 +637,23 @@ export function Contracts() {
       const label = partnerOptions.find(p => p.value === partnerFilter)?.label || partnerFilter;
       chips.push({ key: 'partner', label: `Sócio: ${label}`, onClear: () => setPartnerFilter('') });
     }
-    if (startDate) {
-      chips.push({ key: 'startDate', label: `De: ${new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setStartDate('') });
-    }
-    if (endDate) {
-      chips.push({ key: 'endDate', label: `Até: ${new Date(endDate + 'T12:00:00').toLocaleDateString('pt-BR')}`, onClear: () => setEndDate('') });
+    if (filterPeriodo.start || filterPeriodo.end) {
+      let label = 'Período: ';
+      if (filterPeriodo.start && filterPeriodo.end) {
+         label += `${new Date(filterPeriodo.start + 'T12:00:00').toLocaleDateString('pt-BR')} até ${new Date(filterPeriodo.end + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+      } else if (filterPeriodo.start) {
+         label += `A partir de ${new Date(filterPeriodo.start + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+      } else if (filterPeriodo.end) {
+         label += `Até ${new Date(filterPeriodo.end + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+      }
+      chips.push({
+        key: 'periodo',
+        label,
+        onClear: () => setFilterPeriodo({ start: '', end: '' })
+      });
     }
     return chips;
-  }, [statusFilter, partnerFilter, startDate, endDate, statusOptions, partnerOptions]);
+  }, [statusFilter, partnerFilter, filterPeriodo, statusOptions, partnerOptions]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 animate-in fade-in duration-500">
@@ -746,31 +760,6 @@ export function Contracts() {
             activeFilterChips={activeFilterChips}
             activeFilterCount={activeFilterCount}
             onClearAll={clearFilters}
-            extraContent={
-              <div className="px-4 py-3 space-y-2">
-                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Período</div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1 hover:border-[#1e3a8a] transition-all">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="bg-transparent border-none text-sm p-0.5 outline-none text-gray-700 font-medium cursor-pointer w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-            }
           />
         </div>
       </div>

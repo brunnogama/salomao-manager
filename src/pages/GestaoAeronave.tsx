@@ -143,8 +143,7 @@ export function GestaoAeronave() {
   const [faturaSearchTerm, setFaturaSearchTerm] = useState('')
   const [filterDocFiscal, setFilterDocFiscal] = useState('todos')
   const [filterStatusFatura, setFilterStatusFatura] = useState<'todos' | 'pago' | 'pendente'>('todos')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [filterPeriodo, setFilterPeriodo] = useState<{ start: string; end: string }>({ start: '', end: '' })
   const [isImporting, setIsImporting] = useState(false)
 
   // --- Estados de Modais ---
@@ -226,12 +225,12 @@ export function GestaoAeronave() {
 
       // 3. Filtro de Data (ALTERADO: usa data_pagamento para Dados/Comparativo/Faturas, data_missao para Dashboard)
       const dateRef = activeTab === 'dashboard' ? item.data_missao : item.data_pagamento
-      if (startDate && dateRef && dateRef < startDate) return false
-      if (endDate && dateRef && dateRef > endDate) return false
+      if (filterPeriodo.start && dateRef && dateRef < filterPeriodo.start) return false
+      if (filterPeriodo.end && dateRef && dateRef > filterPeriodo.end) return false
 
       return true
     })
-  }, [data, filterOrigem, searchTerm, startDate, endDate, activeTab])
+  }, [data, filterOrigem, searchTerm, filterPeriodo, activeTab])
 
   // --- Agrupamento de Faturas (Tarefa 3) ---
   const faturasAgrupadas = useMemo(() => {
@@ -611,8 +610,7 @@ export function GestaoAeronave() {
                 setActiveTab('dashboard')
                 setFilterOrigem('todos')
                 setSearchTerm('')
-                setStartDate('')
-                setEndDate('')
+                setFilterPeriodo({ start: '', end: '' })
               }}
               className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -623,8 +621,7 @@ export function GestaoAeronave() {
               onClick={() => {
                 setActiveTab('comparativo')
                 setSearchTerm('')
-                setStartDate('')
-                setEndDate('')
+                setFilterPeriodo({ start: '', end: '' })
               }}
               className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'comparativo' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -777,6 +774,14 @@ export function GestaoAeronave() {
                     onChange: (val: string) => setFilterStatusFatura(val === '' ? 'todos' : val as any),
                   })
                 }
+                cats.push({
+                  key: 'periodo',
+                  label: 'Período',
+                  icon: Calendar,
+                  type: 'date_range',
+                  value: filterPeriodo,
+                  onChange: setFilterPeriodo,
+                })
                 return cats
               })()}
               activeFilterChips={(() => {
@@ -794,9 +799,9 @@ export function GestaoAeronave() {
                 if (activeTab === 'faturas' && filterStatusFatura !== 'todos') {
                   chips.push({ key: 'status_fatura', label: filterStatusFatura === 'pago' ? 'Pago' : 'Pendente', onClear: () => setFilterStatusFatura('todos') })
                 }
-                if (startDate || endDate) {
-                  const label = startDate && endDate ? `${startDate} → ${endDate}` : startDate ? `A partir de ${startDate}` : `Até ${endDate}`
-                  chips.push({ key: 'periodo', label, onClear: () => { setStartDate(''); setEndDate('') } })
+                if (filterPeriodo.start || filterPeriodo.end) {
+                  const label = filterPeriodo.start && filterPeriodo.end ? `${new Date(filterPeriodo.start + 'T12:00:00').toLocaleDateString('pt-BR')} → ${new Date(filterPeriodo.end + 'T12:00:00').toLocaleDateString('pt-BR')}` : filterPeriodo.start ? `A partir de ${new Date(filterPeriodo.start + 'T12:00:00').toLocaleDateString('pt-BR')}` : `Até ${new Date(filterPeriodo.end + 'T12:00:00').toLocaleDateString('pt-BR')}`
+                  chips.push({ key: 'periodo', label, onClear: () => setFilterPeriodo({ start: '', end: '' }) })
                 }
                 return chips
               })()}
@@ -804,41 +809,15 @@ export function GestaoAeronave() {
                 (activeTab !== 'faturas' && filterOrigem !== 'todos' ? 1 : 0) +
                 (activeTab === 'faturas' && filterDocFiscal !== 'todos' ? 1 : 0) +
                 (activeTab === 'faturas' && filterStatusFatura !== 'todos' ? 1 : 0) +
-                (startDate || endDate ? 1 : 0)
+                (filterPeriodo.start || filterPeriodo.end ? 1 : 0)
               }
               onClearAll={() => {
                 setFilterOrigem('todos')
                 setFilterDocFiscal('todos')
                 setFilterStatusFatura('todos')
-                setStartDate('')
-                setEndDate('')
+                setFilterPeriodo({ start: '', end: '' })
               }}
-              extraContent={
-                <div className="px-4 py-3">
-                  <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Período</div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-400 shrink-0" />
-                    <input
-                      type="date"
-                      className="text-xs font-semibold text-gray-700 outline-none bg-transparent flex-1"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
-                    <span className="text-gray-300">→</span>
-                    <input
-                      type="date"
-                      className="text-xs font-semibold text-gray-700 outline-none bg-transparent flex-1"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                    {(startDate || endDate) && (
-                      <button onClick={() => { setStartDate(''); setEndDate('') }} className="text-red-400 hover:text-red-600">
-                        <XCircle className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              }
+              
             />
           </div>
         </div>
