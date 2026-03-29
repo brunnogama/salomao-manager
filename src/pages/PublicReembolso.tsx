@@ -154,7 +154,14 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
         });
         
         if (response.ok) {
-          const makeData = await response.json();
+          let makeData: any = {};
+          try {
+            const rawText = await response.text();
+            makeData = JSON.parse(rawText);
+          } catch(e) {
+            console.warn("Webhook do Make não retornou um JSON válido (talvez esteja retornando 'Accepted').", e);
+          }
+
           // Assume the make webhook returns these fields
           setExtractedData({
             numero_recibo: makeData.numero_recibo || '',
@@ -165,7 +172,7 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
             descricao: makeData.descricao || ''
           });
         } else {
-          throw new Error('Erro na extração da IA (Webhook retornou erro)');
+          throw new Error('Erro na extração da IA (Webhook retornou erro de status)');
         }
       } else {
         // Mocking extraction delay for demonstration
