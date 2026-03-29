@@ -170,7 +170,15 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
             descricao: makeData.descricao || ''
           });
         } else {
-          throw new Error('Erro na extração da IA (Webhook retornou erro de status)');
+          console.warn('Webhook do Make retornou erro de status. Ignorando Extração de IA.');
+          setExtractedData({
+            numero_recibo: '',
+            fornecedor_nome: '',
+            fornecedor_cnpj: '',
+            data_despesa: '',
+            valor: 0,
+            descricao: ''
+          });
         }
       } else {
         // Mocking extraction delay for demonstration
