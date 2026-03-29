@@ -59,10 +59,9 @@ export default function PublicReembolso() {
         return data || [];
       };
 
-      const [colabs, partes, lideres] = await Promise.all([
+      const [colabs, partes] = await Promise.all([
         safeFetch('collaborators'),
-        safeFetch('partners'),
-        safeFetch('team_leader')
+        safeFetch('partners')
       ]);
 
       const addToList = (list: any[]) => {
@@ -78,7 +77,6 @@ export default function PublicReembolso() {
 
       addToList(colabs);
       addToList(partes);
-      addToList(lideres);
 
       const sortedList = Array.from(allNamesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
       setCollaborators(sortedList);
