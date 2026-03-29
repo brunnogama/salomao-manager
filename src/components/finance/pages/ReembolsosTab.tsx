@@ -4,7 +4,7 @@ import { supabase } from '../../../lib/supabase';
 import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileDown, ArrowUpCircle, Calendar, User, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { AlertModal } from '../../../components/ui/AlertModal';
-import XLSX from 'xlsx-js-style';
+import { exportToStandardXLSX } from '../../../utils/exportUtils';
 import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 
 interface Reembolso {
@@ -53,10 +53,10 @@ export function ReembolsosTab() {
       'Cobrar Cliente?': r.reembolsavel_cliente ? 'Sim' : 'Não',
       'Valor (R$)': r.valor || 0,
     }));
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Reembolsos");
-    XLSX.writeFile(wb, `Reembolsos_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+    exportToStandardXLSX(
+      [{ sheetName: "Reembolsos", data: dataToExport, colWidths: [15, 30, 35, 15, 15, 30, 20, 20, 20, 15] }],
+      `Reembolsos_${format(new Date(), 'dd-MM-yyyy')}.xlsx`
+    );
   };
 
   const handleDelete = async () => {

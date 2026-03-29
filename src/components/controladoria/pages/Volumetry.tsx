@@ -17,7 +17,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
-import XLSX from 'xlsx-js-style';
+import { exportToStandardXLSX } from '../../../utils/exportUtils';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
@@ -711,7 +711,7 @@ export function Volumetry() {
   }, [volumetryByPartner]);
 
   const handleExportDashboard = () => {
-    const wb = XLSX.utils.book_new();
+    const sheetsToExport: any[] = [];
 
     // 1. Aba Volumetria (Dashboard)
     const exportData = volumetryByPartner.map((m: any) => ({
@@ -724,20 +724,7 @@ export function Volumetry() {
       'Encerrados': m.arquivados,
       '% Representatividade': `${m.percentage}%`
     }));
-    const wsVolumetry = XLSX.utils.json_to_sheet(exportData);
-    
-    // Formatando larguras de colunas elegantemente
-    wsVolumetry['!cols'] = [
-      { wch: 40 }, // Líder
-      { wch: 40 }, // Sócio
-      { wch: 15 }, // Ativos
-      { wch: 20 }, // Admin
-      { wch: 15 }, // Judic
-      { wch: 15 }, // Arb
-      { wch: 15 }, // Arq
-      { wch: 25 }, // Representatividade
-    ];
-    XLSX.utils.book_append_sheet(wb, wsVolumetry, "Volumetria");
+    sheetsToExport.push({ sheetName: "Volumetria", data: exportData, colWidths: [40, 40, 15, 20, 15, 15, 15, 25] });
 
     // 2. Aba Processos Relacionados
     const exportProcesses = filteredProcesses.map((p: any) => ({
@@ -755,12 +742,7 @@ export function Volumetry() {
     }));
     
     if (exportProcesses.length > 0) {
-      const wsProcesses = XLSX.utils.json_to_sheet(exportProcesses);
-      wsProcesses['!cols'] = [
-        { wch: 20 }, { wch: 35 }, { wch: 35 }, { wch: 35 }, { wch: 35 },
-        { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 20 }
-      ];
-      XLSX.utils.book_append_sheet(wb, wsProcesses, "Processos Relacionados");
+      sheetsToExport.push({ sheetName: "Processos Relacionados", data: exportProcesses, colWidths: [20, 35, 35, 35, 35, 15, 25, 25, 20, 20, 20] });
     }
 
     // 3. Aba Duplicados (se houver)
@@ -784,13 +766,7 @@ export function Volumetry() {
         'Status Atual': p.status || '-',
         'Data de Cadastro': p.data_cadastro || '-',
       }));
-      
-      const wsDuplicates = XLSX.utils.json_to_sheet(exportDuplicates);
-      wsDuplicates['!cols'] = [
-        { wch: 35 }, { wch: 20 }, { wch: 35 }, { wch: 35 },
-        { wch: 35 }, { wch: 15 }, { wch: 20 }
-      ];
-      XLSX.utils.book_append_sheet(wb, wsDuplicates, "Processos Duplicados");
+      sheetsToExport.push({ sheetName: "Processos Duplicados", data: exportDuplicates, colWidths: [35, 20, 35, 35, 35, 15, 20] });
     }
 
     const parts = ['Volumetria'];
@@ -804,11 +780,10 @@ export function Volumetry() {
     const yyyy = today.getFullYear();
     const dateStr = `${dd}.${mm}.${yyyy}`;
     
-    // Fallback if no specific filter other than Status=Ativo is used, to avoid overly long names
     const filterStr = parts.length > 1 ? parts.join(' - ') : 'Geral';
     const filename = `${filterStr} - ${dateStr}.xlsx`;
 
-    XLSX.writeFile(wb, filename);
+    exportToStandardXLSX(sheetsToExport, filename);
     toast.success('Relatório Excel gerado com sucesso!', {
       description: duplicateRowsRaw.length > 0 ? 'Exportou 3 abas: Volumetria, Relacionados e Duplicados.' : 'Exportou 2 abas: Volumetria e Processos Relacionados.'
     });

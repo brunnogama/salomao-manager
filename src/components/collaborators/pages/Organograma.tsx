@@ -8,6 +8,7 @@ import XLSX from 'xlsx-js-style';
 import { createPortal } from 'react-dom';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { exportToStandardXLSX } from '../../../utils/exportUtils';
 
 // Define the exact hierarchy order for Jurídico
 const JURIDICO_HIERARCHY = [
@@ -1408,7 +1409,7 @@ export function Organograma() {
                 // Excel styles
                 const headerStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 13 }, fill: { fgColor: { rgb: '0A192F' } }, alignment: { horizontal: 'center' as const } };
                 const socioStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }, fill: { fgColor: { rgb: '7C3AED' } }, alignment: { horizontal: 'left' as const } };
-                const localStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 }, fill: { fgColor: { rgb: '1E3A8A' } }, alignment: { horizontal: 'left' as const } };
+                const localStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 }, fill: { fgColor: { rgb: '0A192F' } }, alignment: { horizontal: 'left' as const } };
                 const leaderStyle = { font: { bold: true, sz: 10 }, fill: { fgColor: { rgb: 'DBEAFE' } }, alignment: { horizontal: 'left' as const } };
                 const memberStyle = { font: { sz: 10 }, alignment: { horizontal: 'left' as const } };
                 const summaryHeaderStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }, fill: { fgColor: { rgb: '0A192F' } }, alignment: { horizontal: 'center' as const } };
@@ -1574,16 +1575,10 @@ export function Organograma() {
                     };
                 });
 
-                const ws = XLSX.utils.json_to_sheet(excelData);
-                const colWidths = [
-                    { wch: 15 }, { wch: 35 }, { wch: 25 }, { wch: 25 }, { wch: 20 },
-                    { wch: 20 }, { wch: 35 }, { wch: 35 }, { wch: 20 }, { wch: 60 }
-                ];
-                ws['!cols'] = colWidths;
-
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Organograma');
-                XLSX.writeFile(wb, 'Organograma_Estrutura.xlsx');
+                exportToStandardXLSX(
+                  [{ sheetName: "Organograma", data: excelData, colWidths: [15, 35, 25, 25, 20, 20, 35, 35, 20, 60] }],
+                  "Organograma_Estrutura.xlsx"
+                );
                 showAlert('Sucesso', 'Estrutura exportada em Excel com sucesso!', 'success');
             }
         } catch (error) {

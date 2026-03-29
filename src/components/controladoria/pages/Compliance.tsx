@@ -7,7 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import XLSX from 'xlsx-js-style';
+import { exportToStandardXLSX } from '../../../utils/exportUtils';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
 import { EmptyState } from '../ui/EmptyState';
@@ -366,23 +366,23 @@ export function Compliance() {
   };
 
   const exportToExcel = () => {
-    // Header e configuração XLSX
-    const header = ['Documento', 'CNPJ', 'Data Emissão', 'Data Vencimento', 'Cartório', 'Local'];
-    const rows = filteredCertificates.filter(c => activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab).map(c => [
-      getCertName(c) || '-',
-      c.cnpj || '-',
-      formatDate(c.issue_date),
-      formatDate(c.due_date),
-      getAgencyName(c) || '-',
-      c.location || '-'
-    ]);
-
-    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Certidões");
+    const data = filteredCertificates
+      .filter(c => activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab)
+      .map(c => ({
+        'Documento': getCertName(c) || '-',
+        'CNPJ': c.cnpj || '-',
+        'Data Emissão': formatDate(c.issue_date),
+        'Data Vencimento': formatDate(c.due_date),
+        'Cartório': getAgencyName(c) || '-',
+        'Local': c.location || '-'
+      }));
 
     const dateStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-    XLSX.writeFile(wb, `Certidoes_${activeTab === 'dashboard' ? 'Geral' : activeTab}_${dateStr}.xlsx`);
+    
+    exportToStandardXLSX(
+      [{ sheetName: "Certidões", data, colWidths: [40, 20, 15, 15, 30, 20] }],
+      `Certidoes_${activeTab === 'dashboard' ? 'Geral' : activeTab}_${dateStr}.xlsx`
+    );
   };
 
   const handleSaveCertificate = async (data: any) => {

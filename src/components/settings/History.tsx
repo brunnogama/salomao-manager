@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Search, RefreshCw, Calendar, XCircle, LayoutGrid, User, Monitor, Globe, FileText, LogIn, LogOut } from 'lucide-react'
-import XLSX from 'xlsx-js-style'
+import { exportToStandardXLSX } from '../../utils/exportUtils'
 import { FilterSelect } from '../controladoria/ui/FilterSelect'
 
 interface LogItem {
@@ -245,10 +245,11 @@ export function History() {
                 'Detalhes': parsed.info
             }
         })
-        const ws = XLSX.utils.json_to_sheet(exportData)
-        const wb = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(wb, ws, "Logs")
-        XLSX.writeFile(wb, `Historico_${activeTab === 'activities' ? 'Atividades' : 'Acessos'}.xlsx`)
+
+        exportToStandardXLSX(
+            [{ sheetName: "Logs", data: exportData, colWidths: [20, 35, 30, 20, 25, 15, 50] }],
+            `Historico_${activeTab === 'activities' ? 'Atividades' : 'Acessos'}.xlsx`
+        )
     }
 
     const formatAuditInfo = (parsed: ParsedDetails) => {

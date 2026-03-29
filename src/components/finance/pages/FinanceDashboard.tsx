@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import XLSX from 'xlsx-js-style';
+import { exportToStandardXLSX } from '../../../utils/exportUtils';
 import {
   LayoutDashboard,
   Download,
@@ -349,40 +349,10 @@ export function FinanceDashboard() {
       }
     ];
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
-
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
-    for (let col = range.s.c; col <= range.e.c; col++) {
-      const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
-      if (!ws[cellRef]) continue;
-
-      ws[cellRef].s = {
-        font: { bold: true, color: { rgb: "FFFFFF" } },
-        fill: { fgColor: { rgb: "0A192F" } },
-        alignment: { horizontal: "center", vertical: "center" }
-      };
-    }
-
-    ws['!cols'] = [
-      { wch: 30 },
-      { wch: 30 },
-      { wch: 20 },
-    ];
-
-    for (let R = 1; R <= range.e.r; ++R) {
-      const cellRef = XLSX.utils.encode_cell({ r: R, c: 2 });
-      if (ws[cellRef]) {
-        const metricName = ws[XLSX.utils.encode_cell({ r: R, c: 1 })]?.v || '';
-        if (metricName.includes('(R$)') || metricName.includes('Média')) {
-          ws[cellRef].t = 'n';
-          ws[cellRef].z = '"R$"#,##0.00;"R$"-#,##0.00';
-        }
-      }
-    }
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Indicadores");
-    XLSX.writeFile(wb, `Financeiro_Indicadores_${new Date().toISOString().split('T')[0]}.xlsx`);
+    exportToStandardXLSX(
+      [{ sheetName: "Indicadores", data: exportData, colWidths: [30, 30, 20] }],
+      `Financeiro_Indicadores_${new Date().toISOString().split('T')[0]}.xlsx`
+    );
   };
 
   const formatCurrency = (val: number) =>

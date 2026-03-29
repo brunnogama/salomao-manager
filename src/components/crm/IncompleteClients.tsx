@@ -10,7 +10,7 @@ import { FilterSelect } from '../controladoria/ui/FilterSelect'
 import { ClientFormModal } from '../controladoria/clients/ClientFormModal'
 import { Client } from '../../types/controladoria'
 import { CRMContact } from '../../types/crmContact'
-import XLSX from 'xlsx-js-style'
+import { exportToStandardXLSX } from '../../utils/exportUtils'
 
 interface IncompleteClientsProps {
   userName?: string;
@@ -194,10 +194,10 @@ export function IncompleteClients({
       }
     })
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Contatos Incompletos");
-    XLSX.writeFile(wb, "contatos_incompletos.xlsx");
+    exportToStandardXLSX(
+      [{ sheetName: "Contatos Incompletos", data: exportData, colWidths: [30, 40, 30, 80, 20] }],
+      "contatos_incompletos.xlsx"
+    )
   }
 
   const hasActiveFilters = searchTerm !== '' || filterSocio !== '';

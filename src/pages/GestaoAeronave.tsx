@@ -21,6 +21,7 @@ import { FilterBar, FilterCategory } from '../components/collaborators/component
 import XLSX from 'xlsx-js-style'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
+import { exportToStandardXLSX } from '../utils/exportUtils'
 
 // Tipos
 import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
@@ -455,10 +456,10 @@ export function GestaoAeronave() {
       }
     })
 
-    const ws = XLSX.utils.json_to_sheet(dataToExport)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, "Lancamentos")
-    XLSX.writeFile(wb, `Aeronave_Export_${new Date().toISOString().split('T')[0]}.xlsx`)
+    exportToStandardXLSX(
+      [{ sheetName: "Lancamentos", data: dataToExport }],
+      `Aeronave_Export_${new Date().toISOString().split('T')[0]}`
+    )
   }
 
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {

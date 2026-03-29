@@ -73,6 +73,20 @@ export function RHSection({ isAdmin, onReset, onResetSecondary, onResetTertiary 
         ]
 
         const ws = XLSX.utils.aoa_to_sheet([headers])
+        
+        // -- STYLING PADRÃO CORPORATIVO --
+        const range = XLSX.utils.decode_range(ws['!ref']!);
+        for (let col = range.s.c; col <= range.e.c; col++) {
+            const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+            if (!ws[cellRef]) continue;
+            ws[cellRef].s = {
+                font: { bold: true, color: { rgb: "FFFFFF" } },
+                fill: { fgColor: { rgb: "0A192F" } },
+                alignment: { horizontal: "center", vertical: "center" }
+            };
+        }
+        // -------------------------------
+        
         const wscols = headers.map(h => ({ wch: h.length + 5 }))
         ws['!cols'] = wscols
         const wb = XLSX.utils.book_new()
@@ -91,7 +105,7 @@ export function RHSection({ isAdmin, onReset, onResetSecondary, onResetTertiary 
             const data = await file.arrayBuffer()
             const workbook = XLSX.read(data)
             const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-            const jsonData = XLSX.utils.sheet_to_json<ImportRow>(worksheet)
+            const jsonData = XLSX.utils.sheet_to_json(worksheet) as ImportRow[]
 
             const [
                 { data: roles },
@@ -119,8 +133,8 @@ export function RHSection({ isAdmin, onReset, onResetSecondary, onResetTertiary 
                 supabase.from('collaborators').select('id, name, cpf')
             ])
 
-            const findId = (list: any[] | null, name: string) => {
-                if (!list || !name) return null
+            const findId = (list: any[] | null, name: string | number | undefined) => {
+                if (!list || name === undefined || name === null || name === '') return null
                 const normalized = String(name).toLowerCase().trim()
                 return list.find(item => item.name?.toLowerCase().trim() === normalized)?.id || null
             }

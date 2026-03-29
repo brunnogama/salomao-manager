@@ -9,7 +9,7 @@ import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocum
 
 import { EmptyState } from '../ui/EmptyState';
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
-import XLSX from 'xlsx-js-style';
+import { exportToStandardXLSX } from '../../../utils/exportUtils';
 import { toast } from 'sonner';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
@@ -330,10 +330,10 @@ export function Finance() {
       'Data Faturamento': i.paid_at ? new Date(i.paid_at).toLocaleDateString() : '-',
       'Nota Fiscal': i.nf_number || '-'
     }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
-    XLSX.writeFile(wb, "Relatorio_Financeiro.xlsx");
+    exportToStandardXLSX(
+      [{ sheetName: "Financeiro", data, colWidths: [15, 30, 20, 20, 15, 12, 18, 15, 15, 18, 15] }],
+      "Relatorio_Financeiro.xlsx"
+    );
   };
 
   const clearFilters = () => {

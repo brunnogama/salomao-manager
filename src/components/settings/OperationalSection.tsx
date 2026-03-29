@@ -31,6 +31,20 @@ export function OperationalSection({ }: OperationalSectionProps) {
         ]
 
         const ws = XLSX.utils.aoa_to_sheet([headers])
+        
+        // -- STYLING PADRÃO CORPORATIVO --
+        const range = XLSX.utils.decode_range(ws['!ref']!);
+        for (let col = range.s.c; col <= range.e.c; col++) {
+            const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+            if (!ws[cellRef]) continue;
+            ws[cellRef].s = {
+                font: { bold: true, color: { rgb: "FFFFFF" } },
+                fill: { fgColor: { rgb: "0A192F" } },
+                alignment: { horizontal: "center", vertical: "center" }
+            };
+        }
+        // -------------------------------
+        
         const wscols = headers.map(h => ({ wch: h.length + 5 }))
         ws['!cols'] = wscols
         const wb = XLSX.utils.book_new()
@@ -49,8 +63,7 @@ export function OperationalSection({ }: OperationalSectionProps) {
             const data = await file.arrayBuffer()
             const workbook = XLSX.read(data)
             const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-            const jsonData = XLSX.utils.sheet_to_json<ImportRow>(worksheet)
-
+            const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[]
             let successCount = 0
             let errors: string[] = []
 

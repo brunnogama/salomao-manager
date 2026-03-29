@@ -7,6 +7,7 @@ import {
   Plus, Clock, MapPin, User
 } from 'lucide-react'
 import XLSX from 'xlsx-js-style'
+import { exportToStandardXLSX } from '../../../utils/exportUtils'
 import { supabase } from '../../../lib/supabase'
 import { FilterBar, FilterCategory } from '../components/FilterBar'
 
@@ -456,10 +457,10 @@ export function Presencial() {
         });
     }
 
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Horas');
-    XLSX.writeFile(wb, 'Controle_Horas.xlsx');
+    exportToStandardXLSX(
+      [{ sheetName: "Horas", data: dataToExport, colWidths: [30, 15, 12, 15, 15, 15, 15, 12, 15, 15, 30] }],
+      "Controle_Horas.xlsx"
+    )
   }
 
   return (

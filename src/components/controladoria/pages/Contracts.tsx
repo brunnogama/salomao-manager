@@ -537,6 +537,19 @@ export function Contracts() {
     const range = XLSX.utils.decode_range(ws['!ref']!);
     const moneyCols = [7, 9, 11, 13, 15, 17];
 
+    // -- STYLING PADRÃO CORPORATIVO --
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!ws[cellRef]) continue;
+      ws[cellRef].s = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "0A192F" } },
+        alignment: { horizontal: "center", vertical: "center" }
+      };
+    }
+    ws['!cols'] = header.map(h => ({ wch: Math.max(h.length + 5, 15) }));
+    // -------------------------------
+
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
       moneyCols.forEach(C => {
         const cellRef = XLSX.utils.encode_cell({ r: R, c: C });

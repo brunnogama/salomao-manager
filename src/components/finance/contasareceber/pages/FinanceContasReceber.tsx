@@ -20,7 +20,7 @@ import {
   X,
   Download
 } from 'lucide-react'
-import XLSX from 'xlsx-js-style'
+import { exportToStandardXLSX } from '../../../../utils/exportUtils'
 import { FinanceModalEnviarFatura } from '../components/FinanceModalEnviarFatura'
 import { FinanceModalDetalhesFatura } from '../components/FinanceModalDetalhesFatura'
 import { FinanceModalEditarDatas } from '../components/FinanceModalEditarDatas'
@@ -168,10 +168,10 @@ export function FinanceContasReceber({
       Status: f.status
     }))
 
-    const ws = XLSX.utils.json_to_sheet(dataToExport)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, "Faturas")
-    XLSX.writeFile(wb, "Contas_a_Receber.xlsx")
+    exportToStandardXLSX(
+      [{ sheetName: "Faturas", data: dataToExport, colWidths: [15, 30, 30, 40, 15, 20] }],
+      "Contas_a_Receber.xlsx"
+    )
   }
 
   const filteredFaturas = faturas.filter(f => {
