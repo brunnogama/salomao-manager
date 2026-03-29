@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileDown, ArrowUpCircle, Calendar, User } from 'lucide-react';
 import { format } from 'date-fns';
@@ -109,7 +110,7 @@ export function ReembolsosTab() {
         .from('reembolsos')
         .select(`
           *,
-          collaborators (name)
+          collaborators (name, email)
         `)
         .order('created_at', { ascending: false });
 
@@ -134,6 +135,16 @@ export function ReembolsosTab() {
     setSelectedReembolso(null);
     setIsEditing(false);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen) {
+        handleCloseModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen]);
 
   const handlePayment = async () => {
     if (!selectedReembolso) return;
@@ -178,7 +189,12 @@ export function ReembolsosTab() {
          fetch(webhookUrl, {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ reembolso_id: selectedReembolso.id, comprovante_url: comprovanteUrl })
+           body: JSON.stringify({ 
+             reembolso_id: selectedReembolso.id, 
+             comprovante_url: comprovanteUrl,
+             email_colaborador: (selectedReembolso.collaborators as any)?.email || null,
+             nome_colaborador: selectedReembolso.collaborators?.name || null
+           })
          }).catch(e => console.error("Erro chamando webhook", e)); // Fogo e esquece
       }
 
@@ -434,9 +450,9 @@ export function ReembolsosTab() {
       )}
 
       {/* Modal Reembolso */}
-      {isModalOpen && selectedReembolso && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300">
+      {isModalOpen && selectedReembolso && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[95vh] flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300">
             
             {/* Visualização do Recibo (Esquerda) */}
             <div className="w-full md:w-1/2 bg-gray-100 border-r border-gray-200 flex flex-col hidden md:flex">
@@ -463,7 +479,7 @@ export function ReembolsosTab() {
             </div>
 
             {/* Dados e Ações (Direita) */}
-            <div className="w-full md:w-1/2 flex flex-col max-h-[90vh]">
+            <div className="w-full md:w-1/2 flex flex-col h-[95vh]">
               
               <div className="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10 shrink-0">
                 <div>
@@ -502,7 +518,7 @@ export function ReembolsosTab() {
                 </div>
               </div>
 
-              <div className="p-5 md:p-6 flex-1 overflow-y-auto space-y-6">
+              <div className="p-5 md:p-6 flex-1 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 
                 <div className="md:hidden">
                    <a 
@@ -739,7 +755,8 @@ export function ReembolsosTab() {
             </div>
             
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       </div>
