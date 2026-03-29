@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import XLSX from 'xlsx-js-style';
 import {
   LayoutDashboard,
   Download,
@@ -20,7 +21,8 @@ import {
   Building2,
   ArrowUpCircle,
   ArrowDownCircle,
-  Hash
+  Hash,
+  FileDown
 } from 'lucide-react';
 
 export function FinanceDashboard() {
@@ -278,6 +280,111 @@ export function FinanceDashboard() {
     }
   };
 
+  const handleExportXLSX = () => {
+    const exportData = [
+      {
+        "Módulo": "Controle Financeiro",
+        "Métrica": "A Receber (Qtd)",
+        "Valor": kpiReceber.pendenteQty
+      },
+      {
+        "Módulo": "Controle Financeiro",
+        "Métrica": "A Receber (R$)",
+        "Valor": kpiReceber.pendenteAmt
+      },
+      {
+        "Módulo": "Controle Financeiro",
+        "Métrica": "Vencido (Qtd)",
+        "Valor": kpiReceber.vencidoQty
+      },
+      {
+        "Módulo": "Controle Financeiro",
+        "Métrica": "Faturado (R$)",
+        "Valor": kpiReceber.faturadoAmt
+      },
+      {
+        "Módulo": "Contas a Pagar",
+        "Métrica": "Pendentes (Qtd)",
+        "Valor": kpiPagar.pendenteQty
+      },
+      {
+        "Módulo": "Contas a Pagar",
+        "Métrica": "Pendentes (R$)",
+        "Valor": kpiPagar.pendenteAmt
+      },
+      {
+        "Módulo": "Contas a Pagar",
+        "Métrica": "Pagos (R$)",
+        "Valor": kpiPagar.pagoAmt
+      },
+      {
+        "Módulo": "Gestão Aeronave",
+        "Métrica": "Média Comercial/mês",
+        "Valor": kpiAeronave.mediaComercial
+      },
+      {
+        "Módulo": "Gestão Aeronave",
+        "Métrica": "Média Particular/mês",
+        "Valor": kpiAeronave.mediaParticular
+      },
+      {
+        "Módulo": "Vencimentos OAB",
+        "Métrica": "Colab. Avaliados",
+        "Valor": kpiOAB.ativosAvaliados
+      },
+      {
+        "Módulo": "Vencimentos OAB",
+        "Métrica": "OABs Pagas",
+        "Valor": kpiOAB.pagosQty
+      },
+      {
+        "Módulo": "Vencimentos OAB",
+        "Métrica": "Urgentes (Qtd)",
+        "Valor": kpiOAB.urgentesQty
+      },
+      {
+        "Módulo": "Vencimentos OAB",
+        "Métrica": "Vencidos (Qtd)",
+        "Valor": kpiOAB.vencidosQty
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!ws[cellRef]) continue;
+
+      ws[cellRef].s = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "0A192F" } },
+        alignment: { horizontal: "center", vertical: "center" }
+      };
+    }
+
+    ws['!cols'] = [
+      { wch: 30 },
+      { wch: 30 },
+      { wch: 20 },
+    ];
+
+    for (let R = 1; R <= range.e.r; ++R) {
+      const cellRef = XLSX.utils.encode_cell({ r: R, c: 2 });
+      if (ws[cellRef]) {
+        const metricName = ws[XLSX.utils.encode_cell({ r: R, c: 1 })]?.v || '';
+        if (metricName.includes('(R$)') || metricName.includes('Média')) {
+          ws[cellRef].t = 'n';
+          ws[cellRef].z = '"R$"#,##0.00;"R$"-#,##0.00';
+        }
+      }
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Indicadores");
+    XLSX.writeFile(wb, `Financeiro_Indicadores_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
@@ -309,6 +416,14 @@ export function FinanceDashboard() {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={handleExportXLSX}
+            title="Exportar Planilha Excel"
+            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+          >
+            <FileDown className="h-5 w-5" />
+          </button>
+          
           <button
             onClick={handleExportPDF}
             disabled={isExportingPDF}
