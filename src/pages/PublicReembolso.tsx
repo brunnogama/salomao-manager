@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Share2, Trash2, Plus, ExternalLink, ZoomIn, ZoomOut } from 'lucide-react';
+import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Share2, Trash2, Plus, ExternalLink, ZoomIn, ZoomOut, X } from 'lucide-react';
 import { SearchableSelect } from '../components/crm/SearchableSelect';
 
 interface Collaborator {
@@ -318,9 +318,20 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
         <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 md:p-8 relative overflow-hidden">
           
           {isModal && (
-            <div className="text-center mb-6 mt-2">
-              <h1 className="text-2xl font-black text-[#112240]">Nova Solicitação Manual</h1>
-            </div>
+            <>
+              <div className="text-center mb-6 mt-2">
+                <h1 className="text-2xl font-black text-[#112240]">Nova Solicitação Manual</h1>
+              </div>
+              {onClose && (
+                <button 
+                  onClick={onClose} 
+                  className="absolute top-6 right-6 z-50 bg-gray-50 p-2.5 rounded-full shadow-sm border border-gray-200 text-gray-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all opacity-70 hover:opacity-100 hidden sm:flex"
+                  title="Fechar Janela (ESC)"
+                >
+                  <X className="w-5 h-5 md:w-6 md:h-6" />
+                </button>
+              )}
+            </>
           )}
 
           {/* Progress Bar */}
@@ -445,7 +456,7 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
               </div>
 
               {/* Direita: Formulários e Blocos */}
-              <div className="space-y-6 h-auto lg:h-[80vh] lg:overflow-y-auto lg:pr-4">
+              <div className="space-y-5 h-auto lg:h-[80vh] lg:overflow-y-auto lg:pr-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                 
                 <div className="flex items-center gap-3 mb-2">
                   <button onClick={() => setStep(1)} className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
@@ -454,10 +465,12 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
                   <h2 className="text-lg font-bold text-[#112240]">Confira os dados extraídos</h2>
                 </div>
                 
-                <div className="bg-blue-50 p-4 rounded-xl text-sm text-[#1e3a8a] flex gap-3 items-start border border-blue-100">
-                  <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-                  <p>O sistema leu seu recibo, confira e corrija se necessário antes de enviar ao financeiro.</p>
-                </div>
+                {!isModal && (
+                  <div className="bg-blue-50 p-4 rounded-xl text-sm text-[#1e3a8a] flex gap-3 items-start border border-blue-100">
+                    <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+                    <p>O sistema leu seu recibo, confira e corrija se necessário antes de enviar ao financeiro.</p>
+                  </div>
+                )}
 
               {extractedData.map((item, index) => (
                 <div key={index} className="bg-white p-5 md:p-6 rounded-2xl border border-gray-200 shadow-sm relative space-y-4">
