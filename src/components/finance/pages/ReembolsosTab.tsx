@@ -184,7 +184,8 @@ export function ReembolsosTab() {
       if (error) throw error;
 
       // Chama webhook do Make.com se houver para notificar o usuário (Assíncrono)
-      const webhookUrl = import.meta.env.VITE_MAKE_WEBHOOK_REEMBOLSO_PAGO;
+      const webhookUrl = import.meta.env.VITE_MAKE_WEBHOOK_REEMBOLSO_PAGO || 'https://hook.us2.make.com/ek933ugsc18euo3uwv9eha6mgk8ngvws';
+      console.log("🚀 Disparando notificação de pagamento para:", webhookUrl);
       if(webhookUrl && webhookUrl !== 'SUA_URL_AQUI') {
          fetch(webhookUrl, {
            method: 'POST',
@@ -195,7 +196,9 @@ export function ReembolsosTab() {
              email_colaborador: (selectedReembolso.collaborators as any)?.email || null,
              nome_colaborador: selectedReembolso.collaborators?.name || null
            })
-         }).catch(e => console.error("Erro chamando webhook", e)); // Fogo e esquece
+         })
+         .then(res => console.log("✅ Webhook respondido com status:", res.status))
+         .catch(e => console.error("❌ Erro chamando webhook", e)); // Fogo e esquece
       }
 
       await fetchReembolsos();
