@@ -5,9 +5,9 @@ export interface FilterCategory {
   key: string;
   label: string;
   icon: React.ElementType;
-  type: 'single' | 'multi';
-  options: { value: string; label: string }[];
-  value: string | string[];
+  type: 'single' | 'multi' | 'date_range';
+  options?: { value: string; label: string }[];
+  value: any;
   onChange: (val: any) => void;
 }
 
@@ -66,6 +66,10 @@ export function FilterBar({
   };
 
   const getCategoryBadge = (cat: FilterCategory) => {
+    if (cat.type === 'date_range') {
+      const v = cat.value as { start?: string, end?: string };
+      return (v && (v.start || v.end)) ? 1 : 0;
+    }
     if (cat.type === 'single') return cat.value ? 1 : 0;
     return (cat.value as string[]).length;
   };
@@ -166,8 +170,70 @@ export function FilterBar({
                 {/* Popover / Dropdown para esta categoria específica */}
                 {isOpen && (
                   <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
-                    {/* Busca interna */}
-                    <div className="p-2 border-b border-gray-100 bg-gray-50/50">
+                    {cat.type === 'date_range' ? (
+                      <div className="p-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-2 mb-4">
+                          <button
+                            onClick={() => {
+                              const today = new Date();
+                              const day = today.getDay(); // 0 is Sunday
+                              const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Monday
+                              const start = new Date(today.setDate(diff));
+                              const end = new Date(start);
+                              end.setDate(end.getDate() + 6);
+                              cat.onChange({ start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] });
+                              setSelectedCategory(null);
+                            }}
+                            className="flex-1 py-1.5 bg-gray-50 text-gray-600 border border-gray-200 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-colors"
+                          >
+                            Semana Atual
+                          </button>
+                          <button
+                            onClick={() => {
+                              const date = new Date();
+                              const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+                              const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+                              cat.onChange({ start: firstDay.toISOString().split('T')[0], end: lastDay.toISOString().split('T')[0] });
+                              setSelectedCategory(null);
+                            }}
+                            className="flex-1 py-1.5 bg-gray-50 text-gray-600 border border-gray-200 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-colors"
+                          >
+                            Mês Atual
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <label className="block text-[10px] font-black uppercase text-gray-400 mb-1.5 text-center">Início</label>
+                            <input
+                              type="date"
+                              value={cat.value?.start || ''}
+                              onChange={(e) => {
+                                cat.onChange({ ...cat.value, start: e.target.value });
+                              }}
+                              className="w-full text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg py-1.5 px-2 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all"
+                            />
+                          </div>
+                          <div className="flex-1 opacity-50 flex items-center justify-center mt-5 shrink-0 max-w-[8px]">
+                            {/* Um pequeno traço visual */}
+                            <div className="w-2 h-[1px] bg-gray-400"></div>
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-[10px] font-black uppercase text-gray-400 mb-1.5 text-center">Fim</label>
+                            <input
+                              type="date"
+                              value={cat.value?.end || ''}
+                              onChange={(e) => {
+                                cat.onChange({ ...cat.value, end: e.target.value });
+                              }}
+                              className="w-full text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg py-1.5 px-2 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Busca interna */}
+                        <div className="p-2 border-b border-gray-100 bg-gray-50/50">
                         <input
                           type="text"
                           autoFocus
@@ -182,7 +248,7 @@ export function FilterBar({
                       {/* Lista de opções */}
                       <div className="max-h-60 overflow-y-auto py-1 custom-scrollbar w-full bg-white">
                         {(() => {
-                          const filteredOptions = cat.options.filter((opt) =>
+                          const filteredOptions = (cat.options || []).filter((opt) =>
                             opt.label.toLowerCase().includes(optionSearch.toLowerCase())
                           );
   
@@ -237,7 +303,8 @@ export function FilterBar({
                           }
                         })()}
                       </div>
-                    </div>
+                    </>)}
+                  </div>
                 )}
               </div>
             );

@@ -232,7 +232,7 @@ export function ReembolsosTab() {
   // Filters State
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [filterSolicitante, setFilterSolicitante] = useState<string[]>([]);
-  const [filterPeriodo, setFilterPeriodo] = useState<string>('todos');
+  const [filterPeriodo, setFilterPeriodo] = useState<{start: string, end: string}>({ start: '', end: '' });
 
   const solicitanteOptions = React.useMemo(() => {
     const names = Array.from(new Set(reembolsos.map(r => r.collaborators?.name).filter(Boolean)));
@@ -265,12 +265,7 @@ export function ReembolsosTab() {
       key: 'periodo',
       label: 'Período',
       icon: Calendar,
-      type: 'single',
-      options: [
-        { label: 'Todos os Períodos', value: 'todos' },
-        { label: 'Mês Atual', value: 'mes_atual' },
-        { label: 'Últimos 30 Dias', value: 'ultimos_30' },
-      ],
+      type: 'date_range',
       value: filterPeriodo,
       onChange: setFilterPeriodo,
     }
@@ -280,9 +275,17 @@ export function ReembolsosTab() {
     const chips: any[] = [];
     if (filterStatus.length) chips.push({ key: 'status', label: `${filterStatus.length} status`, onClear: () => setFilterStatus([]) });
     if (filterSolicitante.length) chips.push({ key: 'solicitante', label: `${filterSolicitante.length} solicitantes`, onClear: () => setFilterSolicitante([]) });
-    if (filterPeriodo && filterPeriodo !== 'todos') {
-      const opt = categories.find(c => c.key === 'periodo')?.options.find(o => o.value === filterPeriodo);
-      chips.push({ key: 'periodo', label: opt?.label || '', onClear: () => setFilterPeriodo('todos') });
+    if (filterPeriodo.start || filterPeriodo.end) {
+      const formatFilterDate = (dStr: string) => dStr ? dStr.split('-').reverse().join('/') : '';
+      let label = '';
+      if (filterPeriodo.start && filterPeriodo.end) {
+        label = `${formatFilterDate(filterPeriodo.start)} - ${formatFilterDate(filterPeriodo.end)}`;
+      } else if (filterPeriodo.start) {
+        label = `A partir de ${formatFilterDate(filterPeriodo.start)}`;
+      } else {
+        label = `Até ${formatFilterDate(filterPeriodo.end)}`;
+      }
+      chips.push({ key: 'periodo', label, onClear: () => setFilterPeriodo({ start: '', end: '' }) });
     }
     return chips;
   }, [filterStatus, filterSolicitante, filterPeriodo, categories]);
@@ -290,7 +293,7 @@ export function ReembolsosTab() {
   const handleClearAllFilters = () => {
     setFilterStatus([]);
     setFilterSolicitante([]);
-    setFilterPeriodo('todos');
+    setFilterPeriodo({ start: '', end: '' });
     setSearchTerm('');
   };
 
@@ -306,15 +309,10 @@ export function ReembolsosTab() {
     if (filterStatus.length && r.status && !filterStatus.includes(r.status)) return false;
     if (filterSolicitante.length && (!r.collaborators?.name || !filterSolicitante.includes(r.collaborators.name))) return false;
 
-    if (filterPeriodo !== 'todos' && r.created_at) {
-      const d = new Date(r.created_at);
-      const now = new Date();
-      if (filterPeriodo === 'mes_atual') {
-         if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
-      } else if (filterPeriodo === 'ultimos_30') {
-         const limit = new Date(); limit.setDate(limit.getDate() - 30);
-         if (d < limit) return false;
-      }
+    if ((filterPeriodo.start || filterPeriodo.end) && r.data_despesa) {
+       const dateStr = r.data_despesa.split('T')[0];
+       if (filterPeriodo.start && dateStr < filterPeriodo.start) return false;
+       if (filterPeriodo.end && dateStr > filterPeriodo.end) return false;
     }
 
     return true;
@@ -395,7 +393,7 @@ export function ReembolsosTab() {
                onSearchChange={setSearchTerm}
                categories={categories}
                activeFilterChips={activeFilterChips}
-               activeFilterCount={filterStatus.length + filterSolicitante.length + (filterPeriodo !== 'todos' ? 1 : 0)}
+               activeFilterCount={filterStatus.length + filterSolicitante.length + (filterPeriodo.start || filterPeriodo.end ? 1 : 0)}
                onClearAll={handleClearAllFilters}
             />
           </div>
