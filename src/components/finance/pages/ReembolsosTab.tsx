@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
-import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileDown, ArrowUpCircle, Calendar, User } from 'lucide-react';
+import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileDown, ArrowUpCircle, Calendar, User, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { AlertModal } from '../../../components/ui/AlertModal';
 import XLSX from 'xlsx-js-style';
@@ -320,7 +320,14 @@ export function ReembolsosTab() {
             </p>
           </div>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
+            <button
+              onClick={() => window.location.reload()}
+              title="Sincronizar Dados"
+              className="flex items-center justify-center w-10 h-10 bg-gray-50 text-gray-600 hover:text-[#1e3a8a] border border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 rounded-full transition-all shadow-sm shrink-0"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
             <button 
               onClick={handleExportXLSX}
               title="Exportar Planilha"
