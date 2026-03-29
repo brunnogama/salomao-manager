@@ -805,23 +805,23 @@ export function ReembolsosTab() {
       />
       {/* Modal Reembolso Manual */}
       {isAddReembolsoModalOpen && createPortal(
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 sm:p-6 transition-all">
-          <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl relative flex flex-col h-[90vh] sm:h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-start sm:items-center justify-center p-4 sm:p-6 transition-all overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          <div className="w-full relative flex flex-col items-center my-auto animate-in fade-in zoom-in-95 duration-200">
              <button 
                onClick={() => setIsAddReembolsoModalOpen(false)} 
-               className="absolute top-4 right-4 z-[99] bg-white p-2 rounded-full shadow-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+               className="absolute top-8 right-4 lg:-right-4 lg:-top-4 z-[99] bg-white p-2 rounded-full shadow-xl border border-gray-100 text-gray-400 hover:text-red-500 hover:bg-red-50 hover:scale-105 transition-all"
+               title="Fechar Janela"
              >
-               <X className="w-5 h-5" />
+               <X className="w-5 h-5 lg:w-6 lg:h-6" />
              </button>
-             <div className="flex-1 overflow-y-auto w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-               <PublicReembolso 
-                 isModal={true} 
-                 onClose={() => { 
+             
+             <PublicReembolso 
+               isModal={true} 
+               onClose={() => { 
                    setIsAddReembolsoModalOpen(false); 
                    fetchReembolsos(); 
                  }} 
                />
-             </div>
           </div>
         </div>,
         document.body

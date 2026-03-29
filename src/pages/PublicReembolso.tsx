@@ -287,8 +287,8 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
   };
 
   return (
-    <div className={`${isModal ? 'h-full w-full' : 'min-h-screen items-center justify-center p-4'} bg-gray-50 flex flex-col transition-all duration-300`}>
-      <div className={`w-full transition-all duration-500 mx-auto ${step === 2 ? 'max-w-6xl' : 'max-w-xl'} ${isModal ? 'p-6' : ''}`}>
+    <div className={`${isModal ? 'w-full' : 'min-h-screen items-center justify-center p-4 bg-gray-50'} flex flex-col transition-all duration-300`}>
+      <div className={`w-full transition-all duration-500 mx-auto ${step === 2 ? 'max-w-6xl' : 'max-w-xl'} ${isModal ? '' : ''}`}>
         
         {/* Header Branding */}
         {!isModal && (
@@ -313,15 +313,16 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
             </button>
           </div>
         )}
-        {isModal && (
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-black text-[#112240]">Nova Solicitação Manual</h1>
-          </div>
-        )}
 
         {/* Form Container */}
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-8 relative overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 md:p-8 relative overflow-hidden">
           
+          {isModal && (
+            <div className="text-center mb-6 mt-2">
+              <h1 className="text-2xl font-black text-[#112240]">Nova Solicitação Manual</h1>
+            </div>
+          )}
+
           {/* Progress Bar */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gray-100">
             <div 
