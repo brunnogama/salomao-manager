@@ -586,7 +586,7 @@ export function ReembolsosTab() {
                         className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
                       />
                     ) : (
-                      <div className="font-medium text-gray-800">{selectedReembolso.numero_recibo || '--'}</div>
+                      <div className="font-medium text-gray-800 break-all line-clamp-2">{selectedReembolso.numero_recibo || '--'}</div>
                     )}
                   </div>
                   

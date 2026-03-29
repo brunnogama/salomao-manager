@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Share2, Trash2, Plus } from 'lucide-react';
+import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Share2, Trash2, Plus, ExternalLink, ZoomIn, ZoomOut } from 'lucide-react';
 import { SearchableSelect } from '../components/crm/SearchableSelect';
 
 interface Collaborator {
@@ -14,6 +14,7 @@ interface ExtractedData {
   fornecedor_cnpj: string;
   data_despesa: string;
   valor: number;
+  valorString?: string;
   descricao: string;
 }
 
@@ -29,12 +30,17 @@ export default function PublicReembolso() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [publicFileUrl, setPublicFileUrl] = useState('');
   
+  const [imgScale, setImgScale] = useState(1);
+  const handleZoomIn = () => setImgScale(s => Math.min(s + 0.5, 4));
+  const handleZoomOut = () => setImgScale(s => Math.max(s - 0.5, 0.5));
+
   const [extractedData, setExtractedData] = useState<ExtractedData[]>([{
     numero_recibo: '',
     fornecedor_nome: '',
     fornecedor_cnpj: '',
     data_despesa: '',
     valor: 0,
+    valorString: '0,00',
     descricao: ''
   }]);
 
@@ -164,14 +170,18 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
           // Transform response in array in case Make returns single object
           const dataArray = Array.isArray(makeData) ? makeData : [makeData];
 
-          const formattedData = dataArray.map((item: any) => ({
-            numero_recibo: item.numero_recibo || '',
-            fornecedor_nome: item.fornecedor_nome || '',
-            fornecedor_cnpj: item.fornecedor_cnpj || '',
-            data_despesa: item.data_despesa || '',
-            valor: parseFloat(item.valor) || 0,
-            descricao: item.descricao || ''
-          }));
+          const formattedData = dataArray.map((item: any) => {
+            const valNum = parseFloat(item.valor) || 0;
+            return {
+              numero_recibo: item.numero_recibo || '',
+              fornecedor_nome: item.fornecedor_nome || '',
+              fornecedor_cnpj: item.fornecedor_cnpj || '',
+              data_despesa: item.data_despesa || '',
+              valor: valNum,
+              valorString: valNum.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+              descricao: item.descricao || ''
+            };
+          });
 
           setExtractedData(formattedData.length > 0 ? formattedData : [{
             numero_recibo: '',
@@ -179,6 +189,7 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
             fornecedor_cnpj: '',
             data_despesa: '',
             valor: 0,
+            valorString: '0,00',
             descricao: ''
           }]);
         } else {
@@ -189,6 +200,7 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
             fornecedor_cnpj: '',
             data_despesa: '',
             valor: 0,
+            valorString: '0,00',
             descricao: ''
           }]);
         }
@@ -201,6 +213,7 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
           fornecedor_cnpj: '00.000.000/0001-00',
           data_despesa: new Date().toISOString().split('T')[0],
           valor: 150.00,
+          valorString: '150,00',
           descricao: 'Despesa mockada para teste porque o Webhook não está configurado.'
         }]);
       }
@@ -258,6 +271,7 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
       fornecedor_cnpj: '',
       data_despesa: '',
       valor: 0,
+      valorString: '0,00',
       descricao: ''
     }]);
   };
@@ -384,13 +398,29 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
                   <h3 className="font-bold text-[#112240] flex items-center gap-2">
                     <FileText className="w-4 h-4 text-blue-600" /> Arquivo Original
                   </h3>
+                  <div className="flex items-center gap-2">
+                    {!publicFileUrl?.toLowerCase().split('?')[0].endsWith('.pdf') && (
+                      <div className="flex bg-gray-100 rounded-lg p-1 mr-2">
+                        <button type="button" onClick={handleZoomOut} className="p-1 hover:bg-white rounded text-gray-600 shadow-sm" title="Diminuir Zoom"><ZoomOut className="w-4 h-4" /></button>
+                        <button type="button" onClick={handleZoomIn} className="p-1 hover:bg-white rounded text-gray-600 shadow-sm" title="Aumentar Zoom"><ZoomIn className="w-4 h-4" /></button>
+                      </div>
+                    )}
+                    <a href={publicFileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors">
+                       Abrir nova aba <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
                 </div>
-                <div className="flex-1 overflow-hidden p-0 relative">
+                <div className="flex-1 overflow-hidden p-0 relative bg-gray-200/50">
                   {publicFileUrl?.toLowerCase().split('?')[0].endsWith('.pdf') ? (
-                    <iframe src={publicFileUrl} className="absolute inset-0 w-full h-full" title="Visualizador" />
+                    <iframe src={`${publicFileUrl}#view=FitH`} className="absolute inset-0 w-full h-full" title="Visualizador" />
                   ) : (
-                    <div className="overflow-auto w-full h-full p-4 flex items-start justify-center">
-                      <img src={publicFileUrl} alt="Comprovante" className="max-w-full rounded-xl shadow-sm border border-gray-200" />
+                    <div className="overflow-auto w-full h-full p-4 flex items-center justify-center">
+                      <img 
+                        src={publicFileUrl} 
+                        alt="Comprovante" 
+                        style={{ transform: `scale(${imgScale})`, transition: 'transform 0.2s', transformOrigin: 'center' }}
+                        className="max-w-full rounded-xl shadow-sm border border-gray-200" 
+                      />
                     </div>
                   )}
                 </div>
@@ -479,11 +509,18 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
                       <div className="flex items-center">
                         <span className="text-gray-400 font-bold mr-2">R$</span>
                         <input
-                          type="number"
-                          value={item.valor}
-                          onChange={(e) => handleUpdateItem(index, 'valor', parseFloat(e.target.value) || 0)}
+                          type="text"
+                          value={item.valorString !== undefined ? item.valorString : item.valor.toFixed(2).replace('.', ',')}
+                          onChange={(e) => {
+                             const valStr = e.target.value.replace(/[^0-9.,]/g, '');
+                             handleUpdateItem(index, 'valorString', valStr);
+                             const parsed = parseFloat(valStr.replace(',', '.')) || 0;
+                             handleUpdateItem(index, 'valor', parsed);
+                          }}
+                          onBlur={() => {
+                             handleUpdateItem(index, 'valorString', item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+                          }}
                           className="bg-transparent text-white text-xl font-black text-right outline-none w-32"
-                          step="0.01"
                         />
                       </div>
                     </div>
