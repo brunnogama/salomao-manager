@@ -18,7 +18,12 @@ interface ExtractedData {
   descricao: string;
 }
 
-export default function PublicReembolso() {
+interface PublicReembolsoProps {
+  isModal?: boolean;
+  onClose?: () => void;
+}
+
+export default function PublicReembolso({ isModal = false, onClose }: PublicReembolsoProps) {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [selectedColab, setSelectedColab] = useState('');
   const [reembolsavelCliente, setReembolsavelCliente] = useState(false);
@@ -282,8 +287,8 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 transition-all duration-300">
-      <div className={`w-full transition-all duration-500 mx-auto ${step === 2 ? 'max-w-6xl' : 'max-w-xl'}`}>
+    <div className={`${isModal ? 'h-full w-full' : 'min-h-screen items-center justify-center p-4'} bg-gray-50 flex flex-col transition-all duration-300`}>
+      <div className={`w-full transition-all duration-500 mx-auto ${step === 2 ? 'max-w-6xl' : 'max-w-xl'} ${isModal ? 'p-6' : ''}`}>
         
         {/* Header Branding */}
         <div className="text-center mb-8">
@@ -567,10 +572,13 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
                 Sua solicitação foi enviada para o departamento financeiro. Você receberá uma notificação quando for processada.
               </p>
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  if (isModal && onClose) onClose();
+                  else window.location.reload();
+                }}
                 className="py-3 px-8 bg-gray-100 text-[#112240] hover:bg-gray-200 rounded-xl font-bold text-sm transition-colors"
               >
-                Enviar nova solicitação
+                {isModal ? 'Fechar Janela e Atualizar a Tabela' : 'Enviar nova solicitação'}
               </button>
             </div>
           )}

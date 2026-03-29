@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
-import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileDown, ArrowUpCircle, Calendar, User, RefreshCw } from 'lucide-react';
+import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileDown, ArrowUpCircle, Calendar, User, RefreshCw, Plus, X } from 'lucide-react';
+import PublicReembolso from '../../../pages/PublicReembolso';
 import { format } from 'date-fns';
 import { AlertModal } from '../../../components/ui/AlertModal';
 import { exportToStandardXLSX } from '../../../utils/exportUtils';
@@ -39,6 +40,10 @@ export function ReembolsosTab() {
   const [editedData, setEditedData] = useState<Partial<Reembolso>>({});
   const [savingEdit, setSavingEdit] = useState(false);
   const [reembolsoToDelete, setReembolsoToDelete] = useState<Reembolso | null>(null);
+
+  // Modal Add Reembolso Manual
+  const [isAddReembolsoModalOpen, setIsAddReembolsoModalOpen] = useState(false);
+
 
   const handleExportXLSX = () => {
     const dataToExport = filtered.map(r => ({
@@ -337,6 +342,13 @@ export function ReembolsosTab() {
               className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
             >
               <FileDown className="h-5 w-5" />
+            </button>
+            <button 
+              onClick={() => setIsAddReembolsoModalOpen(true)}
+              title="Nova Solicitação de Reembolso Manual"
+              className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-blue-900 transition-all shadow-lg shadow-blue-900/30 shrink-0"
+            >
+              <Plus className="h-5 w-5" />
             </button>
         </div>
       </div>
@@ -781,6 +793,30 @@ export function ReembolsosTab() {
         confirmText="Excluir Definitivamente"
         onConfirm={handleDelete}
       />
+      {/* Modal Reembolso Manual */}
+      {isAddReembolsoModalOpen && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 sm:p-6 transition-all">
+          <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl relative flex flex-col h-[90vh] sm:h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+             <button 
+               onClick={() => setIsAddReembolsoModalOpen(false)} 
+               className="absolute top-4 right-4 z-[99] bg-white p-2 rounded-full shadow-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+             >
+               <X className="w-5 h-5" />
+             </button>
+             <div className="flex-1 overflow-y-auto w-full">
+               <PublicReembolso 
+                 isModal={true} 
+                 onClose={() => { 
+                   setIsAddReembolsoModalOpen(false); 
+                   fetchReembolsos(); 
+                 }} 
+               />
+             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
     </div>
   );
 }
