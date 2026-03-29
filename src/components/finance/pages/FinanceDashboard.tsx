@@ -312,16 +312,14 @@ export function FinanceDashboard() {
           <button
             onClick={handleExportPDF}
             disabled={isExportingPDF}
-            title="Exportar Dashboard em PDF (Alta Resolução)"
-            className="flex items-center justify-center h-10 px-4 rounded-xl transition-all active:scale-95 bg-red-600 text-white hover:bg-red-700 border-none disabled:opacity-50 disabled:cursor-not-allowed gap-2"
-            style={{ boxShadow: '0 4px 14px rgba(220, 38, 38, 0.4)' }}
+            title="Exportar Dashboard em PDF"
+            className="flex items-center justify-center w-10 h-10 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-lg shadow-red-500/30 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isExportingPDF ? (
-              <Loader2 className="w-5 h-5 animate-spin text-white" />
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <Download className="w-5 h-5" />
+              <Download className="h-5 w-5" />
             )}
-            <span className="text-sm font-bold hidden sm:block">PDF</span>
           </button>
         </div>
       </div>
