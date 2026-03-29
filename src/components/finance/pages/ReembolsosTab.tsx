@@ -344,7 +344,7 @@ export function ReembolsosTab() {
             <button
               onClick={() => {
                 const mailtoUrl = `mailto:?subject=${encodeURIComponent('Solicitação de Reembolso - Salomão Manager')}&body=${encodeURIComponent(`Olá,\n\nPara solicitar o seu reembolso financeiro, acesse o canal oficial do nosso sistema abaixo e preencha as informações necessárias (anexe a cópia do comprovante):\n\n${window.location.origin}/reembolsos`)}`;
-                window.open(mailtoUrl, '_blank');
+                window.location.href = mailtoUrl;
               }}
               title="Compartilhar Link (E-mail)"
               className="flex items-center justify-center w-10 h-10 bg-gray-50 text-gray-600 hover:text-blue-600 border border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 rounded-full transition-all shadow-sm shrink-0"
