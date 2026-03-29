@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
-import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileDown, ArrowUpCircle, Calendar, User, RefreshCw, Plus, X } from 'lucide-react';
+import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileDown, ArrowUpCircle, Calendar, User, RefreshCw, Plus, X, Share2 } from 'lucide-react';
 import PublicReembolso from '../../../pages/PublicReembolso';
 import { format } from 'date-fns';
 import { AlertModal } from '../../../components/ui/AlertModal';
@@ -329,6 +329,16 @@ export function ReembolsosTab() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                const mailtoUrl = `mailto:?subject=${encodeURIComponent('Solicitação de Reembolso - Salomão Manager')}&body=${encodeURIComponent(`Olá,\n\nPara solicitar o seu reembolso financeiro, acesse o canal oficial do nosso sistema abaixo e preencha as informações necessárias (anexe a cópia do comprovante):\n\n${window.location.origin}/reembolsos`)}`;
+                window.open(mailtoUrl, '_blank');
+              }}
+              title="Compartilhar Link (E-mail)"
+              className="flex items-center justify-center w-10 h-10 bg-gray-50 text-gray-600 hover:text-blue-600 border border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 rounded-full transition-all shadow-sm shrink-0"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
             <button
               onClick={() => window.location.reload()}
               title="Sincronizar Dados"
@@ -803,7 +813,7 @@ export function ReembolsosTab() {
              >
                <X className="w-5 h-5" />
              </button>
-             <div className="flex-1 overflow-y-auto w-full">
+             <div className="flex-1 overflow-y-auto w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                <PublicReembolso 
                  isModal={true} 
                  onClose={() => { 

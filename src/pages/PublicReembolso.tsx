@@ -291,26 +291,33 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
       <div className={`w-full transition-all duration-500 mx-auto ${step === 2 ? 'max-w-6xl' : 'max-w-xl'} ${isModal ? 'p-6' : ''}`}>
         
         {/* Header Branding */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-             <img
-               src="/logo-salomao.png"
-               alt="Salomão"
-               className="h-16 md:h-20 w-auto object-contain drop-shadow-sm transition-transform duration-500 hover:scale-[1.02]"
-             />
+        {!isModal && (
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-6">
+               <img
+                 src="/logo-salomao.png"
+                 alt="Salomão"
+                 className="h-16 md:h-20 w-auto object-contain drop-shadow-sm transition-transform duration-500 hover:scale-[1.02]"
+               />
+            </div>
+            <h1 className="text-2xl font-black text-[#112240]">Solicitação de Reembolso</h1>
+            <p className="text-gray-500 mt-2">Envie seu comprovante para o financeiro.</p>
+            
+            <button 
+              type="button"
+              onClick={handleShare}
+              className="mx-auto mt-6 px-4 py-2 bg-gray-100 text-[#112240] text-xs font-bold uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors"
+            >
+              <Share2 className="w-4 h-4" /> 
+              Compartilhar Link
+            </button>
           </div>
-          <h1 className="text-2xl font-black text-[#112240]">Solicitação de Reembolso</h1>
-          <p className="text-gray-500 mt-2">Envie seu comprovante para o financeiro.</p>
-          
-          <button 
-            type="button"
-            onClick={handleShare}
-            className="mx-auto mt-6 px-4 py-2 bg-gray-100 text-[#112240] text-xs font-bold uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors"
-          >
-            <Share2 className="w-4 h-4" /> 
-            Compartilhar Link
-          </button>
-        </div>
+        )}
+        {isModal && (
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-black text-[#112240]">Nova Solicitação Manual</h1>
+          </div>
+        )}
 
         {/* Form Container */}
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-8 relative overflow-hidden">
