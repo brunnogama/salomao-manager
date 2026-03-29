@@ -169,12 +169,12 @@ export function FilterBar({
 
                 {/* Popover / Dropdown para esta categoria específica */}
                 {isOpen && (
-                  <div className={`absolute top-full right-0 mt-2 ${cat.type === 'date_range' ? 'w-[320px]' : 'w-72'} bg-white border border-gray-100 rounded-2xl shadow-xl shadow-[#1e3a8a]/5 z-[9999] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden`}>
+                  <div className={`absolute top-full right-0 mt-2 ${cat.type === 'date_range' ? 'w-[360px]' : 'w-72'} bg-white border border-gray-100 rounded-2xl shadow-xl shadow-[#1e3a8a]/5 z-[9999] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden`}>
                     {cat.type === 'date_range' ? (
                       <div className="p-5" onClick={(e) => e.stopPropagation()}>
                         
-                        {/* Botões Rápidos (Pill Style) */}
-                        <div className="flex bg-gray-100/80 p-1 rounded-xl mb-5 border border-gray-50 shadow-inner">
+                        {/* Botões Rápidos */}
+                        <div className="flex gap-3 mb-6">
                           <button
                             onClick={() => {
                               const today = new Date();
@@ -186,7 +186,7 @@ export function FilterBar({
                               cat.onChange({ start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] });
                               setSelectedCategory(null);
                             }}
-                            className="flex-1 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-[#1e3a8a] bg-transparent hover:bg-white rounded-lg transition-all shadow-none hover:shadow-[0_2px_8px_-2px_rgba(30,58,138,0.1)] focus:outline-none"
+                            className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a] ring-1 ring-transparent hover:ring-[#1e3a8a]/10 transition-all outline-none"
                           >
                             Semana Atual
                           </button>
@@ -198,7 +198,7 @@ export function FilterBar({
                               cat.onChange({ start: firstDay.toISOString().split('T')[0], end: lastDay.toISOString().split('T')[0] });
                               setSelectedCategory(null);
                             }}
-                            className="flex-1 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-[#1e3a8a] bg-transparent hover:bg-white rounded-lg transition-all shadow-none hover:shadow-[0_2px_8px_-2px_rgba(30,58,138,0.1)] focus:outline-none"
+                            className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a] ring-1 ring-transparent hover:ring-[#1e3a8a]/10 transition-all outline-none"
                           >
                             Mês Atual
                           </button>
