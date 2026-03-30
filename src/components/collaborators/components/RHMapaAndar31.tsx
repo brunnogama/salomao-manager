@@ -175,7 +175,7 @@ export function RHMapaAndar31({
     };
 
     setElements(prev => [...prev, newEl]);
-    setSelectedId(newEl.id);
+    setSelectedId(null);
     setActiveTool('select');
     setUnsavedChanges(true);
     setDrawingPath(null);
