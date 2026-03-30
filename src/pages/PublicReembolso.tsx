@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Share2, Trash2, Plus, ExternalLink, ZoomIn, ZoomOut, X, Star } from 'lucide-react';
+import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Trash2, Plus, ExternalLink, ZoomIn, ZoomOut, X, Star } from 'lucide-react';
 import { SearchableSelect } from '../components/crm/SearchableSelect';
 
 interface Collaborator {
@@ -109,18 +109,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
     } catch (err) {
       console.error('Erro ao buscar integrantes', err);
     }
-  };
-
-  const handleShare = () => {
-    const subject = encodeURIComponent('Link de Reembolso - Salomão Advogados');
-    const body = encodeURIComponent(`Olá!
-
-Segue o link para solicitar o seu reembolso:
-Anexe o comprovante em PDF e confira as informações antes de enviar.
-
-https://salomao-manager.pages.dev/reembolsos/solicitar`);
-    
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -316,15 +304,6 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
             </div>
             <h1 className="text-2xl font-black text-[#112240]">Solicitação de Reembolso</h1>
             <p className="text-gray-500 mt-2">Envie seu comprovante para o financeiro.</p>
-            
-            <button 
-              type="button"
-              onClick={handleShare}
-              className="mx-auto mt-6 px-4 py-2 bg-gray-100 text-[#112240] text-xs font-bold uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors"
-            >
-              <Share2 className="w-4 h-4" /> 
-              Compartilhar Link
-            </button>
           </div>
         )}
 
