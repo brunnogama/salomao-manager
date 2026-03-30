@@ -776,6 +776,8 @@ export function RHPostos() {
           </div>
         );
       })}
+        </div>
+      )}
     </div>
   );
 }
