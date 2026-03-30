@@ -234,7 +234,7 @@ export function RHPostos() {
   const handleSaveMapElements = async (elements: MapElement[]) => {
     try {
       // Deleta todos os elementos atuais (pois o builder gerencia a tela toda e repassa a nova compilação)
-      const { error: delError } = await supabase.from('rh_mapa_elementos').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('rh_mapa_elementos').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       
       // Insere as novas posições
       if (elements.length > 0) {
@@ -263,13 +263,29 @@ export function RHPostos() {
       const originalTransform = element.style.transform;
       element.style.transform = 'none';
       
+      let minX = 0, minY = 0, maxX = 4000, maxY = 2000;
+      if (mapElements && mapElements.length > 0) {
+          minX = Math.min(...mapElements.map(el => el.x));
+          minY = Math.min(...mapElements.map(el => el.y));
+          maxX = Math.max(...mapElements.map(el => el.x + el.width));
+          maxY = Math.max(...mapElements.map(el => el.y + el.height));
+      }
+
+      const padding = 80; // respiro nas bordas
+      const captureX = Math.max(0, minX - padding);
+      const captureY = Math.max(0, minY - padding);
+      const captureWidth = (maxX - captureX) + padding;
+      const captureHeight = (maxY - captureY) + padding;
+
       const canvas = await html2canvas(element, {
         scale: 2, // High resolution for A3
         useCORS: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#f8fafc', // cor de fundo do sistema slate-50 para manter o look clean
         logging: false,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
+        x: captureX,
+        y: captureY,
+        width: captureWidth,
+        height: captureHeight,
       });
       
       // Restore the visual scaling for the screen
