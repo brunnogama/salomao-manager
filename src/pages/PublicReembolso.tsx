@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Share2, Trash2, Plus, ExternalLink, ZoomIn, ZoomOut, X } from 'lucide-react';
+import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Share2, Trash2, Plus, ExternalLink, ZoomIn, ZoomOut, X, Star } from 'lucide-react';
 import { SearchableSelect } from '../components/crm/SearchableSelect';
 
 interface Collaborator {
@@ -34,6 +34,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [publicFileUrl, setPublicFileUrl] = useState('');
+  const [showFavModal, setShowFavModal] = useState(false);
   
   const [imgScale, setImgScale] = useState(1);
   const handleZoomIn = () => setImgScale(s => Math.min(s + 0.5, 4));
@@ -53,7 +54,20 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
   useEffect(() => {
     fetchCollaborators();
-  }, []);
+
+    const lastColab = localStorage.getItem('salomao_reembolso_last_colab');
+    if (lastColab) {
+      setSelectedColab(lastColab);
+    }
+
+    if (!isModal) {
+      const hasSeenFavModal = localStorage.getItem('salomao_reembolso_fav_modal');
+      if (!hasSeenFavModal) {
+        setShowFavModal(true);
+        localStorage.setItem('salomao_reembolso_fav_modal', 'true');
+      }
+    }
+  }, [isModal]);
 
   const fetchCollaborators = async () => {
     try {
@@ -356,7 +370,10 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
                 <label className="block text-sm font-bold text-gray-700 mb-2">Quem é você?</label>
                 <SearchableSelect
                   value={selectedColab}
-                  onChange={(val) => setSelectedColab(val)}
+                  onChange={(val) => {
+                    setSelectedColab(val);
+                    localStorage.setItem('salomao_reembolso_last_colab', val);
+                  }}
                   options={collaborators.map(c => ({ id: c.id, name: c.name }))}
                   placeholder="Selecione seu nome..."
                   className="bg-gray-50 rounded-xl"
@@ -606,6 +623,27 @@ https://salomao-manager.pages.dev/reembolsos/solicitar`);
 
         </div>
       </div>
+      
+      {/* Modal de Favoritos */}
+      {showFavModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#112240]/40 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-300">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center border border-gray-100">
+            <div className="w-16 h-16 bg-yellow-50 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-5 border border-yellow-100 shadow-inner">
+              <Star className="w-8 h-8 fill-yellow-400 text-yellow-500" />
+            </div>
+            <h2 className="text-xl font-black text-[#112240] mb-3">Acesso Rápido</h2>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+              Para facilitar seus próximos reembolsos, salve esta página nos favoritos do seu navegador pressionando as teclas <strong className="text-[#112240] bg-gray-100 px-1.5 py-0.5 rounded">Ctrl+D</strong> (ou Cmd+D), ou clique na estrela na barra de endereços.
+            </p>
+            <button
+              onClick={() => setShowFavModal(false)}
+              className="w-full py-3.5 bg-[#112240] text-white rounded-xl font-bold hover:bg-[#1e3a8a] shadow-lg shadow-blue-900/20 transition-all active:scale-95"
+            >
+              Entendi!
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
