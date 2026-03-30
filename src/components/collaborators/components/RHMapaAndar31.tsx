@@ -276,7 +276,7 @@ export function RHMapaAndar31({
                 {!isEditMode && (
                   <div 
                     className="absolute bottom-full left-[50%] mb-2.5 w-48 bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] ring-1 ring-gray-100 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex flex-col items-center p-3 z-50 origin-bottom"
-                    style={{ transform: \`translateX(-50%)\` }}
+                    style={{ transform: `translateX(-50%)` }}
                   >
                     {occupant ? (
                       <>
@@ -336,7 +336,7 @@ export function RHMapaAndar31({
                            const parts = occupant.name.split(' ');
                            let finalName = parts[0];
                            if (parts.length > 1 && finalName.length <= 8) {
-                             finalName += \` \${parts[parts.length-1].charAt(0)}.\`;
+                             finalName += ` ${parts[parts.length-1].charAt(0)}.`;
                            }
                            return finalName;
                         })()}
@@ -349,10 +349,10 @@ export function RHMapaAndar31({
                     </>
                   ) : (
                     <>
-                      <span className={\`block text-[10px] mt-0.5 font-black leading-none mb-0.5 \${seat.type.includes('ADMINISTRATIVO') || seat.type.includes('ADM') ? 'text-purple-700' : seat.type === 'SÊNIOR' || seat.type === 'SÓCIO' ? 'text-red-600' : 'text-[#1e3a8a]'} opacity-70\`}>
+                      <span className={`block text-[10px] mt-0.5 font-black leading-none mb-0.5 ${seat.type.includes('ADMINISTRATIVO') || seat.type.includes('ADM') ? 'text-purple-700' : seat.type === 'SÊNIOR' || seat.type === 'SÓCIO' ? 'text-red-600' : 'text-[#1e3a8a]'} opacity-70`}>
                         {seat.id}
                       </span>
-                      <span className={\`block text-[6.5px] font-bold tracking-widest uppercase text-center w-full mt-0.5 leading-none opacity-60 \${seat.type === 'SÓCIO' ? 'text-red-700' : seat.type === 'SÊNIOR' ? 'text-red-600' : seat.type === 'ESTAGIÁRIO' ? 'text-orange-600' : seat.type === 'ADMINISTRATIVO' ? 'text-purple-700' : seat.type === 'CONSULTOR' ? 'text-amber-600' : seat.type === 'JÚNIOR' ? 'text-blue-600' : 'text-emerald-600'}\`}>
+                      <span className={`block text-[6.5px] font-bold tracking-widest uppercase text-center w-full mt-0.5 leading-none opacity-60 ${seat.type === 'SÓCIO' ? 'text-red-700' : seat.type === 'SÊNIOR' ? 'text-red-600' : seat.type === 'ESTAGIÁRIO' ? 'text-orange-600' : seat.type === 'ADMINISTRATIVO' ? 'text-purple-700' : seat.type === 'CONSULTOR' ? 'text-amber-600' : seat.type === 'JÚNIOR' ? 'text-blue-600' : 'text-emerald-600'}`}>
                         {seat.type}
                       </span>
                     </>
