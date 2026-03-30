@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
-import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save, DoorOpen, GripVertical, Copy, Type, ZoomIn, ZoomOut, Crop } from 'lucide-react';
+import { User, MapPin, MousePointer2, Users, Trash2, Save, Copy, ZoomIn, ZoomOut, Crop } from 'lucide-react';
 import { motion, PanInfo } from 'framer-motion';
 import { createPortal } from 'react-dom';
 
@@ -45,9 +45,10 @@ export function RHMapaAndar31({
   
   // STUDIO MODE STATE
   const [elements, setElements] = useState<MapElement[]>([]);
-  const [mapW, setMapW] = useState(4000); // 4000 de largura padrão ao editar
-  const [mapH, setMapH] = useState(2000);
-  const [activeTool, setActiveTool] = useState<'select' | 'wall' | 'line' | 'seat' | 'text' | 'door'>('select');
+  // Use a fixed natural size for the background map (e.g. 2600 x 1800)
+  const [mapW, setMapW] = useState(2600); 
+  const [mapH, setMapH] = useState(1800);
+  const [activeTool, setActiveTool] = useState<'select' | 'seat'>('select');
   const [zoomScale, setZoomScale] = useState(1.15);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectionBox, setSelectionBox] = useState<{startX: number, startY: number, curX: number, curY: number} | null>(null);
@@ -64,40 +65,18 @@ export function RHMapaAndar31({
   useEffect(() => {
     if (!unsavedChanges) {
       const loadedElems = mapElements || [];
-      setElements(loadedElems);
-      
-      // Auto-fit visual inicial quando carrega os dados (para ficar perfeitamente cortado no ViewMode)
-      if (loadedElems.length > 0) {
-          const maxX = Math.max(...loadedElems.map(el => el.x + el.width));
-          const maxY = Math.max(...loadedElems.map(el => el.y + el.height));
-          setMapW(Math.max(1000, maxX + 100));
-          setMapH(Math.max(600, maxY + 100));
-      } else {
-          setMapW(4000);
-          setMapH(2000);
-      }
+      // Clean up legacy elements that are no longer supported in the new background image paradigm
+      const validElements = loadedElems.filter(el => el.type === 'seat');
+      setElements(validElements);
+      // Floor map is fixed size.
+      setMapW(2600);
+      setMapH(1800);
     }
   }, [mapElements, unsavedChanges]);
 
-  // Expandir a lousa infinitamente conforme arraste de elementos encostar na borda direita/baixo
+  // Remove infinite expansion logic as floor maps are fixed bounds
   useEffect(() => {
-    if (elements.length > 0 && isEditMode) {
-      const maxX = Math.max(...elements.map(el => el.x + el.width));
-      const maxY = Math.max(...elements.map(el => el.y + el.height));
-      
-      let newW = mapW;
-      let newH = mapH;
-      
-      if (maxX > mapW - 100) {
-          newW = maxX + 400; // Adds breathing room explicitly for the scroll
-      }
-      if (maxY > mapH - 100) {
-          newH = maxY + 400;
-      }
-      
-      if (newW !== mapW) setMapW(newW);
-      if (newH !== mapH) setMapH(newH);
-    }
+    // Dynamic resizing disabled.
   }, [elements, mapW, mapH, isEditMode]);
 
   // Keyboard Shortcuts (Copy & Paste & Delete)
@@ -242,45 +221,28 @@ export function RHMapaAndar31({
     const dx = Math.abs(drawingPath.curX - drawingPath.startX);
     const dy = Math.abs(drawingPath.curY - drawingPath.startY);
 
-    let finalX, finalY, finalW, finalH;
+    let finalX: number;
+    let finalY: number;
 
-    // Se arraste foi pequeno (menos de 10px), considera clique simples para soltar padrão
     if (dx < 10 && dy < 10) {
         finalX = drawingPath.startX;
         finalY = drawingPath.startY;
-        finalW = activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : (activeTool === 'seat' ? W_STD : (activeTool === 'door' ? 40 : 100)));
-        finalH = activeTool === 'wall' ? 100 : (activeTool === 'line' ? 1 : (activeTool === 'seat' ? H_STD : (activeTool === 'door' ? 5 : 30)));
     } else {
-        // Usa as dimensões arrastadas livremente
         finalX = Math.min(drawingPath.startX, drawingPath.curX);
         finalY = Math.min(drawingPath.startY, drawingPath.curY);
-        finalW = Math.max(1, dx);
-        finalH = Math.max(1, dy);
-        
-        // Mesa não fica distorcida num retângulo gigante, mesa tem limite fixo
-        if (activeTool === 'seat') {
-            finalW = W_STD;
-            finalH = H_STD;
-        }
-
-        // Linha não vira um bloco grosso se arrastada torta: garantimos espessura 1
-        if (activeTool === 'line') {
-            if (finalW > finalH) {
-                finalH = 1; // Arraste horizontal = linha deitada
-            } else {
-                finalW = 1; // Arraste vertical = linha de pé
-            }
-        }
     }
+
+    const finalW = W_STD;
+    const finalH = H_STD;
 
     const newEl: MapElement = {
         id: crypto.randomUUID(),
         type: activeTool as MapElement['type'],
-        x: Math.round(finalX),
-        y: Math.round(finalY),
+        x: Math.round(finalX || 0),
+        y: Math.round(finalY || 0),
         width: Math.round(finalW),
         height: Math.round(finalH),
-        custom_data: activeTool === 'seat' ? { postoId: 'NOVO', seatType: 'PLENO' } : (activeTool === 'text' ? { textValue: 'Rótulo' } : {})
+        custom_data: { postoId: 'NOVO', seatType: 'PLENO' }
     };
 
     setElements(prev => [...prev, newEl]);
@@ -408,27 +370,7 @@ export function RHMapaAndar31({
   };
 
   const handleCropMap = () => {
-      if (elements.length === 0) return;
-
-      const minX = Math.min(...elements.map(el => el.x));
-      const minY = Math.min(...elements.map(el => el.y));
-      const maxX = Math.max(...elements.map(el => el.x + el.width));
-      const maxY = Math.max(...elements.map(el => el.y + el.height));
-
-      const padding = 50;
-      const shiftX = Math.max(0, minX - padding); // não shiftar para negativo
-      const shiftY = Math.max(0, minY - padding);
-
-      const shiftedElements = elements.map(el => ({
-          ...el,
-          x: el.x - shiftX,
-          y: el.y - shiftY
-      }));
-
-      setElements(shiftedElements);
-      setMapW(maxX - shiftX + padding);
-      setMapH(maxY - shiftY + padding);
-      setUnsavedChanges(true);
+     // Crop map disabled, using static image background
   };
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -494,15 +436,6 @@ export function RHMapaAndar31({
     return map;
   }, [collaborators]);
 
-  const getShortRole = (role: string) => {
-    const rawData = role || '';
-    if (!rawData.toLowerCase().includes('advogad')) {
-       return rawData.split(' ')[0];
-    }
-    const r = rawData.toLowerCase().replace('advogado', '').replace('advogada', '').trim();
-    if (!r) return '';
-    return r.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  };
 
   const selectedEl = selectedIds.length === 1 ? elements.find(el => el.id === selectedIds[0]) : null;
 
@@ -519,30 +452,10 @@ export function RHMapaAndar31({
                   <MousePointer2 className="w-4 h-4" />
               </button>
               <div className="w-px h-6 bg-gray-200 mx-0.5"></div>
-              
-              {/* TOOL: WALL */}
-              <button onClick={() => setActiveTool('wall')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'wall' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-                  <Square className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Sala</span>
-              </button>
-
-              {/* TOOL: LINE */}
-              <button onClick={() => setActiveTool('line')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'line' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-                  <Minus className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Linha</span>
-              </button>
-
-              {/* TOOL: DOOR */}
-              <button onClick={() => setActiveTool('door')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'door' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-                  <DoorOpen className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Porta</span>
-              </button>
 
               {/* TOOL: SEAT */}
               <button onClick={() => setActiveTool('seat')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'seat' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-                  <Users className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Posto</span>
-              </button>
-
-              {/* TOOL: TEXT */}
-              <button onClick={() => setActiveTool('text')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'text' ? 'bg-amber-100 text-amber-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-                  <Type className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Texto</span>
+                  <Users className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Adicionar Novo Posto</span>
               </button>
 
               <div className="w-px h-6 bg-gray-200 mx-1"></div>
@@ -592,19 +505,7 @@ export function RHMapaAndar31({
                         </div>
                     </div>
 
-                    {/* Generics: W / H */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                        <div className="flex flex-col gap-1">
-                            <label className="text-[10px] uppercase font-bold text-gray-400">Largura (px)</label>
-                            <input type="number" value={selectedEl.width} onChange={e => updateElement(selectedIds[0], { width: parseInt(e.target.value) || 10 })} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50" />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="text-[10px] uppercase font-bold text-gray-400">Altura (px)</label>
-                            <input type="number" value={selectedEl.height} onChange={e => updateElement(selectedIds[0], { height: parseInt(e.target.value) || 10 })} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50" />
-                        </div>
-                    </div>
-
-                    {/* Specifics: Seat Fields */}
+                    {/* Properties Removed - Fixed Circular Standard Width/Height */}
                     {selectedEl.type === 'seat' && (() => {
                         const postoId = selectedEl.custom_data?.postoId || 'NOVO';
                         const currentOccupants = postoId !== 'NOVO' ? collaborators.filter(c => c.posto?.toUpperCase() === postoId.toUpperCase()) : [];
@@ -786,16 +687,24 @@ export function RHMapaAndar31({
         )}
       </div>
 
-      {/* Wrapper de Escala para Garantir Legibilidade Preservando a Matemática Base */}
-      <div className="mx-auto" style={{ transform: `scale(${zoomScale})`, transformOrigin: 'top center', padding: '20px 0', width: mapW * zoomScale, height: mapH * zoomScale, flexShrink: 0, transition: 'transform 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1), height 0.2s cubic-bezier(0.2, 0, 0, 1)' }}>
+      <div id="mapa-31-andar-wrapper" className="mx-auto" style={{ transform: `scale(${zoomScale})`, transformOrigin: 'top center', padding: isEditMode ? '20px 0' : '0', width: mapW * zoomScale, height: mapH * zoomScale, flexShrink: 0, transition: 'transform 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1), height 0.2s cubic-bezier(0.2, 0, 0, 1)' }}>
         <div 
           ref={contentRef}
           id="mapa-31-andar-content"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
-          className={`relative bg-white select-none rounded-xl shadow-sm ring-1 ring-gray-200 mx-auto ${activeTool !== 'select' && isEditMode ? 'cursor-crosshair bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]' : ''}`}
-          style={{ width: mapW, height: mapH, overflow: 'hidden' }}
+          className={`relative select-none rounded-xl shadow-md ring-1 ring-gray-200 mx-auto ${activeTool !== 'select' && isEditMode ? 'cursor-crosshair' : ''}`}
+          style={{ 
+            width: mapW, 
+            height: mapH, 
+            overflow: 'hidden',
+            backgroundColor: '#ffffff',
+            backgroundImage: "url('/planta-baixa-31.jpg')", // Assuming you will upload 'planta-baixa-31.jpg' to public folder
+            backgroundSize: '100% 100%',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'center'
+          }}
         >
           {/* SELECTION BOX (Arrastar e Multi-Selecionar) */}
           {selectionBox && (
@@ -981,79 +890,86 @@ export function RHMapaAndar31({
                         </div>
                     )}
 
-                    {/* Visual UI (Transparent / Borderless) */}
-                    <div className={`flex flex-col flex-nowrap items-center pt-1.5 justify-start w-full h-full p-[1px] transition-colors overflow-visible relative ${isVacant ? 'bg-amber-100/80 rounded border-2 border-dashed border-amber-400' : isRotativo && occupants.length > 0 ? 'bg-green-50/80 rounded border-2 border-green-500 group-hover:bg-green-100/90' : isRotativo ? 'bg-orange-50/70 rounded border-2 border-dashed border-orange-400 group-hover:bg-orange-100/80' : 'bg-transparent group-hover:bg-[#1e3a8a]/5'}`}>
-                      {isVacant ? (
-                          <div className="flex flex-col items-center justify-center w-full h-full pb-1 opacity-90">
-                              <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest text-center leading-none bg-white/80 px-1 py-0.5 rounded shadow-sm">VAGO</span>
-                          </div>
-                      ) : occupants.length > 0 ? (
-                        <>
-                          {!isEditMode && occupants.length === 1 && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRemoveSeat(String(occupants[0].id));
-                              }}
-                              className="absolute -top-[5px] -right-[5px] w-4 h-4 bg-red-500 text-white rounded-full hidden group-hover:flex items-center justify-center cursor-pointer shadow-md hover:bg-red-600 border border-white transition-colors z-[60]"
-                              title="Remover e colocar Sem Posto"
-                            >
-                              <span className="text-[10px] leading-none mb-0.5 ml-[1px] font-bold">x</span>
-                            </button>
-                          )}
-      
-                          <div className={`flex relative z-10 justify-center w-full mt-1 ${occupants.length > 1 ? '-space-x-2' : ''}`}>
-                             {occupants.slice(0,3).map((occ, idx) => (
-                                <div key={occ.id} className="w-[22px] h-[22px] rounded-full overflow-hidden shrink-0 shadow-md border border-gray-200 bg-white flex items-center justify-center relative" style={{ zIndex: 20 - idx }}>
-                                  {occ.foto_url || occ.photo_url ? (
-                                    <img src={occ.foto_url || occ.photo_url} className="w-full h-full object-cover" alt="" />
-                                  ) : (
-                                    <User className="w-3.5 h-3.5 text-gray-400" />
-                                  )}
-                                </div>
-                             ))}
-                          </div>
+                    {/* Visual UI Otimizada: Circular Avatar Based */}
+                    <div className="flex flex-col items-center justify-center w-max p-1 group">
+                      
+                      {/* Avatar Render */}
+                      <div className={`relative mb-1 rounded-full border-4 shadow-[0_4px_10px_rgba(0,0,0,0.15)] transition-all flex items-center justify-center bg-white ${
+                        isVacant ? 'border-amber-300 ring-2 ring-transparent group-hover:ring-amber-200' :
+                        occupants.length > 0 ? 'border-white ring-2 ring-gray-200 group-hover:ring-blue-300' :
+                        'border-dashed border-gray-300'
+                      }`} style={{ width: 56, height: 56 }}>
                           
-                          <div className="flex flex-col items-center mt-0.5 absolute top-[30px] w-[200%] -left-[50%] pointer-events-none z-20">
-                             {occupants.length === 1 ? (
-                                 <>
-                                     <span className="block text-[7px] font-bold text-gray-800 text-center leading-[1.1] bg-white/80 px-0.5 rounded-sm drop-shadow-sm">
-                                        {(() => {
-                                           const parts = occupants[0].name.split(' ');
-                                           let finalName = parts[0];
-                                           if (parts.length > 1 && finalName.length <= 8) {
-                                             finalName += ` ${parts[parts.length-1].charAt(0)}.`;
-                                           }
-                                           return finalName;
-                                        })()}
-                                     </span>
-                                     <span className="block text-[6px] font-black text-[#1e3a8a] uppercase mt-[1px] text-center leading-none bg-white/80 px-0.5 rounded-sm drop-shadow-sm">
-                                        {getShortRole(occupants[0].roles?.name || occupants[0].role || '')}
-                                     </span>
-                                 </>
-                             ) : (
-                                  <span className="block text-[6.5px] font-black text-green-700 uppercase tracking-widest text-center leading-none bg-green-100 px-1 py-0.5 rounded border border-green-300 drop-shadow-sm">
-                                      {occupants.length} OCUPANTES
-                                  </span>
-                             )}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center w-full h-full pb-2 opacity-50">
-                          {isEditMode ? (
-                              <span className="block text-[10px] font-black leading-none text-gray-400">
-                                {postoId}
-                              </span>
-                          ) : (
+                          {isVacant ? (
+                              <div className="bg-amber-50 w-full h-full rounded-full flex items-center justify-center">
+                                  <MapPin className="w-5 h-5 text-amber-400" />
+                              </div>
+                          ) : occupants.length > 0 ? (
                               <>
-                                  <MapPin className="w-3.5 h-3.5 text-gray-400 drop-shadow-sm mb-0.5" />
-                                  <span className="text-[5.5px] font-bold text-gray-500 uppercase tracking-widest text-center leading-none">
-                                    {isRotativo ? 'ROTATIVO' : seatType}
-                                  </span>
+                                {/* Rendering first occupant's photo. Handle multiple occupants natively in badge/tooltip */}
+                                {occupants[0].foto_url || occupants[0].photo_url ? (
+                                    <img src={occupants[0].foto_url || occupants[0].photo_url} className="w-full h-full rounded-full object-cover" alt="" />
+                                ) : (
+                                    <div className="bg-blue-50 w-full h-full rounded-full flex items-center justify-center">
+                                        <User className="w-7 h-7 text-blue-300/80" />
+                                    </div>
+                                )}
+                                
+                                {/* Badge count if there is more than 1 in the seat */}
+                                {occupants.length > 1 && (
+                                    <div className="absolute -top-1 -right-2 bg-green-500 text-white font-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center shadow shadow-black/20 z-20">
+                                        +{occupants.length - 1}
+                                    </div>
+                                )}
+
+                                {!isEditMode && occupants.length === 1 && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onRemoveSeat(String(occupants[0].id));
+                                      }}
+                                      className="absolute -bottom-1 -right-2 w-5 h-5 bg-red-500 text-white rounded-full hidden group-hover:flex items-center justify-center cursor-pointer shadow-md hover:bg-red-600 border border-white transition-colors z-[60]"
+                                      title="Remover ocupante"
+                                    >
+                                      <span className="text-[12px] leading-none mb-0.5 ml-[0.5px] font-bold">x</span>
+                                    </button>
+                                )}
                               </>
+                          ) : (
+                              <div className="bg-gray-50/80 w-full h-full rounded-full flex items-center justify-center">
+                                  <span className="text-[8px] font-black text-gray-400 rotate-[-15deg]">LIVRE</span>
+                              </div>
                           )}
-                        </div>
-                      )}
+
+                          {/* ID do Posto flutuante embaixo do avatar, como um label aderente */}
+                          <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full uppercase shadow-md flex items-center justify-center z-20 whitespace-nowrap border-2 border-white ${
+                              (seatType.includes('ADM') || seatType.includes('ADMINISTRATIVO')) ? 'bg-orange-600 outline outline-1 outline-orange-600/30' : 'bg-[#1e3a8a] outline outline-1 outline-blue-900/30'
+                          }`}>
+                            <span className="text-[10px] font-black text-white leading-none tracking-widest px-0.5">
+                              {postoId}
+                            </span>
+                          </div>
+                      </div>
+
+                      {/* Nome do Ocupante Embaixo (First + Initial) */}
+                      <div className="mt-3 flex flex-col items-center justify-center">
+                          {occupants.length > 0 ? (
+                               <span className="block text-sm font-black text-gray-800 text-center leading-[1.1] drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)] max-w-[100px] truncate">
+                                  {(() => {
+                                     const parts = occupants[0].name.split(' ');
+                                     let finalName = parts[0];
+                                     if (parts.length > 1 && finalName.length <= 8) {
+                                       finalName += ` ${parts[parts.length-1].charAt(0)}.`;
+                                     }
+                                     return finalName;
+                                  })()}
+                               </span>
+                          ) : isVacant ? (
+                                <span className="block text-xs font-black text-amber-600 uppercase tracking-widest text-center">VAGO</span>
+                          ) : (
+                                <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest text-center">{isRotativo ? 'ROTATIVO' : 'LIVRE'}</span>
+                          )}
+                      </div>
                       
                       {occupants.length === 1 && !isEditMode && (
                         <div 
@@ -1090,10 +1006,10 @@ export function RHMapaAndar31({
 
           {/* Fallback caso não haja NADA no modo edição ainda */}
           {elements.length === 0 && isEditMode && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center opacity-30 pointer-events-none">
-              <Square className="w-20 h-20 text-gray-400 mb-4" />
-              <p className="text-xl font-black text-gray-500">CANVAS LIMPO</p>
-              <p className="text-sm font-bold text-gray-400 mt-2">Use as ferramentas para começar a desenhar as salas e linhas.</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center opacity-70 pointer-events-none">
+              <Users className="w-20 h-20 text-[#1e3a8a] mb-4 opacity-50" />
+              <p className="text-xl font-black text-[#1e3a8a]">MAPEAMENTO VAZIO</p>
+              <p className="text-sm font-bold text-gray-600 mt-2">Clique em Adicionar Posto para começar a popular a planta.</p>
             </div>
           )}
 

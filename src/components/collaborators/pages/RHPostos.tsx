@@ -264,31 +264,21 @@ export function RHPostos() {
       const originalTransform = element.style.transform;
       element.style.transform = 'none';
       
-      let minX = 0, minY = 0, maxX = 4000, maxY = 2000;
-      if (mapElements && mapElements.length > 0) {
-          minX = Math.min(...mapElements.map(el => el.x));
-          minY = Math.min(...mapElements.map(el => el.y));
-          maxX = Math.max(...mapElements.map(el => el.x + el.width));
-          maxY = Math.max(...mapElements.map(el => el.y + el.height));
-      }
+      // Wait for React to apply the CSS removal
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      const padding = 80; // respiro nas bordas
-      const captureX = Math.max(0, minX - padding);
-      const captureY = Math.max(0, minY - padding);
-      const captureWidth = (maxX - captureX) + padding;
-      const captureHeight = (maxY - captureY) + padding;
+      const captureWidth = 2600; // Fixed natural map width
+      const captureHeight = 1800; // Fixed natural map height
 
       const canvas = await html2canvas(element, {
-        scale: 2, // High resolution for sharpness
+        scale: 3, // Ultra-High resolution for sharpness (A3 Print)
         useCORS: true,
-        backgroundColor: '#f8fafc', // cor de fundo do sistema slate-50
+        backgroundColor: '#ffffff',
         logging: false,
-        x: captureX,
-        y: captureY,
         width: captureWidth,
         height: captureHeight,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
+        windowWidth: captureWidth,
+        windowHeight: captureHeight,
       });
       
       // Restore the visual scaling for the screen
