@@ -738,14 +738,22 @@ export function RHPostos() {
                             {(posto.total === 0 && posto.ocupados === 0) ? '-' : disponiveis}
                           </span>
                         </td>
-                        <td className="py-3 px-4 align-middle relative">
-                          <input
-                            type="text"
-                            defaultValue={posto.obs || ''}
-                            onBlur={(e) => handleBlur(posto.id, 'obs', posto.obs, e.target.value)}
-                            placeholder="Adicionar observação..."
-                            className="w-full font-medium text-sm text-gray-700 bg-transparent border-b-2 border-transparent hover:border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none transition-all py-2 px-3 rounded-sm"
-                          />
+                        <td className="py-3 px-4 align-middle relative h-full">
+                          <div
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => {
+                              const newText = e.currentTarget.innerText.trim();
+                              const oldText = (posto.obs || '').trim();
+                              if (newText !== oldText) {
+                                handleBlur(posto.id, 'obs', posto.obs, newText);
+                              }
+                            }}
+                            data-placeholder="Adicionar observação..."
+                            className="w-full font-medium text-sm text-gray-700 bg-transparent border-b-2 border-transparent hover:border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none transition-all py-2 px-3 rounded-sm empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 cursor-text min-h-[40px] break-words whitespace-pre-wrap outline-none"
+                          >
+                            {posto.obs || ''}
+                          </div>
                         </td>
                       </tr>
                     );
