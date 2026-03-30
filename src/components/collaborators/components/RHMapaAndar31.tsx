@@ -558,7 +558,7 @@ export function RHMapaAndar31({
                         onPointerMove={handleElementPointerMove}
                         onPointerUp={handleElementPointerUp}
                         style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, zIndex: 30 }}
-                        className={`flex items-center justify-center transition-none bg-transparent ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing hover:bg-black/5 rounded-sm' : ''} ${isEditMode ? 'border border-dashed border-gray-200' : ''}`}
+                        className={`flex items-center justify-center transition-none bg-transparent ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing hover:bg-black/5 rounded-sm' : ''}`}
                     >
                         <span className="text-gray-900 font-bold whitespace-nowrap" style={{ fontSize: `${el.height * 0.7}px`, lineHeight: 1 }}>{el.custom_data?.textValue || 'Rótulo'}</span>
                         
