@@ -279,7 +279,8 @@ export function RHMapaAndar31({
        return rawData.split(' ')[0];
     }
     const r = rawData.toLowerCase().replace('advogado', '').replace('advogada', '').trim();
-    return r.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'Advogado';
+    if (!r) return '';
+    return r.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   };
 
   const selectedEl = elements.find(el => el.id === selectedId);
@@ -501,13 +502,8 @@ export function RHMapaAndar31({
       
                     {/* BADGE DE IDENTIFICAÇÃO DO POSTO (COM COR DO CARGO) */}
                     {postoId !== 'NOVO' && (
-                        <div className={`absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-[2px] rounded uppercase shadow-sm border border-black/20 flex items-center justify-center z-20 ${
-                            seatType === 'SÓCIO' ? 'bg-red-700' : 
-                            seatType === 'SÊNIOR' ? 'bg-red-600' : 
-                            seatType === 'ESTAGIÁRIO' ? 'bg-orange-600' : 
-                            (seatType.includes('ADM') || seatType.includes('ADMINISTRATIVO')) ? 'bg-purple-600' : 
-                            seatType === 'CONSULTOR' ? 'bg-amber-600' : 
-                            seatType === 'JÚNIOR' ? 'bg-blue-600' : 'bg-emerald-600'
+                        <div className={`absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-[2px] rounded uppercase shadow-sm border border-black/10 flex items-center justify-center z-20 ${
+                            (seatType.includes('ADM') || seatType.includes('ADMINISTRATIVO')) ? 'bg-orange-600' : 'bg-[#1e3a8a]'
                         }`}>
                            <span className="text-[6.5px] font-black text-white leading-none tracking-wider">
                              {postoId}
@@ -515,8 +511,8 @@ export function RHMapaAndar31({
                         </div>
                     )}
 
-                    {/* Visual UI (Compact Black-Border Exact Representation) */}
-                    <div className="flex flex-col flex-nowrap items-center pt-2.5 justify-start w-full h-full p-[1px] border border-black bg-white group-hover:bg-[#1e3a8a]/5 transition-colors overflow-hidden">
+                    {/* Visual UI (Transparent / Borderless) */}
+                    <div className={`flex flex-col flex-nowrap items-center pt-1.5 justify-start w-full h-full p-[1px] bg-transparent transition-colors overflow-visible relative ${isEditMode ? 'border border-dashed border-gray-400/50 bg-white/30' : 'group-hover:bg-[#1e3a8a]/5'}`}>
                       {occupant ? (
                         <>
                           {!isEditMode && (
@@ -532,35 +528,39 @@ export function RHMapaAndar31({
                             </button>
                           )}
       
-                          <div className="w-[18px] h-[18px] rounded-full overflow-hidden shrink-0 shadow-sm border border-gray-100 bg-gray-50 flex items-center justify-center">
+                          <div className="w-[24px] h-[24px] rounded-full overflow-hidden shrink-0 shadow-md border border-gray-200 bg-white flex items-center justify-center relative z-10">
                             {occupant.foto_url || occupant.photo_url ? (
                               <img src={occupant.foto_url || occupant.photo_url} className="w-full h-full object-cover" alt="" />
                             ) : (
-                              <User className="w-3 h-3 text-gray-400" />
+                              <User className="w-4 h-4 text-gray-400" />
                             )}
                           </div>
-                          <span className="block text-[7.5px] mt-0.5 font-bold text-gray-900 text-center leading-[1.1] w-full truncate px-0.5 shrink-0">
-                            {(() => {
-                               const parts = occupant.name.split(' ');
-                               let finalName = parts[0];
-                               if (parts.length > 1 && finalName.length <= 8) {
-                                 finalName += ` ${parts[parts.length-1].charAt(0)}.`;
-                               }
-                               return finalName;
-                            })()}
-                          </span>
-                          <span className="block text-[5.5px] font-medium text-gray-500 uppercase mt-[1px] w-full text-center truncate px-0.5 shrink-0">
-                            {getShortRole(occupant.roles?.name || occupant.role || '')}
-                          </span>
+                          
+                          <div className="flex flex-col items-center mt-0.5 absolute top-[30px] w-[150%] -left-[25%] pointer-events-none z-20">
+                              <span className="block text-[7px] font-bold text-gray-800 text-center leading-[1.1] bg-white/80 px-0.5 rounded-sm drop-shadow-sm">
+                                {(() => {
+                                   const parts = occupant.name.split(' ');
+                                   let finalName = parts[0];
+                                   if (parts.length > 1 && finalName.length <= 8) {
+                                     finalName += ` ${parts[parts.length-1].charAt(0)}.`;
+                                   }
+                                   return finalName;
+                                })()}
+                              </span>
+                              <span className="block text-[6px] font-black text-[#1e3a8a] uppercase mt-[1px] text-center leading-none bg-white/80 px-0.5 rounded-sm drop-shadow-sm">
+                                {getShortRole(occupant.roles?.name || occupant.role || '')}
+                              </span>
+                          </div>
                         </>
                       ) : (
                         <>
-                          <span className={`block text-[10px] mt-0.5 font-black leading-none mb-0.5 ${seatType.includes('ADMINISTRATIVO') || seatType.includes('ADM') ? 'text-purple-700' : seatType === 'SÊNIOR' || seatType === 'SÓCIO' ? 'text-red-600' : 'text-[#1e3a8a]'} opacity-70`}>
-                            {postoId}
-                          </span>
-                          <span className={`block text-[6.5px] font-bold tracking-widest uppercase text-center w-full mt-0.5 leading-none opacity-60 ${seatType === 'SÓCIO' ? 'text-red-700' : seatType === 'SÊNIOR' ? 'text-red-600' : seatType === 'ESTAGIÁRIO' ? 'text-orange-600' : seatType === 'ADMINISTRATIVO' ? 'text-purple-700' : seatType === 'CONSULTOR' ? 'text-amber-600' : seatType === 'JÚNIOR' ? 'text-blue-600' : 'text-emerald-600'}`}>
-                            {seatType}
-                          </span>
+                          {isEditMode ? (
+                              <span className="block text-[10px] mt-0.5 font-black leading-none mb-0.5 text-gray-400 opacity-70">
+                                {postoId}
+                              </span>
+                          ) : (
+                              <MapPin className="w-4 h-4 text-gray-300 mt-1 opacity-50 drop-shadow-sm" />
+                          )}
                         </>
                       )}
                       
@@ -569,7 +569,7 @@ export function RHMapaAndar31({
                           draggable
                           onDragStart={(e) => {
                             e.dataTransfer.setData('colabId', String(occupant.id));
-                          }}
+                           }}
                           onDoubleClick={() => onRemoveSeat(String(occupant.id))}
                           className="absolute inset-0 cursor-grab active:cursor-grabbing pointer-events-auto border border-transparent group-hover:border-blue-500/30"
                           title="Arraste de volta para a lista ou use o botão X"
