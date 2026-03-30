@@ -555,25 +555,27 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                 </div>
               ))}
 
-              <button
-                type="button"
-                onClick={handleAddItem}
-                className="w-full py-4 border-2 border-dashed border-blue-200 text-blue-600 font-bold rounded-xl hover:bg-blue-50/50 hover:border-blue-300 transition-colors flex items-center justify-center gap-2"
-              >
-                 <Plus className="w-5 h-5" /> Adicionar mais um recibo manualmente
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={handleAddItem}
+                  className="flex-1 py-4 border-2 border-dashed border-blue-200 text-blue-600 font-bold rounded-xl hover:bg-blue-50/50 hover:border-blue-300 transition-colors flex items-center justify-center gap-2"
+                >
+                   <Plus className="w-5 h-5" /> Adicionar mais um recibo
+                </button>
 
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="w-full py-4 bg-[#1e3a8a] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 hover:bg-[#152e72] transition-all disabled:opacity-70"
-              >
-                {isSubmitting ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> Salvando...</>
-                ) : (
-                  <>Confirmar e Enviar para o Financeiro <ChevronRight className="w-5 h-5" /></>
-                )}
-              </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="flex-1 py-4 bg-[#1e3a8a] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 hover:bg-[#152e72] transition-all disabled:opacity-70"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" /> Salvando...</>
+                  ) : (
+                    <>Confirmar e Enviar <ChevronRight className="w-5 h-5" /></>
+                  )}
+                </button>
+              </div>
 
               </div>
             </div>
