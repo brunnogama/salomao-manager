@@ -1,24 +1,25 @@
-import React, { useMemo, useEffect, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Collaborator } from '../../../types/controladoria';
 import { User, MapPin } from 'lucide-react';
+import { motion, PanInfo } from 'framer-motion';
 
 interface FloorPlanProps {
   collaborators: Collaborator[];
+  seatLayoutOverrides?: Record<string, { map_x: number, map_y: number }>;
+  isEditMode?: boolean;
   onAssignSeat: (collaboratorId: string, seatId: string) => void;
   onRemoveSeat: (collaboratorId: string) => void;
+  onUpdateSeatCoordinates?: (seatId: string, map_x: number, map_y: number) => void;
 }
 
 interface SeatDef {
   id: string;
   type: string;
-  left: number; // pixels
-  top: number; //  pixels
-  width: number; // pixels
-  height: number; // pixels
+  left: number; // pixels iniciais
+  top: number; //  pixels iniciais
+  width: number; // pixels iniciais
+  height: number; // pixels iniciais
 }
-
-
-
 
 const W_STD = 75;
 const H_STD = 40;
@@ -122,25 +123,39 @@ const SEATS_31_ANDAR: SeatDef[] = [
   { id: 'S21', type: 'SÊNIOR', left: 1880, top: 350, width: W_STD * 2, height: 60 },
 ];
 
-
-
-
-export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: FloorPlanProps) {
+export function RHMapaAndar31({ 
+  collaborators, 
+  seatLayoutOverrides = {},
+  isEditMode = false,
+  onAssignSeat, 
+  onRemoveSeat,
+  onUpdateSeatCoordinates
+}: FloorPlanProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
   
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e: React.DragEvent, seatId: string) => {
+  const handleDropFromList = (e: React.DragEvent, seatId: string) => {
     e.preventDefault();
+    if (isEditMode) return; // Impede drop de RH na edição de layout
     const colabId = e.dataTransfer.getData('colabId');
     if (colabId) {
       onAssignSeat(colabId, seatId);
     }
   };
 
+  // Tratar soltar de cards do Framer Motion para salvar coordenadas
+  const handleSeatDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo, seatId: string, baseLeft: number, baseTop: number) => {
+    if (!isEditMode || !onUpdateSeatCoordinates) return;
+    
+    // Calcular a posição final baseada no offset do drag
+    const finalLeft = Math.round(baseLeft + info.offset.x);
+    const finalTop = Math.round(baseTop + info.offset.y);
+
+    onUpdateSeatCoordinates(seatId, finalLeft, finalTop);
+  };
 
   const seatsMap = useMemo(() => {
     const map = new Map<string, Collaborator>();
@@ -159,160 +174,162 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
     return r.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'Advogado';
   };
 
-  const [hoveredSeat, setHoveredSeat] = useState<string | null>(null);
-
-  // Removido o ResizeObserver para dar controle total à rolagem nativa da tela, 
-  // resolvendo bugs de corte do componente parente
-
   return (
     <div 
       ref={containerRef}
-      className="w-full relative flex justify-center items-start bg-gray-50/50 border border-gray-200 rounded-lg shadow-inner overflow-auto custom-scrollbar"
+      className={`w-full relative flex justify-center items-start bg-gray-50 border border-gray-200 rounded-lg shadow-inner overflow-auto custom-scrollbar transition-all ${isEditMode ? 'ring-4 ring-blue-500/30' : ''}`}
       style={{ minHeight: '500px', maxHeight: '80vh', touchAction: 'pan-x pan-y' }}
     >
+      {isEditMode && (
+        <div className="sticky top-4 left-4 z-50 bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg shadow-blue-500/30 flex items-center gap-2 pointer-events-none">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+          </span>
+          Modo Design Ativo - Arraste as mesas para reposicionar
+        </div>
+      )}
+
+      {/* Container com a imagem de fundo da planta da arquitetura */}
       <div 
         id="mapa-31-andar-content"
-        className="relative bg-white shrink-0 select-none m-4 rounded-xl shadow-sm ring-1 ring-gray-200"
+        className="relative bg-white shrink-0 m-4 rounded-xl shadow-sm ring-1 ring-gray-200 overflow-hidden"
         style={{ 
           width: MAP_W, 
           height: MAP_H, 
-          // Scale was removed to maintain sharpness and 100% visibility via native scroll
+          // Troque "/mapa_base_31.png" pelo caminho correto da sua imagem (na pasta public/)
+          backgroundImage: "url('/mapa_base_31.png')",
+          backgroundSize: '100% 100%',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center'
         }}
       >
-        {/* Left Seniores Rooms */}
-        {Array.from({length: 5}).map((_, i) => (
-          <div key={`room-s-${i}`} className="absolute left-[15px] w-[140px] h-[130px] border border-black z-0 pointer-events-none" style={{ top: `${35 + i * 130}px` }}></div>
-        ))}
-        
-        {/* Decorative Rooms Extra */}
-        <div className="absolute top-[800px] left-[15px] w-[140px] h-[50px] border border-black flex items-center justify-center pointer-events-none">
-           <span className="text-[12px] font-bold">Cell</span>
-        </div>
-        <div className="absolute top-[850px] left-[15px] w-[140px] h-[70px] border border-t-0 border-black flex items-center justify-center pointer-events-none">
-           <span className="text-[12px] font-bold text-center leading-tight">Banheiro<br/>Feminino</span>
-        </div>
-
-        <div className="absolute top-[880px] left-[1880px] w-[150px] h-[80px] border border-black flex items-center justify-center pointer-events-none">
-           <span className="text-[12px] font-bold text-center">Sala de Reunião 5</span>
-        </div>
-        <div className="absolute top-[880px] left-[2030px] w-[50px] h-[80px] border border-l-0 border-black flex items-center justify-center pointer-events-none">
-           <span className="text-[10px] font-bold text-center leading-tight rotate-90">Banheiro<br/>Masc</span>
-        </div>
-        
-        {/* Right Consultant/Senior Rooms */}
-        {/* Sala 1 e 2 independentes */}
-        <div className="absolute left-[1880px] w-[150px] h-[70px] border border-black z-0 pointer-events-none" style={{ top: '35px' }}></div>
-        <div className="absolute left-[1880px] w-[150px] h-[80px] border border-black z-0 pointer-events-none" style={{ top: '105px' }}></div>
-        <div className="absolute left-[2030px] w-[50px] h-[150px] border border-black border-l-0 z-0 pointer-events-none" style={{ top: '35px' }}></div>
-        
-        {/* SALA UNIFICADA para S19, S20, S21 */}
-        <div className="absolute left-[1880px] w-[150px] h-[240px] border border-black z-0 pointer-events-none" style={{ top: '185px' }}></div>
-
-        {/* Central Area Left */}
-        <div className="absolute top-[35px] left-[165px] w-[750px] h-[1px] bg-black pointer-events-none" />
-        <div className="absolute top-[650px] left-[165px] w-[750px] h-[1px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[165px] w-[1px] h-[615px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[915px] w-[1px] h-[615px] bg-black pointer-events-none" />
-        
-        {/* SC01 Walls inside Left Area */}
-        <div className="absolute top-[120px] left-[165px] w-[120px] h-[1px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[285px] w-[1px] h-[85px] bg-black pointer-events-none" />
-
-        {/* Central Area Right */}
-        <div className="absolute top-[35px] left-[950px] w-[810px] h-[1px] bg-black pointer-events-none" />
-        <div className="absolute top-[650px] left-[950px] w-[810px] h-[1px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[950px] w-[1px] h-[615px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[1760px] w-[1px] h-[615px] bg-black pointer-events-none" />
-        
-        {/* S16-S18 Walls inside Right Area */}
-        <div className="absolute top-[200px] left-[1530px] w-[230px] h-[1px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[1530px] w-[1px] h-[165px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[1620px] w-[1px] h-[165px] bg-black pointer-events-none" />
+        {/* Camada translúcida caso a imagem da planta não exista ou demore a carregar */}
+        <div className="absolute inset-0 bg-white/70 pointer-events-none"></div>
 
         {SEATS_31_ANDAR.map(seat => {
           const occupant = seatsMap.get(seat.id.toUpperCase());
-          const tooltipScale = Math.min(2, 1 / scale);
+
+          // Checa se existe posição customizada no banco vinda do parent (local override)
+          const overrideInfo = seatLayoutOverrides[seat.id];
+          const currentLeft = overrideInfo ? overrideInfo.map_x : seat.left;
+          const currentTop = overrideInfo ? overrideInfo.map_y : seat.top;
 
           return (
-            <div
+            <motion.div
               key={seat.id}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, seat.id)}
-              className="absolute flex flex-col items-center justify-start group cursor-pointer"
-              style={{ 
-                top: seat.top, 
-                left: seat.left, 
-                width: seat.width, 
-                height: seat.height
+              drag={isEditMode}
+              dragMomentum={false} // Para não deslizar após soltar
+              onDragEnd={(e, info) => handleSeatDragEnd(e, info, seat.id, currentLeft, currentTop)}
+              // Resetamos o transform do motion quando altera propriedades externas, 
+              // forçando-o a pular diretamente pelo left/top CSS original
+              style={{
+                position: 'absolute',
+                left: currentLeft,
+                top: currentTop,
+                width: occupant ? W_STD : 40,  // Mesa vazia fica menor
+                height: occupant ? H_STD : 40, // Mesa vazia circular/menor
+                zIndex: isEditMode ? 40 : 10,
+                // Reseta X e Y do motion local pra que o offset seja recalculado do zero a cada arrasto
+                x: 0, 
+                y: 0 
               }}
+              onDragOver={handleDragOver}
+              onDrop={(e: any) => handleDropFromList(e, seat.id)}
+              className={`flex flex-col items-center justify-center group ${isEditMode ? 'cursor-grab active:cursor-grabbing hover:ring-2 hover:ring-blue-500 rounded-lg bg-white/50 backdrop-blur-sm' : 'cursor-pointer'}`}
             >
-               {/* Tooltip Counter-Scaled */}
-              <div 
-                className="absolute bottom-full left-[50%] mb-2.5 w-48 bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] ring-1 ring-gray-100 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex flex-col items-center p-3 z-50 origin-bottom"
-                style={{ transform: `translateX(-50%)` }}
-              >
-                {occupant ? (
-                  <>
-                    {occupant.foto_url || occupant.photo_url ? (
-                      <img src={occupant.foto_url || occupant.photo_url} alt={occupant.name} className="w-12 h-12 rounded-full object-cover shadow-sm mb-2 border-2 border-gray-100" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-2 shadow-sm">
-                        <User className="w-5 h-5 text-gray-400" />
-                      </div>
-                    )}
-                    <p className="text-xs font-bold text-gray-800 text-center leading-tight mb-1">{occupant.name}</p>
-                    <p className="text-[9px] font-medium text-gray-500 text-center uppercase tracking-wider bg-gray-100 px-2 py-0.5 rounded-full">{occupant.roles?.name || occupant.role}</p>
-                  </>
-                ) : (
-                  <>
-                    <MapPin className="w-8 h-8 text-gray-200 mb-2" />
-                    <p className="text-xs font-bold text-gray-400 text-center uppercase">Posto Livre</p>
-                  </>
-                )}
-                <div className="w-full h-px bg-gray-100 my-2"></div>
-                <p className="text-[10px] font-black text-[#1e3a8a] uppercase">{seat.id} • {seat.type}</p>
-                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-b border-r border-gray-200 rotate-45"></div>
-              </div>
-
-              {/* Conteúdo da Mesa: TEXT-ONLY, COMPACTO COMO NO PRINT 2 */}
-              <div className="flex flex-col items-center justify-center w-full h-full p-0.5 border border-black bg-white group-hover:bg-[#1e3a8a]/5 transition-colors">
-                {occupant ? (
-                  <>
-                    <span className={`block text-[10px] font-black leading-none mb-0.5 ${seat.type.includes('ADMINISTRATIVO') || seat.type.includes('ADM') ? 'text-purple-700' : seat.type === 'SÊNIOR' || seat.type === 'SÓCIO' ? 'text-red-600' : 'text-[#1e3a8a]'}`}>
-                      {seat.id}
-                    </span>
-                    <span className="block text-[8px] font-bold text-gray-900 text-center leading-tight uppercase w-full truncate">
-                      {occupant.name.split(' ')[0]} {occupant.name.split(' ').length > 1 ? occupant.name.split(' ')[occupant.name.split(' ').length - 1] : ''}
-                    </span>
-                    <span className="block text-[6px] font-medium text-gray-500 uppercase mt-0.5 w-full text-center truncate">
-                      {getShortRole(occupant.roles?.name || occupant.role || '')}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className={`block text-[10px] font-black leading-none mb-0.5 ${seat.type.includes('ADMINISTRATIVO') || seat.type.includes('ADM') ? 'text-purple-700' : seat.type === 'SÊNIOR' || seat.type === 'SÓCIO' ? 'text-red-600' : 'text-[#1e3a8a]'} opacity-70`}>
-                      {seat.id}
-                    </span>
-                    <span className={`block text-[7px] font-bold tracking-widest uppercase text-center w-full mt-0.5 opacity-60 ${seat.type === 'SÓCIO' ? 'text-red-700' : seat.type === 'SÊNIOR' ? 'text-red-600' : seat.type === 'ESTAGIÁRIO' ? 'text-orange-600' : seat.type === 'ADMINISTRATIVO' ? 'text-purple-700' : seat.type === 'CONSULTOR' ? 'text-amber-600' : seat.type === 'JÚNIOR' ? 'text-blue-600' : 'text-emerald-600'}`}>
-                      {seat.type}
-                    </span>
-                  </>
-                )}
-              </div>
-
-              {/* Overlay invisível arrastável se houver ocupante para TIRAR do posto */}
-              {occupant && (
+               {/* Tooltip Detalhado Popover (Só ativo fora do modo de edição) */}
+              {!isEditMode && (
                 <div 
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData('colabId', String(occupant.id));
-                  }}
-                  onDoubleClick={() => onRemoveSeat(String(occupant.id))}
-                  className="absolute inset-0 cursor-grab active:cursor-grabbing"
-                  title="Arraste de volta para a lista ou clique duplo para remover"
-                />
+                  className="absolute bottom-full left-[50%] mb-2.5 w-52 bg-white rounded-2xl shadow-[0_15px_40px_rgba(30,58,138,0.15)] ring-1 ring-gray-100 opacity-0 group-hover:opacity-100 transition-all pointer-events-none flex flex-col items-center p-4 z-50 origin-bottom scale-95 group-hover:scale-100"
+                  style={{ transform: `translateX(-50%)` }}
+                >
+                  {occupant ? (
+                    <>
+                      {occupant.foto_url || occupant.photo_url ? (
+                        <div className="w-16 h-16 rounded-full overflow-hidden mb-3 border-[3px] border-blue-50 shadow-md">
+                          <img src={occupant.foto_url || occupant.photo_url} alt={occupant.name} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mb-3 shadow-md border-[3px] border-white">
+                          <User className="w-7 h-7 text-blue-300" />
+                        </div>
+                      )}
+                      <p className="text-sm font-black text-[#1e3a8a] text-center leading-tight mb-1">{occupant.name}</p>
+                      <p className="text-[10px] font-bold text-gray-400 text-center uppercase tracking-wider">{occupant.roles?.name || occupant.role}</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-2">
+                        <MapPin className="w-6 h-6 text-gray-300" />
+                      </div>
+                      <p className="text-xs font-bold text-gray-400 text-center uppercase mt-1">Posto Disponível</p>
+                    </>
+                  )}
+                  <div className="w-full h-px bg-gray-100 my-3"></div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-[#1e3a8a]/5 text-[#1e3a8a] px-2 py-1 rounded-md text-[10px] font-black uppercase">{seat.id}</span>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{seat.type}</span>
+                  </div>
+                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-5 h-5 bg-white border-b border-r border-gray-100 rotate-45 rounded-sm"></div>
+                </div>
               )}
-            </div>
+
+              {/* CONTEÚDO VISUAL DA MESA */}
+              {occupant ? (
+                // MESA OCUPADA (Card Foto Redonda + Nome + Cargo)
+                <div className="relative flex flex-col items-center justify-center w-full h-full bg-white/90 backdrop-blur-sm shadow-sm ring-1 ring-gray-200/50 rounded-xl group-hover:ring-blue-300 transition-all p-1">
+                  
+                  {/* Foto Redonda do Ocupante */}
+                  <div className="relative w-6 h-6 rounded-full overflow-hidden bg-gray-100 shadow-sm mb-0.5 border border-white">
+                    {occupant.foto_url || occupant.photo_url ? (
+                      <img src={occupant.foto_url || occupant.photo_url} className="w-full h-full object-cover" alt="" />
+                    ) : (
+                      <User className="w-3 h-3 text-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    )}
+                  </div>
+                  
+                  <div className="absolute -top-1.5 -right-1.5 bg-[#1e3a8a] text-white text-[7px] font-black px-1 py-0.5 rounded shadow-sm leading-none border border-white">
+                    {seat.id}
+                  </div>
+
+                  {/* Nome (Primeiro + Inicial do Sobrenome) */}
+                  <span className="block text-[8px] font-bold text-gray-900 text-center leading-tight truncate w-full px-0.5">
+                    {(() => {
+                      const parts = occupant.name.split(' ');
+                      if (parts.length > 1) {
+                        return `${parts[0]} ${parts[parts.length-1].charAt(0)}.`;
+                      }
+                      return parts[0];
+                    })()}
+                  </span>
+                  
+                  {/* Cargo Fino */}
+                  <span className="block text-[6px] font-semibold text-gray-500 mt-0.5 w-full text-center truncate uppercase tracking-tight">
+                    {getShortRole(occupant.roles?.name || occupant.role || '')}
+                  </span>
+
+                  {/* Overlay HTML5 Drag Drop invisível para arrastar PARA FORA o ocupante */}
+                  {!isEditMode && (
+                    <div 
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('colabId', String(occupant.id));
+                      }}
+                      onDoubleClick={() => onRemoveSeat(String(occupant.id))}
+                      className="absolute inset-0 cursor-grab active:cursor-grabbing border-2 border-transparent group-hover:border-blue-400/30 rounded-xl"
+                      title="Arraste de volta para a lista ou clique duplo para remover"
+                    />
+                  )}
+                </div>
+              ) : (
+                // MESA VAZIA (Ícone Discreto)
+                <div className="flex flex-col items-center justify-center w-full h-full p-1 opacity-50 group-hover:opacity-100 transition-opacity bg-white/40 backdrop-blur-sm rounded-full ring-1 ring-gray-200 border border-dashed border-gray-300">
+                  <MapPin className="w-5 h-5 text-gray-400 mb-0.5" />
+                  <span className="text-[7px] font-black text-gray-500">{seat.id}</span>
+                </div>
+              )}
+            </motion.div>
           );
         })}
       </div>

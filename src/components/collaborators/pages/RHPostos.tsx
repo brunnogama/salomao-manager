@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { getSegment } from '../utils/rhChartUtils';
 import { RHMapaAndar31 } from '../components/RHMapaAndar31';
+import { Edit3 } from 'lucide-react';
 
 interface Posto {
   id: string;
@@ -29,6 +30,8 @@ export function RHPostos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [localSeatOverrides, setLocalSeatOverrides] = useState<Record<string, string>>({});
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [seatLayoutOverrides, setSeatLayoutOverrides] = useState<Record<string, { map_x: number, map_y: number }>>({});
 
   const { colaboradores, roles, locations: allLocations } = useColaboradores();
 
@@ -60,8 +63,24 @@ export function RHPostos() {
     setLoading(false);
   };
 
+  const fetchSeatLayouts = async () => {
+    try {
+      const { data, error } = await supabase.from('rh_postos_mapa').select('*');
+      if (error) {
+        console.warn('Tabela rh_postos_mapa não encontrada. O mapa usará dados hardcoded.');
+        return;
+      }
+      const layouts: Record<string, {map_x: number, map_y: number}> = {};
+      data?.forEach(row => { layouts[row.posto_id] = { map_x: row.map_x, map_y: row.map_y }; });
+      setSeatLayoutOverrides(layouts);
+    } catch (e) {
+      console.warn('Tabela rh_postos_mapa não mapeada corretamente.', e);
+    }
+  };
+
   useEffect(() => {
     fetchPostos();
+    fetchSeatLayouts();
   }, []);
 
   const handleUpdate = async (id: string, field: keyof Posto, value: any) => {
@@ -214,6 +233,24 @@ export function RHPostos() {
     toast.success('Integrante removido da mesa!');
   };
 
+  const handleUpdateSeatCoordinates = async (seatId: string, map_x: number, map_y: number) => {
+    setSeatLayoutOverrides(prev => ({ ...prev, [seatId]: { map_x, map_y } }));
+    
+    try {
+      const { error } = await supabase.from('rh_postos_mapa').upsert({
+        posto_id: seatId,
+        map_x,
+        map_y,
+      }, { onConflict: 'posto_id' });
+      
+      if (error) {
+        toast.error('O sistema detectou que a tabela rh_postos_mapa precisa ser configurada.');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleExportPDF = async () => {
     try {
       const element = document.getElementById('mapa-31-andar-content');
@@ -338,6 +375,13 @@ export function RHPostos() {
 
           {viewMode === 'map' && (
             <div className="flex items-center gap-2 bg-gray-100/80 p-1 rounded-xl shrink-0 ml-2">
+              <button
+                onClick={() => setIsEditMode(!isEditMode)}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${isEditMode ? 'bg-blue-600 text-white shadow-sm border border-blue-600' : 'text-gray-500 hover:text-gray-700 bg-white border border-transparent'}`}
+              >
+                <Edit3 className="h-4 w-4" /> Design
+              </button>
+              
               <button
                 onClick={() => setShowUnassigned(!showUnassigned)}
                 className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${!showUnassigned ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
@@ -470,8 +514,11 @@ export function RHPostos() {
 
             <RHMapaAndar31 
               collaborators={mapCollaborators}
+              seatLayoutOverrides={seatLayoutOverrides}
+              isEditMode={isEditMode}
               onAssignSeat={handleAssignSeat}
               onRemoveSeat={handleRemoveSeat}
+              onUpdateSeatCoordinates={handleUpdateSeatCoordinates}
             />
           </div>
         </div>
