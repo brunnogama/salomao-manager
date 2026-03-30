@@ -254,20 +254,26 @@ export function RHPostos() {
 
   const handleSaveMapElements = async (elements: MapElement[]) => {
     try {
-      // Deleta todos os elementos atuais (pois o builder gerencia a tela toda e repassa a nova compilação)
-      await supabase.from('rh_mapa_elementos').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      
-      // Insere as novas posições
       if (elements.length > 0) {
-        const { error: insError } = await supabase.from('rh_mapa_elementos').insert(elements);
+        // Upsert insere ou atualiza mantendo os IDs intactos. 
+        // Se falhar (ex: por restrição de tipo do banco), ele cai no catch sem ter apagado nada.
+        const { error: insError } = await supabase.from('rh_mapa_elementos').upsert(elements);
         if (insError) throw insError;
+
+        // Após salvar com sucesso, exclui os que não estão mais na tela
+        const currentIds = elements.map(el => el.id);
+        const { error: delError } = await supabase.from('rh_mapa_elementos').delete().not('id', 'in', `(${currentIds.join(',')})`);
+        if (delError) throw delError;
+      } else {
+        // Se a tela estiver vazia, apaga tudo
+        await supabase.from('rh_mapa_elementos').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       }
       
       setMapElements(elements);
       toast.success('Layout do mapa salvo com sucesso!');
-    } catch (e) {
-      console.error(e);
-      toast.error('Erro ao salvar mapa. Você rodou a Query SQL da tabela rh_mapa_elementos?');
+    } catch (e: any) {
+      console.error('Erro detalhado no Supabase:', e);
+      toast.error(`Erro ao salvar: ${e.message || JSON.stringify(e)}`);
     }
   };
 

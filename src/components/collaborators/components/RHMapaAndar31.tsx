@@ -1,7 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
 import { User, MapPin, MousePointer2, Users, Trash2, Save, Copy, ZoomIn, ZoomOut, Crop, Square, Minus, DoorOpen } from 'lucide-react';
-import { motion, PanInfo } from 'framer-motion';
 import { createPortal } from 'react-dom';
 
 export interface MapElement {
@@ -55,6 +54,7 @@ export function RHMapaAndar31({
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [drawingPath, setDrawingPath] = useState<{startX: number, startY: number, curX: number, curY: number} | null>(null);
   const [movingElement, setMovingElement] = useState<{ id: string, startX: number, startY: number, initialPositions: Record<string, {x: number, y: number}> } | null>(null);
+  const [mapResizing, setMapResizing] = useState<{ startX: number, startY: number, startW: number, startH: number } | null>(null);
   const [clipboard, setClipboard] = useState<MapElement[] | null>(null);
   
   // Combobox do Inspetor
@@ -373,8 +373,40 @@ export function RHMapaAndar31({
       }
   };
 
+  const handleMapResizePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+      e.stopPropagation();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      setMapResizing({ startX: e.clientX, startY: e.clientY, startW: mapW, startH: mapH });
+  };
+
+  const handleMapResizePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+      e.stopPropagation();
+      if (!mapResizing) return;
+      const deltaX = (e.clientX - mapResizing.startX) / zoomScale;
+      const deltaY = (e.clientY - mapResizing.startY) / zoomScale;
+      setMapW(Math.max(500, Math.round(mapResizing.startW + deltaX)));
+      setMapH(Math.max(500, Math.round(mapResizing.startH + deltaY)));
+  };
+
+  const handleMapResizePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+      e.stopPropagation();
+      if (mapResizing) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+          setMapResizing(null);
+          setUnsavedChanges(true);
+      }
+  };
+
   const handleCropMap = () => {
-     // Crop map disabled, using static image background
+     let maxX = 500;
+     let maxY = 500;
+     elements.forEach(el => {
+         if (el.x + el.width > maxX) maxX = el.x + el.width;
+         if (el.y + el.height > maxY) maxY = el.y + el.height;
+     });
+     setMapW(Math.round(maxX + 60)); // Adiciona uma margem
+     setMapH(Math.round(maxY + 60));
+     setUnsavedChanges(true);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -721,7 +753,7 @@ export function RHMapaAndar31({
             height: mapH, 
             overflow: 'hidden',
             backgroundColor: '#ffffff',
-            backgroundImage: 'radial-gradient(#e5e7eb 1px, transparent 1px)',
+            backgroundImage: isEditMode ? 'radial-gradient(#e5e7eb 1px, transparent 1px)' : 'none',
             backgroundSize: '20px 20px',
             backgroundRepeat: 'repeat',
             backgroundPosition: '0 0'
@@ -1030,6 +1062,19 @@ export function RHMapaAndar31({
               <p className="text-xl font-black text-[#1e3a8a]">MAPEAMENTO VAZIO</p>
               <p className="text-sm font-bold text-gray-600 mt-2">Clique em Adicionar Posto para começar a popular a planta.</p>
             </div>
+          )}
+
+          {/* DRAG HANDLE FOR MAP RESIZE */}
+          {isEditMode && activeTool === 'select' && (
+              <div 
+                  className="absolute bottom-0 right-0 w-8 h-8 cursor-se-resize z-[500] hover:bg-black/5 rounded-tl-xl flex items-end justify-end p-1.5"
+                  onPointerDown={handleMapResizePointerDown}
+                  onPointerMove={handleMapResizePointerMove}
+                  onPointerUp={handleMapResizePointerUp}
+                  title="Arrastar para Redimensionar Tamanho do Mapa"
+              >
+                  <div className="w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-sm ring-1 ring-black/10 pointer-events-none" />
+              </div>
           )}
 
         </div>
