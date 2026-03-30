@@ -278,50 +278,71 @@ export function RHPostos() {
       const captureHeight = (maxY - captureY) + padding;
 
       const canvas = await html2canvas(element, {
-        scale: 2, // High resolution for A3
+        scale: 2, // High resolution for sharpness
         useCORS: true,
-        backgroundColor: '#f8fafc', // cor de fundo do sistema slate-50 para manter o look clean
+        backgroundColor: '#f8fafc', // cor de fundo do sistema slate-50
         logging: false,
         x: captureX,
         y: captureY,
         width: captureWidth,
         height: captureHeight,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
       });
       
       // Restore the visual scaling for the screen
       element.style.transform = originalTransform;
 
+      // Convert pixel dimensions to mm (approx 0.264583 mm per px)
+      const pxToMm = 0.264583;
+      const contentWidthMm = captureWidth * pxToMm;
+      const contentHeightMm = captureHeight * pxToMm;
+
+      // Define PDF structure spacing
+      const paddingMm = 20;
+      const headerHeightMm = 45;
+      const footerHeightMm = 15;
+      
+      const pdfWidthMm = contentWidthMm + (paddingMm * 2);
+      const pdfHeightMm = headerHeightMm + contentHeightMm + footerHeightMm;
+
       const pdf = new jsPDF({
-        orientation: 'landscape',
+        orientation: pdfWidthMm > pdfHeightMm ? 'landscape' : 'portrait',
         unit: 'mm',
-        format: 'a3'
+        format: [pdfWidthMm, pdfHeightMm]
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.9);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+      // Background fill color matching slate-50 to blend with the canvas
+      pdf.setFillColor(248, 250, 252);
+      pdf.rect(0, 0, pdfWidthMm, pdfHeightMm, 'F');
+
+      // Título Principal
+      pdf.setFontSize(32);
+      pdf.setTextColor(30, 58, 138); // Text color: #1e3a8a
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Mapa Oficial de Ocupação • 31º Andar", paddingMm, 22);
+
+      // Subtítulo e Timestamp
+      pdf.setFontSize(14);
+      pdf.setTextColor(113, 113, 122); // Text color: gray-500
+      pdf.setFont("helvetica", "normal");
+      const dateStr = `Relatório atualizado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`;
+      pdf.text(dateStr, paddingMm, 32);
+
+      // Brand/Project Note on the right side
+      pdf.setFontSize(10);
+      pdf.setTextColor(156, 163, 175); // Text color: gray-400
+      pdf.text("Salomão Manager", pdfWidthMm - paddingMm, 22, { align: 'right' });
+
+      // Draw exactly captured Canvas without stretch-distortion
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      pdf.addImage(imgData, 'JPEG', paddingMm, headerHeightMm, contentWidthMm, contentHeightMm, undefined, 'FAST');
       
-      const canvasRatio = canvas.height / canvas.width;
-      const pdfRatio = pdfHeight / pdfWidth;
+      // Footer text
+      pdf.setFontSize(10);
+      pdf.text("Confidencial • Uso Interno Exclusivo", pdfWidthMm / 2, pdfHeightMm - 7, { align: 'center' });
 
-      let finalWidth = pdfWidth;
-      let finalHeight = pdfHeight;
-      let offsetX = 0;
-      let offsetY = 0;
-
-      if (canvasRatio > pdfRatio) {
-        finalWidth = pdfHeight / canvasRatio;
-        offsetX = (pdfWidth - finalWidth) / 2;
-      } else {
-        finalHeight = pdfWidth * canvasRatio;
-        offsetY = (pdfHeight - finalHeight) / 2;
-      }
-
-      pdf.setFillColor(255, 255, 255);
-      pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
-      
-      pdf.addImage(imgData, 'JPEG', offsetX, offsetY, finalWidth, finalHeight, undefined, 'FAST');
-      pdf.save('Mapa_31_Andar.pdf');
+      pdf.save(`Mapa_31_Andar_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
       toast.success('PDF exportado com sucesso!');
 
     } catch (error) {
