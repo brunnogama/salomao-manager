@@ -20,8 +20,8 @@ interface SeatDef {
 
 
 
-const W_STD = 50;
-const H_STD = 42;
+const W_STD = 55;
+const H_STD = 65;
 const MAP_W = 1900;
 const MAP_H = 1150;
 
@@ -53,9 +53,9 @@ const SEATS_31_ANDAR: SeatDef[] = [
     const pos = i % 3; // 0=Top-Left, 1=Bottom-Left, 2=Right
     return {
       id: `S${String(idNum).padStart(2,'0')}`, type: 'SÊNIOR',
-      left: pos === 2 ? 80 : 25, 
-      top: 40 + room * 120 + (pos === 0 ? 15 : pos === 1 ? 65 : 40), 
-      width: W_STD, height: H_STD
+      left: pos === 2 ? 80 : 22, 
+      top: 35 + room * 120 + (pos === 0 ? 12 : pos === 1 ? 48 : 30), 
+      width: W_STD, height: H_STD - 15 // Menores nas salas por espaço
     };
   }),
 
@@ -67,17 +67,17 @@ const SEATS_31_ANDAR: SeatDef[] = [
     const row = Math.floor((idNum - 1) / 2); 
     return {
       id: `J${String(idNum).padStart(2,'0')}`, type: 'JÚNIOR',
-      left: 20 + col * 55, top: 660 + row * 45, width: W_STD, height: H_STD
+      left: 20 + col * 60, top: 660 + row * 48, width: W_STD, height: H_STD
     };
   }),
 
-  { id: 'SC01', type: 'SÓCIO', left: 165, top: 60, width: W_STD, height: H_STD },
+  { id: 'SC01', type: 'SÓCIO', left: 165, top: 45, width: W_STD + 10, height: H_STD },
 
   // Blocos Centrais (Column Major)
-  ...generateBlock('J', 'JÚNIOR', 16, 13, 180, 640, 2, 4, 45, 55, 136),
-  ...generateBlock('E', 'ESTAGIÁRIO', 40, 1, 180 + 2*136, 640, 2, 4, 45, 55, 136),
-  ...generateBlock('J', 'JÚNIOR', 16, 29, 180 + 7*136, 640, 2, 4, 45, 55, 136),
-  ...generateBlock('A', 'ADMINISTRATIVO', 16, 1, 180 + 9*136, 640, 2, 4, 45, 55, 136),
+  ...generateBlock('J', 'JÚNIOR', 16, 13, 180, 640, 2, 4, 48, 60, 136),
+  ...generateBlock('E', 'ESTAGIÁRIO', 40, 1, 180 + 2*136, 640, 2, 4, 48, 60, 136),
+  ...generateBlock('J', 'JÚNIOR', 16, 29, 180 + 7*136, 640, 2, 4, 48, 60, 136),
+  ...generateBlock('A', 'ADMINISTRATIVO', 16, 1, 180 + 9*136, 640, 2, 4, 48, 60, 136),
 
   // Plenos (P01-P24)
   ...Array.from({length: 24}).map((_, i) => {
@@ -87,7 +87,7 @@ const SEATS_31_ANDAR: SeatDef[] = [
     const col = (idNum % 2 !== 0) ? 1 : 0;
     return {
       id: `P${String(idNum).padStart(2,'0')}`, type: 'PLENO',
-      left: 180 + block * 270 + col * 55, top: 940 + row * 45, width: W_STD, height: H_STD
+      left: 180 + block * 270 + col * 60, top: 940 + row * 48, width: W_STD, height: H_STD
     }
   }),
 
@@ -98,21 +98,21 @@ const SEATS_31_ANDAR: SeatDef[] = [
     const row = 2 - Math.floor(i / 2); 
     return {
       id: `A${String(idNum).padStart(2,'0')}`, type: 'ADMINISTRATIVO',
-      left: 1710 + inRow * 55 + 5, top: 490 + row * 45 + 5, width: W_STD, height: H_STD
+      left: 1710 + inRow * 60, top: 490 + row * 48, width: W_STD, height: H_STD
     }
   }),
 
   // S16-S18 Encartados
-  { id: 'S16', type: 'SÊNIOR', left: 1475, top: 60, width: W_STD + 10, height: H_STD },
-  { id: 'S17', type: 'SÊNIOR', left: 1475, top: 145, width: W_STD + 10, height: H_STD },
-  { id: 'S18', type: 'SÊNIOR', left: 1555, top: 145, width: W_STD + 10, height: H_STD },
+  { id: 'S16', type: 'SÊNIOR', left: 1475, top: 50, width: W_STD + 10, height: H_STD - 15 },
+  { id: 'S17', type: 'SÊNIOR', left: 1475, top: 135, width: W_STD + 10, height: H_STD - 15 },
+  { id: 'S18', type: 'SÊNIOR', left: 1555, top: 135, width: W_STD + 10, height: H_STD - 15 },
 
   // Corredor Direito
-  { id: 'CONS01',   type: 'CONSULTOR', left: 1720, top: 50,  width: 90, height: H_STD },
-  { id: 'SC02',     type: 'SÓCIO',     left: 1720, top: 130, width: 90, height: H_STD },
-  { id: 'S19', type: 'SÊNIOR', left: 1720, top: 210, width: W_STD + 10, height: H_STD },
-  { id: 'S20', type: 'SÊNIOR', left: 1720, top: 290, width: W_STD + 10, height: H_STD },
-  { id: 'S21', type: 'SÊNIOR', left: 1720, top: 370, width: W_STD + 10, height: H_STD },
+  { id: 'CONS01',   type: 'CONSULTOR', left: 1705, top: 45,  width: 90, height: H_STD - 20 },
+  { id: 'SC02',     type: 'SÓCIO',     left: 1705, top: 125, width: 90, height: H_STD - 20 },
+  { id: 'S19', type: 'SÊNIOR', left: 1705, top: 205, width: 90, height: H_STD - 20 },
+  { id: 'S20', type: 'SÊNIOR', left: 1705, top: 285, width: 90, height: H_STD - 20 },
+  { id: 'S21', type: 'SÊNIOR', left: 1705, top: 365, width: 90, height: H_STD - 20 },
 ];
 
 
@@ -134,12 +134,6 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
     }
   };
 
-  const getSegmentColor = (c: Collaborator) => {
-    const area = String(c.area || '');
-    if (area === 'Administrativa') return 'bg-orange-500';
-    if (area === 'Terceirizada') return 'bg-emerald-500';
-    return 'bg-[#1e3a8a]'; // Juridico default
-  };
 
   const seatsMap = useMemo(() => {
     const map = new Map<string, Collaborator>();
@@ -182,7 +176,7 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
       >
               {/* Left Seniores Rooms */}
         {Array.from({length: 5}).map((_, i) => (
-          <div key={`room-s-${i}`} className="absolute left-[15px] w-[130px] h-[120px] border-2 border-black z-0 pointer-events-none" style={{ top: `${40 + i * 120}px` }}></div>
+          <div key={`room-s-${i}`} className="absolute left-[15px] w-[130px] h-[120px] border-2 border-black z-0 pointer-events-none" style={{ top: `${35 + i * 120}px` }}></div>
         ))}
         
         {/* Decorative Rooms Extra */}
@@ -224,7 +218,7 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
         {/* S16-S18 Walls inside Right Area */}
         <div className="absolute top-[210px] left-[1450px] w-[160px] h-[2px] bg-black pointer-events-none" />
         <div className="absolute top-[35px] left-[1450px] w-[2px] h-[175px] bg-black pointer-events-none" />
-        <div className="absolute top-[35px] left-[1535px] w-[2px] h-[175px] bg-black pointer-events-none" />
+        <div className="absolute top-[35px] left-[1545px] w-[2px] h-[175px] bg-black pointer-events-none" />
 
         {SEATS_31_ANDAR.map(seat => {
           const occupant = seatsMap.get(seat.id.toUpperCase());
@@ -275,24 +269,48 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
               </div>
 
               {/* Conteúdo da Mesa */}
-              <div className="w-full text-center px-0.5 mt-0.5">
-                <span className={`block text-sm leading-tight font-black tracking-tighter ${occupant ? 'text-gray-800' : 'text-gray-500'}`}>
+              <div className="w-full h-full flex flex-col items-center justify-between py-1 px-0.5 overflow-hidden">
+                <span className={`block text-[10px] leading-none font-black tracking-tighter ${occupant ? 'text-gray-800' : 'text-gray-500'}`}>
                   {seat.id}
                 </span>
-                <span className={`block text-[6px] leading-[8px] font-bold tracking-widest uppercase truncate mt-0.5 ${
-                  seat.type === 'SÓCIO' ? 'text-red-600' :
-                  seat.type === 'SÊNIOR' ? 'text-red-500' :
-                  seat.type === 'ESTAGIÁRIO' ? 'text-orange-500' :
-                  seat.type === 'ADMINISTRATIVO' ? 'text-purple-600' :
-                  seat.type === 'CONSULTOR' ? 'text-amber-500' :
-                  seat.type === 'JÚNIOR' ? 'text-blue-500' :
-                  'text-emerald-500' // PLENO
-                }`}>
-                  {seat.type}
-                </span>
-                
-                {/* Bolinha de ocupante */}
-                <div className={`mt-1 w-2 h-2 mx-auto rounded-full transition-colors ${occupant ? getSegmentColor(occupant) : 'bg-transparent border border-gray-200'}`}></div>
+
+                {occupant ? (
+                  <>
+                    <div className="flex-1 w-full flex items-center justify-center min-h-0">
+                      {occupant.foto_url || occupant.photo_url ? (
+                        <img 
+                          src={occupant.foto_url || occupant.photo_url} 
+                          alt="" 
+                          className="w-[85%] h-[85%] object-cover rounded-md border border-gray-100 shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-[80%] h-[80%] bg-gray-100 rounded-md flex items-center justify-center">
+                          <User className="w-4 h-4 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    <span className="block text-[6px] leading-[8px] font-bold text-gray-600 uppercase truncate w-full text-center px-0.5">
+                      {(occupant.roles?.name || occupant.role || '').split(' ')[0]}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex-1 flex items-center justify-center opacity-10">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <span className={`block text-[6px] leading-[8px] font-bold tracking-widest uppercase truncate mt-0.5 ${
+                      seat.type === 'SÓCIO' ? 'text-red-700' :
+                      seat.type === 'SÊNIOR' ? 'text-red-600' :
+                      seat.type === 'ESTAGIÁRIO' ? 'text-orange-600' :
+                      seat.type === 'ADMINISTRATIVO' ? 'text-purple-700' :
+                      seat.type === 'CONSULTOR' ? 'text-amber-600' :
+                      seat.type === 'JÚNIOR' ? 'text-blue-600' :
+                      'text-emerald-600' // PLENO
+                    }`}>
+                      {seat.type}
+                    </span>
+                  </>
+                )}
               </div>
 
               {/* Overlay invisível arrastável se houver ocupante para TIRAR do posto */}
