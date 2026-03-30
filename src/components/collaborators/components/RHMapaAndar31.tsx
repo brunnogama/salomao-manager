@@ -20,10 +20,10 @@ interface SeatDef {
 
 
 
-const W_STD = 55;
-const H_STD = 75;
-const MAP_W = 1950;
-const MAP_H = 1350;
+const W_STD = 60;
+const H_STD = 85;
+const MAP_W = 2000;
+const MAP_H = 1400;
 
 function generateBlock(prefix: string, type: string, count: number, startId: number, startX: number, startY: number, cols: number = 2, rows: number = 4, rowSpacing: number = 45, colSpacing: number = 55, blockSpacingX: number = 135) {
   return Array.from({length: count}).map((_, i) => {
@@ -67,17 +67,17 @@ const SEATS_31_ANDAR: SeatDef[] = [
     const row = Math.floor((idNum - 1) / 2); 
     return {
       id: `J${String(idNum).padStart(2,'0')}`, type: 'JÚNIOR',
-      left: 20 + col * 60, top: 680 + row * 55, width: W_STD, height: H_STD - 10
+      left: 20 + col * 64, top: 680 + row * 88, width: W_STD, height: H_STD - 10
     };
   }),
 
   { id: 'SC01', type: 'SÓCIO', left: 165, top: 40, width: W_STD + 15, height: H_STD },
 
   // Blocos Centrais (Column Major)
-  ...generateBlock('J', 'JÚNIOR', 16, 13, 180, 640, 2, 4, 78, 60, 140),
-  ...generateBlock('E', 'ESTAGIÁRIO', 40, 1, 180 + 2*140, 640, 2, 4, 78, 60, 140),
-  ...generateBlock('J', 'JÚNIOR', 16, 29, 180 + 7*140, 640, 2, 4, 78, 60, 140),
-  ...generateBlock('A', 'ADMINISTRATIVO', 16, 1, 180 + 9*140, 640, 2, 4, 78, 60, 140),
+  ...generateBlock('J', 'JÚNIOR', 16, 13, 180, 640, 2, 4, 88, 64, 142),
+  ...generateBlock('E', 'ESTAGIÁRIO', 40, 1, 180 + 2*142, 640, 2, 4, 88, 64, 142),
+  ...generateBlock('J', 'JÚNIOR', 16, 29, 180 + 7*142, 640, 2, 4, 88, 64, 142),
+  ...generateBlock('A', 'ADMINISTRATIVO', 16, 1, 180 + 9*142, 640, 2, 4, 88, 64, 142),
 
   // Plenos (P01-P24)
   ...Array.from({length: 24}).map((_, i) => {
@@ -87,7 +87,7 @@ const SEATS_31_ANDAR: SeatDef[] = [
     const col = (idNum % 2 !== 0) ? 1 : 0;
     return {
       id: `P${String(idNum).padStart(2,'0')}`, type: 'PLENO',
-      left: 180 + block * 280 + col * 60, top: 1040 + row * 80, width: W_STD, height: H_STD
+      left: 180 + block * 284 + col * 64, top: 1040 + row * 88, width: W_STD, height: H_STD
     }
   }),
 
@@ -98,7 +98,7 @@ const SEATS_31_ANDAR: SeatDef[] = [
     const row = 2 - Math.floor(i / 2); 
     return {
       id: `A${String(idNum).padStart(2,'0')}`, type: 'ADMINISTRATIVO',
-      left: 1720 + inRow * 60, top: 510 + row * 80, width: W_STD, height: H_STD
+      left: 1770 + inRow * 64, top: 510 + row * 88, width: W_STD, height: H_STD
     }
   }),
 
@@ -108,11 +108,11 @@ const SEATS_31_ANDAR: SeatDef[] = [
   { id: 'S18', type: 'SÊNIOR', left: 1560, top: 135, width: W_STD + 15, height: H_STD - 15 },
 
   // Corredor Direito
-  { id: 'CONS01',   type: 'CONSULTOR', left: 1720, top: 40,  width: 90, height: H_STD - 15 },
-  { id: 'SC02',     type: 'SÓCIO',     left: 1720, top: 120, width: 90, height: H_STD - 15 },
-  { id: 'S19', type: 'SÊNIOR', left: 1720, top: 200, width: 90, height: H_STD - 15 },
-  { id: 'S20', type: 'SÊNIOR', left: 1720, top: 280, width: 90, height: H_STD - 15 },
-  { id: 'S21', type: 'SÊNIOR', left: 1720, top: 360, width: 90, height: H_STD - 15 },
+  { id: 'CONS01',   type: 'CONSULTOR', left: 1770, top: 40,  width: 90, height: H_STD - 15 },
+  { id: 'SC02',     type: 'SÓCIO',     left: 1770, top: 130, width: 90, height: H_STD - 15 },
+  { id: 'S19', type: 'SÊNIOR', left: 1770, top: 220, width: 90, height: H_STD - 15 },
+  { id: 'S20', type: 'SÊNIOR', left: 1770, top: 310, width: 90, height: H_STD - 15 },
+  { id: 'S21', type: 'SÊNIOR', left: 1770, top: 400, width: 90, height: H_STD - 15 },
 ];
 
 
@@ -200,13 +200,13 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
         <div className="absolute top-[930px] left-[1550px] w-[150px] h-[120px] border-2 border-black flex items-center justify-center pointer-events-none">
            <span className="text-[14px] font-bold text-center">Sala de Reunião 5</span>
         </div>
-        <div className="absolute top-[930px] left-[1700px] w-[100px] h-[120px] border-2 border-l-0 border-black flex items-center justify-center pointer-events-none">
+        <div className="absolute top-[930px] left-[1750px] w-[100px] h-[120px] border-2 border-l-0 border-black flex items-center justify-center pointer-events-none">
            <span className="text-[12px] font-bold text-center leading-tight">Banheiro<br/>Masculino</span>
         </div>
         
         {/* Right Consultant/Senior Rooms */}
         {Array.from({length: 5}).map((_, i) => (
-          <div key={`room-sr-${i}`} className="absolute left-[1700px] w-[100px] h-[80px] border-2 border-black z-0 pointer-events-none" style={{ top: `${35 + i * 80}px` }}></div>
+          <div key={`room-sr-${i}`} className="absolute left-[1750px] w-[100px] h-[80px] border-2 border-black z-0 pointer-events-none" style={{ top: `${35 + i * 80}px` }}></div>
         ))}
 
         {/* Central Area Left */}
@@ -279,30 +279,33 @@ export function RHMapaAndar31({ collaborators, onAssignSeat, onRemoveSeat }: Flo
               </div>
 
               {/* Conteúdo da Mesa */}
-              <div className="w-full h-full flex flex-col items-center justify-between py-1 px-1 overflow-hidden">
-                <span className={`block text-[11px] font-black tracking-tighter ${seat.type.includes('ADMINISTRATIVO') || seat.type.includes('ADM') ? 'text-orange-600' : 'text-[#1e3a8a]'} ${!occupant ? 'opacity-50' : ''}`}>
+              <div className="w-full h-full flex flex-col items-center justify-between py-1 px-0.5 overflow-hidden">
+                <span className={`block text-[11px] font-black tracking-tighter leading-none pt-0.5 ${seat.type.includes('ADMINISTRATIVO') || seat.type.includes('ADM') ? 'text-orange-600' : 'text-[#1e3a8a]'} ${!occupant ? 'opacity-50' : ''}`}>
                   {seat.id}
                 </span>
 
                 {occupant ? (
-                  <>
-                    <div className="flex-1 w-full flex items-center justify-center min-h-0 pt-0.5 pointer-events-none">
-                      {occupant.foto_url || occupant.photo_url ? (
-                        <img 
-                          src={occupant.foto_url || occupant.photo_url} 
-                          alt="" 
-                          className="w-10 h-10 object-cover rounded-full border border-gray-200 shadow-sm transition-transform group-hover:scale-105 group-hover:shadow-md"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center border border-gray-200 shadow-sm">
-                          <User className="w-5 h-5 text-gray-400" />
-                        </div>
-                      )}
+                  <div className="flex-1 w-full flex flex-col items-center justify-center pointer-events-none gap-0.5 mt-0.5 min-h-0">
+                    {occupant.foto_url || occupant.photo_url ? (
+                      <img 
+                        src={occupant.foto_url || occupant.photo_url} 
+                        alt="" 
+                        className="w-[36px] h-[36px] object-cover rounded-full shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-[36px] h-[36px] bg-gray-100 rounded-full flex items-center justify-center shadow-sm">
+                        <User className="w-4 h-4 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="flex flex-col items-center justify-start w-full leading-[8px] mt-0.5">
+                      <span className="block text-[7px] font-bold text-gray-800 text-center truncate w-full px-0.5">
+                        {occupant.name.split(' ')[0]} {occupant.name.split(' ').length > 1 ? occupant.name.split(' ')[1].charAt(0) + '.' : ''}
+                      </span>
+                      <span className="block text-[6px] font-medium text-gray-500 uppercase text-center truncate w-full px-0.5">
+                        {getShortRole(occupant.roles?.name || occupant.role || '')}
+                      </span>
                     </div>
-                    <span className="block text-[6px] leading-[8px] font-bold text-gray-700 uppercase pt-1 w-full text-center">
-                      {getShortRole(occupant.roles?.name || occupant.role || '')}
-                    </span>
-                  </>
+                  </div>
                 ) : (
                   <>
                     <div className="flex-1 flex items-center justify-center opacity-10">
