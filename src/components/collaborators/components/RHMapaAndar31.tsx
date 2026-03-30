@@ -375,8 +375,20 @@ export function RHMapaAndar31({
       const currentY = (e.clientY - rect.top) / zoomScale;
       const deltaX = currentX - resizingElement.startX;
       const deltaY = currentY - resizingElement.startY;
-      const newW = Math.max(10, Math.round((resizingElement.startW + deltaX) / 10) * 10);
-      const newH = Math.max(10, Math.round((resizingElement.startH + deltaY) / 10) * 10);
+      const el = elements.find(item => item.id === resizingElement.id);
+      if (!el) return;
+
+      let newW = Math.max(10, Math.round((resizingElement.startW + deltaX) / 10) * 10);
+      let newH = Math.max(10, Math.round((resizingElement.startH + deltaY) / 10) * 10);
+
+      if (el.type === 'line') {
+          if (resizingElement.startW > resizingElement.startH) {
+              newH = 1; // mantem grossura horizontal
+          } else {
+              newW = 1; // mantem grossura vertical
+          }
+      }
+
       setElements(prev => prev.map(item => item.id === resizingElement.id ? { ...item, width: newW, height: newH } : item));
       setUnsavedChanges(true);
   };
