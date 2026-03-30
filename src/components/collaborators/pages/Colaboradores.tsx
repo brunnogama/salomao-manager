@@ -5,7 +5,7 @@ import {
   Calendar, Building2, Mail, Loader2, UserPlus,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, FileDown, Bus, Clock,
   Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon, ChevronDown, ChevronRight, TableIcon,
-  ArrowRight, ArrowLeft, Filter
+  ArrowRight, ArrowLeft, Filter, Layers
 } from 'lucide-react'
 
 import { exportColaboradoresXLSX, exportVTXLSX } from '../utils/exportColaboradores'
@@ -122,6 +122,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [filterPartner, setFilterPartner] = useState<string[]>([])
   const [filterLocal, setFilterLocal] = useState<string[]>([])
   const [filterCargo, setFilterCargo] = useState<string[]>([])
+  const [filterArea, setFilterArea] = useState<string[]>([])
 
   // New Tabs State
   const [activeMainTab, setActiveMainTab] = useState<'Integrantes' | 'Relatórios' | 'Tabelas'>('Integrantes');
@@ -590,6 +591,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
     ...roles.map((r: Role) => ({ label: r.name, value: String(r.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [roles])
 
+  const areaOptions = React.useMemo(() => {
+    const areas = new Set<string>();
+    colaboradores.forEach(c => {
+      if (c.area) areas.add(c.area);
+    });
+    return Array.from(areas)
+      .map(area => ({ label: area, value: area }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [colaboradores]);
+
   const filterCategories = React.useMemo((): FilterCategory[] => [
     {
       key: 'lider',
@@ -627,11 +638,20 @@ export function Colaboradores({ }: ColaboradoresProps) {
       value: filterCargo,
       onChange: setFilterCargo,
     },
-  ], [filterLider, filterPartner, filterLocal, filterCargo, liderOptions, partnerOptions, locationOptions, roleOptions]);
+    {
+      key: 'area',
+      label: 'Área',
+      icon: Layers,
+      type: 'multi',
+      options: areaOptions,
+      value: filterArea,
+      onChange: setFilterArea,
+    },
+  ], [filterLider, filterPartner, filterLocal, filterCargo, filterArea, liderOptions, partnerOptions, locationOptions, roleOptions, areaOptions]);
 
   const activeFilterCount = React.useMemo(() => {
-    return filterLider.length + filterPartner.length + filterLocal.length + filterCargo.length;
-  }, [filterLider, filterPartner, filterLocal, filterCargo]);
+    return filterLider.length + filterPartner.length + filterLocal.length + filterCargo.length + filterArea.length;
+  }, [filterLider, filterPartner, filterLocal, filterCargo, filterArea]);
 
   const activeFilterChips = React.useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
@@ -651,14 +671,19 @@ export function Colaboradores({ }: ColaboradoresProps) {
       const label = id === 'unassigned' ? 'Não definido' : roleOptions.find(r => r.value === id)?.label || id;
       chips.push({ key: `cargo-${id}`, label: `Cargo: ${label}`, onClear: () => setFilterCargo(prev => prev.filter(v => v !== id)) });
     });
+    filterArea.forEach(id => {
+      const label = areaOptions.find(opt => opt.value === id)?.label || id;
+      chips.push({ key: `area-${id}`, label: `Área: ${label}`, onClear: () => setFilterArea(prev => prev.filter(v => v !== id)) });
+    });
     return chips;
-  }, [filterLider, filterPartner, filterLocal, filterCargo, liderOptions, partnerOptions, locationOptions, roleOptions]);
+  }, [filterLider, filterPartner, filterLocal, filterCargo, filterArea, liderOptions, partnerOptions, locationOptions, roleOptions, areaOptions]);
 
   const clearAllFilters = () => {
     setFilterLider([]);
     setFilterPartner([]);
     setFilterLocal([]);
     setFilterCargo([]);
+    setFilterArea([]);
   };
 
   // Inicializa estado vazio por padrão conforme solicitado
@@ -1393,8 +1418,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const matchPartner = filterPartner.length > 0 ? filterPartner.includes(String(c.partner_id)) : true
     const matchLocal = filterLocal.length > 0 ? filterLocal.includes(String(c.local)) : true
     const matchCargo = filterCargo.length > 0 ? filterCargo.some(fc => fc === 'unassigned' ? (!c.role || String(c.role) === 'Não definido' || String(c.role) === 'null') : String(c.role) === fc) : true
+    const matchArea = filterArea.length > 0 ? filterArea.includes(String(c.area)) : true
     const matchUpdated = showUpdatedOnly ? c.cadastro_atualizado === true : true
-    return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchUpdated
+    return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchArea && matchUpdated
   })
   const getAdvancedFiltered = (overrideStatus?: string) => {
     return colaboradores.filter(c => {
