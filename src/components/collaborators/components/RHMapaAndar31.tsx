@@ -53,6 +53,10 @@ export function RHMapaAndar31({
   const [drawingPath, setDrawingPath] = useState<{startX: number, startY: number, curX: number, curY: number} | null>(null);
   const [movingElement, setMovingElement] = useState<{ id: string, startX: number, startY: number, initialPositions: Record<string, {x: number, y: number}> } | null>(null);
   const [clipboard, setClipboard] = useState<MapElement[] | null>(null);
+  
+  // Combobox do Inspetor
+  const [searchOccupant, setSearchOccupant] = useState('');
+  const [occupantDropdownOpen, setOccupantDropdownOpen] = useState(false);
 
   // Sync props -> state on load if not editing
   useEffect(() => {
@@ -595,30 +599,118 @@ export function RHMapaAndar31({
                     </div>
 
                     {/* Specifics: Seat Fields */}
-                    {selectedEl.type === 'seat' && (
-                        <div className="flex flex-col gap-3">
-                            <div className="flex flex-col gap-1">
-                                <label className="text-[10px] uppercase font-bold text-indigo-500">ID do Posto (Ex: S01)</label>
-                                <input type="text" value={selectedEl.custom_data?.postoId || ''} onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, postoId: e.target.value.toUpperCase() } })} className="w-full border border-indigo-200 rounded-lg px-2 py-1.5 text-sm font-black text-indigo-900 bg-indigo-50 focus:outline-none focus:bg-white" />
+                    {selectedEl.type === 'seat' && (() => {
+                        const postoId = selectedEl.custom_data?.postoId || 'NOVO';
+                        const currentOccupant = postoId !== 'NOVO' ? collaborators.find(c => c.posto?.toUpperCase() === postoId.toUpperCase()) : null;
+                        
+                        const filteredCollaborators = collaborators.filter(c => {
+                            if (c.status !== 'active' && (c.status as any) !== 'Ativo') return false;
+                            const locName = (c as any).locations?.name || c.local || '';
+                            if (!locName.includes('Rio de Janeiro')) return false;
+                            if (searchOccupant && !c.name.toLowerCase().includes(searchOccupant.toLowerCase())) return false;
+                            return true;
+                        }).sort((a,b) => a.name.localeCompare(b.name));
+
+                        return (
+                            <div className="flex flex-col gap-3">
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] uppercase font-bold text-indigo-500">ID do Posto (Ex: S01)</label>
+                                    <input type="text" value={postoId === 'NOVO' ? '' : postoId} placeholder="NOVO" onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, postoId: e.target.value.toUpperCase() || 'NOVO' } })} className="w-full border border-indigo-200 rounded-lg px-2 py-1.5 text-sm font-black text-indigo-900 bg-indigo-50 focus:outline-none focus:bg-white" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] uppercase font-bold text-gray-400">Tipo / Hierarquia</label>
+                                    <select 
+                                        value={selectedEl.custom_data?.seatType || 'PLENO'} 
+                                        onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, seatType: e.target.value } })}
+                                        className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 focus:outline-none"
+                                    >
+                                        <option value="SÓCIO">SÓCIO</option>
+                                        <option value="CONSULTOR">CONSULTOR</option>
+                                        <option value="SÊNIOR">SÊNIOR</option>
+                                        <option value="PLENO">PLENO</option>
+                                        <option value="JÚNIOR">JÚNIOR</option>
+                                        <option value="ESTAGIÁRIO">ESTAGIÁRIO</option>
+                                        <option value="ADMINISTRATIVO">ADMINISTRATIVO</option>
+                                    </select>
+                                </div>
+
+                                {/* Integrante Combobox */}
+                                <div className="flex flex-col gap-1 relative mt-1">
+                                    <label className="text-[10px] uppercase font-bold text-gray-400">Ocupante da Mesa</label>
+                                    
+                                    {currentOccupant && !occupantDropdownOpen ? (
+                                        <div className="flex flex-col border border-emerald-200 bg-emerald-50 rounded-lg p-2 group transition-all">
+                                            <div className="flex items-center gap-2 w-full">
+                                                {currentOccupant.foto_url || currentOccupant.photo_url ? (
+                                                    <img src={currentOccupant.foto_url || currentOccupant.photo_url} alt={currentOccupant.name} className="w-6 h-6 rounded-full object-cover border border-emerald-200" />
+                                                ) : (
+                                                    <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center border border-emerald-200">
+                                                        <User className="w-3 h-3 text-emerald-600" />
+                                                    </div>
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-bold text-emerald-900 truncate" title={currentOccupant.name}>{currentOccupant.name}</p>
+                                                    <p className="text-[9px] text-emerald-600 truncate uppercase tracking-wider">{currentOccupant.roles?.name || (currentOccupant as any).role}</p>
+                                                </div>
+                                                <button 
+                                                    onClick={() => { onRemoveSeat(currentOccupant.id); setOccupantDropdownOpen(true); }}
+                                                    className="p-1.5 text-emerald-600 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                                    title="Remover Ocupante"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="w-full relative">
+                                            <input 
+                                                type="text" 
+                                                value={searchOccupant}
+                                                onChange={(e) => { setSearchOccupant(e.target.value); setOccupantDropdownOpen(true); }}
+                                                onFocus={() => setOccupantDropdownOpen(true)}
+                                                placeholder="Buscar nome do integrante..."
+                                                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-gray-400"
+                                            />
+                                            {occupantDropdownOpen && (
+                                                <div className="absolute top-full right-0 left-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-xl rounded-lg z-[200] custom-scrollbar">
+                                                    {filteredCollaborators.length > 0 ? filteredCollaborators.map(c => (
+                                                        <div 
+                                                            key={c.id} 
+                                                            onClick={() => {
+                                                                if (postoId !== 'NOVO') {
+                                                                    onAssignSeat(c.id, postoId);
+                                                                    setSearchOccupant('');
+                                                                    setOccupantDropdownOpen(false);
+                                                                } else {
+                                                                    alert('Renomeie o ID do Posto (Ex: S01) antes de associar um membro.');
+                                                                }
+                                                            }}
+                                                            className={`flex items-center gap-2 p-2 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 ${c.posto ? 'opacity-50' : ''}`}
+                                                        >
+                                                            {c.foto_url || c.photo_url ? (
+                                                                <img src={c.foto_url || c.photo_url} alt={c.name} className="w-5 h-5 rounded-full object-cover shrink-0" />
+                                                            ) : (
+                                                                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                                                    <User className="w-2.5 h-2.5 text-gray-500" />
+                                                                </div>
+                                                            )}
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-[10px] font-bold text-gray-800 truncate" title={c.name}>{c.name}</p>
+                                                                <p className="text-[8px] text-gray-500 truncate uppercase mt-0.5">{c.posto ? `Ocupando: ${c.posto}` : 'Sem Mesa'}</p>
+                                                            </div>
+                                                        </div>
+                                                    )) : (
+                                                        <div className="p-3 text-[10px] text-center text-gray-500">Nenhum integrante livre encontrado no Rio.</div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                {occupantDropdownOpen && <div className="fixed inset-0 z-[190]" onClick={() => setOccupantDropdownOpen(false)}></div>}
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-[10px] uppercase font-bold text-gray-400">Tipo / Hierarquia</label>
-                                <select 
-                                    value={selectedEl.custom_data?.seatType || 'PLENO'} 
-                                    onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, seatType: e.target.value } })}
-                                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 focus:outline-none"
-                                >
-                                    <option value="SÓCIO">SÓCIO</option>
-                                    <option value="CONSULTOR">CONSULTOR</option>
-                                    <option value="SÊNIOR">SÊNIOR</option>
-                                    <option value="PLENO">PLENO</option>
-                                    <option value="JÚNIOR">JÚNIOR</option>
-                                    <option value="ESTAGIÁRIO">ESTAGIÁRIO</option>
-                                    <option value="ADMINISTRATIVO">ADMINISTRATIVO</option>
-                                </select>
-                            </div>
-                        </div>
-                    )}
+                        );
+                    })()}
 
                     {/* Specifics: Text Fields */}
                     {selectedEl.type === 'text' && (
