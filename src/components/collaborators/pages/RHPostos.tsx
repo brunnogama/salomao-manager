@@ -505,7 +505,10 @@ export function RHPostos() {
           {/* Lado Direito: Mapa Principal */}
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 flex flex-col items-center min-w-0">
             <div className="w-full flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-gray-800 tracking-tight">31º Andar <span className="text-gray-400 font-medium">• Rio de Janeiro</span></h2>
+              <div className="flex items-center gap-4">
+                <h2 className="text-xl font-black text-gray-800 tracking-tight">31º Andar <span className="text-gray-400 font-medium">• Rio de Janeiro</span></h2>
+                <div id="map-toolbar-portal" className="flex items-center"></div>
+              </div>
               <div className="flex gap-4">
                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase"><div className="w-2 h-2 rounded-full bg-[#1e3a8a]"></div>Jurídico</div>
                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase"><div className="w-2 h-2 rounded-full bg-orange-500"></div>ADM</div>

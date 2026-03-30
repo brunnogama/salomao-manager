@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
 import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save, DoorOpen, GripVertical, Copy, Type, ZoomIn, ZoomOut, Crop } from 'lucide-react';
 import { motion, PanInfo } from 'framer-motion';
+import { createPortal } from 'react-dom';
 
 export interface MapElement {
   id: string; // uuid
@@ -46,11 +47,12 @@ export function RHMapaAndar31({
   const [mapH, setMapH] = useState(2000);
   const [activeTool, setActiveTool] = useState<'select' | 'wall' | 'line' | 'seat' | 'text' | 'door'>('select');
   const [zoomScale, setZoomScale] = useState(1.15);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectionBox, setSelectionBox] = useState<{startX: number, startY: number, curX: number, curY: number} | null>(null);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [drawingPath, setDrawingPath] = useState<{startX: number, startY: number, curX: number, curY: number} | null>(null);
-  const [movingElement, setMovingElement] = useState<{ id: string, startX: number, startY: number, elX: number, elY: number } | null>(null);
-  const [clipboard, setClipboard] = useState<MapElement | null>(null);
+  const [movingElement, setMovingElement] = useState<{ id: string, startX: number, startY: number, initialPositions: Record<string, {x: number, y: number}> } | null>(null);
+  const [clipboard, setClipboard] = useState<MapElement[] | null>(null);
 
   // Sync props -> state on load if not editing
   useEffect(() => {
@@ -80,37 +82,43 @@ export function RHMapaAndar31({
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
 
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
-            if (selectedId) {
-                const el = elements.find(el => el.id === selectedId);
-                if (el) setClipboard(el);
+            if (selectedIds.length > 0) {
+                const elsToCopy = elements.filter(el => selectedIds.includes(el.id));
+                setClipboard(elsToCopy);
             }
         }
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
-            if (clipboard) {
-                const newEl: MapElement = {
-                    ...clipboard,
-                    id: crypto.randomUUID(),
-                    x: clipboard.x + 20,
-                    y: clipboard.y + 20,
-                    custom_data: clipboard.type === 'seat' ? { ...clipboard.custom_data, postoId: 'NOVO' } : { ...clipboard.custom_data }
-                };
-                setElements(prev => [...prev, newEl]);
-                setSelectedId(newEl.id);
-                setClipboard(newEl); // atualiza para que o próximo paste ande mais 20px
+            if (clipboard && clipboard.length > 0) {
+                const newEls: MapElement[] = [];
+                const newIds: string[] = [];
+                clipboard.forEach(clipEl => {
+                    const newId = crypto.randomUUID();
+                    newEls.push({
+                        ...clipEl,
+                        id: newId,
+                        x: clipEl.x + 20,
+                        y: clipEl.y + 20,
+                        custom_data: clipEl.type === 'seat' ? { ...clipEl.custom_data, postoId: 'NOVO' } : { ...clipEl.custom_data }
+                    });
+                    newIds.push(newId);
+                });
+                setElements(prev => [...prev, ...newEls]);
+                setSelectedIds(newIds);
+                setClipboard(newEls); // atualiza para que o próximo paste ande mais 20px
                 setUnsavedChanges(true);
             }
         }
         if (e.key === 'Delete' || e.key === 'Backspace') {
-            if (selectedId) {
-                setElements(prev => prev.filter(el => el.id !== selectedId));
-                setSelectedId(null);
+            if (selectedIds.length > 0) {
+                setElements(prev => prev.filter(el => !selectedIds.includes(el.id)));
+                setSelectedIds([]);
                 setUnsavedChanges(true);
             }
         }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isEditMode, selectedId, elements, clipboard]);
+  }, [isEditMode, selectedIds, elements, clipboard]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isEditMode) return;
@@ -119,7 +127,18 @@ export function RHMapaAndar31({
     if (e.button !== 0) return;
 
     if (activeTool === 'select') {
-        setSelectedId(null);
+        e.currentTarget.setPointerCapture(e.pointerId);
+        const rect = contentRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const scale = zoomScale;
+        const clickX = (e.clientX - rect.left) / scale;
+        const clickY = (e.clientY - rect.top) / scale;
+        
+        setSelectionBox({ startX: clickX, startY: clickY, curX: clickX, curY: clickY });
+        
+        if (!e.shiftKey) {
+            setSelectedIds([]);
+        }
         return;
     }
 
@@ -135,6 +154,16 @@ export function RHMapaAndar31({
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (selectionBox) {
+        const rect = contentRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const scale = zoomScale;
+        const curX = (e.clientX - rect.left) / scale;
+        const curY = (e.clientY - rect.top) / scale;
+        setSelectionBox(prev => prev ? { ...prev, curX, curY } : null);
+        return;
+    }
+
     if (!drawingPath) return;
 
     const rect = contentRef.current?.getBoundingClientRect();
@@ -147,6 +176,38 @@ export function RHMapaAndar31({
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (selectionBox) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+        
+        const dx = Math.abs(selectionBox.curX - selectionBox.startX);
+        const dy = Math.abs(selectionBox.curY - selectionBox.startY);
+        
+        if (dx > 5 && dy > 5) {
+            const minX = Math.min(selectionBox.startX, selectionBox.curX);
+            const maxX = Math.max(selectionBox.startX, selectionBox.curX);
+            const minY = Math.min(selectionBox.startY, selectionBox.curY);
+            const maxY = Math.max(selectionBox.startY, selectionBox.curY);
+            
+            const newlySelected = elements.filter(el => {
+                const elRight = el.x + el.width;
+                const elBottom = el.y + el.height;
+                return !(el.x > maxX || elRight < minX || el.y > maxY || elBottom < minY);
+            }).map(el => el.id);
+            
+            setSelectedIds(prev => {
+                if (e.shiftKey) {
+                    return Array.from(new Set([...prev, ...newlySelected]));
+                }
+                return newlySelected;
+            });
+        } else if (!e.shiftKey) {
+             setSelectedIds([]);
+        }
+        
+        setSelectionBox(null);
+        return;
+    }
+
     if (!drawingPath) return;
 
     e.currentTarget.releasePointerCapture(e.pointerId);
@@ -187,7 +248,7 @@ export function RHMapaAndar31({
     };
 
     setElements(prev => [...prev, newEl]);
-    setSelectedId(null);
+    setSelectedIds([]);
     setActiveTool('select');
     setUnsavedChanges(true);
     setDrawingPath(null);
@@ -201,7 +262,15 @@ export function RHMapaAndar31({
   const handleElementPointerDown = (e: React.PointerEvent<HTMLDivElement>, el: MapElement) => {
     if (!isEditMode || activeTool !== 'select') return;
     e.stopPropagation();
-    setSelectedId(el.id);
+    
+    // Se o elemento clicado não está na seleção, a seleção passa a ser apenas ele (ou add se shift)
+    if (!selectedIds.includes(el.id)) {
+        if (e.shiftKey) {
+            setSelectedIds(prev => [...prev, el.id]);
+        } else {
+            setSelectedIds([el.id]);
+        }
+    }
 
     const rect = contentRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -209,7 +278,14 @@ export function RHMapaAndar31({
     const clickX = (e.clientX - rect.left) / scale;
     const clickY = (e.clientY - rect.top) / scale;
 
-    setMovingElement({ id: el.id, startX: clickX, startY: clickY, elX: el.x, elY: el.y });
+    // Guarda a posição inicial de todos os elementos selecionados para podermos somar o delta de arrasto neles todos
+    const selectedElementsNodes = elements.filter(item => selectedIds.includes(item.id) || item.id === el.id);
+    const initialPositions = selectedElementsNodes.reduce((acc, curr) => {
+        acc[curr.id] = { x: curr.x, y: curr.y };
+        return acc;
+    }, {} as Record<string, {x: number, y: number}>);
+
+    setMovingElement({ id: el.id, startX: clickX, startY: clickY, initialPositions });
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
@@ -226,7 +302,18 @@ export function RHMapaAndar31({
     const dx = curX - movingElement.startX;
     const dy = curY - movingElement.startY;
 
-    updateElement(movingElement.id, { x: Math.round(movingElement.elX + dx), y: Math.round(movingElement.elY + dy) });
+    // Atualiza todos os nós selecionados ao mesmo tempo
+    setElements(prev => prev.map(item => {
+        if (movingElement.initialPositions[item.id]) {
+            return {
+                ...item,
+                x: Math.round(movingElement.initialPositions[item.id].x + dx),
+                y: Math.round(movingElement.initialPositions[item.id].y + dy)
+            };
+        }
+        return item;
+    }));
+    setUnsavedChanges(true);
   };
 
   const handleElementPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -298,27 +385,36 @@ export function RHMapaAndar31({
 
   const handleDelete = (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!selectedId) return;
-      setElements(prev => prev.filter(el => el.id !== selectedId));
-      setSelectedId(null);
+      if (selectedIds.length === 0) return;
+      setElements(prev => prev.filter(el => !selectedIds.includes(el.id)));
+      setSelectedIds([]);
       setUnsavedChanges(true);
   };
 
   const handleDuplicate = (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!selectedId) return;
-      const el = elements.find(item => item.id === selectedId);
-      if (!el) return;
+      if (selectedIds.length === 0) return;
+      
+      const elsToCopy = elements.filter(item => selectedIds.includes(item.id));
+      if (elsToCopy.length === 0) return;
 
-      const newEl: MapElement = {
-          ...el,
-          id: crypto.randomUUID(),
-          x: el.x + 20,
-          y: el.y + 20,
-          custom_data: el.type === 'seat' ? { ...el.custom_data, postoId: 'NOVO' } : { ...el.custom_data }
-      };
-      setElements(prev => [...prev, newEl]);
-      setSelectedId(newEl.id);
+      const newEls: MapElement[] = [];
+      const newIds: string[] = [];
+      
+      elsToCopy.forEach(el => {
+          const newId = crypto.randomUUID();
+          newEls.push({
+              ...el,
+              id: newId,
+              x: el.x + 20,
+              y: el.y + 20,
+              custom_data: el.type === 'seat' ? { ...el.custom_data, postoId: 'NOVO' } : { ...el.custom_data }
+          });
+          newIds.push(newId);
+      });
+      
+      setElements(prev => [...prev, ...newEls]);
+      setSelectedIds(newIds);
       setUnsavedChanges(true);
   };
 
@@ -356,67 +452,80 @@ export function RHMapaAndar31({
     return r.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   };
 
-  const selectedEl = elements.find(el => el.id === selectedId);
+  const selectedEl = selectedIds.length === 1 ? elements.find(el => el.id === selectedIds[0]) : null;
 
   return (
     <div 
       ref={containerRef}
       className={`w-full relative bg-gray-50 border border-gray-200 rounded-lg shadow-inner overflow-auto custom-scrollbar transition-all ${isEditMode ? 'ring-4 ring-blue-500/30 min-h-[70vh]' : 'min-h-[500px] h-[80vh]'}`}
     >
-      {/* STUDIO TOOLBAR */}
-      {isEditMode && (
-        <div className="sticky top-4 left-4 z-50 pointer-events-none self-start h-0">
-          <motion.div drag dragMomentum={false} className="flex flex-col gap-2 pointer-events-auto items-start">
-            {/* Main Tools Container */}
-            <div className="bg-white p-2 rounded-2xl shadow-xl shadow-blue-900/10 border border-blue-100 flex items-center gap-1.5 cursor-move">
-                {/* DRAG HANDLE */}
-                <div className="p-1 px-1.5 text-gray-400 hover:text-gray-600 active:cursor-grabbing">
-                    <GripVertical className="w-5 h-5" />
+      {/* STUDIO TOOLBAR TELEPORTED TO HEADER */}
+      {isEditMode && document.getElementById('map-toolbar-portal') && createPortal(
+          <div className="flex items-center gap-1.5 bg-white px-2 py-1.5 rounded-xl shadow-sm border border-gray-200 ml-4 animate-in fade-in zoom-in duration-300">
+              {/* TOOL: SELECT */}
+              <button onClick={(e) => { e.stopPropagation(); setActiveTool('select'); }} className={`p-2 rounded-lg transition-all ${activeTool === 'select' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-100'}`} title="Selecionar / Mover (Shift + Click p/ Múltiplos)">
+                  <MousePointer2 className="w-4 h-4" />
+              </button>
+              <div className="w-px h-6 bg-gray-200 mx-0.5"></div>
+              
+              {/* TOOL: WALL */}
+              <button onClick={() => setActiveTool('wall')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'wall' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  <Square className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Sala</span>
+              </button>
+
+              {/* TOOL: LINE */}
+              <button onClick={() => setActiveTool('line')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'line' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  <Minus className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Linha</span>
+              </button>
+
+              {/* TOOL: DOOR */}
+              <button onClick={() => setActiveTool('door')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'door' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  <DoorOpen className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Porta</span>
+              </button>
+
+              {/* TOOL: SEAT */}
+              <button onClick={() => setActiveTool('seat')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'seat' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  <Users className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Posto</span>
+              </button>
+
+              {/* TOOL: TEXT */}
+              <button onClick={() => setActiveTool('text')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'text' ? 'bg-amber-100 text-amber-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  <Type className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Texto</span>
+              </button>
+
+              <div className="w-px h-6 bg-gray-200 mx-1"></div>
+
+              {/* ACTION: SAVE */}
+              <button onClick={(e) => { e.stopPropagation(); handleSave(); }} disabled={!unsavedChanges} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${unsavedChanges ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
+                  <Save className="w-4 h-4" /> <span className="text-[10px] uppercase tracking-wide font-black">Salvar</span>
+              </button>
+          </div>,
+          document.getElementById('map-toolbar-portal')!
+      )}
+
+      {/* SELECTION PROPERTIES INSPECTOR (FLOTING RIGHT) */}
+      {isEditMode && selectedIds.length > 0 && activeTool === 'select' && (
+        <div className="sticky top-4 right-4 z-50 pointer-events-none self-end h-0 float-right mr-4 mt-4">
+          <div className="bg-white p-3 pt-4 rounded-2xl shadow-xl shadow-black/10 border border-gray-200 w-64 pointer-events-auto animate-in slide-in-from-right-4 fade-in duration-200">
+            {selectedIds.length > 1 ? (
+                // BATCH ACTIONS
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between mb-1 pb-2 border-b border-gray-100">
+                        <span className="text-xs font-black text-indigo-800 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2 py-1 rounded-md">
+                            {selectedIds.length} Itens
+                        </span>
+                    </div>
+                    <div className="text-[11px] text-gray-500 mb-2 leading-tight">Vários elementos selecionados. Ações em lote:</div>
+                    <button onClick={handleDuplicate} className="w-full py-2 flex items-center justify-center gap-2 bg-blue-50 text-blue-600 font-bold text-xs uppercase hover:bg-blue-500 hover:text-white rounded-lg transition-colors border border-blue-100">
+                        <Copy className="w-4 h-4" /> Duplicar Grupo
+                    </button>
+                    <button onClick={handleDelete} className="w-full py-2 flex items-center justify-center gap-2 bg-red-50 text-red-600 font-bold text-xs uppercase hover:bg-red-500 hover:text-white rounded-lg transition-colors border border-red-100">
+                        <Trash2 className="w-4 h-4" /> Excluir Grupo
+                    </button>
                 </div>
-                <div className="w-px h-8 bg-gray-100 mr-1"></div>
-
-                {/* TOOL: SELECT */}
-                <button onClick={(e) => { e.stopPropagation(); setActiveTool('select'); }} className={`p-2.5 rounded-xl transition-all ${activeTool === 'select' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-100'}`} title="Selecionar / Mover">
-                    <MousePointer2 className="w-5 h-5" />
-                </button>
-                <div className="w-px h-8 bg-gray-100 mx-1"></div>
-
-                {/* TOOL: WALL */}
-                <button onClick={() => setActiveTool('wall')} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${activeTool === 'wall' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-                    <Square className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Sala</span>
-                </button>
-
-                {/* TOOL: LINE */}
-                <button onClick={() => setActiveTool('line')} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${activeTool === 'line' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-                    <Minus className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Linha</span>
-                </button>
-
-                {/* TOOL: DOOR */}
-                <button onClick={() => setActiveTool('door')} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${activeTool === 'door' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-                    <DoorOpen className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Porta</span>
-                </button>
-
-                {/* TOOL: SEAT */}
-                <button onClick={() => setActiveTool('seat')} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${activeTool === 'seat' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-                    <Users className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Posto</span>
-                </button>
-
-                {/* TOOL: TEXT */}
-                <button onClick={() => setActiveTool('text')} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${activeTool === 'text' ? 'bg-amber-100 text-amber-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-                    <Type className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Texto</span>
-                </button>
-
-                <div className="w-px h-8 bg-gray-100 mx-1"></div>
-
-                {/* ACTION: SAVE */}
-                <button onClick={(e) => { e.stopPropagation(); handleSave(); }} disabled={!unsavedChanges} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${unsavedChanges ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
-                    <Save className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide font-black">Salvar Mapa</span>
-                </button>
-            </div>
-
-            {/* SELECTION PROPERTIES INSPECTOR */}
-            {selectedEl && activeTool === 'select' && (
-                <div className="bg-white p-3 pt-4 rounded-2xl shadow-xl shadow-black/10 border border-gray-200 w-64 pointer-events-auto mt-2 animate-in slide-in-from-left-4 fade-in duration-200">
+            ) : selectedEl ? (
+                // INDIVIDUAL PROPERTIES
+                <div>
                     <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
                         <span className="text-xs font-black text-gray-800 uppercase tracking-widest bg-gray-100 px-2 py-1 rounded-md">
                             {selectedEl.type === 'wall' ? 'Parede / Sala' : selectedEl.type === 'line' ? 'Divisória' : 'Posto (Mesa)'}
@@ -435,11 +544,11 @@ export function RHMapaAndar31({
                     <div className="grid grid-cols-2 gap-3 mb-4">
                         <div className="flex flex-col gap-1">
                             <label className="text-[10px] uppercase font-bold text-gray-400">Largura (px)</label>
-                            <input type="number" value={selectedEl.width} onChange={e => updateElement(selectedId!, { width: parseInt(e.target.value) || 10 })} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50" />
+                            <input type="number" value={selectedEl.width} onChange={e => updateElement(selectedIds[0], { width: parseInt(e.target.value) || 10 })} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50" />
                         </div>
                         <div className="flex flex-col gap-1">
                             <label className="text-[10px] uppercase font-bold text-gray-400">Altura (px)</label>
-                            <input type="number" value={selectedEl.height} onChange={e => updateElement(selectedId!, { height: parseInt(e.target.value) || 10 })} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50" />
+                            <input type="number" value={selectedEl.height} onChange={e => updateElement(selectedIds[0], { height: parseInt(e.target.value) || 10 })} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50" />
                         </div>
                     </div>
 
@@ -448,13 +557,13 @@ export function RHMapaAndar31({
                         <div className="flex flex-col gap-3">
                             <div className="flex flex-col gap-1">
                                 <label className="text-[10px] uppercase font-bold text-indigo-500">ID do Posto (Ex: S01)</label>
-                                <input type="text" value={selectedEl.custom_data?.postoId || ''} onChange={e => updateElement(selectedId!, { custom_data: { ...selectedEl.custom_data, postoId: e.target.value.toUpperCase() } })} className="w-full border border-indigo-200 rounded-lg px-2 py-1.5 text-sm font-black text-indigo-900 bg-indigo-50 focus:outline-none focus:bg-white" />
+                                <input type="text" value={selectedEl.custom_data?.postoId || ''} onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, postoId: e.target.value.toUpperCase() } })} className="w-full border border-indigo-200 rounded-lg px-2 py-1.5 text-sm font-black text-indigo-900 bg-indigo-50 focus:outline-none focus:bg-white" />
                             </div>
                             <div className="flex flex-col gap-1">
                                 <label className="text-[10px] uppercase font-bold text-gray-400">Tipo / Hierarquia</label>
                                 <select 
                                     value={selectedEl.custom_data?.seatType || 'PLENO'} 
-                                    onChange={e => updateElement(selectedId!, { custom_data: { ...selectedEl.custom_data, seatType: e.target.value } })}
+                                    onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, seatType: e.target.value } })}
                                     className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 focus:outline-none"
                                 >
                                     <option value="SÓCIO">SÓCIO</option>
@@ -474,13 +583,13 @@ export function RHMapaAndar31({
                         <div className="flex flex-col gap-3 mt-4">
                             <div className="flex flex-col gap-1">
                                 <label className="text-[10px] uppercase font-bold text-gray-500">Conteúdo do Texto</label>
-                                <input type="text" value={selectedEl.custom_data?.textValue || ''} onChange={e => updateElement(selectedId!, { custom_data: { ...selectedEl.custom_data, textValue: e.target.value } })} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-black text-gray-800 focus:outline-none focus:bg-white" />
+                                <input type="text" value={selectedEl.custom_data?.textValue || ''} onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, textValue: e.target.value } })} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-black text-gray-800 focus:outline-none focus:bg-white" />
                             </div>
                         </div>
                     )}
                 </div>
-            )}
-          </motion.div>
+            ) : null}
+          </div>
         </div>
       )}
 
@@ -516,9 +625,22 @@ export function RHMapaAndar31({
           className={`relative bg-white select-none rounded-xl shadow-sm ring-1 ring-gray-200 mx-auto ${activeTool !== 'select' && isEditMode ? 'cursor-crosshair bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]' : ''}`}
           style={{ width: mapW, height: mapH, overflow: 'hidden' }}
         >
+          {/* SELECTION BOX (Arrastar e Multi-Selecionar) */}
+          {selectionBox && (
+              <div 
+                  className="absolute border border-blue-500 bg-blue-500/10 pointer-events-none z-[100]"
+                  style={{
+                      left: Math.min(selectionBox.startX, selectionBox.curX),
+                      top: Math.min(selectionBox.startY, selectionBox.curY),
+                      width: Math.abs(selectionBox.curX - selectionBox.startX),
+                      height: Math.abs(selectionBox.curY - selectionBox.startY)
+                  }}
+              />
+          )}
+
           {elements.map(el => {
               
-            const isSelected = selectedId === el.id;
+            const isSelected = selectedIds.includes(el.id);
             const selectionClasses = isSelected && isEditMode ? 'ring-2 ring-blue-500 ring-offset-1 shadow-lg' : '';
 
             // RENDER WALL
