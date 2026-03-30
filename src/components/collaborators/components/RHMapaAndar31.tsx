@@ -15,6 +15,7 @@ export interface MapElement {
     postoId?: string; // e.g. "S01"
     seatType?: string; // e.g. "SÊNIOR"
     textValue?: string; // for labels
+    isVacant?: boolean; // manual flag marking the seat as vacant
   }
 }
 
@@ -708,6 +709,19 @@ export function RHMapaAndar31({
                                     )}
                                 </div>
                                 {occupantDropdownOpen && <div className="fixed inset-0 z-[190]" onClick={() => setOccupantDropdownOpen(false)}></div>}
+                                
+                                {/* Vago Checkbox */}
+                                <div className="mt-2">
+                                    <label className="flex items-center gap-2.5 p-2 border border-amber-200 bg-amber-50 rounded-lg cursor-pointer hover:bg-amber-100 transition-colors">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={!!selectedEl.custom_data?.isVacant}
+                                            onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, isVacant: e.target.checked } })}
+                                            className="w-4 h-4 text-amber-500 rounded border-amber-300 focus:ring-amber-500 cursor-pointer"
+                                        />
+                                        <span className="text-[10px] uppercase font-black text-amber-800 tracking-wider">Marcar como Vago</span>
+                                    </label>
+                                </div>
                             </div>
                         );
                     })()}
@@ -933,8 +947,12 @@ export function RHMapaAndar31({
                     )}
 
                     {/* Visual UI (Transparent / Borderless) */}
-                    <div className="flex flex-col flex-nowrap items-center pt-1.5 justify-start w-full h-full p-[1px] bg-transparent transition-colors overflow-visible relative group-hover:bg-[#1e3a8a]/5">
-                      {occupant ? (
+                    <div className={`flex flex-col flex-nowrap items-center pt-1.5 justify-start w-full h-full p-[1px] transition-colors overflow-visible relative ${el.custom_data?.isVacant ? 'bg-amber-100/80 rounded border-2 border-dashed border-amber-400' : 'bg-transparent group-hover:bg-[#1e3a8a]/5'}`}>
+                      {el.custom_data?.isVacant ? (
+                          <div className="flex flex-col items-center justify-center w-full h-full pb-1 opacity-90">
+                              <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest text-center leading-none bg-white/80 px-1 py-0.5 rounded shadow-sm">VAGO</span>
+                          </div>
+                      ) : occupant ? (
                         <>
                           {!isEditMode && (
                             <button
