@@ -197,15 +197,65 @@ export function RHMapaAndar31({
         style={{ 
           width: MAP_W, 
           height: MAP_H, 
-          // Troque "/mapa_base_31.png" pelo caminho correto da sua imagem (na pasta public/)
+          // A imagem de fundo é opcional, caso queira substituir as linhas pelo PNG
           backgroundImage: "url('/mapa_base_31.png')",
           backgroundSize: '100% 100%',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center'
         }}
       >
-        {/* Camada translúcida caso a imagem da planta não exista ou demore a carregar */}
-        <div className="absolute inset-0 bg-white/70 pointer-events-none"></div>
+        {/* Linhas da Planta Baixa (CSS Walls Restored) */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          {/* Left Seniores Rooms */}
+          {Array.from({length: 5}).map((_, i) => (
+            <div key={`room-s-${i}`} className="absolute left-[15px] w-[140px] h-[130px] border border-gray-300" style={{ top: `${35 + i * 130}px` }}></div>
+          ))}
+          
+          {/* Decorative Rooms Extra */}
+          <div className="absolute top-[800px] left-[15px] w-[140px] h-[50px] border border-gray-300 flex items-center justify-center">
+             <span className="text-[12px] font-bold text-gray-400">Cell</span>
+          </div>
+          <div className="absolute top-[850px] left-[15px] w-[140px] h-[70px] border border-t-0 border-gray-300 flex items-center justify-center">
+             <span className="text-[12px] font-bold text-center leading-tight text-gray-400">Banheiro<br/>Feminino</span>
+          </div>
+
+          <div className="absolute top-[880px] left-[1880px] w-[150px] h-[80px] border border-gray-300 flex items-center justify-center">
+             <span className="text-[12px] font-bold text-center text-gray-400">Sala de Reunião 5</span>
+          </div>
+          <div className="absolute top-[880px] left-[2030px] w-[50px] h-[80px] border border-l-0 border-gray-300 flex items-center justify-center">
+             <span className="text-[10px] font-bold text-center leading-tight rotate-90 text-gray-400">Banheiro<br/>Masc</span>
+          </div>
+          
+          {/* Right Consultant/Senior Rooms */}
+          {/* Sala 1 e 2 independentes */}
+          <div className="absolute left-[1880px] w-[150px] h-[70px] border border-gray-300" style={{ top: '35px' }}></div>
+          <div className="absolute left-[1880px] w-[150px] h-[80px] border border-gray-300" style={{ top: '105px' }}></div>
+          <div className="absolute left-[2030px] w-[50px] h-[150px] border border-gray-300 border-l-0" style={{ top: '35px' }}></div>
+          
+          {/* SALA UNIFICADA para S19, S20, S21 */}
+          <div className="absolute left-[1880px] w-[150px] h-[240px] border border-gray-300" style={{ top: '185px' }}></div>
+
+          {/* Central Area Left */}
+          <div className="absolute top-[35px] left-[165px] w-[750px] h-[1px] bg-gray-300" />
+          <div className="absolute top-[650px] left-[165px] w-[750px] h-[1px] bg-gray-300" />
+          <div className="absolute top-[35px] left-[165px] w-[1px] h-[615px] bg-gray-300" />
+          <div className="absolute top-[35px] left-[915px] w-[1px] h-[615px] bg-gray-300" />
+          
+          {/* SC01 Walls inside Left Area */}
+          <div className="absolute top-[120px] left-[165px] w-[120px] h-[1px] bg-gray-300" />
+          <div className="absolute top-[35px] left-[285px] w-[1px] h-[85px] bg-gray-300" />
+
+          {/* Central Area Right */}
+          <div className="absolute top-[35px] left-[950px] w-[810px] h-[1px] bg-gray-300" />
+          <div className="absolute top-[650px] left-[950px] w-[810px] h-[1px] bg-gray-300" />
+          <div className="absolute top-[35px] left-[950px] w-[1px] h-[615px] bg-gray-300" />
+          <div className="absolute top-[35px] left-[1760px] w-[1px] h-[615px] bg-gray-300" />
+          
+          {/* S16-S18 Walls inside Right Area */}
+          <div className="absolute top-[200px] left-[1530px] w-[230px] h-[1px] bg-gray-300" />
+          <div className="absolute top-[35px] left-[1530px] w-[1px] h-[165px] bg-gray-300" />
+          <div className="absolute top-[35px] left-[1620px] w-[1px] h-[165px] bg-gray-300" />
+        </div>
 
         {SEATS_31_ANDAR.map(seat => {
           const occupant = seatsMap.get(seat.id.toUpperCase());
