@@ -294,21 +294,21 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         
         {/* Header Branding */}
         {!isModal && (
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-6">
+          <div className="text-center mb-4">
+            <div className="flex justify-center mb-4">
                <img
                  src="/logo-salomao.png"
                  alt="Salomão"
-                 className="h-16 md:h-20 w-auto object-contain drop-shadow-sm transition-transform duration-500 hover:scale-[1.02]"
+                 className="h-12 md:h-16 w-auto object-contain drop-shadow-sm transition-transform duration-500 hover:scale-[1.02]"
                />
             </div>
-            <h1 className="text-2xl font-black text-[#112240]">Solicitação de Reembolso</h1>
-            <p className="text-gray-500 mt-2">Envie seu comprovante para o financeiro.</p>
+            <h1 className="text-xl md:text-2xl font-black text-[#112240]">Solicitação de Reembolso</h1>
+            <p className="text-sm md:text-base text-gray-500 mt-1">Envie seu comprovante para o financeiro.</p>
           </div>
         )}
 
         {/* Form Container */}
-        <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 md:p-8 relative overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 md:p-6 relative overflow-hidden">
           
           {isModal && (
             <>
@@ -415,10 +415,10 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
           )}
 
           {step === 2 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
               
               {/* Esquerda: Visualizador PDF */}
-              <div className="hidden lg:flex flex-col bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden shadow-inner h-[80vh]">
+              <div className="hidden lg:flex flex-col bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden shadow-inner h-[70vh]">
                 <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
                   <h3 className="font-bold text-[#112240] flex items-center gap-2">
                     <FileText className="w-4 h-4 text-blue-600" /> Arquivo Original
@@ -452,9 +452,9 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
               </div>
 
               {/* Direita: Formulários e Blocos */}
-              <div className="space-y-5 h-auto lg:h-[80vh] lg:overflow-y-auto lg:pr-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+              <div className="space-y-4 h-auto lg:h-[70vh] lg:overflow-y-auto lg:pr-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                 
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-3 mb-1">
                   <button onClick={() => setStep(1)} className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
                      <ArrowLeft className="w-4 h-4 text-gray-600" />
                   </button>
@@ -462,9 +462,9 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                 </div>
                 
                 {!isModal && (
-                  <div className="bg-blue-50 p-4 rounded-xl text-sm text-[#1e3a8a] flex gap-3 items-start border border-blue-100">
-                    <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-                    <p>O sistema leu seu recibo, confira e corrija se necessário antes de enviar ao financeiro.</p>
+                  <div className="bg-blue-50 p-3 rounded-xl text-sm text-[#1e3a8a] flex gap-2 items-center border border-blue-100 overflow-x-auto [&::-webkit-scrollbar]:hidden">
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
+                    <p className="whitespace-nowrap font-medium">Por favor, confira e corrija se necessário antes de enviar.</p>
                   </div>
                 )}
 
