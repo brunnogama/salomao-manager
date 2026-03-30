@@ -1,8 +1,58 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
-import { User, MapPin, MousePointer2, Users, Trash2, Save, Copy, ZoomIn, ZoomOut, Crop, Square, Minus, DoorOpen, Sticker } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { 
+  User, MapPin, MousePointer2, Users, Trash2, Save, Copy, ZoomIn, ZoomOut, Crop, Square, Minus, DoorOpen, Sticker,
+  Sofa, Armchair, Bath, Coffee, Utensils, Refrigerator, Microwave, Trees, Flame, Droplet, Wind, Lightbulb, 
+  Tv, Laptop, Monitor, Printer, Wifi, Server, Database, Mouse, Keyboard, Speaker, Headset,
+  Box, Inbox, Briefcase, Camera, Video, Car, Truck, DoorClosed, Lock, Key, Phone, Mail, FileText,
+  Star, HelpCircle, Check, AlertCircle, Info, Hash
+} from 'lucide-react';
 import { createPortal } from 'react-dom';
+
+const AVAILABLE_ICONS = [
+  { name: 'Sofa', icon: Sofa },
+  { name: 'Armchair', icon: Armchair },
+  { name: 'Bath', icon: Bath },
+  { name: 'Coffee', icon: Coffee },
+  { name: 'Utensils', icon: Utensils },
+  { name: 'Refrigerator', icon: Refrigerator },
+  { name: 'Microwave', icon: Microwave },
+  { name: 'Trees', icon: Trees },
+  { name: 'Flame', icon: Flame },
+  { name: 'Droplet', icon: Droplet },
+  { name: 'Wind', icon: Wind },
+  { name: 'Lightbulb', icon: Lightbulb },
+  { name: 'Tv', icon: Tv },
+  { name: 'Laptop', icon: Laptop },
+  { name: 'Monitor', icon: Monitor },
+  { name: 'Printer', icon: Printer },
+  { name: 'Wifi', icon: Wifi },
+  { name: 'Server', icon: Server },
+  { name: 'Database', icon: Database },
+  { name: 'Mouse', icon: Mouse },
+  { name: 'Keyboard', icon: Keyboard },
+  { name: 'Speaker', icon: Speaker },
+  { name: 'Headset', icon: Headset },
+  { name: 'Box', icon: Box },
+  { name: 'Inbox', icon: Inbox },
+  { name: 'Briefcase', icon: Briefcase },
+  { name: 'Camera', icon: Camera },
+  { name: 'Video', icon: Video },
+  { name: 'Car', icon: Car },
+  { name: 'Truck', icon: Truck },
+  { name: 'DoorClosed', icon: DoorClosed },
+  { name: 'Lock', icon: Lock },
+  { name: 'Key', icon: Key },
+  { name: 'Phone', icon: Phone },
+  { name: 'Mail', icon: Mail },
+  { name: 'FileText', icon: FileText },
+  { name: 'Star', icon: Star },
+  { name: 'HelpCircle', icon: HelpCircle },
+  { name: 'Check', icon: Check },
+  { name: 'AlertCircle', icon: AlertCircle },
+  { name: 'Info', icon: Info },
+  { name: 'Hash', icon: Hash }
+];
 
 export interface MapElement {
   id: string; // uuid
@@ -63,6 +113,7 @@ export function RHMapaAndar31({
   // Combobox do Inspetor
   const [searchOccupant, setSearchOccupant] = useState('');
   const [occupantDropdownOpen, setOccupantDropdownOpen] = useState(false);
+  const [iconSearch, setIconSearch] = useState('');
 
   // Sync props -> state on load (Apenas se não estivermos no meio de uma edição ativa)
   useEffect(() => {
@@ -708,30 +759,49 @@ export function RHMapaAndar31({
                     })()}
 
                     {/* Specifics: Icon Fields */}
-                    {selectedEl.type === 'icon' && (
+                    {selectedEl.type === 'icon' && (() => {
+                        const filteredIcons = AVAILABLE_ICONS.filter(ic => ic.name.toLowerCase().includes(iconSearch.toLowerCase()));
+                        return (
                         <div className="flex flex-col gap-3 mt-4">
                             <div className="flex flex-col gap-1">
-                                <label className="text-[10px] uppercase font-bold text-gray-400">Nome do Ícone (Lucide)</label>
+                                <label className="text-[10px] uppercase font-bold text-gray-400">Escolhe o Ícone</label>
                                 <input 
                                     type="text" 
-                                    value={selectedEl.custom_data?.iconName || 'Star'} 
-                                    placeholder="Ex: Coffee, Printer, Sofa" 
-                                    onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, iconName: e.target.value } })} 
+                                    value={iconSearch} 
+                                    placeholder="Buscar por nome..." 
+                                    onChange={e => setIconSearch(e.target.value)} 
                                     className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30" 
                                 />
-                                <span className="text-[9px] text-gray-400 mt-0.5 leading-tight">Busque nomes em lucide.dev/icons (Em PascalCase Ex: <i>Briefcase</i>)</span>
+                                <div className="mt-1.5 grid grid-cols-5 gap-1.5 max-h-[160px] overflow-y-auto custom-scrollbar p-1.5 border border-indigo-100 rounded-lg bg-indigo-50/30">
+                                   {filteredIcons.map(ic => {
+                                      const IconCmp = ic.icon;
+                                      const isSelectedIcon = selectedEl.custom_data?.iconName === ic.name;
+                                      return (
+                                        <button 
+                                           key={ic.name} 
+                                           onClick={() => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, iconName: ic.name } })} 
+                                           className={`p-1.5 flex flex-col items-center justify-center rounded-lg transition-all border ${isSelectedIcon ? 'bg-indigo-100 text-indigo-700 border-indigo-300 shadow-sm' : 'bg-white text-gray-400 border-transparent hover:border-gray-200 hover:text-gray-600'}`}
+                                           title={ic.name}
+                                        >
+                                           <IconCmp className="w-5 h-5" strokeWidth={1.5} />
+                                        </button>
+                                      )
+                                   })}
+                                   {filteredIcons.length === 0 && <span className="text-[10px] text-gray-400 col-span-5 text-center py-2">Nenhum ícone encontrado</span>}
+                                </div>
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-[10px] uppercase font-bold text-gray-400">Cor do Ícone</label>
+                            <div className="flex flex-col gap-1 mt-1">
+                                <label className="text-[10px] uppercase font-bold text-gray-400">Cor Principal</label>
                                 <input 
                                     type="color" 
                                     value={selectedEl.custom_data?.iconColor || '#4b5563'} 
                                     onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, iconColor: e.target.value } })} 
-                                    className="w-full h-8 cursor-pointer rounded-lg border-none p-0" 
+                                    className="w-full h-8 cursor-pointer rounded-lg border-none p-0 bg-transparent" 
                                 />
                             </div>
                         </div>
-                    )}
+                        );
+                    })()}
 
                     {/* Specifics: Text Fields */}
                     {selectedEl.type === 'text' && (
@@ -907,7 +977,8 @@ export function RHMapaAndar31({
             // RENDER ICON
             if (el.type === 'icon') {
                 const IconName = el.custom_data?.iconName || 'Star';
-                const IconComp = (LucideIcons as any)[IconName] || LucideIcons.HelpCircle;
+                const predefined = AVAILABLE_ICONS.find(i => i.name === IconName);
+                const IconComp = predefined ? predefined.icon : HelpCircle;
                 return (
                     <div
                         key={el.id}
