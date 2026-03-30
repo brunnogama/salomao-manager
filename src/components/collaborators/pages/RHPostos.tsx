@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Building2, Loader2, RefreshCw, MapPin, Layout, List } from 'lucide-react';
+import { Building2, Loader2, RefreshCw, MapPin, Layout, List, Printer } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { getSegment } from '../utils/rhChartUtils';
@@ -26,6 +28,7 @@ export function RHPostos() {
   const [showUnassigned, setShowUnassigned] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [localSeatOverrides, setLocalSeatOverrides] = useState<Record<string, string>>({});
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   const { colaboradores, roles, locations: allLocations } = useColaboradores();
 
@@ -211,6 +214,72 @@ export function RHPostos() {
     toast.success('Integrante removido da mesa!');
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const element = document.getElementById('mapa-31-andar-content');
+      if (!element) {
+        toast.error('Mapa não encontrado para exportação');
+        return;
+      }
+      setIsExportingPDF(true);
+
+      // Save and temporarily remove transform for crisp crisp high-scale export
+      const originalTransform = element.style.transform;
+      element.style.transform = 'none';
+      
+      const canvas = await html2canvas(element, {
+        scale: 2, // High resolution for A3
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
+      });
+      
+      // Restore the visual scaling for the screen
+      element.style.transform = originalTransform;
+
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a3'
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.9);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const canvasRatio = canvas.height / canvas.width;
+      const pdfRatio = pdfHeight / pdfWidth;
+
+      let finalWidth = pdfWidth;
+      let finalHeight = pdfHeight;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (canvasRatio > pdfRatio) {
+        finalWidth = pdfHeight / canvasRatio;
+        offsetX = (pdfWidth - finalWidth) / 2;
+      } else {
+        finalHeight = pdfWidth * canvasRatio;
+        offsetY = (pdfHeight - finalHeight) / 2;
+      }
+
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
+      
+      pdf.addImage(imgData, 'JPEG', offsetX, offsetY, finalWidth, finalHeight, undefined, 'FAST');
+      pdf.save('Mapa_31_Andar.pdf');
+      toast.success('PDF exportado com sucesso!');
+
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      toast.error('Ocorreu um erro ao gerar o PDF');
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24 overflow-y-auto no-scrollbar">
       {/* PAGE HEADER COMPLETO - Título + Actions */}
@@ -268,12 +337,21 @@ export function RHPostos() {
           </div>
 
           {viewMode === 'map' && (
-            <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0 ml-2">
+            <div className="flex items-center gap-2 bg-gray-100/80 p-1 rounded-xl shrink-0 ml-2">
               <button
                 onClick={() => setShowUnassigned(!showUnassigned)}
                 className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${!showUnassigned ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 {!showUnassigned ? 'Mostrar Sem Mesa' : 'Ocultar Sem Mesa'}
+              </button>
+              
+              <button
+                onClick={handleExportPDF}
+                disabled={isExportingPDF}
+                title="Exportar Mapa em PDF A3"
+                className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap bg-gradient-to-r from-red-600 to-red-500 text-white shadow-sm hover:from-red-700 hover:to-red-600 disabled:opacity-50"
+              >
+                {isExportingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />} PDF
               </button>
             </div>
           )}
