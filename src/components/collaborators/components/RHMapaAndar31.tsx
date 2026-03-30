@@ -149,7 +149,7 @@ export function RHMapaAndar31({
   return (
     <div 
       ref={containerRef}
-      className={`w-full relative flex justify-center items-start bg-gray-50 border border-gray-200 rounded-lg shadow-inner overflow-auto custom-scrollbar transition-all ${isEditMode ? 'ring-4 ring-blue-500/30 min-h-[70vh]' : 'min-h-[500px] h-[80vh]'}`}
+      className={`w-full relative bg-gray-50 border border-gray-200 rounded-lg shadow-inner overflow-auto custom-scrollbar transition-all ${isEditMode ? 'ring-4 ring-blue-500/30 min-h-[70vh]' : 'min-h-[500px] h-[80vh]'}`}
     >
       {/* STUDIO TOOLBAR */}
       {isEditMode && (
@@ -253,7 +253,7 @@ export function RHMapaAndar31({
       )}
 
       {/* Wrapper de Escala para Garantir Legibilidade Preservando a Matemática Base */}
-      <div style={{ transform: 'scale(1.15)', transformOrigin: 'top center', padding: '20px 0', width: MAP_W * 1.15, height: MAP_H * 1.15, flexShrink: 0 }}>
+      <div className="mx-auto" style={{ transform: 'scale(1.15)', transformOrigin: 'top center', padding: '20px 0', width: MAP_W * 1.15, height: MAP_H * 1.15, flexShrink: 0 }}>
         <div 
           ref={contentRef}
           id="mapa-31-andar-content"
