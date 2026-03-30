@@ -551,8 +551,8 @@ export function RHMapaAndar31({
 
       {/* SELECTION PROPERTIES INSPECTOR (FLOTING RIGHT) */}
       {isEditMode && selectedIds.length > 0 && activeTool === 'select' && (
-        <div className="sticky top-4 right-4 z-50 pointer-events-none self-end h-0 float-right mr-4 mt-4">
-          <div className="bg-white p-3 pt-4 rounded-2xl shadow-xl shadow-black/10 border border-gray-200 w-64 pointer-events-auto animate-in slide-in-from-right-4 fade-in duration-200">
+        <div className="fixed top-28 right-12 z-[200] pointer-events-none">
+          <div className="bg-white p-3 pt-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.16)] border border-gray-200 w-64 pointer-events-auto animate-in slide-in-from-right-4 fade-in duration-200 max-h-[80vh] overflow-y-auto custom-scrollbar">
             {selectedIds.length > 1 ? (
                 // BATCH ACTIONS
                 <div className="flex flex-col gap-3">
