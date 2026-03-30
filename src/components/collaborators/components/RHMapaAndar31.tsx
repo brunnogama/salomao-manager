@@ -1,24 +1,29 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
-import { User, MapPin } from 'lucide-react';
+import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save } from 'lucide-react';
 import { motion, PanInfo } from 'framer-motion';
+
+export interface MapElement {
+  id: string; // uuid
+  type: 'wall' | 'line' | 'seat' | 'text';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  custom_data?: {
+    postoId?: string; // e.g. "S01"
+    seatType?: string; // e.g. "SÊNIOR"
+    textValue?: string; // for labels
+  }
+}
 
 interface FloorPlanProps {
   collaborators: Collaborator[];
-  seatLayoutOverrides?: Record<string, { map_x: number, map_y: number }>;
+  mapElements: MapElement[]; // new prop containing the entire map config
   isEditMode?: boolean;
   onAssignSeat: (collaboratorId: string, seatId: string) => void;
   onRemoveSeat: (collaboratorId: string) => void;
-  onUpdateSeatCoordinates?: (seatId: string, map_x: number, map_y: number) => void;
-}
-
-interface SeatDef {
-  id: string;
-  type: string;
-  left: number; // pixels
-  top: number; //  pixels
-  width: number; // pixels
-  height: number; // pixels
+  onSaveMap: (elements: MapElement[]) => void;
 }
 
 const W_STD = 75;
@@ -26,131 +31,99 @@ const H_STD = 40;
 const MAP_W = 1700;
 const MAP_H = 1000;
 
-function generateBlock(prefix: string, type: string, count: number, startId: number, startX: number, startY: number, cols: number = 2, rows: number = 4, gapX: number = 20) {
-  return Array.from({length: count}).map((_, i) => {
-    const idNum = startId + i;
-    const itemsPerBlock = cols * rows; 
-    const block = Math.floor(i / itemsPerBlock);
-    const inBlock = i % itemsPerBlock;
-    
-    // COLUMN-MAJOR
-    const col = Math.floor(inBlock / rows);
-    const row = inBlock % rows;
-    
-    return {
-      id: `${prefix}${String(idNum).padStart(2,'0')}`, type,
-      left: startX + block * (cols * W_STD + gapX) + col * W_STD,
-      top: startY + row * H_STD,
-      width: W_STD, height: H_STD
-    };
-  });
-}
-
-const SEATS_31_ANDAR: SeatDef[] = [
-  // S01-S15 (5 salas x 3 postos)
-  ...Array.from({length: 15}).map((_, i) => {
-    const idNum = i + 1;
-    const room = Math.floor(i / 3);
-    const pos = i % 3; // 0=Top-Left, 1=Bottom-Left, 2=Right
-    return {
-      id: `S${String(idNum).padStart(2,'0')}`, type: 'SÊNIOR',
-      left: pos === 2 ? 80 : 20, 
-      top: 40 + room * 130 + (pos === 0 ? 0 : pos === 1 ? 55 : 30), 
-      width: 60, height: 45
-    };
-  }),
-
-  // J01-J12 Left Corridor
-  ...Array.from({length: 12}).map((_, i) => {
-    const idNum = i + 1; 
-    const isOdd = idNum % 2 !== 0; 
-    const col = isOdd ? 1 : 0;
-    const row = Math.floor((idNum - 1) / 2); 
-    return {
-      id: `J${String(idNum).padStart(2,'0')}`, type: 'JÚNIOR',
-      left: 20 + col * W_STD, top: 720 + row * H_STD, width: W_STD, height: H_STD
-    };
-  }),
-
-  { id: 'SC01', type: 'SÓCIO', left: 180, top: 40, width: 90, height: 60 },
-
-  // Blocos Centrais (Column Major)
-  ...generateBlock('J', 'JÚNIOR', 16, 13, 220, 680, 2, 4, 30),
-  ...generateBlock('E', 'ESTAGIÁRIO', 40, 1, 220 + (2 * W_STD + 30) * 2, 680, 2, 4, 10), // E01-E40 juntos com gap 10
-  ...generateBlock('J', 'JÚNIOR', 16, 29, 220 + (2 * W_STD + 30) * 2 + (10 * W_STD + 10 * 4) + 20, 680, 2, 4, 30),
-
-  // Plenos (P01-P24)
-  // 3 blocos de 8 posições. Pares em cima, Ímpares embaixo.
-  ...Array.from({length: 24}).map((_, i) => {
-    const idNum = i + 1;
-    const block = Math.floor((idNum - 1) / 8);
-    const colDentroDoBloco = Math.floor((idNum - 1) / 2) % 4;
-    const isTopRow = (idNum % 2 === 0);
-    const row = isTopRow ? 0 : 1;
-    
-    return {
-      id: `P${String(idNum).padStart(2,'0')}`, type: 'PLENO',
-      left: 220 + block * (4 * W_STD + 30) + colDentroDoBloco * W_STD, 
-      top: 880 + row * H_STD, 
-      width: W_STD, height: H_STD
-    }
-  }),
-
-  // A01-A22 (Coluna Direita, com GAP reduzido de 400px)
-  ...Array.from({length: 22}).map((_, i) => {
-    const idNum = i + 1;
-    const isOdd = idNum % 2 !== 0; 
-    const col = isOdd ? 0 : 1;
-    const row = 10 - Math.floor((idNum - 1) / 2); 
-    return {
-      id: `A${String(idNum).padStart(2,'0')}`, type: 'ADMINISTRATIVO',
-      left: 1480 + col * W_STD, 
-      top: 540 + row * H_STD, 
-      width: W_STD, height: H_STD
-    }
-  }),
-
-  // S16-S18 Encartados (Shift 400px pra esq)
-  { id: 'S16', type: 'SÊNIOR', left: 1140, top: 40, width: W_STD + 15, height: 60 },
-  { id: 'S17', type: 'SÊNIOR', left: 1140, top: 120, width: W_STD + 15, height: 60 },
-  { id: 'S18', type: 'SÊNIOR', left: 1240, top: 120, width: W_STD + 15, height: 60 },
-
-  // Corredor Direito (Shift 400px)
-  { id: 'CONS01',   type: 'CONSULTOR', left: 1480, top: 40,  width: W_STD * 2, height: 60 },
-  { id: 'SC02',     type: 'SÓCIO',     left: 1480, top: 110, width: W_STD * 2, height: 70 },
-  { id: 'S19', type: 'SÊNIOR', left: 1480, top: 210, width: W_STD * 2, height: 60 },
-  { id: 'S20', type: 'SÊNIOR', left: 1480, top: 280, width: W_STD * 2, height: 60 },
-  { id: 'S21', type: 'SÊNIOR', left: 1480, top: 350, width: W_STD * 2, height: 60 },
-];
-
 export function RHMapaAndar31({ 
   collaborators, 
-  seatLayoutOverrides = {},
+  mapElements,
   isEditMode = false,
   onAssignSeat, 
   onRemoveSeat,
-  onUpdateSeatCoordinates
+  onSaveMap
 }: FloorPlanProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
+  // STUDIO MODE STATE
+  const [elements, setElements] = useState<MapElement[]>([]);
+  const [activeTool, setActiveTool] = useState<'select' | 'wall' | 'line' | 'seat' | 'text'>('select');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+
+  // Sync props -> state on load if not editing
+  useEffect(() => {
+    if (!unsavedChanges) {
+      setElements(mapElements || []);
+    }
+  }, [mapElements, unsavedChanges]);
+
+  // Click handler to draw elements
+  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isEditMode) return;
+    
+    // Convert click coordinates to relative position inside the scaled map
+    const rect = contentRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    // We take into account the 1.15 scale defined on the wrapper
+    const scale = 1.15;
+    const clickX = (e.clientX - rect.left) / scale;
+    const clickY = (e.clientY - rect.top) / scale;
+
+    // Only drop if we are using a drawing tool
+    if (activeTool === 'select') {
+        setSelectedId(null);
+        return;
+    }
+
+    const newEl: MapElement = {
+        id: crypto.randomUUID(),
+        type: activeTool,
+        x: Math.round(clickX),
+        y: Math.round(clickY),
+        width: activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : (activeTool === 'seat' ? W_STD : 100)),
+        height: activeTool === 'wall' ? 100 : (activeTool === 'line' ? 2 : (activeTool === 'seat' ? H_STD : 30)),
+        custom_data: activeTool === 'seat' ? { postoId: 'NOVO', seatType: 'PLENO' } : (activeTool === 'text' ? { textValue: 'Rótulo' } : {})
+    }
+
+    setElements(prev => [...prev, newEl]);
+    setSelectedId(newEl.id);
+    setActiveTool('select');
+    setUnsavedChanges(true);
   };
+
+  const updateElement = (id: string, updates: Partial<MapElement>) => {
+      setElements(prev => prev.map(el => el.id === id ? { ...el, ...updates } : el));
+      setUnsavedChanges(true);
+  };
+
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo, el: MapElement) => {
+    if (!isEditMode) return;
+    const finalLeft = Math.round(el.x + info.offset.x);
+    const finalTop = Math.round(el.y + info.offset.y);
+    updateElement(el.id, { x: finalLeft, y: finalTop });
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!selectedId) return;
+      setElements(prev => prev.filter(el => el.id !== selectedId));
+      setSelectedId(null);
+      setUnsavedChanges(true);
+  };
+
+  const handleSave = () => {
+      onSaveMap(elements);
+      setUnsavedChanges(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); };
 
   const handleDropFromList = (e: React.DragEvent, seatId: string) => {
     e.preventDefault();
     if (isEditMode) return; 
     const colabId = e.dataTransfer.getData('colabId');
-    if (colabId) {
+    if (colabId && seatId && seatId !== 'NOVO') {
       onAssignSeat(colabId, seatId);
     }
-  };
-
-  const handleSeatDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo, seatId: string, baseLeft: number, baseTop: number) => {
-    if (!isEditMode || !onUpdateSeatCoordinates) return;
-    const finalLeft = Math.round(baseLeft + info.offset.x);
-    const finalTop = Math.round(baseTop + info.offset.y);
-    onUpdateSeatCoordinates(seatId, finalLeft, finalTop);
   };
 
   const seatsMap = useMemo(() => {
@@ -170,211 +143,271 @@ export function RHMapaAndar31({
     return r.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'Advogado';
   };
 
+  const selectedEl = elements.find(el => el.id === selectedId);
+
   return (
     <div 
       ref={containerRef}
-      className={`w-full relative flex justify-center items-start bg-gray-50 border border-gray-200 rounded-lg shadow-inner overflow-auto custom-scrollbar transition-all ${isEditMode ? 'ring-4 ring-blue-500/30' : ''}`}
-      style={{ minHeight: '500px', maxHeight: '80vh', touchAction: 'pan-x pan-y' }}
+      className={`w-full relative flex justify-center items-start bg-gray-50 border border-gray-200 rounded-lg shadow-inner overflow-auto custom-scrollbar transition-all ${isEditMode ? 'ring-4 ring-blue-500/30 min-h-[70vh]' : 'min-h-[500px] h-[80vh]'}`}
     >
+      {/* STUDIO TOOLBAR */}
       {isEditMode && (
-        <div className="sticky top-4 left-4 z-50 bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg shadow-blue-500/30 flex items-center gap-2 pointer-events-none">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-          </span>
-          Modo Design Ativo - Arraste as mesas para reposicionar
+        <div className="sticky top-4 left-4 z-50 flex flex-col gap-2 pointer-events-none">
+            
+            {/* Main Tools Container */}
+            <div className="bg-white p-2 rounded-2xl shadow-xl shadow-blue-900/10 border border-blue-100 flex items-center gap-1.5 pointer-events-auto">
+                {/* TOOL: SELECT */}
+                <button onClick={() => setActiveTool('select')} className={`p-2.5 rounded-xl transition-all ${activeTool === 'select' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-100'}`} title="Selecionar / Mover">
+                    <MousePointer2 className="w-5 h-5" />
+                </button>
+                <div className="w-px h-8 bg-gray-100 mx-1"></div>
+
+                {/* TOOL: WALL */}
+                <button onClick={() => setActiveTool('wall')} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${activeTool === 'wall' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+                    <Square className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Sala</span>
+                </button>
+
+                {/* TOOL: LINE */}
+                <button onClick={() => setActiveTool('line')} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${activeTool === 'line' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+                    <Minus className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Linha</span>
+                </button>
+
+                {/* TOOL: SEAT */}
+                <button onClick={() => setActiveTool('seat')} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${activeTool === 'seat' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+                    <Users className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Posto</span>
+                </button>
+
+                <div className="w-px h-8 bg-gray-100 mx-1"></div>
+
+                {/* ACTION: SAVE */}
+                <button onClick={handleSave} disabled={!unsavedChanges} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${unsavedChanges ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
+                    <Save className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide font-black">Salvar Mapa</span>
+                </button>
+            </div>
+
+            {/* SELECTION PROPERTIES INSPECTOR */}
+            {selectedEl && activeTool === 'select' && (
+                <div className="bg-white p-3 pt-4 rounded-2xl shadow-xl shadow-black/10 border border-gray-200 w-64 pointer-events-auto mt-2 animate-in slide-in-from-left-4 fade-in duration-200">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
+                        <span className="text-xs font-black text-gray-800 uppercase tracking-widest bg-gray-100 px-2 py-1 rounded-md">
+                            {selectedEl.type === 'wall' ? 'Parede / Sala' : selectedEl.type === 'line' ? 'Divisória' : 'Posto (Mesa)'}
+                        </span>
+                        <button onClick={handleDelete} className="p-1.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    {/* Generics: W / H */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="flex flex-col gap-1">
+                            <label className="text-[10px] uppercase font-bold text-gray-400">Largura (px)</label>
+                            <input type="number" value={selectedEl.width} onChange={e => updateElement(selectedId!, { width: parseInt(e.target.value) || 10 })} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="text-[10px] uppercase font-bold text-gray-400">Altura (px)</label>
+                            <input type="number" value={selectedEl.height} onChange={e => updateElement(selectedId!, { height: parseInt(e.target.value) || 10 })} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50" />
+                        </div>
+                    </div>
+
+                    {/* Specifics: Seat Fields */}
+                    {selectedEl.type === 'seat' && (
+                        <div className="flex flex-col gap-3">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] uppercase font-bold text-indigo-500">ID do Posto (Ex: S01)</label>
+                                <input type="text" value={selectedEl.custom_data?.postoId || ''} onChange={e => updateElement(selectedId!, { custom_data: { ...selectedEl.custom_data, postoId: e.target.value.toUpperCase() } })} className="w-full border border-indigo-200 rounded-lg px-2 py-1.5 text-sm font-black text-indigo-900 bg-indigo-50 focus:outline-none focus:bg-white" />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] uppercase font-bold text-gray-400">Tipo / Hierarquia</label>
+                                <select 
+                                    value={selectedEl.custom_data?.seatType || 'PLENO'} 
+                                    onChange={e => updateElement(selectedId!, { custom_data: { ...selectedEl.custom_data, seatType: e.target.value } })}
+                                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 focus:outline-none"
+                                >
+                                    <option value="SÓCIO">SÓCIO</option>
+                                    <option value="CONSULTOR">CONSULTOR</option>
+                                    <option value="SÊNIOR">SÊNIOR</option>
+                                    <option value="PLENO">PLENO</option>
+                                    <option value="JÚNIOR">JÚNIOR</option>
+                                    <option value="ESTAGIÁRIO">ESTAGIÁRIO</option>
+                                    <option value="ADMINISTRATIVO">ADMINISTRATIVO</option>
+                                </select>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
       )}
 
       {/* Wrapper de Escala para Garantir Legibilidade Preservando a Matemática Base */}
       <div style={{ transform: 'scale(1.15)', transformOrigin: 'top center', padding: '20px 0', width: MAP_W * 1.15, height: MAP_H * 1.15, flexShrink: 0 }}>
         <div 
+          ref={contentRef}
           id="mapa-31-andar-content"
-          className="relative bg-white select-none rounded-xl shadow-sm ring-1 ring-gray-200 mx-auto"
-          style={{ width: MAP_W, height: MAP_H }}
+          onClick={handleCanvasClick}
+          className={`relative bg-white select-none rounded-xl shadow-sm ring-1 ring-gray-200 mx-auto ${activeTool !== 'select' && isEditMode ? 'cursor-crosshair bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]' : ''}`}
+          style={{ width: MAP_W, height: MAP_H, overflow: 'hidden' }}
         >
-          {/* Linhas Estruturais do CSS com 400px Shift na Direita */}
-          <div className="absolute inset-0 z-0 pointer-events-none">
-            {/* Left Seniores Rooms */}
-            {Array.from({length: 5}).map((_, i) => (
-              <div key={`room-s-${i}`} className="absolute left-[15px] w-[140px] h-[130px] border border-black" style={{ top: `${35 + i * 130}px` }}></div>
-            ))}
-            
-            {/* Decorative Rooms Extra */}
-            <div className="absolute top-[800px] left-[15px] w-[140px] h-[50px] border border-black flex items-center justify-center">
-               <span className="text-[12px] font-bold">Cell</span>
-            </div>
-            <div className="absolute top-[850px] left-[15px] w-[140px] h-[70px] border border-t-0 border-black flex items-center justify-center">
-               <span className="text-[12px] font-bold text-center leading-tight">Banheiro<br/>Feminino</span>
-            </div>
-  
-            <div className="absolute top-[880px] left-[1480px] w-[150px] h-[80px] border border-black flex items-center justify-center">
-               <span className="text-[12px] font-bold text-center">Sala de Reunião 5</span>
-            </div>
-            <div className="absolute top-[880px] left-[1630px] w-[50px] h-[80px] border border-l-0 border-black flex items-center justify-center">
-               <span className="text-[10px] font-bold text-center leading-tight rotate-90">Banheiro<br/>Masc</span>
-            </div>
-            
-            {/* Right Consultant/Senior Rooms */}
-            {/* Sala 1 e 2 independentes */}
-            <div className="absolute left-[1480px] w-[150px] h-[70px] border border-black" style={{ top: '35px' }}></div>
-            <div className="absolute left-[1480px] w-[150px] h-[80px] border border-black" style={{ top: '105px' }}></div>
-            <div className="absolute left-[1630px] w-[50px] h-[150px] border border-black border-l-0" style={{ top: '35px' }}></div>
-            
-            {/* SALA UNIFICADA para S19, S20, S21 */}
-            <div className="absolute left-[1480px] w-[150px] h-[240px] border border-black" style={{ top: '185px' }}></div>
-  
-            {/* Central Area Left */}
-            <div className="absolute top-[35px] left-[165px] w-[750px] h-[1px] bg-black" />
-            <div className="absolute top-[650px] left-[165px] w-[750px] h-[1px] bg-black" />
-            <div className="absolute top-[35px] left-[165px] w-[1px] h-[615px] bg-black" />
-            <div className="absolute top-[35px] left-[915px] w-[1px] h-[615px] bg-black" />
-            
-            {/* SC01 Walls inside Left Area */}
-            <div className="absolute top-[120px] left-[165px] w-[120px] h-[1px] bg-black" />
-            <div className="absolute top-[35px] left-[285px] w-[1px] h-[85px] bg-black" />
-  
-            {/* Central Area Right - Gap Shift Applied (-400X) */}
-            <div className="absolute top-[35px] left-[550px] w-[810px] h-[1px] bg-black" />
-            <div className="absolute top-[650px] left-[550px] w-[810px] h-[1px] bg-black" />
-            <div className="absolute top-[35px] left-[550px] w-[1px] h-[615px] bg-black" />
-            <div className="absolute top-[35px] left-[1360px] w-[1px] h-[615px] bg-black" />
-            
-            {/* S16-S18 Walls inside Right Area */}
-            <div className="absolute top-[200px] left-[1130px] w-[230px] h-[1px] bg-black" />
-            <div className="absolute top-[35px] left-[1130px] w-[1px] h-[165px] bg-black" />
-            <div className="absolute top-[35px] left-[1220px] w-[1px] h-[165px] bg-black" />
-          </div>
-  
-          {SEATS_31_ANDAR.map(seat => {
-            const occupant = seatsMap.get(seat.id.toUpperCase());
-            const overrideInfo = seatLayoutOverrides[seat.id];
-            const currentLeft = overrideInfo ? overrideInfo.map_x : seat.left;
-            const currentTop = overrideInfo ? overrideInfo.map_y : seat.top;
-  
-            return (
-              <motion.div
-                key={seat.id}
-                drag={isEditMode}
-                dragMomentum={false}
-                onDragEnd={(e, info) => handleSeatDragEnd(e, info, seat.id, currentLeft, currentTop)}
-                style={{
-                  position: 'absolute',
-                  left: currentLeft,
-                  top: currentTop,
-                  width: seat.width,
-                  height: seat.height,
-                  zIndex: isEditMode ? 40 : 10,
-                  x: 0, 
-                  y: 0 
-                }}
-                onDragOver={handleDragOver}
-                onDrop={(e: any) => handleDropFromList(e, seat.id)}
-                className={`group ${isEditMode ? 'cursor-grab active:cursor-grabbing hover:ring-2 hover:ring-blue-500 rounded-sm bg-white/50 backdrop-blur-sm' : ''}`}
-              >
-                {/* Oculta o Tooltip no isEditMode */}
-                {!isEditMode && (
-                  <div 
-                    className="absolute bottom-full left-[50%] mb-2.5 w-48 bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] ring-1 ring-gray-100 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex flex-col items-center p-3 z-50 origin-bottom"
-                    style={{ transform: `translateX(-50%)` }}
-                  >
-                    {occupant ? (
-                      <>
-                        {occupant.foto_url || occupant.photo_url ? (
-                          <img src={occupant.foto_url || occupant.photo_url} alt={occupant.name} className="w-12 h-12 rounded-full object-cover shadow-sm mb-2 border-2 border-gray-100" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-2 shadow-sm">
-                            <User className="w-5 h-5 text-gray-400" />
-                          </div>
-                        )}
-                        <p className="text-xs font-bold text-gray-800 text-center leading-tight mb-1">{occupant.name}</p>
-                        <p className="text-[9px] font-medium text-gray-500 text-center uppercase tracking-wider bg-gray-100 px-2 py-0.5 rounded-full">{occupant.roles?.name || occupant.role}</p>
-                      </>
-                    ) : (
-                      <>
-                        <MapPin className="w-8 h-8 text-gray-200 mb-2" />
-                        <p className="text-xs font-bold text-gray-400 text-center uppercase">Posto Livre</p>
-                      </>
-                    )}
-                    <div className="w-full h-px bg-gray-100 my-2"></div>
-                    <p className="text-[10px] font-black text-[#1e3a8a] uppercase">{seat.id} • {seat.type}</p>
-                    <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-b border-r border-gray-200 rotate-45"></div>
-                  </div>
-                )}
-  
-                {/* EXATA Fidelidade ao Desenho do Mapa c/ Botão X e Layout Compacto */}
-                <div className="flex flex-col flex-nowrap items-center pt-0.5 justify-start w-full h-full p-[1px] border border-black bg-white group-hover:bg-[#1e3a8a]/5 transition-colors overflow-hidden">
-                  
-                  {occupant ? (
-                    <>
-                      {/* Botão X para retirar do posto */}
-                      {!isEditMode && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveSeat(String(occupant.id));
-                          }}
-                          className="absolute -top-[5px] -right-[5px] w-4 h-4 bg-red-500 text-white rounded-full hidden group-hover:flex items-center justify-center cursor-pointer shadow-md hover:bg-red-600 border border-white transition-colors z-[60]"
-                          title="Remover e colocar Sem Posto"
-                        >
-                          <span className="text-[10px] leading-none mb-0.5 ml-[1px] font-bold">x</span>
-                        </button>
-                      )}
-  
-                      {/* Foto Reduzida Pura */}
-                      <div className="w-[18px] h-[18px] rounded-full overflow-hidden shrink-0 shadow-sm border border-gray-100 bg-gray-50 flex items-center justify-center">
-                        {occupant.foto_url || occupant.photo_url ? (
-                          <img src={occupant.foto_url || occupant.photo_url} className="w-full h-full object-cover" alt="" />
-                        ) : (
-                          <User className="w-3 h-3 text-gray-400" />
-                        )}
-                      </div>
-                      
-                      {/* Nome Abrev */}
-                      <span className="block text-[7.5px] mt-0.5 font-bold text-gray-900 text-center leading-[1.1] w-full truncate px-0.5 shrink-0">
-                        {(() => {
-                           const parts = occupant.name.split(' ');
-                           let finalName = parts[0];
-                           if (parts.length > 1 && finalName.length <= 8) {
-                             finalName += ` ${parts[parts.length-1].charAt(0)}.`;
-                           }
-                           return finalName;
-                        })()}
-                      </span>
-                      
-                      {/* Cargo bem leve */}
-                      <span className="block text-[5.5px] font-medium text-gray-500 uppercase mt-[1px] w-full text-center truncate px-0.5 shrink-0">
-                        {getShortRole(occupant.roles?.name || occupant.role || '')}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className={`block text-[10px] mt-0.5 font-black leading-none mb-0.5 ${seat.type.includes('ADMINISTRATIVO') || seat.type.includes('ADM') ? 'text-purple-700' : seat.type === 'SÊNIOR' || seat.type === 'SÓCIO' ? 'text-red-600' : 'text-[#1e3a8a]'} opacity-70`}>
-                        {seat.id}
-                      </span>
-                      <span className={`block text-[6.5px] font-bold tracking-widest uppercase text-center w-full mt-0.5 leading-none opacity-60 ${seat.type === 'SÓCIO' ? 'text-red-700' : seat.type === 'SÊNIOR' ? 'text-red-600' : seat.type === 'ESTAGIÁRIO' ? 'text-orange-600' : seat.type === 'ADMINISTRATIVO' ? 'text-purple-700' : seat.type === 'CONSULTOR' ? 'text-amber-600' : seat.type === 'JÚNIOR' ? 'text-blue-600' : 'text-emerald-600'}`}>
-                        {seat.type}
-                      </span>
-                    </>
-                  )}
-                  
-                  {/* Overlay HTML5 Drag para arrastar para fora - Evita Conflito com Botão X */}
-                  {occupant && !isEditMode && (
-                    <div 
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('colabId', String(occupant.id));
-                      }}
-                      onDoubleClick={() => onRemoveSeat(String(occupant.id))}
-                      className="absolute inset-0 cursor-grab active:cursor-grabbing pointer-events-auto border border-transparent group-hover:border-blue-500/30"
-                      title="Arraste de volta para a lista ou use o botão X"
-                      style={{ zIndex: 10 /* Abaixo do botão X */ }}
+          {elements.map(el => {
+              
+            const isSelected = selectedId === el.id;
+            const selectionClasses = isSelected && isEditMode ? 'ring-2 ring-blue-500 ring-offset-1 shadow-lg' : '';
+
+            // RENDER WALL
+            if (el.type === 'wall') {
+                return (
+                    <motion.div
+                        key={el.id}
+                        drag={isEditMode && activeTool === 'select'}
+                        dragMomentum={false}
+                        onDragEnd={(e, info) => handleDragEnd(e, info, el)}
+                        onClick={(e) => { e.stopPropagation(); if (activeTool==='select') setSelectedId(el.id); }}
+                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, x: 0, y: 0 }}
+                        className={`border-2 border-gray-800 bg-gray-50/50 ${selectionClasses}`}
                     />
-                  )}
-                </div>
-              </motion.div>
-            );
+                );
+            }
+
+            // RENDER LINE
+            if (el.type === 'line') {
+                return (
+                    <motion.div
+                        key={el.id}
+                        drag={isEditMode && activeTool === 'select'}
+                        dragMomentum={false}
+                        onDragEnd={(e, info) => handleDragEnd(e, info, el)}
+                        onClick={(e) => { e.stopPropagation(); if (activeTool==='select') setSelectedId(el.id); }}
+                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, x: 0, y: 0 }}
+                        className={`bg-gray-800 ${selectionClasses} ${isSelected ? 'h-[4px] -my-[1px]' : ''}`}
+                    />
+                );
+            }
+
+            // RENDER SEAT
+            if (el.type === 'seat') {
+                const postoId = el.custom_data?.postoId || 'NOVO';
+                const seatType = el.custom_data?.seatType || 'PLENO';
+                const occupant = seatsMap.get(postoId.toUpperCase());
+
+                return (
+                  <motion.div
+                    key={el.id}
+                    drag={isEditMode && activeTool === 'select'}
+                    dragMomentum={false}
+                    onDragEnd={(e, info) => handleDragEnd(e, info, el)}
+                    onClick={(e) => { e.stopPropagation(); if (activeTool==='select') setSelectedId(el.id); }}
+                    style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, zIndex: isEditMode ? 40 : 10, x: 0, y: 0 }}
+                    onDragOver={handleDragOver}
+                    onDrop={(e: any) => handleDropFromList(e, postoId)}
+                    className={`group ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing hover:ring-2 hover:ring-blue-500 rounded-sm' : ''}`}
+                  >
+                    {!isEditMode && postoId !== 'NOVO' && (
+                      <div 
+                        className="absolute bottom-full left-[50%] mb-2.5 w-48 bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] ring-1 ring-gray-100 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex flex-col items-center p-3 z-50 origin-bottom"
+                        style={{ transform: `translateX(-50%)` }}
+                      >
+                        {occupant ? (
+                          <>
+                            {occupant.foto_url || occupant.photo_url ? (
+                              <img src={occupant.foto_url || occupant.photo_url} alt={occupant.name} className="w-12 h-12 rounded-full object-cover shadow-sm mb-2 border-2 border-gray-100" />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-2 shadow-sm">
+                                <User className="w-5 h-5 text-gray-400" />
+                              </div>
+                            )}
+                            <p className="text-xs font-bold text-gray-800 text-center leading-tight mb-1">{occupant.name}</p>
+                            <p className="text-[9px] font-medium text-gray-500 text-center uppercase tracking-wider bg-gray-100 px-2 py-0.5 rounded-full">{occupant.roles?.name || occupant.role}</p>
+                          </>
+                        ) : (
+                          <>
+                            <MapPin className="w-8 h-8 text-gray-200 mb-2" />
+                            <p className="text-xs font-bold text-gray-400 text-center uppercase">Posto Livre</p>
+                          </>
+                        )}
+                        <div className="w-full h-px bg-gray-100 my-2"></div>
+                        <p className="text-[10px] font-black text-[#1e3a8a] uppercase">{postoId} • {seatType}</p>
+                        <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-b border-r border-gray-200 rotate-45"></div>
+                      </div>
+                    )}
+      
+                    {/* Visual UI (Compact Black-Border Exact Representation) */}
+                    <div className="flex flex-col flex-nowrap items-center pt-0.5 justify-start w-full h-full p-[1px] border border-black bg-white group-hover:bg-[#1e3a8a]/5 transition-colors overflow-hidden">
+                      {occupant ? (
+                        <>
+                          {!isEditMode && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRemoveSeat(String(occupant.id));
+                              }}
+                              className="absolute -top-[5px] -right-[5px] w-4 h-4 bg-red-500 text-white rounded-full hidden group-hover:flex items-center justify-center cursor-pointer shadow-md hover:bg-red-600 border border-white transition-colors z-[60]"
+                              title="Remover e colocar Sem Posto"
+                            >
+                              <span className="text-[10px] leading-none mb-0.5 ml-[1px] font-bold">x</span>
+                            </button>
+                          )}
+      
+                          <div className="w-[18px] h-[18px] rounded-full overflow-hidden shrink-0 shadow-sm border border-gray-100 bg-gray-50 flex items-center justify-center">
+                            {occupant.foto_url || occupant.photo_url ? (
+                              <img src={occupant.foto_url || occupant.photo_url} className="w-full h-full object-cover" alt="" />
+                            ) : (
+                              <User className="w-3 h-3 text-gray-400" />
+                            )}
+                          </div>
+                          <span className="block text-[7.5px] mt-0.5 font-bold text-gray-900 text-center leading-[1.1] w-full truncate px-0.5 shrink-0">
+                            {(() => {
+                               const parts = occupant.name.split(' ');
+                               let finalName = parts[0];
+                               if (parts.length > 1 && finalName.length <= 8) {
+                                 finalName += ` ${parts[parts.length-1].charAt(0)}.`;
+                               }
+                               return finalName;
+                            })()}
+                          </span>
+                          <span className="block text-[5.5px] font-medium text-gray-500 uppercase mt-[1px] w-full text-center truncate px-0.5 shrink-0">
+                            {getShortRole(occupant.roles?.name || occupant.role || '')}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className={`block text-[10px] mt-0.5 font-black leading-none mb-0.5 ${seatType.includes('ADMINISTRATIVO') || seatType.includes('ADM') ? 'text-purple-700' : seatType === 'SÊNIOR' || seatType === 'SÓCIO' ? 'text-red-600' : 'text-[#1e3a8a]'} opacity-70`}>
+                            {postoId}
+                          </span>
+                          <span className={`block text-[6.5px] font-bold tracking-widest uppercase text-center w-full mt-0.5 leading-none opacity-60 ${seatType === 'SÓCIO' ? 'text-red-700' : seatType === 'SÊNIOR' ? 'text-red-600' : seatType === 'ESTAGIÁRIO' ? 'text-orange-600' : seatType === 'ADMINISTRATIVO' ? 'text-purple-700' : seatType === 'CONSULTOR' ? 'text-amber-600' : seatType === 'JÚNIOR' ? 'text-blue-600' : 'text-emerald-600'}`}>
+                            {seatType}
+                          </span>
+                        </>
+                      )}
+                      
+                      {occupant && !isEditMode && (
+                        <div 
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('colabId', String(occupant.id));
+                          }}
+                          onDoubleClick={() => onRemoveSeat(String(occupant.id))}
+                          className="absolute inset-0 cursor-grab active:cursor-grabbing pointer-events-auto border border-transparent group-hover:border-blue-500/30"
+                          title="Arraste de volta para a lista ou use o botão X"
+                          style={{ zIndex: 10 }}
+                        />
+                      )}
+                    </div>
+                  </motion.div>
+                );
+            }
+
+            return null;
           })}
+
+          {/* Fallback caso não haja NADA no modo edição ainda */}
+          {elements.length === 0 && isEditMode && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center opacity-30 pointer-events-none">
+              <Square className="w-20 h-20 text-gray-400 mb-4" />
+              <p className="text-xl font-black text-gray-500">CANVAS LIMPO</p>
+              <p className="text-sm font-bold text-gray-400 mt-2">Use as ferramentas para começar a desenhar as salas e linhas.</p>
+            </div>
+          )}
+
         </div>
       </div>
     </div>

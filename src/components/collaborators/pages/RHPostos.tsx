@@ -6,7 +6,7 @@ import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { getSegment } from '../utils/rhChartUtils';
-import { RHMapaAndar31 } from '../components/RHMapaAndar31';
+import { RHMapaAndar31, MapElement } from '../components/RHMapaAndar31';
 import { Edit3 } from 'lucide-react';
 
 interface Posto {
@@ -31,7 +31,7 @@ export function RHPostos() {
   const [localSeatOverrides, setLocalSeatOverrides] = useState<Record<string, string>>({});
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [seatLayoutOverrides, setSeatLayoutOverrides] = useState<Record<string, { map_x: number, map_y: number }>>({});
+  const [mapElements, setMapElements] = useState<MapElement[]>([]);
 
   const { colaboradores, roles, locations: allLocations } = useColaboradores();
 
@@ -63,24 +63,22 @@ export function RHPostos() {
     setLoading(false);
   };
 
-  const fetchSeatLayouts = async () => {
+  const fetchMapElements = async () => {
     try {
-      const { data, error } = await supabase.from('rh_postos_mapa').select('*');
+      const { data, error } = await supabase.from('rh_mapa_elementos').select('*');
       if (error) {
-        console.warn('Tabela rh_postos_mapa não encontrada. O mapa usará dados hardcoded.');
+        console.warn('Tabela rh_mapa_elementos não encontrada. O mapa começará vazio.');
         return;
       }
-      const layouts: Record<string, {map_x: number, map_y: number}> = {};
-      data?.forEach(row => { layouts[row.posto_id] = { map_x: row.map_x, map_y: row.map_y }; });
-      setSeatLayoutOverrides(layouts);
+      setMapElements(data || []);
     } catch (e) {
-      console.warn('Tabela rh_postos_mapa não mapeada corretamente.', e);
+      console.warn('Erro ao buscar db do mapa.', e);
     }
   };
 
   useEffect(() => {
     fetchPostos();
-    fetchSeatLayouts();
+    fetchMapElements();
   }, []);
 
   const handleUpdate = async (id: string, field: keyof Posto, value: any) => {
@@ -233,21 +231,22 @@ export function RHPostos() {
     toast.success('Integrante removido da mesa!');
   };
 
-  const handleUpdateSeatCoordinates = async (seatId: string, map_x: number, map_y: number) => {
-    setSeatLayoutOverrides(prev => ({ ...prev, [seatId]: { map_x, map_y } }));
-    
+  const handleSaveMapElements = async (elements: MapElement[]) => {
     try {
-      const { error } = await supabase.from('rh_postos_mapa').upsert({
-        posto_id: seatId,
-        map_x,
-        map_y,
-      }, { onConflict: 'posto_id' });
+      // Deleta todos os elementos atuais (pois o builder gerencia a tela toda e repassa a nova compilação)
+      const { error: delError } = await supabase.from('rh_mapa_elementos').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       
-      if (error) {
-        toast.error('O sistema detectou que a tabela rh_postos_mapa precisa ser configurada.');
+      // Insere as novas posições
+      if (elements.length > 0) {
+        const { error: insError } = await supabase.from('rh_mapa_elementos').insert(elements);
+        if (insError) throw insError;
       }
+      
+      setMapElements(elements);
+      toast.success('Layout do mapa salvo com sucesso!');
     } catch (e) {
       console.error(e);
+      toast.error('Erro ao salvar mapa. Você rodou a Query SQL da tabela rh_mapa_elementos?');
     }
   };
 
@@ -514,11 +513,11 @@ export function RHPostos() {
 
             <RHMapaAndar31 
               collaborators={mapCollaborators}
-              seatLayoutOverrides={seatLayoutOverrides}
+              mapElements={mapElements}
               isEditMode={isEditMode}
               onAssignSeat={handleAssignSeat}
               onRemoveSeat={handleRemoveSeat}
-              onUpdateSeatCoordinates={handleUpdateSeatCoordinates}
+              onSaveMap={handleSaveMapElements}
             />
           </div>
         </div>
