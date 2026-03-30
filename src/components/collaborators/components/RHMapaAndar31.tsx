@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
-import { User, MapPin, MousePointer2, Users, Trash2, Save, Copy, ZoomIn, ZoomOut, Crop } from 'lucide-react';
+import { User, MapPin, MousePointer2, Users, Trash2, Save, Copy, ZoomIn, ZoomOut, Crop, Square, Minus, DoorOpen } from 'lucide-react';
 import { motion, PanInfo } from 'framer-motion';
 import { createPortal } from 'react-dom';
 
@@ -48,7 +48,7 @@ export function RHMapaAndar31({
   // Use a fixed natural size for the background map (e.g. 2600 x 1800)
   const [mapW, setMapW] = useState(2600); 
   const [mapH, setMapH] = useState(1800);
-  const [activeTool, setActiveTool] = useState<'select' | 'seat'>('select');
+  const [activeTool, setActiveTool] = useState<'select' | 'seat' | 'wall' | 'line' | 'door'>('select');
   const [zoomScale, setZoomScale] = useState(1.15);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectionBox, setSelectionBox] = useState<{startX: number, startY: number, curX: number, curY: number} | null>(null);
@@ -232,8 +232,12 @@ export function RHMapaAndar31({
         finalY = Math.min(drawingPath.startY, drawingPath.curY);
     }
 
-    const finalW = W_STD;
-    const finalH = H_STD;
+    let finalW = activeTool === 'seat' ? W_STD : (dx > 5 ? dx : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : 40)));
+    let finalH = activeTool === 'seat' ? H_STD : (dy > 5 ? dy : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 3 : 5)));
+
+    if (activeTool === 'line') {
+        if (finalW > finalH) finalH = 3; else finalW = 3;
+    }
 
     const newEl: MapElement = {
         id: crypto.randomUUID(),
@@ -351,9 +355,9 @@ export function RHMapaAndar31({
 
       if (el.type === 'line') {
           if (resizingElement.startW > resizingElement.startH) {
-              newH = 1; // mantem grossura horizontal
+              newH = 3; // mantem grossura horizontal
           } else {
-              newW = 1; // mantem grossura vertical
+              newW = 3; // mantem grossura vertical
           }
       }
 
@@ -454,8 +458,25 @@ export function RHMapaAndar31({
               <div className="w-px h-6 bg-gray-200 mx-0.5"></div>
 
               {/* TOOL: SEAT */}
-              <button onClick={() => setActiveTool('seat')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'seat' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-                  <Users className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide">Adicionar Novo Posto</span>
+              <button onClick={() => setActiveTool('seat')} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${activeTool === 'seat' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`} title="Adicionar Mesa/Posto (Circular)">
+                  <Users className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase tracking-wide hidden sm:inline">Mesa</span>
+              </button>
+              
+              <div className="w-px h-6 bg-gray-200 mx-0.5"></div>
+
+              {/* TOOL: WALL */}
+              <button onClick={() => setActiveTool('wall')} className={`p-2 rounded-lg transition-all ${activeTool === 'wall' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-500 hover:bg-gray-100'}`} title="Desenhar Parede / Bloco">
+                  <Square className="w-4 h-4" />
+              </button>
+
+              {/* TOOL: LINE */}
+              <button onClick={() => setActiveTool('line')} className={`p-2 rounded-lg transition-all ${activeTool === 'line' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-500 hover:bg-gray-100'}`} title="Desenhar Linha Fina">
+                  <Minus className="w-4 h-4" />
+              </button>
+
+              {/* TOOL: DOOR */}
+              <button onClick={() => setActiveTool('door')} className={`p-2 rounded-lg transition-all ${activeTool === 'door' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-500 hover:bg-gray-100'}`} title="Adicionar Porta">
+                  <DoorOpen className="w-4 h-4" />
               </button>
 
               <div className="w-px h-6 bg-gray-200 mx-1"></div>
@@ -700,10 +721,10 @@ export function RHMapaAndar31({
             height: mapH, 
             overflow: 'hidden',
             backgroundColor: '#ffffff',
-            backgroundImage: "url('/planta-baixa-31.jpg')", // Assuming you will upload 'planta-baixa-31.jpg' to public folder
-            backgroundSize: '100% 100%',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center'
+            backgroundImage: 'radial-gradient(#e5e7eb 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+            backgroundRepeat: 'repeat',
+            backgroundPosition: '0 0'
           }}
         >
           {/* SELECTION BOX (Arrastar e Multi-Selecionar) */}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Building2, Loader2, RefreshCw, MapPin, Layout, List, Printer } from 'lucide-react';
+import { Building2, Loader2, RefreshCw, MapPin, Layout, List, Printer, Maximize, Minimize } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
@@ -46,6 +46,26 @@ export function RHPostos() {
   const activeColaboradores = useMemo(() => {
     return colaboradores.filter(c => c.status === 'active');
   }, [colaboradores]);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => console.error('Error enabling fullscreen mode:', err));
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
 
   const fetchPostos = async () => {
     setLoading(true);
@@ -424,7 +444,7 @@ export function RHPostos() {
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24 overflow-y-auto no-scrollbar">
       {/* PAGE HEADER COMPLETO - Título + Actions */}
-      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500 shrink-0">
+      <div className={`flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500 shrink-0 ${isFullscreen ? 'hidden' : ''}`}>
         {/* Left: Título e Ícone */}
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
@@ -524,6 +544,15 @@ export function RHPostos() {
             >
               <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
             </button>
+            {viewMode === 'map' && (
+              <button
+                onClick={toggleFullscreen}
+                className="flex items-center justify-center w-10 h-10 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200 transition-all shadow-sm shrink-0 ml-1"
+                title="Tela Cheia"
+              >
+                <Maximize className="h-5 w-5" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -538,9 +567,9 @@ export function RHPostos() {
 
       {/* RENDERIZAR VISÃO MAPA */}
       {viewMode === 'map' && (
-        <div className="flex flex-col lg:flex-row gap-6 mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500 flex-1 min-h-[600px] overflow-hidden">
+        <div className={`flex flex-col lg:flex-row gap-6 mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500 flex-1 min-h-[600px] overflow-hidden ${isFullscreen ? 'fixed inset-0 z-[1000] bg-gray-100 p-0 m-0 h-[100dvh] w-[100dvw] gap-0 max-w-none' : ''}`}>
           {/* Lado Esquerdo: Integrantes sem mesa */}
-          {showUnassigned && (
+          {showUnassigned && !isFullscreen && (
             <div className="w-full lg:w-72 shrink-0 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[600px] lg:h-auto overflow-hidden animate-in slide-in-from-left duration-300">
               <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -619,8 +648,19 @@ export function RHPostos() {
           )}
 
           {/* Lado Direito: Mapa Principal */}
-          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 flex flex-col items-center min-w-0">
-            <div className="w-full flex justify-between items-center mb-6">
+          <div className={`flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 flex flex-col items-center min-w-0 ${isFullscreen ? 'rounded-none border-none p-0 sm:p-0 relative h-[100dvh]' : ''}`}>
+            
+            {isFullscreen && (
+               <button
+                  onClick={toggleFullscreen}
+                  className="absolute top-6 right-6 z-[2000] p-3 bg-white/90 backdrop-blur-md text-gray-800 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all group flex items-center gap-2 font-black text-xs tracking-wider"
+                  title="Sair da Tela Cheia"
+               >
+                  <Minimize className="w-6 h-6" />
+               </button>
+            )}
+
+            <div className={`w-full flex justify-between items-center mb-6 ${isFullscreen ? 'hidden' : ''}`}>
               <div className="flex items-center gap-4">
                 <h2 className="text-xl font-black text-gray-800 tracking-tight">31º Andar <span className="text-gray-400 font-medium">• Rio de Janeiro</span></h2>
                 <div id="map-toolbar-portal" className="flex items-center"></div>
