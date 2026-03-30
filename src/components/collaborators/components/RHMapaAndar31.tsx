@@ -879,17 +879,6 @@ export function RHMapaAndar31({
                       </div>
                     )}
       
-                    {/* BADGE DE IDENTIFICAÇÃO DO POSTO */}
-                    {postoId !== 'NOVO' && (
-                        <div className={`absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-[2px] rounded uppercase shadow-sm border border-black/10 flex items-center justify-center z-20 ${
-                            (seatType.includes('ADM') || seatType.includes('ADMINISTRATIVO')) ? 'bg-orange-600' : 'bg-[#1e3a8a]'
-                        }`}>
-                           <span className="text-[6.5px] font-black text-white leading-none tracking-wider">
-                             {postoId}
-                           </span>
-                        </div>
-                    )}
-
                     {/* Visual UI Otimizada: Circular Avatar Based */}
                     <div className="flex flex-col items-center justify-center w-max p-1 group">
                       
@@ -954,16 +943,25 @@ export function RHMapaAndar31({
                       {/* Nome do Ocupante Embaixo (First + Initial) */}
                       <div className="mt-3 flex flex-col items-center justify-center">
                           {occupants.length > 0 ? (
-                               <span className="block text-sm font-black text-gray-800 text-center leading-[1.1] drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)] max-w-[100px] truncate">
-                                  {(() => {
-                                     const parts = occupants[0].name.split(' ');
-                                     let finalName = parts[0];
-                                     if (parts.length > 1 && finalName.length <= 8) {
-                                       finalName += ` ${parts[parts.length-1].charAt(0)}.`;
-                                     }
-                                     return finalName;
-                                  })()}
-                               </span>
+                               <>
+                                   <span className="block text-sm font-black text-[#1e3a8a] text-center leading-[1] drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)] max-w-[100px] truncate">
+                                      {(() => {
+                                         const parts = occupants[0].name.split(' ');
+                                         let finalName = parts[0];
+                                         if (parts.length > 1 && finalName.length <= 8) {
+                                           finalName += ` ${parts[parts.length-1].charAt(0)}.`;
+                                         }
+                                         return finalName;
+                                      })()}
+                                   </span>
+                                   <span className="block text-[8px] font-bold text-gray-500 uppercase tracking-widest text-center mt-1">
+                                     {(() => {
+                                        const roleStr = occupants[0].roles?.name || occupants[0].role || '';
+                                        const cleanRole = roleStr.toLowerCase().replace('advogada', '').replace('advogado', '').trim();
+                                        return cleanRole || seatType;
+                                     })()}
+                                   </span>
+                               </>
                           ) : isVacant ? (
                                 <span className="block text-xs font-black text-amber-600 uppercase tracking-widest text-center">VAGO</span>
                           ) : (
