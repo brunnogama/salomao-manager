@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
-import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save, DoorOpen } from 'lucide-react';
+import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save, DoorOpen, GripVertical } from 'lucide-react';
 import { motion, PanInfo } from 'framer-motion';
 
 export interface MapElement {
@@ -153,12 +153,18 @@ export function RHMapaAndar31({
     >
       {/* STUDIO TOOLBAR */}
       {isEditMode && (
-        <div className="sticky top-4 left-4 z-50 flex flex-col gap-2 pointer-events-none">
-            
+        <div className="sticky top-4 left-4 z-50 pointer-events-none self-start h-0">
+          <motion.div drag dragMomentum={false} className="flex flex-col gap-2 pointer-events-auto items-start">
             {/* Main Tools Container */}
-            <div className="bg-white p-2 rounded-2xl shadow-xl shadow-blue-900/10 border border-blue-100 flex items-center gap-1.5 pointer-events-auto">
+            <div className="bg-white p-2 rounded-2xl shadow-xl shadow-blue-900/10 border border-blue-100 flex items-center gap-1.5 cursor-move">
+                {/* DRAG HANDLE */}
+                <div className="p-1 px-1.5 text-gray-400 hover:text-gray-600 active:cursor-grabbing">
+                    <GripVertical className="w-5 h-5" />
+                </div>
+                <div className="w-px h-8 bg-gray-100 mr-1"></div>
+
                 {/* TOOL: SELECT */}
-                <button onClick={() => setActiveTool('select')} className={`p-2.5 rounded-xl transition-all ${activeTool === 'select' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-100'}`} title="Selecionar / Mover">
+                <button onClick={(e) => { e.stopPropagation(); setActiveTool('select'); }} className={`p-2.5 rounded-xl transition-all ${activeTool === 'select' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-100'}`} title="Selecionar / Mover">
                     <MousePointer2 className="w-5 h-5" />
                 </button>
                 <div className="w-px h-8 bg-gray-100 mx-1"></div>
@@ -186,7 +192,7 @@ export function RHMapaAndar31({
                 <div className="w-px h-8 bg-gray-100 mx-1"></div>
 
                 {/* ACTION: SAVE */}
-                <button onClick={handleSave} disabled={!unsavedChanges} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${unsavedChanges ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
+                <button onClick={(e) => { e.stopPropagation(); handleSave(); }} disabled={!unsavedChanges} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${unsavedChanges ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
                     <Save className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide font-black">Salvar Mapa</span>
                 </button>
             </div>
@@ -242,6 +248,7 @@ export function RHMapaAndar31({
                     )}
                 </div>
             )}
+          </motion.div>
         </div>
       )}
 
