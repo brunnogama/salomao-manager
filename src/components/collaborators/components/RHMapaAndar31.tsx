@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
-import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save, DoorOpen, GripVertical } from 'lucide-react';
+import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save, DoorOpen, GripVertical, Copy } from 'lucide-react';
 import { motion, PanInfo } from 'framer-motion';
 
 export interface MapElement {
@@ -49,6 +49,7 @@ export function RHMapaAndar31({
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [drawingPath, setDrawingPath] = useState<{startX: number, startY: number, curX: number, curY: number} | null>(null);
   const [movingElement, setMovingElement] = useState<{ id: string, startX: number, startY: number, elX: number, elY: number } | null>(null);
+  const [clipboard, setClipboard] = useState<MapElement | null>(null);
 
   // Sync props -> state on load if not editing
   useEffect(() => {
@@ -56,6 +57,47 @@ export function RHMapaAndar31({
       setElements(mapElements || []);
     }
   }, [mapElements, unsavedChanges]);
+
+  // Keyboard Shortcuts (Copy & Paste & Delete)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (!isEditMode) return;
+        
+        // Ignore se estiver digitando em input
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
+
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+            if (selectedId) {
+                const el = elements.find(el => el.id === selectedId);
+                if (el) setClipboard(el);
+            }
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+            if (clipboard) {
+                const newEl: MapElement = {
+                    ...clipboard,
+                    id: crypto.randomUUID(),
+                    x: clipboard.x + 20,
+                    y: clipboard.y + 20,
+                    custom_data: clipboard.type === 'seat' ? { ...clipboard.custom_data, postoId: 'NOVO' } : { ...clipboard.custom_data }
+                };
+                setElements(prev => [...prev, newEl]);
+                setSelectedId(newEl.id);
+                setClipboard(newEl); // atualiza para que o próximo paste ande mais 20px
+                setUnsavedChanges(true);
+            }
+        }
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (selectedId) {
+                setElements(prev => prev.filter(el => el.id !== selectedId));
+                setSelectedId(null);
+                setUnsavedChanges(true);
+            }
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEditMode, selectedId, elements, clipboard]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isEditMode) return;
@@ -189,6 +231,24 @@ export function RHMapaAndar31({
       setUnsavedChanges(true);
   };
 
+  const handleDuplicate = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!selectedId) return;
+      const el = elements.find(item => item.id === selectedId);
+      if (!el) return;
+
+      const newEl: MapElement = {
+          ...el,
+          id: crypto.randomUUID(),
+          x: el.x + 20,
+          y: el.y + 20,
+          custom_data: el.type === 'seat' ? { ...el.custom_data, postoId: 'NOVO' } : { ...el.custom_data }
+      };
+      setElements(prev => [...prev, newEl]);
+      setSelectedId(newEl.id);
+      setUnsavedChanges(true);
+  };
+
   const handleSave = () => {
       onSaveMap(elements);
       setUnsavedChanges(false);
@@ -282,9 +342,14 @@ export function RHMapaAndar31({
                         <span className="text-xs font-black text-gray-800 uppercase tracking-widest bg-gray-100 px-2 py-1 rounded-md">
                             {selectedEl.type === 'wall' ? 'Parede / Sala' : selectedEl.type === 'line' ? 'Divisória' : 'Posto (Mesa)'}
                         </span>
-                        <button onClick={handleDelete} className="p-1.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex gap-1.5 items-center">
+                            <button onClick={handleDuplicate} className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white rounded-lg transition-colors" title="Duplicar (Ctrl+C / Ctrl+V)">
+                                <Copy className="w-4 h-4" />
+                            </button>
+                            <button onClick={handleDelete} className="p-1.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-colors" title="Excluir Elemento (Del)">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Generics: W / H */}
