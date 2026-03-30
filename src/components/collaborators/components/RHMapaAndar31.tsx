@@ -47,6 +47,8 @@ export function RHMapaAndar31({
   const [activeTool, setActiveTool] = useState<'select' | 'wall' | 'line' | 'seat' | 'text' | 'door'>('select');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [drawingPath, setDrawingPath] = useState<{startX: number, startY: number, curX: number, curY: number} | null>(null);
+  const [movingElement, setMovingElement] = useState<{ id: string, startX: number, startY: number, elX: number, elY: number } | null>(null);
 
   // Sync props -> state on load if not editing
   useEffect(() => {
@@ -55,39 +57,85 @@ export function RHMapaAndar31({
     }
   }, [mapElements, unsavedChanges]);
 
-  // Click handler to draw elements
-  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isEditMode) return;
     
-    // Convert click coordinates to relative position inside the scaled map
-    const rect = contentRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    // Se clicou com botão direito não desenha
+    if (e.button !== 0) return;
 
-    // We take into account the 1.15 scale defined on the wrapper
-    const scale = 1.15;
-    const clickX = (e.clientX - rect.left) / scale;
-    const clickY = (e.clientY - rect.top) / scale;
-
-    // Only drop if we are using a drawing tool
     if (activeTool === 'select') {
         setSelectedId(null);
         return;
     }
 
+    e.currentTarget.setPointerCapture(e.pointerId);
+
+    const rect = contentRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const scale = 1.15;
+    const clickX = (e.clientX - rect.left) / scale;
+    const clickY = (e.clientY - rect.top) / scale;
+
+    setDrawingPath({ startX: clickX, startY: clickY, curX: clickX, curY: clickY });
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drawingPath) return;
+
+    const rect = contentRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const scale = 1.15;
+    const curX = (e.clientX - rect.left) / scale;
+    const curY = (e.clientY - rect.top) / scale;
+
+    setDrawingPath(prev => prev ? { ...prev, curX, curY } : null);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drawingPath) return;
+
+    e.currentTarget.releasePointerCapture(e.pointerId);
+
+    const dx = Math.abs(drawingPath.curX - drawingPath.startX);
+    const dy = Math.abs(drawingPath.curY - drawingPath.startY);
+
+    let finalX, finalY, finalW, finalH;
+
+    // Se arraste foi pequeno (menos de 10px), considera clique simples para soltar padrão
+    if (dx < 10 && dy < 10) {
+        finalX = drawingPath.startX;
+        finalY = drawingPath.startY;
+        finalW = activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : (activeTool === 'seat' ? W_STD : (activeTool === 'door' ? 40 : 100)));
+        finalH = activeTool === 'wall' ? 100 : (activeTool === 'line' ? 2 : (activeTool === 'seat' ? H_STD : (activeTool === 'door' ? 5 : 30)));
+    } else {
+        // Usa as dimensões arrastadas livremente
+        finalX = Math.min(drawingPath.startX, drawingPath.curX);
+        finalY = Math.min(drawingPath.startY, drawingPath.curY);
+        finalW = dx;
+        finalH = dy;
+        
+        // Mesa não fica distorcida num retângulo gigante, mesa tem limite
+        if (activeTool === 'seat') {
+            finalW = W_STD;
+            finalH = H_STD;
+        }
+    }
+
     const newEl: MapElement = {
         id: crypto.randomUUID(),
-        type: activeTool,
-        x: Math.round(clickX),
-        y: Math.round(clickY),
-        width: activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : (activeTool === 'seat' ? W_STD : (activeTool === 'door' ? 40 : 100))),
-        height: activeTool === 'wall' ? 100 : (activeTool === 'line' ? 2 : (activeTool === 'seat' ? H_STD : (activeTool === 'door' ? 5 : 30))),
+        type: activeTool as MapElement['type'],
+        x: Math.round(finalX),
+        y: Math.round(finalY),
+        width: Math.round(finalW),
+        height: Math.round(finalH),
         custom_data: activeTool === 'seat' ? { postoId: 'NOVO', seatType: 'PLENO' } : (activeTool === 'text' ? { textValue: 'Rótulo' } : {})
-    }
+    };
 
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
     setActiveTool('select');
     setUnsavedChanges(true);
+    setDrawingPath(null);
   };
 
   const updateElement = (id: string, updates: Partial<MapElement>) => {
@@ -95,12 +143,42 @@ export function RHMapaAndar31({
       setUnsavedChanges(true);
   };
 
-  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo, el: MapElement) => {
-    if (!isEditMode) return;
-    const finalLeft = Math.round(el.x + (info.offset.x / 1.15));
-    const finalTop = Math.round(el.y + (info.offset.y / 1.15));
-    if (el.x === finalLeft && el.y === finalTop) return; // Prevent unnecessary updates
-    updateElement(el.id, { x: finalLeft, y: finalTop });
+  const handleElementPointerDown = (e: React.PointerEvent<HTMLDivElement>, el: MapElement) => {
+    if (!isEditMode || activeTool !== 'select') return;
+    e.stopPropagation();
+    setSelectedId(el.id);
+
+    const rect = contentRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const scale = 1.15;
+    const clickX = (e.clientX - rect.left) / scale;
+    const clickY = (e.clientY - rect.top) / scale;
+
+    setMovingElement({ id: el.id, startX: clickX, startY: clickY, elX: el.x, elY: el.y });
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handleElementPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!movingElement) return;
+    e.stopPropagation();
+    
+    const rect = contentRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const scale = 1.15;
+    const curX = (e.clientX - rect.left) / scale;
+    const curY = (e.clientY - rect.top) / scale;
+    
+    const dx = curX - movingElement.startX;
+    const dy = curY - movingElement.startY;
+
+    updateElement(movingElement.id, { x: Math.round(movingElement.elX + dx), y: Math.round(movingElement.elY + dy) });
+  };
+
+  const handleElementPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!movingElement) return;
+    e.stopPropagation();
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    setMovingElement(null);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -257,7 +335,9 @@ export function RHMapaAndar31({
         <div 
           ref={contentRef}
           id="mapa-31-andar-content"
-          onClick={handleCanvasClick}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
           className={`relative bg-white select-none rounded-xl shadow-sm ring-1 ring-gray-200 mx-auto ${activeTool !== 'select' && isEditMode ? 'cursor-crosshair bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]' : ''}`}
           style={{ width: MAP_W, height: MAP_H, overflow: 'hidden' }}
         >
@@ -269,14 +349,13 @@ export function RHMapaAndar31({
             // RENDER WALL
             if (el.type === 'wall') {
                 return (
-                    <motion.div
+                    <div
                         key={el.id}
-                        drag={isEditMode && activeTool === 'select'}
-                        dragMomentum={false}
-                        onDragEnd={(e, info) => handleDragEnd(e, info, el)}
-                        onClick={(e) => { e.stopPropagation(); if (activeTool==='select') setSelectedId(el.id); }}
-                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, x: 0, y: 0 }}
-                        className={`border-2 border-gray-800 bg-gray-50/50 ${selectionClasses}`}
+                        onPointerDown={(e) => handleElementPointerDown(e, el)}
+                        onPointerMove={handleElementPointerMove}
+                        onPointerUp={handleElementPointerUp}
+                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height }}
+                        className={`border-2 border-gray-800 bg-gray-50/50 transition-none ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing' : ''}`}
                     />
                 );
             }
@@ -284,14 +363,13 @@ export function RHMapaAndar31({
             // RENDER LINE
             if (el.type === 'line') {
                 return (
-                    <motion.div
+                    <div
                         key={el.id}
-                        drag={isEditMode && activeTool === 'select'}
-                        dragMomentum={false}
-                        onDragEnd={(e, info) => handleDragEnd(e, info, el)}
-                        onClick={(e) => { e.stopPropagation(); if (activeTool==='select') setSelectedId(el.id); }}
-                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, x: 0, y: 0 }}
-                        className={`bg-gray-800 ${selectionClasses} ${isSelected ? 'h-[4px] -my-[1px]' : ''}`}
+                        onPointerDown={(e) => handleElementPointerDown(e, el)}
+                        onPointerMove={handleElementPointerMove}
+                        onPointerUp={handleElementPointerUp}
+                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height }}
+                        className={`bg-gray-800 transition-none ${selectionClasses} ${isSelected ? 'h-[4px] -my-[1px]' : ''} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing' : ''}`}
                     />
                 );
             }
@@ -299,14 +377,13 @@ export function RHMapaAndar31({
             // RENDER DOOR
             if (el.type === 'door') {
                 return (
-                    <motion.div
+                    <div
                         key={el.id}
-                        drag={isEditMode && activeTool === 'select'}
-                        dragMomentum={false}
-                        onDragEnd={(e, info) => handleDragEnd(e, info, el)}
-                        onClick={(e) => { e.stopPropagation(); if (activeTool==='select') setSelectedId(el.id); }}
-                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, x: 0, y: 0, zIndex: 15 }}
-                        className={`bg-white border text-[0px] ${selectionClasses ? selectionClasses : 'border-dashed border-gray-400 hover:border-gray-500'}`}
+                        onPointerDown={(e) => handleElementPointerDown(e, el)}
+                        onPointerMove={handleElementPointerMove}
+                        onPointerUp={handleElementPointerUp}
+                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, zIndex: 15 }}
+                        className={`bg-white border text-[0px] transition-none ${selectionClasses ? selectionClasses : 'border-dashed border-gray-400 hover:border-gray-500'} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing' : ''}`}
                     />
                 );
             }
@@ -318,16 +395,15 @@ export function RHMapaAndar31({
                 const occupant = seatsMap.get(postoId.toUpperCase());
 
                 return (
-                  <motion.div
+                  <div
                     key={el.id}
-                    drag={isEditMode && activeTool === 'select'}
-                    dragMomentum={false}
-                    onDragEnd={(e, info) => handleDragEnd(e, info, el)}
-                    onClick={(e) => { e.stopPropagation(); if (activeTool==='select') setSelectedId(el.id); }}
-                    style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, zIndex: isEditMode ? 40 : 10, x: 0, y: 0 }}
+                    onPointerDown={(e) => handleElementPointerDown(e, el)}
+                    onPointerMove={handleElementPointerMove}
+                    onPointerUp={handleElementPointerUp}
+                    style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, zIndex: isEditMode ? 40 : 10 }}
                     onDragOver={handleDragOver}
                     onDrop={(e: any) => handleDropFromList(e, postoId)}
-                    className={`group ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing hover:ring-2 hover:ring-blue-500 rounded-sm' : ''}`}
+                    className={`group transition-none ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing hover:ring-2 hover:ring-blue-500 rounded-sm' : ''}`}
                   >
                     {!isEditMode && postoId !== 'NOVO' && (
                       <div 
@@ -420,12 +496,25 @@ export function RHMapaAndar31({
                         />
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                 );
             }
 
             return null;
           })}
+
+          {/* DRAG PREVIEW GHOST */}
+          {drawingPath && (
+              <div 
+                  className="absolute pointer-events-none ring-2 ring-blue-500 bg-blue-500/20 z-50 transition-none"
+                  style={{
+                      left: Math.min(drawingPath.startX, drawingPath.curX),
+                      top: Math.min(drawingPath.startY, drawingPath.curY),
+                      width: Math.abs(drawingPath.curX - drawingPath.startX),
+                      height: Math.abs(drawingPath.curY - drawingPath.startY)
+                  }}
+              />
+          )}
 
           {/* Fallback caso não haja NADA no modo edição ainda */}
           {elements.length === 0 && isEditMode && (
