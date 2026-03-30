@@ -119,7 +119,14 @@ export function RHMapaAndar31({
   useEffect(() => {
     if (!isEditMode) {
       const loadedElems = mapElements || [];
-      setElements(loadedElems);
+      
+      const configEl = loadedElems.find(el => el.id === '00000000-0000-0000-0000-000000000000');
+      if (configEl) {
+          setMapW(configEl.width || 2600);
+          setMapH(configEl.height || 1800);
+      }
+      
+      setElements(loadedElems.filter(el => el.id !== '00000000-0000-0000-0000-000000000000'));
     }
   }, [mapElements, isEditMode]);
 
@@ -494,7 +501,22 @@ export function RHMapaAndar31({
   };
 
   const handleSave = () => {
-      onSaveMap(elements);
+      const finalElements = [...elements];
+      
+      // Upsert a special config "element" representing the canvas settings
+      const globalConfig: MapElement = {
+          id: '00000000-0000-0000-0000-000000000000',
+          type: 'text', // Safe standard type
+          x: -9999, // Offscreen
+          y: -9999,
+          width: mapW,
+          height: mapH,
+          custom_data: { 
+              textValue: 'SYSTEM_CONFIG'
+          }
+      };
+      
+      onSaveMap([...finalElements, globalConfig]);
       setUnsavedChanges(false);
   };
 
