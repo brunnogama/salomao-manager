@@ -1,11 +1,12 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
-import { User, MapPin, MousePointer2, Users, Trash2, Save, Copy, ZoomIn, ZoomOut, Crop, Square, Minus, DoorOpen } from 'lucide-react';
+import { User, MapPin, MousePointer2, Users, Trash2, Save, Copy, ZoomIn, ZoomOut, Crop, Square, Minus, DoorOpen, Sticker } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 export interface MapElement {
   id: string; // uuid
-  type: 'wall' | 'line' | 'seat' | 'text' | 'door';
+  type: 'wall' | 'line' | 'seat' | 'text' | 'door' | 'icon';
   x: number;
   y: number;
   width: number;
@@ -14,6 +15,8 @@ export interface MapElement {
     postoId?: string; // e.g. "S01"
     seatType?: string; // e.g. "SÊNIOR"
     textValue?: string; // for labels
+    iconName?: string; // nome do icone Lucide
+    iconColor?: string; // cor hex
     isVacant?: boolean; // manual flag marking the seat as vacant
     isRotativo?: boolean; // manual flag marking the seat as hotdesking
   }
@@ -47,7 +50,7 @@ export function RHMapaAndar31({
   // Use a fixed natural size for the background map (e.g. 2600 x 1800)
   const [mapW, setMapW] = useState(2600); 
   const [mapH, setMapH] = useState(1800);
-  const [activeTool, setActiveTool] = useState<'select' | 'seat' | 'wall' | 'line' | 'door'>('select');
+  const [activeTool, setActiveTool] = useState<'select' | 'seat' | 'wall' | 'line' | 'door' | 'icon'>('select');
   const [zoomScale, setZoomScale] = useState(1.15);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectionBox, setSelectionBox] = useState<{startX: number, startY: number, curX: number, curY: number} | null>(null);
@@ -227,8 +230,8 @@ export function RHMapaAndar31({
         finalY = Math.min(drawingPath.startY, drawingPath.curY);
     }
 
-    let finalW = activeTool === 'seat' ? W_STD : (dx > 5 ? dx : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : 40)));
-    let finalH = activeTool === 'seat' ? H_STD : (dy > 5 ? dy : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 3 : 5)));
+    let finalW = activeTool === 'seat' ? W_STD : (dx > 5 ? dx : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : (activeTool === 'icon' ? 40 : 40))));
+    let finalH = activeTool === 'seat' ? H_STD : (dy > 5 ? dy : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 3 : (activeTool === 'icon' ? 40 : 5))));
 
     if (activeTool === 'line') {
         if (finalW > finalH) finalH = 3; else finalW = 3;
@@ -241,7 +244,7 @@ export function RHMapaAndar31({
         y: Math.round(finalY || 0),
         width: Math.round(finalW),
         height: Math.round(finalH),
-        custom_data: { postoId: 'NOVO', seatType: 'PLENO' }
+        custom_data: { postoId: 'NOVO', seatType: 'PLENO', iconName: activeTool === 'icon' ? 'Star' : undefined }
     };
 
     setElements(prev => [...prev, newEl]);
@@ -506,6 +509,11 @@ export function RHMapaAndar31({
                   <DoorOpen className="w-4 h-4" />
               </button>
 
+              {/* TOOL: ICON */}
+              <button onClick={() => setActiveTool('icon')} className={`p-2 rounded-lg transition-all ${activeTool === 'icon' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-500 hover:bg-gray-100'}`} title="Adicionar Ícone Lucide">
+                  <Sticker className="w-4 h-4" />
+              </button>
+
               <div className="w-px h-6 bg-gray-200 mx-1"></div>
 
               {/* ACTION: SAVE */}
@@ -699,6 +707,32 @@ export function RHMapaAndar31({
                         );
                     })()}
 
+                    {/* Specifics: Icon Fields */}
+                    {selectedEl.type === 'icon' && (
+                        <div className="flex flex-col gap-3 mt-4">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] uppercase font-bold text-gray-400">Nome do Ícone (Lucide)</label>
+                                <input 
+                                    type="text" 
+                                    value={selectedEl.custom_data?.iconName || 'Star'} 
+                                    placeholder="Ex: Coffee, Printer, Sofa" 
+                                    onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, iconName: e.target.value } })} 
+                                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30" 
+                                />
+                                <span className="text-[9px] text-gray-400 mt-0.5 leading-tight">Busque nomes em lucide.dev/icons (Em PascalCase Ex: <i>Briefcase</i>)</span>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] uppercase font-bold text-gray-400">Cor do Ícone</label>
+                                <input 
+                                    type="color" 
+                                    value={selectedEl.custom_data?.iconColor || '#4b5563'} 
+                                    onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, iconColor: e.target.value } })} 
+                                    className="w-full h-8 cursor-pointer rounded-lg border-none p-0" 
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     {/* Specifics: Text Fields */}
                     {selectedEl.type === 'text' && (
                         <div className="flex flex-col gap-3 mt-4">
@@ -864,6 +898,34 @@ export function RHMapaAndar31({
                                 onPointerUp={handleResizePointerUp}
                                 className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-blue-600 border-2 border-white cursor-se-resize shadow-sm ring-1 ring-black/10 rounded-full z-[100]"
                                 title="Mudar Tamanho do Texto"
+                            />
+                        )}
+                    </div>
+                );
+            }
+
+            // RENDER ICON
+            if (el.type === 'icon') {
+                const IconName = el.custom_data?.iconName || 'Star';
+                const IconComp = (LucideIcons as any)[IconName] || LucideIcons.HelpCircle;
+                return (
+                    <div
+                        key={el.id}
+                        onPointerDown={(e) => handleElementPointerDown(e, el)}
+                        onPointerMove={handleElementPointerMove}
+                        onPointerUp={handleElementPointerUp}
+                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, zIndex: 25, color: el.custom_data?.iconColor || '#4b5563' }}
+                        className={`flex items-center justify-center transition-none bg-transparent ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing hover:bg-black/5 rounded-sm' : ''}`}
+                    >
+                        <IconComp style={{ width: '100%', height: '100%' }} strokeWidth={1.5} />
+                        
+                        {isSelected && isEditMode && activeTool === 'select' && (
+                            <div 
+                                onPointerDown={(e) => handleResizePointerDown(e, el)}
+                                onPointerMove={handleResizePointerMove}
+                                onPointerUp={handleResizePointerUp}
+                                className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-blue-600 border-2 border-white cursor-se-resize shadow-sm ring-1 ring-black/10 rounded-full z-[100]"
+                                title="Mudar Tamanho do Ícone"
                             />
                         )}
                     </div>
