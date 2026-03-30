@@ -1,11 +1,11 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
-import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save } from 'lucide-react';
+import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save, DoorOpen } from 'lucide-react';
 import { motion, PanInfo } from 'framer-motion';
 
 export interface MapElement {
   id: string; // uuid
-  type: 'wall' | 'line' | 'seat' | 'text';
+  type: 'wall' | 'line' | 'seat' | 'text' | 'door';
   x: number;
   y: number;
   width: number;
@@ -44,7 +44,7 @@ export function RHMapaAndar31({
   
   // STUDIO MODE STATE
   const [elements, setElements] = useState<MapElement[]>([]);
-  const [activeTool, setActiveTool] = useState<'select' | 'wall' | 'line' | 'seat' | 'text'>('select');
+  const [activeTool, setActiveTool] = useState<'select' | 'wall' | 'line' | 'seat' | 'text' | 'door'>('select');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
@@ -79,8 +79,8 @@ export function RHMapaAndar31({
         type: activeTool,
         x: Math.round(clickX),
         y: Math.round(clickY),
-        width: activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : (activeTool === 'seat' ? W_STD : 100)),
-        height: activeTool === 'wall' ? 100 : (activeTool === 'line' ? 2 : (activeTool === 'seat' ? H_STD : 30)),
+        width: activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : (activeTool === 'seat' ? W_STD : (activeTool === 'door' ? 40 : 100))),
+        height: activeTool === 'wall' ? 100 : (activeTool === 'line' ? 2 : (activeTool === 'seat' ? H_STD : (activeTool === 'door' ? 5 : 30))),
         custom_data: activeTool === 'seat' ? { postoId: 'NOVO', seatType: 'PLENO' } : (activeTool === 'text' ? { textValue: 'Rótulo' } : {})
     }
 
@@ -97,8 +97,9 @@ export function RHMapaAndar31({
 
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo, el: MapElement) => {
     if (!isEditMode) return;
-    const finalLeft = Math.round(el.x + info.offset.x);
-    const finalTop = Math.round(el.y + info.offset.y);
+    const finalLeft = Math.round(el.x + (info.offset.x / 1.15));
+    const finalTop = Math.round(el.y + (info.offset.y / 1.15));
+    if (el.x === finalLeft && el.y === finalTop) return; // Prevent unnecessary updates
     updateElement(el.id, { x: finalLeft, y: finalTop });
   };
 
@@ -170,6 +171,11 @@ export function RHMapaAndar31({
                 {/* TOOL: LINE */}
                 <button onClick={() => setActiveTool('line')} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${activeTool === 'line' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
                     <Minus className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Linha</span>
+                </button>
+
+                {/* TOOL: DOOR */}
+                <button onClick={() => setActiveTool('door')} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${activeTool === 'door' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+                    <DoorOpen className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Porta</span>
                 </button>
 
                 {/* TOOL: SEAT */}
@@ -279,6 +285,21 @@ export function RHMapaAndar31({
                         onClick={(e) => { e.stopPropagation(); if (activeTool==='select') setSelectedId(el.id); }}
                         style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, x: 0, y: 0 }}
                         className={`bg-gray-800 ${selectionClasses} ${isSelected ? 'h-[4px] -my-[1px]' : ''}`}
+                    />
+                );
+            }
+
+            // RENDER DOOR
+            if (el.type === 'door') {
+                return (
+                    <motion.div
+                        key={el.id}
+                        drag={isEditMode && activeTool === 'select'}
+                        dragMomentum={false}
+                        onDragEnd={(e, info) => handleDragEnd(e, info, el)}
+                        onClick={(e) => { e.stopPropagation(); if (activeTool==='select') setSelectedId(el.id); }}
+                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, x: 0, y: 0, zIndex: 15 }}
+                        className={`bg-white border text-[0px] ${selectionClasses ? selectionClasses : 'border-dashed border-gray-400 hover:border-gray-500'}`}
                     />
                 );
             }
