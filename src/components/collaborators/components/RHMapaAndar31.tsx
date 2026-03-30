@@ -662,7 +662,7 @@ export function RHMapaAndar31({
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="w-full relative">
+                                        <div className="w-full">
                                             <input 
                                                 type="text" 
                                                 value={searchOccupant}
@@ -672,7 +672,7 @@ export function RHMapaAndar31({
                                                 className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-gray-400"
                                             />
                                             {occupantDropdownOpen && (
-                                                <div className="absolute top-full right-0 left-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-xl rounded-lg z-[200] custom-scrollbar">
+                                                <div className="relative mt-2 w-full max-h-48 overflow-y-auto bg-gray-50 border border-gray-200 shadow-inner rounded-xl z-[200] custom-scrollbar">
                                                     {filteredCollaborators.length > 0 ? filteredCollaborators.map(c => (
                                                         <div 
                                                             key={c.id} 
@@ -887,10 +887,10 @@ export function RHMapaAndar31({
                     onPointerDown={(e) => handleElementPointerDown(e, el)}
                     onPointerMove={handleElementPointerMove}
                     onPointerUp={handleElementPointerUp}
-                    style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, zIndex: isEditMode ? 40 : 10 }}
+                    style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height }}
                     onDragOver={handleDragOver}
                     onDrop={(e: any) => handleDropFromList(e, postoId)}
-                    className={`group transition-none ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing hover:ring-2 hover:ring-blue-500 rounded-sm' : ''}`}
+                    className={`group transition-none ${isEditMode ? 'z-[40] hover:z-[60]' : 'z-10 hover:z-[60]'} ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing hover:ring-2 hover:ring-blue-500 rounded-sm' : ''}`}
                   >
                     {!isEditMode && postoId !== 'NOVO' && (
                       <div 
