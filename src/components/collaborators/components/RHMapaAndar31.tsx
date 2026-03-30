@@ -61,13 +61,13 @@ export function RHMapaAndar31({
   const [searchOccupant, setSearchOccupant] = useState('');
   const [occupantDropdownOpen, setOccupantDropdownOpen] = useState(false);
 
-  // Sync props -> state on load se não houver edições não salvas
+  // Sync props -> state on load (Apenas se não estivermos no meio de uma edição ativa)
   useEffect(() => {
-    if (!unsavedChanges) {
+    if (!isEditMode) {
       const loadedElems = mapElements || [];
       setElements(loadedElems);
     }
-  }, [mapElements, unsavedChanges]);
+  }, [mapElements, isEditMode]);
 
   // Remove infinite expansion logic as floor maps are fixed bounds
   useEffect(() => {

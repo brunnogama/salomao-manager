@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Building2, Loader2, RefreshCw, MapPin, Layout, List, Printer, Maximize, Minimize } from 'lucide-react';
+import { Building2, Loader2, RefreshCw, MapPin, Layout, List, Printer, Maximize, Minimize, X } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
@@ -250,6 +250,12 @@ export function RHPostos() {
     setLocalSeatOverrides(prev => ({ ...prev, [colabId]: '' }));
     await supabase.from('collaborators').update({ posto: null }).eq('id', colabId);
     toast.success('Integrante removido da mesa!');
+  };
+
+  const handleMarkAsNA = async (colabId: string) => {
+    setLocalSeatOverrides(prev => ({ ...prev, [colabId]: 'N/A' }));
+    await supabase.from('collaborators').update({ posto: 'N/A' }).eq('id', colabId);
+    toast.success('Integrante ocultado da lista e marcado como N/A');
   };
 
   const handleSaveMapElements = async (elements: MapElement[]) => {
@@ -631,8 +637,16 @@ export function RHPostos() {
                         e.dataTransfer.setData('text/plain', String(c.id));
                         e.dataTransfer.setData('colabId', String(c.id));
                       }}
-                      className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-300 hover:shadow transition-all group"
+                      className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-300 hover:shadow transition-all group relative"
+                      title={c.name}
                     >
+                      <button 
+                         onClick={(e) => { e.stopPropagation(); handleMarkAsNA(c.id); }}
+                         className="absolute top-1 right-1 p-1 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 bg-white opacity-0 group-hover:opacity-100 transition-all z-10"
+                         title="Remover da Lista (Marcar como N/A)"
+                      >
+                         <X className="w-4 h-4" />
+                      </button>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
                           {c.foto_url || c.photo_url ? (
