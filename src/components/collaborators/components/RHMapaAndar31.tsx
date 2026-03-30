@@ -16,6 +16,7 @@ export interface MapElement {
     seatType?: string; // e.g. "SÊNIOR"
     textValue?: string; // for labels
     isVacant?: boolean; // manual flag marking the seat as vacant
+    isRotativo?: boolean; // manual flag marking the seat as hotdesking
   }
 }
 
@@ -482,9 +483,13 @@ export function RHMapaAndar31({
   };
 
   const seatsMap = useMemo(() => {
-    const map = new Map<string, Collaborator>();
+    const map = new Map<string, Collaborator[]>();
     collaborators.forEach(c => {
-      if (c.posto) map.set(c.posto.toUpperCase(), c);
+      if (c.posto) {
+        const pId = c.posto.toUpperCase();
+        if (!map.has(pId)) map.set(pId, []);
+        map.get(pId)!.push(c);
+      }
     });
     return map;
   }, [collaborators]);
@@ -602,7 +607,8 @@ export function RHMapaAndar31({
                     {/* Specifics: Seat Fields */}
                     {selectedEl.type === 'seat' && (() => {
                         const postoId = selectedEl.custom_data?.postoId || 'NOVO';
-                        const currentOccupant = postoId !== 'NOVO' ? collaborators.find(c => c.posto?.toUpperCase() === postoId.toUpperCase()) : null;
+                        const currentOccupants = postoId !== 'NOVO' ? collaborators.filter(c => c.posto?.toUpperCase() === postoId.toUpperCase()) : [];
+                        const isRotativo = selectedEl.custom_data?.isRotativo;
                         
                         const filteredCollaborators = collaborators.filter(c => {
                             if (c.status !== 'active' && (c.status as any) !== 'Ativo') return false;
@@ -637,32 +643,36 @@ export function RHMapaAndar31({
 
                                 {/* Integrante Combobox */}
                                 <div className="flex flex-col gap-1 relative mt-1">
-                                    <label className="text-[10px] uppercase font-bold text-gray-400">Ocupante da Mesa</label>
+                                    <label className="text-[10px] uppercase font-bold text-gray-400">Ocupante(s) da Mesa</label>
                                     
-                                    {currentOccupant && !occupantDropdownOpen ? (
-                                        <div className="flex flex-col border border-emerald-200 bg-emerald-50 rounded-lg p-2 group transition-all">
-                                            <div className="flex items-center gap-2 w-full">
-                                                {currentOccupant.foto_url || currentOccupant.photo_url ? (
-                                                    <img src={currentOccupant.foto_url || currentOccupant.photo_url} alt={currentOccupant.name} className="w-6 h-6 rounded-full object-cover border border-emerald-200" />
-                                                ) : (
-                                                    <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center border border-emerald-200">
-                                                        <User className="w-3 h-3 text-emerald-600" />
+                                    {currentOccupants.length > 0 && (
+                                        <div className="flex flex-col gap-1.5 mb-1">
+                                            {currentOccupants.map(occ => (
+                                                <div key={occ.id} className="flex items-center gap-2 w-full border border-emerald-200 bg-emerald-50 rounded-lg p-2 group transition-all">
+                                                    {occ.foto_url || occ.photo_url ? (
+                                                        <img src={occ.foto_url || occ.photo_url} alt={occ.name} className="w-6 h-6 rounded-full object-cover border border-emerald-200 shrink-0" />
+                                                    ) : (
+                                                        <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center border border-emerald-200 shrink-0">
+                                                            <User className="w-3 h-3 text-emerald-600" />
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-bold text-emerald-900 truncate" title={occ.name}>{occ.name}</p>
+                                                        <p className="text-[9px] text-emerald-600 truncate uppercase tracking-wider">{occ.roles?.name || (occ as any).role}</p>
                                                     </div>
-                                                )}
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-bold text-emerald-900 truncate" title={currentOccupant.name}>{currentOccupant.name}</p>
-                                                    <p className="text-[9px] text-emerald-600 truncate uppercase tracking-wider">{currentOccupant.roles?.name || (currentOccupant as any).role}</p>
+                                                    <button 
+                                                        onClick={() => { onRemoveSeat(occ.id); if(!isRotativo) setOccupantDropdownOpen(true); }}
+                                                        className="p-1.5 text-emerald-600 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors shrink-0"
+                                                        title="Remover Ocupante"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
                                                 </div>
-                                                <button 
-                                                    onClick={() => { onRemoveSeat(currentOccupant.id); setOccupantDropdownOpen(true); }}
-                                                    className="p-1.5 text-emerald-600 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                                                    title="Remover Ocupante"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
+                                            ))}
                                         </div>
-                                    ) : (
+                                    )}
+
+                                    {((currentOccupants.length === 0 && !selectedEl.custom_data?.isVacant) || (isRotativo && occupantDropdownOpen)) ? (
                                         <div className="w-full">
                                             <input 
                                                 type="text" 
@@ -706,20 +716,34 @@ export function RHMapaAndar31({
                                                 </div>
                                             )}
                                         </div>
-                                    )}
+                                    ) : (isRotativo && !occupantDropdownOpen && !selectedEl.custom_data?.isVacant) ? (
+                                        <button onClick={() => setOccupantDropdownOpen(true)} className="w-full border border-dashed border-orange-300 bg-orange-50 text-orange-600 hover:bg-orange-100 text-[10px] font-bold py-2 rounded-lg transition-colors">
+                                            + ADICIONAR INTEGRANTE
+                                        </button>
+                                    ) : null}
                                 </div>
                                 {occupantDropdownOpen && <div className="fixed inset-0 z-[190]" onClick={() => setOccupantDropdownOpen(false)}></div>}
                                 
-                                {/* Vago Checkbox */}
-                                <div className="mt-2">
-                                    <label className="flex items-center gap-2.5 p-2 border border-amber-200 bg-amber-50 rounded-lg cursor-pointer hover:bg-amber-100 transition-colors">
+                                {/* Flags Checkboxes */}
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                    <label className="flex items-center gap-1.5 p-2 py-2.5 border border-amber-200 bg-amber-50 rounded-lg cursor-pointer hover:bg-amber-100 transition-colors w-full">
                                         <input 
                                             type="checkbox" 
                                             checked={!!selectedEl.custom_data?.isVacant}
                                             onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, isVacant: e.target.checked } })}
                                             className="w-4 h-4 text-amber-500 rounded border-amber-300 focus:ring-amber-500 cursor-pointer"
                                         />
-                                        <span className="text-[10px] uppercase font-black text-amber-800 tracking-wider">Marcar como Vago</span>
+                                        <span className="text-[9px] uppercase font-black text-amber-800 tracking-wider">Vago</span>
+                                    </label>
+                                    
+                                    <label className="flex items-center gap-1.5 p-2 py-2.5 border border-orange-200 bg-orange-50 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors w-full">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={!!selectedEl.custom_data?.isRotativo}
+                                            onChange={e => updateElement(selectedIds[0], { custom_data: { ...selectedEl.custom_data, isRotativo: e.target.checked } })}
+                                            className="w-4 h-4 text-orange-500 rounded border-orange-300 focus:ring-orange-500 cursor-pointer"
+                                        />
+                                        <span className="text-[9px] uppercase font-black text-orange-800 tracking-wider">Rotativo</span>
                                     </label>
                                 </div>
                             </div>
@@ -893,7 +917,9 @@ export function RHMapaAndar31({
             if (el.type === 'seat') {
                 const postoId = el.custom_data?.postoId || 'NOVO';
                 const seatType = el.custom_data?.seatType || 'PLENO';
-                const occupant = seatsMap.get(postoId.toUpperCase());
+                const occupants = seatsMap.get(postoId.toUpperCase()) || [];
+                const isVacant = el.custom_data?.isVacant;
+                const isRotativo = el.custom_data?.isRotativo;
 
                 return (
                   <div
@@ -908,34 +934,43 @@ export function RHMapaAndar31({
                   >
                     {!isEditMode && postoId !== 'NOVO' && (
                       <div 
-                        className="absolute bottom-full left-[50%] mb-2.5 w-48 bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] ring-1 ring-gray-100 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex flex-col items-center p-3 z-50 origin-bottom"
+                        className="absolute bottom-full left-[50%] mb-2.5 w-64 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.2)] ring-1 ring-gray-100 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex flex-col items-center p-3 z-50 origin-bottom"
                         style={{ transform: `translateX(-50%)` }}
                       >
-                        {occupant ? (
+                        {occupants.length > 0 && !isVacant ? (
+                          <div className="flex flex-col gap-3 w-full max-h-60 overflow-y-auto custom-scrollbar">
+                            {occupants.map(occ => (
+                                <div key={occ.id} className="flex flex-col items-center bg-gray-50 rounded-lg p-2 border border-gray-100">
+                                    {occ.foto_url || occ.photo_url ? (
+                                      <img src={occ.foto_url || occ.photo_url} alt={occ.name} className="w-10 h-10 rounded-full object-cover shadow-sm mb-1.5 border-2 border-white" />
+                                    ) : (
+                                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mb-1.5 shadow-sm border border-gray-200">
+                                        <User className="w-4 h-4 text-gray-400" />
+                                      </div>
+                                    )}
+                                    <p className="text-[10px] font-bold text-gray-800 text-center leading-tight mb-0.5">{occ.name}</p>
+                                    <p className="text-[8px] font-medium text-gray-500 text-center uppercase tracking-wider bg-white px-2 py-0.5 rounded-full border border-gray-200">{occ.roles?.name || occ.role}</p>
+                                </div>
+                            ))}
+                          </div>
+                        ) : isVacant ? (
                           <>
-                            {occupant.foto_url || occupant.photo_url ? (
-                              <img src={occupant.foto_url || occupant.photo_url} alt={occupant.name} className="w-12 h-12 rounded-full object-cover shadow-sm mb-2 border-2 border-gray-100" />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-2 shadow-sm">
-                                <User className="w-5 h-5 text-gray-400" />
-                              </div>
-                            )}
-                            <p className="text-xs font-bold text-gray-800 text-center leading-tight mb-1">{occupant.name}</p>
-                            <p className="text-[9px] font-medium text-gray-500 text-center uppercase tracking-wider bg-gray-100 px-2 py-0.5 rounded-full">{occupant.roles?.name || occupant.role}</p>
+                            <MapPin className="w-8 h-8 text-amber-300 mb-2" />
+                            <p className="text-xs font-bold text-amber-600 text-center uppercase mb-1">Mesa Inativa</p>
                           </>
                         ) : (
                           <>
                             <MapPin className="w-8 h-8 text-gray-200 mb-2" />
-                            <p className="text-xs font-bold text-gray-400 text-center uppercase">Posto Livre</p>
+                            <p className="text-xs font-bold text-gray-400 text-center uppercase mb-1">{isRotativo ? 'Rotativo Seco' : 'Posto Livre'}</p>
                           </>
                         )}
                         <div className="w-full h-px bg-gray-100 my-2"></div>
                         <p className="text-[10px] font-black text-[#1e3a8a] uppercase">{postoId} • {seatType}</p>
-                        <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-b border-r border-gray-200 rotate-45"></div>
+                        <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-b border-r border-gray-100 rotate-45"></div>
                       </div>
                     )}
       
-                    {/* BADGE DE IDENTIFICAÇÃO DO POSTO (COM COR DO CARGO) */}
+                    {/* BADGE DE IDENTIFICAÇÃO DO POSTO */}
                     {postoId !== 'NOVO' && (
                         <div className={`absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-[2px] rounded uppercase shadow-sm border border-black/10 flex items-center justify-center z-20 ${
                             (seatType.includes('ADM') || seatType.includes('ADMINISTRATIVO')) ? 'bg-orange-600' : 'bg-[#1e3a8a]'
@@ -947,18 +982,18 @@ export function RHMapaAndar31({
                     )}
 
                     {/* Visual UI (Transparent / Borderless) */}
-                    <div className={`flex flex-col flex-nowrap items-center pt-1.5 justify-start w-full h-full p-[1px] transition-colors overflow-visible relative ${el.custom_data?.isVacant ? 'bg-amber-100/80 rounded border-2 border-dashed border-amber-400' : 'bg-transparent group-hover:bg-[#1e3a8a]/5'}`}>
-                      {el.custom_data?.isVacant ? (
+                    <div className={`flex flex-col flex-nowrap items-center pt-1.5 justify-start w-full h-full p-[1px] transition-colors overflow-visible relative ${isVacant ? 'bg-amber-100/80 rounded border-2 border-dashed border-amber-400' : isRotativo && occupants.length > 0 ? 'bg-green-50/80 rounded border-2 border-green-500 group-hover:bg-green-100/90' : isRotativo ? 'bg-orange-50/70 rounded border-2 border-dashed border-orange-400 group-hover:bg-orange-100/80' : 'bg-transparent group-hover:bg-[#1e3a8a]/5'}`}>
+                      {isVacant ? (
                           <div className="flex flex-col items-center justify-center w-full h-full pb-1 opacity-90">
                               <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest text-center leading-none bg-white/80 px-1 py-0.5 rounded shadow-sm">VAGO</span>
                           </div>
-                      ) : occupant ? (
+                      ) : occupants.length > 0 ? (
                         <>
-                          {!isEditMode && (
+                          {!isEditMode && occupants.length === 1 && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onRemoveSeat(String(occupant.id));
+                                onRemoveSeat(String(occupants[0].id));
                               }}
                               className="absolute -top-[5px] -right-[5px] w-4 h-4 bg-red-500 text-white rounded-full hidden group-hover:flex items-center justify-center cursor-pointer shadow-md hover:bg-red-600 border border-white transition-colors z-[60]"
                               title="Remover e colocar Sem Posto"
@@ -967,28 +1002,40 @@ export function RHMapaAndar31({
                             </button>
                           )}
       
-                          <div className="w-[24px] h-[24px] rounded-full overflow-hidden shrink-0 shadow-md border border-gray-200 bg-white flex items-center justify-center relative z-10">
-                            {occupant.foto_url || occupant.photo_url ? (
-                              <img src={occupant.foto_url || occupant.photo_url} className="w-full h-full object-cover" alt="" />
-                            ) : (
-                              <User className="w-4 h-4 text-gray-400" />
-                            )}
+                          <div className={`flex relative z-10 justify-center w-full mt-1 ${occupants.length > 1 ? '-space-x-2' : ''}`}>
+                             {occupants.slice(0,3).map((occ, idx) => (
+                                <div key={occ.id} className="w-[22px] h-[22px] rounded-full overflow-hidden shrink-0 shadow-md border border-gray-200 bg-white flex items-center justify-center relative" style={{ zIndex: 20 - idx }}>
+                                  {occ.foto_url || occ.photo_url ? (
+                                    <img src={occ.foto_url || occ.photo_url} className="w-full h-full object-cover" alt="" />
+                                  ) : (
+                                    <User className="w-3.5 h-3.5 text-gray-400" />
+                                  )}
+                                </div>
+                             ))}
                           </div>
                           
-                          <div className="flex flex-col items-center mt-0.5 absolute top-[30px] w-[150%] -left-[25%] pointer-events-none z-20">
-                              <span className="block text-[7px] font-bold text-gray-800 text-center leading-[1.1] bg-white/80 px-0.5 rounded-sm drop-shadow-sm">
-                                {(() => {
-                                   const parts = occupant.name.split(' ');
-                                   let finalName = parts[0];
-                                   if (parts.length > 1 && finalName.length <= 8) {
-                                     finalName += ` ${parts[parts.length-1].charAt(0)}.`;
-                                   }
-                                   return finalName;
-                                })()}
-                              </span>
-                              <span className="block text-[6px] font-black text-[#1e3a8a] uppercase mt-[1px] text-center leading-none bg-white/80 px-0.5 rounded-sm drop-shadow-sm">
-                                {getShortRole(occupant.roles?.name || occupant.role || '')}
-                              </span>
+                          <div className="flex flex-col items-center mt-0.5 absolute top-[30px] w-[200%] -left-[50%] pointer-events-none z-20">
+                             {occupants.length === 1 ? (
+                                 <>
+                                     <span className="block text-[7px] font-bold text-gray-800 text-center leading-[1.1] bg-white/80 px-0.5 rounded-sm drop-shadow-sm">
+                                        {(() => {
+                                           const parts = occupants[0].name.split(' ');
+                                           let finalName = parts[0];
+                                           if (parts.length > 1 && finalName.length <= 8) {
+                                             finalName += ` ${parts[parts.length-1].charAt(0)}.`;
+                                           }
+                                           return finalName;
+                                        })()}
+                                     </span>
+                                     <span className="block text-[6px] font-black text-[#1e3a8a] uppercase mt-[1px] text-center leading-none bg-white/80 px-0.5 rounded-sm drop-shadow-sm">
+                                        {getShortRole(occupants[0].roles?.name || occupants[0].role || '')}
+                                     </span>
+                                 </>
+                             ) : (
+                                  <span className="block text-[6.5px] font-black text-green-700 uppercase tracking-widest text-center leading-none bg-green-100 px-1 py-0.5 rounded border border-green-300 drop-shadow-sm">
+                                      {occupants.length} OCUPANTES
+                                  </span>
+                             )}
                           </div>
                         </>
                       ) : (
@@ -1001,20 +1048,20 @@ export function RHMapaAndar31({
                               <>
                                   <MapPin className="w-3.5 h-3.5 text-gray-400 drop-shadow-sm mb-0.5" />
                                   <span className="text-[5.5px] font-bold text-gray-500 uppercase tracking-widest text-center leading-none">
-                                    {seatType}
+                                    {isRotativo ? 'ROTATIVO' : seatType}
                                   </span>
                               </>
                           )}
                         </div>
                       )}
                       
-                      {occupant && !isEditMode && (
+                      {occupants.length === 1 && !isEditMode && (
                         <div 
                           draggable
                           onDragStart={(e) => {
-                            e.dataTransfer.setData('colabId', String(occupant.id));
+                            e.dataTransfer.setData('colabId', String(occupants[0].id));
                            }}
-                          onDoubleClick={() => onRemoveSeat(String(occupant.id))}
+                          onDoubleClick={() => onRemoveSeat(String(occupants[0].id))}
                           className="absolute inset-0 cursor-grab active:cursor-grabbing pointer-events-auto border border-transparent group-hover:border-blue-500/30"
                           title="Arraste de volta para a lista ou use o botão X"
                           style={{ zIndex: 10 }}
