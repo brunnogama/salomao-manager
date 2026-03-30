@@ -73,6 +73,27 @@ export function RHMapaAndar31({
     }
   }, [mapElements, unsavedChanges]);
 
+  // Expandir a lousa infinitamente conforme arraste de elementos encostar na borda direita/baixo
+  useEffect(() => {
+    if (elements.length > 0 && isEditMode) {
+      const maxX = Math.max(...elements.map(el => el.x + el.width));
+      const maxY = Math.max(...elements.map(el => el.y + el.height));
+      
+      let newW = mapW;
+      let newH = mapH;
+      
+      if (maxX > mapW - 100) {
+          newW = maxX + 400; // Adds breathing room explicitly for the scroll
+      }
+      if (maxY > mapH - 100) {
+          newH = maxY + 400;
+      }
+      
+      if (newW !== mapW) setMapW(newW);
+      if (newH !== mapH) setMapH(newH);
+    }
+  }, [elements, mapW, mapH, isEditMode]);
+
   // Keyboard Shortcuts (Copy & Paste & Delete)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
