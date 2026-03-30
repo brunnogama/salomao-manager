@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
 import { 
-  User, MapPin, MousePointer2, Users, Trash2, Save, Copy, ZoomIn, ZoomOut, Crop, Square, Minus, DoorOpen, Sticker,
+  User, MapPin, MousePointer2, Users, Trash2, Save, Copy, ZoomIn, ZoomOut, Crop, Square, Minus, DoorOpen, Sticker, Type,
   Sofa, Armchair, Bath, Coffee, Utensils, Refrigerator, Microwave, Trees, Flame, Droplet, Wind, Lightbulb, 
   Tv, Laptop, Monitor, Printer, Wifi, Server, Database, Mouse, Keyboard, Speaker, Headset,
   Box, Inbox, Briefcase, Camera, Video, Car, Truck, DoorClosed, Lock, Key, Phone, Mail, FileText,
@@ -100,7 +100,7 @@ export function RHMapaAndar31({
   // Use a fixed natural size for the background map (e.g. 2600 x 1800)
   const [mapW, setMapW] = useState(2600); 
   const [mapH, setMapH] = useState(1800);
-  const [activeTool, setActiveTool] = useState<'select' | 'seat' | 'wall' | 'line' | 'door' | 'icon'>('select');
+  const [activeTool, setActiveTool] = useState<'select' | 'seat' | 'wall' | 'line' | 'door' | 'icon' | 'text'>('select');
   const [zoomScale, setZoomScale] = useState(1.15);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectionBox, setSelectionBox] = useState<{startX: number, startY: number, curX: number, curY: number} | null>(null);
@@ -288,8 +288,8 @@ export function RHMapaAndar31({
         finalY = Math.min(drawingPath.startY, drawingPath.curY);
     }
 
-    let finalW = activeTool === 'seat' ? W_STD : (dx > 5 ? dx : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : (activeTool === 'icon' ? 40 : 40))));
-    let finalH = activeTool === 'seat' ? H_STD : (dy > 5 ? dy : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 3 : (activeTool === 'icon' ? 40 : 5))));
+    let finalW = activeTool === 'seat' ? W_STD : (dx > 5 ? dx : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : (activeTool === 'icon' ? 40 : (activeTool === 'text' ? 120 : 40)))));
+    let finalH = activeTool === 'seat' ? H_STD : (dy > 5 ? dy : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 3 : (activeTool === 'icon' ? 40 : (activeTool === 'text' ? 30 : 5)))));
 
     if (activeTool === 'line') {
         if (finalW > finalH) finalH = 3; else finalW = 3;
@@ -585,6 +585,11 @@ export function RHMapaAndar31({
               {/* TOOL: ICON */}
               <button onClick={() => setActiveTool('icon')} className={`p-2 rounded-lg transition-all ${activeTool === 'icon' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-500 hover:bg-gray-100'}`} title="Adicionar Ícone Lucide">
                   <Sticker className="w-4 h-4" />
+              </button>
+
+              {/* TOOL: TEXT */}
+              <button onClick={() => setActiveTool('text')} className={`p-2 rounded-lg transition-all ${activeTool === 'text' ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-500 hover:bg-gray-100'}`} title="Escrever Texto/Rótulo">
+                  <Type className="w-4 h-4" />
               </button>
 
               <div className="w-px h-6 bg-gray-200 mx-1"></div>
