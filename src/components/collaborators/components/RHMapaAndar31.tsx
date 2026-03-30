@@ -243,18 +243,27 @@ export function RHMapaAndar31({
         finalX = drawingPath.startX;
         finalY = drawingPath.startY;
         finalW = activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : (activeTool === 'seat' ? W_STD : (activeTool === 'door' ? 40 : 100)));
-        finalH = activeTool === 'wall' ? 100 : (activeTool === 'line' ? 2 : (activeTool === 'seat' ? H_STD : (activeTool === 'door' ? 5 : 30)));
+        finalH = activeTool === 'wall' ? 100 : (activeTool === 'line' ? 1 : (activeTool === 'seat' ? H_STD : (activeTool === 'door' ? 5 : 30)));
     } else {
         // Usa as dimensões arrastadas livremente
         finalX = Math.min(drawingPath.startX, drawingPath.curX);
         finalY = Math.min(drawingPath.startY, drawingPath.curY);
-        finalW = dx;
-        finalH = dy;
+        finalW = Math.max(1, dx);
+        finalH = Math.max(1, dy);
         
-        // Mesa não fica distorcida num retângulo gigante, mesa tem limite
+        // Mesa não fica distorcida num retângulo gigante, mesa tem limite fixo
         if (activeTool === 'seat') {
             finalW = W_STD;
             finalH = H_STD;
+        }
+
+        // Linha não vira um bloco grosso se arrastada torta: garantimos espessura 1
+        if (activeTool === 'line') {
+            if (finalW > finalH) {
+                finalH = 1; // Arraste horizontal = linha deitada
+            } else {
+                finalW = 1; // Arraste vertical = linha de pé
+            }
         }
     }
 
