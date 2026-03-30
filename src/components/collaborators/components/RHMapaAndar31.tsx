@@ -61,16 +61,11 @@ export function RHMapaAndar31({
   const [searchOccupant, setSearchOccupant] = useState('');
   const [occupantDropdownOpen, setOccupantDropdownOpen] = useState(false);
 
-  // Sync props -> state on load if not editing
+  // Sync props -> state on load se não houver edições não salvas
   useEffect(() => {
     if (!unsavedChanges) {
       const loadedElems = mapElements || [];
-      // Clean up legacy elements that are no longer supported in the new background image paradigm
-      const validElements = loadedElems.filter(el => el.type === 'seat');
-      setElements(validElements);
-      // Floor map is fixed size.
-      setMapW(2600);
-      setMapH(1800);
+      setElements(loadedElems);
     }
   }, [mapElements, unsavedChanges]);
 
