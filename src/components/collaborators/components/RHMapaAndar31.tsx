@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
-import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save, DoorOpen, GripVertical, Copy } from 'lucide-react';
+import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save, DoorOpen, GripVertical, Copy, Type, ZoomIn, ZoomOut } from 'lucide-react';
 import { motion, PanInfo } from 'framer-motion';
 
 export interface MapElement {
@@ -45,6 +45,7 @@ export function RHMapaAndar31({
   // STUDIO MODE STATE
   const [elements, setElements] = useState<MapElement[]>([]);
   const [activeTool, setActiveTool] = useState<'select' | 'wall' | 'line' | 'seat' | 'text' | 'door'>('select');
+  const [zoomScale, setZoomScale] = useState(1.15);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [drawingPath, setDrawingPath] = useState<{startX: number, startY: number, curX: number, curY: number} | null>(null);
@@ -114,7 +115,7 @@ export function RHMapaAndar31({
 
     const rect = contentRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const scale = 1.15;
+    const scale = zoomScale;
     const clickX = (e.clientX - rect.left) / scale;
     const clickY = (e.clientY - rect.top) / scale;
 
@@ -126,7 +127,7 @@ export function RHMapaAndar31({
 
     const rect = contentRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const scale = 1.15;
+    const scale = zoomScale;
     const curX = (e.clientX - rect.left) / scale;
     const curY = (e.clientY - rect.top) / scale;
 
@@ -192,7 +193,7 @@ export function RHMapaAndar31({
 
     const rect = contentRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const scale = 1.15;
+    const scale = zoomScale;
     const clickX = (e.clientX - rect.left) / scale;
     const clickY = (e.clientY - rect.top) / scale;
 
@@ -206,7 +207,7 @@ export function RHMapaAndar31({
     
     const rect = contentRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const scale = 1.15;
+    const scale = zoomScale;
     const curX = (e.clientX - rect.left) / scale;
     const curY = (e.clientY - rect.top) / scale;
     
@@ -221,6 +222,42 @@ export function RHMapaAndar31({
     e.stopPropagation();
     e.currentTarget.releasePointerCapture(e.pointerId);
     setMovingElement(null);
+  };
+
+  const [resizingElement, setResizingElement] = useState<{ id: string, startX: number, startY: number, startW: number, startH: number } | null>(null);
+
+  const handleResizePointerDown = (e: React.PointerEvent<HTMLDivElement>, el: MapElement) => {
+      e.stopPropagation();
+      if (!isEditMode || activeTool !== 'select') return;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      const rect = contentRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const x = (e.clientX - rect.left) / zoomScale;
+      const y = (e.clientY - rect.top) / zoomScale;
+      setResizingElement({ id: el.id, startX: x, startY: y, startW: el.width, startH: el.height });
+  };
+
+  const handleResizePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+      e.stopPropagation();
+      if (!resizingElement) return;
+      const rect = contentRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const currentX = (e.clientX - rect.left) / zoomScale;
+      const currentY = (e.clientY - rect.top) / zoomScale;
+      const deltaX = currentX - resizingElement.startX;
+      const deltaY = currentY - resizingElement.startY;
+      const newW = Math.max(10, Math.round((resizingElement.startW + deltaX) / 10) * 10);
+      const newH = Math.max(10, Math.round((resizingElement.startH + deltaY) / 10) * 10);
+      setElements(prev => prev.map(item => item.id === resizingElement.id ? { ...item, width: newW, height: newH } : item));
+      setUnsavedChanges(true);
+  };
+
+  const handleResizePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+      e.stopPropagation();
+      if (resizingElement) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+          setResizingElement(null);
+      }
   };
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -328,6 +365,11 @@ export function RHMapaAndar31({
                     <Users className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Posto</span>
                 </button>
 
+                {/* TOOL: TEXT */}
+                <button onClick={() => setActiveTool('text')} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${activeTool === 'text' ? 'bg-amber-100 text-amber-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+                    <Type className="w-5 h-5" /> <span className="text-xs uppercase tracking-wide pr-1">Texto</span>
+                </button>
+
                 <div className="w-px h-8 bg-gray-100 mx-1"></div>
 
                 {/* ACTION: SAVE */}
@@ -390,14 +432,37 @@ export function RHMapaAndar31({
                             </div>
                         </div>
                     )}
+
+                    {/* Specifics: Text Fields */}
+                    {selectedEl.type === 'text' && (
+                        <div className="flex flex-col gap-3 mt-4">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] uppercase font-bold text-gray-500">Conteúdo do Texto</label>
+                                <input type="text" value={selectedEl.custom_data?.textValue || ''} onChange={e => updateElement(selectedId!, { custom_data: { ...selectedEl.custom_data, textValue: e.target.value } })} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-black text-gray-800 focus:outline-none focus:bg-white" />
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
           </motion.div>
         </div>
       )}
 
+      {/* ZOOM CONTROLS */}
+      <div className="fixed bottom-6 right-6 bg-white/90 backdrop-blur-md p-1.5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200/60 flex flex-col items-center gap-1 z-[100] transition-opacity hover:opacity-100 opacity-70">
+        <button onClick={() => setZoomScale(prev => Math.min(prev + 0.15, 2.5))} className="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-xl text-gray-700 transition-colors" title="Aumentar Zoom">
+            <ZoomIn className="w-5 h-5" />
+        </button>
+        <div className="w-full h-px bg-gray-200/60 px-2 my-0.5"></div>
+        <div className="text-[10px] font-black text-center text-gray-500 py-0.5 select-none w-10">{Math.round(zoomScale * 100)}%</div>
+        <div className="w-full h-px bg-gray-200/60 px-2 my-0.5"></div>
+        <button onClick={() => setZoomScale(prev => Math.max(prev - 0.15, 0.4))} className="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-xl text-gray-700 transition-colors" title="Diminuir Zoom">
+            <ZoomOut className="w-5 h-5" />
+        </button>
+      </div>
+
       {/* Wrapper de Escala para Garantir Legibilidade Preservando a Matemática Base */}
-      <div className="mx-auto" style={{ transform: 'scale(1.15)', transformOrigin: 'top center', padding: '20px 0', width: MAP_W * 1.15, height: MAP_H * 1.15, flexShrink: 0 }}>
+      <div className="mx-auto" style={{ transform: `scale(${zoomScale})`, transformOrigin: 'top center', padding: '20px 0', width: MAP_W * zoomScale, height: MAP_H * zoomScale, flexShrink: 0, transition: 'transform 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1), height 0.2s cubic-bezier(0.2, 0, 0, 1)' }}>
         <div 
           ref={contentRef}
           id="mapa-31-andar-content"
@@ -422,7 +487,17 @@ export function RHMapaAndar31({
                         onPointerUp={handleElementPointerUp}
                         style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height }}
                         className={`border-2 border-gray-800 bg-gray-50/50 transition-none ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                    />
+                    >
+                        {isSelected && isEditMode && activeTool === 'select' && (
+                            <div 
+                                onPointerDown={(e) => handleResizePointerDown(e, el)}
+                                onPointerMove={handleResizePointerMove}
+                                onPointerUp={handleResizePointerUp}
+                                className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-blue-600 border-2 border-white cursor-se-resize shadow-sm ring-1 ring-black/10 rounded-full z-[100]"
+                                title="Redimensionar Parede"
+                            />
+                        )}
+                    </div>
                 );
             }
 
@@ -436,7 +511,17 @@ export function RHMapaAndar31({
                         onPointerUp={handleElementPointerUp}
                         style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height }}
                         className={`bg-gray-800 transition-none ${selectionClasses} ${isSelected ? 'h-[4px] -my-[1px]' : ''} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                    />
+                    >
+                        {isSelected && isEditMode && activeTool === 'select' && (
+                            <div 
+                                onPointerDown={(e) => handleResizePointerDown(e, el)}
+                                onPointerMove={handleResizePointerMove}
+                                onPointerUp={handleResizePointerUp}
+                                className="absolute -top-[2px] -right-1.5 w-3.5 h-3.5 bg-blue-600 border-2 border-white cursor-ew-resize shadow-sm ring-1 ring-black/10 rounded-full z-[100]"
+                                title="Esticar Linha"
+                            />
+                        )}
+                    </div>
                 );
             }
 
@@ -450,7 +535,43 @@ export function RHMapaAndar31({
                         onPointerUp={handleElementPointerUp}
                         style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, zIndex: 15 }}
                         className={`bg-white border text-[0px] transition-none ${selectionClasses ? selectionClasses : 'border-dashed border-gray-400 hover:border-gray-500'} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                    />
+                    >
+                        {isSelected && isEditMode && activeTool === 'select' && (
+                            <div 
+                                onPointerDown={(e) => handleResizePointerDown(e, el)}
+                                onPointerMove={handleResizePointerMove}
+                                onPointerUp={handleResizePointerUp}
+                                className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-blue-600 border-2 border-white cursor-se-resize shadow-sm ring-1 ring-black/10 rounded-full z-[100]"
+                                title="Redimensionar Porta"
+                            />
+                        )}
+                    </div>
+                );
+            }
+
+            // RENDER TEXT
+            if (el.type === 'text') {
+                return (
+                    <div
+                        key={el.id}
+                        onPointerDown={(e) => handleElementPointerDown(e, el)}
+                        onPointerMove={handleElementPointerMove}
+                        onPointerUp={handleElementPointerUp}
+                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height, zIndex: 30 }}
+                        className={`flex items-center justify-center transition-none bg-transparent ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing hover:bg-black/5 rounded-sm' : ''} ${isEditMode ? 'border border-dashed border-gray-200' : ''}`}
+                    >
+                        <span className="text-gray-900 font-bold whitespace-nowrap" style={{ fontSize: `${el.height * 0.7}px`, lineHeight: 1 }}>{el.custom_data?.textValue || 'Rótulo'}</span>
+                        
+                        {isSelected && isEditMode && activeTool === 'select' && (
+                            <div 
+                                onPointerDown={(e) => handleResizePointerDown(e, el)}
+                                onPointerMove={handleResizePointerMove}
+                                onPointerUp={handleResizePointerUp}
+                                className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-blue-600 border-2 border-white cursor-se-resize shadow-sm ring-1 ring-black/10 rounded-full z-[100]"
+                                title="Mudar Tamanho do Texto"
+                            />
+                        )}
+                    </div>
                 );
             }
 
@@ -553,15 +674,20 @@ export function RHMapaAndar31({
                           </div>
                         </>
                       ) : (
-                        <>
+                        <div className="flex flex-col items-center justify-center w-full h-full pb-2 opacity-50">
                           {isEditMode ? (
-                              <span className="block text-[10px] mt-0.5 font-black leading-none mb-0.5 text-gray-400 opacity-70">
+                              <span className="block text-[10px] font-black leading-none text-gray-400">
                                 {postoId}
                               </span>
                           ) : (
-                              <MapPin className="w-4 h-4 text-gray-300 mt-1 opacity-50 drop-shadow-sm" />
+                              <>
+                                  <MapPin className="w-3.5 h-3.5 text-gray-400 drop-shadow-sm mb-0.5" />
+                                  <span className="text-[5.5px] font-bold text-gray-500 uppercase tracking-widest text-center leading-none">
+                                    {seatType}
+                                  </span>
+                              </>
                           )}
-                        </>
+                        </div>
                       )}
                       
                       {occupant && !isEditMode && (
