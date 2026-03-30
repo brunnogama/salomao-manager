@@ -465,7 +465,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   };
 
   const handleApplyTemplate = (template: ReportTemplate) => {
-    const tempFiltered = getAdvancedFiltered(''); // applies current filters block
+    const tempFiltered = getAdvancedFiltered(); // applies current filters block
     const now = new Date();
     const dd = String(now.getDate()).padStart(2, '0');
     const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -537,7 +537,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const fd = `${dd}-${mm}-${yyyy}`;
 
     if (exportTargetList === 'search' || exportTargetList === 'all') {
-      tempFiltered = getAdvancedFiltered('');
+      tempFiltered = getAdvancedFiltered();
       fileName = templateName ? `${templateName} - ${dateTimeStr}` : `Colaboradores_${fd}`;
     } else if (exportTargetList === 'active') {
       tempFiltered = getAdvancedFiltered('active');
@@ -2852,7 +2852,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     <div className="flex justify-end mt-8 border-t border-gray-100 pt-6">
                       <button
                         onClick={() => {
-                          const tempFiltered = getAdvancedFiltered('');
+                          const tempFiltered = getAdvancedFiltered();
                           if (tempFiltered.length > 0) {
                             setExportTargetList('search');
                             setShowColumnSelectModal(true);
