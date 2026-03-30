@@ -338,9 +338,7 @@ export function RHMapaAndar31({
                     )}
                   </div>
                   
-                  <div className="absolute -top-1.5 -right-1.5 bg-[#1e3a8a] text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm leading-none border border-white z-10">
-                    {seat.id}
-                  </div>
+                  {/* A badge do ID do posto foi removida daqui a pedido do usuário */}
 
                   {/* Organização dos Textos de Forma Compacta porém legível */}
                   <div className="w-full flex flex-col items-center mt-1 shrink-0 px-0.5">
