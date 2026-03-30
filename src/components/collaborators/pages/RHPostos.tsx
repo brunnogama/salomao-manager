@@ -30,6 +30,7 @@ export function RHPostos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [localSeatOverrides, setLocalSeatOverrides] = useState<Record<string, string>>({});
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [isExportingTable, setIsExportingTable] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [mapElements, setMapElements] = useState<MapElement[]>([]);
 
@@ -353,6 +354,83 @@ export function RHPostos() {
     }
   };
 
+  const handleExportTablePDF = async () => {
+    try {
+      const element = document.getElementById('tabelas-postos-container');
+      if (!element) {
+        toast.error('Tabela não encontrada para exportação');
+        return;
+      }
+      setIsExportingTable(true);
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      
+      // Carregar Logo
+      const logoImg = new Image();
+      logoImg.src = '/logo-salomao.png';
+      
+      await new Promise((resolve) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = resolve;
+      });
+
+      // Se a tabela for muito longa, ampliamos a página para baixo
+      const canvasRatio = canvas.height / canvas.width;
+      const contentWidth = pdfWidth - 30; // 15mm margin left/right
+      const contentHeight = contentWidth * canvasRatio;
+      
+      const expectedHeight = contentHeight + 45;
+      const finalPdfHeight = Math.max(297, expectedHeight + 20); // Pelo menos A4
+      
+      // Re-create pdf if dimensions needed are larger
+      const finalPdf = new jsPDF('p', 'mm', [pdfWidth, finalPdfHeight]);
+      
+      // Desenhar Fundo
+      finalPdf.setFillColor(255, 255, 255);
+      finalPdf.rect(0, 0, pdfWidth, finalPdfHeight, 'F');
+
+      if (logoImg.width > 0) {
+        const logoWidth = 40;
+        const logoHeight = (logoImg.height * logoWidth) / logoImg.width;
+        finalPdf.addImage(logoImg, 'PNG', 15, 12, logoWidth, logoHeight);
+      }
+
+      // Título
+      finalPdf.setFontSize(16);
+      finalPdf.setTextColor(30, 58, 138); // #1e3a8a
+      finalPdf.setFont("helvetica", "bold");
+      const title = `Relatório de Postos Físicos${filterLocal !== 'Todos' ? ` • ${filterLocal}` : ''}`;
+      finalPdf.text(title, 60, 20);
+
+      // Subtítulo
+      finalPdf.setFontSize(10);
+      finalPdf.setTextColor(100, 100, 100);
+      finalPdf.setFont("helvetica", "normal");
+      const dataStr = `Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`;
+      finalPdf.text(dataStr, 60, 25);
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      finalPdf.addImage(imgData, 'JPEG', 15, 45, contentWidth, contentHeight, undefined, 'FAST');
+      
+      finalPdf.save(`Postos_Fisicos_${filterLocal}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+      toast.success('PDF da Tabela gerado com sucesso!');
+
+    } catch (error) {
+      console.error('Erro ao gerar PDF da tabela:', error);
+      toast.error('Não foi possível exportar a tabela para PDF.');
+    } finally {
+      setIsExportingTable(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24 overflow-y-auto no-scrollbar">
       {/* PAGE HEADER COMPLETO - Título + Actions */}
@@ -437,6 +515,17 @@ export function RHPostos() {
           )}
 
           <div className="flex items-center gap-3 border-l border-gray-100 pl-4 ml-2">
+            {viewMode === 'table' && (
+              <button
+                onClick={handleExportTablePDF}
+                disabled={isExportingTable}
+                className="flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-800 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50 shrink-0"
+                title="Exportar Tabela em PDF"
+              >
+                {isExportingTable ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+                PDF
+              </button>
+            )}
             <button
               onClick={fetchPostos}
               disabled={loading}
@@ -565,25 +654,27 @@ export function RHPostos() {
       )}
 
       {/* RENDERIZAR VISÃO TABELAS */}
-      {viewMode === 'table' && (filterLocal === 'Todos' ? locations : locations.filter(l => l === filterLocal)).map((local) => {
-        const localPostos = groupedPostos[local];
-        const totals = localPostos.reduce((acc, current) => ({
-          qdeCargos: acc.qdeCargos + (current.qdeCargos || 0),
-          total: acc.total + (current.total || 0),
-          ocupados: acc.ocupados + (current.ocupados || 0),
-          disponiveis: acc.disponiveis + ((current.total || 0) - (current.ocupados || 0))
-        }), { qdeCargos: 0, total: 0, ocupados: 0, disponiveis: 0 });
+      {viewMode === 'table' && (
+        <div id="tabelas-postos-container" className="flex flex-col gap-6 mx-auto w-full max-w-6xl">
+          {(filterLocal === 'Todos' ? locations : locations.filter(l => l === filterLocal)).map((local) => {
+            const localPostos = groupedPostos[local];
+            const totals = localPostos.reduce((acc, current) => ({
+              qdeCargos: acc.qdeCargos + (current.qdeCargos || 0),
+              total: acc.total + (current.total || 0),
+              ocupados: acc.ocupados + (current.ocupados || 0),
+              disponiveis: acc.disponiveis + ((current.total || 0) - (current.ocupados || 0))
+            }), { qdeCargos: 0, total: 0, ocupados: 0, disponiveis: 0 });
 
-        return (
-          <div key={local} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col mx-auto w-full max-w-6xl shrink-0 animate-in slide-in-from-bottom-4 duration-500">
-            {/* Título da Tabela */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-[#1e3a8a]" />
-              <h2 className="text-xl font-black text-[#1e3a8a] uppercase tracking-wide">Escritório • {local}</h2>
-            </div>
-            
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse min-w-[700px]">
+            return (
+              <div key={local} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col shrink-0 animate-in slide-in-from-bottom-4 duration-500">
+                {/* Título da Tabela */}
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-3">
+                  <MapPin className="h-5 w-5 text-[#1e3a8a]" />
+                  <h2 className="text-xl font-black text-[#1e3a8a] uppercase tracking-wide">Escritório • {local}</h2>
+                </div>
+                
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead>
                   <tr className="bg-white border-b-2 border-gray-200">
                     <th className="py-4 px-6 font-black text-gray-800 text-sm uppercase tracking-wider w-[15%] whitespace-nowrap text-center">Postos</th>
