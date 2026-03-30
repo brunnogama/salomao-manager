@@ -477,6 +477,7 @@ export function RHPostos() {
                       key={c.id}
                       draggable
                       onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', String(c.id));
                         e.dataTransfer.setData('colabId', String(c.id));
                       }}
                       className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-300 hover:shadow transition-all group"

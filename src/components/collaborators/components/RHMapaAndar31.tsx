@@ -259,7 +259,7 @@ export function RHMapaAndar31({
   const handleDropFromList = (e: React.DragEvent, seatId: string) => {
     e.preventDefault();
     if (isEditMode) return; 
-    const colabId = e.dataTransfer.getData('colabId');
+    const colabId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('colabId');
     if (colabId && seatId && seatId !== 'NOVO') {
       onAssignSeat(colabId, seatId);
     }
