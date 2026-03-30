@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Collaborator } from '../../../types/controladoria';
-import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save, DoorOpen, GripVertical, Copy, Type, ZoomIn, ZoomOut } from 'lucide-react';
+import { User, MapPin, MousePointer2, Square, Minus, Users, Trash2, Save, DoorOpen, GripVertical, Copy, Type, ZoomIn, ZoomOut, Crop } from 'lucide-react';
 import { motion, PanInfo } from 'framer-motion';
 
 export interface MapElement {
@@ -28,8 +28,6 @@ interface FloorPlanProps {
 
 const W_STD = 75;
 const H_STD = 40;
-const MAP_W = 2550;
-const MAP_H = 1500;
 
 export function RHMapaAndar31({ 
   collaborators, 
@@ -44,6 +42,8 @@ export function RHMapaAndar31({
   
   // STUDIO MODE STATE
   const [elements, setElements] = useState<MapElement[]>([]);
+  const [mapW, setMapW] = useState(4000); // 4000 de largura padrão ao editar
+  const [mapH, setMapH] = useState(2000);
   const [activeTool, setActiveTool] = useState<'select' | 'wall' | 'line' | 'seat' | 'text' | 'door'>('select');
   const [zoomScale, setZoomScale] = useState(1.15);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -55,7 +55,19 @@ export function RHMapaAndar31({
   // Sync props -> state on load if not editing
   useEffect(() => {
     if (!unsavedChanges) {
-      setElements(mapElements || []);
+      const loadedElems = mapElements || [];
+      setElements(loadedElems);
+      
+      // Auto-fit visual inicial quando carrega os dados (para ficar perfeitamente cortado no ViewMode)
+      if (loadedElems.length > 0) {
+          const maxX = Math.max(...loadedElems.map(el => el.x + el.width));
+          const maxY = Math.max(...loadedElems.map(el => el.y + el.height));
+          setMapW(Math.max(1000, maxX + 100));
+          setMapH(Math.max(600, maxY + 100));
+      } else {
+          setMapW(4000);
+          setMapH(2000);
+      }
     }
   }, [mapElements, unsavedChanges]);
 
@@ -260,6 +272,30 @@ export function RHMapaAndar31({
       }
   };
 
+  const handleCropMap = () => {
+      if (elements.length === 0) return;
+
+      const minX = Math.min(...elements.map(el => el.x));
+      const minY = Math.min(...elements.map(el => el.y));
+      const maxX = Math.max(...elements.map(el => el.x + el.width));
+      const maxY = Math.max(...elements.map(el => el.y + el.height));
+
+      const padding = 50;
+      const shiftX = Math.max(0, minX - padding); // não shiftar para negativo
+      const shiftY = Math.max(0, minY - padding);
+
+      const shiftedElements = elements.map(el => ({
+          ...el,
+          x: el.x - shiftX,
+          y: el.y - shiftY
+      }));
+
+      setElements(shiftedElements);
+      setMapW(maxX - shiftX + padding);
+      setMapH(maxY - shiftY + padding);
+      setUnsavedChanges(true);
+  };
+
   const handleDelete = (e: React.MouseEvent) => {
       e.stopPropagation();
       if (!selectedId) return;
@@ -459,10 +495,18 @@ export function RHMapaAndar31({
         <button onClick={() => setZoomScale(prev => Math.max(prev - 0.15, 0.4))} className="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-xl text-gray-700 transition-colors" title="Diminuir Zoom">
             <ZoomOut className="w-5 h-5" />
         </button>
+        {isEditMode && (
+          <>
+            <div className="w-full h-px bg-gray-200/60 px-2 my-0.5"></div>
+            <button onClick={handleCropMap} className="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-xl text-gray-700 transition-colors" title="Recortar Fundo (Otimizar tamanho da lousa)">
+              <Crop className="w-4 h-4" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Wrapper de Escala para Garantir Legibilidade Preservando a Matemática Base */}
-      <div className="mx-auto" style={{ transform: `scale(${zoomScale})`, transformOrigin: 'top center', padding: '20px 0', width: MAP_W * zoomScale, height: MAP_H * zoomScale, flexShrink: 0, transition: 'transform 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1), height 0.2s cubic-bezier(0.2, 0, 0, 1)' }}>
+      <div className="mx-auto" style={{ transform: `scale(${zoomScale})`, transformOrigin: 'top center', padding: '20px 0', width: mapW * zoomScale, height: mapH * zoomScale, flexShrink: 0, transition: 'transform 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1), height 0.2s cubic-bezier(0.2, 0, 0, 1)' }}>
         <div 
           ref={contentRef}
           id="mapa-31-andar-content"
@@ -470,7 +514,7 @@ export function RHMapaAndar31({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           className={`relative bg-white select-none rounded-xl shadow-sm ring-1 ring-gray-200 mx-auto ${activeTool !== 'select' && isEditMode ? 'cursor-crosshair bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]' : ''}`}
-          style={{ width: MAP_W, height: MAP_H, overflow: 'hidden' }}
+          style={{ width: mapW, height: mapH, overflow: 'hidden' }}
         >
           {elements.map(el => {
               
