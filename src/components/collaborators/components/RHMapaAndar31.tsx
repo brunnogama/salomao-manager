@@ -499,8 +499,24 @@ export function RHMapaAndar31({
                       </div>
                     )}
       
+                    {/* BADGE DE IDENTIFICAÇÃO DO POSTO (COM COR DO CARGO) */}
+                    {postoId !== 'NOVO' && (
+                        <div className={`absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-[2px] rounded uppercase shadow-sm border border-black/20 flex items-center justify-center z-20 ${
+                            seatType === 'SÓCIO' ? 'bg-red-700' : 
+                            seatType === 'SÊNIOR' ? 'bg-red-600' : 
+                            seatType === 'ESTAGIÁRIO' ? 'bg-orange-600' : 
+                            (seatType.includes('ADM') || seatType.includes('ADMINISTRATIVO')) ? 'bg-purple-600' : 
+                            seatType === 'CONSULTOR' ? 'bg-amber-600' : 
+                            seatType === 'JÚNIOR' ? 'bg-blue-600' : 'bg-emerald-600'
+                        }`}>
+                           <span className="text-[6.5px] font-black text-white leading-none tracking-wider">
+                             {postoId}
+                           </span>
+                        </div>
+                    )}
+
                     {/* Visual UI (Compact Black-Border Exact Representation) */}
-                    <div className="flex flex-col flex-nowrap items-center pt-0.5 justify-start w-full h-full p-[1px] border border-black bg-white group-hover:bg-[#1e3a8a]/5 transition-colors overflow-hidden">
+                    <div className="flex flex-col flex-nowrap items-center pt-2.5 justify-start w-full h-full p-[1px] border border-black bg-white group-hover:bg-[#1e3a8a]/5 transition-colors overflow-hidden">
                       {occupant ? (
                         <>
                           {!isEditMode && (
