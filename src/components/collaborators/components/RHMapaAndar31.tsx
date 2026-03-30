@@ -28,8 +28,8 @@ interface FloorPlanProps {
 
 const W_STD = 75;
 const H_STD = 40;
-const MAP_W = 1700;
-const MAP_H = 1000;
+const MAP_W = 2550;
+const MAP_H = 1500;
 
 export function RHMapaAndar31({ 
   collaborators, 
@@ -512,7 +512,7 @@ export function RHMapaAndar31({
                     )}
 
                     {/* Visual UI (Transparent / Borderless) */}
-                    <div className={`flex flex-col flex-nowrap items-center pt-1.5 justify-start w-full h-full p-[1px] bg-transparent transition-colors overflow-visible relative ${isEditMode ? 'border border-dashed border-gray-400/50 bg-white/30' : 'group-hover:bg-[#1e3a8a]/5'}`}>
+                    <div className="flex flex-col flex-nowrap items-center pt-1.5 justify-start w-full h-full p-[1px] bg-transparent transition-colors overflow-visible relative group-hover:bg-[#1e3a8a]/5">
                       {occupant ? (
                         <>
                           {!isEditMode && (
