@@ -129,7 +129,7 @@ export function ReembolsosTab() {
         .from('reembolsos')
         .select(`
           *,
-          collaborators (name, email)
+          collaborators:colaborador_id (name, email)
         `)
         .order('created_at', { ascending: false });
 
