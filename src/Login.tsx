@@ -41,7 +41,7 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
         options: {
-          scopes: 'email profile openid',
+          scopes: 'email profile openid User.Read',
           redirectTo: window.location.origin + '/login'
         }
       })
