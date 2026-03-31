@@ -235,7 +235,8 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                    valor: "0,00",
                    descricao: "Aguardando Apuração",
                    fornecedor: "Não processado pela IA",
-                   link_autorizacao: `https://salomao-manager.pages.dev/reembolso/autorizar/${r.id}`
+                   link_autorizacao: `https://salomao-manager.pages.dev/reembolso/autorizar/${r.id}`,
+                   recibo_url: r.recibo_url
                 },
                 solicitante: {
                    id: solicitanteObj?.id || '',
