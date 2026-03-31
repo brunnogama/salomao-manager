@@ -18,6 +18,9 @@ interface ReembolsoDetails {
   solicitante_email: string;
   autorizador_nome: string;
   autorizador_email: string;
+  data_despesa?: string;
+  cliente_nome?: string;
+  observacao?: string;
 }
 
 export default function PublicReembolsoAuth() {
@@ -67,7 +70,10 @@ export default function PublicReembolsoAuth() {
         solicitante_nome: rData.collaborators?.name || 'Desconhecido',
         solicitante_email: rData.collaborators?.email || '',
         autorizador_nome: rData.authorizer?.name || '',
-        autorizador_email: rData.authorizer?.email || ''
+        autorizador_email: rData.authorizer?.email || '',
+        data_despesa: rData.data_despesa,
+        cliente_nome: rData.cliente_nome,
+        observacao: rData.observacao
       });
 
     } catch (err: any) {
@@ -163,7 +169,7 @@ export default function PublicReembolsoAuth() {
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-yellow-100/30 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4 pointer-events-none" />
 
-      <div className="w-full max-w-2xl relative z-10 space-y-6">
+      <div className="w-full max-w-[1200px] relative z-10 space-y-6 flex flex-col h-full items-center">
         
         {/* Header */}
         <div className="text-center space-y-2">
@@ -175,8 +181,8 @@ export default function PublicReembolsoAuth() {
           </p>
         </div>
 
-        {/* Card Principal */}
-        <div className="bg-white rounded-[2rem] shadow-2xl shadow-blue-900/5 overflow-hidden border border-white/60">
+        {/* Card Principal Split-Screen */}
+        <div className="bg-white rounded-[2rem] shadow-2xl shadow-blue-900/5 overflow-hidden border border-white/60 flex flex-col w-full max-w-[1200px]">
           
           {/* Status Banner */}
           {!isPending && (
@@ -189,132 +195,175 @@ export default function PublicReembolsoAuth() {
             </div>
           )}
 
-          <div className="p-6 md:p-10 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] xl:grid-cols-[1fr,450px] divide-y lg:divide-y-0 lg:divide-x divide-gray-100">
             
-            {/* Infos Pessoais e Resumo */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8">
-              <div className="space-y-1">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Solicitante</p>
-                <p className="text-xl font-bold text-[#112240]">{data.solicitante_nome}</p>
-              </div>
-              <div className="space-y-1 md:text-right">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Valor da Despesa</p>
-                {data.valor > 0 ? (
-                  <div className="text-3xl font-black text-[#d4af37] tracking-tight">
-                    <span className="text-lg mr-1 text-[#d4af37]/70">R$</span>
-                    {data.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </div>
-                ) : (
-                  <div className="inline-block px-4 py-2 bg-yellow-50 text-yellow-700 font-bold text-sm tracking-wide rounded-full border border-yellow-200">
-                     A Apurar pelo Financeiro
-                  </div>
-                )}
-              </div>
+            {/* Esquerda: Visualizador do Recibo */}
+            <div className="p-4 md:p-8 bg-gray-50/50 h-full flex flex-col">
+               {data.recibo_url ? (
+                 <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white flex flex-col shadow-sm flex-1 min-h-[500px]">
+                   <div className="w-full bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                     <span className="text-sm font-bold text-[#112240] flex items-center gap-2">
+                       <FileText className="w-5 h-5 text-blue-600" />
+                       Visualizador de Documento
+                     </span>
+                     <a
+                       href={data.recibo_url}
+                       target="_blank"
+                       rel="noreferrer"
+                       className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg font-bold text-xs hover:bg-gray-50 transition-colors shadow-sm"
+                     >
+                       <Download className="w-4 h-4" />
+                       Baixar
+                     </a>
+                   </div>
+                   
+                   <div className="w-full flex-1 flex items-center justify-center bg-gray-50/80 p-4">
+                     {data.recibo_url.toLowerCase().match(/\.(jpeg|jpg|png|gif|webp)(?:\?.*)?$/i) ? (
+                       <img
+                         src={data.recibo_url}
+                         alt="Recibo"
+                         className="max-h-[700px] w-auto max-w-full rounded-xl shadow-sm border border-gray-200/60 object-contain mx-auto"
+                         loading="lazy"
+                       />
+                     ) : data.recibo_url.toLowerCase().match(/\.pdf(?:\?.*)?$/i) ? (
+                       <iframe
+                         src={`${data.recibo_url}#toolbar=0`}
+                         className="w-full h-[700px] rounded-xl border border-gray-200/60"
+                         title="PDF Preview"
+                       />
+                     ) : (
+                       <div className="p-8 flex flex-col items-center text-center">
+                         <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
+                           <FileText className="w-8 h-8" />
+                         </div>
+                         <p className="font-bold text-gray-700">Visualização Indisponível</p>
+                         <p className="text-xs text-gray-400 mt-1 max-w-xs">Este tipo de arquivo não suporta visualização direta no navegador. Utilize o botão acima para baixar.</p>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               ) : (
+                 <div className="h-full min-h-[500px] border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-400 bg-white">
+                    <FileText className="w-10 h-10 mb-2 opacity-50" />
+                    <p className="font-medium text-sm">Nenhum recibo anexado</p>
+                 </div>
+               )}
             </div>
 
-            {/* Detalhes da Despesa (Só mostramos se a IA/Financeiro já leu ou houver dados extras preenchidos) */}
-            {data.valor > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100/50">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5"><FileText className="w-3 h-3"/> Descrição</p>
-                  <p className="text-sm font-medium text-gray-700 leading-relaxed">{data.descricao || '-'}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fornecedor / Estabelecimento</p>
-                  <p className="text-sm font-medium text-gray-700">{data.fornecedor_nome || '-'}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Data do Envio</p>
-                  <p className="text-sm font-medium text-gray-700">{new Date(data.created_at).toLocaleDateString('pt-BR')}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Aviso quando pendente de IA */}
-            {data.valor === 0 && (
-               <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 flex flex-col items-center justify-center text-center space-y-2">
-                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-inner">
-                     <AlertCircle className="w-6 h-6" />
+            {/* Direita: Informações e Ações */}
+            <div className="p-6 md:p-8 flex flex-col h-full bg-white relative">
+               
+               {/* 1. Blocos de Destaque Principais (Nome e Valor) */}
+               <div className="space-y-6 mb-8">
+                  <div>
+                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-blue-500"/> Solicitante</p>
+                     <p className="text-xl md:text-2xl font-black text-[#112240] tracking-tight">{data.solicitante_nome}</p>
                   </div>
-                  <h3 className="font-bold text-[#112240]">Aguardando Apuração</h3>
-                  <p className="text-sm text-gray-500 max-w-sm">
-                     O valor do recibo abaixo bem como o CNPJ e descrição serão apurados pelo departamento financeiro da Salomão.
-                  </p>
-                  <p className="text-sm font-bold text-blue-600 mt-2">
-                     Você pode manifestar sua autorização baseado na imagem anexa abaixo.
-                  </p>
+                  
+                  <div className="p-6 rounded-[1.25rem] bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-xl shadow-blue-900/10 flex flex-col gap-1 border border-blue-800">
+                     <p className="text-[11px] font-bold text-blue-200/80 uppercase tracking-widest">Valor da Despesa</p>
+                     {data.valor > 0 ? (
+                        <div className="text-4xl font-black text-[#f1c40f] tracking-tight drop-shadow-sm flex items-end">
+                           <span className="text-2xl mr-1.5 text-[#f1c40f]/80 font-bold tracking-normal mb-1">R$</span>
+                           {data.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                     ) : (
+                        <div className="text-lg font-bold text-blue-100 flex items-center gap-2 mt-1">
+                           <AlertCircle className="w-5 h-5 opacity-80" /> <span className="opacity-90">A apurar no contábil</span>
+                        </div>
+                     )}
+                  </div>
                </div>
-            )}
 
-            {/* Recibo Anexo */}
-            {data.recibo_url && (
-              <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white flex flex-col items-center shadow-sm">
-                <div className="w-full bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                  <span className="text-sm font-bold text-[#112240] flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-blue-600" />
-                    Visualização do Recibo
-                  </span>
-                  <a
-                    href={data.recibo_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg font-bold text-xs hover:bg-gray-50 transition-colors shadow-sm"
-                  >
-                    <Download className="w-4 h-4" />
-                    Baixar Arquivo
-                  </a>
-                </div>
-                
-                <div className="w-full p-4 flex items-center justify-center bg-gray-50/50 min-h-[300px]">
-                  {/* Tenta renderizar como imagem ou PDF com regex seguro para query params */}
-                  {data.recibo_url.toLowerCase().match(/\.(jpeg|jpg|png|gif|webp)(?:\?.*)?$/i) ? (
-                    <img
-                      src={data.recibo_url}
-                      alt="Recibo"
-                      className="max-h-[600px] w-auto max-w-full rounded-xl shadow-sm border border-gray-200/60 object-contain"
-                      loading="lazy"
-                    />
-                  ) : data.recibo_url.toLowerCase().match(/\.pdf(?:\?.*)?$/i) ? (
-                    <iframe
-                      src={`${data.recibo_url}#toolbar=0`}
-                      className="w-full h-[600px] rounded-xl border border-gray-200/60"
-                      title="PDF Preview"
-                    />
-                  ) : (
-                    <div className="p-8 flex flex-col items-center text-center">
-                      <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
-                        <FileText className="w-8 h-8" />
-                      </div>
-                      <p className="font-bold text-gray-700">Visualização Indisponível</p>
-                      <p className="text-xs text-gray-400 mt-1 max-w-xs">Este tipo de arquivo não suporta visualização direta. Utilize o botão acima para baixar.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+               {/* 2. Resumo Secundário (Apenas se a IA tiver lido ou financeiro atualizado) */}
+               {data.valor > 0 && (
+                  <div className="space-y-6 mb-8 flex-1">
+                     
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl flex flex-col justify-center">
+                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Data da Nota</p>
+                           <p className="text-[15px] font-black text-[#112240]">
+                              {data.data_despesa ? new Date(data.data_despesa + 'T12:00:00').toLocaleDateString('pt-BR') : new Date(data.created_at).toLocaleDateString('pt-BR')}
+                           </p>
+                        </div>
+                        <div className="bg-blue-50/50 border border-blue-100/50 p-4 rounded-xl flex flex-col justify-center">
+                           <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Cliente Vinculado</p>
+                           <p className="text-[14px] font-black text-blue-900 leading-tight">
+                              {data.cliente_nome ? data.cliente_nome : 'Não Reembolsável'}
+                           </p>
+                        </div>
+                     </div>
 
-            {/* Action Buttons */}
-            {isPending && (
-              <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-gray-100">
-                <button
-                  onClick={() => handleAction('reject')}
-                  disabled={processing !== null}
-                  className="flex-1 py-4 px-6 rounded-xl border border-red-200 bg-white text-red-600 font-bold tracking-wide uppercase text-sm hover:bg-red-50 hover:border-red-300 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {processing === 'reject' ? <Loader2 className="w-5 h-5 animate-spin" /> : <XCircle className="w-5 h-5" />}
-                  Não Autorizar
-                </button>
-                <button
-                  onClick={() => handleAction('approve')}
-                  disabled={processing !== null}
-                  className="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-blue-900 to-blue-800 focus:ring-4 focus:ring-blue-100 border border-blue-900 text-white font-bold tracking-wider uppercase text-sm shadow-xl shadow-blue-900/20 hover:shadow-blue-900/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {processing === 'approve' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-                  Autorizar Despesa
-                </button>
-              </div>
-            )}
-            
+                     <div className="pt-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-gray-300"/> 
+                          Fornecedor
+                        </p>
+                        <p className="text-sm font-bold text-gray-800 bg-white border border-gray-200/80 p-3.5 rounded-xl shadow-sm">
+                           {data.fornecedor_nome || '-'}
+                        </p>
+                     </div>
+                     
+                     <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-gray-300"/> 
+                          Itens Consumidos (IA)
+                        </p>
+                        <p className="text-sm font-medium text-gray-600 bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                           {data.descricao || '-'}
+                        </p>
+                     </div>
+
+                     {data.observacao && (
+                        <div className="pt-2">
+                           <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                              <AlertCircle className="w-3.5 h-3.5"/>
+                              Observação Extra do Usuário
+                           </p>
+                           <p className="text-sm font-medium text-amber-900 bg-amber-50 p-4 rounded-xl border border-amber-200/60 shadow-inner">
+                              "{data.observacao}"
+                           </p>
+                        </div>
+                     )}
+                  </div>
+               )}
+
+               {/* Aviso se ainda pendente de Leitura IA */}
+               {data.valor === 0 && (
+                  <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 flex flex-col items-center justify-center text-center space-y-3 mb-8 flex-1">
+                     <div className="w-14 h-14 bg-white text-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-100">
+                        <AlertCircle className="w-7 h-7" />
+                     </div>
+                     <h3 className="font-bold text-[#112240] text-lg mt-2">Valores Pendentes</h3>
+                     <p className="text-sm text-gray-500 leading-relaxed px-4">
+                        Os dados não constam pois aguardam processamento. Você já pode autorizar o reembolso conferindo a imagem e o valor ao lado.
+                     </p>
+                  </div>
+               )}
+
+               {/* 3. Action Buttons (Bottom Pinned) */}
+               {isPending && (
+                  <div className="flex flex-col gap-3 mt-auto pt-6 border-t border-gray-100">
+                     <button
+                        onClick={() => handleAction('approve')}
+                        disabled={processing !== null}
+                        className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-blue-900 to-[#1e3a8a] focus:ring-4 focus:ring-blue-100 border border-blue-800 text-white font-bold tracking-widest uppercase text-sm shadow-xl shadow-blue-900/20 hover:shadow-blue-900/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50"
+                     >
+                        {processing === 'approve' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                        Autorizar Despesa
+                     </button>
+                     <button
+                        onClick={() => handleAction('reject')}
+                        disabled={processing !== null}
+                        className="w-full py-4 px-6 rounded-2xl border-2 border-red-100 bg-white text-red-500 font-bold tracking-widest uppercase text-sm hover:bg-red-50 hover:border-red-200 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50"
+                     >
+                        {processing === 'reject' ? <Loader2 className="w-5 h-5 animate-spin" /> : <XCircle className="w-5 h-5" />}
+                        Não Autorizar
+                     </button>
+                  </div>
+               )}
+
+            </div>
           </div>
         </div>
       </div>
