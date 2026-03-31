@@ -23,6 +23,7 @@ interface Reembolso {
   created_at: string;
   collaborators: { name: string };
   cliente_nome?: string;
+  observacao?: string;
 }
 
 export function ReembolsosTab() {
@@ -782,7 +783,7 @@ export function ReembolsosTab() {
                   )}
 
                   <div className="col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Descrição do Solicitante</label>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><FileText className="w-4 h-4 text-gray-400" /> Itens Consumidos (Extração IA)</label>
                     {isEditing ? (
                       <textarea 
                         value={editedData.descricao || ''} 
@@ -793,6 +794,21 @@ export function ReembolsosTab() {
                       <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedReembolso.descricao || 'Nenhuma descrição fornecida.'}</p>
                     )}
                   </div>
+
+                  {(selectedReembolso.observacao || editedData.observacao) && (
+                    <div className="col-span-2 bg-amber-50/50 p-4 rounded-xl border border-amber-100 shadow-inner">
+                      <label className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-2 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-amber-600"/> Observação Direta do Solicitante</label>
+                      {isEditing ? (
+                        <textarea 
+                          value={editedData.observacao || ''} 
+                          onChange={(e) => setEditedData({...editedData, observacao: e.target.value})}
+                          className="w-full p-3 bg-white border border-amber-200 rounded-lg text-sm h-16"
+                        />
+                      ) : (
+                        <p className="text-sm font-medium text-amber-900 italic whitespace-pre-wrap">"{selectedReembolso.observacao}"</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className={`p-4 rounded-xl ${isEditing ? 'bg-amber-100' : 'bg-[#112240]'} flex justify-between items-center shadow-lg transition-colors`}>
