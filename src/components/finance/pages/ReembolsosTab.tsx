@@ -60,7 +60,7 @@ export function ReembolsosTab() {
   const handleExportXLSX = () => {
     const dataToExport = filtered.map(r => ({
       'Data da Despesa': r.data_despesa ? format(new Date(r.data_despesa), 'dd/MM/yyyy') : '',
-      'Colaborador': r.collaborators?.name || '',
+      'Integrante': r.collaborators?.name || '',
       'Descrição': r.descricao || '',
       'Solicitado em': r.created_at ? format(new Date(r.created_at), 'dd/MM/yyyy HH:mm') : '',
       'Status': r.status === 'pago' ? 'Pago' : 'Pendente',
@@ -422,7 +422,7 @@ export function ReembolsosTab() {
               <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
                 <tr>
                   <th className="p-4 pl-6 text-[10px] font-black uppercase text-white tracking-widest">Data da Despesa</th>
-                  <th className="p-4 text-[10px] font-black uppercase text-white tracking-widest">Colaborador</th>
+                  <th className="p-4 text-[10px] font-black uppercase text-white tracking-widest">Integrante</th>
                   <th className="p-4 text-[10px] font-black uppercase text-white tracking-widest">Descrição</th>
                   <th className="p-4 text-[10px] font-black uppercase text-white tracking-widest">Solicitado em</th>
                   <th className="p-4 text-[10px] font-black uppercase text-white tracking-widest">Cobrar Cliente?</th>
@@ -789,7 +789,7 @@ export function ReembolsosTab() {
                       disabled={processingPayment}
                       className="w-full py-4 bg-[#0a192f] text-white rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg hover:bg-black transition-all disabled:opacity-70 flex justify-center items-center gap-2"
                     >
-                      {processingPayment ? <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</> : 'Marcar como Pago e Notificar Colaborador'}
+                      {processingPayment ? <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</> : 'Marcar como Pago e Notificar Integrante'}
                     </button>
                   </div>
                 )
