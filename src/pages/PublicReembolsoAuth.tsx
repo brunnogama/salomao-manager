@@ -99,7 +99,7 @@ export default function PublicReembolsoAuth() {
       // Disparar o Webhook para notificar
       const payloadMake = {
         evento: "resultado_autorizacao",
-        acao: action, // "approve" ou "reject"
+        acao: action === 'approve' ? "Autorizado" : "Rejeitado",
         reembolso: {
           id: data.id,
           valor: data.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),

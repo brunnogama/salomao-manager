@@ -210,10 +210,18 @@ export function ReembolsosTab() {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({ 
-             reembolso_id: selectedReembolso.id, 
-             comprovante_url: comprovanteUrl,
-             email_colaborador: (selectedReembolso.collaborators as any)?.email || null,
-             nome_colaborador: selectedReembolso.collaborators?.name || null
+             evento: "pagamento_realizado",
+             reembolso: {
+               id: selectedReembolso.id, 
+               valor: selectedReembolso.valor ? selectedReembolso.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00',
+               descricao: selectedReembolso.descricao || '',
+               fornecedor: selectedReembolso.fornecedor_nome || '',
+               comprovante_url: comprovanteUrl || ''
+             },
+             solicitante: {
+               nome: selectedReembolso.collaborators?.name || '',
+               email: (selectedReembolso.collaborators as any)?.email || ''
+             }
            })
          })
          .then(res => console.log("✅ Webhook respondido com status:", res.status))
