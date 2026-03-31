@@ -251,7 +251,7 @@ export function ReembolsosTab() {
       if (error) throw error;
 
       // Chama webhook do Make.com se houver para notificar o usuário (Assíncrono)
-      const webhookUrl = import.meta.env.VITE_MAKE_WEBHOOK_REEMBOLSO_PAGO || 'https://hook.us2.make.com/ek933ugsc18euo3uwv9eha6mgk8ngvws';
+      const webhookUrl = import.meta.env.VITE_MAKE_WEBHOOK_URL_REEMBOLSO_NOVO || 'https://hook.us2.make.com/8e7s11ns13rgpffbtyduy5kt93zzrf53';
       console.log("🚀 Disparando notificação de pagamento para:", webhookUrl);
       if(webhookUrl && webhookUrl !== 'SUA_URL_AQUI') {
          fetch(webhookUrl, {
