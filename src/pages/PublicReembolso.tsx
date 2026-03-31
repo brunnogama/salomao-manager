@@ -520,7 +520,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                 {isSubmitting ? (
                   <><Loader2 className="w-5 h-5 animate-spin" /> Salvando recibos no banco...</>
                 ) : (
-                  <>Confirmar e Enviar Lote <ChevronRight className="w-5 h-5" /></>
+                  <>Enviar Solicitação <ChevronRight className="w-5 h-5" /></>
                 )}
               </button>
             </div>
@@ -543,7 +543,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                 }}
                 className="py-3 px-8 bg-gray-100 text-[#112240] hover:bg-gray-200 rounded-xl font-bold text-sm transition-colors"
               >
-                {isModal ? 'Fechar Janela' : 'Enviar novo lote'}
+                {isModal ? 'Fechar Janela' : 'Enviar nova solicitação'}
               </button>
             </div>
           )}
