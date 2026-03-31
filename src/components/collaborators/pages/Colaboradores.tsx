@@ -2673,7 +2673,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     <div>
                       <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><Briefcase className="h-4 w-4" /> Filtros Corporativos</h3>
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="relative z-[118]">
+                        <div className="relative z-[120]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
                           <SearchableMultiSelect
                             value={advFilterStatus}
@@ -2685,7 +2685,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             placeholder="Todos..."
                           />
                         </div>
-                        <div className="relative z-[109]">
+                        <div className="relative z-[119]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Rateio</label>
                           <SearchableMultiSelect
                             value={advFilterRateio}
@@ -2694,7 +2694,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             placeholder="Todos..."
                           />
                         </div>
-                        <div className="relative z-[116]">
+                        <div className="relative z-[118]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Área</label>
                           <SearchableMultiSelect
                             value={advFilterArea}
@@ -2706,8 +2706,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             placeholder="Todas..."
                           />
                         </div>
-                        <div className="relative z-[115]">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Contratação</label>
+                        <div className="relative z-[117]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Equipe</label>
+                          <SearchableMultiSelect value={advFilterTeam} onChange={setAdvFilterTeam} table="teams" placeholder="Todas..." />
+                        </div>
+                        <div className="relative z-[116]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Vínculo</label>
                           <SearchableMultiSelect
                             value={advFilterContractType}
                             onChange={setAdvFilterContractType}
@@ -2725,8 +2729,23 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             placeholder="Todos..."
                           />
                         </div>
-
+                        <div className="relative z-[115]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cargo/Classe</label>
+                          <SearchableMultiSelect value={advFilterRole} onChange={setAdvFilterRole} options={roleOptions as any} placeholder="Todos..." />
+                        </div>
                         <div className="relative z-[114]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sócio Responsável</label>
+                          <SearchableMultiSelect value={advFilterPartner} onChange={setAdvFilterPartner} options={partnerOptions as any} placeholder="Todos..." />
+                        </div>
+                        <div className="relative z-[113]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Líder Direto</label>
+                          <SearchableMultiSelect value={advFilterLeader} onChange={setAdvFilterLeader} options={liderOptions as any} placeholder="Todos..." />
+                        </div>
+                        <div className="relative z-[112]">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local</label>
+                          <SearchableMultiSelect value={advFilterLocal} onChange={setAdvFilterLocal} table="locations" placeholder="Todos..." />
+                        </div>
+                        <div className="relative z-[111]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Meio de Transporte</label>
                           <SearchableMultiSelect
                             value={advFilterTransporteTipo}
@@ -2744,27 +2763,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             ]}
                             placeholder="Todos..."
                           />
-                        </div>
-
-                        <div className="relative z-[108]">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sócio Responsável</label>
-                          <SearchableMultiSelect value={advFilterPartner} onChange={setAdvFilterPartner} options={partnerOptions as any} placeholder="Todos..." />
-                        </div>
-                        <div className="relative z-[107]">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Líder Direto</label>
-                          <SearchableMultiSelect value={advFilterLeader} onChange={setAdvFilterLeader} options={liderOptions as any} placeholder="Todos..." />
-                        </div>
-                        <div className="relative z-[106]">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Equipe</label>
-                          <SearchableMultiSelect value={advFilterTeam} onChange={setAdvFilterTeam} table="teams" placeholder="Todas..." />
-                        </div>
-                        <div className="relative z-[105]">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cargo/Classe</label>
-                          <SearchableMultiSelect value={advFilterRole} onChange={setAdvFilterRole} options={roleOptions as any} placeholder="Todos..." />
-                        </div>
-                        <div className="relative z-[104]">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local</label>
-                          <SearchableMultiSelect value={advFilterLocal} onChange={setAdvFilterLocal} table="locations" placeholder="Todos..." />
                         </div>
                       </div>
 
