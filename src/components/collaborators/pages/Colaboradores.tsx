@@ -18,6 +18,7 @@ import { Collaborator, Partner, GEDDocument } from '../../../types/controladoria
 import { AlertModal } from '../../ui/AlertModal'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
 import { SearchableSelect } from '../../crm/SearchableSelect'
+import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync'
 import { getWorkingDaysInCurrentMonth } from '../utils/colaboradoresUtils';
 
@@ -1448,14 +1449,21 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
       const safeCompare = (filterVal: string, ...targetVals: (string | undefined | null)[]) => {
         if (!filterVal) return true;
-        const lowFilter = filterVal.toLowerCase();
-        return targetVals.some(t => t && String(t).toLowerCase() === lowFilter);
+        const filterItems = filterVal.split(',').map(f => f.trim().toLowerCase());
+        return targetVals.some(t => {
+          if (!t) return false;
+          return filterItems.includes(String(t).toLowerCase());
+        });
       };
 
       const safeIncludes = (filterVal: string, ...targetVals: (string | undefined | null)[]) => {
         if (!filterVal) return true;
-        const lowFilter = filterVal.toLowerCase();
-        return targetVals.some(t => t && String(t).toLowerCase().includes(lowFilter));
+        const filterItems = filterVal.split(',').map(f => f.trim().toLowerCase());
+        return targetVals.some(t => {
+          if (!t) return false;
+          const lowT = String(t).toLowerCase();
+          return filterItems.some(f => lowT.includes(f));
+        });
       };
 
       if (!safeCompare(advFilterPartner, c.partner_id, (c as any).partner?.name)) return false;
@@ -2581,7 +2589,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="relative z-[120]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Gênero</label>
-                          <SearchableSelect
+                          <SearchableMultiSelect
                             value={advFilterGender}
                             onChange={setAdvFilterGender}
                             options={[
@@ -2594,7 +2602,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                         </div>
                         <div className="relative z-[119]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Filhos</label>
-                          <SearchableSelect
+                          <SearchableMultiSelect
                             value={advFilterChildren}
                             onChange={(val) => setAdvFilterChildren(val as any)}
                             options={[
@@ -2606,7 +2614,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                         </div>
                         <div className="col-span-1 md:col-span-2 relative z-[110]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Estado (Moradia)</label>
-                          <SearchableSelect
+                          <SearchableMultiSelect
                             value={advFilterStateHome}
                             onChange={setAdvFilterStateHome}
                             options={ESTADOS_BRASIL.map(e => ({ id: e.nome, label: e.nome, value: e.nome }))}
@@ -2645,7 +2653,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="relative z-[118]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
-                          <SearchableSelect
+                          <SearchableMultiSelect
                             value={advFilterStatus}
                             onChange={(val) => setAdvFilterStatus(val as any)}
                             options={[
@@ -2657,7 +2665,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                         </div>
                         <div className="relative z-[109]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Rateio</label>
-                          <SearchableSelect
+                          <SearchableMultiSelect
                             value={advFilterRateio}
                             onChange={setAdvFilterRateio}
                             options={rateios.map(r => ({ id: String(r.id), label: r.name, value: String(r.id) }))}
@@ -2666,7 +2674,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                         </div>
                         <div className="relative z-[116]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Área</label>
-                          <SearchableSelect
+                          <SearchableMultiSelect
                             value={advFilterArea}
                             onChange={setAdvFilterArea}
                             options={[
@@ -2678,7 +2686,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                         </div>
                         <div className="relative z-[115]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Contratação</label>
-                          <SearchableSelect
+                          <SearchableMultiSelect
                             value={advFilterContractType}
                             onChange={setAdvFilterContractType}
                             options={[
@@ -2696,7 +2704,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                         <div className="relative z-[115]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Sócio</label>
-                          <SearchableSelect
+                          <SearchableMultiSelect
                             value={advFilterPartnerType}
                             onChange={setAdvFilterPartnerType}
                             options={[
@@ -2710,7 +2718,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                         <div className="relative z-[114]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Meio de Transporte</label>
-                          <SearchableSelect
+                          <SearchableMultiSelect
                             value={advFilterTransporteTipo}
                             onChange={setAdvFilterTransporteTipo}
                             options={[
@@ -2730,23 +2738,23 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                         <div className="relative z-[108]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sócio Responsável</label>
-                          <SearchableSelect value={advFilterPartner} onChange={setAdvFilterPartner} options={partnerOptions as any} placeholder="Todos..." />
+                          <SearchableMultiSelect value={advFilterPartner} onChange={setAdvFilterPartner} options={partnerOptions as any} placeholder="Todos..." />
                         </div>
                         <div className="relative z-[107]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Líder Direto</label>
-                          <SearchableSelect value={advFilterLeader} onChange={setAdvFilterLeader} options={liderOptions as any} placeholder="Todos..." />
+                          <SearchableMultiSelect value={advFilterLeader} onChange={setAdvFilterLeader} options={liderOptions as any} placeholder="Todos..." />
                         </div>
                         <div className="relative z-[106]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Equipe</label>
-                          <SearchableSelect value={advFilterTeam} onChange={setAdvFilterTeam} table="teams" placeholder="Todas..." />
+                          <SearchableMultiSelect value={advFilterTeam} onChange={setAdvFilterTeam} table="teams" placeholder="Todas..." />
                         </div>
                         <div className="relative z-[105]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cargo</label>
-                          <SearchableSelect value={advFilterRole} onChange={setAdvFilterRole} options={roleOptions as any} placeholder="Todos..." />
+                          <SearchableMultiSelect value={advFilterRole} onChange={setAdvFilterRole} options={roleOptions as any} placeholder="Todos..." />
                         </div>
                         <div className="relative z-[104]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local</label>
-                          <SearchableSelect value={advFilterLocal} onChange={setAdvFilterLocal} table="locations" placeholder="Todos..." />
+                          <SearchableMultiSelect value={advFilterLocal} onChange={setAdvFilterLocal} table="locations" placeholder="Todos..." />
                         </div>
                       </div>
 
@@ -2784,7 +2792,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                         <div className="relative z-[113]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Graduação Completa</label>
-                          <SearchableSelect
+                          <SearchableMultiSelect
                             value={advFilterGraduationComplete}
                             onChange={(val) => setAdvFilterGraduationComplete(val as any)}
                             options={[
@@ -2796,11 +2804,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
                         </div>
                         <div className="relative z-[112]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">UF (Graduação)</label>
-                          <SearchableSelect value={advFilterGraduationUF} onChange={(v) => { setAdvFilterGraduationUF(v); setAdvFilterGraduationInstitution(''); }} options={ESTADOS_BRASIL.map(e => ({ id: e.sigla, label: e.nome, value: e.sigla }))} placeholder="Todos..." />
+                          <SearchableMultiSelect value={advFilterGraduationUF} onChange={(v) => { setAdvFilterGraduationUF(v); setAdvFilterGraduationInstitution(''); }} options={ESTADOS_BRASIL.map(e => ({ id: e.sigla, label: e.nome, value: e.sigla }))} placeholder="Todos..." />
                         </div>
                         <div className="relative z-[111]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Instituição</label>
-                          <SearchableSelect value={advFilterGraduationInstitution} onChange={setAdvFilterGraduationInstitution} options={graduationInstitutionOptions} placeholder="Todas..." disabled={!advFilterGraduationUF} />
+                          <SearchableMultiSelect value={advFilterGraduationInstitution} onChange={setAdvFilterGraduationInstitution} options={graduationInstitutionOptions} placeholder="Todas..." disabled={!advFilterGraduationUF} />
                         </div>
                         <div className="relative z-[110]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano Prev. Conclusão</label>
@@ -2817,7 +2825,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                         <div className="relative z-[108]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Pós-Graduação Comp.</label>
-                          <SearchableSelect
+                          <SearchableMultiSelect
                             value={advFilterPostGraduationComplete}
                             onChange={(val) => setAdvFilterPostGraduationComplete(val as any)}
                             options={[
@@ -2829,11 +2837,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
                         </div>
                         <div className="relative z-[107]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">UF (Pós)</label>
-                          <SearchableSelect value={advFilterPostGraduationUF} onChange={(v) => { setAdvFilterPostGraduationUF(v); setAdvFilterPostGraduationInstitution(''); }} options={ESTADOS_BRASIL.map(e => ({ id: e.sigla, label: e.nome, value: e.sigla }))} placeholder="Todos..." />
+                          <SearchableMultiSelect value={advFilterPostGraduationUF} onChange={(v) => { setAdvFilterPostGraduationUF(v); setAdvFilterPostGraduationInstitution(''); }} options={ESTADOS_BRASIL.map(e => ({ id: e.sigla, label: e.nome, value: e.sigla }))} placeholder="Todos..." />
                         </div>
                         <div className="relative z-[106]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Instituição</label>
-                          <SearchableSelect value={advFilterPostGraduationInstitution} onChange={setAdvFilterPostGraduationInstitution} options={postGraduationInstitutionOptions} placeholder="Todas..." disabled={!advFilterPostGraduationUF} />
+                          <SearchableMultiSelect value={advFilterPostGraduationInstitution} onChange={setAdvFilterPostGraduationInstitution} options={postGraduationInstitutionOptions} placeholder="Todas..." disabled={!advFilterPostGraduationUF} />
                         </div>
                         <div className="relative z-[105]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano Prev. Conclusão</label>
