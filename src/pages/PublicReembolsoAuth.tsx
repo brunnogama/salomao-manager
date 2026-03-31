@@ -248,28 +248,48 @@ export default function PublicReembolsoAuth() {
 
             {/* Recibo Anexo */}
             {data.recibo_url && (
-              <div className="border border-gray-200 rounded-2xl overflow-hidden bg-gray-50 flex flex-col items-center">
-                <div className="w-full bg-gray-100 border-b border-gray-200 p-3 text-center">
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center justify-center gap-2">
-                    <Download className="w-4 h-4" /> Comprovante Anexado
+              <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white flex flex-col items-center shadow-sm">
+                <div className="w-full bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                  <span className="text-sm font-bold text-[#112240] flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    Visualização do Recibo
                   </span>
+                  <a
+                    href={data.recibo_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg font-bold text-xs hover:bg-gray-50 transition-colors shadow-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    Baixar Arquivo
+                  </a>
                 </div>
-                {/* Img Preview - assumes its image or pdf link */}
-                {data.recibo_url.toLowerCase().match(/\.(jpeg|jpg|png|gif|webp)$/i) ? (
-                  <img src={data.recibo_url} alt="Recibo" className="w-full h-auto max-h-[500px] object-contain p-4" />
-                ) : (
-                  <div className="p-10 flex flex-col items-center justify-center gap-4 text-center">
-                    <div className="w-16 h-16 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center">
-                      <FileText className="w-8 h-8" />
+                
+                <div className="w-full p-4 flex items-center justify-center bg-gray-50/50 min-h-[300px]">
+                  {/* Tenta renderizar como imagem ou PDF com regex seguro para query params */}
+                  {data.recibo_url.toLowerCase().match(/\.(jpeg|jpg|png|gif|webp)(?:\?.*)?$/i) ? (
+                    <img
+                      src={data.recibo_url}
+                      alt="Recibo"
+                      className="max-h-[600px] w-auto max-w-full rounded-xl shadow-sm border border-gray-200/60 object-contain"
+                      loading="lazy"
+                    />
+                  ) : data.recibo_url.toLowerCase().match(/\.pdf(?:\?.*)?$/i) ? (
+                    <iframe
+                      src={`${data.recibo_url}#toolbar=0`}
+                      className="w-full h-[600px] rounded-xl border border-gray-200/60"
+                      title="PDF Preview"
+                    />
+                  ) : (
+                    <div className="p-8 flex flex-col items-center text-center">
+                      <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
+                        <FileText className="w-8 h-8" />
+                      </div>
+                      <p className="font-bold text-gray-700">Visualização Indisponível</p>
+                      <p className="text-xs text-gray-400 mt-1 max-w-xs">Este tipo de arquivo não suporta visualização direta. Utilize o botão acima para baixar.</p>
                     </div>
-                    <div>
-                      <p className="font-bold text-gray-700">Documento PDF ou Indisponível para Preview</p>
-                      <a href={data.recibo_url} target="_blank" rel="noreferrer" className="text-sm text-blue-500 font-semibold hover:underline mt-2 inline-block">
-                        Clique aqui para visualizar ou baixar
-                      </a>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
 
