@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Trash2, Plus, ExternalLink, ZoomIn, ZoomOut, X, Star } from 'lucide-react';
 import { SearchableSelect } from '../components/crm/SearchableSelect';
+import { convertPdfToTallImage } from '../utils/pdfToImage';
 
 interface Collaborator {
   id: string;
@@ -21,6 +22,14 @@ const normalizeString = (str: string) => {
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, '');
 };
 
+interface FileConfig {
+  reembolsavelCliente: boolean;
+  clienteNome: string;
+  observacao: string;
+  thumbFile?: File;
+  isProcessing?: boolean;
+}
+
 export default function PublicReembolso({ isModal = false, onClose }: PublicReembolsoProps) {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [selectedColab, setSelectedColab] = useState('');
@@ -29,7 +38,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
   const [clientsList, setClientsList] = useState<string[]>([]);
   const [showAutocomplete, setShowAutocomplete] = useState<number | null>(null);
   const [files, setFiles] = useState<File[]>([]);
-  const [fileConfigs, setFileConfigs] = useState<{reembolsavelCliente: boolean, clienteNome: string, observacao: string}[]>([]);
+  const [fileConfigs, setFileConfigs] = useState<FileConfig[]>([]);
   
   const [step, setStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -149,14 +158,35 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
+  const [isProcessingFiles, setIsProcessingFiles] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setIsProcessingFiles(true);
       const addedFiles = Array.from(e.target.files);
+      const newConfigs: FileConfig[] = [];
+
+      for (const file of addedFiles) {
+        let thumbFile = undefined;
+        if (file.type === 'application/pdf') {
+          try {
+            thumbFile = await convertPdfToTallImage(file);
+          } catch (err) {
+            console.error(`Erro ao gerar miniatura do PDF ${file.name}:`, err);
+            // Prossegue silenciosamente, o thumb não existirá
+          }
+        }
+        newConfigs.push({
+          reembolsavelCliente: false,
+          clienteNome: '',
+          observacao: '',
+          thumbFile
+        });
+      }
+
       setFiles(prev => [...prev, ...addedFiles]);
-      setFileConfigs(prev => [
-        ...prev, 
-        ...addedFiles.map(() => ({ reembolsavelCliente: false, clienteNome: '', observacao: '' }))
-      ]);
+      setFileConfigs(prev => [...prev, ...newConfigs]);
+      setIsProcessingFiles(false);
     }
   };
 
@@ -181,13 +211,16 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
     try {
       const payloadArray: any[] = [];
       const publicUrls: string[] = [];
+      const publicThumbUrls: (string | null)[] = [];
 
       for (let idx = 0; idx < files.length; idx++) {
         const file = files[idx];
         const config = fileConfigs[idx] || { reembolsavelCliente: false, clienteNome: '', observacao: '' };
-        // Upload to Supabase Storage
+        
+        // Upload para o Supabase Storage
         const fileExt = file.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const baseId = crypto.randomUUID();
+        const fileName = `${baseId}.${fileExt}`;
         const filePath = `recibos/${fileName}`;
         
         await supabase.storage.from('gastos_reembolsos').upload(filePath, file);
@@ -196,6 +229,18 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         const fileUrl = publicUrlData.publicUrl;
         
         publicUrls.push(fileUrl);
+
+        // Upload da Imagem Fantasma (Se Houver)
+        let thumbUrl = null;
+        if (config.thumbFile) {
+          const thumbFileName = `${baseId}_thumb.jpg`;
+          const thumbFilePath = `recibos/${thumbFileName}`;
+          await supabase.storage.from('gastos_reembolsos').upload(thumbFilePath, config.thumbFile);
+          
+          const { data: thumbData } = supabase.storage.from('gastos_reembolsos').getPublicUrl(thumbFilePath);
+          thumbUrl = thumbData.publicUrl;
+        }
+        publicThumbUrls.push(thumbUrl);
 
         payloadArray.push({
           colaborador_id: selectedColab,
@@ -230,6 +275,8 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
            for (let i = 0; i < insertedRows.length; i++) {
              const r = insertedRows[i];
              const config = fileConfigs[i] || { reembolsavelCliente: false, clienteNome: '', observacao: '' };
+             const tUrl = publicThumbUrls[i];
+
              const payloadMake = {
                 evento: selectedAuthorizer ? "solicitacao_autorizacao" : "novo_reembolso_direto",
                 reembolso: {
@@ -239,6 +286,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                    fornecedor: "Não processado pela IA",
                    link_autorizacao: `https://salomao-manager.pages.dev/reembolso/autorizar/${r.id}`,
                    recibo_url: r.recibo_url,
+                   recibo_thumb_url: tUrl || r.recibo_url,
                    reembolsavel_cliente: config.reembolsavelCliente ? "Sim" : "Não",
                    cliente_nome: config.clienteNome || "-",
                    observacao: config.observacao || "-"
@@ -376,20 +424,33 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Recibos (PDF ou Imagem)</label>
-                <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 hover:bg-gray-50 transition-colors text-center cursor-pointer relative">
+                <div className={`border-2 border-dashed rounded-2xl p-8 transition-colors text-center relative ${isProcessingFiles ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200 hover:bg-gray-50 cursor-pointer'}`}>
                   <input
                     type="file"
                     multiple
                     accept="image/*,.pdf"
                     onChange={handleFileChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={isProcessingFiles}
+                    className={`absolute inset-0 w-full h-full opacity-0 ${isProcessingFiles ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                   />
                   <div className="flex flex-col items-center pointer-events-none">
-                    <div className="w-12 h-12 bg-blue-50 text-[#1e3a8a] rounded-full flex items-center justify-center mb-3">
-                      <Upload className="w-6 h-6" />
-                    </div>
-                    <span className="font-medium text-[#112240]">Clique ou arraste arquivos para enviar</span>
-                    <span className="text-xs text-gray-500 mt-1">Imagens (JPG, PNG) ou PDFs simultâneos</span>
+                    {isProcessingFiles ? (
+                      <>
+                        <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-3 shadow-inner">
+                          <Loader2 className="w-6 h-6 animate-spin" />
+                        </div>
+                        <span className="font-bold text-amber-700 mb-1">Costurando Páginas do PDF...</span>
+                        <span className="text-xs font-semibold text-amber-600">O celular está lendo o PDF e montando uma imagem panorâmica na galeria para envio rápido e sem custos na IA. Pode levar alguns segundos.</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 bg-blue-50 text-[#1e3a8a] rounded-full flex items-center justify-center mb-3">
+                          <Upload className="w-6 h-6" />
+                        </div>
+                        <span className="font-medium text-[#112240]">Clique ou arraste arquivos para enviar</span>
+                        <span className="text-xs text-gray-500 mt-1">Imagens (JPG, PNG) ou PDFs simultâneos</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
