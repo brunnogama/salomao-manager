@@ -6,6 +6,7 @@ import { SearchableSelect } from '../components/crm/SearchableSelect';
 interface Collaborator {
   id: string;
   name: string;
+  leader_id?: string;
 }
 
 interface ExtractedData {
@@ -30,6 +31,8 @@ const normalizeString = (str: string) => {
 export default function PublicReembolso({ isModal = false, onClose }: PublicReembolsoProps) {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [selectedColab, setSelectedColab] = useState('');
+  const [authorizers, setAuthorizers] = useState<Collaborator[]>([]);
+  const [selectedAuthorizer, setSelectedAuthorizer] = useState('');
   const [reembolsavelCliente, setReembolsavelCliente] = useState(false);
   const [clienteNome, setClienteNome] = useState('');
   const [clientsList, setClientsList] = useState<string[]>([]);
@@ -77,42 +80,75 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
     }
   }, [isModal]);
 
+  useEffect(() => {
+    if (selectedColab && collaborators.length > 0) {
+      const colab = collaborators.find(c => String(c.id) === String(selectedColab));
+      if (colab?.leader_id) {
+         setSelectedAuthorizer(String(colab.leader_id));
+      } else {
+         setSelectedAuthorizer('');
+      }
+    }
+  }, [selectedColab, collaborators]);
+
   const fetchCollaborators = async () => {
     try {
       const allNamesMap = new Map<string, Collaborator>();
 
-      const safeFetch = async (table: string) => {
-        // Tenta com status = 'active' ou 'Ativo'
-        const { data, error } = await supabase.from(table).select('id, name').in('status', ['active', 'Ativo']);
-        if (error) {
-          // Se falhar (provavelmente a coluna status não existe), busca tudo
-          const fallback = await supabase.from(table).select('id, name');
-          return fallback.data || [];
+      const getColabs = async () => {
+        let { data, error } = await supabase.from('collaborators').select('id, name, leader_id').in('status', ['active', 'Ativo']);
+        if (error || !data || data.length === 0) {
+           const res = await supabase.from('collaborators').select('id, name, leader_id');
+           data = res.data;
         }
         return data || [];
       };
 
-      const [colabs, partes] = await Promise.all([
-        safeFetch('collaborators'),
-        safeFetch('partners')
-      ]);
-
-      const addToList = (list: any[]) => {
-        list.forEach(item => {
-          if (item?.name) {
-            const key = item.name.trim().toLowerCase();
-            if (!allNamesMap.has(key)) {
-              allNamesMap.set(key, { id: item.id, name: item.name.trim() });
-            }
-          }
-        });
+      const getParts = async () => {
+        let { data, error } = await supabase.from('partners').select('id, name').in('status', ['active', 'Ativo']);
+        if (error || !data || data.length === 0) {
+           const res = await supabase.from('partners').select('id, name');
+           data = res.data;
+        }
+        return data || [];
       };
 
-      addToList(colabs);
-      addToList(partes);
+      const getTLs = async () => {
+        const { data } = await supabase.from('team_leader').select('collaborator_id');
+        return data || [];
+      };
 
-      const sortedList = Array.from(allNamesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-      setCollaborators(sortedList);
+      const [colabsList, partsList, tls] = await Promise.all([getColabs(), getParts(), getTLs()]);
+      const tlSet = new Set(tls.map((t: any) => String(t.collaborator_id)));
+
+      colabsList.forEach((c: any) => {
+        if (c?.name && !allNamesMap.has(c.name.trim().toLowerCase())) {
+          allNamesMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim(), leader_id: c.leader_id });
+        }
+      });
+      partsList.forEach((p: any) => {
+        if (p?.name && !allNamesMap.has(p.name.trim().toLowerCase())) {
+          allNamesMap.set(p.name.trim().toLowerCase(), { id: p.id, name: p.name.trim() });
+        }
+      });
+
+      const sortedColabs = Array.from(allNamesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+      setCollaborators(sortedColabs);
+
+      const authMap = new Map<string, Collaborator>();
+      partsList.forEach((p: any) => {
+        if (p?.name && !authMap.has(p.name.trim().toLowerCase())) {
+          authMap.set(p.name.trim().toLowerCase(), { id: p.id, name: p.name.trim() });
+        }
+      });
+      colabsList.forEach((c: any) => {
+         if (tlSet.has(String(c.id)) && c?.name && !authMap.has(c.name.trim().toLowerCase())) {
+             authMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim() });
+         }
+      });
+
+      const sortedAuth = Array.from(authMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+      setAuthorizers(sortedAuth);
 
     } catch (err) {
       console.error('Erro ao buscar integrantes', err);
@@ -262,6 +298,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
     try {
       const payload = extractedData.map(item => ({
         colaborador_id: selectedColab,
+        autorizador_id: selectedAuthorizer || null,
         reembolsavel_cliente: reembolsavelCliente,
         cliente_nome: reembolsavelCliente ? clienteNome : null,
         recibo_url: publicFileUrl,
@@ -377,6 +414,18 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                   }}
                   options={collaborators.map(c => ({ id: c.id, name: c.name }))}
                   placeholder="Selecione seu nome..."
+                  className="bg-gray-50 rounded-xl"
+                  disableFormatting
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Requer autorização de:</label>
+                <SearchableSelect
+                  value={selectedAuthorizer}
+                  onChange={setSelectedAuthorizer}
+                  options={authorizers.map(a => ({ id: a.id, name: a.name }))}
+                  placeholder="Escolha o líder direto ou sócio..."
                   className="bg-gray-50 rounded-xl"
                   disableFormatting
                 />
