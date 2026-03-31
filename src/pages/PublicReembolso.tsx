@@ -39,11 +39,11 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
   const [showAutocomplete, setShowAutocomplete] = useState<number | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [fileConfigs, setFileConfigs] = useState<FileConfig[]>([]);
-  
+
   const [step, setStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showFavModal, setShowFavModal] = useState(false);
-  
+
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       if (!lastAuth) {
         const colab = collaborators.find(c => String(c.id) === String(selectedColab));
         if (colab?.leader_id) {
-           setSelectedAuthorizer(String(colab.leader_id));
+          setSelectedAuthorizer(String(colab.leader_id));
         }
       }
     }
@@ -88,8 +88,8 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       const getColabs = async () => {
         let { data, error } = await supabase.from('collaborators').select('id, name, leader_id, email').in('status', ['active', 'Ativo']);
         if (error || !data || data.length === 0) {
-           const res = await supabase.from('collaborators').select('id, name, leader_id, email');
-           data = res.data;
+          const res = await supabase.from('collaborators').select('id, name, leader_id, email');
+          data = res.data;
         }
         return data || [];
       };
@@ -97,8 +97,8 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       const getParts = async () => {
         let { data, error } = await supabase.from('partners').select('id, name, email').in('status', ['active', 'Ativo']);
         if (error || !data || data.length === 0) {
-           const res = await supabase.from('partners').select('id, name, email');
-           data = res.data;
+          const res = await supabase.from('partners').select('id, name, email');
+          data = res.data;
         }
         return data || [];
       };
@@ -132,9 +132,9 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         }
       });
       colabsList.forEach((c: any) => {
-         if (tlSet.has(String(c.id)) && c?.name && !authMap.has(c.name.trim().toLowerCase())) {
-             authMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim(), email: c.email });
-         }
+        if (tlSet.has(String(c.id)) && c?.name && !authMap.has(c.name.trim().toLowerCase())) {
+          authMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim(), email: c.email });
+        }
       });
 
       const sortedAuth = Array.from(authMap.values()).sort((a, b) => a.name.localeCompare(b.name));
@@ -216,18 +216,18 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       for (let idx = 0; idx < files.length; idx++) {
         const file = files[idx];
         const config = fileConfigs[idx] || { reembolsavelCliente: false, clienteNome: '', observacao: '' };
-        
+
         // Upload para o Supabase Storage
         const fileExt = file.name.split('.').pop();
         const baseId = crypto.randomUUID();
         const fileName = `${baseId}.${fileExt}`;
         const filePath = `recibos/${fileName}`;
-        
+
         await supabase.storage.from('gastos_reembolsos').upload(filePath, file);
 
         const { data: publicUrlData } = supabase.storage.from('gastos_reembolsos').getPublicUrl(filePath);
         const fileUrl = publicUrlData.publicUrl;
-        
+
         publicUrls.push(fileUrl);
 
         // Upload da Imagem Fantasma (Se Houver)
@@ -236,7 +236,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
           const thumbFileName = `${baseId}_thumb.jpg`;
           const thumbFilePath = `recibos/${thumbFileName}`;
           await supabase.storage.from('gastos_reembolsos').upload(thumbFilePath, config.thumbFile);
-          
+
           const { data: thumbData } = supabase.storage.from('gastos_reembolsos').getPublicUrl(thumbFilePath);
           thumbUrl = thumbData.publicUrl;
         }
@@ -268,47 +268,47 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         const solicitanteObj = collaborators.find(c => String(c.id) === String(selectedColab));
         let autorizadorObj = null;
         if (selectedAuthorizer) {
-           autorizadorObj = authorizers.find(a => String(a.id) === String(selectedAuthorizer));
+          autorizadorObj = authorizers.find(a => String(a.id) === String(selectedAuthorizer));
         }
 
         if (insertedRows && insertedRows.length > 0) {
-           for (let i = 0; i < insertedRows.length; i++) {
-             const r = insertedRows[i];
-             const config = fileConfigs[i] || { reembolsavelCliente: false, clienteNome: '', observacao: '' };
-             const tUrl = publicThumbUrls[i];
+          for (let i = 0; i < insertedRows.length; i++) {
+            const r = insertedRows[i];
+            const config = fileConfigs[i] || { reembolsavelCliente: false, clienteNome: '', observacao: '' };
+            const tUrl = publicThumbUrls[i];
 
-             const payloadMake = {
-                evento: selectedAuthorizer ? "solicitacao_autorizacao" : "novo_reembolso_direto",
-                reembolso: {
-                   id: r.id,
-                   valor: "0,00",
-                   descricao: config.observacao || "Aguardando Apuração",
-                   fornecedor: "Não processado pela IA",
-                   link_autorizacao: `https://salomao-manager.pages.dev/reembolso/autorizar/${r.id}`,
-                   recibo_url: r.recibo_url,
-                   recibo_thumb_url: tUrl || r.recibo_url,
-                   reembolsavel_cliente: config.reembolsavelCliente ? "Sim" : "Não",
-                   cliente_nome: config.clienteNome || "-",
-                   observacao: config.observacao || "-"
-                },
-                solicitante: {
-                   id: solicitanteObj?.id || '',
-                   nome: solicitanteObj?.name || 'Membro do time',
-                   email: solicitanteObj?.email || ''
-                },
-                autorizador: autorizadorObj ? {
-                   id: autorizadorObj.id,
-                   nome: autorizadorObj.name,
-                   email: autorizadorObj.email || ''
-                } : null
-             };
+            const payloadMake = {
+              evento: selectedAuthorizer ? "solicitacao_autorizacao" : "novo_reembolso_direto",
+              reembolso: {
+                id: r.id,
+                valor: "0,00",
+                descricao: config.observacao || "Aguardando Apuração",
+                fornecedor: "Não processado pela IA",
+                link_autorizacao: `https://salomao-manager.pages.dev/reembolso/autorizar/${r.id}`,
+                recibo_url: r.recibo_url,
+                recibo_thumb_url: tUrl || r.recibo_url,
+                reembolsavel_cliente: config.reembolsavelCliente ? "Sim" : "Não",
+                cliente_nome: config.clienteNome || "-",
+                observacao: config.observacao || "-"
+              },
+              solicitante: {
+                id: solicitanteObj?.id || '',
+                nome: solicitanteObj?.name || 'Membro do time',
+                email: solicitanteObj?.email || ''
+              },
+              autorizador: autorizadorObj ? {
+                id: autorizadorObj.id,
+                nome: autorizadorObj.name,
+                email: autorizadorObj.email || ''
+              } : null
+            };
 
-             await fetch(webhookUrl, {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify(payloadMake)
-             }).catch(e => console.error("Falha silenciosa ao chamar Make:", e));
-           }
+            await fetch(webhookUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payloadMake)
+            }).catch(e => console.error("Falha silenciosa ao chamar Make:", e));
+          }
         }
       } catch (webhookErr) {
         console.error("Erro no fluxo do disparo Make:", webhookErr);
@@ -326,16 +326,16 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
   return (
     <div className={`${isModal ? 'w-full' : 'min-h-screen items-center justify-center p-4 bg-gray-50'} flex flex-col transition-all duration-300`}>
       <div className={`w-full transition-all duration-500 mx-auto ${step === 2 ? 'max-w-6xl' : 'max-w-xl'} ${isModal ? '' : ''}`}>
-        
+
         {/* Header Branding */}
         {!isModal && (
           <div className="text-center mb-4">
             <div className="flex justify-center mb-4">
-               <img
-                 src="/logo-salomao.png"
-                 alt="Salomão"
-                 className="h-12 md:h-16 w-auto object-contain drop-shadow-sm transition-transform duration-500 hover:scale-[1.02]"
-               />
+              <img
+                src="/logo-salomao.png"
+                alt="Salomão"
+                className="h-12 md:h-16 w-auto object-contain drop-shadow-sm transition-transform duration-500 hover:scale-[1.02]"
+              />
             </div>
             <h1 className="text-xl md:text-2xl font-black text-[#112240]">Solicitação de Reembolso</h1>
             <p className="text-sm md:text-base text-gray-500 mt-1">Envie seu comprovante para o financeiro.</p>
@@ -344,15 +344,15 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
         {/* Form Container */}
         <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 md:p-6 relative overflow-hidden">
-          
+
           {isModal && (
             <>
               <div className="text-center mb-6 mt-2">
                 <h1 className="text-2xl font-black text-[#112240]">Nova Solicitação Manual</h1>
               </div>
               {onClose && (
-                <button 
-                  onClick={onClose} 
+                <button
+                  onClick={onClose}
                   className="absolute top-6 right-6 z-50 bg-gray-50 p-2.5 rounded-full shadow-sm border border-gray-200 text-gray-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all opacity-70 hover:opacity-100 hidden sm:flex"
                   title="Fechar Janela (ESC)"
                 >
@@ -364,7 +364,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
           {/* Progress Bar */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gray-100">
-            <div 
+            <div
               className="h-full bg-gradient-to-r from-[#1e3a8a] to-[#d4af37] transition-all duration-500"
               style={{ width: step === 1 ? '33%' : step === 2 ? '66%' : '100%' }}
             />
@@ -379,7 +379,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
           {step === 1 && (
             <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
-              
+
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Solicitante:</label>
                 <SearchableSelect
@@ -389,11 +389,11 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                     localStorage.setItem('salomao_reembolso_last_colab', val);
                     const colab = collaborators.find(c => String(c.id) === String(val));
                     if (colab?.leader_id) {
-                       setSelectedAuthorizer(String(colab.leader_id));
-                       localStorage.setItem('salomao_reembolso_last_authorizer', String(colab.leader_id));
+                      setSelectedAuthorizer(String(colab.leader_id));
+                      localStorage.setItem('salomao_reembolso_last_authorizer', String(colab.leader_id));
                     } else {
-                       setSelectedAuthorizer('');
-                       localStorage.removeItem('salomao_reembolso_last_authorizer');
+                      setSelectedAuthorizer('');
+                      localStorage.removeItem('salomao_reembolso_last_authorizer');
                     }
                   }}
                   options={collaborators.map(c => ({ id: c.id, name: c.name }))}
@@ -440,7 +440,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                           <Loader2 className="w-6 h-6 animate-spin" />
                         </div>
                         <span className="font-bold text-amber-700 mb-1">Costurando Páginas do PDF...</span>
-                        <span className="text-xs font-semibold text-amber-600">O celular está lendo o PDF e montando uma imagem panorâmica na galeria para envio rápido e sem custos na IA. Pode levar alguns segundos.</span>
+                        <span className="text-xs font-semibold text-amber-600">O sistema está lendo o PDF e ajustando para enviar sem erros. Pode levar alguns segundos.</span>
                       </>
                     ) : (
                       <>
@@ -458,116 +458,116 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                   <div className="mt-4 flex flex-col gap-3">
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{files.length} arquivo(s) selecionado(s):</p>
                     {files.map((f, idx) => (
-                       <div key={idx} className="flex flex-col gap-3 bg-blue-50/50 p-3 md:p-4 rounded-xl border border-blue-100">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-semibold text-[#112240] truncate max-w-[80%] flex items-center gap-2">
-                               <FileText className="w-4 h-4 text-blue-500 shrink-0" />
-                               {f.name}
-                            </span>
-                            <button onClick={() => handleRemoveFile(idx)} className="p-1 hover:bg-red-100 text-red-400 hover:text-red-500 rounded transition-colors" title="Remover Arquivo">
-                               <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                          
-                          <div className="pt-2 border-t border-blue-100/50 space-y-3">
-                            <div className="flex items-center gap-3">
-                              <input
-                                type="checkbox"
-                                id={`reembolsavel-${idx}`}
-                                checked={fileConfigs[idx]?.reembolsavelCliente || false}
-                                onChange={(e) => {
-                                  const newConfigs = [...fileConfigs];
-                                  newConfigs[idx].reembolsavelCliente = e.target.checked;
-                                  setFileConfigs(newConfigs);
-                                }}
-                                className="w-4 h-4 rounded text-[#1e3a8a] focus:ring-[#1e3a8a]"
-                              />
-                              <label htmlFor={`reembolsavel-${idx}`} className="text-xs font-bold text-blue-900 cursor-pointer select-none">
-                                Cobrar do Cliente?
-                              </label>
-                            </div>
+                      <div key={idx} className="flex flex-col gap-3 bg-blue-50/50 p-3 md:p-4 rounded-xl border border-blue-100">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-semibold text-[#112240] truncate max-w-[80%] flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+                            {f.name}
+                          </span>
+                          <button onClick={() => handleRemoveFile(idx)} className="p-1 hover:bg-red-100 text-red-400 hover:text-red-500 rounded transition-colors" title="Remover Arquivo">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
 
-                            {fileConfigs[idx]?.reembolsavelCliente && (
-                              <div className="animate-in slide-in-from-top-1 fade-in duration-200">
-                                <div className="flex items-center justify-between mb-1">
-                                  <label className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Nome do Cliente</label>
-                                  {idx > 0 && fileConfigs[0]?.reembolsavelCliente && fileConfigs[0]?.clienteNome && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const newConfigs = [...fileConfigs];
-                                        newConfigs[idx].clienteNome = fileConfigs[0].clienteNome;
-                                        setFileConfigs(newConfigs);
-                                      }}
-                                      className="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline transition-colors"
-                                    >
-                                      Copiar 1º Recibo
-                                    </button>
-                                  )}
-                                </div>
-                                <div className="relative">
-                                  <input
-                                    type="text"
-                                    value={fileConfigs[idx]?.clienteNome || ''}
-                                    onFocus={() => setShowAutocomplete(idx)}
-                                    onBlur={() => setTimeout(() => setShowAutocomplete(null), 200)}
-                                    onChange={(e) => {
-                                      const words = e.target.value.toLowerCase().split(' ');
-                                      const formatted = words.map((word) => {
-                                        if (['de', 'da', 'do', 'das', 'dos', 'e', 'em'].includes(word)) return word;
-                                        return word.charAt(0).toUpperCase() + word.slice(1);
-                                      }).join(' ');
-                                      
+                        <div className="pt-2 border-t border-blue-100/50 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              id={`reembolsavel-${idx}`}
+                              checked={fileConfigs[idx]?.reembolsavelCliente || false}
+                              onChange={(e) => {
+                                const newConfigs = [...fileConfigs];
+                                newConfigs[idx].reembolsavelCliente = e.target.checked;
+                                setFileConfigs(newConfigs);
+                              }}
+                              className="w-4 h-4 rounded text-[#1e3a8a] focus:ring-[#1e3a8a]"
+                            />
+                            <label htmlFor={`reembolsavel-${idx}`} className="text-xs font-bold text-blue-900 cursor-pointer select-none">
+                              Cobrar do Cliente?
+                            </label>
+                          </div>
+
+                          {fileConfigs[idx]?.reembolsavelCliente && (
+                            <div className="animate-in slide-in-from-top-1 fade-in duration-200">
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Nome do Cliente</label>
+                                {idx > 0 && fileConfigs[0]?.reembolsavelCliente && fileConfigs[0]?.clienteNome && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
                                       const newConfigs = [...fileConfigs];
-                                      newConfigs[idx].clienteNome = formatted;
+                                      newConfigs[idx].clienteNome = fileConfigs[0].clienteNome;
                                       setFileConfigs(newConfigs);
-                                      setShowAutocomplete(idx);
                                     }}
-                                    placeholder="Ex: João da Silva..."
-                                    className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium shadow-sm"
-                                  />
-                                  {showAutocomplete === idx && fileConfigs[idx]?.clienteNome.trim().length > 0 && (
-                                    <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-gray-100">
-                                      {clientsList
-                                        .filter(c => normalizeString(c).includes(normalizeString(fileConfigs[idx].clienteNome)) && normalizeString(c) !== normalizeString(fileConfigs[idx].clienteNome))
-                                        .map((c, i) => (
-                                          <li 
-                                            key={i} 
-                                            className="p-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition-colors"
-                                            onMouseDown={(e) => {
-                                               e.preventDefault();
-                                               const newConfigs = [...fileConfigs];
-                                               newConfigs[idx].clienteNome = c;
-                                               setFileConfigs(newConfigs);
-                                               setShowAutocomplete(null);
-                                            }}
-                                          >
-                                            {c}
-                                          </li>
-                                        ))}
-                                    </ul>
-                                  )}
-                                </div>
+                                    className="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline transition-colors"
+                                  >
+                                    Copiar 1º Recibo
+                                  </button>
+                                )}
                               </div>
-                            )}
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={fileConfigs[idx]?.clienteNome || ''}
+                                  onFocus={() => setShowAutocomplete(idx)}
+                                  onBlur={() => setTimeout(() => setShowAutocomplete(null), 200)}
+                                  onChange={(e) => {
+                                    const words = e.target.value.toLowerCase().split(' ');
+                                    const formatted = words.map((word) => {
+                                      if (['de', 'da', 'do', 'das', 'dos', 'e', 'em'].includes(word)) return word;
+                                      return word.charAt(0).toUpperCase() + word.slice(1);
+                                    }).join(' ');
 
-                            {/* Campo Observações */}
-                            <div className="pt-2 animate-in slide-in-from-top-1 fade-in duration-200">
-                               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Observações (Opcional)</label>
-                               <textarea
-                                 rows={2}
-                                 placeholder="Identifique provisoriamente este recibo ou adicione detalhes pro líder..."
-                                 value={fileConfigs[idx]?.observacao || ''}
-                                 onChange={(e) => {
                                     const newConfigs = [...fileConfigs];
-                                    newConfigs[idx].observacao = e.target.value;
+                                    newConfigs[idx].clienteNome = formatted;
                                     setFileConfigs(newConfigs);
-                                 }}
-                                 className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium shadow-sm resize-none"
-                               />
+                                    setShowAutocomplete(idx);
+                                  }}
+                                  placeholder="Ex: João da Silva..."
+                                  className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium shadow-sm"
+                                />
+                                {showAutocomplete === idx && fileConfigs[idx]?.clienteNome.trim().length > 0 && (
+                                  <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-gray-100">
+                                    {clientsList
+                                      .filter(c => normalizeString(c).includes(normalizeString(fileConfigs[idx].clienteNome)) && normalizeString(c) !== normalizeString(fileConfigs[idx].clienteNome))
+                                      .map((c, i) => (
+                                        <li
+                                          key={i}
+                                          className="p-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition-colors"
+                                          onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            const newConfigs = [...fileConfigs];
+                                            newConfigs[idx].clienteNome = c;
+                                            setFileConfigs(newConfigs);
+                                            setShowAutocomplete(null);
+                                          }}
+                                        >
+                                          {c}
+                                        </li>
+                                      ))}
+                                  </ul>
+                                )}
+                              </div>
                             </div>
+                          )}
+
+                          {/* Campo Observações */}
+                          <div className="pt-2 animate-in slide-in-from-top-1 fade-in duration-200">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Observações (Opcional)</label>
+                            <textarea
+                              rows={2}
+                              placeholder="Identifique provisoriamente este recibo ou adicione detalhes pro líder..."
+                              value={fileConfigs[idx]?.observacao || ''}
+                              onChange={(e) => {
+                                const newConfigs = [...fileConfigs];
+                                newConfigs[idx].observacao = e.target.value;
+                                setFileConfigs(newConfigs);
+                              }}
+                              className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium shadow-sm resize-none"
+                            />
                           </div>
-                       </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -611,7 +611,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
         </div>
       </div>
-      
+
       {/* Modal de Favoritos */}
       {showFavModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#112240]/40 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-300">
