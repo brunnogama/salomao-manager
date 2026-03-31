@@ -41,6 +41,7 @@ export function ReembolsosTab() {
   const [editedData, setEditedData] = useState<Partial<Reembolso>>({});
   const [savingEdit, setSavingEdit] = useState(false);
   const [reembolsoToDelete, setReembolsoToDelete] = useState<Reembolso | null>(null);
+  const [isExtractingIA, setIsExtractingIA] = useState(false);
 
   // Modal Add Reembolso Manual
   const [isAddReembolsoModalOpen, setIsAddReembolsoModalOpen] = useState(false);
@@ -115,6 +116,52 @@ export function ReembolsosTab() {
       alert('Erro ao salvar edições.');
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const handleExtractIA = async () => {
+    if (!selectedReembolso?.recibo_url) return;
+    setIsExtractingIA(true);
+    try {
+      const webhookUrl = import.meta.env.VITE_MAKE_WEBHOOK_REEMBOLSO_EXTRACT || 'https://hook.us2.make.com/8e7s11ns13rgpffbtyduy5kt93zzrf53';
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_url: selectedReembolso.recibo_url, colaborador_id: selectedReembolso.collaborators?.name })
+      });
+      
+      if (response.ok) {
+        let makeData: any = {};
+        try {
+          const rawText = await response.text();
+          makeData = JSON.parse(rawText);
+        } catch(e) {
+          console.warn("Webhook do Make retornou dados ou array inválido", e);
+        }
+
+        const dataArray = Array.isArray(makeData) ? makeData : [makeData];
+        const item = dataArray[0];
+
+        if (item) {
+          setEditedData(prev => ({
+            ...prev,
+            fornecedor_nome: item.fornecedor_nome || prev.fornecedor_nome,
+            fornecedor_cnpj: item.fornecedor_cnpj || prev.fornecedor_cnpj,
+            data_despesa: item.data_despesa || prev.data_despesa,
+            valor: parseFloat(item.valor) || prev.valor,
+            descricao: item.descricao || prev.descricao,
+            numero_recibo: item.numero_recibo || prev.numero_recibo,
+          }));
+        }
+      } else {
+         alert("Erro no serviço da IA. Status: " + response.status);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert('Erro de conexão ao processar IA: ' + err.message);
+    } finally {
+      setIsExtractingIA(false);
     }
   };
 
@@ -635,6 +682,23 @@ export function ReembolsosTab() {
                            * Ao voltar para Pendente, o comprovante anexado anteriormente será removido.
                          </p>
                        )}
+                    </div>
+                  )}
+
+                  {isEditing && (!editedData.valor) && (
+                    <div className="col-span-2 p-4 bg-gradient-to-r from-blue-900 to-[#112240] rounded-xl flex items-center justify-between shadow-lg text-white mt-1 border border-blue-800">
+                       <div>
+                          <h4 className="font-black text-blue-300 flex items-center gap-2">✨ Leitura por IA Disponível</h4>
+                          <p className="text-xs text-blue-100/80 mt-1 max-w-sm leading-relaxed">Deixe a Inteligência Artificial extrair todos os dados deste recibo automaticamente e poupe seu trabalho manual.</p>
+                       </div>
+                       <button
+                         type="button"
+                         onClick={handleExtractIA}
+                         disabled={isExtractingIA}
+                         className="px-5 py-2.5 bg-blue-500 hover:bg-blue-400 text-white font-bold tracking-wide uppercase text-[10px] rounded-lg shadow-inner flex items-center gap-2 transition-all disabled:opacity-50 shrink-0"
+                       >
+                         {isExtractingIA ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Processando...</> : 'Extrair Dados'}
+                       </button>
                     </div>
                   )}
 

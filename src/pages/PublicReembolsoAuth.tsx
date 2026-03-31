@@ -102,9 +102,9 @@ export default function PublicReembolsoAuth() {
         acao: action === 'approve' ? "Autorizado" : "Rejeitado",
         reembolso: {
           id: data.id,
-          valor: data.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
-          descricao: data.descricao,
-          fornecedor: data.fornecedor_nome,
+          valor: data.valor > 0 ? data.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "Aguardando Apuração",
+          descricao: data.descricao || "Aguardando Leitura",
+          fornecedor: data.fornecedor_nome || "Aguardando Leitura",
         },
         solicitante: {
           nome: data.solicitante_nome,
@@ -191,36 +191,60 @@ export default function PublicReembolsoAuth() {
 
           <div className="p-6 md:p-10 space-y-8">
             
-            {/* Infos Pessoais */}
+            {/* Infos Pessoais e Resumo */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8">
               <div className="space-y-1">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Solicitante</p>
                 <p className="text-xl font-bold text-[#112240]">{data.solicitante_nome}</p>
               </div>
               <div className="space-y-1 md:text-right">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Valor Solicitado</p>
-                <div className="text-3xl font-black text-[#d4af37] tracking-tight">
-                  <span className="text-lg mr-1 text-[#d4af37]/70">R$</span>
-                  {data.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Valor da Despesa</p>
+                {data.valor > 0 ? (
+                  <div className="text-3xl font-black text-[#d4af37] tracking-tight">
+                    <span className="text-lg mr-1 text-[#d4af37]/70">R$</span>
+                    {data.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                ) : (
+                  <div className="inline-block px-4 py-2 bg-yellow-50 text-yellow-700 font-bold text-sm tracking-wide rounded-full border border-yellow-200">
+                     A Apurar pelo Financeiro
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Detalhes da Despesa */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100/50">
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5"><FileText className="w-3 h-3"/> Descrição</p>
-                <p className="text-sm font-medium text-gray-700 leading-relaxed">{data.descricao || '-'}</p>
+            {/* Detalhes da Despesa (Só mostramos se a IA/Financeiro já leu ou houver dados extras preenchidos) */}
+            {data.valor > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100/50">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5"><FileText className="w-3 h-3"/> Descrição</p>
+                  <p className="text-sm font-medium text-gray-700 leading-relaxed">{data.descricao || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fornecedor / Estabelecimento</p>
+                  <p className="text-sm font-medium text-gray-700">{data.fornecedor_nome || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Data do Envio</p>
+                  <p className="text-sm font-medium text-gray-700">{new Date(data.created_at).toLocaleDateString('pt-BR')}</p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fornecedor / Estabelecimento</p>
-                <p className="text-sm font-medium text-gray-700">{data.fornecedor_nome || '-'}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Data do Envio</p>
-                <p className="text-sm font-medium text-gray-700">{new Date(data.created_at).toLocaleDateString('pt-BR')}</p>
-              </div>
-            </div>
+            )}
+
+            {/* Aviso quando pendente de IA */}
+            {data.valor === 0 && (
+               <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 flex flex-col items-center justify-center text-center space-y-2">
+                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-inner">
+                     <AlertCircle className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-[#112240]">Aguardando Apuração</h3>
+                  <p className="text-sm text-gray-500 max-w-sm">
+                     O valor do recibo abaixo bem como o CNPJ e descrição serão apurados pelo departamento financeiro da Salomão.
+                  </p>
+                  <p className="text-sm font-bold text-blue-600 mt-2">
+                     Você pode manifestar sua autorização baseado na imagem anexa abaixo.
+                  </p>
+               </div>
+            )}
 
             {/* Recibo Anexo */}
             {data.recibo_url && (
