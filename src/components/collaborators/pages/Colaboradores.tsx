@@ -2156,6 +2156,19 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
 
 
+              <div className="relative z-[150]">
+                <button
+                  onClick={() => {
+                    setExportTargetList('search');
+                    setShowColumnSelectModal(true);
+                  }}
+                  className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+                  title="Exportar Planilha"
+                >
+                  <FileDown className="h-5 w-5" />
+                </button>
+              </div>
+
               {!isReadOnly && (
                 <button
                   onClick={() => {
