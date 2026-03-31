@@ -538,7 +538,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const fd = `${dd}-${mm}-${yyyy}`;
 
     if (exportTargetList === 'search' || exportTargetList === 'all') {
-      tempFiltered = getAdvancedFiltered();
+      tempFiltered = activeMainTab === 'Integrantes' ? filtered : getAdvancedFiltered();
       fileName = templateName ? `${templateName} - ${dateTimeStr}` : `Colaboradores_${fd}`;
     } else if (exportTargetList === 'active') {
       tempFiltered = getAdvancedFiltered('active');
