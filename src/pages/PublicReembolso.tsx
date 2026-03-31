@@ -71,6 +71,11 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       setSelectedColab(lastColab);
     }
 
+    const lastAuth = localStorage.getItem('salomao_reembolso_last_authorizer');
+    if (lastAuth) {
+      setSelectedAuthorizer(lastAuth);
+    }
+
     if (!isModal) {
       const hasSeenFavModal = localStorage.getItem('salomao_reembolso_fav_modal');
       if (!hasSeenFavModal) {
@@ -81,15 +86,16 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
   }, [isModal]);
 
   useEffect(() => {
-    if (selectedColab && collaborators.length > 0) {
-      const colab = collaborators.find(c => String(c.id) === String(selectedColab));
-      if (colab?.leader_id) {
-         setSelectedAuthorizer(String(colab.leader_id));
-      } else {
-         setSelectedAuthorizer('');
+    if (collaborators.length > 0 && selectedColab && !selectedAuthorizer) {
+      const lastAuth = localStorage.getItem('salomao_reembolso_last_authorizer');
+      if (!lastAuth) {
+        const colab = collaborators.find(c => String(c.id) === String(selectedColab));
+        if (colab?.leader_id) {
+           setSelectedAuthorizer(String(colab.leader_id));
+        }
       }
     }
-  }, [selectedColab, collaborators]);
+  }, [collaborators]);
 
   const fetchCollaborators = async () => {
     try {
@@ -411,6 +417,14 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                   onChange={(val) => {
                     setSelectedColab(val);
                     localStorage.setItem('salomao_reembolso_last_colab', val);
+                    const colab = collaborators.find(c => String(c.id) === String(val));
+                    if (colab?.leader_id) {
+                       setSelectedAuthorizer(String(colab.leader_id));
+                       localStorage.setItem('salomao_reembolso_last_authorizer', String(colab.leader_id));
+                    } else {
+                       setSelectedAuthorizer('');
+                       localStorage.removeItem('salomao_reembolso_last_authorizer');
+                    }
                   }}
                   options={collaborators.map(c => ({ id: c.id, name: c.name }))}
                   placeholder="Selecione seu nome..."
@@ -423,7 +437,14 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                 <label className="block text-sm font-bold text-gray-700 mb-2">Requer autorização de:</label>
                 <SearchableSelect
                   value={selectedAuthorizer}
-                  onChange={setSelectedAuthorizer}
+                  onChange={(val) => {
+                    setSelectedAuthorizer(val);
+                    if (val) {
+                      localStorage.setItem('salomao_reembolso_last_authorizer', val);
+                    } else {
+                      localStorage.removeItem('salomao_reembolso_last_authorizer');
+                    }
+                  }}
                   options={authorizers.map(a => ({ id: a.id, name: a.name }))}
                   placeholder="Escolha o líder direto ou sócio..."
                   className="bg-gray-50 rounded-xl"
