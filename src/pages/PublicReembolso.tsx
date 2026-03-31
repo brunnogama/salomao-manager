@@ -205,6 +205,14 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       return;
     }
 
+    // Validação estrita: Não permitir o envio se houver PDF sem imagem miniatura gerada (evita erro no ChatGPT/Make)
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].type === 'application/pdf' && !fileConfigs[i]?.thumbFile) {
+        setFormError(`O PDF "${files[i].name}" não pôde ser convertido automaticamente. Por favor, tire um "print screen" do recibo e envie como imagem.`);
+        return;
+      }
+    }
+
     setFormError('');
     setIsSubmitting(true);
 

@@ -1,8 +1,8 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Configura o worker do PDF.js dinamicamente pelo CDN global de acordo com a versão exata instalada.
-// Isso evita dor de cabeça com os bundlers (como Vite ou Webpack) tentando empacotar o Worker pesado.
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Na versão 5+, o pdf.js utiliza .mjs no build
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 /**
  * Converte um arquivo PDF de múltiplas páginas em um único arquivo de imagem JPEG (Panorâmico Vertical).
