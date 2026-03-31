@@ -22,6 +22,7 @@ interface Reembolso {
   comprovante_pagamento_url: string | null;
   created_at: string;
   collaborators: { name: string };
+  cliente_nome?: string;
 }
 
 export function ReembolsosTab() {
@@ -68,10 +69,11 @@ export function ReembolsosTab() {
       'CNPJ': r.fornecedor_cnpj || '',
       'Número Recibo': r.numero_recibo || '',
       'Cobrar Cliente?': r.reembolsavel_cliente ? 'Sim' : 'Não',
+      'Nome do Cliente': r.cliente_nome || '',
       'Valor (R$)': r.valor || 0,
     }));
     exportToStandardXLSX(
-      [{ sheetName: "Reembolsos", data: dataToExport, colWidths: [15, 30, 35, 15, 15, 30, 20, 20, 20, 15] }],
+      [{ sheetName: "Reembolsos", data: dataToExport, colWidths: [15, 30, 35, 15, 15, 30, 20, 20, 20, 25, 15] }],
       `Reembolsos_${format(new Date(), 'dd-MM-yyyy')}.xlsx`
     );
   };
@@ -664,6 +666,29 @@ export function ReembolsosTab() {
                           onChange={(e) => setEditedData({...editedData, fornecedor_cnpj: e.target.value})}
                           className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
                         />
+                    </div>
+                  )}
+
+                  {(selectedReembolso.reembolsavel_cliente || editedData.reembolsavel_cliente) && (
+                    <div className="col-span-2 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                      <label className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-1 block">Nome do Cliente</label>
+                      {isEditing ? (
+                        <input 
+                          type="text" 
+                          value={editedData.cliente_nome || ''} 
+                          onChange={(e) => {
+                            const words = e.target.value.toLowerCase().split(' ');
+                            const formatted = words.map((word) => {
+                              if (['de', 'da', 'do', 'das', 'dos', 'e', 'em'].includes(word)) return word;
+                              return word.charAt(0).toUpperCase() + word.slice(1);
+                            }).join(' ');
+                            setEditedData({...editedData, cliente_nome: formatted})
+                          }}
+                          className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm"
+                        />
+                      ) : (
+                        <div className="font-medium text-gray-800">{selectedReembolso.cliente_nome || '--'}</div>
+                      )}
                     </div>
                   )}
 

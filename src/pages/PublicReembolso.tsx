@@ -27,6 +27,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [selectedColab, setSelectedColab] = useState('');
   const [reembolsavelCliente, setReembolsavelCliente] = useState(false);
+  const [clienteNome, setClienteNome] = useState('');
   const [file, setFile] = useState<File | null>(null);
   
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -242,6 +243,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       const payload = extractedData.map(item => ({
         colaborador_id: selectedColab,
         reembolsavel_cliente: reembolsavelCliente,
+        cliente_nome: reembolsavelCliente ? clienteNome : null,
         recibo_url: publicFileUrl,
         numero_recibo: item.numero_recibo,
         fornecedor_nome: item.fornecedor_nome,
@@ -346,7 +348,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
             <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
               
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Quem é você?</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Solicitante:</label>
                 <SearchableSelect
                   value={selectedColab}
                   onChange={(val) => {
@@ -385,17 +387,39 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <input
-                  type="checkbox"
-                  id="reembolsavel"
-                  checked={reembolsavelCliente}
-                  onChange={(e) => setReembolsavelCliente(e.target.checked)}
-                  className="w-5 h-5 rounded text-[#1e3a8a] focus:ring-[#1e3a8a]"
-                />
-                <label htmlFor="reembolsavel" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
-                  Despesa é reembolsável para o cliente?
-                </label>
+              <div className="flex flex-col gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="reembolsavel"
+                    checked={reembolsavelCliente}
+                    onChange={(e) => setReembolsavelCliente(e.target.checked)}
+                    className="w-5 h-5 rounded text-[#1e3a8a] focus:ring-[#1e3a8a]"
+                  />
+                  <label htmlFor="reembolsavel" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+                    Despesa é reembolsável para o cliente?
+                  </label>
+                </div>
+                
+                {reembolsavelCliente && (
+                  <div className="pl-8 animate-in slide-in-from-top-2 fade-in duration-200">
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nome do Cliente</label>
+                    <input
+                      type="text"
+                      value={clienteNome}
+                      onChange={(e) => {
+                        const words = e.target.value.toLowerCase().split(' ');
+                        const formatted = words.map((word) => {
+                          if (['de', 'da', 'do', 'das', 'dos', 'e', 'em'].includes(word)) return word;
+                          return word.charAt(0).toUpperCase() + word.slice(1);
+                        }).join(' ');
+                        setClienteNome(formatted);
+                      }}
+                      placeholder="Ex: João da Silva..."
+                      className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium shadow-sm"
+                    />
+                  </div>
+                )}
               </div>
 
               <button
