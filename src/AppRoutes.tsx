@@ -13,6 +13,7 @@ import { CandidatoPublicProfile } from './components/collaborators/pages/Candida
 import ReportControladoria from './pages/ReportControladoria';
 import { PublicDemandas } from './components/secretaria/demandas/PublicDemandas';
 import PublicReembolso from './pages/PublicReembolso';
+import PublicReembolsoAuth from './pages/PublicReembolsoAuth';
 import { Presentation } from './pages/presentation/Presentation';
 import { KanbanModal } from './components/WelcomeKanbanModal';
 import { BackupService } from './lib/BackupService';
@@ -232,6 +233,7 @@ export function AppRoutes() {
             <Route path="/report/controladoria" element={<ReportControladoria />} />
             <Route path="/public/demandas" element={<PublicDemandas />} />
             <Route path="/reembolsos/solicitar" element={<PublicReembolso />} />
+            <Route path="/reembolso/autorizar/:id" element={<PublicReembolsoAuth />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute><RouteGuard><MainLayout /></RouteGuard></ProtectedRoute>}>

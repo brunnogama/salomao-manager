@@ -6,6 +6,7 @@ import { SearchableSelect } from '../components/crm/SearchableSelect';
 interface Collaborator {
   id: string;
   name: string;
+  email?: string;
   leader_id?: string;
 }
 
@@ -102,18 +103,18 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       const allNamesMap = new Map<string, Collaborator>();
 
       const getColabs = async () => {
-        let { data, error } = await supabase.from('collaborators').select('id, name, leader_id').in('status', ['active', 'Ativo']);
+        let { data, error } = await supabase.from('collaborators').select('id, name, leader_id, email').in('status', ['active', 'Ativo']);
         if (error || !data || data.length === 0) {
-           const res = await supabase.from('collaborators').select('id, name, leader_id');
+           const res = await supabase.from('collaborators').select('id, name, leader_id, email');
            data = res.data;
         }
         return data || [];
       };
 
       const getParts = async () => {
-        let { data, error } = await supabase.from('partners').select('id, name').in('status', ['active', 'Ativo']);
+        let { data, error } = await supabase.from('partners').select('id, name, email').in('status', ['active', 'Ativo']);
         if (error || !data || data.length === 0) {
-           const res = await supabase.from('partners').select('id, name');
+           const res = await supabase.from('partners').select('id, name, email');
            data = res.data;
         }
         return data || [];
@@ -129,12 +130,12 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
       colabsList.forEach((c: any) => {
         if (c?.name && !allNamesMap.has(c.name.trim().toLowerCase())) {
-          allNamesMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim(), leader_id: c.leader_id });
+          allNamesMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim(), leader_id: c.leader_id, email: c.email });
         }
       });
       partsList.forEach((p: any) => {
         if (p?.name && !allNamesMap.has(p.name.trim().toLowerCase())) {
-          allNamesMap.set(p.name.trim().toLowerCase(), { id: p.id, name: p.name.trim() });
+          allNamesMap.set(p.name.trim().toLowerCase(), { id: p.id, name: p.name.trim(), email: p.email });
         }
       });
 
@@ -144,12 +145,12 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       const authMap = new Map<string, Collaborator>();
       partsList.forEach((p: any) => {
         if (p?.name && !authMap.has(p.name.trim().toLowerCase())) {
-          authMap.set(p.name.trim().toLowerCase(), { id: p.id, name: p.name.trim() });
+          authMap.set(p.name.trim().toLowerCase(), { id: p.id, name: p.name.trim(), email: p.email });
         }
       });
       colabsList.forEach((c: any) => {
          if (tlSet.has(String(c.id)) && c?.name && !authMap.has(c.name.trim().toLowerCase())) {
-             authMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim() });
+             authMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim(), email: c.email });
          }
       });
 
@@ -313,13 +314,59 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         fornecedor_cnpj: item.fornecedor_cnpj,
         data_despesa: item.data_despesa,
         valor: item.valor,
-        descricao: item.descricao
+        descricao: item.descricao,
+        status: selectedAuthorizer ? 'pendente_autorizacao' : 'pendente'
       }));
 
-      const { error } = await supabase.from('reembolsos').insert(payload);
+      const { data: insertedRows, error } = await supabase.from('reembolsos').insert(payload).select();
 
       if (error) {
         throw error;
+      }
+
+      // Envio de Webhook
+      try {
+        const webhookUrl = "https://hook.us2.make.com/ek933ugsc18euo3uwv9eha6mgk8ngvws";
+        const solicitanteObj = collaborators.find(c => String(c.id) === String(selectedColab));
+        
+        let autorizadorObj = null;
+        if (selectedAuthorizer) {
+           autorizadorObj = authorizers.find(a => String(a.id) === String(selectedAuthorizer));
+        }
+
+        // Somente disparamos o webhook se houver um Id recebido do DB
+        if (insertedRows && insertedRows.length > 0) {
+           // Enviar um único request informando todos os ids
+           const payloadMake = {
+              evento: selectedAuthorizer ? "solicitacao_autorizacao" : "novo_reembolso_direto",
+              items: insertedRows.map((r, index) => ({
+                 id: r.id,
+                 valor: extractedData[index]?.valorString || r.valor,
+                 descricao: r.descricao,
+                 fornecedor: r.fornecedor_nome,
+                 link_autorizacao: `https://salomao-manager.pages.dev/reembolso/autorizar/${r.id}`
+              })),
+              solicitante: {
+                 id: solicitanteObj?.id || '',
+                 nome: solicitanteObj?.name || 'Membro do time',
+                 email: solicitanteObj?.email || ''
+              },
+              autorizador: autorizadorObj ? {
+                 id: autorizadorObj.id,
+                 nome: autorizadorObj.name,
+                 email: autorizadorObj.email || ''
+              } : null,
+              recibo_url: publicFileUrl
+           };
+
+           await fetch(webhookUrl, {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify(payloadMake)
+           }).catch(e => console.error("Falha silenciosa ao chamar Make:", e));
+        }
+      } catch (webhookErr) {
+        console.error("Erro no fluxo do disparo Make:", webhookErr);
       }
 
       setStep(3);

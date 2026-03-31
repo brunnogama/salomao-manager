@@ -250,6 +250,8 @@ export function ReembolsosTab() {
       options: [
         { label: 'Pendente', value: 'pendente' },
         { label: 'Pago', value: 'pago' },
+        { label: 'Aguardando Liderança', value: 'pendente_autorizacao' },
+        { label: 'Rejeitado', value: 'rejeitado' }
       ],
       value: filterStatus,
       onChange: setFilterStatus,
@@ -308,7 +310,12 @@ export function ReembolsosTab() {
 
     if (!matchSearch) return false;
 
-    if (filterStatus.length && r.status && !filterStatus.includes(r.status)) return false;
+    // Se nenum filtro de status estiver ativo, ocultamos os que não interessam pro financeiro
+    if (filterStatus.length === 0) {
+      if (r.status === 'pendente_autorizacao' || r.status === 'rejeitado') return false;
+    } else {
+      if (r.status && !filterStatus.includes(r.status)) return false;
+    }
     if (filterSolicitante.length && (!r.collaborators?.name || !filterSolicitante.includes(r.collaborators.name))) return false;
 
     if ((filterPeriodo.start || filterPeriodo.end) && r.data_despesa) {
@@ -470,6 +477,16 @@ export function ReembolsosTab() {
                       {r.status === 'pago' && (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200/50 text-xs font-bold">
                           <CheckCircle2 className="w-3.5 h-3.5" /> Pago
+                        </span>
+                      )}
+                      {r.status === 'pendente_autorizacao' && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/50 text-xs font-bold">
+                          <User className="w-3.5 h-3.5" /> Ag. Líder
+                        </span>
+                      )}
+                      {r.status === 'rejeitado' && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200/50 text-xs font-bold">
+                          <XCircle className="w-3.5 h-3.5" /> Rejeitado
                         </span>
                       )}
                     </td>
