@@ -23,11 +23,17 @@ interface PublicReembolsoProps {
   onClose?: () => void;
 }
 
+const normalizeString = (str: string) => {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, '');
+};
+
 export default function PublicReembolso({ isModal = false, onClose }: PublicReembolsoProps) {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [selectedColab, setSelectedColab] = useState('');
   const [reembolsavelCliente, setReembolsavelCliente] = useState(false);
   const [clienteNome, setClienteNome] = useState('');
+  const [clientsList, setClientsList] = useState<string[]>([]);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -55,6 +61,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
   useEffect(() => {
     fetchCollaborators();
+    fetchClients();
 
     const lastColab = localStorage.getItem('salomao_reembolso_last_colab');
     if (lastColab) {
@@ -109,6 +116,19 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
     } catch (err) {
       console.error('Erro ao buscar integrantes', err);
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase.from('clients').select('name');
+      if (error) throw error;
+      if (data) {
+        const uniqueNames = Array.from(new Set(data.map(c => c.name).filter(Boolean))).sort();
+        setClientsList(uniqueNames);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar clientes', err);
     }
   };
 
@@ -397,27 +417,50 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                     className="w-5 h-5 rounded text-[#1e3a8a] focus:ring-[#1e3a8a]"
                   />
                   <label htmlFor="reembolsavel" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
-                    Despesa é reembolsável para o cliente?
+                    Despesa é reembolsável pelo cliente?
                   </label>
                 </div>
                 
                 {reembolsavelCliente && (
                   <div className="pl-8 animate-in slide-in-from-top-2 fade-in duration-200">
                     <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nome do Cliente</label>
-                    <input
-                      type="text"
-                      value={clienteNome}
-                      onChange={(e) => {
-                        const words = e.target.value.toLowerCase().split(' ');
-                        const formatted = words.map((word) => {
-                          if (['de', 'da', 'do', 'das', 'dos', 'e', 'em'].includes(word)) return word;
-                          return word.charAt(0).toUpperCase() + word.slice(1);
-                        }).join(' ');
-                        setClienteNome(formatted);
-                      }}
-                      placeholder="Ex: João da Silva..."
-                      className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium shadow-sm"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={clienteNome}
+                        onFocus={() => setShowAutocomplete(true)}
+                        onBlur={() => setTimeout(() => setShowAutocomplete(false), 200)}
+                        onChange={(e) => {
+                          const words = e.target.value.toLowerCase().split(' ');
+                          const formatted = words.map((word) => {
+                            if (['de', 'da', 'do', 'das', 'dos', 'e', 'em'].includes(word)) return word;
+                            return word.charAt(0).toUpperCase() + word.slice(1);
+                          }).join(' ');
+                          setClienteNome(formatted);
+                          setShowAutocomplete(true);
+                        }}
+                        placeholder="Ex: João da Silva..."
+                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium shadow-sm"
+                      />
+                      {showAutocomplete && clienteNome.trim().length > 0 && (
+                        <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-gray-100">
+                          {clientsList
+                            .filter(c => normalizeString(c).includes(normalizeString(clienteNome)) && normalizeString(c) !== normalizeString(clienteNome))
+                            .map((c, i) => (
+                              <li 
+                                key={i} 
+                                className="p-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition-colors"
+                                onClick={() => {
+                                  setClienteNome(c);
+                                  setShowAutocomplete(false);
+                                }}
+                              >
+                                {c}
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
