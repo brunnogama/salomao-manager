@@ -151,9 +151,12 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setFiles(newFiles);
-      setFileConfigs(newFiles.map(() => ({ reembolsavelCliente: false, clienteNome: '' })));
+      const addedFiles = Array.from(e.target.files);
+      setFiles(prev => [...prev, ...addedFiles]);
+      setFileConfigs(prev => [
+        ...prev, 
+        ...addedFiles.map(() => ({ reembolsavelCliente: false, clienteNome: '' }))
+      ]);
     }
   };
 
