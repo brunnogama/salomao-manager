@@ -1425,28 +1425,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
   })
   const getAdvancedFiltered = (overrideStatus?: string) => {
     return colaboradores.filter(c => {
-      // Pessoais
-      if (advFilterGender && c.gender !== advFilterGender) return false;
-      if (advFilterBirthStart && (!c.birthday || c.birthday < advFilterBirthStart)) return false;
-      if (advFilterBirthEnd && (!c.birthday || c.birthday > advFilterBirthEnd)) return false;
-      if (advFilterChildren) {
-        const has = !!c.has_children;
-        if (advFilterChildren === 'sim' && !has) return false;
-        if (advFilterChildren === 'nao' && has) return false;
-      }
-      if (advFilterStateHome && c.state !== advFilterStateHome) return false;
-
-      // Corporativos
-      const statusToCheck = overrideStatus !== undefined ? overrideStatus : advFilterStatus;
-      if (statusToCheck && c.status !== statusToCheck) return false;
-      if (advFilterRateio && String(c.rateio_id) !== advFilterRateio) return false;
-      if (advFilterAdmissionStart && (!c.hire_date || c.hire_date < advFilterAdmissionStart)) return false;
-      if (advFilterAdmissionEnd && (!c.hire_date || c.hire_date > advFilterAdmissionEnd)) return false;
-      if (advFilterTerminationStart && (!c.termination_date || c.termination_date < advFilterTerminationStart)) return false;
-      if (advFilterTerminationEnd && (!c.termination_date || c.termination_date > advFilterTerminationEnd)) return false;
-      if (advFilterActivePeriodStart && c.termination_date && c.termination_date < advFilterActivePeriodStart) return false;
-      if (advFilterActivePeriodEnd && c.hire_date && c.hire_date > advFilterActivePeriodEnd) return false;
-
       const safeCompare = (filterVal: string, ...targetVals: (string | undefined | null)[]) => {
         if (!filterVal) return true;
         const filterItems = filterVal.split(',').map(f => f.trim().toLowerCase());
@@ -1465,6 +1443,34 @@ export function Colaboradores({ }: ColaboradoresProps) {
           return filterItems.some(f => lowT.includes(f));
         });
       };
+
+      // Pessoais
+      if (!safeCompare(advFilterGender, c.gender)) return false;
+      if (advFilterBirthStart && (!c.birthday || c.birthday < advFilterBirthStart)) return false;
+      if (advFilterBirthEnd && (!c.birthday || c.birthday > advFilterBirthEnd)) return false;
+      if (advFilterChildren) {
+        const has = !!c.has_children;
+        if (advFilterChildren === 'sim' && !has) return false;
+        if (advFilterChildren === 'nao' && has) return false;
+      }
+      if (!safeCompare(advFilterStateHome, c.state)) return false;
+
+      // Corporativos
+      const statusToCheck = overrideStatus !== undefined ? overrideStatus : advFilterStatus;
+      if (statusToCheck) {
+        let mappedStatus: string = c.status;
+        if (c.status === 'active') mappedStatus = 'Ativo';
+        if (c.status === 'inactive') mappedStatus = 'Inativo';
+        if (!safeCompare(statusToCheck, c.status, mappedStatus)) return false;
+      }
+
+      if (!safeCompare(advFilterRateio, String(c.rateio_id), (c as any).rateios?.name)) return false;
+      if (advFilterAdmissionStart && (!c.hire_date || c.hire_date < advFilterAdmissionStart)) return false;
+      if (advFilterAdmissionEnd && (!c.hire_date || c.hire_date > advFilterAdmissionEnd)) return false;
+      if (advFilterTerminationStart && (!c.termination_date || c.termination_date < advFilterTerminationStart)) return false;
+      if (advFilterTerminationEnd && (!c.termination_date || c.termination_date > advFilterTerminationEnd)) return false;
+      if (advFilterActivePeriodStart && c.termination_date && c.termination_date < advFilterActivePeriodStart) return false;
+      if (advFilterActivePeriodEnd && c.hire_date && c.hire_date > advFilterActivePeriodEnd) return false;
 
       if (!safeCompare(advFilterPartner, c.partner_id, (c as any).partner?.name)) return false;
       if (!safeCompare(advFilterLeader, c.leader_id, (c as any).leader?.name)) return false;
