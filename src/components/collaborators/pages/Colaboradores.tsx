@@ -156,7 +156,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterTeam, setAdvFilterTeam] = useState('');
   const [advFilterRole, setAdvFilterRole] = useState('');
   const [advFilterContractType, setAdvFilterContractType] = useState('');
-  const [advFilterPartnerType, setAdvFilterPartnerType] = useState('');
+
   const [advFilterLocal, setAdvFilterLocal] = useState('');
   const [advFilterTransporteTipo, setAdvFilterTransporteTipo] = useState('');
   const [advFilterSegment, setAdvFilterSegment] = useState('');
@@ -303,7 +303,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setAdvFilterTeam('');
     setAdvFilterRole('');
     setAdvFilterContractType('');
-    setAdvFilterPartnerType('');
+
     setAdvFilterLocal('');
     setAdvFilterTransporteTipo('');
     setAdvFilterSegment('');
@@ -433,7 +433,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const hasActiveAdvancedFilters = Object.values({
     advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
     advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterTerminationStart, advFilterTerminationEnd, advFilterPartner,
-    advFilterLeader, advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterPartnerType, advFilterLocal,
+    advFilterLeader, advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal,
     advFilterTransporteTipo, advFilterGraduationComplete, advFilterPostGraduationComplete,
     advFilterGraduationExpected, advFilterGraduationCompletion, advFilterGraduationUF, advFilterGraduationInstitution,
     advFilterPostGraduationExpected, advFilterPostGraduationCompletion, advFilterPostGraduationUF, advFilterPostGraduationInstitution
@@ -450,7 +450,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     if (advFilterArea) cols.push('Área');
     if (advFilterTeam) cols.push('Equipe');
     if (advFilterRole) cols.push('Cargo');
-    if (advFilterContractType || advFilterPartnerType) cols.push('Tipo Contrato');
+    if (advFilterContractType) cols.push('Tipo Contrato');
     if (advFilterLocal) cols.push('Local');
     if (advFilterTransporteTipo) cols.push('Tipo Transporte');
     
@@ -1479,7 +1479,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (!safeCompare(advFilterTeam, c.equipe, (c as any).teams?.name)) return false;
       if (!safeCompare(advFilterRole, c.role, (c as any).roles?.name)) return false;
       if (!safeCompare(advFilterContractType, c.contract_type)) return false;
-      if (!safeCompare(advFilterPartnerType, c.contract_type)) return false; // Reusing contract_type for partner type
       if (!safeCompare(advFilterLocal, c.local, (c as any).locations?.name)) return false;
       if (!safeIncludes(advFilterTransporteTipo, c.transportes?.map(t => t.tipo).join(', '))) return false;
       if (advFilterSegment && getSegment(c) !== advFilterSegment) return false;
@@ -2701,22 +2700,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               { id: 'ESTAGIÁRIO', label: 'Estagiário', value: 'ESTAGIÁRIO' },
                               { id: 'JOVEM APRENDIZ', label: 'Jovem Aprendiz', value: 'JOVEM APRENDIZ' },
                               { id: 'PJ', label: 'PJ', value: 'PJ' },
-                              { id: 'SÓCIO', label: 'Sócio', value: 'SÓCIO' },
-                              { id: 'TERCEIRIZADO', label: 'Terceirizado', value: 'TERCEIRIZADO' }
-                            ]}
-                            placeholder="Todos..."
-                          />
-                        </div>
-
-                        <div className="relative z-[115]">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Sócio</label>
-                          <SearchableMultiSelect
-                            value={advFilterPartnerType}
-                            onChange={setAdvFilterPartnerType}
-                            options={[
-                              { id: 'Sócio de Serviço', label: 'Sócio de Serviço', value: 'Sócio de Serviço' },
+                              { id: 'Sócio Administrador', label: 'Sócio Administrador', value: 'Sócio Administrador' },
                               { id: 'Sócio de Capital', label: 'Sócio de Capital', value: 'Sócio de Capital' },
-                              { id: 'Sócio Administrador', label: 'Sócio Administrador', value: 'Sócio Administrador' }
+                              { id: 'Sócio de Serviço', label: 'Sócio de Serviço', value: 'Sócio de Serviço' },
+                              { id: 'TERCEIRIZADO', label: 'Terceirizado', value: 'TERCEIRIZADO' }
                             ]}
                             placeholder="Todos..."
                           />

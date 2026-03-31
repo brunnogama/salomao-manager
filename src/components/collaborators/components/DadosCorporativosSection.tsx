@@ -54,12 +54,7 @@ export function DadosCorporativosSection({
     return roleName.toLowerCase().includes('sócio') || roleName.toLowerCase().includes('socio')
   }, [roleName])
 
-  // Auto-set contract_type for partners
-  useEffect(() => {
-    if (isSocio && formData.contract_type !== 'SÓCIO' && !isViewMode) {
-      setFormData({ ...formData, contract_type: 'SÓCIO' });
-    }
-  }, [isSocio, isViewMode, formData]);
+
 
   const isEstagiario = useMemo(() => {
     return roleName.toLowerCase().includes('estagiário') || roleName.toLowerCase().includes('estagiario') || formData.contract_type?.toUpperCase() === 'ESTAGIÁRIO'
@@ -395,7 +390,6 @@ export function DadosCorporativosSection({
                     { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' },
                     { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' },
                     { id: 'PJ', name: 'PJ' },
-                    { id: 'SÓCIO', name: 'SÓCIO' },
                     { id: 'TERCEIRIZADO', name: 'TERCEIRIZADO' }
                   ]}
                   uppercase={false}
