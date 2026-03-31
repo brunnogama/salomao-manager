@@ -388,6 +388,7 @@ export function DadosCorporativosSection({
                     { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' },
                     { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' },
                     { id: 'PJ', name: 'PJ' },
+                    { id: 'SÓCIO', name: 'SÓCIO' },
                     { id: 'TERCEIRIZADO', name: 'TERCEIRIZADO' }
                   ]}
                   uppercase={false}

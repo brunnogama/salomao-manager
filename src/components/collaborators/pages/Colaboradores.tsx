@@ -2684,12 +2684,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             options={[
                               { id: 'ADVOGADO ASSOCIADO', label: 'Advogado Associado', value: 'ADVOGADO ASSOCIADO' },
                               { id: 'CLT', label: 'CLT', value: 'CLT' },
-                              { id: 'Sócio', label: 'Sócio', value: 'Sócio' },
-                              { id: 'Associado', label: 'Associado', value: 'Associado' },
-                              { id: 'Estágio', label: 'Estágio', value: 'Estágio' },
-                              { id: 'Jovem Aprendiz', label: 'Jovem Aprendiz', value: 'Jovem Aprendiz' },
-                              { id: 'Terceirizado', label: 'Terceirizado', value: 'Terceirizado' },
-                              { id: 'Outros', label: 'Outros', value: 'Outros' }
+                              { id: 'ESTAGIÁRIO', label: 'Estagiário', value: 'ESTAGIÁRIO' },
+                              { id: 'JOVEM APRENDIZ', label: 'Jovem Aprendiz', value: 'JOVEM APRENDIZ' },
+                              { id: 'PJ', label: 'PJ', value: 'PJ' },
+                              { id: 'SÓCIO', label: 'Sócio', value: 'SÓCIO' },
+                              { id: 'TERCEIRIZADO', label: 'Terceirizado', value: 'TERCEIRIZADO' }
                             ]}
                             placeholder="Todos..."
                           />
@@ -2747,7 +2746,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                         </div>
                         <div className="relative z-[104]">
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local</label>
-                          <SearchableSelect value={advFilterLocal} onChange={setAdvFilterLocal} options={locationOptions as any} placeholder="Todos..." />
+                          <SearchableSelect value={advFilterLocal} onChange={setAdvFilterLocal} table="locations" placeholder="Todos..." />
                         </div>
                       </div>
 
