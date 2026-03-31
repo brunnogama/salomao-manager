@@ -29,7 +29,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
   const [clientsList, setClientsList] = useState<string[]>([]);
   const [showAutocomplete, setShowAutocomplete] = useState<number | null>(null);
   const [files, setFiles] = useState<File[]>([]);
-  const [fileConfigs, setFileConfigs] = useState<{reembolsavelCliente: boolean, clienteNome: string}[]>([]);
+  const [fileConfigs, setFileConfigs] = useState<{reembolsavelCliente: boolean, clienteNome: string, observacao: string}[]>([]);
   
   const [step, setStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -155,7 +155,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       setFiles(prev => [...prev, ...addedFiles]);
       setFileConfigs(prev => [
         ...prev, 
-        ...addedFiles.map(() => ({ reembolsavelCliente: false, clienteNome: '' }))
+        ...addedFiles.map(() => ({ reembolsavelCliente: false, clienteNome: '', observacao: '' }))
       ]);
     }
   };
@@ -184,7 +184,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
       for (let idx = 0; idx < files.length; idx++) {
         const file = files[idx];
-        const config = fileConfigs[idx] || { reembolsavelCliente: false, clienteNome: '' };
+        const config = fileConfigs[idx] || { reembolsavelCliente: false, clienteNome: '', observacao: '' };
         // Upload to Supabase Storage
         const fileExt = file.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -227,16 +227,21 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         }
 
         if (insertedRows && insertedRows.length > 0) {
-           for (const r of insertedRows) {
+           for (let i = 0; i < insertedRows.length; i++) {
+             const r = insertedRows[i];
+             const config = fileConfigs[i] || { reembolsavelCliente: false, clienteNome: '', observacao: '' };
              const payloadMake = {
                 evento: selectedAuthorizer ? "solicitacao_autorizacao" : "novo_reembolso_direto",
                 reembolso: {
                    id: r.id,
                    valor: "0,00",
-                   descricao: "Aguardando Apuração",
+                   descricao: config.observacao || "Aguardando Apuração",
                    fornecedor: "Não processado pela IA",
                    link_autorizacao: `https://salomao-manager.pages.dev/reembolso/autorizar/${r.id}`,
-                   recibo_url: r.recibo_url
+                   recibo_url: r.recibo_url,
+                   reembolsavel_cliente: config.reembolsavelCliente ? "Sim" : "Não",
+                   cliente_nome: config.clienteNome || "-",
+                   observacao: config.observacao || "-"
                 },
                 solicitante: {
                    id: solicitanteObj?.id || '',
@@ -484,6 +489,22 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                                 </div>
                               </div>
                             )}
+
+                            {/* Campo Observações */}
+                            <div className="pt-2 animate-in slide-in-from-top-1 fade-in duration-200">
+                               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Observações (Opcional)</label>
+                               <textarea
+                                 rows={2}
+                                 placeholder="Identifique provisoriamente este recibo ou adicione detalhes pro líder..."
+                                 value={fileConfigs[idx]?.observacao || ''}
+                                 onChange={(e) => {
+                                    const newConfigs = [...fileConfigs];
+                                    newConfigs[idx].observacao = e.target.value;
+                                    setFileConfigs(newConfigs);
+                                 }}
+                                 className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium shadow-sm resize-none"
+                               />
+                            </div>
                           </div>
                        </div>
                     ))}
