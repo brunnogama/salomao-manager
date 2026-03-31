@@ -227,32 +227,34 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         }
 
         if (insertedRows && insertedRows.length > 0) {
-           const payloadMake = {
-              evento: selectedAuthorizer ? "solicitacao_autorizacao" : "novo_reembolso_direto",
-              items: insertedRows.map((r) => ({
-                 id: r.id,
-                 valor: "0,00",
-                 descricao: "Aguardando Apuração",
-                 fornecedor: "Não processado pela IA",
-                 link_autorizacao: `https://salomao-manager.pages.dev/reembolso/autorizar/${r.id}`
-              })),
-              solicitante: {
-                 id: solicitanteObj?.id || '',
-                 nome: solicitanteObj?.name || 'Membro do time',
-                 email: solicitanteObj?.email || ''
-              },
-              autorizador: autorizadorObj ? {
-                 id: autorizadorObj.id,
-                 nome: autorizadorObj.name,
-                 email: autorizadorObj.email || ''
-              } : null
-           };
+           for (const r of insertedRows) {
+             const payloadMake = {
+                evento: selectedAuthorizer ? "solicitacao_autorizacao" : "novo_reembolso_direto",
+                reembolso: {
+                   id: r.id,
+                   valor: "0,00",
+                   descricao: "Aguardando Apuração",
+                   fornecedor: "Não processado pela IA",
+                   link_autorizacao: `https://salomao-manager.pages.dev/reembolso/autorizar/${r.id}`
+                },
+                solicitante: {
+                   id: solicitanteObj?.id || '',
+                   nome: solicitanteObj?.name || 'Membro do time',
+                   email: solicitanteObj?.email || ''
+                },
+                autorizador: autorizadorObj ? {
+                   id: autorizadorObj.id,
+                   nome: autorizadorObj.name,
+                   email: autorizadorObj.email || ''
+                } : null
+             };
 
-           await fetch(webhookUrl, {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify(payloadMake)
-           }).catch(e => console.error("Falha silenciosa ao chamar Make:", e));
+             await fetch(webhookUrl, {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify(payloadMake)
+             }).catch(e => console.error("Falha silenciosa ao chamar Make:", e));
+           }
         }
       } catch (webhookErr) {
         console.error("Erro no fluxo do disparo Make:", webhookErr);
