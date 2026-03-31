@@ -759,28 +759,7 @@ export function ReembolsosTab() {
                     </div>
                   )}
 
-                  {(selectedReembolso.reembolsavel_cliente || editedData.reembolsavel_cliente) && (
-                    <div className="col-span-2 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-                      <label className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-1 block">Nome do Cliente</label>
-                      {isEditing ? (
-                        <input 
-                          type="text" 
-                          value={editedData.cliente_nome || ''} 
-                          onChange={(e) => {
-                            const words = e.target.value.toLowerCase().split(' ');
-                            const formatted = words.map((word) => {
-                              if (['de', 'da', 'do', 'das', 'dos', 'e', 'em'].includes(word)) return word;
-                              return word.charAt(0).toUpperCase() + word.slice(1);
-                            }).join(' ');
-                            setEditedData({...editedData, cliente_nome: formatted})
-                          }}
-                          className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm"
-                        />
-                      ) : (
-                        <div className="font-medium text-gray-800">{selectedReembolso.cliente_nome || '--'}</div>
-                      )}
-                    </div>
-                  )}
+
 
                   <div className="col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><FileText className="w-4 h-4 text-gray-400" /> Itens Consumidos (Extração IA)</label>
@@ -794,21 +773,6 @@ export function ReembolsosTab() {
                       <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedReembolso.descricao || 'Nenhuma descrição fornecida.'}</p>
                     )}
                   </div>
-
-                  {(selectedReembolso.observacao || editedData.observacao) && (
-                    <div className="col-span-2 bg-amber-50/50 p-4 rounded-xl border border-amber-100 shadow-inner">
-                      <label className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-2 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-amber-600"/> Observação Direta do Solicitante</label>
-                      {isEditing ? (
-                        <textarea 
-                          value={editedData.observacao || ''} 
-                          onChange={(e) => setEditedData({...editedData, observacao: e.target.value})}
-                          className="w-full p-3 bg-white border border-amber-200 rounded-lg text-sm h-16"
-                        />
-                      ) : (
-                        <p className="text-sm font-medium text-amber-900 italic whitespace-pre-wrap">"{selectedReembolso.observacao}"</p>
-                      )}
-                    </div>
-                  )}
                 </div>
 
                 <div className={`p-4 rounded-xl ${isEditing ? 'bg-amber-100' : 'bg-[#112240]'} flex justify-between items-center shadow-lg transition-colors`}>
@@ -831,12 +795,43 @@ export function ReembolsosTab() {
                   )}
                 </div>
 
-                {/* Área Financeira */}
-                {(!isEditing && selectedReembolso.status !== 'pago') && (
-                  <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 space-y-4">
-                    <h4 className="font-bold text-[#1e3a8a] mb-2 border-b border-blue-100 pb-2">Ação do Financeiro</h4>
-                    
-                    <div className="flex items-center gap-3">
+                {/* Área Financeira Consolidade */}
+                <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 space-y-5">
+                  <h4 className="font-bold text-[#1e3a8a] mb-2 border-b border-blue-100 pb-2">Informações Adicionais e Ação do Financeiro</h4>
+                  
+                  {/* Observação */}
+                  {(selectedReembolso.observacao || editedData.observacao || isEditing) && (
+                    <div className="bg-white/80 p-4 rounded-xl border border-blue-200/60 shadow-sm">
+                      <label className="text-xs font-bold text-[#1e3a8a] uppercase tracking-wider mb-2 flex items-center gap-1.5"><FileText className="w-3.5 h-3.5"/> Observação do Solicitante</label>
+                      {isEditing ? (
+                        <textarea 
+                          value={editedData.observacao || ''} 
+                          onChange={(e) => setEditedData({...editedData, observacao: e.target.value})}
+                          className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm h-16"
+                          placeholder="Adicionar observação..."
+                        />
+                      ) : (
+                        <p className="text-sm font-medium text-gray-800 italic whitespace-pre-wrap">{selectedReembolso.observacao ? `"${selectedReembolso.observacao}"` : 'Sem observação.'}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Checkboxes de Edição ou Visualização do Reembolso */}
+                  {isEditing ? (
+                    <div className="flex items-center gap-3 pt-1">
+                      <input
+                        type="checkbox"
+                        id="reembolsar-edit"
+                        className="w-5 h-5 rounded text-[#1e3a8a] focus:ring-[#1e3a8a]"
+                        checked={editedData.reembolsavel_cliente || false}
+                        onChange={(e) => setEditedData({ ...editedData, reembolsavel_cliente: e.target.checked })}
+                      />
+                      <label htmlFor="reembolsar-edit" className="font-bold text-sm text-[#1e3a8a] cursor-pointer">
+                        Despesa Reembolsável pelo Cliente?
+                      </label>
+                    </div>
+                  ) : selectedReembolso.status !== 'pago' ? (
+                    <div className="flex items-center gap-3 pt-1">
                       <input
                         type="checkbox"
                         id="reembolsar-cliente-modal"
@@ -844,13 +839,41 @@ export function ReembolsosTab() {
                         checked={selectedReembolso.reembolsavel_cliente}
                         onChange={(e) => setSelectedReembolso({ ...selectedReembolso, reembolsavel_cliente: e.target.checked })}
                       />
-                      <label htmlFor="reembolsar-cliente-modal" className="font-medium text-gray-800 cursor-pointer">
+                      <label htmlFor="reembolsar-cliente-modal" className="font-bold text-sm text-[#1e3a8a] cursor-pointer">
                         Despesa reembolsável pelo cliente?
                       </label>
                     </div>
+                  ) : null}
 
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2 mt-4">Comprovante de Pagamento (Opcional)</label>
+                  {/* Nome do Cliente */}
+                  {(selectedReembolso.reembolsavel_cliente || editedData.reembolsavel_cliente) && (
+                    <div className="bg-white/80 p-4 rounded-xl border border-blue-200/60 shadow-sm">
+                      <label className="text-xs font-bold text-[#1e3a8a] uppercase tracking-wider mb-1 block">Nome do Cliente a ser Faturado</label>
+                      {isEditing ? (
+                        <input 
+                          type="text" 
+                          value={editedData.cliente_nome || ''} 
+                          onChange={(e) => {
+                            const words = e.target.value.toLowerCase().split(' ');
+                            const formatted = words.map((word) => {
+                              if (['de', 'da', 'do', 'das', 'dos', 'e', 'em'].includes(word)) return word;
+                              return word.charAt(0).toUpperCase() + word.slice(1);
+                            }).join(' ');
+                            setEditedData({...editedData, cliente_nome: formatted})
+                          }}
+                          className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-bold"
+                          placeholder="Digite o nome do cliente"
+                        />
+                      ) : (
+                        <div className="font-black text-[#1e3a8a]">{selectedReembolso.cliente_nome || '--'}</div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Comprovante */}
+                  {(!isEditing && selectedReembolso.status !== 'pago') && (
+                    <div className="pt-2 border-t border-blue-100/50">
+                      <label className="block text-sm font-bold text-gray-700 mb-2 mt-2">Comprovante de Pagamento do Reembolso (Opcional)</label>
                       <input 
                         type="file" 
                         accept="image/*,.pdf"
@@ -858,23 +881,8 @@ export function ReembolsosTab() {
                         className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-[#1e3a8a] file:text-white hover:file:bg-[#152e72] cursor-pointer bg-white border border-gray-200 rounded-xl p-1"
                       />
                     </div>
-                  </div>
-                )}
-                
-                {isEditing && (
-                  <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <input
-                      type="checkbox"
-                      id="reembolsar-edit"
-                      className="w-5 h-5 rounded text-[#1e3a8a] focus:ring-[#1e3a8a]"
-                      checked={editedData.reembolsavel_cliente || false}
-                      onChange={(e) => setEditedData({ ...editedData, reembolsavel_cliente: e.target.checked })}
-                    />
-                    <label htmlFor="reembolsar-edit" className="font-bold text-sm text-gray-700 cursor-pointer">
-                      Cobrar do Cliente? (Reembolsável)
-                    </label>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {(!isEditing && selectedReembolso.status === 'pago') && (
                   <div className="bg-green-50 border border-green-200 rounded-xl p-5 text-center relative group">
