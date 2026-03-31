@@ -305,7 +305,7 @@ export function DadosCorporativosSection({
               />
 
               <ManagedSelect
-                label="Cargo"
+                label="Cargo/Classe"
                 value={formData.role || ''}
                 onChange={v => setFormData({ ...formData, role: v })}
                 tableName="roles"
@@ -336,7 +336,7 @@ export function DadosCorporativosSection({
               {formData.original_role && formData.original_role !== formData.role && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest">Data da Mudança de Cargo</label>
+                    <label className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest">Data da Mudança de Cargo/Classe</label>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, original_role: formData.role, role_change_date: '' })}
@@ -358,30 +358,14 @@ export function DadosCorporativosSection({
                     />
                   </div>
                   <p className="text-[9px] text-gray-500 mt-1 font-medium">
-                    Informe a data em que o integrante assumirá o novo cargo.
+                    Informe a data em que o integrante assumirá o novo cargo/classe.
                   </p>
                 </div>
               )}
 
-              {isSocio ? (
-                <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-                  <SearchableSelect
-                    label="Tipo de Sócio"
-                    value={formData.contract_type || ''}
-                    onChange={(v) => setFormData({ ...formData, contract_type: v })}
-                    options={[
-                      { id: 'Sócio de Serviço', name: 'Sócio de Serviço' },
-                      { id: 'Sócio de Capital', name: 'Sócio de Capital' },
-                      { id: 'Sócio Administrador', name: 'Sócio Administrador' }
-                    ]}
-                    uppercase={false}
-                    disabled={isViewMode}
-                    icon={<Crown className="w-3 h-3 text-amber-500" />}
-                  />
-                </div>
-              ) : (
+              <div className="animate-in fade-in duration-300">
                 <SearchableSelect
-                  label="Tipo da Contratação"
+                  label="Tipo de Vínculo"
                   value={formData.contract_type || ''}
                   onChange={(v) => setFormData({ ...formData, contract_type: v })}
                   options={[
@@ -390,12 +374,16 @@ export function DadosCorporativosSection({
                     { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' },
                     { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' },
                     { id: 'PJ', name: 'PJ' },
+                    { id: 'Sócio Administrador', name: 'Sócio Administrador' },
+                    { id: 'Sócio de Capital', name: 'Sócio de Capital' },
+                    { id: 'Sócio de Serviço', name: 'Sócio de Serviço' },
                     { id: 'TERCEIRIZADO', name: 'TERCEIRIZADO' }
                   ]}
                   uppercase={false}
                   disabled={isViewMode}
+                  icon={isSocio ? <Crown className="w-3 h-3 text-amber-500" /> : undefined}
                 />
-              )}
+              </div>
 
               {/* Row 4 */}
               <ManagedSelect

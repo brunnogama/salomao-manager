@@ -449,7 +449,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     if (advFilterLeader && advFilterLeader.length > 0) cols.push('Líder Direto');
     if (advFilterArea) cols.push('Área');
     if (advFilterTeam) cols.push('Equipe');
-    if (advFilterRole) cols.push('Cargo');
+    if (advFilterRole) cols.push('Cargo/Classe');
     if (advFilterContractType) cols.push('Tipo Contrato');
     if (advFilterLocal) cols.push('Local');
     if (advFilterTransporteTipo) cols.push('Tipo Transporte');
@@ -632,7 +632,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     },
     {
       key: 'cargo',
-      label: 'Cargo',
+      label: 'Cargo/Classe',
       icon: Briefcase,
       type: 'multi',
       options: roleOptions,
@@ -670,7 +670,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     });
     filterCargo.forEach(id => {
       const label = id === 'unassigned' ? 'Não definido' : roleOptions.find(r => r.value === id)?.label || id;
-      chips.push({ key: `cargo-${id}`, label: `Cargo: ${label}`, onClear: () => setFilterCargo(prev => prev.filter(v => v !== id)) });
+      chips.push({ key: `cargo-${id}`, label: `Cargo/Classe: ${label}`, onClear: () => setFilterCargo(prev => prev.filter(v => v !== id)) });
     });
     filterArea.forEach(id => {
       const label = areaOptions.find(opt => opt.value === id)?.label || id;
@@ -1140,6 +1140,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
     try {
       if (!formData.name) {
         showAlert('Atenção', 'O campo Nome é obrigatório.', 'info')
+        return
+      }
+      if (!formData.contract_type) {
+        showAlert('Atenção', 'O campo Tipo de Vínculo é obrigatório.', 'info')
         return
       }
       setLoading(true)
@@ -2282,7 +2286,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       />
                     </th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Integrante</th>
-                    <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Cargo</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Cargo/Classe</th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Sócio</th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Líder</th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Status</th>
@@ -2755,7 +2759,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           <SearchableMultiSelect value={advFilterTeam} onChange={setAdvFilterTeam} table="teams" placeholder="Todas..." />
                         </div>
                         <div className="relative z-[105]">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cargo</label>
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cargo/Classe</label>
                           <SearchableMultiSelect value={advFilterRole} onChange={setAdvFilterRole} options={roleOptions as any} placeholder="Todos..." />
                         </div>
                         <div className="relative z-[104]">
