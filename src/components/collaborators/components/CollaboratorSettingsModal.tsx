@@ -32,7 +32,7 @@ interface ImportRow {
     'Parentesco Emergência': string
     'Admissão': string | number
     'Status (Ativo/Inativo)': string
-    'Cargo': string
+    'Cargo/Classe': string
     'Equipe': string
     'Área': string
     'Sócio': string
@@ -41,7 +41,7 @@ interface ImportRow {
     'Centro de Custo': string
     'Rateio': string
     'Motivo Contratação': string
-    'Tipo Contratação': string
+    'Tipo de Vínculo': string
     'OAB Número': string
     'OAB UF': string
     'OAB Emissão': string | number
@@ -64,8 +64,8 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
             'CEP', 'Endereço', 'Número', 'Complemento', 'Bairro', 'Cidade', 'Estado',
             'Nome Emergência', 'Telefone Emergência', 'Parentesco Emergência',
             'Admissão', 'Status (Ativo/Inativo)',
-            'Cargo', 'Área', 'Equipe', 'Sócio', 'Líder', 'Local', 'Centro de Custo',
-            'Rateio', 'Motivo Contratação', 'Tipo Contratação',
+            'Cargo/Classe', 'Área', 'Equipe', 'Sócio', 'Líder', 'Local', 'Centro de Custo',
+            'Rateio', 'Motivo Contratação', 'Tipo de Vínculo',
             'OAB Número', 'OAB UF', 'OAB Emissão',
             'Observações',
             'Data Desligamento', 'Iniciativa Desligamento', 'Tipo Desligamento', 'Motivo Desligamento'
@@ -193,10 +193,10 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                             if (rawStatus === undefined || rawStatus === null || String(rawStatus).trim() === '') return undefined;
                             return String(rawStatus).trim().toLowerCase() === 'inativo' ? 'inactive' : 'active';
                         })(),
-                        contract_type: row['Tipo Contratação'] || row['Tipo Contrato'],
+                        contract_type: row['Tipo de Vínculo'] || row['Tipo Contratação'] || row['Tipo Contrato'],
 
                         // Foreign Keys mapping
-                        role: findId(roles, row['Cargo']),
+                        role: findId(roles, row['Cargo/Classe'] || row['Cargo']),
                         area: (row['Área'] === 'Administrativa' || row['Área'] === 'Jurídica') ? row['Área'] : undefined,
                         equipe: findId(teams, row['Equipe'] || row['Equipe/Área']),
                         partner_id: findId(partners, row['Sócio'] || row['Sócio Responsável']),

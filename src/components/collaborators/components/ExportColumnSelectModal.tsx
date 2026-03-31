@@ -52,9 +52,9 @@ const EXPORT_COLUMN_CATEGORIES = [
     name: 'Dados Corporativos e Transporte',
     icon: Building2,
     columns: [
-      'Status', 'Rateio', 'Data Admissão', 'Motivo Contratação', 'Tipo Contrato',
+      'Status', 'Rateio', 'Data Admissão', 'Motivo Contratação', 'Tipo de Vínculo',
       'Email Corporativo', 'Email Pessoal', 'Telefone', 'Área', 'Sócio Responsável',
-      'Líder Direto', 'Equipe', 'Cargo', 'Atuação', 'Local', 'Horário Entrada', 'Horário Saída', 'Posto / Mesa', 'Tipo Transporte',
+      'Líder Direto', 'Equipe', 'Cargo/Classe', 'Atuação', 'Local', 'Horário Entrada', 'Horário Saída', 'Posto / Mesa', 'Tipo Transporte',
       'Quantidade Ida', 'Quantidade Volta', 'Total Ida', 'Total Volta', 'Custo Total Transporte'
     ]
   },

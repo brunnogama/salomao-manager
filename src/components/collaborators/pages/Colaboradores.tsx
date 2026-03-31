@@ -450,7 +450,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     if (advFilterArea) cols.push('Área');
     if (advFilterTeam) cols.push('Equipe');
     if (advFilterRole) cols.push('Cargo/Classe');
-    if (advFilterContractType) cols.push('Tipo Contrato');
+    if (advFilterContractType) cols.push('Tipo de Vínculo');
     if (advFilterLocal) cols.push('Local');
     if (advFilterTransporteTipo) cols.push('Tipo Transporte');
     
