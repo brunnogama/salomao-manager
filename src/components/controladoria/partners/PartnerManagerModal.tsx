@@ -1,6 +1,7 @@
 // brunnogama/salomao-manager/salomao-manager-3e743876de4fb5af74c8aedf5b89ce1e3913c795/src/components/controladoria/partners/PartnerManagerModal.tsx
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Plus, Trash2, Edit, Save, Check } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Partner } from '../../../types/controladoria';
@@ -132,7 +133,7 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
@@ -207,6 +208,7 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

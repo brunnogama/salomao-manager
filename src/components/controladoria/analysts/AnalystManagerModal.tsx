@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import { X, Plus, Edit, Trash2, Save } from 'lucide-react';
 import { Analyst } from '../../../types/controladoria';
@@ -115,7 +116,7 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
@@ -221,6 +222,7 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
