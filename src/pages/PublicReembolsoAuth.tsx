@@ -21,6 +21,7 @@ interface ReembolsoDetails {
   data_despesa?: string;
   cliente_nome?: string;
   observacao?: string;
+  motivo_rejeicao?: string;
 }
 
 export default function PublicReembolsoAuth() {
@@ -30,6 +31,8 @@ export default function PublicReembolsoAuth() {
   const [data, setData] = useState<ReembolsoDetails | null>(null);
   const [error, setError] = useState('');
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
   // A mesma URL providenciada para centralizar o webhook no Make
   const MAKE_WEBHOOK = "https://hook.us2.make.com/ek933ugsc18euo3uwv9eha6mgk8ngvws";
@@ -74,7 +77,8 @@ export default function PublicReembolsoAuth() {
         autorizador_email: rData.authorizer?.email || '',
         data_despesa: rData.data_despesa,
         cliente_nome: rData.cliente_nome,
-        observacao: rData.observacao
+        observacao: rData.observacao,
+        motivo_rejeicao: rData.motivo_rejeicao
       });
 
     } catch (err: any) {
@@ -91,15 +95,20 @@ export default function PublicReembolsoAuth() {
     const newStatus = action === 'approve' ? 'pendente' : 'rejeitado';
 
     try {
+      const updatePayload: any = { status: newStatus };
+      if (action === 'reject' && rejectReason.trim()) {
+        updatePayload.motivo_rejeicao = rejectReason.trim();
+      }
+
       const { error: updateError } = await supabase
         .from('reembolsos')
-        .update({ status: newStatus })
+        .update(updatePayload)
         .eq('id', data.id);
 
       if (updateError) throw updateError;
 
       // Update local state to reflect change immediately
-      setData(prev => prev ? { ...prev, status: newStatus } : null);
+      setData(prev => prev ? { ...prev, status: newStatus, motivo_rejeicao: updatePayload.motivo_rejeicao } : null);
       
       toast.success(action === 'approve' ? 'Reembolso Autorizado com sucesso!' : 'Reembolso Rejeitado.');
 
@@ -112,6 +121,7 @@ export default function PublicReembolsoAuth() {
           valor: data.valor > 0 ? data.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "Aguardando Apuração",
           descricao: data.descricao || "Aguardando Leitura",
           fornecedor: data.fornecedor_nome || "Aguardando Leitura",
+          motivo_rejeicao: action === 'reject' ? rejectReason.trim() : ""
         },
         solicitante: {
           nome: data.solicitante_nome,
@@ -378,7 +388,7 @@ export default function PublicReembolsoAuth() {
                         Autorizar Despesa
                      </button>
                      <button
-                        onClick={() => handleAction('reject')}
+                        onClick={() => setShowRejectModal(true)}
                         disabled={processing !== null}
                         className="w-full py-4 px-6 rounded-2xl border-2 border-red-100 bg-white text-red-500 font-bold tracking-widest uppercase text-sm hover:bg-red-50 hover:border-red-200 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50"
                      >
@@ -392,6 +402,55 @@ export default function PublicReembolsoAuth() {
           </div>
         </div>
       </div>
+
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-lg border border-red-100 flex flex-col relative animate-in zoom-in-95 duration-200">
+             <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-sm">
+                <XCircle className="w-8 h-8" />
+             </div>
+             
+             <h3 className="text-xl md:text-2xl font-black text-[#112240] text-center mb-2">
+                Rejeitar Solicitação
+             </h3>
+             <p className="text-gray-500 mb-6 text-center text-sm">
+                Tem certeza que deseja não autorizar este reembolso?
+             </p>
+             
+             <div className="mb-6 space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-widest text-[#1e3a8a] ml-1">Motivo / Justificativa (Opcional)</label>
+                <textarea
+                   className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium text-[#112240] focus:ring-4 focus:ring-red-100 focus:border-red-300 outline-none transition-all resize-none h-28"
+                   placeholder="Ex: A política da empresa não cobre gastos com bebidas alcoólicas..."
+                   value={rejectReason}
+                   onChange={e => setRejectReason(e.target.value)}
+                ></textarea>
+                <p className="text-xs text-gray-400 ml-1 mt-1">* Se preenchido, será enviado ao e-mail do solicitante e visível no Financeiro.</p>
+             </div>
+             
+             <div className="flex items-center gap-3 mt-2">
+                <button
+                   onClick={() => setShowRejectModal(false)}
+                   className="flex-1 py-3.5 px-6 rounded-2xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition-colors"
+                   disabled={processing !== null}
+                >
+                   Cancelar
+                </button>
+                <button
+                   onClick={() => {
+                     setShowRejectModal(false);
+                     handleAction('reject');
+                   }}
+                   className="flex-1 py-3.5 px-6 rounded-2xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
+                   disabled={processing !== null}
+                >
+                   {processing === 'reject' ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5"/>}
+                   Sim, Rejeitar
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

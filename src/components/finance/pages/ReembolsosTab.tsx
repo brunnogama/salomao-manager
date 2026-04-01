@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
-import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileDown, ArrowUpCircle, Calendar, User, RefreshCw, Plus, Share2 } from 'lucide-react';
+import { Filter, CheckCircle2, XCircle, Clock, FileText, Download, Loader2, ArrowRight, Trash2, Pencil, Save, FileDown, ArrowUpCircle, Calendar, User, RefreshCw, Plus, Share2, AlertCircle } from 'lucide-react';
 import PublicReembolso from '../../../pages/PublicReembolso';
 import { format } from 'date-fns';
 import { AlertModal } from '../../../components/ui/AlertModal';
@@ -27,6 +27,7 @@ interface Reembolso {
   autorizador_id?: string;
   cliente_nome?: string;
   observacao?: string;
+  motivo_rejeicao?: string;
 }
 
 export function ReembolsosTab() {
@@ -757,6 +758,17 @@ export function ReembolsosTab() {
                         Reembolso Recusado
                      </div>
                      <p className="text-sm text-red-900/80 font-medium">Esta solicitação de despesa não foi autorizada pelo gestor. A política de reembolso não se aplica ou a nota é inválida.</p>
+                     
+                     {selectedReembolso.motivo_rejeicao && (
+                        <div className="mt-2 mb-1 bg-white/60 p-3.5 rounded-xl border border-red-100/50 shadow-inner">
+                           <span className="block text-[10px] font-bold text-red-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" />
+                              Motivo da Recusa:
+                           </span>
+                           <p className="text-sm font-bold text-red-950 italic">"{selectedReembolso.motivo_rejeicao}"</p>
+                        </div>
+                     )}
+
                      <div className="flex items-center gap-2 mt-2 pt-3 border-t border-red-200/50">
                         <span className="block text-[10px] font-bold text-red-500 uppercase tracking-widest">Avaliado por</span>
                         <span className="font-black text-red-900 text-xs">{selectedReembolso.authorizer?.name || 'Líder'}</span>
