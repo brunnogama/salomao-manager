@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, ArrowLeft, Trash2, Plus, ExternalLink, ZoomIn, ZoomOut, X, Star } from 'lucide-react';
+import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, Trash2, X, Star } from 'lucide-react';
 import { SearchableSelect } from '../components/crm/SearchableSelect';
 import { convertPdfToTallImage } from '../utils/pdfToImage';
 
@@ -300,7 +300,8 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                 descricao: config.observacao || "Aguardando Apuração",
                 fornecedor: "Não processado pela IA",
                 link_autorizacao: `https://salomao-manager.pages.dev/reembolso/autorizar/${r.id}`,
-                recibo_url: r.recibo_url,
+                recibo_url: tUrl || r.recibo_url,
+                recibo_original_url: r.recibo_url,
                 recibo_thumb_url: tUrl || r.recibo_url,
                 reembolsavel_cliente: config.reembolsavelCliente ? "Sim" : "Não",
                 cliente_nome: config.clienteNome || "-",

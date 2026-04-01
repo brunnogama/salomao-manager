@@ -129,7 +129,12 @@ export function ReembolsosTab() {
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_url: selectedReembolso.recibo_url, colaborador_id: selectedReembolso.collaborators?.name })
+        body: JSON.stringify({ 
+          file_url: (selectedReembolso.recibo_url || '').toLowerCase().includes('.pdf') 
+            ? selectedReembolso.recibo_url.replace(/\.pdf(?:\?.*)?$/i, '_thumb.jpg')
+            : selectedReembolso.recibo_url,
+          colaborador_id: selectedReembolso.collaborators?.name 
+        })
       });
       
       if (response.ok) {
