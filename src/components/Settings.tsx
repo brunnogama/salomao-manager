@@ -20,6 +20,7 @@ import { ControladoriaSection } from './settings/ControladoriaSection'
 import { OperationalSection } from './settings/OperationalSection'
 import { BackupSection } from './settings/BackupSection'
 import { ValidationSection } from './settings/ValidationSection'
+import { TablesSection } from './settings/TablesSection'
 import { SYSTEM_VERSION } from '../config/version'
 import { APP_UPDATES } from '../config/updates'
 
@@ -52,7 +53,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   // --- STATES ---
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
-  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'permissoes' | 'crm' | 'juridico' | 'rh' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup' | 'operacoes' | 'validacao'>('menu')
+  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'permissoes' | 'crm' | 'juridico' | 'rh' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup' | 'operacoes' | 'validacao' | 'tabelas'>('menu')
 
   const [users, setUsers] = useState<AppUser[]>([])
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
@@ -334,7 +335,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   // I'll add 'controladoria' to the keyMap or just allow it for admins
   const hasAccessToModule = (modId: string) => {
     if (isSuperAdmin || isAdmin) return true;
-    if (['menu', 'historico', 'juridico', 'geral', 'about', 'permissoes'].includes(modId)) return true;
+    if (['menu', 'historico', 'juridico', 'geral', 'about', 'permissoes', 'tabelas'].includes(modId)) return true;
     const keyMap: any = { crm: 'crm', rh: 'collaborators', financial: 'financial', controladoria: 'controladoria', operacoes: 'operational' }; // Assumes user permission might track it, but for now mostly Admin
 
     // If it's pure Admin module, only admins should see it (already handled by !item.adminOnly check in menu render)
@@ -355,6 +356,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
     { id: 'rh', label: 'RH', icon: Users },
     { id: 'financial', label: 'Financeiro', icon: DollarSign },
     { id: 'validacao', label: 'Auditoria & Validação', icon: ShieldCheck },
+    { id: 'tabelas', label: 'Tabelas (Avançado)', icon: Database, adminOnly: true },
     { id: 'historico', label: 'Histórico', icon: HistoryIcon },
     { id: 'backup', label: 'Backup', icon: Database, adminOnly: true },
     { id: 'sistema', label: 'Changelog', icon: Code, adminOnly: true },
@@ -577,6 +579,10 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
 
           {activeModule === 'backup' && (
             <BackupSection isAdmin={isAdmin} />
+          )}
+
+          {activeModule === 'tabelas' && (
+            <TablesSection isAdmin={isAdmin} />
           )}
 
           {activeModule === 'historico' && <div className="bg-white rounded-xl shadow-sm border p-6"><History /></div>}
