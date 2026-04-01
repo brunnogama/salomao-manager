@@ -240,28 +240,69 @@ export function ContractDetailsModal({
   const calculateFinancials = () => {
     const isFinancialRelevant = ['proposal', 'active'].includes(contract.status);
 
+    const formatGroupTotal = (valuesArr: (string | undefined)[], fallbackNumber: number) => {
+      const validStrings = valuesArr.filter(v => v && parseCurrency(v) > 0);
+      if (validStrings.length === 0) return formatMoney(0);
+
+      const allPercent = validStrings.every(v => v?.includes('%'));
+      const allUSD = validStrings.every(v => v?.includes('US$'));
+      const allEUR = validStrings.every(v => v?.includes('€'));
+
+      if (allPercent) {
+        const sum = validStrings.reduce((acc, v) => acc + parseCurrency(v!), 0);
+        return sum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+      }
+
+      if (allUSD) {
+        const sumUsd = validStrings.reduce((acc, v) => {
+          const part = v!.split(' | ')[0];
+          const clean = part.replace(/[^\d,\-]/g, '').replace(',', '.');
+          const val = parseFloat(clean);
+          return acc + (isNaN(val) ? 0 : val);
+        }, 0);
+        return 'US$ ' + sumUsd.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      if (allEUR) {
+        const sumEur = validStrings.reduce((acc, v) => {
+          const part = v!.split(' | ')[0];
+          const clean = part.replace(/[^\d,\-]/g, '').replace(',', '.');
+          const val = parseFloat(clean);
+          return acc + (isNaN(val) ? 0 : val);
+        }, 0);
+        return '€ ' + sumEur.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      return formatMoney(fallbackNumber);
+    };
+
     const proLaboreBase = parseCurrency(contract.pro_labore);
     const proLaboreExtrasList = (contract as any).pro_labore_extras;
     const proLaboreExtrasTotal = (Array.isArray(proLaboreExtrasList) ? proLaboreExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
     const totalProLabore = proLaboreBase + proLaboreExtrasTotal;
+    const formattedProLabore = formatGroupTotal([contract.pro_labore, ...(Array.isArray(proLaboreExtrasList) ? proLaboreExtrasList : [])], totalProLabore);
 
     const intermediateList = contract.intermediate_fees;
     const intermediateTotal = (Array.isArray(intermediateList) ? intermediateList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
+    const formattedIntermediate = formatGroupTotal(Array.isArray(intermediateList) ? intermediateList : [], intermediateTotal);
 
     const finalFeeBase = parseCurrency(contract.final_success_fee);
     const finalFeeExtrasList = (contract as any).final_success_extras;
     const finalFeeExtrasTotal = (Array.isArray(finalFeeExtrasList) ? finalFeeExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
     const totalFinalFee = finalFeeBase + finalFeeExtrasTotal;
+    const formattedFinalFee = formatGroupTotal([contract.final_success_fee, ...(Array.isArray(finalFeeExtrasList) ? finalFeeExtrasList : [])], totalFinalFee);
 
     const otherFeesBase = parseCurrency(contract.other_fees);
     const otherFeesExtrasList = (contract as any).other_fees_extras;
     const otherFeesExtrasTotal = (Array.isArray(otherFeesExtrasList) ? otherFeesExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
     const totalOtherFees = otherFeesBase + otherFeesExtrasTotal;
+    const formattedOtherFees = formatGroupTotal([contract.other_fees, ...(Array.isArray(otherFeesExtrasList) ? otherFeesExtrasList : [])], totalOtherFees);
 
     const fixedMonthlyBase = parseCurrency(contract.fixed_monthly_fee);
     const fixedMonthlyExtrasList = (contract as any).fixed_monthly_extras;
     const fixedMonthlyExtrasTotal = (Array.isArray(fixedMonthlyExtrasList) ? fixedMonthlyExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
     const totalFixedMonthly = fixedMonthlyBase + fixedMonthlyExtrasTotal;
+    const formattedFixedMonthly = formatGroupTotal([contract.fixed_monthly_fee, ...(Array.isArray(fixedMonthlyExtrasList) ? fixedMonthlyExtrasList : [])], totalFixedMonthly);
 
     const grandTotal = totalProLabore + intermediateTotal + totalFinalFee + totalOtherFees + totalFixedMonthly;
     
@@ -274,6 +315,11 @@ export function ContractDetailsModal({
       intermediateTotal,
       totalOtherFees,
       totalFixedMonthly,
+      formattedProLabore,
+      formattedIntermediate,
+      formattedFinalFee,
+      formattedOtherFees,
+      formattedFixedMonthly,
       grandTotal,
       lackToPay: lackToPay > 0 ? lackToPay : 0,
 
@@ -390,7 +436,7 @@ export function ContractDetailsModal({
                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
                     <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
                        <span className="text-[10px] font-bold text-gray-500 uppercase">Pró-Labore (Total)</span>
-                       <span className="text-sm font-black text-gray-800">{formatMoney(financials.totalProLabore)}</span>
+                       <span className="text-sm font-black text-gray-800">{financials.formattedProLabore}</span>
                     </div>
                     <div className="flex flex-col gap-2">
                       {parseCurrency(contract.pro_labore) > 0 && activeTab === 2 && (contract.pro_labore_rule || contract.pro_labore_ready) && (
@@ -425,7 +471,7 @@ export function ContractDetailsModal({
                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 flex flex-col shadow-sm">
                     <div className="flex justify-between items-center border-b border-blue-200 pb-2 mb-2">
                        <span className="text-[10px] font-bold text-blue-700 uppercase">Ex. Intermediário (Total)</span>
-                       <span className="text-sm font-black text-blue-900">{formatMoney(financials.intermediateTotal)}</span>
+                       <span className="text-sm font-black text-blue-900">{financials.formattedIntermediate}</span>
                     </div>
                     <div className="flex flex-col gap-2">
                       {contract.intermediate_fees && Array.isArray(contract.intermediate_fees) && contract.intermediate_fees.map((val: string, idx: number) => {
@@ -451,7 +497,7 @@ export function ContractDetailsModal({
                  <div className="bg-green-50 p-3 rounded-lg border border-green-200 flex flex-col shadow-sm">
                     <div className="flex justify-between items-center border-b border-green-200 pb-2 mb-2">
                        <span className="text-[10px] font-bold text-green-800 uppercase">Êxito Final (Total)</span>
-                       <span className="text-sm font-black text-green-900">{formatMoney(financials.totalFinalFee)}</span>
+                       <span className="text-sm font-black text-green-900">{financials.formattedFinalFee}</span>
                     </div>
                     <div className="flex flex-col gap-2">
                       {parseCurrency(contract.final_success_fee) > 0 && activeTab === 2 && (contract.final_success_fee_rule || contract.final_success_ready) && (
@@ -486,7 +532,7 @@ export function ContractDetailsModal({
                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
                     <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
                        <span className="text-[10px] font-bold text-gray-500 uppercase">Fixo Mensal (Total)</span>
-                       <span className="text-sm font-black text-gray-800">{formatMoney(financials.totalFixedMonthly)}</span>
+                       <span className="text-sm font-black text-gray-800">{financials.formattedFixedMonthly}</span>
                     </div>
                     <div className="flex flex-col gap-2">
                       {parseCurrency(contract.fixed_monthly_fee) > 0 && activeTab === 2 && (contract.fixed_monthly_fee_rule || contract.fixed_monthly_ready) && (
@@ -521,7 +567,7 @@ export function ContractDetailsModal({
                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
                     <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
                        <span className="text-[10px] font-bold text-gray-500 uppercase">Outros Honorários (Total)</span>
-                       <span className="text-sm font-black text-gray-800">{formatMoney(financials.totalOtherFees)}</span>
+                       <span className="text-sm font-black text-gray-800">{financials.formattedOtherFees}</span>
                     </div>
                     <div className="flex flex-col gap-2">
                       {parseCurrency(contract.other_fees) > 0 && activeTab === 2 && (contract.other_fees_rule || contract.other_fees_ready) && (
