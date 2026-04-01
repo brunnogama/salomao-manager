@@ -1090,6 +1090,10 @@ export function ContractFormModal(props: Props) {
                   handleAddIntermediateFee={handleAddIntermediateFee}
                   interimClause={interimClause}
                   setInterimClause={setInterimClause}
+                  interimRule={interimRule}
+                  setInterimRule={setInterimRule}
+                  interimReady={interimReady}
+                  setInterimReady={setInterimReady}
                   handleRemoveIntermediateFee={handleRemoveIntermediateFee}
                   ensureArray={ensureArray}
                   duplicateHonCase={duplicateHonCase}
