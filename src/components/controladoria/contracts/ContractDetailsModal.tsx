@@ -3,7 +3,7 @@ import {
   X, Edit, Trash2, User, FileText, Briefcase, MapPin, 
   History as HistoryIcon, Hourglass, CalendarCheck, Calculator, 
   Paperclip, CheckCircle2, Clock, ChevronsRight, Download,
-  PieChart, Scale, Sparkles, Bot, Loader2, AlertCircle
+  PieChart, Scale, Sparkles, Bot, Loader2, AlertCircle, ArrowLeft, ArrowRight
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
@@ -58,6 +58,10 @@ interface Props {
   documents?: ContractDocument[];
   canEdit?: boolean;
   canDelete?: boolean;
+  onPrev?: () => void;
+  onNext?: () => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
 }
 
 export function ContractDetailsModal({
@@ -69,7 +73,11 @@ export function ContractDetailsModal({
   processes,
   documents = [],
   canEdit = false,
-  canDelete = false
+  canDelete = false,
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext
 }: Props) {
   useEscKey(isOpen, onClose);
   
@@ -666,9 +674,29 @@ export function ContractDetailsModal({
               </span>
             </div>
             
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors" title="Fechar">
-              <X className="w-6 h-6" />
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1 mr-2 border border-gray-100">
+                <button 
+                  onClick={onPrev} 
+                  disabled={!hasPrev}
+                  className={`p-1.5 rounded-md flex items-center justify-center transition-all ${hasPrev ? 'text-gray-600 hover:bg-white hover:shadow-sm' : 'text-gray-300 cursor-not-allowed'}`}
+                  title="Caso Anterior"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={onNext} 
+                  disabled={!hasNext}
+                  className={`p-1.5 rounded-md flex items-center justify-center transition-all ${hasNext ? 'text-gray-600 hover:bg-white hover:shadow-sm' : 'text-gray-300 cursor-not-allowed'}`}
+                  title="Próximo Caso"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors" title="Fechar">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
           </div>
 
           {/* Scrollable Body */}

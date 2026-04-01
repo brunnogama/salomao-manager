@@ -186,22 +186,57 @@ export function Contracts() {
     setIsModalOpen(true);
   };
 
-  const handleView = async (contract: Contract) => {
-    setFormData(contract);
+  const fetchContractDetailsData = async (contractId: string) => {
     const [procRes, timeRes] = await Promise.all([
-      supabase.from('contract_processes').select('*').eq('contract_id', contract.id),
-      supabase.from('contract_timeline').select('*').eq('contract_id', contract.id).order('changed_at', { ascending: false })
+      supabase.from('contract_processes').select('*').eq('contract_id', contractId),
+      supabase.from('contract_timeline').select('*').eq('contract_id', contractId).order('changed_at', { ascending: false })
     ]);
-    if (procRes.data) {
-      const formattedProcesses = procRes.data.map((p: any) => ({
+    return {
+      processes: procRes.data?.map((p: any) => ({
         ...p,
         cause_value: p.value_of_cause ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.value_of_cause) : ''
-      }));
-      setProcesses(formattedProcesses);
+      })) || [],
+      timeline: timeRes.data || []
+    };
+  };
+
+  const handleView = async (contract: Contract) => {
+    setFormData(contract);
+    if (contract.id) {
+      const data = await fetchContractDetailsData(contract.id);
+      setProcesses(data.processes);
+      setTimelineData(data.timeline);
     }
-    if (timeRes.data) setTimelineData(timeRes.data);
     setNewIntermediateFee('');
     setIsDetailsModalOpen(true);
+  };
+
+  const handleNext = async () => {
+    const currentIndex = filteredContracts.findIndex((c: Contract) => c.id === formData.id);
+    if (currentIndex >= 0 && currentIndex < filteredContracts.length - 1) {
+      const nextContract = filteredContracts[currentIndex + 1];
+      setFormData(nextContract);
+      if (nextContract.id) {
+        const data = await fetchContractDetailsData(nextContract.id);
+        setProcesses(data.processes);
+        setTimelineData(data.timeline);
+      }
+      setNewIntermediateFee('');
+    }
+  };
+
+  const handlePrev = async () => {
+    const currentIndex = filteredContracts.findIndex((c: Contract) => c.id === formData.id);
+    if (currentIndex > 0) {
+      const prevContract = filteredContracts[currentIndex - 1];
+      setFormData(prevContract);
+      if (prevContract.id) {
+        const data = await fetchContractDetailsData(prevContract.id);
+        setProcesses(data.processes);
+        setTimelineData(data.timeline);
+      }
+      setNewIntermediateFee('');
+    }
   };
 
   const handleEdit = () => {
@@ -835,47 +870,69 @@ export function Contracts() {
         description="Tem certeza que deseja excluir este contrato? Esta ação não pode ser desfeita."
       />
 
-      <ContractDetailsModal
-        isOpen={isDetailsModalOpen}
-        onClose={() => setIsDetailsModalOpen(false)}
-        contract={formData}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        processes={processes}
-        documents={(formData as any).documents}
-        canEdit={true}
-        canDelete={true}
-      />
+      {React.useMemo(() => {
+        const currentIndex = filteredContracts.findIndex((c: Contract) => c.id === formData.id);
+        const hasNext = currentIndex >= 0 && currentIndex < filteredContracts.length - 1;
+        const hasPrev = currentIndex > 0;
 
-      <ContractFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        formData={formData}
-        setFormData={setFormData}
-        onSave={handleSave}
-        loading={loading}
-        isEditing={isEditing}
-        partners={partners}
-        onOpenPartnerManager={() => setIsPartnerModalOpen(true)}
-        analysts={analysts}
-        onOpenAnalystManager={() => setIsAnalystModalOpen(true)}
-        onCNPJSearch={() => { }}
-        processes={processes}
-        currentProcess={currentProcess}
-        setCurrentProcess={setCurrentProcess}
-        editingProcessIndex={editingProcessIndex}
-        handleProcessAction={handleProcessAction}
-        cancelEditProcess={cancelEditProcess}
-        editProcess={editProcess}
-        removeProcess={removeProcess}
-        newIntermediateFee={newIntermediateFee}
-        setNewIntermediateFee={setNewIntermediateFee}
-        addIntermediateFee={addIntermediateFee}
-        removeIntermediateFee={removeIntermediateFee}
-        timelineData={timelineData}
-        getStatusColor={getStatusColor}
-        getStatusLabel={getStatusLabel}
-      />
+        return (
+          <>
+            <ContractDetailsModal
+              isOpen={isDetailsModalOpen}
+              onClose={() => setIsDetailsModalOpen(false)}
+              contract={formData}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              processes={processes}
+              documents={(formData as any).documents}
+              canEdit={true}
+              canDelete={true}
+              onNext={handleNext}
+              onPrev={handlePrev}
+              hasNext={hasNext}
+              hasPrev={hasPrev}
+            />
+
+            <ContractFormModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              formData={formData}
+              setFormData={setFormData}
+              onSave={handleSave}
+              loading={loading}
+              isEditing={isEditing}
+              partners={partners}
+              onOpenPartnerManager={() => setIsPartnerModalOpen(true)}
+              analysts={analysts}
+              onOpenAnalystManager={() => setIsAnalystModalOpen(true)}
+              onCNPJSearch={() => { }}
+              processes={processes}
+              currentProcess={currentProcess}
+              setCurrentProcess={setCurrentProcess}
+              editingProcessIndex={editingProcessIndex}
+              handleProcessAction={handleProcessAction}
+              cancelEditProcess={cancelEditProcess}
+              editProcess={editProcess}
+              removeProcess={removeProcess}
+              newIntermediateFee={newIntermediateFee}
+              setNewIntermediateFee={setNewIntermediateFee}
+              addIntermediateFee={addIntermediateFee}
+              removeIntermediateFee={removeIntermediateFee}
+              timelineData={timelineData}
+              getStatusColor={getStatusColor}
+              getStatusLabel={getStatusLabel}
+              onNext={handleNext}
+              onPrev={handlePrev}
+              hasNext={hasNext}
+              hasPrev={hasPrev}
+            />
+          </>
+        );
+      }, [
+        isDetailsModalOpen, isModalOpen, formData, processes, loading, isEditing, 
+        partners, analysts, currentProcess, editingProcessIndex, newIntermediateFee, 
+        timelineData, filteredContracts
+      ])}
 
       <PartnerManagerModal isOpen={isPartnerModalOpen} onClose={() => setIsPartnerModalOpen(false)} onUpdate={handlePartnerUpdate} />
       <AnalystManagerModal isOpen={isAnalystModalOpen} onClose={() => setIsAnalystModalOpen(false)} onUpdate={handleAnalystUpdate} />

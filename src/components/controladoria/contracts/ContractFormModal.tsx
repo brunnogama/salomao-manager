@@ -4,7 +4,8 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import {
   X, Scale, Clock, Save,
-  FileText, Briefcase, Loader2
+  FileText, Briefcase, Loader2,
+  ArrowLeft, ArrowRight
 } from 'lucide-react';
 import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst } from '../../../types/controladoria';
 import { maskCNPJ, maskMoney, maskHon, toTitleCase } from '../utils/masks';
@@ -35,6 +36,7 @@ interface Props {
   isOpen: boolean; onClose: () => void; formData: Contract; setFormData: React.Dispatch<React.SetStateAction<Contract>>; onSave: () => void; loading: boolean; isEditing: boolean;
   partners: Partner[]; onOpenPartnerManager: () => void; analysts: Analyst[]; onOpenAnalystManager: () => void;
   onCNPJSearch: () => void; processes: ContractProcess[]; currentProcess: ContractProcess; setCurrentProcess: React.Dispatch<React.SetStateAction<ContractProcess>>; editingProcessIndex: number | null; handleProcessAction: () => void; cancelEditProcess?: () => void; editProcess: (idx: number) => void; removeProcess: (idx: number) => void; newIntermediateFee: string; setNewIntermediateFee: (v: string) => void; addIntermediateFee: () => void; removeIntermediateFee: (idx: number) => void; timelineData: TimelineEvent[]; getStatusColor: (s: string) => string; getStatusLabel: (s: string) => string;
+  onPrev?: () => void; onNext?: () => void; hasPrev?: boolean; hasNext?: boolean;
 }
 
 export function ContractFormModal(props: Props) {
@@ -42,7 +44,8 @@ export function ContractFormModal(props: Props) {
     isOpen, onClose, formData, setFormData, onSave, loading: parentLoading, isEditing,
     partners, onOpenPartnerManager, analysts, onOpenAnalystManager,
     processes, currentProcess, setCurrentProcess, editingProcessIndex, handleProcessAction, cancelEditProcess, editProcess, removeProcess,
-    newIntermediateFee, setNewIntermediateFee, addIntermediateFee, removeIntermediateFee, getStatusLabel
+    newIntermediateFee, setNewIntermediateFee, addIntermediateFee, removeIntermediateFee, getStatusLabel,
+    onPrev, onNext, hasPrev, hasNext
   } = props;
 
   useEscKey(isOpen, onClose);
@@ -998,13 +1001,33 @@ export function ContractFormModal(props: Props) {
         {/* Right Content */}
         <div className={`flex-1 flex flex-col min-w-0 ${getThemeBackground(formData.status)} transition-colors duration-300 relative`}>
           
-          <button 
-            onClick={onClose} 
-            className="hidden md:flex absolute top-6 right-6 z-50 text-gray-400 hover:text-red-500 hover:bg-white/80 p-2 rounded-xl transition-all shadow-sm border border-transparent hover:border-red-100 cursor-pointer" 
-            title="Fechar"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="hidden md:flex absolute top-6 right-6 z-50 items-center gap-2">
+            <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg p-1 border border-gray-100 shadow-sm">
+              <button 
+                onClick={onPrev} 
+                disabled={!hasPrev}
+                className={`p-1.5 rounded-md flex items-center justify-center transition-all ${hasPrev ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'}`}
+                title="Caso Anterior"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={onNext} 
+                disabled={!hasNext}
+                className={`p-1.5 rounded-md flex items-center justify-center transition-all ${hasNext ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'}`}
+                title="Próximo Caso"
+              >
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+            <button 
+              onClick={onClose} 
+              className="text-gray-400 hover:text-red-500 bg-white/80 backdrop-blur-sm p-2 rounded-xl transition-all shadow-sm border border-gray-100 hover:border-red-100 cursor-pointer" 
+              title="Fechar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
           {/* Validation Alert */}
           <AlertModal 
