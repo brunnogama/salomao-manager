@@ -3,6 +3,7 @@ import { Plus, CheckCircle, DollarSign, Award, Save, Edit, Trash2, Settings, Ale
 import { Contract } from '../../../../types/controladoria';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { FinancialInputWithInstallments } from './FinancialInputWithInstallments';
+import { parseCurrency } from '../../utils/masks';
 
 interface FeeSectionsCollapsibleProps {
     formData: Contract;
@@ -148,8 +149,19 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
 
                 <div className="px-5 py-3">
                     {/* Itens salvos */}
-                    {extras.length > 0 && (
+                    {(parseCurrency(safeString((formData as any)[valueField])) > 0 || extras.length > 0) && (
                         <div className="flex flex-col gap-2 mb-3">
+                            {parseCurrency(safeString((formData as any)[valueField])) > 0 && (
+                                <SavedFeeItem
+                                    val={safeString(formatForInput((formData as any)[valueField]))}
+                                    clause={(formData as any)[clauseField]}
+                                    installment={(formData as any)[installmentsField]}
+                                    rule={(formData as any)[ruleField]}
+                                    isReady={(formData as any)[readyField]}
+                                    onEdit={() => setOpenSections(prev => ({ ...prev, [key]: true }))}
+                                    onDelete={() => setFormData({ ...formData, [valueField]: '', [clauseField]: '', [installmentsField]: '1x', [ruleField]: '', [readyField]: false } as any)}
+                                />
+                            )}
                             {extras.map((val: string, idx: number) => (
                                 <SavedFeeItem
                                     key={idx}
@@ -168,7 +180,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                         </div>
                     )}
 
-                    {extras.length === 0 && !isOpen && (
+                    {parseCurrency(safeString((formData as any)[valueField])) === 0 && extras.length === 0 && !isOpen && (
                         <p className="text-xs text-gray-400 italic">Nenhum valor cadastrado.</p>
                     )}
 
@@ -199,17 +211,24 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     onChange={(e) => setFormData({ ...formData, [ruleField]: e.target.value })}
                                 />
                             </div>
-                            <div className="flex justify-end mt-3">
+                            <div className="flex justify-end gap-2 mt-3">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleSection(key)}
+                                    className="px-4 py-2 text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
+                                >
+                                    Fechar
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => {
                                         handleAddToList(extrasField, valueField, extrasInstallmentsField, installmentsField, extrasRulesField, ruleField as any, extrasReadyField, readyField as any);
-                                        toggleSection(key);
+                                        // Não fechamos a seção, permitimos adicionar mais
                                     }}
                                     className="flex items-center gap-1.5 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-sm"
                                 >
-                                    <Save className="w-3.5 h-3.5" />
-                                    Salvar
+                                    <Plus className="w-3.5 h-3.5" />
+                                    Transformar em Adicional
                                 </button>
                             </div>
                         </div>

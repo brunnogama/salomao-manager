@@ -44,12 +44,18 @@ export const ensureArray = (val: any): string[] => {
     
     // Tratamento para arrays corrompidos (espalhados como caracteres)
     // Ex: ['[', '"', '2', ...]
-    if (Array.isArray(val) && val.length > 0 && val[0] === '[' && val.every(item => typeof item === 'string' && item.length === 1)) {
+    if (Array.isArray(val) && val.length > 0 && val.every(item => typeof item === 'string' && item.length === 1)) {
         try {
             const joined = val.join('');
             const parsed = JSON.parse(joined);
             if (Array.isArray(parsed)) return parsed;
-        } catch { /* erro em parse, continua para retornar val normal */ }
+            if (typeof parsed === 'string') return [parsed];
+            if (typeof parsed === 'number') return [String(parsed)];
+        } catch { 
+            // Se falhar o parse (ex: joined resultou em "2.1" ou "iii")
+            const joined = val.join('').replace(/^"/, '').replace(/"$/, ''); // Limpa aspas do inicio e fim se existirem
+            return [joined];
+        }
     }
 
     if (Array.isArray(val)) return val;
