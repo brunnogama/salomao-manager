@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase, Trash2, Calendar, Users } from 'lucide-react'
+import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase, Trash2, Calendar, Users, UserX, RefreshCcw } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { Collaborator } from '../../../types/controladoria'
 import { supabase } from '../../../lib/supabase'
@@ -349,21 +349,113 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                             <h4 className="text-lg font-black text-[#0a192f]">Histórico de Cargos</h4>
                         </div>
 
-                        {formData.hire_date && (
-                            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shrink-0">
-                                    <Calendar className="w-4 h-4" />
+                        {(() => {
+                            const nameFirst = formData.name?.split(' ')[0] || 'Integrante';
+                            const parseDateBR = (d: string) => {
+                                if (!d || typeof d !== 'string') return 0;
+                                const parts = d.split('/');
+                                if (parts.length === 3) {
+                                    return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`).getTime();
+                                }
+                                return 0;
+                            };
+
+                            const events = [];
+
+                            // 1. Current contract (Or current Readmission)
+                            if (formData.hire_date) {
+                                const isReadmission = formData.employment_cycles && formData.employment_cycles.length > 0;
+                                events.push({
+                                    id: 'current_hire',
+                                    type: isReadmission ? 'readmission' : 'hire',
+                                    date: formData.hire_date,
+                                    timestamp: parseDateBR(formData.hire_date),
+                                    text: isReadmission 
+                                        ? `${nameFirst} foi readmitido na empresa em ` 
+                                        : `${nameFirst} entrou na empresa em `,
+                                    icon: isReadmission ? <RefreshCcw className="w-4 h-4" /> : <Calendar className="w-4 h-4" />,
+                                    iconBg: isReadmission ? 'bg-emerald-100' : 'bg-blue-100',
+                                    iconColor: isReadmission ? 'text-emerald-600' : 'text-blue-600',
+                                    container: isReadmission ? 'bg-emerald-50/50 border-emerald-100/50' : 'bg-blue-50/50 border-blue-100/50'
+                                });
+                            }
+
+                            if (formData.status === 'inactive' && formData.termination_date) {
+                                events.push({
+                                    id: 'current_termination',
+                                    type: 'termination',
+                                    date: formData.termination_date,
+                                    timestamp: parseDateBR(formData.termination_date),
+                                    text: `${nameFirst} foi desligado em `,
+                                    icon: <UserX className="w-4 h-4" />,
+                                    iconBg: 'bg-red-100',
+                                    iconColor: 'text-red-600',
+                                    container: 'bg-red-50/50 border-red-100/50'
+                                });
+                            }
+
+                            // 2. Past Cycles from employment_cycles
+                            if (formData.employment_cycles && Array.isArray(formData.employment_cycles)) {
+                                formData.employment_cycles.forEach((cycle, idx) => {
+                                    const isFirstHire = idx === formData.employment_cycles!.length - 1;
+                                    
+                                    if (cycle.termination_date) {
+                                        events.push({
+                                            id: `cycle_term_${idx}`,
+                                            type: 'termination',
+                                            date: cycle.termination_date,
+                                            timestamp: parseDateBR(cycle.termination_date),
+                                            text: `${nameFirst} foi desligado em `,
+                                            icon: <UserX className="w-4 h-4" />,
+                                            iconBg: 'bg-red-100',
+                                            iconColor: 'text-red-600',
+                                            container: 'bg-red-50/50 border-red-100/50'
+                                        });
+                                    }
+                                    
+                                    if (cycle.hire_date) {
+                                        events.push({
+                                            id: `cycle_hire_${idx}`,
+                                            type: isFirstHire ? 'hire' : 'readmission',
+                                            date: cycle.hire_date,
+                                            timestamp: parseDateBR(cycle.hire_date),
+                                            text: isFirstHire 
+                                                  ? `${nameFirst} entrou na empresa em `
+                                                  : `${nameFirst} foi readmitido na empresa em `,
+                                            icon: isFirstHire ? <Calendar className="w-4 h-4" /> : <RefreshCcw className="w-4 h-4" />,
+                                            iconBg: isFirstHire ? 'bg-blue-100' : 'bg-emerald-100',
+                                            iconColor: isFirstHire ? 'text-blue-600' : 'text-emerald-600',
+                                            container: isFirstHire ? 'bg-blue-50/50 border-blue-100/50' : 'bg-emerald-50/50 border-emerald-100/50'
+                                        });
+                                    }
+                                });
+                            }
+
+                            // Sort visually: Newest to Oldest
+                            events.sort((a, b) => b.timestamp - a.timestamp);
+
+                            return (
+                                <div className="space-y-4 mb-6">
+                                    {events.map((ev) => (
+                                        <div key={ev.id} className={`p-4 rounded-xl border flex items-center gap-3 ${ev.container}`}>
+                                            <div className={`p-2 rounded-lg shrink-0 ${ev.iconBg} ${ev.iconColor}`}>
+                                                {ev.icon}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-[#0a192f] font-medium leading-tight">
+                                                    {ev.text} <span className="font-bold">{ev.date}</span>
+                                                </p>
+                                                {ev.type === 'hire' || ev.type === 'readmission' ? (
+                                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">
+                                                        Ciclo Registrado
+                                                    </p>
+                                                ) : null}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div>
-                                    <p className="text-sm text-[#0a192f] font-medium leading-tight">
-                                        <span className="font-bold">{formData.name?.split(' ')[0]}</span> entrou na empresa em <span className="font-bold">{formData.hire_date}</span>
-                                    </p>
-                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">
-                                        Há {formatDurationExtensive(Math.max(0, Math.floor((new Date().getTime() - new Date(formData.hire_date.split('/').reverse().join('-') + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24))))}
-                                    </p>
-                                </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {roleHistory.length > 0 ? (
                             <div className="space-y-4">
