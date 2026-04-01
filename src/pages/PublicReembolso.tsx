@@ -111,7 +111,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       const [colabsList, partsList, tls] = await Promise.all([getColabs(), getParts(), getTLs()]);
       const tlSet = new Set(tls.map((t: any) => String(t.collaborator_id)));
 
-      // Garante que qualquer pessoa apontada como líder por algum colaborador seja reconhecida como Team Leader (Resolve problema do RLS public na tabela team_leader)
+      // Garante qe qualquer pessoa apontada como líder por algum colaborador seja reconhecida como Team Leader (Resolve problema do RLS public na tabela team_leader)
       colabsList.forEach((c: any) => {
         if (c.leader_id) {
           tlSet.add(String(c.leader_id));
