@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, Trash2, X, Star } from 'lucide-react';
+import { Upload, ChevronRight, CheckCircle2, AlertCircle, FileText, Loader2, Trash2, X, Star, ZoomIn } from 'lucide-react';
 import { SearchableSelect } from '../components/crm/SearchableSelect';
 import { convertPdfToTallImage } from '../utils/pdfToImage';
 
@@ -10,8 +10,6 @@ interface Collaborator {
   email?: string;
   leader_id?: string;
 }
-
-
 
 interface PublicReembolsoProps {
   isModal?: boolean;
@@ -40,6 +38,7 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
   const [showAutocomplete, setShowAutocomplete] = useState<number | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [fileConfigs, setFileConfigs] = useState<FileConfig[]>([]);
+  const [zoomImageURL, setZoomImageURL] = useState<string | null>(null);
 
   const [step, setStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -109,7 +108,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       const [colabsList, partsList, tls] = await Promise.all([getColabs(), getParts(), getTLs()]);
       const tlSet = new Set(tls.map((t: any) => String(t.collaborator_id)));
 
-      // Garante qe qualquer pessoa apontada como líder por algum colaborador seja reconhecida como Team Leader (Resolve problema do RLS public na tabela team_leader)
       colabsList.forEach((c: any) => {
         if (c.leader_id) {
           tlSet.add(String(c.leader_id));
@@ -188,7 +186,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
             thumbFile = await convertPdfToTallImage(file);
           } catch (err) {
             console.error(`Erro ao gerar miniatura do PDF ${file.name}:`, err);
-            // Prossegue silenciosamente, o thumb não existirá
           }
         }
         if (thumbFile) {
@@ -211,7 +208,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
   };
 
   const handleRemoveFile = (index: number) => {
-    // Revogar a URL de preview para não vazar memória
     const configLine = fileConfigs[index];
     if (configLine && configLine.previewUrl) {
       URL.revokeObjectURL(configLine.previewUrl);
@@ -231,7 +227,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       return;
     }
 
-    // Validação estrita: Não permitir o envio se houver PDF sem imagem miniatura gerada (evita erro no ChatGPT/Make)
     for (let i = 0; i < files.length; i++) {
       if (files[i].type === 'application/pdf' && !fileConfigs[i]?.thumbFile) {
         setFormError(`O PDF "${files[i].name}" não pôde ser convertido automaticamente. Por favor, tire um "print screen" do recibo e envie como imagem.`);
@@ -251,7 +246,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         const file = files[idx];
         const config = fileConfigs[idx] || { reembolsavelCliente: false, clienteNome: '', observacao: '' };
 
-        // Upload para o Supabase Storage
         const fileExt = file.name.split('.').pop();
         const baseId = crypto.randomUUID();
         const fileName = `${baseId}.${fileExt}`;
@@ -264,7 +258,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
         publicUrls.push(fileUrl);
 
-        // Upload da Imagem Fantasma (Se Houver)
         let thumbUrl = null;
         if (config.thumbFile) {
           const thumbFileName = `${baseId}_thumb.jpg`;
@@ -292,11 +285,9 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         });
       }
 
-      // Insert all
       const { data: insertedRows, error } = await supabase.from('reembolsos').insert(payloadArray).select();
       if (error) throw error;
 
-      // Webhook Notification
       try {
         const webhookUrl = "https://hook.us2.make.com/ek933ugsc18euo3uwv9eha6mgk8ngvws";
         const solicitanteObj = collaborators.find(c => String(c.id) === String(selectedColab));
@@ -365,7 +356,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
     <div className={`${isModal ? 'w-full' : 'min-h-screen items-center justify-center p-4 bg-gray-50'} flex flex-col transition-all duration-300`}>
       <div className={`w-full transition-all duration-500 mx-auto ${step === 2 ? 'max-w-6xl' : 'max-w-xl'} ${isModal ? '' : ''}`}>
 
-        {/* Header Branding */}
         {!isModal && (
           <div className="text-center mb-4">
             <div className="flex justify-center mb-4">
@@ -380,7 +370,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
           </div>
         )}
 
-        {/* Form Container */}
         <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 md:p-6 relative overflow-hidden">
 
           {isModal && (
@@ -400,7 +389,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
             </>
           )}
 
-          {/* Progress Bar */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gray-100">
             <div
               className="h-full bg-gradient-to-r from-[#1e3a8a] to-[#d4af37] transition-all duration-500"
@@ -498,10 +486,19 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                     {files.map((f, idx) => (
                       <div key={idx} className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-[1.5rem] border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative group overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                          
-                         {/* THUMBNAIL */}
-                         <div className="w-full md:w-32 h-36 md:h-auto min-h-[140px] bg-slate-50 rounded-[1rem] border border-slate-200/60 overflow-hidden flex flex-col items-center justify-center shrink-0 shadow-inner mt-6 md:mt-0">
+                         <div className="w-full md:w-32 h-36 md:h-auto min-h-[140px] bg-slate-50 rounded-[1rem] border border-slate-200/60 overflow-hidden flex flex-col items-center justify-center shrink-0 shadow-inner mt-6 md:mt-0 relative group/img">
                             {fileConfigs[idx]?.previewUrl ? (
-                               <img src={fileConfigs[idx].previewUrl} alt={f.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+                               <>
+                                 <img 
+                                   src={fileConfigs[idx].previewUrl} 
+                                   alt={f.name} 
+                                   className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105 cursor-zoom-in" 
+                                   onClick={() => setZoomImageURL(fileConfigs[idx]?.previewUrl || null)}
+                                 />
+                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+                                    <ZoomIn className="w-6 h-6 text-white drop-shadow-md" />
+                                 </div>
+                               </>
                             ) : (
                                <>
                                  <FileText className="w-8 h-8 text-slate-300 mb-2" />
@@ -510,7 +507,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                             )}
                          </div>
 
-                         {/* CONTENT / FORM */}
                          <div className="flex-1 flex flex-col py-1">
                             <div className="flex justify-between items-start mb-3">
                               <span className="text-sm font-black text-[#112240] truncate pr-8 tracking-tight" title={f.name}>
@@ -664,7 +660,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         </div>
       </div>
 
-      {/* Modal de Favoritos */}
       {showFavModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#112240]/40 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-300">
           <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center border border-gray-100">
@@ -681,6 +676,27 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
             >
               Entendi!
             </button>
+          </div>
+        </div>
+      )}
+
+      {zoomImageURL && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setZoomImageURL(null)}
+        >
+          <div className="relative max-w-5xl w-full max-h-[90vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="absolute -top-12 right-0 md:-right-12 text-white/70 hover:text-white p-2 transition-colors bg-black/20 hover:bg-black/40 rounded-full"
+              onClick={() => setZoomImageURL(null)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+            <img 
+              src={zoomImageURL} 
+              alt="Visualização Ampliada" 
+              className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl"
+            />
           </div>
         </div>
       )}
