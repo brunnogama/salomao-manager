@@ -150,10 +150,14 @@ export function GED() {
 
   const filteredDocs = documents.filter(doc => {
     const matchesFolder = selectedFolder ? doc.client_name === selectedFolder : true;
-    const matchesSearch = searchTerm
-      ? doc.file_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.hon_number_ref?.includes(searchTerm) ||
-      doc.contract?.display_id?.includes(searchTerm)
+    const term = searchTerm.toLowerCase().trim();
+    const numericTerm = term.replace(/\D/g, '');
+
+    const matchesSearch = term
+      ? doc.file_name.toLowerCase().includes(term) ||
+        Boolean(doc.hon_number_ref?.toLowerCase().includes(term)) ||
+        Boolean(numericTerm && doc.hon_number_ref?.replace(/\D/g, '').includes(numericTerm)) ||
+        Boolean(doc.contract?.display_id?.toLowerCase().includes(term))
       : true;
     return matchesFolder && matchesSearch;
   });

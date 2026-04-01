@@ -203,6 +203,7 @@ export function Finance() {
       matchesSearch = 
         Boolean(i.contract?.client_name?.toLowerCase().includes(term)) ||
         Boolean(i.contract?.hon_number?.toLowerCase().includes(term)) ||
+        Boolean(numericTerm && i.contract?.hon_number?.replace(/\D/g, '').includes(numericTerm)) ||
         Boolean((i.contract as any)?.display_id?.toLowerCase().includes(term)) ||
         Boolean(i.contract?.cnpj?.toLowerCase().includes(term)) ||
         Boolean(numericTerm && i.contract?.cnpj?.replace(/\D/g, '').includes(numericTerm)) ||
