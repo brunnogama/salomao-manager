@@ -3399,7 +3399,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
           () => setSelectedColaborador(null),
           activeDetailTab,
           setActiveDetailTab,
-          activeDetailTab === 4
+          [4, 6, 7].includes(activeDetailTab)
             ? <div className="contents">{renderModalContent(activeDetailTab, true, selectedColaborador)}</div>
             : <fieldset disabled className="contents">{renderModalContent(activeDetailTab, true, selectedColaborador)}</fieldset>,
           (

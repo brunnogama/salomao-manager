@@ -306,11 +306,10 @@ export function DadosCorporativosSection({
         </button>
         <button
           type="button"
-          disabled={formData.status !== 'inactive'}
           onClick={() => setActiveTab('desligamento')}
           className={`flex-1 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${activeTab === 'desligamento'
             ? 'bg-white text-red-700 shadow-sm'
-            : formData.status !== 'inactive' ? 'text-gray-300 cursor-not-allowed opacity-50' : 'text-gray-400 hover:text-gray-600'
+            : 'text-gray-400 hover:text-gray-600'
             }`}
         >
           Desligamento
