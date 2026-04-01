@@ -468,7 +468,7 @@ export function ReembolsosTab() {
                onClick={() => setActiveTab('aguardando')}
                className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'aguardando' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
              >
-               <User className="w-3.5 h-3.5" /> Liderança
+               <User className="w-3.5 h-3.5" /> Ag. Autorização
                <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${activeTab === 'aguardando' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
                  {aguardandoLiderCount}
                </span>
