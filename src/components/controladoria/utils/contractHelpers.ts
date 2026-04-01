@@ -38,13 +38,34 @@ export const safeParseFloat = (value: string | number | undefined | null): numbe
     return isNaN(floatVal) ? 0 : floatVal;
 };
 
-// HELPER ESSENCIAL: Garante que o valor seja um array, mesmo que venha como string JSON do banco
+// HELPER ESSENCIAL: Garante que o valor seja um array, mesmo que venha como string JSON do banco ou formatado incorretamente
 export const ensureArray = (val: any): string[] => {
+    if (!val) return [];
+    
+    // Tratamento para arrays corrompidos (espalhados como caracteres)
+    // Ex: ['[', '"', '2', ...]
+    if (Array.isArray(val) && val.length > 0 && val[0] === '[' && val.every(item => typeof item === 'string' && item.length === 1)) {
+        try {
+            const joined = val.join('');
+            const parsed = JSON.parse(joined);
+            if (Array.isArray(parsed)) return parsed;
+        } catch { /* erro em parse, continua para retornar val normal */ }
+    }
+
     if (Array.isArray(val)) return val;
+    
     if (typeof val === 'string') {
         const trimmed = val.trim();
         if (trimmed.startsWith('[')) {
-            try { return JSON.parse(trimmed); } catch { return []; }
+            try { 
+                const parsed = JSON.parse(trimmed); 
+                if (Array.isArray(parsed)) return parsed;
+                // Lidando com JSON string "duplamente" codificado: '"[\\"2.1\\"]"'
+                if (typeof parsed === 'string' && parsed.trim().startsWith('[')) {
+                    const doubleParsed = JSON.parse(parsed.trim());
+                    if (Array.isArray(doubleParsed)) return doubleParsed;
+                }
+            } catch { return []; }
         }
     }
     return [];
