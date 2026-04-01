@@ -90,6 +90,7 @@ export interface Collaborator {
   // Novos campos
   contract_type?: string;
   history_observations?: string;
+  employment_cycles?: any[];
   ctps_numero?: string;
   ctps_serie?: string;
   ctps_uf?: string;

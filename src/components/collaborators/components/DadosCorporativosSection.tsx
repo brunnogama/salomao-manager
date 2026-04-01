@@ -8,7 +8,6 @@ import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { differenceInMonths, differenceInYears } from 'date-fns'
 import { TransporteSection } from './TransporteSection'
 import { supabase } from '../../../lib/supabase'
-import { AlertModal } from '../../../components/ui/AlertModal'
 import { getInternScholarshipValue, formatDbMoneyToDisplay } from '../utils/colaboradoresUtils'
 import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA, ATUACOES_TERCEIRIZADA, CARGOS_TERCEIRIZADA } from '../utils/cargosAtuacoesUtils'
 
@@ -25,9 +24,10 @@ export function DadosCorporativosSection({
   maskDate,
   isViewMode = false
 }: DadosCorporativosSectionProps) {
-  const [activeTab, setActiveTab] = useState<'contratacao' | 'desligamento'>('contratacao')
+  const [activeTab, setActiveTab] = useState<'contratacao' | 'desligamento' | 'historico'>('contratacao')
   const [originalStatus] = useState(formData.status)
   const [pendingReactivation, setPendingReactivation] = useState(false)
+  const [readmissionDate, setReadmissionDate] = useState('')
 
   const [roleName, setRoleName] = useState<string>('')
 
@@ -117,27 +117,92 @@ export function DadosCorporativosSection({
 
   return (
     <section className="space-y-6">
-      <AlertModal
-        isOpen={pendingReactivation}
-        onClose={() => setPendingReactivation(false)}
-        title="Reativar Integrante"
-        description={`Tem certeza que o integrante ${formData.name?.split(' ')[0] || ''} vai ser reativado e retornará ao trabalho?`}
-        variant="warning"
-        confirmText="Sim, Reativar"
-        cancelText="Cancelar"
-        onConfirm={() => {
-          const now = new Date();
-          const dateStr = now.toLocaleDateString('pt-BR');
-          const reactivationMsg = `[${dateStr}] Retorno: O integrante foi reativado e retornou ao trabalho no escritório.\n\n`;
-          setFormData({
-            ...formData,
-            status: 'active',
-            history_observations: reactivationMsg + (formData.history_observations || '')
-          });
-          setPendingReactivation(false);
-          setActiveTab('contratacao');
-        }}
-      />
+      {pendingReactivation && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center gap-2 text-white">
+              <AlertTriangle className="h-5 w-5" />
+              <h3 className="font-black text-base tracking-tight">Reativar e Readmitir</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-sm font-medium text-gray-600 leading-relaxed mb-6 text-center">
+                Você está prestes a reativar {formData.name?.split(' ')[0] || 'o integrante'}.<br/>Por favor, informe a <span className="font-bold text-[#1e3a8a]">nova data de readmissão</span> para gravar o ciclo atual no histórico.
+              </p>
+              
+              <div className="mb-6 space-y-2">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Data de Readmissão</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    className="w-full pl-9 bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none transition-all font-bold text-center tracking-widest"
+                    value={readmissionDate}
+                    onChange={e => setReadmissionDate(maskDate(e.target.value))}
+                    maxLength={10}
+                    placeholder="DD/MM/AAAA"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 w-full">
+                <button
+                  onClick={() => setPendingReactivation(false)}
+                  className="flex-1 px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  disabled={readmissionDate.length !== 10}
+                  onClick={() => {
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('pt-BR');
+                    const reactivationMsg = `[${dateStr}] Readmissão: O integrante foi readmitido com data inicial de ${readmissionDate}.\n\n`;
+                    
+                    // Snapshot the current contract
+                    const snapshot = {
+                      hire_date: formData.hire_date || null,
+                      role: formData.role || null,
+                      rateio_id: formData.rateio_id || null,
+                      hiring_reason_id: formData.hiring_reason_id || null,
+                      partner_ids: formData.partner_ids || [],
+                      leader_ids: formData.leader_ids || [],
+                      contract_type: formData.contract_type || null,
+                      termination_date: formData.termination_date || null,
+                      termination_reason_id: formData.termination_reason_id || null,
+                      termination_type_id: formData.termination_type_id || null,
+                      termination_initiative_id: formData.termination_initiative_id || null,
+                      motivo_desligamento: formData.motivo_desligamento || null,
+                    };
+                    
+                    const oldCycles = formData.employment_cycles || [];
+                    
+                    setFormData({
+                      ...formData,
+                      status: 'active',
+                      employment_cycles: [snapshot, ...oldCycles],
+                      history_observations: reactivationMsg + (formData.history_observations || ''),
+                      // Reset old values for the new cycle
+                      hire_date: readmissionDate,
+                      termination_date: '',
+                      termination_reason_id: '',
+                      termination_type_id: '',
+                      termination_initiative_id: '',
+                      motivo_desligamento: ''
+                    });
+                    
+                    setPendingReactivation(false);
+                    setReadmissionDate('');
+                    setActiveTab('contratacao');
+                  }}
+                  className="flex-1 px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white bg-[#1e3a8a] hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-md active:scale-95"
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
         <Briefcase className="h-4 w-4" /> Dados Corporativos
@@ -575,8 +640,58 @@ export function DadosCorporativosSection({
               setTransportes={(t) => setFormData({ ...formData, transportes: t })}
               isViewMode={isViewMode}
             />
+
+            {/* HISTÓRICO DE READMISSÕES / CICLOS PASSADOS */}
+            {(formData.employment_cycles && formData.employment_cycles.length > 0) && (
+              <div className="mt-8 border-t border-blue-200/50 pt-8 animate-in fade-in duration-500">
+                <h4 className="text-[12px] font-black text-[#1e3a8a] uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <Briefcase className="h-5 w-5" /> Ciclos de Contratação Anteriores
+                </h4>
+                <div className="space-y-4">
+                  {formData.employment_cycles.map((cycle, idx) => (
+                    <div key={idx} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-gray-200 group-hover:bg-[#1e3a8a] transition-colors" />
+                      <div className="flex flex-col sm:flex-row justify-between items-start mb-4 border-b border-gray-100 pb-4 gap-4">
+                        <div>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            Ciclo Fechado #{formData.employment_cycles!.length - idx}
+                          </p>
+                          <h5 className="font-bold text-[#0a192f] mt-1 text-sm">
+                            {cycle.contract_type || 'Contrato Padrão'} {cycle.role ? `- ${cycle.role}` : ''}
+                          </h5>
+                        </div>
+                        <div className="text-left sm:text-right bg-blue-50/50 p-2 rounded-lg border border-blue-100">
+                          <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1">Período de Atuação</p>
+                          <p className="font-bold text-[#1e3a8a] text-xs">
+                            {cycle.hire_date || 'N/D'} <span className="text-gray-400 font-medium mx-1">até</span> {cycle.termination_date || 'N/D'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                        <div>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Rateio Base</span>
+                          <span className="font-medium text-gray-700">{cycle.rateio_id || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Motivo Contratação</span>
+                          <span className="font-medium text-gray-700">{cycle.hiring_reason_id || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Tipo Desligamento</span>
+                          <span className="font-medium text-gray-700">{cycle.termination_reason_id || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Detalhes (Desligamento)</span>
+                          <span className="font-medium text-gray-700">{cycle.motivo_desligamento || '-'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
+        ) : activeTab === 'desligamento' ? (
           /* DESLIGAMENTO TAB */
           <div className="space-y-6">
             <div className="bg-red-50/30 p-6 rounded-xl space-y-6 border border-red-100/50">
@@ -681,7 +796,7 @@ export function DadosCorporativosSection({
               </div>
             )}
           </div>
-        )}
+        ) : null}
       </div>
     </section>
   )
