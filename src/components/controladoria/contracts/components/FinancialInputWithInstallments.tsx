@@ -213,8 +213,8 @@ export const FinancialInputWithInstallments = ({
 
         {/* Converted Value Readonly display */}
         {(format === 'US$' || format === '€') && convertedVal && (
-          <div className="flex items-center bg-gray-50 border-y border-gray-300 px-3 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" title={`Convertido: ${convertedVal}`}>
-            <span className="text-xs font-bold text-gray-600 truncate">{convertedVal}</span>
+          <div className="flex items-center bg-gray-50 border-y border-gray-300 px-3 whitespace-nowrap shrink-0" title={`Convertido: ${convertedVal}`}>
+            <span className="text-xs font-bold text-gray-600">{convertedVal}</span>
           </div>
         )}
 
