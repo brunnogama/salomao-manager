@@ -22,6 +22,8 @@ interface Reembolso {
   comprovante_pagamento_url: string | null;
   created_at: string;
   collaborators: { name: string };
+  colaborador_id?: string;
+  autorizador_id?: string;
   cliente_nome?: string;
   observacao?: string;
 }
@@ -159,6 +161,36 @@ export function ReembolsosTab() {
             descricao: item.descricao || prev.descricao,
             numero_recibo: item.numero_recibo || prev.numero_recibo,
           }));
+
+          if (dataArray.length > 1) {
+             const qtdeAmais = dataArray.length - 1;
+             alert(`A IA encontrou ${dataArray.length} recibos neste documento!\n\nA tela atual foi preenchida com o primeiro recibo (R$ ${item.valor || 0}).\n\nO sistema irá criar automaticamente ${qtdeAmais} nova(s) despesa(s) "${selectedReembolso.autorizador_id ? 'Aguardando Liderança' : 'Pendente'}" para o(s) recibo(s) restante(s). Ao finalizar a edição desta tela, atualize a página.`);
+
+             const newRows = [];
+             for (let i = 1; i < dataArray.length; i++) {
+                const extraItem = dataArray[i];
+                newRows.push({
+                   colaborador_id: selectedReembolso.colaborador_id,
+                   autorizador_id: selectedReembolso.autorizador_id,
+                   reembolsavel_cliente: selectedReembolso.reembolsavel_cliente,
+                   cliente_nome: selectedReembolso.cliente_nome,
+                   observacao: selectedReembolso.observacao,
+                   recibo_url: selectedReembolso.recibo_url,
+                   status: selectedReembolso.autorizador_id ? 'pendente_autorizacao' : 'pendente',
+                   numero_recibo: extraItem.numero_recibo || '',
+                   fornecedor_nome: extraItem.fornecedor_nome || '',
+                   fornecedor_cnpj: extraItem.fornecedor_cnpj || '',
+                   data_despesa: extraItem.data_despesa || null,
+                   valor: parseFloat(extraItem.valor?.toString().replace(',', '.')) || 0,
+                   descricao: extraItem.descricao || '',
+                });
+             }
+
+             supabase.from('reembolsos').insert(newRows).then(({ error }) => {
+                if (error) console.error("Erro ao inserir despesas extras da IA:", error);
+                else fetchReembolsos();
+             });
+          }
         }
       } else {
          alert("Erro no serviço da IA. Status: " + response.status);
