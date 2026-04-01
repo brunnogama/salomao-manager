@@ -446,7 +446,7 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-gray-800">{financials.formattedProLabore}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.pro_labore) > 0 && activeTab === 2 && (contract.pro_labore_rule || contract.pro_labore_ready) && (
+                      {parseCurrency(contract.pro_labore) > 0 && activeTab === 2 && (contract.pro_labore_clause || contract.pro_labore_rule || contract.pro_labore_ready) && (
                         <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
                           <div className="flex justify-between items-start">
                              <span className="font-semibold text-gray-700">{contract.pro_labore_clause ? `Cláusula ${contract.pro_labore_clause} - Principal` : 'Regra Principal'}</span>
@@ -507,7 +507,7 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-green-900">{financials.formattedFinalFee}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.final_success_fee) > 0 && activeTab === 2 && (contract.final_success_fee_rule || contract.final_success_ready) && (
+                      {parseCurrency(contract.final_success_fee) > 0 && activeTab === 2 && (contract.final_success_fee_clause || contract.final_success_fee_rule || contract.final_success_ready) && (
                         <div className="text-xs flex flex-col bg-white p-2 rounded border border-green-100 mt-1">
                           <div className="flex justify-between items-start">
                              <span className="font-semibold text-green-800">{contract.final_success_fee_clause ? `Cláusula ${contract.final_success_fee_clause} - Principal` : 'Regra Principal'}</span>
@@ -542,7 +542,7 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-gray-800">{financials.formattedFixedMonthly}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.fixed_monthly_fee) > 0 && activeTab === 2 && (contract.fixed_monthly_fee_rule || contract.fixed_monthly_ready) && (
+                      {parseCurrency(contract.fixed_monthly_fee) > 0 && activeTab === 2 && (contract.fixed_monthly_fee_clause || contract.fixed_monthly_fee_rule || contract.fixed_monthly_ready) && (
                         <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
                           <div className="flex justify-between items-start">
                              <span className="font-semibold text-gray-700">{contract.fixed_monthly_fee_clause ? `Cláusula ${contract.fixed_monthly_fee_clause} - Principal` : 'Regra Principal'}</span>
@@ -577,7 +577,7 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-gray-800">{financials.formattedOtherFees}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.other_fees) > 0 && activeTab === 2 && (contract.other_fees_rule || contract.other_fees_ready) && (
+                      {parseCurrency(contract.other_fees) > 0 && activeTab === 2 && (contract.other_fees_clause || contract.other_fees_rule || contract.other_fees_ready) && (
                         <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
                           <div className="flex justify-between items-start">
                              <span className="font-semibold text-gray-700">{contract.other_fees_clause ? `Cláusula ${contract.other_fees_clause} - Principal` : 'Regra Principal'}</span>
