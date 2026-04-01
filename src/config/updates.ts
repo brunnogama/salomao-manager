@@ -9,6 +9,22 @@ export interface AppUpdate {
 
 export const APP_UPDATES: AppUpdate[] = [
     {
+        version: '1.5.0',
+        date: '01/04/2026',
+        title: 'Melhorias de Refatoração e Fluxos Operacionais',
+        description: 'Implementamos otimizações significativas no fluxo de Reembolso, Recesso Administrativo e na gestão da Controladoria.',
+        features: [
+            'Fluxo de Reembolso: Novo prompt para favoritar, seleção persistente do colaborador e correção na visualização/conversão do PDF.',
+            'Gestão de Recessos: Formulário refatorado para múltiplos períodos de férias e integração otimizada para envio automático do Link Mágico.',
+            'Refinamento do Organograma: Ajuste na hierarquia Administrativa para comportar os Sócios corretamente, e nova exportação em Excel otimizada para a aba Jurídico.',
+            'Controladoria em Foco: Interface inovadora e segmentada no Cadastro de Contratos (Status & Valores) e unificação visual com modais em abas (Gestão de Aeronave).'
+        ],
+        fixes: [
+            'Correções na integração de webhooks automatizados e envio de e-mails de RH.',
+            'Ajuste na profundidade de camadas (z-index) em modais críticos.'
+        ]
+    },
+    {
         version: '1.4.0',
         date: '07/03/2026',
         title: 'Inteligência Artificial Recrutadora e Experiência de Vagas',
