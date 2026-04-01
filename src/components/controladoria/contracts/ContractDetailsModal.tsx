@@ -244,9 +244,9 @@ export function ContractDetailsModal({
       const validStrings = valuesArr.filter(v => v && parseCurrency(v) > 0);
       if (validStrings.length === 0) return formatMoney(0);
 
-      const allPercent = validStrings.every(v => v?.includes('%'));
-      const allUSD = validStrings.every(v => v?.includes('US$'));
-      const allEUR = validStrings.every(v => v?.includes('€'));
+      const allPercent = validStrings.every(v => typeof v === 'string' && v.includes('%'));
+      const allUSD = validStrings.every(v => typeof v === 'string' && v.includes('US$'));
+      const allEUR = validStrings.every(v => typeof v === 'string' && v.includes('€'));
 
       if (allPercent) {
         const sum = validStrings.reduce((acc, v) => acc + parseCurrency(v!), 0);
