@@ -450,87 +450,88 @@ export function ReembolsosTab() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
+          {/* Abas Navegação */}
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl w-full sm:w-auto overflow-x-auto hide-scrollbar">
             <button
-              onClick={() => {
-                const mailtoUrl = `mailto:?subject=${encodeURIComponent('Solicitação de Reembolso - Salomão Manager')}&body=${encodeURIComponent(`Olá,\n\nPara solicitar o seu reembolso financeiro, acesse o canal oficial do nosso sistema abaixo e preencha as informações necessárias (anexe a cópia do comprovante):\n\n${window.location.origin}/reembolsos`)}`;
-                window.location.href = mailtoUrl;
-              }}
-              title="Compartilhar Link (E-mail)"
-              className="flex items-center justify-center w-10 h-10 bg-gray-50 text-gray-600 hover:text-blue-600 border border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 rounded-full transition-all shadow-sm shrink-0"
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              title="Sincronizar Dados"
-              className="flex items-center justify-center w-10 h-10 bg-gray-50 text-gray-600 hover:text-[#1e3a8a] border border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 rounded-full transition-all shadow-sm shrink-0"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-            <button 
-              onClick={handleExportXLSX}
-              title="Exportar Planilha"
-              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
-            >
-              <FileDown className="h-5 w-5" />
-            </button>
-            <button 
-              onClick={() => setIsAddReembolsoModalOpen(true)}
-              title="Nova Solicitação de Reembolso Manual"
-              className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-blue-900 transition-all shadow-lg shadow-blue-900/30 shrink-0"
-            >
-              <Plus className="h-5 w-5" />
-            </button>
+               onClick={() => setActiveTab('pagar')}
+               className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'pagar' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+             >
+               <Clock className="w-3.5 h-3.5" /> Pagar
+               <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${activeTab === 'pagar' ? 'bg-[#1e3a8a] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                 {pendentesCount}
+               </span>
+             </button>
+
+             <button
+               onClick={() => setActiveTab('aguardando')}
+               className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'aguardando' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+             >
+               <User className="w-3.5 h-3.5" /> Liderança
+               <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${activeTab === 'aguardando' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                 {aguardandoLiderCount}
+               </span>
+             </button>
+
+             <button
+               onClick={() => setActiveTab('reembolsados')}
+               className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'reembolsados' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+             >
+               <CheckCircle2 className="w-3.5 h-3.5" /> Reembolsados
+               <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${activeTab === 'reembolsados' ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                 {reembolsadosCount}
+               </span>
+             </button>
+
+             <button
+               onClick={() => setActiveTab('rejeitados')}
+               className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'rejeitados' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+             >
+               <XCircle className="w-3.5 h-3.5" /> Rejeitados
+               <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${activeTab === 'rejeitados' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                 {reembolsos.filter(r => r.status === 'rejeitado').length}
+               </span>
+             </button>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => {
+                  const mailtoUrl = `mailto:?subject=${encodeURIComponent('Solicitação de Reembolso - Salomão Manager')}&body=${encodeURIComponent(`Olá,\n\nPara solicitar o seu reembolso financeiro, acesse o canal oficial do nosso sistema abaixo e preencha as informações necessárias (anexe a cópia do comprovante):\n\n${window.location.origin}/reembolsos`)}`;
+                  window.location.href = mailtoUrl;
+                }}
+                title="Compartilhar Link (E-mail)"
+                className="flex items-center justify-center w-10 h-10 bg-gray-50 text-gray-600 hover:text-blue-600 border border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 rounded-full transition-all shadow-sm"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                title="Sincronizar Dados"
+                className="flex items-center justify-center w-10 h-10 bg-gray-50 text-gray-600 hover:text-[#1e3a8a] border border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 rounded-full transition-all shadow-sm"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
+              <button 
+                onClick={handleExportXLSX}
+                title="Exportar Planilha"
+                className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+              >
+                <FileDown className="h-5 w-5" />
+              </button>
+              <button 
+                onClick={() => setIsAddReembolsoModalOpen(true)}
+                title="Nova Solicitação de Reembolso Manual"
+                className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-blue-900 transition-all shadow-lg shadow-blue-900/30"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+          </div>
         </div>
       </div>
 
-      {/* TABS NAVEGAÇÃO MICRO-STATUS */}
-      <div className="flex flex-wrap border-b border-gray-200 mt-2 mb-4 gap-2 sm:gap-8 px-2">
-           <button
-             onClick={() => setActiveTab('pagar')}
-             className={`py-3 px-1 border-b-2 font-bold text-sm whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === 'pagar' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-           >
-             <Clock className="w-4 h-4" />
-             Fila de Pagamentos
-             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'pagar' ? 'bg-[#1e3a8a] text-white' : 'bg-gray-100 text-gray-500'}`}>
-               {pendentesCount}
-             </span>
-           </button>
 
-           <button
-             onClick={() => setActiveTab('aguardando')}
-             className={`py-3 px-1 border-b-2 font-bold text-sm whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === 'aguardando' ? 'border-amber-600 text-amber-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-           >
-             <User className="w-4 h-4" />
-             Aguardando Aprovação
-             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'aguardando' ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
-               {aguardandoLiderCount}
-             </span>
-           </button>
-
-           <button
-             onClick={() => setActiveTab('reembolsados')}
-             className={`py-3 px-1 border-b-2 font-bold text-sm whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === 'reembolsados' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-           >
-             <CheckCircle2 className="w-4 h-4" />
-             Reembolsados
-             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'reembolsados' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
-               {reembolsadosCount}
-             </span>
-           </button>
-
-           <button
-             onClick={() => setActiveTab('rejeitados')}
-             className={`py-3 px-1 border-b-2 font-bold text-sm whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === 'rejeitados' ? 'border-red-600 text-red-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-           >
-             <XCircle className="w-4 h-4" />
-             Rejeitados
-             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'rejeitados' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
-               {reembolsos.filter(r => r.status === 'rejeitado').length}
-             </span>
-           </button>
-      </div>
 
       <div className="w-full space-y-4 sm:space-y-6 flex-1 animate-in fade-in zoom-in-[0.98] duration-300">
         <div className="flex flex-col lg:flex-row items-stretch gap-4">
