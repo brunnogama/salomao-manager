@@ -2,25 +2,80 @@ import { supabase } from './supabase'
 import { logAction } from './logger'
 
 const BACKUP_TABLES = [
-    'user_profiles',
-    'analysts',
-    'partners',
-    'clients',
-    'contracts',
-    'contract_processes',
-    'contract_documents',
-    'contract_timeline',
-    'kanban_tasks',
-    'financial_installments',
-    'colaboradores',
-    'marcacoes_ponto',
-    'presenca_portaria',
     'aeronave_frota',
     'aeronave_lancamentos',
-    'financeiro_aeronave',
+    'agendamentos',
+    'analysts',
+    'areas',
+    'assets',
+    'atividades_familia',
+    'audit_logs',
+    'candidates',
+    'categories',
+    'certificates',
+    'client_contacts',
+    'clients',
+    'collaborator_absences',
+    'collaborator_education_history',
+    'collaborator_role_history',
+    'collaborator_warnings',
+    'collaborators',
+    'config_magistrados',
+    'contract_documents',
+    'contract_processes',
+    'contract_statuses',
+    'contract_timeline',
+    'contracts',
+    'cost_centers',
+    'courts',
+    'eventos',
+    'familia_config_opcoes',
     'familia_salomao_dados',
+    'familia_salomao_demandas',
+    'finance_clientes',
+    'finance_faturas',
+    'financeiro_aeronave',
+    'financeiro_oab',
+    'financial_installments',
+    'ged_colaboradores',
+    'ged_documentos',
+    'hiring_reasons',
+    'kanban_tasks',
+    'locations',
     'logs',
-    'audit_logs'
+    'magistrados',
+    'marcacoes_ponto',
+    'oab_number',
+    'office_locations',
+    'operational_assets',
+    'operational_fornecedores',
+    'operational_items',
+    'operational_stock',
+    'opponents',
+    'partners',
+    'perfil_tags',
+    'presenca_portaria',
+    'processos',
+    'rateios',
+    'reembolsos',
+    'rh_actions',
+    'rh_export_templates',
+    'rh_mapa_elementos',
+    'rh_postos',
+    'roles',
+    'shopping_list_items',
+    'sucumbencias',
+    'tasks',
+    'team_leader',
+    'teams',
+    'termination_initiatives',
+    'termination_reasons',
+    'termination_types',
+    'tipos_brinde',
+    'user_kanban_settings',
+    'user_profiles',
+    'vacation_requests',
+    'vagas'
 ];
 
 export interface BackupData {
@@ -92,12 +147,11 @@ export const BackupService = {
 
         const now = new Date();
         const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
         const today = now.toISOString().split('T')[0];
         const lastBackupDate = localStorage.getItem('last_backup_date');
 
-        // Triggers if it's 17:40 or later AND no backup was done today
-        const isAfterTime = currentHour > 17 || (currentHour === 17 && currentMinute >= 40);
+        // Triggers if it's 19:00 or later AND no backup was done today
+        const isAfterTime = currentHour >= 19;
 
         if (isAfterTime && lastBackupDate !== today) {
             try {

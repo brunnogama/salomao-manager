@@ -196,7 +196,15 @@ export function AppRoutes() {
             const ADMIN_EMAILS = ['marcio.gama@salomaoadv.com.br']; // Extendable list or fetch role
 
             if (ADMIN_EMAILS.includes(email)) {
+                // Check immediately on mount/session change
                 BackupService.checkAndRunAutomaticBackup();
+                
+                // Set interval to check every 5 minutes
+                const backupInterval = setInterval(() => {
+                    BackupService.checkAndRunAutomaticBackup();
+                }, 5 * 60 * 1000);
+
+                return () => clearInterval(backupInterval);
             }
         }
     }, [session]);
