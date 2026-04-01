@@ -34,7 +34,7 @@ export function ReembolsosTab() {
   const [reembolsos, setReembolsos] = useState<Reembolso[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'pagar' | 'aguardando' | 'rejeitados'>('pagar');
+  const [activeTab, setActiveTab] = useState<'pagar' | 'aguardando' | 'reembolsados' | 'rejeitados'>('pagar');
   
   // Modal State
   const [selectedReembolso, setSelectedReembolso] = useState<Reembolso | null>(null);
@@ -408,8 +408,9 @@ export function ReembolsosTab() {
     if (!matchSearch) return false;
 
     // 1. Filtro macro pelas Abas (Tabs)
-    if (activeTab === 'pagar' && (r.status === 'pendente_autorizacao' || r.status === 'rejeitado')) return false;
+    if (activeTab === 'pagar' && r.status !== 'pendente') return false;
     if (activeTab === 'aguardando' && r.status !== 'pendente_autorizacao') return false;
+    if (activeTab === 'reembolsados' && r.status !== 'pago') return false;
     if (activeTab === 'rejeitados' && r.status !== 'rejeitado') return false;
 
     // 2. Filtro Sub-Status (ex: apenas Pagos dentro da aba Pagar)
@@ -429,6 +430,7 @@ export function ReembolsosTab() {
 
   const pendentesCount = reembolsos.filter(r => r.status === 'pendente').length;
   const aguardandoLiderCount = reembolsos.filter(r => r.status === 'pendente_autorizacao').length;
+  const reembolsadosCount = reembolsos.filter(r => r.status === 'pago').length;
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative sm:px-6 sm:py-6 sm:mx-0 -mx-4 px-4 py-4 min-h-screen">
@@ -492,7 +494,7 @@ export function ReembolsosTab() {
              <Clock className="w-4 h-4" />
              Fila de Pagamentos
              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'pagar' ? 'bg-[#1e3a8a] text-white' : 'bg-gray-100 text-gray-500'}`}>
-               {reembolsos.filter(r => r.status === 'pendente' || r.status === 'pago').length}
+               {pendentesCount}
              </span>
            </button>
 
@@ -501,9 +503,20 @@ export function ReembolsosTab() {
              className={`py-3 px-1 border-b-2 font-bold text-sm whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === 'aguardando' ? 'border-amber-600 text-amber-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
            >
              <User className="w-4 h-4" />
-             Aguardando Liderança
+             Aguardando Aprovação
              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'aguardando' ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
                {aguardandoLiderCount}
+             </span>
+           </button>
+
+           <button
+             onClick={() => setActiveTab('reembolsados')}
+             className={`py-3 px-1 border-b-2 font-bold text-sm whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === 'reembolsados' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+           >
+             <CheckCircle2 className="w-4 h-4" />
+             Reembolsados
+             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'reembolsados' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+               {reembolsadosCount}
              </span>
            </button>
 
