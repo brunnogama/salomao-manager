@@ -76,7 +76,7 @@ export function Finance() {
       .select(`
         *,
         contract:contracts (
-          id, seq_id, hon_number, client_name, partner_id, billing_location, status,
+          id, seq_id, hon_number, client_name, cnpj, partner_id, billing_location, status,
           partners (name)
         )
       `)
@@ -195,10 +195,21 @@ export function Finance() {
   };
 
   const filteredInstallments = installments.filter(i => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch = i.contract?.client_name?.toLowerCase().includes(term) ||
-      i.contract?.hon_number?.includes(searchTerm) ||
-      (i.contract as any)?.display_id?.includes(searchTerm);
+    const term = searchTerm.toLowerCase().trim();
+    const numericTerm = term.replace(/\D/g, '');
+
+    let matchesSearch = true;
+    if (term) {
+      matchesSearch = 
+        Boolean(i.contract?.client_name?.toLowerCase().includes(term)) ||
+        Boolean(i.contract?.hon_number?.toLowerCase().includes(term)) ||
+        Boolean((i.contract as any)?.display_id?.toLowerCase().includes(term)) ||
+        Boolean(i.contract?.cnpj?.toLowerCase().includes(term)) ||
+        Boolean(numericTerm && i.contract?.cnpj?.replace(/\D/g, '').includes(numericTerm)) ||
+        Boolean(i.amount.toString().includes(numericTerm && numericTerm !== '' ? numericTerm : term)) ||
+        Boolean(i.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).toLowerCase().includes(term)) ||
+        Boolean(i.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }).includes(term));
+    }
 
     const matchesPartner = selectedPartner ? i.contract?.partner_id === selectedPartner : true;
     const matchesLocation = selectedLocation ? i.contract?.billing_location === selectedLocation : true;

@@ -463,6 +463,7 @@ export interface FinancialInstallment {
     display_id?: string;
     hon_number?: string;
     client_name: string;
+    cnpj?: string;
     partner_id?: string;
     partner_name?: string;
     billing_location?: string;
