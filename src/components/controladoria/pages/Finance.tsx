@@ -314,7 +314,7 @@ export function Finance() {
     await supabase.from('financial_installments')
       .update({ 
         status: 'paid', 
-        paid_at: billingDate,
+        paid_at: billingDate || null,
         due_date: nfDueDate || selectedInstallment.due_date,
         nf_issue_date: nfIssueDate || null,
         nf_number: nfNumber || null,
