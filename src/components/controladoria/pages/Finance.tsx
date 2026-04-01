@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import {
   DollarSign, Download, CheckCircle2, Circle, Clock, Loader2,
@@ -736,14 +737,14 @@ export function Finance() {
       )}
 
       {/* MODAL: DATA DE FATURAMENTO */}
-      {isDateModalOpen && (
+      {isDateModalOpen && createPortal(
         <div 
-          className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[70] p-4"
+          className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[99999] p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsDateModalOpen(false);
           }}
         >
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-2xl animate-in zoom-in-95 border border-gray-100 relative">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-3xl animate-in zoom-in-95 border border-gray-100 relative">
             <button 
               onClick={() => setIsDateModalOpen(false)}
               className="absolute top-5 right-5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-1.5 transition-all"
@@ -751,11 +752,11 @@ export function Finance() {
               <X className="w-5 h-5 pointer-events-none" />
             </button>
 
-            <h3 className="text-lg font-black text-[#0a192f] mb-2 pr-8 uppercase tracking-tight">Confirmar Faturamento</h3>
+            <h3 className="text-lg font-black text-[#0a192f] mb-2 uppercase tracking-tight">Confirmar Faturamento</h3>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Confirma o recebimento desta parcela e informações fiscais?</p>
 
-            <div className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
                 <div>
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Emissão</label>
                   <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={nfIssueDate} onChange={(e) => setNfIssueDate(e.target.value)} />
@@ -770,35 +771,33 @@ export function Finance() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Local do Fat.</label>
                   <div className="relative">
-                    <select className="appearance-none w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all bg-white" value={nfLocation} onChange={(e) => setNfLocation(e.target.value)}>
+                    <select className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] outline-none transition-all bg-white shadow-sm hover:border-gray-300" value={nfLocation} onChange={(e) => setNfLocation(e.target.value)}>
                       <option value="">Selecione...</option>
                       {officeLocations.map(loc => (
                         <option key={loc.id} value={loc.id}>{loc.name}</option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Natureza</label>
                   <div className="relative">
-                    <select className="appearance-none w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all bg-white" value={nfNature} onChange={(e) => setNfNature(e.target.value)}>
+                    <select className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] outline-none transition-all bg-white shadow-sm hover:border-gray-300" value={nfNature} onChange={(e) => setNfNature(e.target.value)}>
                       <option value="">Selecione...</option>
                       <option value="COND">COND</option>
                       <option value="EXT">EXT</option>
                       <option value="PF">PF</option>
                       <option value="PJ">PJ</option>
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">NF (Opcional)</label>
-                  <input type="text" placeholder="Nº NF/Boleto" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-300 placeholder:font-normal" value={nfNumber} onChange={(e) => setNfNumber(e.target.value)} />
+                  <input type="text" placeholder="Nº NF/Boleto" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" value={nfNumber} onChange={(e) => setNfNumber(e.target.value)} />
                 </div>
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">Valor Bruto (R$)</label>
@@ -806,22 +805,22 @@ export function Finance() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-2">
                 <div>
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">IRPJ (R$)</label>
-                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-400 focus:text-gray-700 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-300 placeholder:font-normal" placeholder="R$ 0,00" value={nfIrpj} onChange={(e) => setNfIrpj(maskMoney(e.target.value))} />
+                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] shadow-sm hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" placeholder="R$ 0,00" value={nfIrpj} onChange={(e) => setNfIrpj(maskMoney(e.target.value))} />
                 </div>
                 <div>
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">PIS (R$)</label>
-                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-400 focus:text-gray-700 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-300 placeholder:font-normal" placeholder="R$ 0,00" value={nfPis} onChange={(e) => setNfPis(maskMoney(e.target.value))} />
+                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] shadow-sm hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" placeholder="R$ 0,00" value={nfPis} onChange={(e) => setNfPis(maskMoney(e.target.value))} />
                 </div>
                 <div>
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">COFINS (R$)</label>
-                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-400 focus:text-gray-700 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-300 placeholder:font-normal" placeholder="R$ 0,00" value={nfCofins} onChange={(e) => setNfCofins(maskMoney(e.target.value))} />
+                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] shadow-sm hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" placeholder="R$ 0,00" value={nfCofins} onChange={(e) => setNfCofins(maskMoney(e.target.value))} />
                 </div>
                 <div>
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">CSLL (R$)</label>
-                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-400 focus:text-gray-700 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-300 placeholder:font-normal" placeholder="R$ 0,00" value={nfCsll} onChange={(e) => setNfCsll(maskMoney(e.target.value))} />
+                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] shadow-sm hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" placeholder="R$ 0,00" value={nfCsll} onChange={(e) => setNfCsll(maskMoney(e.target.value))} />
                 </div>
               </div>
 
@@ -837,7 +836,7 @@ export function Finance() {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* MODAL: ALTERAR VENCIMENTO */}
       {isDueDateModalOpen && (
