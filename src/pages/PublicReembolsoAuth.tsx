@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { CheckCircle2, XCircle, AlertCircle, Loader2, Download, FileText, Check } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Loader2, Download, FileText, Check, ZoomIn, ZoomOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ReembolsoDetails {
@@ -29,6 +29,7 @@ export default function PublicReembolsoAuth() {
   const [processing, setProcessing] = useState<'approve' | 'reject' | null>(null);
   const [data, setData] = useState<ReembolsoDetails | null>(null);
   const [error, setError] = useState('');
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   // A mesma URL providenciada para centralizar o webhook no Make
   const MAKE_WEBHOOK = "https://hook.us2.make.com/ek933ugsc18euo3uwv9eha6mgk8ngvws";
@@ -217,14 +218,38 @@ export default function PublicReembolsoAuth() {
                      </a>
                    </div>
                    
-                   <div className="w-full flex-1 flex items-center justify-center bg-gray-50/80 p-4">
+                   <div className="w-full h-[600px] md:h-[700px] flex flex-col bg-gray-50/80 relative overflow-hidden">
                      {data.recibo_url.toLowerCase().match(/\.(jpeg|jpg|png|gif|webp)(?:\?.*)?$/i) ? (
-                       <img
-                         src={data.recibo_url}
-                         alt="Recibo"
-                         className="max-h-[700px] w-auto max-w-full rounded-xl shadow-sm border border-gray-200/60 object-contain mx-auto"
-                         loading="lazy"
-                       />
+                       <>
+                         {/* Controles de Zoom Overlay */}
+                         <div className="absolute right-4 bottom-4 z-10 flex gap-1.5 bg-white/95 backdrop-blur-md p-1.5 rounded-2xl shadow-xl border border-gray-200/50">
+                           <button onClick={() => setZoomLevel(prev => Math.max(prev - 0.25, 0.5))} className="p-2.5 hover:bg-gray-100 rounded-xl text-gray-700 transition-all hover:scale-105 active:scale-95" title="Diminuir Zoom">
+                             <ZoomOut className="w-5 h-5" />
+                           </button>
+                           <button onClick={() => setZoomLevel(1)} className="p-2.5 hover:bg-gray-100 rounded-xl text-gray-700 transition-all hover:scale-105 active:scale-95 flex items-center justify-center font-bold text-xs w-11" title="Restaurar Original">
+                             {Math.round(zoomLevel * 100)}%
+                           </button>
+                           <button onClick={() => setZoomLevel(prev => Math.min(prev + 0.5, 4))} className="p-2.5 hover:bg-gray-100 rounded-xl text-gray-700 transition-all hover:scale-105 active:scale-95" title="Aumentar Zoom">
+                             <ZoomIn className="w-5 h-5" />
+                           </button>
+                         </div>
+                         
+                         {/* Scrollable Container da Imagem */}
+                         <div className={`flex-1 overflow-auto p-4 flex ${zoomLevel > 1 ? 'items-start justify-start' : 'items-center justify-center'}`}>
+                           <img
+                             src={data.recibo_url}
+                             alt="Recibo"
+                             style={{ 
+                               width: zoomLevel === 1 ? 'auto' : `${zoomLevel * 100}%`,
+                               maxWidth: zoomLevel === 1 ? '100%' : 'none',
+                               maxHeight: zoomLevel === 1 ? '668px' : 'none',
+                               transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                             }}
+                             className="rounded-xl shadow-sm border border-gray-200/60 object-contain mx-auto"
+                             loading="lazy"
+                           />
+                         </div>
+                       </>
                      ) : data.recibo_url.toLowerCase().match(/\.pdf(?:\?.*)?$/i) ? (
                        <iframe
                          src={`${data.recibo_url}#toolbar=0`}
