@@ -83,9 +83,9 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
       const allNamesMap = new Map<string, Collaborator>();
 
       const getColabs = async () => {
-        let { data, error } = await supabase.from('collaborators').select('id, name, leader_id, email').in('status', ['active', 'Ativo']);
+        let { data, error } = await supabase.from('collaborators').select('id, name, leader_id, leader_ids, email').in('status', ['active', 'Ativo']);
         if (error || !data || data.length === 0) {
-          const res = await supabase.from('collaborators').select('id, name, leader_id, email');
+          const res = await supabase.from('collaborators').select('id, name, leader_id, leader_ids, email');
           data = res.data;
         }
         return data || [];
@@ -113,11 +113,15 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         if (c.leader_id) {
           tlSet.add(String(c.leader_id));
         }
+        if (c.leader_ids && Array.isArray(c.leader_ids)) {
+          c.leader_ids.forEach((id: string) => tlSet.add(String(id)));
+        }
       });
 
       colabsList.forEach((c: any) => {
         if (c?.name && !allNamesMap.has(c.name.trim().toLowerCase())) {
-          allNamesMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim(), leader_id: c.leader_id, email: c.email });
+          const primaryLeader = c.leader_id || (c.leader_ids && c.leader_ids.length > 0 ? c.leader_ids[0] : null);
+          allNamesMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim(), leader_id: primaryLeader, email: c.email });
         }
       });
       partsList.forEach((p: any) => {
