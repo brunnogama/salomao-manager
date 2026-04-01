@@ -161,15 +161,12 @@ export function Contracts() {
   };
 
   const fetchNotifications = async () => {
-    // Tabela temporariamente não inicializada no banco, evitando erro 404:
-    /*
     const { data } = await supabase
       .from('kanban_tasks')
       .select('id, title, due_date')
       .eq('status', 'signature')
       .order('due_date', { ascending: true });
     if (data) setNotifications(data);
-    */
   };
 
   const handleNotificationClick = (taskId: string) => {

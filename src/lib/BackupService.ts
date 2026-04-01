@@ -33,6 +33,7 @@ const BACKUP_TABLES = [
     'ged_colaboradores',
     'ged_documentos',
     'hiring_reasons',
+    'kanban_tasks',
     'locations',
     'logs',
     'magistrados',
