@@ -117,18 +117,25 @@ export function GED() {
     setLoading(false);
   };
 
-  const handleDownload = async (path: string) => {
-    let { data } = await supabase.storage.from('ged-documentos').createSignedUrl(path, 60);
+  const handleDownload = async (path: string, fileName?: string) => {
+    let { data, error } = await supabase.storage.from('ged-documentos').download(path);
 
-    if (!data?.signedUrl) {
-      const res = await supabase.storage.from('ged').createSignedUrl(path, 60);
+    if (error || !data) {
+      const res = await supabase.storage.from('ged').download(path);
       data = res.data;
     }
 
-    if (data?.signedUrl) {
-      window.open(data.signedUrl, '_blank');
+    if (data) {
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName || path.split('/').pop() || 'documento.pdf';
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } else {
-      alert('Erro ao gerar link de download. Arquivo não encontrado no Storage.');
+      alert('Erro ao baixar documento. Arquivo não encontrado no Storage.');
     }
   };
 
@@ -295,7 +302,7 @@ export function GED() {
 
                     <div className="absolute inset-0 bg-[#0a192f]/90 rounded-2xl opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-[2px]">
                       <button
-                        onClick={() => handleDownload(doc.file_path)}
+                        onClick={() => handleDownload(doc.file_path, doc.file_name)}
                         className="bg-white text-[#0a192f] px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all flex items-center active:scale-95"
                       >
                         <Download className="w-4 h-4 mr-2" /> Baixar PDF

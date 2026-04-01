@@ -121,11 +121,18 @@ export function ContractDetailsModal({
   const handleDownload = async (e: React.MouseEvent, doc: ContractDocument) => {
     e.stopPropagation();
     try {
-      const { data, error } = await supabase.storage.from('ged-documentos').createSignedUrl(doc.file_path, 60);
+      const { data, error } = await supabase.storage.from('ged-documentos').download(doc.file_path);
       if (error) throw error;
       
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, '_blank');
+      if (data) {
+        const url = URL.createObjectURL(data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = doc.file_name || 'documento.pdf';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
       } else {
         alert('Erro ao gerar link de download.');
       }

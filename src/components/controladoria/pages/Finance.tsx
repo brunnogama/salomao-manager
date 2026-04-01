@@ -302,14 +302,21 @@ export function Finance() {
 
       const { data: fileData, error: downloadError } = await supabase.storage
         .from('ged-documentos')
-        .createSignedUrl(doc.file_path, 60);
+        .download(doc.file_path);
 
       if (downloadError) throw downloadError;
 
-      if (fileData?.signedUrl) {
-        window.open(fileData.signedUrl, '_blank');
+      if (fileData) {
+        const url = URL.createObjectURL(fileData);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = doc.file_name || 'documento.pdf';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
       } else {
-        throw new Error('Erro ao gerar link de download.');
+        throw new Error('Erro ao gerar arquivo.');
       }
 
       toast.dismiss(loadingToast);
