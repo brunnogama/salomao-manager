@@ -22,6 +22,7 @@ interface Reembolso {
   comprovante_pagamento_url: string | null;
   created_at: string;
   collaborators: { name: string };
+  authorizer?: { name: string };
   colaborador_id?: string;
   autorizador_id?: string;
   cliente_nome?: string;
@@ -32,6 +33,7 @@ export function ReembolsosTab() {
   const [reembolsos, setReembolsos] = useState<Reembolso[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'pagar' | 'aguardando' | 'rejeitados'>('pagar');
   
   // Modal State
   const [selectedReembolso, setSelectedReembolso] = useState<Reembolso | null>(null);
@@ -214,7 +216,8 @@ export function ReembolsosTab() {
         .from('reembolsos')
         .select(`
           *,
-          collaborators:colaborador_id (name, email)
+          collaborators:colaborador_id (name, email),
+          authorizer:autorizador_id (name)
         `)
         .order('created_at', { ascending: false });
 
@@ -341,9 +344,7 @@ export function ReembolsosTab() {
       type: 'multi',
       options: [
         { label: 'Pendente', value: 'pendente' },
-        { label: 'Pago', value: 'pago' },
-        { label: 'Aguardando Liderança', value: 'pendente_autorizacao' },
-        { label: 'Rejeitado', value: 'rejeitado' }
+        { label: 'Pago', value: 'pago' }
       ],
       value: filterStatus,
       onChange: setFilterStatus,
@@ -402,10 +403,13 @@ export function ReembolsosTab() {
 
     if (!matchSearch) return false;
 
-    // Se nenum filtro de status estiver ativo, ocultamos os que não interessam pro financeiro
-    if (filterStatus.length === 0) {
-      if (r.status === 'pendente_autorizacao' || r.status === 'rejeitado') return false;
-    } else {
+    // 1. Filtro macro pelas Abas (Tabs)
+    if (activeTab === 'pagar' && (r.status === 'pendente_autorizacao' || r.status === 'rejeitado')) return false;
+    if (activeTab === 'aguardando' && r.status !== 'pendente_autorizacao') return false;
+    if (activeTab === 'rejeitados' && r.status !== 'rejeitado') return false;
+
+    // 2. Filtro Sub-Status (ex: apenas Pagos dentro da aba Pagar)
+    if (filterStatus.length > 0) {
       if (r.status && !filterStatus.includes(r.status)) return false;
     }
     if (filterSolicitante.length && (!r.collaborators?.name || !filterSolicitante.includes(r.collaborators.name))) return false;
@@ -419,7 +423,8 @@ export function ReembolsosTab() {
     return true;
   });
 
-  const pendentesCount = filtered.filter(r => r.status === 'pendente').length;
+  const pendentesCount = reembolsos.filter(r => r.status === 'pendente').length;
+  const aguardandoLiderCount = reembolsos.filter(r => r.status === 'pendente_autorizacao').length;
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative sm:px-6 sm:py-6 sm:mx-0 -mx-4 px-4 py-4 min-h-screen">
@@ -474,17 +479,67 @@ export function ReembolsosTab() {
         </div>
       </div>
 
+      {/* TABS NAVEGAÇÃO MICRO-STATUS */}
+      <div className="flex border-b border-gray-200 mt-1 mb-2 px-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+         <div className="flex gap-6 w-max">
+           <button
+             onClick={() => setActiveTab('pagar')}
+             className={`py-3 px-1 border-b-2 font-bold text-sm whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === 'pagar' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+           >
+             <Clock className="w-4 h-4" />
+             Fila de Pagamentos
+             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'pagar' ? 'bg-[#1e3a8a] text-white' : 'bg-gray-100 text-gray-500'}`}>
+               {reembolsos.filter(r => r.status === 'pendente' || r.status === 'pago').length}
+             </span>
+           </button>
+
+           <button
+             onClick={() => setActiveTab('aguardando')}
+             className={`py-3 px-1 border-b-2 font-bold text-sm whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === 'aguardando' ? 'border-amber-600 text-amber-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+           >
+             <User className="w-4 h-4" />
+             Aguardando Liderança
+             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'aguardando' ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+               {aguardandoLiderCount}
+             </span>
+           </button>
+
+           <button
+             onClick={() => setActiveTab('rejeitados')}
+             className={`py-3 px-1 border-b-2 font-bold text-sm whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === 'rejeitados' ? 'border-red-600 text-red-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+           >
+             <XCircle className="w-4 h-4" />
+             Rejeitados
+             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'rejeitados' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+               {reembolsos.filter(r => r.status === 'rejeitado').length}
+             </span>
+           </button>
+         </div>
+      </div>
+
       <div className="w-full space-y-4 sm:space-y-6 flex-1 animate-in fade-in zoom-in-[0.98] duration-300">
         <div className="flex flex-col lg:flex-row items-stretch gap-4">
-          {/* KPI Card */}
-          <div className="shrink-0 bg-white border border-gray-100 rounded-xl shadow-sm p-4 sm:p-5 flex items-center justify-center lg:justify-start gap-3">
-             <div className="p-3 bg-amber-50 rounded-lg">
-               <Clock className="w-6 h-6 text-amber-600" />
-             </div>
-             <div>
-               <div className="text-2xl font-black text-amber-900 leading-none">{pendentesCount}</div>
-               <div className="text-[10px] font-bold text-amber-700/70 uppercase tracking-widest mt-1">Não Pagos</div>
-             </div>
+          {/* KPI Cards */}
+          <div className="shrink-0 flex gap-4">
+            <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-4 sm:p-5 flex items-center justify-center lg:justify-start gap-3 min-w-[140px]">
+               <div className="p-3 bg-amber-50 rounded-lg">
+                 <Clock className="w-6 h-6 text-amber-600" />
+               </div>
+               <div>
+                 <div className="text-2xl font-black text-amber-900 leading-none">{pendentesCount}</div>
+                 <div className="text-[10px] font-bold text-amber-700/70 uppercase tracking-widest mt-1">Não Pagos</div>
+               </div>
+            </div>
+
+            <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-4 sm:p-5 flex items-center justify-center lg:justify-start gap-3 min-w-[160px]">
+               <div className="p-3 bg-blue-50 rounded-lg">
+                 <User className="w-6 h-6 text-blue-600" />
+               </div>
+               <div>
+                 <div className="text-2xl font-black text-blue-900 leading-none">{aguardandoLiderCount}</div>
+                 <div className="text-[10px] font-bold text-blue-700/70 uppercase tracking-widest mt-1">Ag. Líder</div>
+               </div>
+            </div>
           </div>
 
           {/* Filter Bar */}
@@ -673,6 +728,44 @@ export function ReembolsosTab() {
 
               <div className="p-5 md:p-6 flex-1 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 
+                {(!isEditing && selectedReembolso.status === 'pendente_autorizacao') && (
+                  <div className="bg-blue-50/50 border border-blue-200 p-5 rounded-2xl flex flex-col gap-3 shadow-sm">
+                     <div className="flex items-center gap-2 text-blue-800 font-bold mb-1">
+                        <User className="w-5 h-5"/>
+                        Aprovação Pendente da Liderança
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div>
+                           <span className="block text-[10px] font-bold text-blue-400 uppercase tracking-widest">Enviado por</span>
+                           <span className="font-semibold text-[#112240] text-sm">{selectedReembolso.collaborators?.name || 'Desconhecido'}</span>
+                        </div>
+                        <div>
+                           <span className="block text-[10px] font-bold text-blue-400 uppercase tracking-widest">Aguardando Aval de</span>
+                           <span className="font-black text-[#1e3a8a] text-sm">{selectedReembolso.authorizer?.name || 'Líder Desconhecido'}</span>
+                        </div>
+                        <div className="col-span-2">
+                           <span className="block text-[10px] font-bold text-blue-400 uppercase tracking-widest">Data do Envio</span>
+                           <span className="font-semibold text-gray-600 text-sm">{format(new Date(selectedReembolso.created_at), "dd/MM/yyyy 'às' HH:mm")}</span>
+                        </div>
+                     </div>
+                     <p className="text-xs text-blue-600/80 mt-2 italic bg-blue-100/50 p-2 inset-0 rounded-lg">* O pagamento só poderá ser processado pelo Financeiro após a aprovação do líder via sistema/link mágico.</p>
+                  </div>
+                )}
+
+                {(!isEditing && selectedReembolso.status === 'rejeitado') && (
+                  <div className="bg-red-50 border border-red-200 p-5 rounded-2xl flex flex-col gap-2 shadow-sm">
+                     <div className="flex items-center gap-2 text-red-700 font-bold mb-1">
+                        <XCircle className="w-5 h-5"/>
+                        Reembolso Recusado
+                     </div>
+                     <p className="text-sm text-red-900/80 font-medium">Esta solicitação de despesa não foi autorizada pelo gestor. A política de reembolso não se aplica ou a nota é inválida.</p>
+                     <div className="flex items-center gap-2 mt-2 pt-3 border-t border-red-200/50">
+                        <span className="block text-[10px] font-bold text-red-500 uppercase tracking-widest">Avaliado por</span>
+                        <span className="font-black text-red-900 text-xs">{selectedReembolso.authorizer?.name || 'Líder'}</span>
+                     </div>
+                  </div>
+                )}
+
                 <div className="md:hidden">
                    <a 
                     href={selectedReembolso.recibo_url} 
@@ -956,7 +1049,7 @@ export function ReembolsosTab() {
                     </button>
                  </div>
               ) : (
-                selectedReembolso.status !== 'pago' && (
+                (selectedReembolso.status === 'pendente') && (
                   <div className="p-5 border-t border-gray-100 bg-gray-50 shrink-0 flex gap-2">
                     <button
                       onClick={handlePayment}
