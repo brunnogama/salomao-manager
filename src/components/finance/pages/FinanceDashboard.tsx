@@ -12,18 +12,24 @@ import {
   TrendingDown,
   Plane,
   GraduationCap,
-  DollarSign,
-  Wallet,
   Clock,
   CheckCircle2,
   AlertCircle,
-  Receipt,
   Building2,
   ArrowUpCircle,
   ArrowDownCircle,
-  Hash,
   FileDown
 } from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 export function FinanceDashboard() {
   const [loading, setLoading] = useState(true);
@@ -142,19 +148,50 @@ export function FinanceDashboard() {
   }, [installments]);
 
   // 2. Contas a Pagar (Reembolsos)
-  const { kpiPagar } = useMemo(() => {
+  const { kpiPagar, chartReembolsos } = useMemo(() => {
     const pendentes = reembolsos.filter((r) => r.status === 'pendente');
+    const aguardando = reembolsos.filter((r) => r.status === 'pendente_autorizacao');
     const pagos = reembolsos.filter((r) => r.status === 'pago');
+    const rejeitados = reembolsos.filter((r) => r.status === 'rejeitado');
 
-    const totalPendente = pendentes.reduce((acc, c) => acc + (c.valor || 0), 0);
-    const totalPago = pagos.reduce((acc, c) => acc + (c.valor || 0), 0);
+    const chartDataMap: Record<string, { monthDate: string, monthLabel: string, Solicitado: number, Reembolsado: number }> = {};
+    
+    reembolsos.forEach(r => {
+      const dateStr = r.data_despesa || r.created_at;
+      if (!dateStr) return;
+      const d = new Date(dateStr);
+      const monthPrefix = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const shortM = d.toLocaleString('pt-BR', { month: 'short' }).toUpperCase();
+      const monthLabel = `${shortM}/${String(d.getFullYear()).slice(2)}`;
+      
+      if (!chartDataMap[monthPrefix]) {
+        chartDataMap[monthPrefix] = { monthDate: monthPrefix, monthLabel, Solicitado: 0, Reembolsado: 0 };
+      }
+      
+      const v = Number(r.valor) || 0;
+      if (r.status !== 'rejeitado') {
+        chartDataMap[monthPrefix].Solicitado += v;
+      }
+      if (r.status === 'pago') {
+        chartDataMap[monthPrefix].Reembolsado += v;
+      }
+    });
+
+    const chartArr = Object.values(chartDataMap).sort((a, b) => a.monthDate.localeCompare(b.monthDate));
+    const finalChart = chartArr.slice(-6);
 
     return {
       kpiPagar: {
         pendenteQty: pendentes.length,
-        pendenteAmt: totalPendente,
-        pagoAmt: totalPago
-      }
+        pendenteAmt: pendentes.reduce((acc, c) => acc + (c.valor || 0), 0),
+        aguardandoQty: aguardando.length,
+        aguardandoAmt: aguardando.reduce((acc, c) => acc + (c.valor || 0), 0),
+        pagoQty: pagos.length,
+        pagoAmt: pagos.reduce((acc, c) => acc + (c.valor || 0), 0),
+        rejeitadoQty: rejeitados.length,
+        rejeitadoAmt: rejeitados.reduce((acc, c) => acc + (c.valor || 0), 0),
+      },
+      chartReembolsos: finalChart
     };
   }, [reembolsos]);
 
@@ -460,49 +497,6 @@ export function FinanceDashboard() {
               </div>
             </div>
           </div>
-
-          {/* Contas a Pagar */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-red-50/30 to-transparent flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <ArrowUpCircle className="h-6 w-6 text-red-500" />
-                <h3 className="font-black text-[#0a192f] text-lg">Contas a Pagar</h3>
-              </div>
-              <span className="text-[10px] uppercase font-bold text-gray-400">Reembolsos & Custos</span>
-            </div>
-            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl border border-red-100 bg-red-50/50 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-1 h-full bg-red-500" />
-                <div className="text-[10px] font-black text-red-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-500" /> Pendentes
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-red-900">{formatCurrency(kpiPagar.pendenteAmt)}</span>
-                </div>
-                <div className="mt-1 text-xs font-semibold text-red-700">
-                  {kpiPagar.pendenteQty} solicitações travadas
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-1 h-full bg-blue-500" />
-                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <Wallet className="w-3.5 h-3.5 text-blue-500" /> Pagos
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-[#0a192f]">{formatCurrency(kpiPagar.pagoAmt)}</span>
-                </div>
-                <div className="mt-1 text-xs font-semibold text-gray-500">
-                  Total de saídas realizadas
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* BLOCO 2: OAB E AERONAVE */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full mt-6">
-          
           {/* Gestão Aeronave */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-emerald-50/50 to-transparent flex items-center justify-between">
@@ -544,7 +538,131 @@ export function FinanceDashboard() {
               </div>
             </div>
           </div>
+        </div>
 
+        {/* BLOCO 2: CONTAS A PAGAR / REEMBOLSOS (Largura Total) */}
+        <div className="w-full mt-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row">
+            
+            {/* Lado Esquerdo: Cards (KPIs) - 40% */}
+            <div className="w-full md:w-5/12 border-b md:border-b-0 md:border-r border-gray-100 p-6 flex flex-col">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 rounded-lg bg-red-50">
+                  <ArrowUpCircle className="h-6 w-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="font-black text-[#0a192f] text-lg leading-tight">Reembolsos</h3>
+                  <p className="text-[10px] uppercase font-bold text-gray-400">Despesas & Custos Ativos</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 flex-1">
+                {/* Pendentes */}
+                <div className="p-4 rounded-xl border border-red-100 bg-red-50/50 relative overflow-hidden flex flex-col items-center justify-center text-center group">
+                  <div className="absolute top-0 right-0 w-1 h-full bg-red-500" />
+                  <span className="text-3xl font-black text-red-900 leading-none group-hover:scale-105 transition-transform">{kpiPagar.pendenteQty}</span>
+                  <span className="text-[10px] font-black uppercase text-red-600 tracking-widest mt-1.5 flex items-center gap-1">
+                    Pendentes
+                  </span>
+                </div>
+
+                {/* Ag. Autorizacao */}
+                <div className="p-4 rounded-xl border border-blue-100 bg-blue-50/50 relative overflow-hidden flex flex-col items-center justify-center text-center group">
+                  <div className="absolute top-0 right-0 w-1 h-full bg-blue-500" />
+                  <span className="text-3xl font-black text-[#0a192f] leading-none group-hover:scale-105 transition-transform">{kpiPagar.aguardandoQty}</span>
+                  <span className="text-[10px] font-black uppercase text-blue-600 tracking-widest mt-1.5 flex items-center gap-1">
+                    Ag. Autorização
+                  </span>
+                </div>
+
+                {/* Reembolsados */}
+                <div className="p-4 rounded-xl border border-emerald-100 bg-emerald-50/50 relative overflow-hidden flex flex-col items-center justify-center text-center group">
+                  <div className="absolute top-0 right-0 w-1 h-full bg-emerald-500" />
+                  <span className="text-3xl font-black text-emerald-900 leading-none group-hover:scale-105 transition-transform">{kpiPagar.pagoQty}</span>
+                  <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest mt-1.5 flex items-center gap-1">
+                    Reembolsados
+                  </span>
+                </div>
+
+                {/* Rejeitados */}
+                <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 relative overflow-hidden flex flex-col items-center justify-center text-center group">
+                  <div className="absolute top-0 right-0 w-1 h-full bg-gray-400" />
+                  <span className="text-3xl font-black text-gray-700 leading-none group-hover:scale-105 transition-transform">{kpiPagar.rejeitadoQty}</span>
+                  <span className="text-[10px] font-black uppercase text-gray-500 tracking-widest mt-1.5 flex items-center gap-1">
+                    Rejeitados
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Lado Direito: Gráfico (60%) */}
+            <div className="w-full md:w-7/12 p-6 flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                  Evolução Mensal (Solicitados x Pagos)
+                </span>
+              </div>
+              
+              <div className="flex-1 min-h-[240px] w-full">
+                {chartReembolsos.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartReembolsos} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                      <XAxis 
+                        dataKey="monthLabel" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fontSize: 10, fill: '#6b7280', fontWeight: 'bold' }} 
+                        dy={10}
+                      />
+                      <YAxis 
+                        hide={true} 
+                        domain={['auto', 'auto']}
+                      />
+                      <Tooltip 
+                        cursor={{ stroke: '#f3f4f6', strokeWidth: 32 }}
+                        contentStyle={{ borderRadius: '12px', border: '1px solid #f3f4f6', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', padding: '12px' }}
+                        formatter={(value: number) => [formatCurrency(value), '']}
+                        labelStyle={{ fontWeight: 'black', color: '#112240', marginBottom: '8px' }}
+                      />
+                      <Legend 
+                        iconType="circle" 
+                        wrapperStyle={{ fontSize: '11px', fontWeight: 'bold', paddingTop: '10px' }} 
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="Solicitado" 
+                        name="Solicitado" 
+                        stroke="#ef4444" 
+                        strokeWidth={4} 
+                        dot={{ r: 4, strokeWidth: 2, fill: '#ffffff' }} 
+                        activeDot={{ r: 7, strokeWidth: 0 }} 
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="Reembolsado" 
+                        name="Reembolsado" 
+                        stroke="#10b981" 
+                        strokeWidth={4} 
+                        dot={{ r: 4, strokeWidth: 2, fill: '#ffffff' }} 
+                        activeDot={{ r: 7, strokeWidth: 0 }} 
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    Dados insuficientes para o gráfico
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* BLOCO 3: OAB */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full mt-6">
+          
           {/* OAB */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
