@@ -458,7 +458,7 @@ export function ReembolsosTab() {
                onClick={() => setActiveTab('pagar')}
                className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'pagar' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
              >
-               <Clock className="w-3.5 h-3.5" /> Pagar
+               <Clock className="w-3.5 h-3.5" /> Pendentes
                <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${activeTab === 'pagar' ? 'bg-[#1e3a8a] text-white' : 'bg-gray-200 text-gray-500'}`}>
                  {pendentesCount}
                </span>
@@ -543,7 +543,7 @@ export function ReembolsosTab() {
                </div>
                <div>
                  <div className="text-2xl font-black text-amber-900 leading-none">{pendentesCount}</div>
-                 <div className="text-[10px] font-bold text-amber-700/70 uppercase tracking-widest mt-1">Não Pagos</div>
+                 <div className="text-[10px] font-bold text-amber-700/70 uppercase tracking-widest mt-1">Pendentes</div>
                </div>
             </div>
 
@@ -553,7 +553,7 @@ export function ReembolsosTab() {
                </div>
                <div>
                  <div className="text-2xl font-black text-blue-900 leading-none">{aguardandoLiderCount}</div>
-                 <div className="text-[10px] font-bold text-blue-700/70 uppercase tracking-widest mt-1">Ag. Líder</div>
+                 <div className="text-[10px] font-bold text-blue-700/70 uppercase tracking-widest mt-1">Ag. Aut.</div>
                </div>
             </div>
           </div>
