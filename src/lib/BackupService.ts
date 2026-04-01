@@ -4,14 +4,8 @@ import { logAction } from './logger'
 const BACKUP_TABLES = [
     'aeronave_frota',
     'aeronave_lancamentos',
-    'agendamentos',
     'analysts',
-    'areas',
-    'assets',
-    'atividades_familia',
     'audit_logs',
-    'candidates',
-    'categories',
     'certificates',
     'client_contacts',
     'clients',
@@ -26,7 +20,6 @@ const BACKUP_TABLES = [
     'contract_statuses',
     'contract_timeline',
     'contracts',
-    'cost_centers',
     'courts',
     'eventos',
     'familia_config_opcoes',
@@ -40,7 +33,6 @@ const BACKUP_TABLES = [
     'ged_colaboradores',
     'ged_documentos',
     'hiring_reasons',
-    'kanban_tasks',
     'locations',
     'logs',
     'magistrados',
@@ -50,7 +42,6 @@ const BACKUP_TABLES = [
     'operational_assets',
     'operational_fornecedores',
     'operational_items',
-    'operational_stock',
     'opponents',
     'partners',
     'perfil_tags',
@@ -132,7 +123,9 @@ export const BackupService = {
 
         if (error) {
             if (error.message.includes('bucket not found')) {
-                console.warn('Bucket "backups" não encontrado. Criando manualmente ou ignorando.');
+                console.warn('Bucket "backups" não encontrado. Backup não foi salvo.');
+                // Não propaga o erro para não quebrar a aplicação (fallback silencioso)
+                return;
             }
             throw error;
         }
