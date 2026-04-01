@@ -401,17 +401,23 @@ export function ReembolsosTab() {
   const filtered = reembolsos.filter(r => {
     const text = searchTerm.toLowerCase();
     const matchSearch = searchTerm === '' || 
-      r.collaborators?.name?.toLowerCase().includes(text) || 
-      r.fornecedor_nome?.toLowerCase().includes(text) ||
-      r.descricao?.toLowerCase().includes(text);
+      (r.collaborators?.name || '').toLowerCase().includes(text) || 
+      (r.fornecedor_nome || '').toLowerCase().includes(text) ||
+      (r.descricao || '').toLowerCase().includes(text) ||
+      (r.numero_recibo || '').toLowerCase().includes(text) ||
+      (r.cliente_nome || '').toLowerCase().includes(text) ||
+      (r.observacao || '').toLowerCase().includes(text) ||
+      (r.valor ? r.valor.toString() : '').includes(text);
 
     if (!matchSearch) return false;
 
-    // 1. Filtro macro pelas Abas (Tabs)
-    if (activeTab === 'pagar' && r.status !== 'pendente') return false;
-    if (activeTab === 'aguardando' && r.status !== 'pendente_autorizacao') return false;
-    if (activeTab === 'reembolsados' && r.status !== 'pago') return false;
-    if (activeTab === 'rejeitados' && r.status !== 'rejeitado') return false;
+    // 1. Filtro macro pelas Abas (Tabs) - Ignorado se estiver fazendo uma busca global por texto
+    if (searchTerm === '') {
+      if (activeTab === 'pagar' && r.status !== 'pendente') return false;
+      if (activeTab === 'aguardando' && r.status !== 'pendente_autorizacao') return false;
+      if (activeTab === 'reembolsados' && r.status !== 'pago') return false;
+      if (activeTab === 'rejeitados' && r.status !== 'rejeitado') return false;
+    }
 
     // 2. Filtro Sub-Status (ex: apenas Pagos dentro da aba Pagar)
     if (filterStatus.length > 0) {
