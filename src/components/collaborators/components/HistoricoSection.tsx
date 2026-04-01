@@ -42,6 +42,9 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
     const [warningReason, setWarningReason] = useState('')
     const [warningDesc, setWarningDesc] = useState('')
 
+    // --- CYCLES STATE ---
+    const [pendingDeleteEventId, setPendingDeleteEventId] = useState<string | null>(null)
+
 
     // --- OBSERVAÇÕES STATE ---
     const [obsText, setObsText] = useState(formData.history_observations || '')
@@ -239,6 +242,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Cargos */}
                 <button
+                    type="button"
                     onClick={() => setActiveSection(activeSection === 'roles' ? 'none' : 'roles')}
                     className={`
                         relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
@@ -260,6 +264,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
                 {/* Advertências */}
                 <button
+                    type="button"
                     onClick={() => setActiveSection(activeSection === 'warnings' ? 'none' : 'warnings')}
                     className={`
                         relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
@@ -281,6 +286,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
                 {/* Recrutamento */}
                 <button
+                    type="button"
                     onClick={() => setActiveSection(activeSection === 'recruiting' ? 'none' : 'recruiting')}
                     className={`
                         relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
@@ -302,6 +308,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
                 {/* Observações */}
                 <button
+                    type="button"
                     onClick={() => setActiveSection(activeSection === 'observations' ? 'none' : 'observations')}
                     className={`
                         relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
@@ -360,19 +367,25 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                 return 0;
                             };
 
+                            const nowTs = new Date().getTime();
+                            const daysBetween = (start: number, end: number) => Math.max(0, Math.floor((end - start) / (1000 * 60 * 60 * 24)));
+
                             const events = [];
 
                             // 1. Current contract (Or current Readmission)
+                            const currentHireTs = parseDateBR(formData.hire_date || '');
                             if (formData.hire_date) {
                                 const isReadmission = formData.employment_cycles && formData.employment_cycles.length > 0;
+                                const isActive = formData.status === 'active';
                                 events.push({
                                     id: 'current_hire',
                                     type: isReadmission ? 'readmission' : 'hire',
                                     date: formData.hire_date,
-                                    timestamp: parseDateBR(formData.hire_date),
+                                    timestamp: currentHireTs,
                                     text: isReadmission 
                                         ? `${nameFirst} foi readmitido na empresa em ` 
                                         : `${nameFirst} entrou na empresa em `,
+                                    subtitle: isActive ? `Há ${formatDurationExtensive(daysBetween(currentHireTs, nowTs))}` : 'Ciclo Registrado',
                                     icon: isReadmission ? <RefreshCcw className="w-4 h-4" /> : <Calendar className="w-4 h-4" />,
                                     iconBg: isReadmission ? 'bg-emerald-100' : 'bg-blue-100',
                                     iconColor: isReadmission ? 'text-emerald-600' : 'text-blue-600',
@@ -381,12 +394,15 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                             }
 
                             if (formData.status === 'inactive' && formData.termination_date) {
+                                const termTs = parseDateBR(formData.termination_date);
+                                const cycleDays = currentHireTs && termTs ? daysBetween(currentHireTs, termTs) : 0;
                                 events.push({
                                     id: 'current_termination',
                                     type: 'termination',
                                     date: formData.termination_date,
-                                    timestamp: parseDateBR(formData.termination_date),
+                                    timestamp: termTs,
                                     text: `${nameFirst} foi desligado em `,
+                                    subtitle: cycleDays > 0 ? `Trabalhou por ${formatDurationExtensive(cycleDays)}` : 'Desligamento',
                                     icon: <UserX className="w-4 h-4" />,
                                     iconBg: 'bg-red-100',
                                     iconColor: 'text-red-600',
@@ -398,14 +414,18 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                             if (formData.employment_cycles && Array.isArray(formData.employment_cycles)) {
                                 formData.employment_cycles.forEach((cycle, idx) => {
                                     const isFirstHire = idx === formData.employment_cycles!.length - 1;
+                                    const cycleHireTs = parseDateBR(cycle.hire_date || '');
+                                    const cycleTermTs = parseDateBR(cycle.termination_date || '');
+                                    const cycleDays = cycleHireTs && cycleTermTs ? daysBetween(cycleHireTs, cycleTermTs) : 0;
                                     
                                     if (cycle.termination_date) {
                                         events.push({
                                             id: `cycle_term_${idx}`,
                                             type: 'termination',
                                             date: cycle.termination_date,
-                                            timestamp: parseDateBR(cycle.termination_date),
+                                            timestamp: cycleTermTs,
                                             text: `${nameFirst} foi desligado em `,
+                                            subtitle: cycleDays > 0 ? `Trabalhou por ${formatDurationExtensive(cycleDays)}` : 'Desligamento',
                                             icon: <UserX className="w-4 h-4" />,
                                             iconBg: 'bg-red-100',
                                             iconColor: 'text-red-600',
@@ -418,10 +438,11 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                             id: `cycle_hire_${idx}`,
                                             type: isFirstHire ? 'hire' : 'readmission',
                                             date: cycle.hire_date,
-                                            timestamp: parseDateBR(cycle.hire_date),
+                                            timestamp: cycleHireTs,
                                             text: isFirstHire 
                                                   ? `${nameFirst} entrou na empresa em `
                                                   : `${nameFirst} foi readmitido na empresa em `,
+                                            subtitle: 'Ciclo Registrado',
                                             icon: isFirstHire ? <Calendar className="w-4 h-4" /> : <RefreshCcw className="w-4 h-4" />,
                                             iconBg: isFirstHire ? 'bg-blue-100' : 'bg-emerald-100',
                                             iconColor: isFirstHire ? 'text-blue-600' : 'text-emerald-600',
@@ -435,9 +456,10 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                             events.sort((a, b) => b.timestamp - a.timestamp);
 
                             return (
-                                <div className="space-y-4 mb-6">
-                                    {events.map((ev) => (
-                                        <div key={ev.id} className={`p-4 rounded-xl border flex items-center gap-3 ${ev.container}`}>
+                                <>
+                                    <div className="space-y-4 mb-6">
+                                        {events.map((ev) => (
+                                            <div key={ev.id} className={`p-4 rounded-xl border flex items-center gap-3 ${ev.container}`}>
                                             <div className={`p-2 rounded-lg shrink-0 ${ev.iconBg} ${ev.iconColor}`}>
                                                 {ev.icon}
                                             </div>
@@ -445,15 +467,72 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                                 <p className="text-sm text-[#0a192f] font-medium leading-tight">
                                                     {ev.text} <span className="font-bold">{ev.date}</span>
                                                 </p>
-                                                {ev.type === 'hire' || ev.type === 'readmission' ? (
+                                                {ev.subtitle ? (
                                                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">
-                                                        Ciclo Registrado
+                                                        {ev.subtitle}
                                                     </p>
                                                 ) : null}
                                             </div>
+                                            {!isViewMode && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPendingDeleteEventId(ev.id);
+                                                    }}
+                                                    className="ml-auto p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Excluir este registro"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
+                                
+                                <AlertModal
+                                    isOpen={!!pendingDeleteEventId}
+                                    onClose={() => setPendingDeleteEventId(null)}
+                                    title="Excluir Registro de Ciclo"
+                                    description="Tem certeza que deseja excluir esta data? O histórico associado a ela não poderá ser recuperado."
+                                    variant="error"
+                                    confirmText="Sim, Excluir"
+                                    onConfirm={() => {
+                                        if (!pendingDeleteEventId) return;
+                                        
+                                        let updated = { ...formData };
+                                        
+                                        if (pendingDeleteEventId === 'current_hire') {
+                                            updated.hire_date = '';
+                                        } else if (pendingDeleteEventId === 'current_termination') {
+                                            updated.termination_date = '';
+                                        } else if (pendingDeleteEventId.startsWith('cycle_term_')) {
+                                            const idx = parseInt(pendingDeleteEventId.split('_')[2]);
+                                            if (updated.employment_cycles && updated.employment_cycles[idx]) {
+                                                const newCycles = [...updated.employment_cycles];
+                                                newCycles[idx] = { ...newCycles[idx], termination_date: null };
+                                                updated.employment_cycles = newCycles;
+                                            }
+                                        } else if (pendingDeleteEventId.startsWith('cycle_hire_')) {
+                                            const idx = parseInt(pendingDeleteEventId.split('_')[2]);
+                                            if (updated.employment_cycles && updated.employment_cycles[idx]) {
+                                                const newCycles = [...updated.employment_cycles];
+                                                newCycles[idx] = { ...newCycles[idx], hire_date: null };
+                                                updated.employment_cycles = newCycles;
+                                            }
+                                        }
+                                        
+                                        // Auto-cleanup completely empty cycles
+                                        if (updated.employment_cycles) {
+                                            updated.employment_cycles = updated.employment_cycles.filter((c: any) => c.hire_date || c.termination_date);
+                                        }
+                                        
+                                        setFormData(updated);
+                                        setPendingDeleteEventId(null);
+                                        toast.success('Registro do ciclo excluído.');
+                                    }}
+                                />
+                                </>
                             );
                         })()}
 
@@ -482,6 +561,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                                     </p>
                                                     {!isViewMode && (
                                                         <button
+                                                            type="button"
                                                             onClick={() => handleDeleteRoleHistoryClick(item.id)}
                                                             className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                                                             title="Excluir histórico"
@@ -552,6 +632,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                             {!isViewMode && (
                                 <div className="flex justify-end pt-4">
                                     <button
+                                        type="button"
                                         onClick={handleSaveWarning}
                                         disabled={loading || !warningReason}
                                         className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-red-700 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -690,6 +771,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                             {!isViewMode && (
                                 <div className="flex justify-end pt-4">
                                     <button
+                                        type="button"
                                         onClick={handleSaveObs}
                                         disabled={loading}
                                         className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-amber-600 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
