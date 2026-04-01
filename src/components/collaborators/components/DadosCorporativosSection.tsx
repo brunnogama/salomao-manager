@@ -31,6 +31,32 @@ export function DadosCorporativosSection({
 
   const [roleName, setRoleName] = useState<string>('')
 
+  const [refMaps, setRefMaps] = useState<{
+    rateios: Record<string, string>,
+    hiring_reasons: Record<string, string>,
+    termination_reasons: Record<string, string>
+  }>({ rateios: {}, hiring_reasons: {}, termination_reasons: {} });
+
+  // Fetch reference names for historical cycles
+  useEffect(() => {
+    async function fetchRefMaps() {
+      if (!formData.employment_cycles || formData.employment_cycles.length === 0) return;
+      
+      const r_res = await supabase.from('rateios').select('id, name');
+      const hr_res = await supabase.from('hiring_reasons').select('id, name');
+      const tr_res = await supabase.from('termination_reasons').select('id, name');
+      
+      const toMap = (arr: any[]) => arr?.reduce((acc, curr) => ({ ...acc, [curr.id]: curr.name }), {}) || {};
+      
+      setRefMaps({
+        rateios: toMap(r_res.data || []),
+        hiring_reasons: toMap(hr_res.data || []),
+        termination_reasons: toMap(tr_res.data || [])
+      });
+    }
+    fetchRefMaps();
+  }, [formData.employment_cycles]);
+
   // Fetch role name when role ID changes
   useEffect(() => {
     async function fetchRoleName() {
@@ -670,15 +696,15 @@ export function DadosCorporativosSection({
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                         <div>
                           <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Rateio Base</span>
-                          <span className="font-medium text-gray-700">{cycle.rateio_id || '-'}</span>
+                          <span className="font-medium text-gray-700">{refMaps.rateios[cycle.rateio_id] || cycle.rateio_id || '-'}</span>
                         </div>
                         <div>
                           <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Motivo Contratação</span>
-                          <span className="font-medium text-gray-700">{cycle.hiring_reason_id || '-'}</span>
+                          <span className="font-medium text-gray-700">{refMaps.hiring_reasons[cycle.hiring_reason_id] || cycle.hiring_reason_id || '-'}</span>
                         </div>
                         <div>
-                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Tipo Desligamento</span>
-                          <span className="font-medium text-gray-700">{cycle.termination_reason_id || '-'}</span>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Motivo Desligamento</span>
+                          <span className="font-medium text-gray-700">{refMaps.termination_reasons[cycle.termination_reason_id] || cycle.termination_reason_id || '-'}</span>
                         </div>
                         <div>
                           <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Detalhes (Desligamento)</span>
