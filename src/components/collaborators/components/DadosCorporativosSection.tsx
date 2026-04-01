@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Briefcase, Calendar, Clock, Crown, GraduationCap, MapPin } from 'lucide-react'
+import { Briefcase, Calendar, Clock, Crown, GraduationCap, MapPin, AlertTriangle } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
@@ -8,6 +8,7 @@ import { SearchableMultiSelect } from '../../crm/SearchableMultiSelect'
 import { differenceInMonths, differenceInYears } from 'date-fns'
 import { TransporteSection } from './TransporteSection'
 import { supabase } from '../../../lib/supabase'
+import { AlertModal } from '../../../components/ui/AlertModal'
 import { getInternScholarshipValue, formatDbMoneyToDisplay } from '../utils/colaboradoresUtils'
 import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA, ATUACOES_TERCEIRIZADA, CARGOS_TERCEIRIZADA } from '../utils/cargosAtuacoesUtils'
 
@@ -25,6 +26,8 @@ export function DadosCorporativosSection({
   isViewMode = false
 }: DadosCorporativosSectionProps) {
   const [activeTab, setActiveTab] = useState<'contratacao' | 'desligamento'>('contratacao')
+  const [originalStatus] = useState(formData.status)
+  const [pendingReactivation, setPendingReactivation] = useState(false)
 
   const [roleName, setRoleName] = useState<string>('')
 
@@ -114,6 +117,28 @@ export function DadosCorporativosSection({
 
   return (
     <section className="space-y-6">
+      <AlertModal
+        isOpen={pendingReactivation}
+        onClose={() => setPendingReactivation(false)}
+        title="Reativar Integrante"
+        description={`Tem certeza que o integrante ${formData.name?.split(' ')[0] || ''} vai ser reativado e retornará ao trabalho?`}
+        variant="warning"
+        confirmText="Sim, Reativar"
+        cancelText="Cancelar"
+        onConfirm={() => {
+          const now = new Date();
+          const dateStr = now.toLocaleDateString('pt-BR');
+          const reactivationMsg = `[${dateStr}] Retorno: O integrante foi reativado e retornou ao trabalho no escritório.\n\n`;
+          setFormData({
+            ...formData,
+            status: 'active',
+            history_observations: reactivationMsg + (formData.history_observations || '')
+          });
+          setPendingReactivation(false);
+          setActiveTab('contratacao');
+        }}
+      />
+
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
         <Briefcase className="h-4 w-4" /> Dados Corporativos
       </h3>
@@ -124,8 +149,12 @@ export function DadosCorporativosSection({
           label="Status"
           value={formData.status || 'active'}
           onChange={(v) => {
-            const newStatus = v as 'active' | 'inactive';
-            setFormData({ ...formData, status: newStatus });
+            const newStatus = v as 'active' | 'inactive' | 'Pré-Cadastro';
+            if (originalStatus === 'inactive' && newStatus === 'active') {
+              setPendingReactivation(true);
+              return;
+            }
+            setFormData({ ...formData, status: newStatus as any });
             if (newStatus === 'inactive') setActiveTab('desligamento');
           }}
           options={[

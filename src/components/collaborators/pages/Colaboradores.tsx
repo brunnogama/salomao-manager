@@ -5,7 +5,7 @@ import {
   Calendar, Building2, Mail, Loader2, UserPlus,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, FileDown, Bus, Clock,
   Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, FilterX, BellRing, Tag as TagIcon, ChevronDown, ChevronRight, TableIcon,
-  ArrowRight, ArrowLeft, Filter, Layers
+  ArrowRight, ArrowLeft, Filter, Layers, AlertTriangle
 } from 'lucide-react'
 
 import { exportColaboradoresXLSX, exportVTXLSX } from '../utils/exportColaboradores'
@@ -1707,11 +1707,26 @@ export function Colaboradores({ }: ColaboradoresProps) {
       </div>
     ) : null;
 
+    const inactiveBanner = data.status === 'inactive' ? (
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-4 mb-4 animate-in slide-in-from-top-2">
+        <div className="bg-blue-100 p-2 rounded-full text-blue-600 shrink-0 mt-0.5 shadow-sm">
+          <AlertTriangle className="w-4 h-4" />
+        </div>
+        <div>
+          <p className="text-blue-800 text-xs font-black uppercase tracking-wider">Integrante Inativo</p>
+          <p className="text-blue-600 text-[10px] sm:text-xs mt-1 font-medium leading-relaxed">
+            Caso ocorra a reativação deste integrante, por favor, verifique se os dados de contato (endereço, telefone) e as informações cadastrais estão devidamente atualizados.
+          </p>
+        </div>
+      </div>
+    ) : null;
+
     // 1. DADOS PESSOAIS
     if (activeTab === 1) {
       return (
         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
           {magicLinkBanner}
+          {inactiveBanner}
           <DadosPessoaisSection
             formData={currentData}
             setFormData={currentSetData}
