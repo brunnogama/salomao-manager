@@ -480,8 +480,7 @@ export function ReembolsosTab() {
       </div>
 
       {/* TABS NAVEGAÇÃO MICRO-STATUS */}
-      <div className="flex border-b border-gray-200 mt-1 mb-2 px-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-         <div className="flex gap-6 w-max">
+      <div className="flex flex-wrap border-b border-gray-200 mt-2 mb-4 gap-2 sm:gap-8 px-2">
            <button
              onClick={() => setActiveTab('pagar')}
              className={`py-3 px-1 border-b-2 font-bold text-sm whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === 'pagar' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
@@ -514,7 +513,6 @@ export function ReembolsosTab() {
                {reembolsos.filter(r => r.status === 'rejeitado').length}
              </span>
            </button>
-         </div>
       </div>
 
       <div className="w-full space-y-4 sm:space-y-6 flex-1 animate-in fade-in zoom-in-[0.98] duration-300">
