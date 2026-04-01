@@ -121,7 +121,10 @@ export default function PublicReembolsoAuth() {
           valor: data.valor > 0 ? data.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "Aguardando Apuração",
           descricao: data.descricao || "Aguardando Leitura",
           fornecedor: data.fornecedor_nome || "Aguardando Leitura",
-          motivo_rejeicao: action === 'reject' ? rejectReason.trim() : ""
+          motivo_rejeicao: action === 'reject' ? rejectReason.trim() : "",
+          html_justificativa: (action === 'reject' && rejectReason.trim()) 
+            ? `<div style="background-color: #fef2f2; border: 1px solid #fee2e2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 6px; margin-top: 20px; text-align: left;"><span style="display: block; font-size: 11px; font-weight: bold; color: #b91c1c; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Motivo apontado pelo líder:</span><span style="color: #7f1d1d; font-size: 14px; font-style: italic;">"${rejectReason.trim()}"</span></div>`
+            : ""
         },
         solicitante: {
           nome: data.solicitante_nome,
