@@ -457,6 +457,10 @@ export interface FinancialInstallment {
   status: 'pending' | 'paid';
   clause?: string;
   nf_number?: string;
+  nf_issue_date?: string | null;
+  nf_location?: string | null;
+  nf_nature?: string | null;
+  nf_value?: number | null;
   contract?: {
     id: string;
     seq_id?: number;

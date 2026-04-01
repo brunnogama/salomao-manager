@@ -13,6 +13,7 @@ import { exportToStandardXLSX } from '../../../utils/exportUtils';
 import { toast } from 'sonner';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
+import { maskMoney, parseCurrency } from '../utils/masks';
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -39,6 +40,13 @@ export function Finance() {
   const [selectedInstallment, setSelectedInstallment] = useState<FinancialInstallment | null>(null);
   const [billingDate, setBillingDate] = useState(new Date().toISOString().split('T')[0]);
   const [nfNumber, setNfNumber] = useState('');
+  
+  const [nfIssueDate, setNfIssueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [nfDueDate, setNfDueDate] = useState('');
+  const [nfLocation, setNfLocation] = useState('');
+  const [nfNature, setNfNature] = useState('');
+  const [nfValue, setNfValue] = useState('');
+  const [officeLocations, setOfficeLocations] = useState<{ id: string; name: string }[]>([]);
 
   const [isDueDateModalOpen, setIsDueDateModalOpen] = useState(false);
   const [installmentToEdit, setInstallmentToEdit] = useState<FinancialInstallment | null>(null);
@@ -67,9 +75,11 @@ export function Finance() {
   const fetchData = async () => {
     setLoading(true);
 
-    // Atualizado para buscar parceiros ativos com base no novo campo 'status'
     const { data: partnersData } = await supabase.from('partners').select('*').eq('status', 'active').order('name');
     if (partnersData) setPartners(partnersData);
+
+    const { data: locData } = await supabase.from('locations').select('id, name').order('name');
+    if (locData) setOfficeLocations(locData);
 
     const { data: installmentsData } = await supabase
       .from('financial_installments')
@@ -245,8 +255,22 @@ export function Finance() {
 
   const handleMarkAsPaid = (installment: FinancialInstallment) => {
     setSelectedInstallment(installment);
-    setBillingDate(todayStr);
+    setNfIssueDate(installment.nf_issue_date ? installment.nf_issue_date.split('T')[0] : todayStr);
+    setNfDueDate(installment.due_date ? installment.due_date.split('T')[0] : todayStr);
+    setBillingDate(installment.paid_at ? installment.paid_at.split('T')[0] : todayStr);
     setNfNumber(installment.nf_number || '');
+    setNfLocation(installment.nf_location || '');
+    setNfNature(installment.nf_nature || '');
+    
+    let formattedNfValue = '';
+    if (installment.nf_value) {
+      formattedNfValue = maskMoney(installment.nf_value.toFixed(2).replace('.', ','));
+    } else if (installment.amount) {
+      // Se não tem valor NF definido, insere o valor da parcela como sugestão
+      formattedNfValue = maskMoney(installment.amount.toFixed(2).replace('.', ','));
+    }
+    setNfValue(formattedNfValue);
+    
     setIsDateModalOpen(true);
   };
 
@@ -258,7 +282,12 @@ export function Finance() {
       .update({ 
         status: 'paid', 
         paid_at: billingDate,
-        nf_number: nfNumber || null
+        due_date: nfDueDate || selectedInstallment.due_date,
+        nf_issue_date: nfIssueDate || null,
+        nf_number: nfNumber || null,
+        nf_location: nfLocation || null,
+        nf_nature: nfNature || null,
+        nf_value: nfValue ? parseCurrency(nfValue) : null
       })
       .eq('id', selectedInstallment.id);
       
@@ -672,35 +701,65 @@ export function Finance() {
       {/* MODAL: DATA DE FATURAMENTO */}
       {isDateModalOpen && (
         <div className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm animate-in zoom-in-95 border border-gray-100">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 border border-gray-100">
             <h3 className="text-lg font-black text-[#0a192f] mb-2 uppercase tracking-tight">Confirmar Faturamento</h3>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Confirma o recebimento desta parcela?</p>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Data do Recebimento</label>
-                <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={billingDate} onChange={(e) => setBillingDate(e.target.value)} />
-              </div>
-              
-              <div>
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Nota Fiscal (Opcional)</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder="Busque por CNPJ ou nome, ou preencha o número 000..." 
-                    className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-300 placeholder:font-normal" 
-                    value={nfNumber} 
-                    onChange={(e) => setNfNumber(e.target.value)} 
-                    list="nf-suggestions"
-                  />
-                  <datalist id="nf-suggestions">
-                    {/* Aqui entrarão as opções de NFs do backend quando a integração estiver pronta */}
-                    <option value="Emitir nova NF pelo portal" />
-                  </datalist>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Emissão</label>
+                  <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={nfIssueDate} onChange={(e) => setNfIssueDate(e.target.value)} />
                 </div>
-                <p className="mt-1.5 text-[8.5px] font-bold text-gray-400 uppercase tracking-wide">
-                  Dica: Você pode digitar livremente caso não encontre na busca.
-                </p>
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Vencimento</label>
+                  <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={nfDueDate} onChange={(e) => setNfDueDate(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Pagamento</label>
+                  <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={billingDate} onChange={(e) => setBillingDate(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Local do Faturamento</label>
+                  <select className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all bg-white" value={nfLocation} onChange={(e) => setNfLocation(e.target.value)}>
+                    <option value="">Selecione...</option>
+                    {officeLocations.map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Natureza</label>
+                  <select className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all bg-white" value={nfNature} onChange={(e) => setNfNature(e.target.value)}>
+                    <option value="">Selecione...</option>
+                    <option value="COND">COND</option>
+                    <option value="EXT">EXT</option>
+                    <option value="PF">PF</option>
+                    <option value="PJ">PJ</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Valor Faturado (NF)</label>
+                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" placeholder="R$ 0,00" value={nfValue} onChange={(e) => setNfValue(maskMoney(e.target.value))} />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Nota Fiscal (Opcional)</label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="Nº da NF / Boleto" 
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-300 placeholder:font-normal" 
+                      value={nfNumber} 
+                      onChange={(e) => setNfNumber(e.target.value)} 
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
