@@ -366,14 +366,17 @@ export function Contracts() {
   };
 
   const filteredContracts = contracts.filter((c: Contract) => {
-    const term = searchTerm.toLowerCase();
+    const term = searchTerm.toLowerCase().trim();
+    const numericTerm = term.replace(/\D/g, '');
 
-    const matchesSearch =
-      c.client_name?.toLowerCase().includes(term) ||
-      c.hon_number?.toLowerCase().includes(term) ||
-      c.proposal_code?.toLowerCase().includes(term) ||
-      c.cnpj?.includes(term) ||
-      c.display_id?.includes(term) ||
+    const matchesSearch = !term ? true :
+      Boolean(c.client_name?.toLowerCase().includes(term)) ||
+      Boolean(c.hon_number?.toLowerCase().includes(term)) ||
+      Boolean(numericTerm && c.hon_number?.replace(/\D/g, '').includes(numericTerm)) ||
+      Boolean(c.proposal_code?.toLowerCase().includes(term)) ||
+      Boolean(c.cnpj?.includes(term)) ||
+      Boolean(numericTerm && c.cnpj?.replace(/\D/g, '').includes(numericTerm)) ||
+      Boolean(c.display_id?.includes(term)) ||
       c.observations?.toLowerCase().includes(term) ||
       c.reference?.toLowerCase().includes(term) ||
       c.partner_name?.toLowerCase().includes(term) ||
