@@ -109,7 +109,7 @@ export function Contracts() {
   useDatabaseSync(() => {
     fetchData();
     fetchNotifications();
-  }, ['contracts', 'kanban_tasks']);
+  }, ['contracts']);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

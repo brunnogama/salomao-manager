@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Loader2, Check, Plus, Pencil, Trash2 } from 'lucide-react';
 
 interface OptionManagerProps {
@@ -163,8 +164,8 @@ export const OptionManager = ({
         setInputCnpj('');
     };
 
-    return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70]">
+    return createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99999]">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95">
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <h3 className="font-bold text-gray-800">{title}</h3>
@@ -243,6 +244,7 @@ export const OptionManager = ({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
     );
 };
