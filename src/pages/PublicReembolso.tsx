@@ -297,6 +297,9 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
               evento: selectedAuthorizer ? "solicitacao_autorizacao" : "novo_reembolso_direto",
               reembolso: {
                 id: r.id,
+                status_banco: selectedAuthorizer ? "pendente_autorizacao" : "pendente",
+                autorizador_id_banco: selectedAuthorizer || null,
+                colaborador_id_banco: selectedColab,
                 valor: "0,00",
                 descricao: config.observacao || "Aguardando Apuração",
                 fornecedor: "Não processado pela IA",
