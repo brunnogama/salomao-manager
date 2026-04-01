@@ -147,11 +147,17 @@ export const BackupService = {
 
         const now = new Date();
         const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
         const today = now.toISOString().split('T')[0];
         const lastBackupDate = localStorage.getItem('last_backup_date');
 
-        // Triggers if it's 19:00 or later AND no backup was done today
-        const isAfterTime = currentHour >= 19;
+        const configuredTime = localStorage.getItem('auto_backup_time') || '19:00';
+        const [configHourStr, configMinuteStr] = configuredTime.split(':');
+        const configHour = parseInt(configHourStr, 10);
+        const configMinute = parseInt(configMinuteStr, 10);
+
+        // Triggers if current time is >= configured time AND no backup was done today
+        const isAfterTime = currentHour > configHour || (currentHour === configHour && currentMinute >= configMinute);
 
         if (isAfterTime && lastBackupDate !== today) {
             try {

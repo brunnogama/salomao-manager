@@ -10,12 +10,15 @@ interface BackupSectionProps {
 export function BackupSection({ isAdmin }: BackupSectionProps) {
     const [loading, setLoading] = useState(false)
     const [autoBackupEnabled, setAutoBackupEnabled] = useState(false)
+    const [autoBackupTime, setAutoBackupTime] = useState('19:00')
     const [lastBackupDate, setLastBackupDate] = useState<string | null>(null)
 
     useEffect(() => {
         const savedAutoBackup = localStorage.getItem('auto_backup_enabled') === 'true'
+        const savedTime = localStorage.getItem('auto_backup_time') || '19:00'
         const savedLastBackup = localStorage.getItem('last_backup_date')
         setAutoBackupEnabled(savedAutoBackup)
+        setAutoBackupTime(savedTime)
         setLastBackupDate(savedLastBackup)
     }, [])
 
@@ -31,6 +34,13 @@ export function BackupSection({ isAdmin }: BackupSectionProps) {
         } finally {
             setLoading(false)
         }
+    }
+
+    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newTime = e.target.value
+        setAutoBackupTime(newTime)
+        localStorage.setItem('auto_backup_time', newTime)
+        toast.success(`Horário de backup atualizado para ${newTime}`)
     }
 
     const toggleAutoBackup = () => {
@@ -98,7 +108,7 @@ export function BackupSection({ isAdmin }: BackupSectionProps) {
                                 </div>
                             </div>
                             <p className="text-xs text-gray-600 mb-4 leading-relaxed">
-                                Quando ativado, o sistema realiza um backup diário às 19:00 (se houver um administrador conectado).
+                                Quando ativado, o sistema realiza um backup diário no horário configurado (se houver um administrador conectado).
                             </p>
                         </div>
 
@@ -115,6 +125,17 @@ export function BackupSection({ isAdmin }: BackupSectionProps) {
                                             }`}
                                     />
                                 </button>
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">Horário do Backup</span>
+                                <input
+                                    type="time"
+                                    value={autoBackupTime}
+                                    onChange={handleTimeChange}
+                                    disabled={!autoBackupEnabled}
+                                    className="text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded px-2 py-1 outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                />
                             </div>
 
                             {lastBackupDate && (
