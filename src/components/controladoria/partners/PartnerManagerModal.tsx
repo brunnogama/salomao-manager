@@ -82,7 +82,8 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
           .insert([{
             name: formData.name.trim(),
             email: formData.email.trim(),
-            status: 'active'
+            status: 'active',
+            created_at: new Date().toISOString()
           }])
           .select()
           .single();
