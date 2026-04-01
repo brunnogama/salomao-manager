@@ -106,8 +106,11 @@ export function ReembolsosTab() {
     setSavingEdit(true);
     try {
       const updates = { ...editedData };
-      // Remove nested join data before sending to Supabase
+      // Remove nested join data and read-only fields before sending to Supabase
       delete (updates as any).collaborators;
+      delete (updates as any).authorizer;
+      delete (updates as any).id;
+      delete (updates as any).created_at;
       
       if (updates.status === 'pendente') {
          updates.comprovante_pagamento_url = null;
