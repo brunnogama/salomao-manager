@@ -70,16 +70,13 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
   }, [isModal]);
 
   useEffect(() => {
-    if (collaborators.length > 0 && selectedColab && !selectedAuthorizer) {
-      const lastAuth = localStorage.getItem('salomao_reembolso_last_authorizer');
-      if (!lastAuth) {
-        const colab = collaborators.find(c => String(c.id) === String(selectedColab));
-        if (colab?.leader_id) {
-          setSelectedAuthorizer(String(colab.leader_id));
-        }
+    if (collaborators.length > 0 && selectedColab) {
+      const colab = collaborators.find(c => String(c.id) === String(selectedColab));
+      if (colab?.leader_id) {
+        setSelectedAuthorizer(String(colab.leader_id));
       }
     }
-  }, [collaborators]);
+  }, [selectedColab, collaborators]);
 
   const fetchCollaborators = async () => {
     try {
