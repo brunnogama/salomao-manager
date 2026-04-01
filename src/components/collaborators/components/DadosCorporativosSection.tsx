@@ -34,8 +34,11 @@ export function DadosCorporativosSection({
   const [refMaps, setRefMaps] = useState<{
     rateios: Record<string, string>,
     hiring_reasons: Record<string, string>,
-    termination_reasons: Record<string, string>
-  }>({ rateios: {}, hiring_reasons: {}, termination_reasons: {} });
+    termination_reasons: Record<string, string>,
+    termination_types: Record<string, string>,
+    termination_initiatives: Record<string, string>,
+    roles: Record<string, string>
+  }>({ rateios: {}, hiring_reasons: {}, termination_reasons: {}, termination_types: {}, termination_initiatives: {}, roles: {} });
 
   // Fetch reference names for historical cycles
   useEffect(() => {
@@ -45,13 +48,19 @@ export function DadosCorporativosSection({
       const r_res = await supabase.from('rateios').select('id, name');
       const hr_res = await supabase.from('hiring_reasons').select('id, name');
       const tr_res = await supabase.from('termination_reasons').select('id, name');
+      const tt_res = await supabase.from('termination_types').select('id, name');
+      const ti_res = await supabase.from('termination_initiatives').select('id, name');
+      const ro_res = await supabase.from('roles').select('id, name');
       
       const toMap = (arr: any[]) => arr?.reduce((acc, curr) => ({ ...acc, [curr.id]: curr.name }), {}) || {};
       
       setRefMaps({
         rateios: toMap(r_res.data || []),
         hiring_reasons: toMap(hr_res.data || []),
-        termination_reasons: toMap(tr_res.data || [])
+        termination_reasons: toMap(tr_res.data || []),
+        termination_types: toMap(tt_res.data || []),
+        termination_initiatives: toMap(ti_res.data || []),
+        roles: toMap(ro_res.data || [])
       });
     }
     fetchRefMaps();
@@ -681,8 +690,8 @@ export function DadosCorporativosSection({
                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                             Ciclo Fechado #{formData.employment_cycles!.length - idx}
                           </p>
-                          <h5 className="font-bold text-[#0a192f] mt-1 text-sm">
-                            {cycle.contract_type || 'Contrato Padrão'} {cycle.role ? `- ${cycle.role}` : ''}
+                          <h5 className="font-bold text-[#0a192f] mt-1 text-sm uppercase">
+                            {cycle.contract_type || 'Contrato Padrão'} {cycle.role ? `- ${refMaps.roles[cycle.role] || cycle.role}` : ''}
                           </h5>
                         </div>
                         <div className="text-left sm:text-right bg-blue-50/50 p-2 rounded-lg border border-blue-100">
@@ -692,7 +701,7 @@ export function DadosCorporativosSection({
                           </p>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                      <div className="grid grid-cols-2 gap-4 text-xs">
                         <div>
                           <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Rateio Base</span>
                           <span className="font-medium text-gray-700">{refMaps.rateios[cycle.rateio_id] || cycle.rateio_id || '-'}</span>
@@ -700,14 +709,6 @@ export function DadosCorporativosSection({
                         <div>
                           <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Motivo Contratação</span>
                           <span className="font-medium text-gray-700">{refMaps.hiring_reasons[cycle.hiring_reason_id] || cycle.hiring_reason_id || '-'}</span>
-                        </div>
-                        <div>
-                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Motivo Desligamento</span>
-                          <span className="font-medium text-gray-700">{refMaps.termination_reasons[cycle.termination_reason_id] || cycle.termination_reason_id || '-'}</span>
-                        </div>
-                        <div>
-                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Detalhes (Desligamento)</span>
-                          <span className="font-medium text-gray-700">{cycle.motivo_desligamento || '-'}</span>
                         </div>
                       </div>
                     </div>
@@ -817,6 +818,56 @@ export function DadosCorporativosSection({
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* HISTÓRICO DE DESLIGAMENTOS (CICLOS PASSADOS) */}
+            {(formData.employment_cycles && formData.employment_cycles.length > 0) && (
+              <div className="mt-8 border-t border-red-200/50 pt-8 animate-in fade-in duration-500">
+                <h4 className="text-[12px] font-black text-red-800 uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" /> Histórico de Desligamentos
+                </h4>
+                <div className="space-y-4">
+                  {formData.employment_cycles.map((cycle, idx) => (
+                    <div key={idx} className="bg-white border border-red-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-red-200 group-hover:bg-red-500 transition-colors" />
+                      <div className="flex flex-col sm:flex-row justify-between items-start mb-4 border-b border-gray-100 pb-4 gap-4">
+                        <div>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            Desligamento do Ciclo #{formData.employment_cycles!.length - idx}
+                          </p>
+                          <h5 className="font-bold text-[#0a192f] mt-1 text-sm uppercase">
+                            {cycle.contract_type || 'Contrato Padrão'} {cycle.role ? `- ${refMaps.roles[cycle.role] || cycle.role}` : ''}
+                          </h5>
+                        </div>
+                        <div className="text-left sm:text-right bg-red-50/50 p-2 rounded-lg border border-red-100">
+                          <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1">Data</p>
+                          <p className="font-bold text-red-700 text-xs">
+                            {cycle.termination_date || 'Não informada'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                        <div>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Iniciativa</span>
+                          <span className="font-medium text-gray-700">{refMaps.termination_initiatives[cycle.termination_initiative_id] || cycle.termination_initiative_id || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Tipo</span>
+                          <span className="font-medium text-gray-700">{refMaps.termination_types[cycle.termination_type_id] || cycle.termination_type_id || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Motivo</span>
+                          <span className="font-medium text-gray-700">{refMaps.termination_reasons[cycle.termination_reason_id] || cycle.termination_reason_id || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider font-bold mb-1">Detalhes Extras</span>
+                          <span className="font-medium text-gray-700">{cycle.motivo_desligamento || '-'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
