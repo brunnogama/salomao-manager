@@ -27,6 +27,7 @@ interface FileConfig {
   clienteNome: string;
   observacao: string;
   thumbFile?: File;
+  previewUrl?: string;
   isProcessing?: boolean;
 }
 
@@ -176,6 +177,12 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
       for (const file of addedFiles) {
         let thumbFile = undefined;
+        let previewUrl = undefined;
+        
+        if (file.type.startsWith('image/')) {
+           previewUrl = URL.createObjectURL(file);
+        }
+        
         if (file.type === 'application/pdf') {
           try {
             thumbFile = await convertPdfToTallImage(file);
@@ -184,11 +191,16 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
             // Prossegue silenciosamente, o thumb não existirá
           }
         }
+        if (thumbFile) {
+          previewUrl = URL.createObjectURL(thumbFile);
+        }
+
         newConfigs.push({
           reembolsavelCliente: false,
           clienteNome: '',
           observacao: '',
-          thumbFile
+          thumbFile,
+          previewUrl
         });
       }
 
@@ -199,6 +211,12 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
   };
 
   const handleRemoveFile = (index: number) => {
+    // Revogar a URL de preview para não vazar memória
+    const configLine = fileConfigs[index];
+    if (configLine && configLine.previewUrl) {
+      URL.revokeObjectURL(configLine.previewUrl);
+    }
+    
     setFiles(prev => prev.filter((_, i) => i !== index));
     setFileConfigs(prev => prev.filter((_, i) => i !== index));
   };
@@ -478,115 +496,129 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
                   <div className="mt-4 flex flex-col gap-3">
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{files.length} arquivo(s) selecionado(s):</p>
                     {files.map((f, idx) => (
-                      <div key={idx} className="flex flex-col gap-3 bg-blue-50/50 p-3 md:p-4 rounded-xl border border-blue-100">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-semibold text-[#112240] truncate max-w-[80%] flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-blue-500 shrink-0" />
-                            {f.name}
-                          </span>
-                          <button onClick={() => handleRemoveFile(idx)} className="p-1 hover:bg-red-100 text-red-400 hover:text-red-500 rounded transition-colors" title="Remover Arquivo">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                      <div key={idx} className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-[1.5rem] border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative group overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                         
+                         {/* THUMBNAIL */}
+                         <div className="w-full md:w-32 h-36 md:h-auto min-h-[140px] bg-slate-50 rounded-[1rem] border border-slate-200/60 overflow-hidden flex flex-col items-center justify-center shrink-0 shadow-inner mt-6 md:mt-0">
+                            {fileConfigs[idx]?.previewUrl ? (
+                               <img src={fileConfigs[idx].previewUrl} alt={f.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+                            ) : (
+                               <>
+                                 <FileText className="w-8 h-8 text-slate-300 mb-2" />
+                                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center px-2">Anexo sem Previa</span>
+                               </>
+                            )}
+                         </div>
 
-                        <div className="pt-2 border-t border-blue-100/50 space-y-3">
-                          <div className="flex items-center gap-3">
-                            <input
-                              type="checkbox"
-                              id={`reembolsavel-${idx}`}
-                              checked={fileConfigs[idx]?.reembolsavelCliente || false}
-                              onChange={(e) => {
-                                const newConfigs = [...fileConfigs];
-                                newConfigs[idx].reembolsavelCliente = e.target.checked;
-                                setFileConfigs(newConfigs);
-                              }}
-                              className="w-4 h-4 rounded text-[#1e3a8a] focus:ring-[#1e3a8a]"
-                            />
-                            <label htmlFor={`reembolsavel-${idx}`} className="text-xs font-bold text-blue-900 cursor-pointer select-none">
-                              Cobrar do Cliente?
-                            </label>
-                          </div>
+                         {/* CONTENT / FORM */}
+                         <div className="flex-1 flex flex-col py-1">
+                            <div className="flex justify-between items-start mb-3">
+                              <span className="text-sm font-black text-[#112240] truncate pr-8 tracking-tight" title={f.name}>
+                                {f.name}
+                              </span>
+                              <button onClick={() => handleRemoveFile(idx)} className="p-2 hover:bg-red-50 text-gray-300 hover:text-red-500 rounded-xl transition-colors absolute top-3 right-3" title="Remover Arquivo">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
 
-                          {fileConfigs[idx]?.reembolsavelCliente && (
-                            <div className="animate-in slide-in-from-top-1 fade-in duration-200">
-                              <div className="flex items-center justify-between mb-1">
-                                <label className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Nome do Cliente</label>
-                                {idx > 0 && fileConfigs[0]?.reembolsavelCliente && fileConfigs[0]?.clienteNome && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const newConfigs = [...fileConfigs];
-                                      newConfigs[idx].clienteNome = fileConfigs[0].clienteNome;
-                                      setFileConfigs(newConfigs);
-                                    }}
-                                    className="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline transition-colors"
-                                  >
-                                    Copiar 1º Recibo
-                                  </button>
-                                )}
-                              </div>
-                              <div className="relative">
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-3 bg-blue-50/40 p-3 rounded-xl border border-blue-50">
                                 <input
-                                  type="text"
-                                  value={fileConfigs[idx]?.clienteNome || ''}
-                                  onFocus={() => setShowAutocomplete(idx)}
-                                  onBlur={() => setTimeout(() => setShowAutocomplete(null), 200)}
+                                  type="checkbox"
+                                  id={`reembolsavel-${idx}`}
+                                  checked={fileConfigs[idx]?.reembolsavelCliente || false}
                                   onChange={(e) => {
-                                    const words = e.target.value.toLowerCase().split(' ');
-                                    const formatted = words.map((word) => {
-                                      if (['de', 'da', 'do', 'das', 'dos', 'e', 'em'].includes(word)) return word;
-                                      return word.charAt(0).toUpperCase() + word.slice(1);
-                                    }).join(' ');
-
                                     const newConfigs = [...fileConfigs];
-                                    newConfigs[idx].clienteNome = formatted;
+                                    newConfigs[idx].reembolsavelCliente = e.target.checked;
                                     setFileConfigs(newConfigs);
-                                    setShowAutocomplete(idx);
                                   }}
-                                  placeholder="Ex: João da Silva..."
-                                  className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium shadow-sm"
+                                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-600 border-gray-300 transition-all cursor-pointer"
                                 />
-                                {showAutocomplete === idx && fileConfigs[idx]?.clienteNome.trim().length > 0 && (
-                                  <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-gray-100">
-                                    {clientsList
-                                      .filter(c => normalizeString(c).includes(normalizeString(fileConfigs[idx].clienteNome)) && normalizeString(c) !== normalizeString(fileConfigs[idx].clienteNome))
-                                      .map((c, i) => (
-                                        <li
-                                          key={i}
-                                          className="p-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition-colors"
-                                          onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            const newConfigs = [...fileConfigs];
-                                            newConfigs[idx].clienteNome = c;
-                                            setFileConfigs(newConfigs);
-                                            setShowAutocomplete(null);
-                                          }}
-                                        >
-                                          {c}
-                                        </li>
-                                      ))}
-                                  </ul>
-                                )}
+                                <label htmlFor={`reembolsavel-${idx}`} className="text-xs font-bold text-blue-900 cursor-pointer select-none">
+                                  Cobrar do Cliente faturável?
+                                </label>
+                              </div>
+
+                              {fileConfigs[idx]?.reembolsavelCliente && (
+                                <div className="animate-in slide-in-from-top-1 fade-in duration-200">
+                                  <div className="flex items-center justify-between mb-1.5 ml-1">
+                                    <label className="text-[10px] font-bold text-blue-800 uppercase tracking-widest block">Qual Cliente?</label>
+                                    {idx > 0 && fileConfigs[0]?.reembolsavelCliente && fileConfigs[0]?.clienteNome && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newConfigs = [...fileConfigs];
+                                          newConfigs[idx].clienteNome = fileConfigs[0].clienteNome;
+                                          setFileConfigs(newConfigs);
+                                        }}
+                                        className="text-[10px] font-bold text-blue-600 hover:text-blue-900 underline decoration-blue-200 underline-offset-2 transition-colors"
+                                      >
+                                        Copiar do 1º Recibo
+                                      </button>
+                                    )}
+                                  </div>
+                                  <div className="relative">
+                                    <input
+                                      type="text"
+                                      value={fileConfigs[idx]?.clienteNome || ''}
+                                      onFocus={() => setShowAutocomplete(idx)}
+                                      onBlur={() => setTimeout(() => setShowAutocomplete(null), 200)}
+                                      onChange={(e) => {
+                                        const words = e.target.value.toLowerCase().split(' ');
+                                        const formatted = words.map((word) => {
+                                          if (['de', 'da', 'do', 'das', 'dos', 'e', 'em'].includes(word)) return word;
+                                          return word.charAt(0).toUpperCase() + word.slice(1);
+                                        }).join(' ');
+
+                                        const newConfigs = [...fileConfigs];
+                                        newConfigs[idx].clienteNome = formatted;
+                                        setFileConfigs(newConfigs);
+                                        setShowAutocomplete(idx);
+                                      }}
+                                      placeholder="Ex: Salomão Advogados..."
+                                      className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
+                                    />
+                                    {showAutocomplete === idx && fileConfigs[idx]?.clienteNome.trim().length > 0 && (
+                                      <ul className="absolute z-10 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] max-h-48 overflow-y-auto custom-scrollbar p-1">
+                                        {clientsList
+                                          .filter(c => normalizeString(c).includes(normalizeString(fileConfigs[idx].clienteNome)) && normalizeString(c) !== normalizeString(fileConfigs[idx].clienteNome))
+                                          .map((c, i) => (
+                                            <li
+                                              key={i}
+                                              className="px-4 py-2.5 m-0.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-blue-50/80 hover:text-blue-700 cursor-pointer transition-colors"
+                                              onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                const newConfigs = [...fileConfigs];
+                                                newConfigs[idx].clienteNome = c;
+                                                setFileConfigs(newConfigs);
+                                                setShowAutocomplete(null);
+                                              }}
+                                            >
+                                              {c}
+                                            </li>
+                                          ))}
+                                      </ul>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="pt-1">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1 block">Breve Observação (Opcional)</label>
+                                <textarea
+                                  rows={1}
+                                  placeholder="Detalhes para a liderança..."
+                                  value={fileConfigs[idx]?.observacao || ''}
+                                  onChange={(e) => {
+                                    const newConfigs = [...fileConfigs];
+                                    newConfigs[idx].observacao = e.target.value;
+                                    setFileConfigs(newConfigs);
+                                  }}
+                                  className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium resize-none min-h-[46px]"
+                                />
                               </div>
                             </div>
-                          )}
-
-                          {/* Campo Observações */}
-                          <div className="pt-2 animate-in slide-in-from-top-1 fade-in duration-200">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Observações (Opcional)</label>
-                            <textarea
-                              rows={2}
-                              placeholder="Identifique provisoriamente este recibo ou adicione detalhes pro líder..."
-                              value={fileConfigs[idx]?.observacao || ''}
-                              onChange={(e) => {
-                                const newConfigs = [...fileConfigs];
-                                newConfigs[idx].observacao = e.target.value;
-                                setFileConfigs(newConfigs);
-                              }}
-                              className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium shadow-sm resize-none"
-                            />
-                          </div>
-                        </div>
+                         </div>
                       </div>
                     ))}
                   </div>

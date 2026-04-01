@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { CheckCircle2, XCircle, AlertCircle, Loader2, Download, FileText, Check, ZoomIn, ZoomOut } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Loader2, Download, FileText, ZoomIn, ZoomOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ReembolsoDetails {
@@ -298,15 +298,16 @@ export default function PublicReembolsoAuth() {
                      <p className="text-xl md:text-2xl font-black text-[#112240] tracking-tight">{data.solicitante_nome}</p>
                   </div>
                   
-                  <div className="p-6 rounded-[1.25rem] bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-xl shadow-blue-900/10 flex flex-col gap-1 border border-blue-800">
-                     <p className="text-[11px] font-bold text-blue-200/80 uppercase tracking-widest">Valor da Despesa</p>
+                  <div className="p-6 md:p-8 rounded-[1.5rem] bg-slate-50 border border-slate-200/60 shadow-inner flex flex-col gap-1.5 relative overflow-hidden">
+                     <div className="absolute -right-10 -top-10 w-40 h-40 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none"></div>
+                     <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-slate-400"/> Valor da Despesa</p>
                      {data.valor > 0 ? (
-                        <div className="text-4xl font-black text-[#f1c40f] tracking-tight drop-shadow-sm flex items-end">
-                           <span className="text-2xl mr-1.5 text-[#f1c40f]/80 font-bold tracking-normal mb-1">R$</span>
+                        <div className="text-4xl md:text-5xl font-black text-emerald-600 tracking-tight flex items-end relative z-10 pt-2">
+                           <span className="text-2xl mr-2 text-emerald-600/70 font-bold tracking-normal mb-1">R$</span>
                            {data.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </div>
                      ) : (
-                        <div className="text-lg font-bold text-blue-100 flex items-center gap-2 mt-1">
+                        <div className="text-lg font-bold text-slate-400 flex items-center gap-2 mt-2 relative z-10">
                            <AlertCircle className="w-5 h-5 opacity-80" /> <span className="opacity-90">A apurar no contábil</span>
                         </div>
                      )}
@@ -381,22 +382,22 @@ export default function PublicReembolsoAuth() {
 
                {/* 3. Action Buttons (Bottom Pinned) */}
                {isPending && (
-                  <div className="flex flex-col gap-3 mt-auto pt-6 border-t border-gray-100">
-                     <button
-                        onClick={() => handleAction('approve')}
-                        disabled={processing !== null}
-                        className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-blue-900 to-[#1e3a8a] focus:ring-4 focus:ring-blue-100 border border-blue-800 text-white font-bold tracking-widest uppercase text-sm shadow-xl shadow-blue-900/20 hover:shadow-blue-900/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50"
-                     >
-                        {processing === 'approve' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-                        Autorizar Despesa
-                     </button>
+                  <div className="flex flex-col sm:flex-row gap-3 mt-auto pt-6 border-t border-gray-100">
                      <button
                         onClick={() => setShowRejectModal(true)}
                         disabled={processing !== null}
-                        className="w-full py-4 px-6 rounded-2xl border-2 border-red-100 bg-white text-red-500 font-bold tracking-widest uppercase text-sm hover:bg-red-50 hover:border-red-200 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50"
+                        className="flex-1 py-4 px-6 rounded-2xl bg-white border border-gray-200 text-gray-600 font-bold tracking-widest uppercase text-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50"
                      >
                         {processing === 'reject' ? <Loader2 className="w-5 h-5 animate-spin" /> : <XCircle className="w-5 h-5" />}
-                        Não Autorizar
+                        Recusar
+                     </button>
+                     <button
+                        onClick={() => handleAction('approve')}
+                        disabled={processing !== null}
+                        className="flex-[2] py-4 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-100 text-white font-bold tracking-widest uppercase text-sm shadow-[0_10px_40px_-10px_rgba(16,185,129,0.5)] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50"
+                     >
+                        {processing === 'approve' ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                        Autorizar e Enviar
                      </button>
                   </div>
                )}

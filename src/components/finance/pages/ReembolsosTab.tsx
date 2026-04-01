@@ -900,8 +900,8 @@ export function ReembolsosTab() {
 
 
 
-                  <div className="col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><FileText className="w-4 h-4 text-gray-400" /> Itens Consumidos (Extração IA)</label>
+                  <div className="col-span-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-gray-400" /> Itens Consumidos (Extração IA)</label>
                     {isEditing ? (
                       <textarea 
                         value={editedData.descricao || ''} 
@@ -909,13 +909,15 @@ export function ReembolsosTab() {
                         className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm h-24"
                       />
                     ) : (
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedReembolso.descricao || 'Nenhuma descrição fornecida.'}</p>
+                      <div className="pl-5 border-l-2 border-gray-100">
+                        <p className="text-sm font-medium text-gray-600 leading-relaxed whitespace-pre-wrap">{selectedReembolso.descricao || 'Nenhuma descrição fornecida.'}</p>
+                      </div>
                     )}
                   </div>
                 </div>
 
-                <div className={`p-4 rounded-xl ${isEditing ? 'bg-amber-100' : 'bg-[#112240]'} flex justify-between items-center shadow-lg transition-colors`}>
-                  <span className={`font-bold ${isEditing ? 'text-amber-900' : 'text-gray-300'}`}>Valor a Reembolsar</span>
+                <div className={`p-4 md:p-6 rounded-2xl ${isEditing ? 'bg-amber-50/50 border border-amber-200' : 'bg-emerald-50/50 border border-emerald-100'} flex justify-between items-center transition-colors mb-4`}>
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${isEditing ? 'text-amber-800' : 'text-emerald-800'}`}>Valor a Reembolsar</span>
                   {isEditing ? (
                     <div className="flex items-center">
                        <span className="text-amber-900 font-bold mr-2">R$</span>
@@ -924,19 +926,22 @@ export function ReembolsosTab() {
                           step="0.01"
                           value={editedData.valor || ''}
                           onChange={(e) => setEditedData({...editedData, valor: parseFloat(e.target.value) || 0})}
-                          className="w-32 p-2 bg-white border border-amber-300 rounded-lg text-lg font-black text-amber-900 text-right"
+                          className="w-32 p-2 bg-white border border-amber-200 rounded-xl text-lg font-black text-amber-900 text-right shadow-sm focus:ring-amber-500 focus:border-amber-500"
                         />
                     </div>
                   ) : (
-                    <span className="text-2xl font-black text-green-400">
+                    <span className="text-2xl md:text-3xl font-black text-emerald-600 tracking-tight">
                       R$ {selectedReembolso.valor ? selectedReembolso.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
                     </span>
                   )}
                 </div>
 
                 {/* Área Financeira Consolidade */}
-                <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 space-y-5">
-                  <h4 className="font-bold text-[#1e3a8a] mb-2 border-b border-blue-100 pb-2">Informações Adicionais e Ação do Financeiro</h4>
+                <div className="border-t border-gray-100 pt-6 space-y-5">
+                  <h4 className="font-bold text-[#112240] text-sm flex items-center gap-2">
+                     <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                     Informações Adicionais e Ação do Financeiro
+                  </h4>
                   
                   {/* Observação */}
                   {(selectedReembolso.observacao || editedData.observacao || isEditing) && (
@@ -986,8 +991,9 @@ export function ReembolsosTab() {
 
                   {/* Nome do Cliente */}
                   {(selectedReembolso.reembolsavel_cliente || editedData.reembolsavel_cliente) && (
-                    <div className="bg-white/80 p-4 rounded-xl border border-blue-200/60 shadow-sm">
-                      <label className="text-xs font-bold text-[#1e3a8a] uppercase tracking-wider mb-1 block">Nome do Cliente a ser Faturado</label>
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm ml-6 relative">
+                      <div className="absolute top-1/2 -left-[29px] w-[28px] h-px bg-gray-100"></div>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 block">Nome do Cliente a ser Faturado</label>
                       {isEditing ? (
                         <input 
                           type="text" 
