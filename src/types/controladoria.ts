@@ -461,6 +461,11 @@ export interface FinancialInstallment {
   nf_location?: string | null;
   nf_nature?: string | null;
   nf_value?: number | null;
+  tax_irpj?: number | null;
+  tax_pis?: number | null;
+  tax_cofins?: number | null;
+  tax_csll?: number | null;
+  net_value?: number | null;
   contract?: {
     id: string;
     seq_id?: number;
