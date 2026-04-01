@@ -59,8 +59,8 @@ const InstallmentDropdown = ({ value, onChange }: { value: string; onChange: (va
   );
 };
 
-// Custom dropdown para formato R$/% - design moderno
-const FormatDropdown = ({ value, onChange }: { value: 'R$' | '%'; onChange: (val: 'R$' | '%') => void }) => {
+// Custom dropdown para formato R$/%/US$/€ - design moderno
+const FormatDropdown = ({ value, onChange }: { value: 'R$' | '%' | 'US$' | '€'; onChange: (val: 'R$' | '%' | 'US$' | '€') => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -85,7 +85,7 @@ const FormatDropdown = ({ value, onChange }: { value: 'R$' | '%'; onChange: (val
       </button>
       {isOpen && (
         <div className="absolute left-0 top-full mt-1 w-16 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1">
-          {(['R$', '%'] as const).map(opt => (
+          {(['R$', '%', 'US$', '€'] as const).map(opt => (
             <button
               key={opt}
               type="button"
@@ -102,32 +102,85 @@ const FormatDropdown = ({ value, onChange }: { value: 'R$' | '%'; onChange: (val
 };
 
 export const FinancialInputWithInstallments = ({
-  label, value, onChangeValue, installments, onChangeInstallments, onAdd, clause, onChangeClause, rule, onChangeRule, readyToInvoice, onToggleReady
+  label, value, onChangeValue, installments, onChangeInstallments, onAdd, clause, onChangeClause, readyToInvoice, onToggleReady
 }: FinancialInputProps) => {
-  // Decide whether the current value looks like a percentage
-  const isPercentInitial = value?.includes('%');
-  const [format, setFormat] = useState<'R$' | '%'>((isPercentInitial) ? '%' : 'R$');
+  
+  const valueParts = (value || '').split(' | ');
+  const mainVal = valueParts[0];
+  const convertedVal = valueParts[1];
 
-  const handleFormatChange = (newFormat: 'R$' | '%') => {
+  const isPercentInitial = mainVal?.includes('%');
+  const isUSDInitial = mainVal?.includes('US$');
+  const isEURInitial = mainVal?.includes('€');
+  
+  const initialFormat = isPercentInitial ? '%' : isUSDInitial ? 'US$' : isEURInitial ? '€' : 'R$';
+  const [format, setFormat] = useState<'R$' | '%' | 'US$' | '€'>(initialFormat);
+  const [rates, setRates] = useState({ USD: 0, EUR: 0 });
+
+  useEffect(() => {
+    fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL')
+      .then(res => res.json())
+      .then(data => {
+        setRates({
+          USD: parseFloat(data.USDBRL.ask),
+          EUR: parseFloat(data.EURBRL.ask)
+        });
+      })
+      .catch(console.error);
+  }, []);
+
+  const formatValueAndConverted = (rawVal: string, targetFormat: 'R$' | '%' | 'US$' | '€', curRates = rates) => {
+    if (targetFormat === '%') {
+      return maskPercent(rawVal);
+    } 
+    
+    if (targetFormat === 'US$') {
+      const mainFormatted = maskMoney(rawVal, 'US$');
+      const numericVal = parseFloat(mainFormatted.replace(/\D/g, '')) / 100;
+      if (!isNaN(numericVal) && curRates.USD > 0) {
+        const converted = numericVal * curRates.USD;
+        const convertedStr = converted.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        return `${mainFormatted} | ${convertedStr}`;
+      }
+      return mainFormatted;
+    }
+    
+    if (targetFormat === '€') {
+      const mainFormatted = maskMoney(rawVal, '€');
+      const numericVal = parseFloat(mainFormatted.replace(/\D/g, '')) / 100;
+      if (!isNaN(numericVal) && curRates.EUR > 0) {
+        const converted = numericVal * curRates.EUR;
+        const convertedStr = converted.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        return `${mainFormatted} | ${convertedStr}`;
+      }
+      return mainFormatted;
+    }
+    
+    return maskMoney(rawVal);
+  };
+
+  // Re-calculate the converted value when rates load, if currently on a foreign format
+  useEffect(() => {
+    if ((format === 'US$' || format === '€') && mainVal) {
+        const expectedVal = formatValueAndConverted(mainVal, format, rates);
+        if (expectedVal !== value) {
+            onChangeValue(expectedVal);
+        }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rates, format]); // do not add mainVal or value here to avoid loops
+
+  const handleFormatChange = (newFormat: 'R$' | '%' | 'US$' | '€') => {
     setFormat(newFormat);
     if (!value) return;
-
-    // Quick conversion logic to swap format string visually 
-    // Usually one might clear the field or just apply the new mask to the raw digits
-    if (newFormat === '%') {
-      onChangeValue(maskPercent(value));
-    } else {
-      onChangeValue(maskMoney(value));
-    }
+    const newVal = formatValueAndConverted(mainVal, newFormat);
+    onChangeValue(newVal);
   };
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value;
-    if (format === '%') {
-      onChangeValue(maskPercent(rawVal));
-    } else {
-      onChangeValue(maskMoney(rawVal));
-    }
+    const newVal = formatValueAndConverted(rawVal, format);
+    onChangeValue(newVal);
   };
 
   return (
@@ -153,10 +206,17 @@ export const FinancialInputWithInstallments = ({
         <input
           type="text"
           className="flex-1 border border-gray-300 p-2.5 text-sm bg-white focus:border-salomao-blue outline-none min-w-0"
-          value={value || ''}
+          value={mainVal || ''}
           onChange={handleValueChange}
-          placeholder={format === 'R$' ? "0,00" : "0,00%"}
+          placeholder={format === 'R$' ? "0,00" : format === '%' ? "0,00%" : format === 'US$' ? "US$ 0,00" : "€ 0,00"}
         />
+
+        {/* Converted Value Readonly display */}
+        {(format === 'US$' || format === '€') && convertedVal && (
+          <div className="flex items-center bg-gray-50 border-y border-gray-300 px-3 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" title={`Convertido: ${convertedVal}`}>
+            <span className="text-xs font-bold text-gray-600 truncate">{convertedVal}</span>
+          </div>
+        )}
 
         {/* Pronto para Faturar - ao lado do valor */}
         {onToggleReady && (

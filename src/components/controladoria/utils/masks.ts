@@ -20,13 +20,17 @@ export const maskCNPJ = (value: string) => {
   }
 };
 
-export const maskMoney = (value: string, lang: 'pt' | 'en' = 'pt') => {
+export const maskMoney = (value: string, lang: 'pt' | 'en' | 'US$' | '€' = 'pt') => {
   const onlyDigits = value.replace(/\D/g, "");
   if (!onlyDigits) return "";
   const number = parseFloat(onlyDigits) / 100;
   
   if (lang === 'en') {
     return 'U$$ ' + number.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  } else if (lang === 'US$') {
+    return 'US$ ' + number.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  } else if (lang === '€') {
+    return '€ ' + number.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -60,8 +64,16 @@ export const maskCNJ = (value: string) => {
 export const parseCurrency = (value: string | undefined): number => {
   if (!value) return 0;
   if (typeof value === 'number') return value;
-  // Remove R$, U$$, pontos e espaços, troca vírgula por ponto
-  const clean = value.replace(/[RU$\s.]/g, '').replace(',', '.');
+  
+  let stringToParse = value;
+  // If the value is "US$ 10,00 | R$ 51,50", extract the BRL part
+  if (value.includes(' | ')) {
+    stringToParse = value.split(' | ')[1];
+  }
+
+  // Remove everything except digits, comma, and minus sign
+  // This ensures we keep negative signs and the decimal comma.
+  const clean = stringToParse.replace(/[^\d,\-]/g, '').replace(',', '.');
   const parsed = parseFloat(clean);
   return isNaN(parsed) ? 0 : parsed;
 };
