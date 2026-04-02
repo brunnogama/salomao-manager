@@ -826,7 +826,7 @@ export function Finance() {
 
               <div className="mt-4 bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl flex justify-between items-center transition-all">
                 <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Valor Líquido Recebido</span>
-                <span className="text-2xl font-black text-emerald-600">R$ {nfNetValue || '0,00'}</span>
+                <span className="text-2xl font-black text-emerald-600">{nfNetValue || 'R$ 0,00'}</span>
               </div>
             </div>
 
