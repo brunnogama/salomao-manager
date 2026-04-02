@@ -335,7 +335,7 @@ export function Finance() {
       .eq('id', selectedInstallment.id);
       
     setIsDateModalOpen(false);
-    toast.success('Faturamento confirmado!');
+    toast.success(selectedInstallment.status === 'paid' ? 'Faturamento atualizado!' : 'Faturamento confirmado!');
     fetchData();
   };
 
@@ -660,7 +660,7 @@ export function Finance() {
                       <tr
                         key={item.id}
                         className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
-                        onClick={() => handleOpenContractModal(item.contract!.id)}
+                        onClick={() => handleMarkAsPaid(item)}
                       >
                         <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{(item.contract as any)?.display_id}</td>
                         <td className="p-4">
@@ -757,8 +757,26 @@ export function Finance() {
               <X className="w-5 h-5 pointer-events-none" />
             </button>
 
-            <h3 className="text-lg font-black text-[#0a192f] mb-2 uppercase tracking-tight">Confirmar Faturamento</h3>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Confirma o recebimento desta parcela e informações fiscais?</p>
+            <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4 pr-8">
+              <div>
+                <h3 className="text-lg font-black text-[#0a192f] mb-1 uppercase tracking-tight">
+                  {selectedInstallment?.status === 'paid' ? 'Detalhes do Faturamento' : 'Confirmar Faturamento'}
+                </h3>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirma o recebimento desta parcela e informações fiscais?'}
+                </p>
+              </div>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDateModalOpen(false);
+                  handleOpenContractModal(selectedInstallment!.contract_id);
+                }}
+                className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 flex items-center transition-all shrink-0"
+              >
+                <Briefcase className="w-3.5 h-3.5 mr-2" /> Visualizar Contrato
+              </button>
+            </div>
 
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
@@ -854,7 +872,9 @@ export function Finance() {
 
             <div className="flex justify-end gap-3 mt-8">
               <button onClick={() => setIsDateModalOpen(false)} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
-              <button onClick={confirmPayment} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">Confirmar Pagamento</button>
+              <button onClick={confirmPayment} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">
+                {selectedInstallment?.status === 'paid' ? 'Salvar Alterações' : 'Confirmar Pagamento'}
+              </button>
             </div>
           </div>
         </div>
