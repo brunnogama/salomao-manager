@@ -104,7 +104,7 @@ export function CustomSelect({
   const dropdownMenu = (
     <div
       id="select-portal-root"
-      className="fixed z-[9999] bg-white border border-gray-200 rounded-lg shadow-xl animate-in fade-in zoom-in-95 origin-top"
+      className="fixed z-[999999] bg-white border border-gray-200 rounded-lg shadow-xl animate-in fade-in zoom-in-95 origin-top"
       style={{
         top: coords.top + 4 - window.scrollY, // Ajuste para a posição fixa
         left: coords.left,

@@ -986,15 +986,17 @@ export function Finance() {
                 </div>
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Natureza</label>
-                  <div className="relative">
-                    <select className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] outline-none transition-all bg-white shadow-sm hover:border-gray-300" value={nfNature} onChange={(e) => setNfNature(e.target.value)}>
-                      <option value="">Selecione...</option>
-                      <option value="COND">COND</option>
-                      <option value="EXT">EXT</option>
-                      <option value="PF">PF</option>
-                      <option value="PJ">PJ</option>
-                    </select>
-                  </div>
+                  <CustomSelect 
+                    value={nfNature} 
+                    onChange={setNfNature} 
+                    options={[
+                      { label: 'Selecione', value: '' },
+                      { label: 'COND', value: 'COND' },
+                      { label: 'EXT', value: 'EXT' },
+                      { label: 'PF', value: 'PF' },
+                      { label: 'PJ', value: 'PJ' }
+                    ]}
+                  />
                 </div>
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">NF (Opcional)</label>
