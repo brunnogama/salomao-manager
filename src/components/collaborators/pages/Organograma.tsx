@@ -851,7 +851,9 @@ export function Organograma() {
             
             try {
                 container.setPointerCapture(e.pointerId);
-            } catch (err) {}
+            } catch (err) {
+                console.warn('Fallback setPointerCapture', err);
+            }
             
             container.style.cursor = 'grabbing';
             container.focus({ preventScroll: true }); // garante o foco sem pular a tela
@@ -862,7 +864,9 @@ export function Organograma() {
             isDown = false;
             try {
                 container.releasePointerCapture(e.pointerId);
-            } catch (err) {}
+            } catch (err) {
+                console.warn('Fallback releasePointerCapture', err);
+            }
             container.style.cursor = 'grab';
         };
 
@@ -1117,7 +1121,7 @@ export function Organograma() {
         const newLeaderIdRaw = destination.droppableId;
         // Resolve root droppable IDs back to actual director ID. Format: root:DIRECTOR_ID:ATUACAO_NAME
         const isRootDrop = newLeaderIdRaw.startsWith('root:');
-        let newLeaderId = isRootDrop
+        const newLeaderId = isRootDrop
             ? newLeaderIdRaw.split(':')[1]
             : newLeaderIdRaw;
 
@@ -1214,7 +1218,7 @@ export function Organograma() {
         } finally {
             setPendingDragResult(null);
         }
-    }, [pendingDragResult, data]);
+    }, [pendingDragResult, data, atuacoesMap, fetchColaboradores]);
 
     const handleDragEnd = useCallback((result: DropResult) => {
         const { source, destination, draggableId } = result;
@@ -1240,7 +1244,7 @@ export function Organograma() {
     const rawSubordinatesMap = useMemo(() => {
         const map = new Map<string | null, ColaboradorCard[]>();
         data.forEach(c => {
-            let lids = c.leader_ids && Array.isArray(c.leader_ids) && c.leader_ids.length > 0 
+            const lids = c.leader_ids && Array.isArray(c.leader_ids) && c.leader_ids.length > 0 
                 ? c.leader_ids 
                 : [c.leader_id || null];
             
@@ -1541,7 +1545,7 @@ export function Organograma() {
                     // Max worksheet name is 31 characters
                     if(sheetName.length > 31) sheetName = sheetName.substring(0, 31);
                     // Remove invalid characters for excel sheet names
-                    sheetName = sheetName.replace(/[\\|/|*|?|:|\[|\]]/g, "").trim();
+                    sheetName = sheetName.replace(/[\\/*?:[\]|]/g, "").trim();
                     
                     // Handle duplicates
                     let finalSheetName = sheetName;

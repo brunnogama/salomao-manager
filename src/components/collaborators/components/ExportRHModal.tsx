@@ -71,6 +71,9 @@ export const EXPORT_SECTIONS: ExportSection[] = [
   }
 ];
 
+// Resolvido: Constante estática movida para o escopo un-renderizado evitando alocamento em cascata nos updates
+const ALL_CHART_IDS = EXPORT_SECTIONS.flatMap(s => s.charts.map(c => c.id));
+
 interface ExportRHModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -79,15 +82,12 @@ interface ExportRHModalProps {
 }
 
 export function ExportRHModal({ isOpen, onClose, onExport, isExporting }: ExportRHModalProps) {
-  // Flatten all IDs for default
-  const allChartIds = EXPORT_SECTIONS.flatMap(s => s.charts.map(c => c.id));
-  const [selectedIds, setSelectedIds] = useState<string[]>(allChartIds);
-  const [expandedSections, setExpandedSections] = useState<string[]>(EXPORT_SECTIONS.map(s => s.title)); // All expanded by default
+  const [selectedIds, setSelectedIds] = useState<string[]>(ALL_CHART_IDS);
+  const [expandedSections, setExpandedSections] = useState<string[]>(EXPORT_SECTIONS.map(s => s.title)); 
 
   useEffect(() => {
-    // Reset selection to ALL when opening
     if (isOpen) {
-      setSelectedIds(allChartIds);
+      setSelectedIds(ALL_CHART_IDS);
       setExpandedSections(EXPORT_SECTIONS.map(s => s.title));
     }
   }, [isOpen]);
@@ -126,10 +126,10 @@ export function ExportRHModal({ isOpen, onClose, onExport, isExporting }: Export
   };
 
   const handleToggleAll = () => {
-    if (selectedIds.length === allChartIds.length) {
+    if (selectedIds.length === ALL_CHART_IDS.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(allChartIds);
+      setSelectedIds(ALL_CHART_IDS);
     }
   };
 
@@ -139,7 +139,7 @@ export function ExportRHModal({ isOpen, onClose, onExport, isExporting }: Export
     );
   };
 
-  const allSelected = selectedIds.length === allChartIds.length;
+  const allSelected = selectedIds.length === ALL_CHART_IDS.length;
 
   return createPortal(
     <>

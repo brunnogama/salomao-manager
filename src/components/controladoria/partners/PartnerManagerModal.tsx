@@ -43,16 +43,23 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
 
   const fetchPartners = async () => {
     setLoading(true);
-    const { data } = await supabase.from('partners').select('*').order('name');
-    if (data) {
-      // Mapeia o status do banco para a propriedade 'active' da interface para manter compatibilidade com a UI
-      const mappedPartners = data.map((p: any) => ({
-        ...p,
-        active: p.status === 'active'
-      }));
-      setPartners(mappedPartners);
+    try {
+      const { data, error } = await supabase.from('partners').select('*').order('name');
+      if (error) throw error;
+      
+      if (data) {
+        // Mapeia o status do banco para a propriedade 'active' da interface para manter compatibilidade com a UI
+        const mappedPartners = data.map((p: any) => ({
+          ...p,
+          active: p.status === 'active'
+        }));
+        setPartners(mappedPartners);
+      }
+    } catch (error: any) {
+      console.error('Erro ao buscar sócios:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSave = async () => {
