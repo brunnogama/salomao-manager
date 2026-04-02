@@ -93,15 +93,11 @@ export function Finance() {
   };
 
   useEffect(() => {
-    if (isDateModalOpen) {
-      setTimeout(() => {
-        setInitialBillingState(getCurrentBillingState());
-      }, 50);
-    } else {
+    if (!isDateModalOpen) {
       setInitialBillingState('');
       setIsConfirmCloseBillingOpen(false);
     }
-  }, [isDateModalOpen, nfIssueDate, nfDueDate, billingDate, nfNumber, nfLocation, nfNature, nfObservations, nfIrpj, nfPis, nfCofins, nfCsll, nfValue, nfNetValue]);
+  }, [isDateModalOpen]);
 
   useEscKey(isDateModalOpen && !isConfirmCloseBillingOpen, handleTryCloseBillingModal);
 
@@ -341,6 +337,32 @@ export function Finance() {
       formattedNfValue = maskMoney(installment.amount.toFixed(2).replace('.', ','));
     }
     setNfValue(formattedNfValue);
+
+    // Calcula tb o valor líquido pra criar o snampshot limpo
+    const valueNum = installment.nf_value ?? installment.amount;
+    const irpjNum = installment.tax_irpj || 0;
+    const pisNum = installment.tax_pis || 0;
+    const cofinsNum = installment.tax_cofins || 0;
+    const csllNum = installment.tax_csll || 0;
+    const net = valueNum - irpjNum - pisNum - cofinsNum - csllNum;
+    const initialNetValue = maskMoney(net.toFixed(2).replace('.', ','));
+
+    const initialState = JSON.stringify({
+      nfIssueDate: installment.nf_issue_date ? installment.nf_issue_date.split('T')[0] : todayStr,
+      nfDueDate: installment.due_date ? installment.due_date.split('T')[0] : todayStr,
+      billingDate: installment.paid_at ? installment.paid_at.split('T')[0] : todayStr,
+      nfNumber: installment.nf_number || '',
+      nfLocation: installment.nf_location || '',
+      nfNature: installment.nf_nature || '',
+      nfObservations: (installment as any).observations || '',
+      nfIrpj: installment.tax_irpj ? maskMoney(installment.tax_irpj.toFixed(2).replace('.', ',')) : '',
+      nfPis: installment.tax_pis ? maskMoney(installment.tax_pis.toFixed(2).replace('.', ',')) : '',
+      nfCofins: installment.tax_cofins ? maskMoney(installment.tax_cofins.toFixed(2).replace('.', ',')) : '',
+      nfCsll: installment.tax_csll ? maskMoney(installment.tax_csll.toFixed(2).replace('.', ',')) : '',
+      nfValue: formattedNfValue,
+      nfNetValue: initialNetValue
+    });
+    setInitialBillingState(initialState);
     
     setIsDateModalOpen(true);
   };
@@ -799,6 +821,11 @@ export function Finance() {
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                   {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirma o recebimento desta parcela e informações fiscais?'}
                 </p>
+                <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100/60">
+                   <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cliente</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.client_name || '-'}</span></div>
+                   <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">HON</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.hon_number || '-'}</span></div>
+                   <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cláusula</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{(selectedInstallment as any)?.clause || '-'}</span></div>
+                </div>
               </div>
               <button 
                 onClick={(e) => {
