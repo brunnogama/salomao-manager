@@ -40,8 +40,6 @@ const ExpandableText = ({ text }: { text: string }) => {
 const getDurationBetween = (startDateStr: string, endDateStr: string): string => {
   if (!startDateStr || !endDateStr) return '-';
 
-  if (!startDateStr || !endDateStr) return '-';
-
   const start = safeDate(startDateStr);
   const end = safeDate(endDateStr);
 
@@ -51,12 +49,16 @@ const getDurationBetween = (startDateStr: string, endDateStr: string): string =>
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) return 'Mesmo dia';
-  if (diffDays > 30) {
+  if (diffDays >= 30) {
     const months = Math.floor(diffDays / 30);
     const days = diffDays % 30;
-    return days > 0 ? `${months} meses e ${days} dias` : `${months} meses`;
+    
+    const monthStr = months === 1 ? '1 mês' : `${months} meses`;
+    const dayStr = days === 1 ? '1 dia' : `${days} dias`;
+    
+    return days > 0 ? `${monthStr} e ${dayStr}` : monthStr;
   }
-  return `${diffDays} dias`;
+  return diffDays === 1 ? '1 dia' : `${diffDays} dias`;
 };
 
 // Função auxiliar para formatar moeda apenas para exibição
