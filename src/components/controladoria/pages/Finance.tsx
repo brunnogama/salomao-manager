@@ -108,6 +108,23 @@ export function Finance() {
   const [contractProcesses, setContractProcesses] = useState<ContractProcess[]>([]);
   const [contractDocuments, setContractDocuments] = useState<ContractDocument[]>([]);
 
+  // Baixa de Contrato
+  const [isConfirmBaixarOpen, setIsConfirmBaixarOpen] = useState(false);
+  const [contractToBaixar, setContractToBaixar] = useState<string | null>(null);
+
+  const handleBaixarContrato = async () => {
+    if (!contractToBaixar) return;
+    try {
+      await supabase.from('contracts').update({ status: 'baixado' }).eq('id', contractToBaixar);
+      toast.success('Contrato baixado com sucesso!');
+      setContractToBaixar(null);
+      fetchData();
+    } catch (error: any) {
+      console.error(error);
+      toast.error('Erro ao baixar contrato');
+    }
+  };
+
   useEffect(() => {
     fetchData();
 
@@ -152,7 +169,7 @@ export function Finance() {
       .order('due_date', { ascending: true });
 
     if (installmentsData) {
-      const allowedStatuses = ['proposal', 'active'];
+      const allowedStatuses = ['proposal', 'active', 'baixado'];
       const filteredInstallments = installmentsData.filter((i: any) =>
         i.contract?.status && allowedStatuses.includes(i.contract.status)
       );
@@ -302,9 +319,11 @@ export function Finance() {
     }
 
     let matchesStatus = true;
-    if (statusFilter === 'pending') matchesStatus = i.status === 'pending';
-    if (statusFilter === 'paid') matchesStatus = i.status === 'paid';
-    if (statusFilter === 'overdue') matchesStatus = isOverdue(i);
+    if (statusFilter === 'pending') matchesStatus = i.status === 'pending' && i.contract?.status !== 'baixado';
+    if (statusFilter === 'paid') matchesStatus = i.status === 'paid' && i.contract?.status !== 'baixado';
+    if (statusFilter === 'baixado') matchesStatus = i.contract?.status === 'baixado';
+    if (statusFilter === 'all') matchesStatus = i.contract?.status !== 'baixado';
+    if (statusFilter === 'overdue') matchesStatus = isOverdue(i) && i.contract?.status !== 'baixado';
 
     return matchesSearch && matchesPartner && matchesLocation && matchesStatus && matchesDate;
   });
@@ -392,6 +411,19 @@ export function Finance() {
       
     setIsDateModalOpen(false);
     toast.success(selectedInstallment.status === 'paid' ? 'Faturamento atualizado!' : 'Faturamento confirmado!');
+
+    const contractId = selectedInstallment.contract_id || (selectedInstallment.contract as any)?.id;
+    if (contractId && selectedInstallment.status === 'pending') {
+      const otherPending = installments.filter(i => 
+        (i.contract_id === contractId || (i.contract as any)?.id === contractId) && 
+        i.id !== selectedInstallment.id && 
+        i.status === 'pending'
+      );
+      if (otherPending.length === 0) {
+        setContractToBaixar(contractId);
+        setIsConfirmBaixarOpen(true);
+      }
+    }
     fetchData();
   };
 
@@ -582,8 +614,10 @@ export function Finance() {
     clearFilters();
   };
 
-  const pendentesCount = installments.filter(i => i.status === 'pending').length;
-  const faturadosCount = installments.filter(i => i.status === 'paid').length;
+  const pendentesCount = installments.filter(i => i.status === 'pending' && i.contract?.status !== 'baixado').length;
+  const faturadosCount = installments.filter(i => i.status === 'paid' && i.contract?.status !== 'baixado').length;
+  const baixadosCount = installments.filter(i => i.contract?.status === 'baixado').length;
+  const todosCount = installments.length - baixadosCount;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
@@ -609,7 +643,7 @@ export function Finance() {
             >
               Todos
               <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${statusFilter === 'all' ? 'bg-[#1e3a8a] text-white' : 'bg-gray-200 text-gray-500'}`}>
-                {installments.length}
+                {todosCount}
               </span>
             </button>
 
@@ -630,6 +664,16 @@ export function Finance() {
               <CheckCircle2 className="w-3.5 h-3.5" /> Faturados
               <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${statusFilter === 'paid' ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
                 {faturadosCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('baixado')}
+              className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === 'baixado' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Download className="w-3.5 h-3.5" /> Baixados
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${statusFilter === 'baixado' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                {baixadosCount}
               </span>
             </button>
           </div>
@@ -753,7 +797,7 @@ export function Finance() {
                     {filteredInstallments.map((item) => (
                       <tr
                         key={item.id}
-                        className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
+                        className={`transition-colors cursor-pointer group ${item.contract?.status === 'baixado' ? 'bg-gray-50 opacity-60 grayscale hover:opacity-80' : 'hover:bg-blue-50/30'}`}
                         onClick={() => handleMarkAsPaid(item)}
                       >
                         <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{(item.contract as any)?.display_id}</td>
@@ -790,7 +834,11 @@ export function Finance() {
                             <button onClick={(e) => { e.stopPropagation(); handleEditDueDate(item); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-all" title="Alterar Vencimento"><CalendarDays className="w-4 h-4" /></button>
                             <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-all" title="Baixar Contrato"><FileDown className="w-4 h-4" /></button>
 
-                            {item.status === 'pending' ? (
+                            {item.contract?.status === 'baixado' ? (
+                              <div className="ml-2 bg-purple-50/50 text-purple-600 border border-purple-100 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center">
+                                <CheckCircle2 className="w-3 h-3 mr-1" /> Baixado
+                              </div>
+                            ) : item.status === 'pending' ? (
                               <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1.5 rounded-lg hover:bg-amber-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
                                 <DollarSign className="w-3 h-3 mr-1" /> Faturar
                               </button>
@@ -1019,6 +1067,23 @@ export function Finance() {
           setIsDateModalOpen(false);
         }}
         variant="warning"
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmBaixarOpen}
+        onClose={() => {
+          setIsConfirmBaixarOpen(false);
+          setContractToBaixar(null);
+        }}
+        title="Faturamento Concluído"
+        description="Não há mais faturamento pendente para esse contrato. Deseja baixar o contrato?"
+        confirmText="Sim, Baixar Contrato"
+        onConfirm={() => {
+          setIsConfirmBaixarOpen(false);
+          handleBaixarContrato();
+        }}
+        cancelText="Não Baixar"
+        variant="info"
       />
     </div>
   );
