@@ -10,9 +10,11 @@ import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocum
 
 import { EmptyState } from '../ui/EmptyState';
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { exportToStandardXLSX } from '../../../utils/exportUtils';
 import { toast } from 'sonner';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
+import { useEscKey } from '../../../hooks/useEscKey';
 import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 import { maskMoney, parseCurrency, safeDate } from '../utils/masks';
 
@@ -72,6 +74,37 @@ export function Finance() {
   const [installmentToEdit, setInstallmentToEdit] = useState<FinancialInstallment | null>(null);
   const [newDueDate, setNewDueDate] = useState('');
 
+  const [initialBillingState, setInitialBillingState] = useState('');
+  const [isConfirmCloseBillingOpen, setIsConfirmCloseBillingOpen] = useState(false);
+
+  const getCurrentBillingState = () => {
+    return JSON.stringify({
+      nfIssueDate, nfDueDate, billingDate, nfNumber, nfLocation, nfNature, nfObservations,
+      nfIrpj, nfPis, nfCofins, nfCsll, nfValue, nfNetValue
+    });
+  };
+
+  const handleTryCloseBillingModal = () => {
+    if (getCurrentBillingState() !== initialBillingState) {
+      setIsConfirmCloseBillingOpen(true);
+    } else {
+      setIsDateModalOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isDateModalOpen) {
+      setTimeout(() => {
+        setInitialBillingState(getCurrentBillingState());
+      }, 50);
+    } else {
+      setInitialBillingState('');
+      setIsConfirmCloseBillingOpen(false);
+    }
+  }, [isDateModalOpen, nfIssueDate, nfDueDate, billingDate, nfNumber, nfLocation, nfNature, nfObservations, nfIrpj, nfPis, nfCofins, nfCsll, nfValue, nfNetValue]);
+
+  useEscKey(isDateModalOpen && !isConfirmCloseBillingOpen, handleTryCloseBillingModal);
+
   // Modal de Detalhes do Contrato
   const [isContractModalOpen, setIsContractModalOpen] = useState(false);
 
@@ -84,7 +117,6 @@ export function Finance() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsDateModalOpen(false);
         setIsDueDateModalOpen(false);
         setIsContractModalOpen(false);
       }
@@ -748,12 +780,12 @@ export function Finance() {
         <div 
           className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[99999] p-4"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setIsDateModalOpen(false);
+            if (e.target === e.currentTarget) handleTryCloseBillingModal();
           }}
         >
           <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-3xl animate-in zoom-in-95 border border-gray-100 relative">
             <button 
-              onClick={() => setIsDateModalOpen(false)}
+              onClick={handleTryCloseBillingModal}
               className="absolute top-5 right-5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-1.5 transition-all"
             >
               <X className="w-5 h-5 pointer-events-none" />
@@ -771,6 +803,7 @@ export function Finance() {
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
+                  // No need to warn if they're actively navigating elsewhere via the module link
                   setIsDateModalOpen(false);
                   handleOpenContractModal(selectedInstallment!.contract_id);
                 }}
@@ -873,7 +906,7 @@ export function Finance() {
             </div>
 
             <div className="flex justify-end gap-3 mt-8">
-              <button onClick={() => setIsDateModalOpen(false)} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
+              <button onClick={handleTryCloseBillingModal} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
               <button onClick={confirmPayment} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">
                 {selectedInstallment?.status === 'paid' ? 'Salvar Alterações' : 'Confirmar Pagamento'}
               </button>
@@ -902,6 +935,26 @@ export function Finance() {
           </div>
         </div>
       )}
+
+      {/* CONFIRM CLOSE BILLING MODAL */}
+      <ConfirmModal
+        isOpen={isConfirmCloseBillingOpen}
+        onClose={() => setIsConfirmCloseBillingOpen(false)}
+        title="Deseja salvar as alterações?"
+        description="Você realizou alterações nas informações de faturamento desta parcela. Como deseja prosseguir?"
+        confirmText="Salvar e Sair"
+        onConfirm={() => {
+          setIsConfirmCloseBillingOpen(false);
+          confirmPayment();
+        }}
+        cancelText="Voltar"
+        secondaryActionText="Sair sem Salvar"
+        onSecondaryAction={() => {
+          setIsConfirmCloseBillingOpen(false);
+          setIsDateModalOpen(false);
+        }}
+        variant="warning"
+      />
     </div>
   );
 }
