@@ -16,8 +16,6 @@ import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { useState } from 'react'
 
-// --- Helper Functions ---
-// --- Main component ---
 export function RHDashboard() {
   const { isPresentationMode, togglePresentationMode } = usePresentation()
   const [showExportModal, setShowExportModal] = useState(false)
@@ -58,7 +56,9 @@ export function RHDashboard() {
         if (img.width > 0) {
           pdf.addImage(img, 'PNG', 40, 30, 200, 60);
         }
-      } catch(e) {}
+      } catch(error) {
+        console.warn('Falha silenciosa evitada - Erro ao integrar logo no canvas PDF', error);
+      }
 
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(28);
@@ -129,7 +129,7 @@ export function RHDashboard() {
               Dashboard RH
             </h1>
             <p className="text-sm font-semibold text-gray-500 mt-0.5">
-              Visão geral estratégica e indicadores chave
+               Visão geral estratégica e indicadores chave
             </p>
           </div>
         </div>
@@ -171,7 +171,6 @@ export function RHDashboard() {
 
       <div className="max-w-[1600px] mx-auto w-full pb-10 flex flex-col gap-6">
 
-        {/* Master Dashboards Included Here */}
         <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
           <RHEvolucaoPessoal />
         </div>
