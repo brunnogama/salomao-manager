@@ -330,6 +330,18 @@ export function Finance() {
     if (statusFilter === 'overdue') matchesStatus = isOverdue(i) && i.contract?.status !== 'baixado';
 
     return matchesStatus;
+  }).sort((a, b) => {
+    const clauseA = ((a as any).clause || '').toString().toLowerCase();
+    const clauseB = ((b as any).clause || '').toString().toLowerCase();
+    
+    if (!clauseA && clauseB) return 1;
+    if (clauseA && !clauseB) return -1;
+    if (clauseA === clauseB) {
+       const dateA = a.due_date ? new Date(a.due_date).getTime() : 0;
+       const dateB = b.due_date ? new Date(b.due_date).getTime() : 0;
+       return dateA - dateB;
+    }
+    return clauseA.localeCompare(clauseB);
   });
 
   const totalPending = baseInstallments.filter(i => i.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
@@ -822,9 +834,15 @@ export function Finance() {
                           )}
                         </td>
                         <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{item.contract?.client_name}</td>
-                        <td className="p-4 text-[10px] font-semibold text-gray-500 uppercase">
-                          <div className="font-bold">HON: {item.contract?.hon_number || '-'}</div>
-                          <div className="text-[9px] text-gray-400 truncate max-w-[150px] lowercase tracking-normal">{(item as any).clause}</div>
+                        <td className="p-4 uppercase">
+                          <div className="text-[10px] font-bold text-gray-500">HON: {item.contract?.hon_number || '-'}</div>
+                          {(item as any).clause ? (
+                            <div className="text-[11px] font-black text-[#1e3a8a] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded inline-block mt-1 tracking-tight truncate max-w-[180px]" title={(item as any).clause}>
+                              {(item as any).clause}
+                            </div>
+                          ) : (
+                            <div className="text-[9px] text-gray-400 mt-1 uppercase tracking-tight">Sem cláusula</div>
+                          )}
                         </td>
                         <td className="p-4">
                           <div className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest">{getTypeLabel(item.type)}</div>
