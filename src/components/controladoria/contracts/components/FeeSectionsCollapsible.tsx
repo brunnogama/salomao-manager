@@ -38,16 +38,22 @@ interface FeeSectionsCollapsibleProps {
 }
 
 // Componente de item de honorário salvo
-const SavedFeeItem = ({ val, clause, installment, rule, isReady, onEdit, onDelete }: {
-    val: string; clause?: string; installment?: string; rule?: string; isReady?: boolean;
+const SavedFeeItem = ({ val, clause, installment, rule, isReady, feeType, onEdit, onDelete }: {
+    val: string; clause?: string; installment?: string; rule?: string; isReady?: boolean; feeType?: string;
     onEdit: () => void; onDelete: () => void;
-}) => (
+}) => {
+    const titleParts = [
+        clause ? clause : null,
+        feeType ? feeType : null,
+        val,
+        installment ? installment : '1x'
+    ].filter(Boolean).join(' - ');
+
+    return (
     <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-4 py-3 group hover:border-blue-200 transition-colors">
         <div className="flex flex-col flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-                {clause && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">Cl. {clause}</span>}
-                <span className="font-bold text-sm text-[#0a192f]">{val}</span>
-                {installment && installment !== '1x' && <span className="text-gray-400 text-[10px] font-medium">({installment})</span>}
+                <span className="font-bold text-sm text-[#0a192f]">{titleParts}</span>
                 {isReady && <span className="flex items-center gap-0.5 text-[9px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider"><CheckCircle className="w-2.5 h-2.5" /> Faturar</span>}
             </div>
             {rule && <span className="text-[11px] text-gray-500 italic mt-1 line-clamp-1">{rule}</span>}
@@ -61,7 +67,8 @@ const SavedFeeItem = ({ val, clause, installment, rule, isReady, onEdit, onDelet
             </button>
         </div>
     </div>
-);
+    );
+};
 
 
 
@@ -158,6 +165,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     installment={(formData as any)[installmentsField]}
                                     rule={(formData as any)[ruleField]}
                                     isReady={(formData as any)[readyField]}
+                                    feeType={title}
                                     onEdit={() => setOpenSections(prev => ({ ...prev, [key]: true }))}
                                     onDelete={() => setFormData({ ...formData, [valueField]: '', [clauseField]: '', [installmentsField]: '1x', [ruleField]: '', [readyField]: false } as any)}
                                 />
@@ -170,6 +178,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     installment={extrasInstallments[idx]}
                                     rule={extrasRules[idx]}
                                     isReady={extrasReady[idx]}
+                                    feeType={title}
                                     onEdit={() => {
                                         handleEditExtra(extrasField, valueField, extrasInstallmentsField, installmentsField, extrasClausesField, clauseField as keyof Contract, extrasRulesField, ruleField, extrasReadyField, readyField, idx);
                                         setOpenSections(prev => ({ ...prev, [key]: true }));
@@ -284,6 +293,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     installment={installments[idx]}
                                     rule={rules[idx]}
                                     isReady={readyFlags[idx]}
+                                    feeType="Êxito Intermediário"
                                     onEdit={() => {
                                         setNewIntermediateFee(fee);
                                         setInterimInstallments(installments[idx] || '1x');

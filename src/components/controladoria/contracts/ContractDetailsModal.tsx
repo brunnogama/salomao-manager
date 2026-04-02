@@ -428,6 +428,44 @@ export function ContractDetailsModal({
 
   const renderFinancials = () => {
     if (!financials.showTotals) return null;
+
+    const renderDetailItem = (
+      clause: string | undefined,
+      feeType: string,
+      val: string | undefined | null,
+      installment: string | undefined,
+      ready: boolean | undefined,
+      rule: string | undefined,
+      colorTheme: 'gray' | 'blue' | 'green' | 'yellow'
+    ) => {
+      if (!val) return null;
+      
+      const titleParts = [
+        clause ? clause : null,
+        feeType,
+        val,
+        installment ? installment : '1x'
+      ].filter(Boolean).join(' - ');
+
+      const colors = {
+        gray: { bg: 'bg-white', border: 'border-gray-100', text: 'text-gray-700', ruleBg: 'bg-gray-50', ruleText: 'text-gray-500' },
+        blue: { bg: 'bg-white', border: 'border-blue-100', text: 'text-blue-800', ruleBg: 'bg-blue-50/50', ruleText: 'text-blue-600/80' },
+        green: { bg: 'bg-white', border: 'border-green-100', text: 'text-green-800', ruleBg: 'bg-green-50/50', ruleText: 'text-green-700/80' },
+        yellow: { bg: 'bg-white', border: 'border-yellow-100', text: 'text-yellow-900', ruleBg: 'bg-yellow-50/50', ruleText: 'text-yellow-800/80' }
+      };
+      const t = colors[colorTheme];
+
+      return (
+        <div className={`text-xs flex flex-col ${t.bg} p-2 rounded border ${t.border} mt-1 shadow-sm`}>
+          <div className="flex justify-between items-start">
+             <span className={`font-semibold ${t.text}`}>{titleParts}</span>
+             {ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+          </div>
+          {rule && <span className={`text-[10px] ${t.ruleText} italic mt-1 ${t.ruleBg} p-1.5 rounded`}>{rule}</span>}
+        </div>
+      );
+    };
+
     return (
       <div className="space-y-4">
          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-black/5 pb-2">Resumo Financeiro</h3>
@@ -446,29 +484,16 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-gray-800">{financials.formattedProLabore}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.pro_labore) > 0 && activeTab === 2 && (contract.pro_labore_clause || contract.pro_labore_rule || contract.pro_labore_ready) && (
-                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
-                          <div className="flex justify-between items-start">
-                             <span className="font-semibold text-gray-700">{contract.pro_labore_clause ? `Cláusula ${contract.pro_labore_clause} - Principal` : 'Regra Principal'}</span>
-                             {contract.pro_labore_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                          </div>
-                          {contract.pro_labore_rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{contract.pro_labore_rule}</span>}
-                        </div>
+                      {parseCurrency(contract.pro_labore) > 0 && (
+                          renderDetailItem(contract.pro_labore_clause, 'Pró-labore', contract.pro_labore, contract.pro_labore_installments, contract.pro_labore_ready, contract.pro_labore_rule, 'gray')
                       )}
                       {(contract as any).pro_labore_extras && Array.isArray((contract as any).pro_labore_extras) && (contract as any).pro_labore_extras.map((val: string, idx: number) => {
                          const rule = (contract as any).pro_labore_extras_rules?.[idx];
                          const ready = (contract as any).pro_labore_extras_ready?.[idx];
                          const clause = (contract as any).pro_labore_extras_clauses?.[idx];
+                         const inst = (contract as any).pro_labore_extras_installments?.[idx];
                          if (parseCurrency(val) === 0) return null;
-                         return (
-                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
-                            <div className="flex justify-between items-start">
-                               <span className="font-semibold text-gray-700">{clause ? `Cláusula ${clause}` : `Adicional ${idx + 1}`} - {val}</span>
-                               {activeTab === 2 && ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                            </div>
-                            {activeTab === 2 && rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{rule}</span>}
-                          </div>
-                         );
+                         return <React.Fragment key={idx}>{renderDetailItem(clause, 'Pró-labore', val, inst, ready, rule, 'gray')}</React.Fragment>;
                       })}
                     </div>
                  </div>
@@ -485,16 +510,9 @@ export function ContractDetailsModal({
                          const rule = (contract as any).intermediate_fees_rules?.[idx];
                          const ready = (contract as any).intermediate_fees_ready?.[idx];
                          const clause = (contract as any).intermediate_fees_clauses?.[idx];
+                         const inst = (contract as any).intermediate_fees_installments?.[idx];
                          if (parseCurrency(val) === 0) return null;
-                         return (
-                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-blue-100 mt-1">
-                            <div className="flex justify-between items-start">
-                               <span className="font-semibold text-blue-800">{clause ? `Cláusula ${clause}` : `Fase ${idx + 1}`} - {val}</span>
-                               {activeTab === 2 && ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                            </div>
-                            {activeTab === 2 && rule && <span className="text-[10px] text-blue-600/80 italic mt-1 bg-blue-50/50 p-1.5 rounded">{rule}</span>}
-                          </div>
-                         );
+                         return <React.Fragment key={idx}>{renderDetailItem(clause, 'Êxito Intermediário', val, inst, ready, rule, 'blue')}</React.Fragment>;
                       })}
                     </div>
                  </div>
@@ -507,29 +525,16 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-green-900">{financials.formattedFinalFee}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.final_success_fee) > 0 && activeTab === 2 && (contract.final_success_fee_clause || contract.final_success_fee_rule || contract.final_success_ready) && (
-                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-green-100 mt-1">
-                          <div className="flex justify-between items-start">
-                             <span className="font-semibold text-green-800">{contract.final_success_fee_clause ? `Cláusula ${contract.final_success_fee_clause} - Principal` : 'Regra Principal'}</span>
-                             {contract.final_success_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                          </div>
-                          {contract.final_success_fee_rule && <span className="text-[10px] text-green-700/80 italic mt-1 bg-green-50/50 p-1.5 rounded">{contract.final_success_fee_rule}</span>}
-                        </div>
+                      {parseCurrency(contract.final_success_fee) > 0 && (
+                          renderDetailItem(contract.final_success_fee_clause, 'Êxito Final', contract.final_success_fee, contract.final_success_fee_installments, contract.final_success_ready, contract.final_success_fee_rule, 'green')
                       )}
                       {(contract as any).final_success_extras && Array.isArray((contract as any).final_success_extras) && (contract as any).final_success_extras.map((val: string, idx: number) => {
                          const rule = (contract as any).final_success_extras_rules?.[idx];
                          const ready = (contract as any).final_success_extras_ready?.[idx];
                          const clause = (contract as any).final_success_extras_clauses?.[idx];
+                         const inst = (contract as any).final_success_extras_installments?.[idx];
                          if (parseCurrency(val) === 0) return null;
-                         return (
-                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-green-100 mt-1">
-                            <div className="flex justify-between items-start">
-                               <span className="font-semibold text-green-800">{clause ? `Cláusula ${clause}` : `Adicional ${idx + 1}`} - {val}</span>
-                               {activeTab === 2 && ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                            </div>
-                            {activeTab === 2 && rule && <span className="text-[10px] text-green-700/80 italic mt-1 bg-green-50/50 p-1.5 rounded">{rule}</span>}
-                          </div>
-                         );
+                         return <React.Fragment key={idx}>{renderDetailItem(clause, 'Êxito Final', val, inst, ready, rule, 'green')}</React.Fragment>;
                       })}
                     </div>
                  </div>
@@ -542,29 +547,16 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-gray-800">{financials.formattedFixedMonthly}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.fixed_monthly_fee) > 0 && activeTab === 2 && (contract.fixed_monthly_fee_clause || contract.fixed_monthly_fee_rule || contract.fixed_monthly_ready) && (
-                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
-                          <div className="flex justify-between items-start">
-                             <span className="font-semibold text-gray-700">{contract.fixed_monthly_fee_clause ? `Cláusula ${contract.fixed_monthly_fee_clause} - Principal` : 'Regra Principal'}</span>
-                             {contract.fixed_monthly_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                          </div>
-                          {contract.fixed_monthly_fee_rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{contract.fixed_monthly_fee_rule}</span>}
-                        </div>
+                      {parseCurrency(contract.fixed_monthly_fee) > 0 && (
+                          renderDetailItem(contract.fixed_monthly_fee_clause, 'Fixo Mensal', contract.fixed_monthly_fee, contract.fixed_monthly_fee_installments, contract.fixed_monthly_ready, contract.fixed_monthly_fee_rule, 'gray')
                       )}
                       {(contract as any).fixed_monthly_extras && Array.isArray((contract as any).fixed_monthly_extras) && (contract as any).fixed_monthly_extras.map((val: string, idx: number) => {
                          const rule = (contract as any).fixed_monthly_extras_rules?.[idx];
                          const ready = (contract as any).fixed_monthly_extras_ready?.[idx];
                          const clause = (contract as any).fixed_monthly_extras_clauses?.[idx];
+                         const inst = (contract as any).fixed_monthly_extras_installments?.[idx];
                          if (parseCurrency(val) === 0) return null;
-                         return (
-                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
-                            <div className="flex justify-between items-start">
-                               <span className="font-semibold text-gray-700">{clause ? `Cláusula ${clause}` : `Adicional ${idx + 1}`} - {val}</span>
-                               {activeTab === 2 && ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                            </div>
-                            {activeTab === 2 && rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{rule}</span>}
-                          </div>
-                         );
+                         return <React.Fragment key={idx}>{renderDetailItem(clause, 'Fixo Mensal', val, inst, ready, rule, 'gray')}</React.Fragment>;
                       })}
                     </div>
                  </div>
@@ -577,29 +569,16 @@ export function ContractDetailsModal({
                        <span className="text-sm font-black text-gray-800">{financials.formattedOtherFees}</span>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.other_fees) > 0 && activeTab === 2 && (contract.other_fees_clause || contract.other_fees_rule || contract.other_fees_ready) && (
-                        <div className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
-                          <div className="flex justify-between items-start">
-                             <span className="font-semibold text-gray-700">{contract.other_fees_clause ? `Cláusula ${contract.other_fees_clause} - Principal` : 'Regra Principal'}</span>
-                             {contract.other_fees_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                          </div>
-                          {contract.other_fees_rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{contract.other_fees_rule}</span>}
-                        </div>
+                      {parseCurrency(contract.other_fees) > 0 && (
+                          renderDetailItem(contract.other_fees_clause, 'Outros Honorários', contract.other_fees, contract.other_fees_installments, contract.other_fees_ready, contract.other_fees_rule, 'gray')
                       )}
                       {(contract as any).other_fees_extras && Array.isArray((contract as any).other_fees_extras) && (contract as any).other_fees_extras.map((val: string, idx: number) => {
                          const rule = (contract as any).other_fees_extras_rules?.[idx];
                          const ready = (contract as any).other_fees_extras_ready?.[idx];
                          const clause = (contract as any).other_fees_extras_clauses?.[idx];
+                         const inst = (contract as any).other_fees_extras_installments?.[idx];
                          if (parseCurrency(val) === 0) return null;
-                         return (
-                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-gray-100 mt-1">
-                            <div className="flex justify-between items-start">
-                               <span className="font-semibold text-gray-700">{clause ? `Cláusula ${clause}` : `Adicional ${idx + 1}`} - {val}</span>
-                               {activeTab === 2 && ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                            </div>
-                            {activeTab === 2 && rule && <span className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">{rule}</span>}
-                          </div>
-                         );
+                         return <React.Fragment key={idx}>{renderDetailItem(clause, 'Outros Honorários', val, inst, ready, rule, 'gray')}</React.Fragment>;
                       })}
                     </div>
                  </div>
@@ -613,27 +592,13 @@ export function ContractDetailsModal({
                     </div>
                     <div className="flex flex-col gap-2 mt-1">
                       {contract.final_success_percent && (
-                         <div className="text-xs flex flex-col bg-white p-2 rounded border border-yellow-100 mt-1">
-                           <div className="flex justify-between items-start">
-                             <span className="font-black text-yellow-900">{contract.final_success_percent_clause ? `Cláusula ${contract.final_success_percent_clause} - Principal` : 'Principal'} - {contract.final_success_percent}</span>
-                             {activeTab === 2 && contract.final_success_percent_ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                           </div>
-                           {activeTab === 2 && contract.final_success_percent_rule && <span className="text-[10px] text-yellow-800/80 italic mt-1 bg-yellow-50/50 p-1.5 rounded">{contract.final_success_percent_rule}</span>}
-                         </div>
+                          renderDetailItem(contract.final_success_percent_clause, 'Valores em %', contract.final_success_percent, '1x', contract.final_success_percent_ready, contract.final_success_percent_rule, 'yellow')
                       )}
                       {validPercentExtras.map((val: string, idx: number) => {
                          const rule = (contract as any).percent_extras_rules?.[idx];
                          const ready = (contract as any).percent_extras_ready?.[idx];
                          const clause = (contract as any).percent_extras_clauses?.[idx];
-                         return (
-                          <div key={idx} className="text-xs flex flex-col bg-white p-2 rounded border border-yellow-100 mt-1">
-                            <div className="flex justify-between items-start">
-                              <span className="font-black text-yellow-900">{clause ? `Cláusula ${clause}` : `Adicional ${idx + 1}`} - {val}</span>
-                              {activeTab === 2 && ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
-                            </div>
-                            {activeTab === 2 && rule && <span className="text-[10px] text-yellow-800/80 italic mt-1 bg-yellow-50/50 p-1.5 rounded">{rule}</span>}
-                          </div>
-                         );
+                         return <React.Fragment key={idx}>{renderDetailItem(clause, 'Valores em %', val, '1x', ready, rule, 'yellow')}</React.Fragment>;
                       })}
                     </div>
                  </div>
