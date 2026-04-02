@@ -838,17 +838,23 @@ export function Contracts() {
                   {filteredContracts.map(contract => (
                     <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
                       <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{contract.display_id}</td>
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(contract.status)}`}>
                           {getStatusLabel(contract.status)}
                         </span>
                       </td>
-                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
-                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{getPartnerDisplay(contract)}</td>
-                      <td className="p-4 font-mono text-[10px] font-bold text-gray-400">
-                        {getHonDisplay(contract)}
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight whitespace-normal max-w-[250px] break-words">{contract.client_name}</td>
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight whitespace-normal max-w-[250px] break-words">{getPartnerDisplay(contract)}</td>
+                      <td className="p-4 whitespace-nowrap">
+                        <span className="bg-slate-100/80 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-md font-mono text-[10px] font-black tracking-widest">
+                          {getHonDisplay(contract)}
+                        </span>
                       </td>
-                      <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}</td>
+                      <td className="p-4 text-right whitespace-nowrap">
+                        <span className="bg-blue-50/50 text-[#1e3a8a] border border-blue-100/50 px-2.5 py-1 rounded-md text-[10px] font-black tracking-widest">
+                          {safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}
+                        </span>
+                      </td>
                       <td className="p-4">
                         <div className="flex justify-end gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>
