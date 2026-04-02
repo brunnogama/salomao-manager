@@ -99,6 +99,7 @@ export function ContractDetailsModal({
   
   const [activeTab, setActiveTab] = useState(0);
   const [totalPaid, setTotalPaid] = useState(0);
+  const [baixadoDate, setBaixadoDate] = useState<string | null>(null);
   const [loadingAiMap, setLoadingAiMap] = useState<Record<string, boolean>>({});
   const [localSummaries, setLocalSummaries] = useState<Record<string, string>>({});
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
@@ -113,13 +114,20 @@ export function ContractDetailsModal({
       try {
         const { data, error } = await supabase
           .from('financial_installments')
-          .select('amount')
+          .select('amount, paid_at')
           .eq('contract_id', contract.id)
           .eq('status', 'paid');
           
         if (!error && data && isMounted) {
           const sum = data.reduce((acc, curr) => acc + Number(curr.amount), 0);
           setTotalPaid(sum);
+
+          if (contract.status === 'baixado' && data.length > 0) {
+             const dates = data.map(i => i.paid_at).filter(Boolean).sort();
+             if (dates.length > 0) {
+               setBaixadoDate(dates[dates.length - 1]);
+             }
+          }
         }
       } catch (err) {}
     };
@@ -207,7 +215,7 @@ export function ContractDetailsModal({
       events.push({ label: 'Probono', date: contract.probono_date, status: 'probono', color: 'bg-purple-100 text-purple-800 border-purple-200' });
     }
     if (contract.status === 'baixado') {
-      events.push({ label: 'Baixado', date: contract.updated_at || new Date().toISOString(), status: 'baixado', color: 'bg-purple-100 text-purple-800 border-purple-200' });
+      events.push({ label: 'Baixado', date: baixadoDate || contract.updated_at || new Date().toISOString(), status: 'baixado', color: 'bg-purple-100 text-purple-800 border-purple-200' });
     }
 
     return events.sort((a, b) => {
@@ -248,7 +256,7 @@ export function ContractDetailsModal({
       case 'analysis': return contract.prospect_date || contract.created_at;
       case 'proposal': return contract.proposal_date || contract.created_at;
       case 'active': return contract.contract_date || contract.created_at;
-      case 'baixado': return contract.updated_at || contract.contract_date || contract.created_at;
+      case 'baixado': return baixadoDate || contract.updated_at || contract.contract_date || contract.created_at;
       case 'rejected': return contract.rejection_date || contract.created_at;
       case 'probono': return contract.probono_date || contract.contract_date || contract.created_at;
       default: return contract.created_at;
