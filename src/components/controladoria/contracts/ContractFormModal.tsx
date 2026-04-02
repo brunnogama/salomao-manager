@@ -178,13 +178,18 @@ export function ContractFormModal(props: Props) {
   useEffect(() => {
     const checkClientDuplicates = async () => {
       if (!formData.client_name || formData.client_name.length < 3) return setDuplicateClientCases([]);
-      const { data } = await supabase.from('contracts').select('id, hon_number, status, seq_id').ilike('client_name', `%${formData.client_name}%`).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').limit(5);
-      if (data) {
-        const formatted = data.map(c => ({
-          ...c,
-          display_id: String((c as any).seq_id || 0).padStart(6, '0')
-        }));
-        setDuplicateClientCases(formatted);
+      try {
+        const { data, error } = await supabase.from('contracts').select('id, hon_number, status, seq_id').ilike('client_name', `%${formData.client_name}%`).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').limit(5);
+        if (error) throw error;
+        if (data) {
+          const formatted = data.map(c => ({
+            ...c,
+            display_id: String((c as any).seq_id || 0).padStart(6, '0')
+          }));
+          setDuplicateClientCases(formatted);
+        }
+      } catch (err) {
+        console.error('Erro ao verificar duplicidade de cliente:', err);
       }
     };
     const timer = setTimeout(checkClientDuplicates, 800);
@@ -194,14 +199,19 @@ export function ContractFormModal(props: Props) {
   useEffect(() => {
     const checkHonDuplicates = async () => {
       if (!formData.hon_number || formData.hon_number.length < 2) return setDuplicateHonCase(null);
-      const { data } = await supabase.from('contracts').select('id, client_name, seq_id, status').eq('hon_number', formData.hon_number).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').limit(1);
-      if (data && data.length > 0) {
-        setDuplicateHonCase({
-          ...data[0],
-          display_id: String((data[0] as any).seq_id || 0).padStart(6, '0')
-        });
-      } else {
-        setDuplicateHonCase(null);
+      try {
+        const { data, error } = await supabase.from('contracts').select('id, client_name, seq_id, status').eq('hon_number', formData.hon_number).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').limit(1);
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setDuplicateHonCase({
+            ...data[0],
+            display_id: String((data[0] as any).seq_id || 0).padStart(6, '0')
+          });
+        } else {
+          setDuplicateHonCase(null);
+        }
+      } catch (err) {
+        console.error('Erro ao verificar duplicidade de HON:', err);
       }
     };
     const timer = setTimeout(checkHonDuplicates, 800);
@@ -286,7 +296,14 @@ export function ContractFormModal(props: Props) {
 
 
   const fetchStatuses = async () => {
-    const { data } = await supabase.from('contract_statuses').select('*');
+    let data = null;
+    try {
+      const result = await supabase.from('contract_statuses').select('*');
+      if (result.error) throw result.error;
+      data = result.data;
+    } catch (err) {
+      console.error('Erro ao buscar status:', err);
+    }
     const defaultStatuses = [
       { label: 'Sob Análise', value: 'analysis' },
       { label: 'Proposta Enviada', value: 'proposal' },
@@ -322,8 +339,13 @@ export function ContractFormModal(props: Props) {
   };
 
   const fetchDocuments = async () => {
-    const { data } = await supabase.from('contract_documents').select('*').eq('contract_id', formData.id).order('uploaded_at', { ascending: false });
-    if (data) setDocuments(data);
+    try {
+      const { data, error } = await supabase.from('contract_documents').select('*').eq('contract_id', formData.id).order('uploaded_at', { ascending: false });
+      if (error) throw error;
+      if (data) setDocuments(data);
+    } catch (err) {
+      console.error('Erro ao buscar documentos:', err);
+    }
   };
 
   const upsertClient = async () => {

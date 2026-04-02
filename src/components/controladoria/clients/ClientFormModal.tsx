@@ -84,14 +84,19 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
     const checkDuplicates = async () => {
       if (!formData.name || formData.name.length < 3) return setDuplicateClients([]);
 
-      const { data } = await supabase
-        .from('clients')
-        .select('*')
-        .ilike('name', `%${formData.name}%`)
-        .neq('id', client?.id || '00000000-0000-0000-0000-000000000000') // Não comparar consigo mesmo
-        .limit(3);
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .ilike('name', `%${formData.name}%`)
+          .neq('id', client?.id || '00000000-0000-0000-0000-000000000000') // Não comparar consigo mesmo
+          .limit(3);
 
-      if (data) setDuplicateClients(data);
+        if (error) throw error;
+        if (data) setDuplicateClients(data);
+      } catch (err) {
+        console.error('Erro checando duplicidade de cliente:', err);
+      }
     };
 
     const timer = setTimeout(checkDuplicates, 500);
@@ -99,21 +104,31 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
   }, [formData.name, client?.id]);
 
   const fetchPartners = async () => {
-    const { data } = await supabase
-      .from('partners')
-      .select('*')
-      .eq('status', 'active')
-      .order('name');
-    if (data) setPartners(data);
+    try {
+      const { data, error } = await supabase
+        .from('partners')
+        .select('*')
+        .eq('status', 'active')
+        .order('name');
+      if (error) throw error;
+      if (data) setPartners(data);
+    } catch (err) {
+      console.error('Erro ao buscar sócios:', err);
+    }
   };
 
   const fetchContacts = async (clientId: string) => {
-    const { data } = await supabase
-      .from('client_contacts')
-      .select('*')
-      .eq('client_id', clientId)
-      .order('created_at');
-    if (data) setContacts(data);
+    try {
+      const { data, error } = await supabase
+        .from('client_contacts')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at');
+      if (error) throw error;
+      if (data) setContacts(data);
+    } catch (err) {
+      console.error('Erro ao buscar contatos:', err);
+    }
   };
 
   const handleAddContact = () => {

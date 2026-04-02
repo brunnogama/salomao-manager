@@ -26,13 +26,19 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
 
   const fetchAnalysts = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('analysts')
-      .select('*')
-      .order('name', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('analysts')
+        .select('*')
+        .order('name', { ascending: true });
 
-    if (data) setAnalysts(data);
-    setLoading(false);
+      if (error) throw error;
+      if (data) setAnalysts(data);
+    } catch (error: any) {
+      console.error('Erro ao buscar analistas:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async () => {
