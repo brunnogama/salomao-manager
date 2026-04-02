@@ -38,13 +38,12 @@ interface FeeSectionsCollapsibleProps {
 }
 
 // Componente de item de honorário salvo
-const SavedFeeItem = ({ val, clause, installment, rule, isReady, feeType, onEdit, onDelete }: {
+const SavedFeeItem = ({ val, clause, installment, rule, isReady, feeType: _feeType, onEdit, onDelete }: {
     val: string; clause?: string; installment?: string; rule?: string; isReady?: boolean; feeType?: string;
     onEdit: () => void; onDelete: () => void;
 }) => {
     const titleParts = [
         clause ? clause : null,
-        feeType ? feeType : null,
         val,
         installment ? installment : '1x'
     ].filter(Boolean).join(' - ');

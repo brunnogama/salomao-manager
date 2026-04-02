@@ -431,7 +431,7 @@ export function ContractDetailsModal({
 
     const renderDetailItem = (
       clause: string | undefined,
-      feeType: string,
+      _feeType: string,
       val: string | undefined | null,
       installment: string | undefined,
       ready: boolean | undefined,
@@ -442,7 +442,6 @@ export function ContractDetailsModal({
       
       const titleParts = [
         clause ? clause : null,
-        feeType,
         val,
         installment ? installment : '1x'
       ].filter(Boolean).join(' - ');
