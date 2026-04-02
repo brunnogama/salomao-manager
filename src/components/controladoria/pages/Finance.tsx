@@ -14,7 +14,7 @@ import { exportToStandardXLSX } from '../../../utils/exportUtils';
 import { toast } from 'sonner';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
-import { maskMoney, parseCurrency } from '../utils/masks';
+import { maskMoney, parseCurrency, safeDate } from '../utils/masks';
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -258,13 +258,15 @@ export function Finance() {
 
     let matchesDate = true;
     if (filterPeriodo.start || filterPeriodo.end) {
-      const dateToCheck = i.paid_at ? new Date(i.paid_at) : (i.due_date ? new Date(i.due_date) : null);
+      const dateToCheck = i.paid_at ? safeDate(i.paid_at) : (i.due_date ? safeDate(i.due_date) : null);
       if (dateToCheck) {
-        if (filterPeriodo.start && dateToCheck < new Date(filterPeriodo.start)) matchesDate = false;
+        if (filterPeriodo.start) {
+          const startD = safeDate(filterPeriodo.start);
+          if (startD) { startD.setHours(0, 0, 0, 0); if (dateToCheck < startD) matchesDate = false; }
+        }
         if (filterPeriodo.end) {
-          const end = new Date(filterPeriodo.end);
-          end.setHours(23, 59, 59, 999);
-          if (dateToCheck > end) matchesDate = false;
+          const end = safeDate(filterPeriodo.end);
+          if (end) { end.setHours(23, 59, 59, 999); if (dateToCheck > end) matchesDate = false; }
         }
       } else {
         matchesDate = false;
@@ -414,9 +416,9 @@ export function Finance() {
       'Tipo': getTypeLabel(i.type),
       'Parcela': `${i.installment_number}/${i.total_installments}`,
       'Valor': i.amount,
-      'Vencimento': new Date(i.due_date!).toLocaleDateString(),
+      'Vencimento': i.due_date ? safeDate(i.due_date)?.toLocaleDateString() : '-',
       'Status': i.status === 'paid' ? 'Faturado' : 'Pendente',
-      'Data Faturamento': i.paid_at ? new Date(i.paid_at).toLocaleDateString() : '-',
+      'Data Faturamento': i.paid_at ? safeDate(i.paid_at)?.toLocaleDateString() : '-',
       'Nota Fiscal': i.nf_number || '-'
     }));
     exportToStandardXLSX(
@@ -671,11 +673,11 @@ export function Finance() {
                         </td>
                         <td className="p-4 text-[11px] font-semibold">
                           {item.paid_at ? (
-                            <span className="text-emerald-600 font-black uppercase tracking-tighter">Pago em {new Date(item.paid_at).toLocaleDateString()}</span>
+                            <span className="text-emerald-600 font-black uppercase tracking-tighter">Pago em {safeDate(item.paid_at)?.toLocaleDateString()}</span>
                           ) : (
                             <span className={`flex items-center ${isOverdue(item) ? "text-red-600 font-black uppercase tracking-tighter" : "text-gray-700"}`}>
                               {isOverdue(item) && <AlertTriangle className="w-3 h-3 mr-1 animate-pulse" />}
-                              {item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}
+                              {item.due_date ? safeDate(item.due_date)?.toLocaleDateString() : '-'}
                             </span>
                           )}
                         </td>

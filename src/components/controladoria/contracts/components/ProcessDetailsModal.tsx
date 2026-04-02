@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Gavel, Edit } from 'lucide-react';
 import { ContractProcess } from '../../../../types/controladoria';
+import { safeDate } from '../../utils/masks';
 
 interface ProcessDetailsModalProps {
   process: ContractProcess | null;
@@ -74,23 +75,23 @@ export function ProcessDetailsModal({ process, onClose, onEdit }: ProcessDetails
             </div>
             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
               <span className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Tipo de Ação</span>
-              <span className="text-sm font-medium text-gray-800">{process.action_type || '-'}</span>
+              <span className="text-sm font-medium text-gray-800">{(process as any).action_type || '-'}</span>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
               <span className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Data Distribuição</span>
-              <span className="text-sm font-medium text-gray-800">{process.distribution_date ? new Date(process.distribution_date).toLocaleDateString('pt-BR') : '-'}</span>
+              <span className="text-sm font-medium text-gray-800">{(process as any).distribution_date ? safeDate((process as any).distribution_date)?.toLocaleDateString('pt-BR') : '-'}</span>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
               <span className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Justiça</span>
-              <span className="text-sm font-medium text-gray-800">{process.justice_type || '-'}</span>
+              <span className="text-sm font-medium text-gray-800">{(process as any).justice_type || '-'}</span>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
               <span className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Instância</span>
-              <span className="text-sm font-medium text-gray-800">{process.instance || '-'}</span>
+              <span className="text-sm font-medium text-gray-800">{(process as any).instance || '-'}</span>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
               <span className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Classe</span>
-              <span className="text-sm font-medium text-gray-800">{process.process_class || '-'}</span>
+              <span className="text-sm font-medium text-gray-800">{(process as any).process_class || '-'}</span>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
               <span className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Assunto</span>
