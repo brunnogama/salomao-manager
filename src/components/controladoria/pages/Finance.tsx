@@ -846,7 +846,7 @@ export function Finance() {
                         </td>
                         <td className="p-4">
                           <div className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest">{getTypeLabel(item.type)}</div>
-                          <div className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Parcela {item.installment_number}/{item.total_installments}</div>
+                          <div className="text-[10px] font-black text-[#1e3a8a] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded inline-block mt-1 uppercase tracking-tight">Parcela {item.installment_number}/{item.total_installments}</div>
                         </td>
                         <td className="p-4 text-right font-black text-[#0a192f] text-xs">
                           {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
