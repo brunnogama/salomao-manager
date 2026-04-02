@@ -499,12 +499,14 @@ export function Finance() {
     toast.success(selectedInstallment.status === 'paid' ? 'Faturamento atualizado!' : 'Faturamento confirmado!');
 
     const contractId = selectedInstallment.contract_id || (selectedInstallment.contract as any)?.id;
-    if (contractId && selectedInstallment.status === 'pending') {
+    if (contractId) {
       if (selectedInstallment.type === 'fixed_monthly_fee') {
         setInstallmentToGenerateNext(selectedInstallment);
         setIsConfirmGenerateNextOpen(true);
-      } else {
+      } else if (selectedInstallment.status === 'pending') {
         checkAndPromptBaixa(contractId, selectedInstallment.id);
+      } else {
+        fetchData();
       }
     } else {
       fetchData();
