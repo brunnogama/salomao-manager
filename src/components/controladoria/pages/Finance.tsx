@@ -53,14 +53,17 @@ export function Finance() {
   const [nfCofins, setNfCofins] = useState('');
   const [nfCsll, setNfCsll] = useState('');
 
-  const nfNetValue = useMemo(() => {
+  const [nfNetValue, setNfNetValue] = useState('');
+  const [nfObservations, setNfObservations] = useState('');
+
+  useEffect(() => {
     const value = parseCurrency(nfValue) || 0;
     const irpj = parseCurrency(nfIrpj) || 0;
     const pis = parseCurrency(nfPis) || 0;
     const cofins = parseCurrency(nfCofins) || 0;
     const csll = parseCurrency(nfCsll) || 0;
     const net = value - irpj - pis - cofins - csll;
-    return maskMoney(net.toFixed(2).replace('.', ','));
+    setNfNetValue(maskMoney(net.toFixed(2).replace('.', ',')));
   }, [nfValue, nfIrpj, nfPis, nfCofins, nfCsll]);
 
   const [officeLocations, setOfficeLocations] = useState<{ id: string; name: string }[]>([]);
@@ -289,6 +292,7 @@ export function Finance() {
     setNfNumber(installment.nf_number || '');
     setNfLocation(installment.nf_location || '');
     setNfNature(installment.nf_nature || '');
+    setNfObservations((installment as any).observations || '');
     
     setNfIrpj(installment.tax_irpj ? maskMoney(installment.tax_irpj.toFixed(2).replace('.', ',')) : '');
     setNfPis(installment.tax_pis ? maskMoney(installment.tax_pis.toFixed(2).replace('.', ',')) : '');
@@ -325,7 +329,8 @@ export function Finance() {
         tax_pis: nfPis ? parseCurrency(nfPis) : null,
         tax_cofins: nfCofins ? parseCurrency(nfCofins) : null,
         tax_csll: nfCsll ? parseCurrency(nfCsll) : null,
-        net_value: nfNetValue ? parseCurrency(nfNetValue) : null
+        net_value: nfNetValue ? parseCurrency(nfNetValue) : null,
+        observations: nfObservations || null
       })
       .eq('id', selectedInstallment.id);
       
@@ -825,8 +830,25 @@ export function Finance() {
               </div>
 
               <div className="mt-4 bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl flex justify-between items-center transition-all">
-                <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Valor Líquido Recebido</span>
-                <span className="text-2xl font-black text-emerald-600">{nfNetValue || 'R$ 0,00'}</span>
+                <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest shrink-0">Valor Líquido Recebido</span>
+                <input 
+                  type="text" 
+                  className="text-right w-full bg-transparent text-2xl font-black text-emerald-600 outline-none focus:bg-white/50 focus:ring-2 focus:ring-emerald-200/50 rounded-lg px-2 -mr-2 transition-all"
+                  value={nfNetValue}
+                  onChange={(e) => setNfNetValue(maskMoney(e.target.value))}
+                  placeholder="R$ 0,00"
+                />
+              </div>
+              
+              <div className="mt-4">
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Observações (Opcional)</label>
+                <textarea 
+                  className="w-full border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-700 shadow-sm hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-400 resize-none"
+                  rows={2}
+                  placeholder="Informações adicionais sobre o faturamento..."
+                  value={nfObservations}
+                  onChange={(e) => setNfObservations(e.target.value)}
+                ></textarea>
               </div>
             </div>
 

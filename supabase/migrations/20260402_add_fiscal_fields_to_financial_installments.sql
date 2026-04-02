@@ -9,4 +9,5 @@ ALTER TABLE public.financial_installments
   ADD COLUMN IF NOT EXISTS tax_cofins NUMERIC(10,2),
   ADD COLUMN IF NOT EXISTS tax_csll NUMERIC(10,2),
   ADD COLUMN IF NOT EXISTS net_value NUMERIC(10,2),
-  ADD COLUMN IF NOT EXISTS nf_number TEXT;
+  ADD COLUMN IF NOT EXISTS nf_number TEXT,
+  ADD COLUMN IF NOT EXISTS observations TEXT;
