@@ -87,6 +87,16 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
             const newRulesList = [...ensureArray(prev[ruleListField])];
             const newReadyList = prev[readyListField] ? [...prev[readyListField]] : [];
 
+            // Prevent data loss: if main slot has a non-zero value, move it to the extra list before overwriting it
+            const currentMainValue = prev[valueField];
+            if (currentMainValue && currentMainValue !== 'R$ 0,00' && currentMainValue !== '') {
+                newList.push(currentMainValue);
+                newInstList.push(prev[installmentsSourceField] || '1x');
+                newClausesList.push(prev[clauseSourceField] || '');
+                newRulesList.push(prev[ruleSourceField] || '');
+                newReadyList.push(prev[readySourceField] || false);
+            }
+
             newList.splice(index, 1);
             newClausesList.splice(index, 1);
             newInstList.splice(index, 1);

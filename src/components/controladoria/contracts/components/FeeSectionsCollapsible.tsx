@@ -223,12 +223,20 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     type="button"
                                     onClick={() => {
                                         handleAddToList(extrasField, valueField, extrasInstallmentsField, installmentsField, extrasRulesField, ruleField as any, extrasReadyField, readyField as any);
-                                        // Não fechamos a seção, permitimos adicionar mais
                                     }}
-                                    className="flex items-center gap-1.5 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-sm"
+                                    className="flex items-center gap-1.5 px-4 py-2 text-[#1e3a8a] bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors shadow-sm"
+                                    title="Salvar este e abrir espaço para adicionar mais um do mesmo tipo"
                                 >
                                     <Plus className="w-3.5 h-3.5" />
-                                    Transformar em Adicional
+                                    Adicionar Outro
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => toggleSection(key)}
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-sm"
+                                >
+                                    <Save className="w-3.5 h-3.5" />
+                                    Salvar
                                 </button>
                             </div>
                         </div>
