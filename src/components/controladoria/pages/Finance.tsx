@@ -416,7 +416,7 @@ export function Finance() {
     if (!selectedInstallment) return;
     
     // Atualiza a parcela com a data de pagamento, status de pago e número da NF
-    await supabase.from('financial_installments')
+    const { error } = await supabase.from('financial_installments')
       .update({ 
         status: 'paid', 
         paid_at: billingDate || null,
@@ -425,16 +425,22 @@ export function Finance() {
         nf_number: nfNumber || null,
         nf_location: nfLocation || null,
         nf_nature: nfNature || null,
-        nf_value: nfValue ? parseCurrency(nfValue) : null,
-        tax_irpj: nfIrpj ? parseCurrency(nfIrpj) : null,
-        tax_pis: nfPis ? parseCurrency(nfPis) : null,
-        tax_cofins: nfCofins ? parseCurrency(nfCofins) : null,
-        tax_csll: nfCsll ? parseCurrency(nfCsll) : null,
-        net_value: nfNetValue ? parseCurrency(nfNetValue) : null,
+        nf_value: nfValue ? parseCurrency(String(nfValue)) : null,
+        tax_irpj: nfIrpj ? parseCurrency(String(nfIrpj)) : null,
+        tax_pis: nfPis ? parseCurrency(String(nfPis)) : null,
+        tax_cofins: nfCofins ? parseCurrency(String(nfCofins)) : null,
+        tax_csll: nfCsll ? parseCurrency(String(nfCsll)) : null,
+        net_value: nfNetValue ? parseCurrency(String(nfNetValue)) : null,
         observations: nfObservations || null
       })
       .eq('id', selectedInstallment.id);
       
+    if (error) {
+      console.error(error);
+      toast.error(`Erro ao salvar: ${error.message}`);
+      return;
+    }
+
     setIsDateModalOpen(false);
     toast.success(selectedInstallment.status === 'paid' ? 'Faturamento atualizado!' : 'Faturamento confirmado!');
 
