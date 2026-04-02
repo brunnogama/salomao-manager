@@ -280,7 +280,7 @@ export function Finance() {
     }
   };
 
-  const filteredInstallments = installments.filter(i => {
+  const baseInstallments = installments.filter(i => {
     const term = searchTerm.toLowerCase().trim();
     const numericTerm = term.replace(/\D/g, '');
 
@@ -318,6 +318,10 @@ export function Finance() {
       }
     }
 
+    return matchesSearch && matchesPartner && matchesLocation && matchesDate;
+  });
+
+  const filteredInstallments = baseInstallments.filter(i => {
     let matchesStatus = true;
     if (statusFilter === 'pending') matchesStatus = i.status === 'pending' && i.contract?.status !== 'baixado';
     if (statusFilter === 'paid') matchesStatus = i.status === 'paid' && i.contract?.status !== 'baixado';
@@ -325,12 +329,12 @@ export function Finance() {
     if (statusFilter === 'all') matchesStatus = i.contract?.status !== 'baixado';
     if (statusFilter === 'overdue') matchesStatus = isOverdue(i) && i.contract?.status !== 'baixado';
 
-    return matchesSearch && matchesPartner && matchesLocation && matchesStatus && matchesDate;
+    return matchesStatus;
   });
 
-  const totalPending = filteredInstallments.filter(i => i.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
-  const totalPaid = filteredInstallments.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0);
-  const totalPendingCount = filteredInstallments.filter(i => i.status === 'pending').length;
+  const totalPending = baseInstallments.filter(i => i.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalPaid = baseInstallments.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalPendingCount = baseInstallments.filter(i => i.status === 'pending').length;
   const totalOverdueCount = installments.filter(i => isOverdue(i)).length;
 
   const handleMarkAsPaid = (installment: FinancialInstallment) => {
@@ -797,7 +801,7 @@ export function Finance() {
                     {filteredInstallments.map((item) => (
                       <tr
                         key={item.id}
-                        className={`transition-colors cursor-pointer group ${item.contract?.status === 'baixado' ? 'bg-gray-50 opacity-60 grayscale hover:opacity-80' : 'hover:bg-blue-50/30'}`}
+                        className={`transition-colors cursor-pointer group ${item.contract?.status === 'baixado' ? 'bg-gray-50/50 opacity-90 hover:bg-gray-100/50' : 'hover:bg-blue-50/30'}`}
                         onClick={() => handleMarkAsPaid(item)}
                       >
                         <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{(item.contract as any)?.display_id}</td>
