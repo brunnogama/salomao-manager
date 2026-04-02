@@ -3,9 +3,10 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import {
   DollarSign, Download, CheckCircle2, Circle, Clock, Loader2,
-  CalendarDays, Receipt, MapPin, Hash,
+  CalendarDays, Receipt, MapPin, Hash, Settings,
   AlertTriangle, Plus, FileDown, Briefcase, ChevronDown, X
 } from 'lucide-react';
+import { CustomSelect } from '../ui/CustomSelect';
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 
 import { EmptyState } from '../ui/EmptyState';
@@ -331,6 +332,13 @@ export function Finance() {
 
     return matchesStatus;
   }).sort((a, b) => {
+    const idA = (a.contract as any)?.seq_id || 0;
+    const idB = (b.contract as any)?.seq_id || 0;
+    
+    if (idA !== idB) {
+      return idB - idA;
+    }
+
     const clauseA = ((a as any).clause || '').toString().toLowerCase();
     const clauseB = ((b as any).clause || '').toString().toLowerCase();
     
@@ -967,14 +975,14 @@ export function Finance() {
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Local do Fat.</label>
-                  <div className="relative">
-                    <select className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] outline-none transition-all bg-white shadow-sm hover:border-gray-300" value={nfLocation} onChange={(e) => setNfLocation(e.target.value)}>
-                      <option value="">Selecione...</option>
-                      {officeLocations.map(loc => (
-                        <option key={loc.id} value={loc.id}>{loc.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <CustomSelect 
+                    value={nfLocation} 
+                    onChange={setNfLocation} 
+                    options={[{ label: 'Selecione', value: '' }, ...officeLocations.map(loc => ({ label: loc.name, value: loc.id }))]}
+                    actionLabel="Gerenciar Locais"
+                    actionIcon={Settings}
+                    onAction={() => toast.info('As modificações de locais são centralizadas no módulo de contratos/configurações.')}
+                  />
                 </div>
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Natureza</label>
