@@ -21,6 +21,22 @@ interface InternalTimelineEvent {
   color: string;
 }
 
+const ExpandableText = ({ text }: { text: string }) => {
+  const [expanded, setExpanded] = React.useState(false);
+  return (
+    <div 
+      className={`text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-medium bg-slate-50 border border-slate-100 p-3 rounded-lg cursor-pointer transition-all ${!expanded ? 'line-clamp-3' : ''}`}
+      onClick={() => setExpanded(!expanded)}
+      title={expanded ? "Clique para recolher" : "Clique para expandir (mostrar mais)"}
+    >
+      {text}
+      {!expanded && text && text.length > 150 && (
+        <span className="text-salomao-blue text-xs ml-1 font-bold">... (ver mais)</span>
+      )}
+    </div>
+  );
+};
+
 const getDurationBetween = (startDateStr: string, endDateStr: string): string => {
   if (!startDateStr || !endDateStr) return '-';
 
@@ -360,15 +376,15 @@ export function ContractDetailsModal({
     Seção Reutilizável de Timeline e Cálculos de Timeline 
   */
   const renderTimeline = () => (
-    <div className="border-t border-gray-100 pt-6">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
           <HistoryIcon className="w-4 h-4 mr-2" /> Timeline das Fases
         </h3>
       </div>
 
       {timelineEvents.length > 0 ? (
-        <div className="flex items-stretch overflow-x-auto pb-4 px-2 space-x-2 scrollbar-thin scrollbar-thumb-gray-200 w-full">
+        <div className="flex items-stretch overflow-x-auto pb-2 px-1 space-x-2 scrollbar-thin scrollbar-thumb-gray-200 w-full">
           {timelineEvents.map((event, idx) => {
             const isLast = idx === timelineEvents.length - 1;
             const nextEvent = !isLast ? timelineEvents[idx + 1] : null;
@@ -379,29 +395,29 @@ export function ContractDetailsModal({
 
             return (
               <React.Fragment key={idx}>
-                <div className="flex-shrink-0 flex flex-col h-full min-w-[200px] flex-1">
-                  <div className={`flex-1 flex flex-col justify-between bg-white p-4 rounded-xl border shadow-sm transition-all w-full text-center relative ${event.status === contract.status ? 'border-salomao-blue ring-1 ring-salomao-blue/20 shadow-md' : 'border-gray-100'}`}>
+                <div className="flex-shrink-0 flex flex-col h-full min-w-[130px] flex-1">
+                  <div className={`flex-1 flex flex-col justify-between bg-white p-2 rounded-lg border shadow-sm transition-all w-full text-center relative ${event.status === contract.status ? 'border-salomao-blue ring-1 ring-salomao-blue/20 shadow-md' : 'border-gray-100'}`}>
                     <div>
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border mb-3 ${event.color}`}>
+                      <span className={`inline-block px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase border mb-1.5 ${event.color}`}>
                         {event.label}
                       </span>
-                      <p className="text-sm font-bold text-gray-700 flex items-center justify-center gap-1.5">
-                        <CalendarCheck className="w-4 h-4 text-gray-400" />
+                      <p className="text-xs font-bold text-gray-700 flex items-center justify-center gap-1">
+                        <CalendarCheck className="w-3.5 h-3.5 text-gray-400" />
                         {safeDate(event.date)?.toLocaleDateString('pt-BR') || '-'}
                       </p>
                     </div>
 
-                    <div className="space-y-2 mt-3">
+                    <div className="space-y-1 mt-2">
                       {event.status === 'active' && (
-                        <div className="flex items-center justify-center text-[10px] text-green-700 bg-green-50 px-2 py-1 rounded-lg border border-green-100 w-full font-medium">
-                          <Hourglass className="w-3 h-3 mr-1" />
+                        <div className="flex items-center justify-center text-[9px] text-green-700 bg-green-50 px-1 py-0.5 rounded border border-green-100 w-full font-medium">
+                          <Hourglass className="w-2.5 h-2.5 mr-1" />
                           Total: {getTotalDuration()}
                         </div>
                       )}
 
                       {durationToNext && (
-                        <div className="flex items-center justify-center text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 w-full mx-auto">
-                          <Clock className="w-3 h-3 mr-1" />
+                        <div className="flex items-center justify-center text-[9px] text-gray-400 bg-gray-50 px-1 py-0.5 rounded border border-gray-100 w-full mx-auto">
+                          <Clock className="w-2.5 h-2.5 mr-1" />
                           {durationToNext}
                         </div>
                       )}
@@ -411,7 +427,7 @@ export function ContractDetailsModal({
 
                 {!isLast && (
                   <div className="flex-shrink-0 text-gray-300 self-center">
-                    <ChevronsRight className="w-6 h-6" />
+                    <ChevronsRight className="w-4 h-4" />
                   </div>
                 )}
               </React.Fragment>
@@ -419,7 +435,7 @@ export function ContractDetailsModal({
           })}
         </div>
       ) : (
-        <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl text-gray-400 text-sm">
+        <div className="text-center py-4 border border-dashed border-gray-200 rounded-lg text-gray-400 text-xs">
           Nenhuma data interna preenchida.
         </div>
       )}
@@ -761,6 +777,8 @@ export function ContractDetailsModal({
                   )}
                 </div>
 
+                {renderTimeline()}
+
                 {/* Área Financeira (apenas Fechado/Ativo ou Proposta) */}
                 {renderFinancials()}
 
@@ -785,9 +803,7 @@ export function ContractDetailsModal({
                               </div>
                             </div>
                             
-                            <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-medium bg-slate-50 border border-slate-100 p-3 rounded-lg">
-                              {summaryContent}
-                            </div>
+                            <ExpandableText text={summaryContent} />
                             
                             <div className="text-[10px] text-gray-500 flex items-center">
                               Parte Adversa: <strong className="ml-1 text-gray-700">{proc.opponent || '-'}</strong>
@@ -798,8 +814,6 @@ export function ContractDetailsModal({
                     </div>
                   )}
                 </div>
-
-                {renderTimeline()}
               </div>
             )}
 
