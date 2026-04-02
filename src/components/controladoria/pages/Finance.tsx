@@ -117,6 +117,60 @@ export function Finance() {
   const [isConfirmBaixarOpen, setIsConfirmBaixarOpen] = useState(false);
   const [contractToBaixar, setContractToBaixar] = useState<string | null>(null);
 
+  const [isConfirmGenerateNextOpen, setIsConfirmGenerateNextOpen] = useState(false);
+  const [installmentToGenerateNext, setInstallmentToGenerateNext] = useState<FinancialInstallment | null>(null);
+
+  const checkAndPromptBaixa = (contractId: string, ignoreInstallmentId: string) => {
+    const otherPending = installments.filter(i => 
+      (i.contract_id === contractId || (i.contract as any)?.id === contractId) && 
+      i.id !== ignoreInstallmentId && 
+      i.status === 'pending'
+    );
+    if (otherPending.length === 0) {
+      setContractToBaixar(contractId);
+      setIsConfirmBaixarOpen(true);
+    } else {
+      fetchData();
+    }
+  };
+
+  const generateNextFixedInstallment = async () => {
+    if (!installmentToGenerateNext) return;
+    
+    let baseDateStr = installmentToGenerateNext.due_date;
+    if (!baseDateStr) {
+       baseDateStr = new Date().toISOString().split('T')[0];
+    }
+    const d = new Date(baseDateStr + 'T12:00:00');
+    d.setMonth(d.getMonth() + 1);
+    const nextDueDate = d.toISOString().split('T')[0];
+
+    // Limpar campos de faturamento para gerar uma parcela nova e "limpa"
+    const newInstallment = {
+      contract_id: installmentToGenerateNext.contract_id,
+      type: installmentToGenerateNext.type,
+      amount: installmentToGenerateNext.amount,
+      installment_number: installmentToGenerateNext.installment_number + 1,
+      total_installments: installmentToGenerateNext.total_installments,
+      due_date: nextDueDate,
+      status: 'pending',
+      clause: installmentToGenerateNext.clause
+    };
+
+    try {
+      const { error } = await supabase.from('financial_installments').insert([newInstallment]);
+      if (error) throw error;
+      toast.success('Próxima parcela gerada com sucesso!');
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Erro ao gerar próxima parcela: ${e.message}`);
+    }
+
+    setIsConfirmGenerateNextOpen(false);
+    setInstallmentToGenerateNext(null);
+    fetchData();
+  };
+
   const handleBaixarContrato = async () => {
     if (!contractToBaixar) return;
     try {
@@ -446,17 +500,15 @@ export function Finance() {
 
     const contractId = selectedInstallment.contract_id || (selectedInstallment.contract as any)?.id;
     if (contractId && selectedInstallment.status === 'pending') {
-      const otherPending = installments.filter(i => 
-        (i.contract_id === contractId || (i.contract as any)?.id === contractId) && 
-        i.id !== selectedInstallment.id && 
-        i.status === 'pending'
-      );
-      if (otherPending.length === 0) {
-        setContractToBaixar(contractId);
-        setIsConfirmBaixarOpen(true);
+      if (selectedInstallment.type === 'fixed_monthly_fee') {
+        setInstallmentToGenerateNext(selectedInstallment);
+        setIsConfirmGenerateNextOpen(true);
+      } else {
+        checkAndPromptBaixa(contractId, selectedInstallment.id);
       }
+    } else {
+      fetchData();
     }
-    fetchData();
   };
 
   const handleEditDueDate = (installment: FinancialInstallment) => {
@@ -1125,6 +1177,24 @@ export function Finance() {
         editingValue={editingManagerValue}
         setEditingValue={setEditingManagerValue}
         placeholder="Digite o local"
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmGenerateNextOpen}
+        onClose={() => {
+          if (installmentToGenerateNext) {
+            const cId = installmentToGenerateNext.contract_id || (installmentToGenerateNext.contract as any)?.id;
+            checkAndPromptBaixa(cId, installmentToGenerateNext.id);
+          }
+          setIsConfirmGenerateNextOpen(false);
+          setInstallmentToGenerateNext(null);
+        }}
+        title="Gerar Próxima Parcela?"
+        description="Esta é uma parcela de Fixo Mensal. Deseja gerar automaticamente a parcela do próximo mês com as mesmas condições?"
+        confirmText="Sim, Gerar Próxima"
+        onConfirm={generateNextFixedInstallment}
+        cancelText="Não Gerar"
+        variant="info"
       />
 
       <ConfirmModal
