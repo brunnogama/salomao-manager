@@ -23,6 +23,7 @@ import { KanbanTask, Contract } from '../../../types/controladoria';
 import { KanbanTaskModal } from '../kanban/KanbanTaskModal';
 import { toast } from 'sonner';
 import { logAction } from '../../../lib/logger';
+import { safeDate } from '../utils/masks';
 
 // REMOVIDOS: billing e review
 const columns: Record<string, { id: string; title: string; color: string; accent: string }> = {
@@ -327,7 +328,7 @@ export function Kanban() {
                                   <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-50">
                                     <div className="flex items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                       <Calendar className="w-3 h-3 mr-1.5 text-[#1e3a8a]" />
-                                      {task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR') : '-'}
+                                      {task.due_date ? safeDate(task.due_date)?.toLocaleDateString('pt-BR') : '-'}
                                     </div>
                                     <div className="h-6 w-6 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center">
                                       <User className="w-3 h-3 text-gray-400" />

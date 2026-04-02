@@ -762,7 +762,7 @@ export function Contracts() {
                         <p className="text-sm font-medium text-gray-800 line-clamp-1">{notif.title}</p>
                         <p className="text-xs text-gray-500 flex items-center mt-1">
                           <Calendar className="w-3 h-3 mr-1" />
-                          Vence: {new Date(notif.due_date).toLocaleDateString()}
+                          Vence: {safeDate(notif.due_date)?.toLocaleDateString()}
                         </p>
                       </div>
                     ))

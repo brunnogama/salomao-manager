@@ -14,7 +14,7 @@ import { exportToStandardXLSX } from '../../../utils/exportUtils';
 import { toast } from 'sonner';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
-import { maskMoney, parseCurrency } from '../utils/masks';
+import { maskMoney, parseCurrency, safeDate } from '../utils/masks';
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -53,14 +53,17 @@ export function Finance() {
   const [nfCofins, setNfCofins] = useState('');
   const [nfCsll, setNfCsll] = useState('');
 
-  const nfNetValue = useMemo(() => {
+  const [nfNetValue, setNfNetValue] = useState('');
+  const [nfObservations, setNfObservations] = useState('');
+
+  useEffect(() => {
     const value = parseCurrency(nfValue) || 0;
     const irpj = parseCurrency(nfIrpj) || 0;
     const pis = parseCurrency(nfPis) || 0;
     const cofins = parseCurrency(nfCofins) || 0;
     const csll = parseCurrency(nfCsll) || 0;
     const net = value - irpj - pis - cofins - csll;
-    return maskMoney(net.toFixed(2).replace('.', ','));
+    setNfNetValue(maskMoney(net.toFixed(2).replace('.', ',')));
   }, [nfValue, nfIrpj, nfPis, nfCofins, nfCsll]);
 
   const [officeLocations, setOfficeLocations] = useState<{ id: string; name: string }[]>([]);
@@ -255,13 +258,15 @@ export function Finance() {
 
     let matchesDate = true;
     if (filterPeriodo.start || filterPeriodo.end) {
-      const dateToCheck = i.paid_at ? new Date(i.paid_at) : (i.due_date ? new Date(i.due_date) : null);
+      const dateToCheck = i.paid_at ? safeDate(i.paid_at) : (i.due_date ? safeDate(i.due_date) : null);
       if (dateToCheck) {
-        if (filterPeriodo.start && dateToCheck < new Date(filterPeriodo.start)) matchesDate = false;
+        if (filterPeriodo.start) {
+          const startD = safeDate(filterPeriodo.start);
+          if (startD) { startD.setHours(0, 0, 0, 0); if (dateToCheck < startD) matchesDate = false; }
+        }
         if (filterPeriodo.end) {
-          const end = new Date(filterPeriodo.end);
-          end.setHours(23, 59, 59, 999);
-          if (dateToCheck > end) matchesDate = false;
+          const end = safeDate(filterPeriodo.end);
+          if (end) { end.setHours(23, 59, 59, 999); if (dateToCheck > end) matchesDate = false; }
         }
       } else {
         matchesDate = false;
@@ -289,6 +294,7 @@ export function Finance() {
     setNfNumber(installment.nf_number || '');
     setNfLocation(installment.nf_location || '');
     setNfNature(installment.nf_nature || '');
+    setNfObservations((installment as any).observations || '');
     
     setNfIrpj(installment.tax_irpj ? maskMoney(installment.tax_irpj.toFixed(2).replace('.', ',')) : '');
     setNfPis(installment.tax_pis ? maskMoney(installment.tax_pis.toFixed(2).replace('.', ',')) : '');
@@ -325,12 +331,13 @@ export function Finance() {
         tax_pis: nfPis ? parseCurrency(nfPis) : null,
         tax_cofins: nfCofins ? parseCurrency(nfCofins) : null,
         tax_csll: nfCsll ? parseCurrency(nfCsll) : null,
-        net_value: nfNetValue ? parseCurrency(nfNetValue) : null
+        net_value: nfNetValue ? parseCurrency(nfNetValue) : null,
+        observations: nfObservations || null
       })
       .eq('id', selectedInstallment.id);
       
     setIsDateModalOpen(false);
-    toast.success('Faturamento confirmado!');
+    toast.success(selectedInstallment.status === 'paid' ? 'Faturamento atualizado!' : 'Faturamento confirmado!');
     fetchData();
   };
 
@@ -409,9 +416,9 @@ export function Finance() {
       'Tipo': getTypeLabel(i.type),
       'Parcela': `${i.installment_number}/${i.total_installments}`,
       'Valor': i.amount,
-      'Vencimento': new Date(i.due_date!).toLocaleDateString(),
+      'Vencimento': i.due_date ? safeDate(i.due_date)?.toLocaleDateString() : '-',
       'Status': i.status === 'paid' ? 'Faturado' : 'Pendente',
-      'Data Faturamento': i.paid_at ? new Date(i.paid_at).toLocaleDateString() : '-',
+      'Data Faturamento': i.paid_at ? safeDate(i.paid_at)?.toLocaleDateString() : '-',
       'Nota Fiscal': i.nf_number || '-'
     }));
     exportToStandardXLSX(
@@ -655,7 +662,7 @@ export function Finance() {
                       <tr
                         key={item.id}
                         className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
-                        onClick={() => handleOpenContractModal(item.contract!.id)}
+                        onClick={() => handleMarkAsPaid(item)}
                       >
                         <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{(item.contract as any)?.display_id}</td>
                         <td className="p-4">
@@ -666,11 +673,11 @@ export function Finance() {
                         </td>
                         <td className="p-4 text-[11px] font-semibold">
                           {item.paid_at ? (
-                            <span className="text-emerald-600 font-black uppercase tracking-tighter">Pago em {new Date(item.paid_at).toLocaleDateString()}</span>
+                            <span className="text-emerald-600 font-black uppercase tracking-tighter">Pago em {safeDate(item.paid_at)?.toLocaleDateString()}</span>
                           ) : (
                             <span className={`flex items-center ${isOverdue(item) ? "text-red-600 font-black uppercase tracking-tighter" : "text-gray-700"}`}>
                               {isOverdue(item) && <AlertTriangle className="w-3 h-3 mr-1 animate-pulse" />}
-                              {item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}
+                              {item.due_date ? safeDate(item.due_date)?.toLocaleDateString() : '-'}
                             </span>
                           )}
                         </td>
@@ -752,8 +759,26 @@ export function Finance() {
               <X className="w-5 h-5 pointer-events-none" />
             </button>
 
-            <h3 className="text-lg font-black text-[#0a192f] mb-2 uppercase tracking-tight">Confirmar Faturamento</h3>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Confirma o recebimento desta parcela e informações fiscais?</p>
+            <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4 pr-8">
+              <div>
+                <h3 className="text-lg font-black text-[#0a192f] mb-1 uppercase tracking-tight">
+                  {selectedInstallment?.status === 'paid' ? 'Detalhes do Faturamento' : 'Confirmar Faturamento'}
+                </h3>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirma o recebimento desta parcela e informações fiscais?'}
+                </p>
+              </div>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDateModalOpen(false);
+                  handleOpenContractModal(selectedInstallment!.contract_id);
+                }}
+                className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 flex items-center transition-all shrink-0"
+              >
+                <Briefcase className="w-3.5 h-3.5 mr-2" /> Visualizar Contrato
+              </button>
+            </div>
 
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
@@ -825,14 +850,33 @@ export function Finance() {
               </div>
 
               <div className="mt-4 bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl flex justify-between items-center transition-all">
-                <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Valor Líquido Recebido</span>
-                <span className="text-2xl font-black text-emerald-600">R$ {nfNetValue || '0,00'}</span>
+                <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest shrink-0">Valor Líquido Recebido</span>
+                <input 
+                  type="text" 
+                  className="text-right w-full bg-transparent text-2xl font-black text-emerald-600 outline-none focus:bg-white/50 focus:ring-2 focus:ring-emerald-200/50 rounded-lg px-2 -mr-2 transition-all"
+                  value={nfNetValue}
+                  onChange={(e) => setNfNetValue(maskMoney(e.target.value))}
+                  placeholder="R$ 0,00"
+                />
+              </div>
+              
+              <div className="mt-4">
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Observações (Opcional)</label>
+                <textarea 
+                  className="w-full border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-700 shadow-sm hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-400 resize-none"
+                  rows={2}
+                  placeholder="Informações adicionais sobre o faturamento..."
+                  value={nfObservations}
+                  onChange={(e) => setNfObservations(e.target.value)}
+                ></textarea>
               </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-8">
               <button onClick={() => setIsDateModalOpen(false)} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
-              <button onClick={confirmPayment} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">Confirmar Pagamento</button>
+              <button onClick={confirmPayment} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">
+                {selectedInstallment?.status === 'paid' ? 'Salvar Alterações' : 'Confirmar Pagamento'}
+              </button>
             </div>
           </div>
         </div>
