@@ -7,6 +7,8 @@ import {
   AlertTriangle, Plus, FileDown, Briefcase, ChevronDown, X
 } from 'lucide-react';
 import { CustomSelect } from '../ui/CustomSelect';
+import { useContractOptions } from '../hooks/useContractOptions';
+import { OptionManager } from '../contracts/components/OptionManager';
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 
 import { EmptyState } from '../ui/EmptyState';
@@ -38,6 +40,10 @@ export function Finance() {
   const [filterPeriodo, setFilterPeriodo] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
   const [locations, setLocations] = useState<string[]>([]);
+  const [dummyFormData, setDummyFormData] = useState({} as Contract);
+  const { billingLocations, fetchAuxiliaryTables, handleGenericAdd, handleGenericEdit, handleGenericRemove } = useContractOptions({ formData: dummyFormData, setFormData: setDummyFormData });
+  const [activeManager, setActiveManager] = useState<string | null>(null);
+  const [editingManagerValue, setEditingManagerValue] = useState<string | null>(null);
 
   // Modais
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
@@ -68,8 +74,6 @@ export function Finance() {
     const net = value - irpj - pis - cofins - csll;
     setNfNetValue(maskMoney(net.toFixed(2).replace('.', ',')));
   }, [nfValue, nfIrpj, nfPis, nfCofins, nfCsll]);
-
-  const [officeLocations, setOfficeLocations] = useState<{ id: string; name: string }[]>([]);
 
   const [isDueDateModalOpen, setIsDueDateModalOpen] = useState(false);
   const [installmentToEdit, setInstallmentToEdit] = useState<FinancialInstallment | null>(null);
@@ -128,6 +132,7 @@ export function Finance() {
 
   useEffect(() => {
     fetchData();
+    fetchAuxiliaryTables();
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -154,9 +159,6 @@ export function Finance() {
 
     const { data: partnersData } = await supabase.from('partners').select('*').eq('status', 'active').order('name');
     if (partnersData) setPartners(partnersData);
-
-    const { data: locData } = await supabase.from('locations').select('id, name').order('name');
-    if (locData) setOfficeLocations(locData);
 
     const { data: installmentsData } = await supabase
       .from('financial_installments')
@@ -978,10 +980,10 @@ export function Finance() {
                   <CustomSelect 
                     value={nfLocation} 
                     onChange={setNfLocation} 
-                    options={[{ label: 'Selecione', value: '' }, ...officeLocations.map(loc => ({ label: loc.name, value: loc.id }))]}
+                    options={[{ label: 'Selecione', value: '' }, ...billingLocations.map(l => ({ label: l, value: l }))]}
                     actionLabel="Gerenciar Locais"
                     actionIcon={Settings}
-                    onAction={() => toast.info('As modificações de locais são centralizadas no módulo de contratos/configurações.')}
+                    onAction={() => setActiveManager('location')}
                   />
                 </div>
                 <div className="sm:col-span-1">
@@ -1099,6 +1101,24 @@ export function Finance() {
           setIsDateModalOpen(false);
         }}
         variant="warning"
+      />
+
+      <OptionManager
+        type={activeManager || ''}
+        lists={{
+          billingLocations,
+          legalAreas: [], courtOptions: [], classOptions: [], subjectOptions: [],
+          positionsList: [], varaOptions: [], justiceOptions: [], comarcaOptions: [],
+          magistrateOptions: [], opponentOptions: [], authorOptions: [], clientOptions: []
+        }}
+        onAdd={async (val) => handleGenericAdd(activeManager!, val)}
+        onRemove={async (val) => handleGenericRemove(activeManager!, val)}
+        onEdit={async (oldV, newV) => handleGenericEdit(activeManager!, oldV, newV)}
+        isOpen={!!activeManager}
+        onClose={() => { setActiveManager(null); setEditingManagerValue(null); fetchData(); fetchAuxiliaryTables(); }}
+        editingValue={editingManagerValue}
+        setEditingValue={setEditingManagerValue}
+        placeholder="Digite o local"
       />
 
       <ConfirmModal

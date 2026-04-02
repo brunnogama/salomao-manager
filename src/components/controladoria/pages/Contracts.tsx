@@ -844,7 +844,7 @@ export function Contracts() {
                         </span>
                       </td>
                       <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
-                      <td className="p-4 text-[11px] font-semibold text-gray-600 line-clamp-1 truncate max-w-[150px]" title={getPartnerDisplay(contract)}>{getPartnerDisplay(contract)}</td>
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{getPartnerDisplay(contract)}</td>
                       <td className="p-4 font-mono text-[10px] font-bold text-gray-400">
                         {getHonDisplay(contract)}
                       </td>
