@@ -106,7 +106,7 @@ export function ContractDetailsModal({
   useEffect(() => {
     let isMounted = true;
     const fetchPaid = async () => {
-      if (!contract?.id || contract.status !== 'active') {
+      if (!contract?.id || !['active', 'baixado'].includes(contract.status)) {
         if (isMounted) setTotalPaid(0);
         return;
       }
@@ -206,6 +206,9 @@ export function ContractDetailsModal({
     if (contract.probono_date) {
       events.push({ label: 'Probono', date: contract.probono_date, status: 'probono', color: 'bg-purple-100 text-purple-800 border-purple-200' });
     }
+    if (contract.status === 'baixado') {
+      events.push({ label: 'Baixado', date: contract.updated_at || new Date().toISOString(), status: 'baixado', color: 'bg-purple-100 text-purple-800 border-purple-200' });
+    }
 
     return events.sort((a, b) => {
       const dateA = safeDate(a.date)?.getTime() || 0;
@@ -230,12 +233,13 @@ export function ContractDetailsModal({
       case 'active': return 'bg-green-100 text-green-800 border-green-200';
       case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
       case 'probono': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'baixado': return 'bg-purple-100 text-purple-800 border-purple-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getStatusLabel = (status: string) => {
-    const map: any = { analysis: 'Sob Análise', proposal: 'Proposta Enviada', active: 'Contrato Fechado', rejected: 'Rejeitada', probono: 'Probono' };
+    const map: any = { analysis: 'Sob Análise', proposal: 'Proposta Enviada', active: 'Contrato Fechado', rejected: 'Rejeitada', probono: 'Probono', baixado: 'Baixado' };
     return map[status] || status;
   };
   
@@ -244,6 +248,7 @@ export function ContractDetailsModal({
       case 'analysis': return contract.prospect_date || contract.created_at;
       case 'proposal': return contract.proposal_date || contract.created_at;
       case 'active': return contract.contract_date || contract.created_at;
+      case 'baixado': return contract.updated_at || contract.contract_date || contract.created_at;
       case 'rejected': return contract.rejection_date || contract.created_at;
       case 'probono': return contract.probono_date || contract.contract_date || contract.created_at;
       default: return contract.created_at;
@@ -261,7 +266,7 @@ export function ContractDetailsModal({
 
   // --- LÓGICA DE CÁLCULO FINANCEIRO ---
   const calculateFinancials = () => {
-    const isFinancialRelevant = ['proposal', 'active'].includes(contract.status);
+    const isFinancialRelevant = ['proposal', 'active', 'baixado'].includes(contract.status);
 
     const formatGroupTotal = (valuesArr: (string | undefined)[], fallbackNumber: number) => {
       const validStrings = valuesArr.filter(v => v && parseCurrency(v) > 0);
@@ -637,7 +642,7 @@ export function ContractDetailsModal({
                   <p className="text-2xl font-black text-[#0a192f] mt-1">{formatMoney(financials.grandTotal)}</p>
                </div>
                
-               {contract.status === 'active' && (
+               {['active', 'baixado'].includes(contract.status) && (
                  <>
                    <div className="h-px bg-gray-100 w-full" />
                    <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-200">
