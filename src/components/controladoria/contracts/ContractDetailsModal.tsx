@@ -376,63 +376,68 @@ export function ContractDetailsModal({
     Seção Reutilizável de Timeline e Cálculos de Timeline 
   */
   const renderTimeline = () => (
-    <div className="mb-6">
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
+    <div className="mb-6 bg-white p-6 rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="flex justify-between items-center mb-8">
+        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">
           <HistoryIcon className="w-4 h-4 mr-2" /> Timeline das Fases
         </h3>
       </div>
 
       {timelineEvents.length > 0 ? (
-        <div className="flex items-stretch overflow-x-auto pb-2 px-1 space-x-2 scrollbar-thin scrollbar-thumb-gray-200 w-full">
-          {timelineEvents.map((event, idx) => {
-            const isLast = idx === timelineEvents.length - 1;
-            const nextEvent = !isLast ? timelineEvents[idx + 1] : null;
+        <div className="relative w-full pb-6">
+          <div className="flex items-start justify-between w-full relative z-10">
+            {timelineEvents.map((event, idx) => {
+              const isLast = idx === timelineEvents.length - 1;
+              const nextEvent = !isLast ? timelineEvents[idx + 1] : null;
+              const durationToNext = nextEvent
+                ? getDurationBetween(event.date, nextEvent.date)
+                : null;
+              const isCurrent = event.status === contract.status;
 
-            const durationToNext = nextEvent
-              ? getDurationBetween(event.date, nextEvent.date)
-              : null;
-
-            return (
-              <React.Fragment key={idx}>
-                <div className="flex-shrink-0 flex flex-col h-full min-w-[130px] flex-1">
-                  <div className={`flex-1 flex flex-col justify-between bg-white p-2 rounded-lg border shadow-sm transition-all w-full text-center relative ${event.status === contract.status ? 'border-salomao-blue ring-1 ring-salomao-blue/20 shadow-md' : 'border-gray-100'}`}>
-                    <div>
-                      <span className={`inline-block px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase border mb-1.5 ${event.color}`}>
-                        {event.label}
-                      </span>
-                      <p className="text-xs font-bold text-gray-700 flex items-center justify-center gap-1">
-                        <CalendarCheck className="w-3.5 h-3.5 text-gray-400" />
-                        {safeDate(event.date)?.toLocaleDateString('pt-BR') || '-'}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1 mt-2">
-                      {event.status === 'active' && (
-                        <div className="flex items-center justify-center text-[9px] text-green-700 bg-green-50 px-1 py-0.5 rounded border border-green-100 w-full font-medium">
-                          <Hourglass className="w-2.5 h-2.5 mr-1" />
-                          Total: {getTotalDuration()}
-                        </div>
-                      )}
-
-                      {durationToNext && (
-                        <div className="flex items-center justify-center text-[9px] text-gray-400 bg-gray-50 px-1 py-0.5 rounded border border-gray-100 w-full mx-auto">
-                          <Clock className="w-2.5 h-2.5 mr-1" />
-                          {durationToNext}
-                        </div>
-                      )}
-                    </div>
+              return (
+                <div key={idx} className="flex flex-col items-center relative flex-1 text-center group">
+                  {/* Top Node Row with Lines */}
+                  <div className="relative w-full flex justify-center items-center h-8">
+                     {!isLast && (
+                        <div className="absolute left-1/2 top-1/2 w-full h-[2px] bg-gray-200 -z-10 -translate-y-1/2"></div>
+                     )}
+                     <div className={`w-7 h-7 rounded-full border-[3px] border-white flex items-center justify-center shrink-0 z-10 relative shadow-sm transition-colors ${isCurrent ? 'bg-salomao-blue shadow-salomao-blue/30 ring-2 ring-salomao-blue/20' : 'bg-gray-300'}`}>
+                       <div className="w-2 h-2 rounded-full bg-white"></div>
+                     </div>
                   </div>
+                  
+                  {/* Label and Date */}
+                  <div className="mt-3 flex flex-col items-center justify-center z-10 min-w-max">
+                    <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md mb-1.5 border bg-white ${event.color} ${isCurrent ? 'ring-1 ring-black/5' : ''}`}>
+                      {event.label}
+                    </span>
+                    <span className="text-[11px] font-bold text-gray-500 flex items-center gap-1 bg-white px-1">
+                      <CalendarCheck className="w-3 h-3 text-gray-400" />
+                      {safeDate(event.date)?.toLocaleDateString('pt-BR') || '-'}
+                    </span>
+                  </div>
+
+                  {/* Duration to next */}
+                  {!isLast && durationToNext && (
+                    <div className="absolute top-[75px] left-1/2 w-full flex justify-center z-0 pointer-events-none">
+                       <span className="text-[10px] font-bold text-gray-400 whitespace-nowrap bg-white px-2">
+                         ({durationToNext})
+                       </span>
+                    </div>
+                  )}
+
+                  {/* Current Active Total Duration */}
+                  {isLast && event.status === 'active' && getTotalDuration() && (
+                    <div className="absolute top-[75px] left-1/2 w-full flex justify-center z-0 pointer-events-none">
+                       <span className="text-[10px] font-bold text-green-600/80 whitespace-nowrap bg-white px-2">
+                         (Total: {getTotalDuration()})
+                       </span>
+                    </div>
+                  )}
                 </div>
-
-                {!isLast && (
-                  <div className="flex-shrink-0 text-gray-300 self-center">
-                    <ChevronsRight className="w-4 h-4" />
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       ) : (
         <div className="text-center py-4 border border-dashed border-gray-200 rounded-lg text-gray-400 text-xs">
