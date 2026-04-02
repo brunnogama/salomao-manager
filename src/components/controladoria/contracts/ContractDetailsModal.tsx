@@ -376,15 +376,15 @@ export function ContractDetailsModal({
     Seção Reutilizável de Timeline e Cálculos de Timeline 
   */
   const renderTimeline = () => (
-    <div className="mb-6 bg-white p-6 rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="flex justify-between items-center mb-8">
+    <div className="mt-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm overflow-x-auto scrollbar-thin">
+      <div className="flex justify-between items-center mb-4 min-w-[500px]">
         <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">
           <HistoryIcon className="w-4 h-4 mr-2" /> Timeline das Fases
         </h3>
       </div>
 
       {timelineEvents.length > 0 ? (
-        <div className="relative w-full pb-6">
+        <div className="relative w-full pb-2 min-w-[500px] px-8">
           <div className="flex items-start justify-between w-full relative z-10">
             {timelineEvents.map((event, idx) => {
               const isLast = idx === timelineEvents.length - 1;
@@ -428,7 +428,7 @@ export function ContractDetailsModal({
 
                   {/* Current Active Total Duration */}
                   {isLast && event.status === 'active' && getTotalDuration() && (
-                    <div className="absolute top-[75px] left-1/2 w-full flex justify-center z-0 pointer-events-none">
+                    <div className="absolute top-[75px] left-0 w-full flex justify-center z-0 pointer-events-none">
                        <span className="text-[10px] font-bold text-green-600/80 whitespace-nowrap bg-white px-2">
                          (Total: {getTotalDuration()})
                        </span>
@@ -782,8 +782,6 @@ export function ContractDetailsModal({
                   )}
                 </div>
 
-                {renderTimeline()}
-
                 {/* Área Financeira (apenas Fechado/Ativo ou Proposta) */}
                 {renderFinancials()}
 
@@ -819,6 +817,8 @@ export function ContractDetailsModal({
                     </div>
                   )}
                 </div>
+
+                {renderTimeline()}
               </div>
             )}
 
