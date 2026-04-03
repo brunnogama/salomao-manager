@@ -104,7 +104,7 @@ const EmissaoNF = () => {
     // Safe Query (alternativa robusta)
     try {
       // Primeiro buscando os contratos do cliente
-      const { data: clientContracts } = await supabase.from('contracts').select('id, hon_number').eq('client_id', client.id);
+      const { data: clientContracts } = await supabase.from('contracts').select('id, hon_number, display_id, seq_id, reference').eq('client_id', client.id);
       if (clientContracts && clientContracts.length > 0) {
         const contractIds = clientContracts.map(c => c.id);
         const { data: hons } = await supabase
@@ -159,11 +159,12 @@ const EmissaoNF = () => {
     setSelectedHonorario(hon);
     setValorNF(hon.amount || 0);
     
-    const texto = `Referente aos honorários advocatícios.
+    const texto = `Referente aos honorários de ${formatTypeText(hon.type)}
+ID do contrato: ${hon.contract?.display_id || hon.contract?.seq_id || 'N/A'}
 Número HON: ${hon.contract?.hon_number || 'N/A'}
-Fatura ID: ${hon.id}
-Cláusula/Tipo: ${hon.clause || formatTypeText(hon.type)}
-Parcela: ${hon.installment_number}/${hon.total_installments}`;
+Cláusula: ${hon.clause || ''}
+Parcela: ${hon.installment_number}/${hon.total_installments}
+Referência: ${hon.contract?.reference || 'N/A'}`;
     
     setDiscriminacao(texto);
   };
