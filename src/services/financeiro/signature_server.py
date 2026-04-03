@@ -68,7 +68,7 @@ def assinar_nota():
         return jsonify({"erro": "Provedor para esta cidade ainda não implementado"}), 501
 
     except Exception as e:
-        return jsonify({"erro": str(e)}), 500
+        import traceback; open("error.log", "w").write(traceback.format_exc()); return jsonify({"erro": str(e)}), 500
 
 if __name__ == '__main__':
     # Roda na porta 5000 para o React consumir
