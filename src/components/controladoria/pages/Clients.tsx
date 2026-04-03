@@ -4,7 +4,6 @@ import { useAuth } from '../../../contexts/AuthContext';
 import {
   Users,
   Plus,
-  Edit,
   Trash2,
   Building,
   User,
@@ -16,7 +15,7 @@ import {
   Download,
   Gift
 } from 'lucide-react';
-import { Client, ClientContact } from '../../../types/controladoria';
+import { Client } from '../../../types/controladoria';
 import { ClientFormModal } from '../clients/ClientFormModal';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
@@ -26,6 +25,8 @@ import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { getGiftIconColor } from '../../../types/crmContact';
+
+const UFS = [{ sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' }, { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' }, { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' }, { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' }, { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' }, { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' }, { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' }, { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' }, { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }];
 
 interface ClientsProps {
   initialFilters?: { socio?: string; brinde?: string };
@@ -526,7 +527,9 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
                       {/* UF Column */}
                       <div className="col-span-1 flex items-center justify-center shrink-0">
                         <span className="text-sm font-bold text-gray-700">
-                          {client.uf || '-'}
+                          {client.uf && client.uf.length > 2 
+                            ? (UFS.find(u => u.nome.toLowerCase() === client.uf?.toLowerCase())?.sigla || client.uf.substring(0, 2).toUpperCase())
+                            : (client.uf || '-')}
                         </span>
                       </div>
 
@@ -754,7 +757,7 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
               </div>
             </div>
           </div>
-        )
+        , document.body)
       }
 
       <ConfirmModal

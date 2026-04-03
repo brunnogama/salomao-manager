@@ -457,7 +457,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                     <CustomSelect
                       value={formData.uf || ''}
                       onChange={val => setFormData({ ...formData, uf: val })}
-                      options={UFS.map(u => ({ label: u.nome, value: u.sigla }))}
+                      options={UFS.map(u => ({ label: `${u.sigla} - ${u.nome}`, value: u.sigla }))}
                     />
                   </div>
                 </div>
