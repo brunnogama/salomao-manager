@@ -352,7 +352,10 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                     <textarea 
                         className="w-full border border-gray-300 rounded-lg p-3 text-sm h-20 focus:border-salomao-blue outline-none bg-white resize-none" 
                         value={(formData as any).reference || ''} 
-                        onChange={e => setFormData({ ...formData, reference: e.target.value } as any)} 
+                        onChange={e => {
+                            const val = e.target.value.replace(/[\r\n]+/g, ' ');
+                            setFormData({ ...formData, reference: val } as any);
+                        }} 
                         placeholder="Ex: Proposta 123/2025" 
                     />
                 </div>

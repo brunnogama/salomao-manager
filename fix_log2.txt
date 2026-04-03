@@ -1,0 +1,2 @@
+[dotenv@17.3.1] injecting env (9) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+Updated 41 contracts!
