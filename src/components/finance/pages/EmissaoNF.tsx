@@ -34,18 +34,27 @@ const EmissaoNF = () => {
     const loadingToast = toast.loading("Transmitindo nota...");
 
     try {
+      const formData = new FormData();
+      formData.append('cidade', selectedCity);
+      formData.append('prestador', JSON.stringify({ cnpj: "00.000.000/0001-00", im: "123456" }));
+      formData.append('servico', JSON.stringify({ valor: 1500.00, discriminacao: "Honorários Advocatícios" }));
+      if (file) {
+        formData.append('certificado', file);
+      }
+
       const response = await fetch('http://localhost:5000/assinar-nota', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cidade: selectedCity,
-          // Exemplo de dados que viriam do seu sistema de faturamento
-          prestador: { cnpj: "00.000.000/0001-00", im: "123456" },
-          servico: { valor: 1500.00, discriminacao: "Honorários Advocatícios" }
-        })
+        body: formData
       });
 
-      const data = await response.json();
+      const textResponse = await response.text();
+      let data = {};
+      try {
+        data = JSON.parse(textResponse);
+      } catch (e) {
+        console.error("Failed to parse json:", textResponse);
+        data = { erro: "Invalid JSON response from server" };
+      }
 
       if (response.ok) {
         toast.dismiss(loadingToast);

@@ -3,13 +3,17 @@ from cryptography.hazmat.backends import default_backend
 from signxml import XMLSigner
 
 class CertificateSigner:
-    def __init__(self, cert_path, password):
+    def __init__(self, cert_path, password, pfx_data=None):
         self.cert_path = cert_path
         self.password = password.encode()
+        self.pfx_data = pfx_data
 
     def sign_xml(self, xml_element):
-        with open(self.cert_path, "rb") as f:
-            pfx_data = f.read()
+        if self.pfx_data is not None:
+            pfx_data = self.pfx_data
+        else:
+            with open(self.cert_path, "rb") as f:
+                pfx_data = f.read()
         private_key, certificate, _ = pkcs12.load_key_and_certificates(
             pfx_data, self.password, default_backend()
         )

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "signature-server": "source .venv/bin/activate && python src/services/financeiro/signature_server.py"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
