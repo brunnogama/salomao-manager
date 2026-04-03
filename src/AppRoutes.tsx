@@ -21,7 +21,6 @@ import { useEffect } from 'react';
 
 // CRM Components
 import { Dashboard as CrmDashboard } from './components/crm/Dashboard';
-import { Clients } from './components/crm/Clients';
 import { Magistrados } from './components/crm/Magistrados';
 import { IncompleteClients } from './components/crm/IncompleteClients';
 import { Kanban as CrmKanban } from './components/crm/Kanban';
@@ -286,7 +285,7 @@ export function AppRoutes() {
                 {/* CRM */}
                 <Route path="/crm">
                     <Route path="dashboard" element={<WithProps Component={CrmDashboard} extraProps={{ onNavigateWithFilter: handleCrmNavigateWithFilter }} />} />
-                    <Route path="clientes" element={<WithProps Component={Clients} extraProps={{ initialFilters: clientFilters }} />} />
+                    <Route path="clientes" element={<WithProps Component={ControlClients} extraProps={{ initialFilters: clientFilters }} />} />
                     <Route path="magistrados" element={<WithProps Component={Magistrados} />} />
                     <Route path="incompletos" element={<WithProps Component={IncompleteClients} />} />
                     <Route path="kanban" element={<WithProps Component={CrmKanban} />} />

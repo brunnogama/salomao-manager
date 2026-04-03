@@ -13,15 +13,22 @@ import {
   Phone,
   MapPin,
   X,
-  Download
+  Download,
+  Gift
 } from 'lucide-react';
-import { Client } from '../../../types/controladoria';
+import { Client, ClientContact } from '../../../types/controladoria';
 import { ClientFormModal } from '../clients/ClientFormModal';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 
-// CAMINHO CORRIGIDO: saindo de /pages e entrando em /utils (dentro de controladoria)
 import { maskCNPJ } from '../utils/masks';
+import { toast } from 'sonner';
+import { ConfirmModal } from '../ui/ConfirmModal';
+import { getGiftIconColor } from '../../../types/crmContact';
+
+interface ClientsProps {
+  initialFilters?: { socio?: string; brinde?: string };
+}
 
 // Interface para sócio com seus contratos dentro de um grupo
 interface PartnerWithContracts {
@@ -42,7 +49,7 @@ interface GroupedClient {
   totalContracts: number;
 }
 
-export function Clients() {
+export function Clients({ initialFilters }: ClientsProps = {}) {
   const { userRole } = useAuth();
   const isReadOnly = userRole === 'readonly';
 
@@ -59,6 +66,16 @@ export function Clients() {
   // Novos filtros
   const [clientFilter, setClientFilter] = useState('');
   const [partnerFilter, setPartnerFilter] = useState('');
+  const [filterGiftType, setFilterGiftType] = useState<string>('');
+
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialFilters) {
+      if (initialFilters.socio) setPartnerFilter(initialFilters.socio);
+      if (initialFilters.brinde) setFilterGiftType(initialFilters.brinde);
+    }
+  }, [initialFilters]);
 
   useEffect(() => {
     fetchData();
@@ -78,7 +95,8 @@ export function Clients() {
       .select(`
         *,
         partner:partners(name),
-        contracts:contracts(id, hon_number, seq_id, status, partner_id, contract_partner:partners!contracts_partner_id_fkey(name))
+        contracts:contracts(id, hon_number, seq_id, status, partner_id, contract_partner:partners!contracts_partner_id_fkey(name)),
+        contacts:client_contacts(*)
       `)
       .order('name');
 
@@ -198,21 +216,27 @@ export function Clients() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este cliente?')) return;
-    const { error } = await supabase.from('clients').delete().eq('id', id);
+  const handleDelete = (id: string) => {
+    setClientToDelete(id);
+  };
+
+  const confirmDeleteClient = async () => {
+    if (!clientToDelete) return;
+    const { error } = await supabase.from('clients').delete().eq('id', clientToDelete);
     if (!error) {
+      toast.success('Cliente excluído com sucesso!');
       fetchData();
       setViewingGroup(null);
+    } else {
+      toast.error('Erro ao excluir: ' + error.message);
     }
-    else alert('Erro ao excluir: ' + error.message);
+    setClientToDelete(null);
   };
 
   const handleView = (group: GroupedClient) => {
     setViewingGroup(group);
   };
 
-  // Obter lista única de clientes e sócios para os filtros
   const uniqueClients = useMemo(() =>
     Array.from(new Set(groupedClients.map(g => g.primaryClient.name))).sort()
   , [groupedClients]);
@@ -220,6 +244,26 @@ export function Clients() {
   const uniquePartners = useMemo(() =>
     Array.from(new Set(groupedClients.flatMap(g => g.partners.map(p => p.partner_name)).filter(Boolean))).sort()
   , [groupedClients]);
+
+  // CRM: Calculate Gift Stats
+  const { giftStats, totalGifts } = useMemo(() => {
+    const stats: Record<string, number> = {};
+    let total = 0;
+
+    clients.forEach(client => {
+      client.contacts?.forEach((contact: any) => {
+        let type = contact.gift_type;
+        if (type === 'Brinde Pequeno' || type === 'Outro') type = 'Outros';
+
+        if (type && type !== 'Não recebe') {
+          const qty = contact.gift_quantity || 1;
+          stats[type] = (stats[type] || 0) + qty;
+          total += qty;
+        }
+      });
+    });
+    return { giftStats: stats, totalGifts: total };
+  }, [clients]);
 
   const filteredGroups = useMemo(() => groupedClients.filter(g => {
     const client = g.primaryClient;
@@ -234,8 +278,14 @@ export function Clients() {
     const matchesClient = !clientFilter || client.name === clientFilter;
     const matchesPartner = !partnerFilter || allPartnerNames.includes(partnerFilter);
 
-    return matchesSearch && matchesClient && matchesPartner;
-  }), [groupedClients, searchTerm, clientFilter, partnerFilter]);
+    const matchesGift = !filterGiftType || g.allClients.some(c => c.contacts?.some((contact: any) => {
+      let type = contact.gift_type;
+      if (type === 'Brinde Pequeno' || type === 'Outro') type = 'Outros';
+      return type === filterGiftType;
+    }));
+
+    return matchesSearch && matchesClient && matchesPartner && matchesGift;
+  }), [groupedClients, searchTerm, clientFilter, partnerFilter, filterGiftType]);
 
 
   const filterCategories = useMemo((): FilterCategory[] => [
@@ -281,6 +331,7 @@ export function Clients() {
     setSearchTerm('');
     setClientFilter('');
     setPartnerFilter('');
+    setFilterGiftType('');
   };
 
   return (
@@ -334,6 +385,45 @@ export function Clients() {
             </button>
           )}
         </div>
+      </div>
+
+      {/* CRM: Gift Statistics Cards */}
+      <div className="flex flex-wrap gap-4">
+        {/* Total Gifts Card */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-3 flex-1 min-w-[140px] sm:min-w-[180px] hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-lg bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-sm shrink-0">
+              <Gift className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Total de Brindes</p>
+              <p className="text-2xl font-black text-[#0a192f] leading-none mt-1">{totalGifts}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Gift Type Cards */}
+        {['Brinde VIP', 'Brinde Médio', 'Outros'].map((tipo) => {
+          const qtd = giftStats[tipo] || 0;
+          return (
+            <div
+              key={tipo}
+              onClick={() => setFilterGiftType(tipo === filterGiftType ? '' : tipo)}
+              className={`bg-white p-4 rounded-xl shadow-sm border-2 flex flex-col gap-3 cursor-pointer hover:shadow-md transition-all flex-1 min-w-[140px] sm:min-w-[180px] active:scale-95 ${filterGiftType === tipo ? 'border-[#1e3a8a] bg-blue-50' : 'border-gray-100 hover:border-blue-100'
+                }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-3 rounded-lg bg-gradient-to-br ${getGiftIconColor(tipo)} shadow-sm shrink-0`}>
+                  <Gift className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate leading-none">{tipo}</p>
+                  <p className="text-2xl font-black text-[#0a192f] leading-none mt-1">{qtd}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* 2. KPI Card + FilterBar */}
@@ -478,9 +568,9 @@ export function Clients() {
                                 handleEdit(client);
                               }}
                               className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all"
-                              title="Editar cliente"
+                              title="Gestão de Brindes (Editar)"
                             >
-                              <Edit className="w-4 h-4" />
+                              <Gift className="w-4 h-4" />
                             </button>
                             <button
                               onClick={(e) => {
@@ -510,6 +600,7 @@ export function Clients() {
         onClose={() => setIsModalOpen(false)}
         client={clientToEdit}
         onSave={fetchData}
+        showGiftsTab={true}
       />
 
       {/* Modal de Visualização */}
@@ -539,6 +630,31 @@ export function Clients() {
               {/* Content */}
               <div className="p-4 sm:p-6 flex-1 overflow-y-auto custom-scrollbar">
                 <div className="space-y-6">
+                  {/* Gift Summary */}
+                  {viewingGroup.allClients.some(c => c.contacts?.some((contact: any) => contact.gift_type && contact.gift_type !== 'Não recebe')) && (
+                    <div>
+                      <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Resumo de Brindes</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {viewingGroup.allClients.flatMap(c => c.contacts || [])
+                          .filter((contact: any) => contact.gift_type && contact.gift_type !== 'Não recebe')
+                          .map((c: any, idx: number) => (
+                            <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                              <div className={`p-2 rounded-lg bg-gradient-to-br ${getGiftIconColor(c.gift_type || '')}`}>
+                                <Gift className="w-3 h-3 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-gray-800 truncate">{c.name}</p>
+                                <div className="flex gap-2 text-[10px] text-gray-500 mt-0.5">
+                                  <span>{c.gift_type}</span>
+                                  {c.gift_quantity && <span>(x{c.gift_quantity})</span>}
+                                </div>
+                              </div>
+                            </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Informações Básicas */}
                   <div>
                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Informações Básicas</h3>
@@ -662,8 +778,8 @@ export function Clients() {
                     onClick={() => handleEdit(viewingGroup.primaryClient)}
                     className="flex items-center justify-center gap-2 px-6 py-3 sm:py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
                   >
-                    <Edit className="w-4 h-4" />
-                    Editar Cliente
+                    <Gift className="w-4 h-4" />
+                    Gerenciar Brindes
                   </button>
                 )}
               </div>
@@ -671,6 +787,16 @@ export function Clients() {
           </div>
         )
       }
+
+      <ConfirmModal
+        isOpen={!!clientToDelete}
+        onClose={() => setClientToDelete(null)}
+        onConfirm={confirmDeleteClient}
+        title="Excluir Cliente"
+        description="Tem certeza que deseja excluir este cliente?"
+        variant="danger"
+        confirmText="Excluir"
+      />
     </div >
   );
 }
