@@ -309,12 +309,11 @@ export function ContractFormModal(props: Props) {
       { label: 'Proposta Enviada', value: 'proposal' },
       { label: 'Contrato Fechado', value: 'active' },
       { label: 'Probono', value: 'probono' },
-      { label: 'Rejeitada', value: 'rejected' },
-      { label: 'Baixados', value: 'baixado' }
+      { label: 'Rejeitada', value: 'rejected' }
     ];
 
     if (data && data.length > 0) {
-      const order = ['analysis', 'proposal', 'active', 'rejected', 'probono', 'baixado'];
+      const order = ['analysis', 'proposal', 'active', 'rejected', 'probono'];
       const sortedData = data.sort((a, b) => {
         const iA = order.indexOf(a.value), iB = order.indexOf(b.value);
         if (iA !== -1 && iB !== -1) return iA - iB;

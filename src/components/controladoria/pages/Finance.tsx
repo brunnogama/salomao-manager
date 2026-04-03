@@ -3,16 +3,21 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import {
   DollarSign, Download, CheckCircle2, Circle, Clock, Loader2,
-  CalendarDays, Receipt, MapPin, Hash,
-  AlertTriangle, Plus, FileDown, Briefcase, ChevronDown, X
+  CalendarDays, Receipt, MapPin, Hash, Settings,
+  AlertTriangle, Plus, FileDown, Briefcase, ChevronDown, X, Trash2
 } from 'lucide-react';
+import { CustomSelect } from '../ui/CustomSelect';
+import { useContractOptions } from '../hooks/useContractOptions';
+import { OptionManager } from '../contracts/components/OptionManager';
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 
 import { EmptyState } from '../ui/EmptyState';
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { exportToStandardXLSX } from '../../../utils/exportUtils';
 import { toast } from 'sonner';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
+import { useEscKey } from '../../../hooks/useEscKey';
 import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 import { maskMoney, parseCurrency, safeDate } from '../utils/masks';
 
@@ -35,6 +40,10 @@ export function Finance() {
   const [filterPeriodo, setFilterPeriodo] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
   const [locations, setLocations] = useState<string[]>([]);
+  const [dummyFormData, setDummyFormData] = useState({} as Contract);
+  const { billingLocations, fetchAuxiliaryTables, handleGenericAdd, handleGenericEdit, handleGenericRemove } = useContractOptions({ formData: dummyFormData, setFormData: setDummyFormData });
+  const [activeManager, setActiveManager] = useState<string | null>(null);
+  const [editingManagerValue, setEditingManagerValue] = useState<string | null>(null);
 
   // Modais
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
@@ -66,11 +75,36 @@ export function Finance() {
     setNfNetValue(maskMoney(net.toFixed(2).replace('.', ',')));
   }, [nfValue, nfIrpj, nfPis, nfCofins, nfCsll]);
 
-  const [officeLocations, setOfficeLocations] = useState<{ id: string; name: string }[]>([]);
-
   const [isDueDateModalOpen, setIsDueDateModalOpen] = useState(false);
   const [installmentToEdit, setInstallmentToEdit] = useState<FinancialInstallment | null>(null);
   const [newDueDate, setNewDueDate] = useState('');
+
+  const [initialBillingState, setInitialBillingState] = useState('');
+  const [isConfirmCloseBillingOpen, setIsConfirmCloseBillingOpen] = useState(false);
+
+  const getCurrentBillingState = () => {
+    return JSON.stringify({
+      nfIssueDate, nfDueDate, billingDate, nfNumber, nfLocation, nfNature, nfObservations,
+      nfIrpj, nfPis, nfCofins, nfCsll, nfValue, nfNetValue
+    });
+  };
+
+  const handleTryCloseBillingModal = () => {
+    if (getCurrentBillingState() !== initialBillingState) {
+      setIsConfirmCloseBillingOpen(true);
+    } else {
+      setIsDateModalOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isDateModalOpen) {
+      setInitialBillingState('');
+      setIsConfirmCloseBillingOpen(false);
+    }
+  }, [isDateModalOpen]);
+
+  useEscKey(isDateModalOpen && !isConfirmCloseBillingOpen, handleTryCloseBillingModal);
 
   // Modal de Detalhes do Contrato
   const [isContractModalOpen, setIsContractModalOpen] = useState(false);
@@ -79,12 +113,125 @@ export function Finance() {
   const [contractProcesses, setContractProcesses] = useState<ContractProcess[]>([]);
   const [contractDocuments, setContractDocuments] = useState<ContractDocument[]>([]);
 
+  // Baixa de Contrato
+  const [isConfirmBaixarOpen, setIsConfirmBaixarOpen] = useState(false);
+  const [contractToBaixar, setContractToBaixar] = useState<string | null>(null);
+
+  const [isConfirmGenerateNextOpen, setIsConfirmGenerateNextOpen] = useState(false);
+  const [installmentToGenerateNext, setInstallmentToGenerateNext] = useState<FinancialInstallment | null>(null);
+
+  const [itemToDelete, setItemToDelete] = useState<FinancialInstallment | null>(null);
+
+  const checkAndPromptBaixa = (contractId: string, ignoreInstallmentId: string) => {
+    const otherPending = installments.filter(i => 
+      (i.contract_id === contractId || (i.contract as any)?.id === contractId) && 
+      i.id !== ignoreInstallmentId && 
+      i.status === 'pending'
+    );
+    if (otherPending.length === 0) {
+      setContractToBaixar(contractId);
+      setIsConfirmBaixarOpen(true);
+    } else {
+      fetchData();
+    }
+  };
+
+  const handleDeleteInstallment = async () => {
+    if (!itemToDelete) return;
+    try {
+      const { error } = await supabase.from('financial_installments').delete().eq('id', itemToDelete.id);
+      if (error) throw error;
+      toast.success('Parcela excluída com sucesso!');
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao excluir a parcela.');
+    } finally {
+      setItemToDelete(null);
+    }
+  };
+
+  const generateNextFixedInstallment = async () => {
+    if (!installmentToGenerateNext) return;
+    
+    let baseDateStr = installmentToGenerateNext.due_date;
+    if (!baseDateStr) {
+       baseDateStr = new Date().toISOString().split('T')[0];
+    }
+    const d = new Date(baseDateStr + 'T12:00:00');
+    d.setMonth(d.getMonth() + 1);
+    const nextDueDate = d.toISOString().split('T')[0];
+
+    // Limpar campos de faturamento para gerar uma parcela nova e "limpa"
+    const newInstallment = {
+      contract_id: installmentToGenerateNext.contract_id,
+      type: installmentToGenerateNext.type,
+      amount: installmentToGenerateNext.amount,
+      installment_number: installmentToGenerateNext.installment_number + 1,
+      total_installments: installmentToGenerateNext.total_installments,
+      due_date: nextDueDate,
+      status: 'pending',
+      clause: installmentToGenerateNext.clause
+    };
+
+    try {
+      const { error } = await supabase.from('financial_installments').insert([newInstallment]);
+      if (error) throw error;
+
+      // Inserir a nova parcela gerada também no formulário do contrato (Casos) -> fixed_monthly_extras
+      const contractIdToUpdate = installmentToGenerateNext.contract_id || (installmentToGenerateNext.contract as any)?.id;
+      if (contractIdToUpdate) {
+        const { data: contractData, error: contractError } = await supabase.from('contracts').select('fixed_monthly_extras, fixed_monthly_extras_rules, fixed_monthly_extras_clauses, fixed_monthly_extras_ready, fixed_monthly_extras_installments').eq('id', contractIdToUpdate).single();
+        
+        if (!contractError && contractData) {
+          const currentExtras = Array.isArray(contractData.fixed_monthly_extras) ? contractData.fixed_monthly_extras : [];
+          const currentRules = Array.isArray(contractData.fixed_monthly_extras_rules) ? contractData.fixed_monthly_extras_rules : [];
+          const currentClauses = Array.isArray(contractData.fixed_monthly_extras_clauses) ? contractData.fixed_monthly_extras_clauses : [];
+          const currentReady = Array.isArray(contractData.fixed_monthly_extras_ready) ? contractData.fixed_monthly_extras_ready : [];
+          const currentInsts = Array.isArray(contractData.fixed_monthly_extras_installments) ? contractData.fixed_monthly_extras_installments : [];
+
+          const formattedValue = "R$ " + installmentToGenerateNext.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+          await supabase.from('contracts').update({
+            fixed_monthly_extras: [...currentExtras, formattedValue],
+            fixed_monthly_extras_rules: [...currentRules, `Continuídade da parcela paga em ${new Date().toLocaleDateString('pt-BR')}`],
+            fixed_monthly_extras_clauses: [...currentClauses, installmentToGenerateNext.clause || ''],
+            fixed_monthly_extras_ready: [...currentReady, false],
+            fixed_monthly_extras_installments: [...currentInsts, '1x']
+          }).eq('id', contractIdToUpdate);
+        }
+      }
+
+      toast.success('Próxima parcela gerada com sucesso e vinculada ao contrato!');
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Erro ao gerar próxima parcela: ${e.message}`);
+    }
+
+    setIsConfirmGenerateNextOpen(false);
+    setInstallmentToGenerateNext(null);
+    fetchData();
+  };
+
+  const handleBaixarContrato = async () => {
+    if (!contractToBaixar) return;
+    try {
+      await supabase.from('contracts').update({ status: 'baixado' }).eq('id', contractToBaixar);
+      toast.success('Contrato baixado com sucesso!');
+      setContractToBaixar(null);
+      fetchData();
+    } catch (error: any) {
+      console.error(error);
+      toast.error('Erro ao baixar contrato');
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchAuxiliaryTables();
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsDateModalOpen(false);
         setIsDueDateModalOpen(false);
         setIsContractModalOpen(false);
       }
@@ -109,9 +256,6 @@ export function Finance() {
     const { data: partnersData } = await supabase.from('partners').select('*').eq('status', 'active').order('name');
     if (partnersData) setPartners(partnersData);
 
-    const { data: locData } = await supabase.from('locations').select('id, name').order('name');
-    if (locData) setOfficeLocations(locData);
-
     const { data: installmentsData } = await supabase
       .from('financial_installments')
       .select(`
@@ -124,7 +268,7 @@ export function Finance() {
       .order('due_date', { ascending: true });
 
     if (installmentsData) {
-      const allowedStatuses = ['proposal', 'active'];
+      const allowedStatuses = ['proposal', 'active', 'baixado'];
       const filteredInstallments = installmentsData.filter((i: any) =>
         i.contract?.status && allowedStatuses.includes(i.contract.status)
       );
@@ -235,7 +379,7 @@ export function Finance() {
     }
   };
 
-  const filteredInstallments = installments.filter(i => {
+  const baseInstallments = installments.filter(i => {
     const term = searchTerm.toLowerCase().trim();
     const numericTerm = term.replace(/\D/g, '');
 
@@ -273,17 +417,42 @@ export function Finance() {
       }
     }
 
-    let matchesStatus = true;
-    if (statusFilter === 'pending') matchesStatus = i.status === 'pending';
-    if (statusFilter === 'paid') matchesStatus = i.status === 'paid';
-    if (statusFilter === 'overdue') matchesStatus = isOverdue(i);
-
-    return matchesSearch && matchesPartner && matchesLocation && matchesStatus && matchesDate;
+    return matchesSearch && matchesPartner && matchesLocation && matchesDate;
   });
 
-  const totalPending = filteredInstallments.filter(i => i.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
-  const totalPaid = filteredInstallments.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0);
-  const totalPendingCount = filteredInstallments.filter(i => i.status === 'pending').length;
+  const filteredInstallments = baseInstallments.filter(i => {
+    let matchesStatus = true;
+    if (statusFilter === 'pending') matchesStatus = i.status === 'pending' && i.contract?.status !== 'baixado';
+    if (statusFilter === 'paid') matchesStatus = i.status === 'paid' && i.contract?.status !== 'baixado';
+    if (statusFilter === 'baixado') matchesStatus = i.contract?.status === 'baixado';
+    if (statusFilter === 'all') matchesStatus = i.contract?.status !== 'baixado';
+    if (statusFilter === 'overdue') matchesStatus = isOverdue(i) && i.contract?.status !== 'baixado';
+
+    return matchesStatus;
+  }).sort((a, b) => {
+    const idA = (a.contract as any)?.seq_id || 0;
+    const idB = (b.contract as any)?.seq_id || 0;
+    
+    if (idA !== idB) {
+      return idB - idA;
+    }
+
+    const clauseA = ((a as any).clause || '').toString().toLowerCase();
+    const clauseB = ((b as any).clause || '').toString().toLowerCase();
+    
+    if (!clauseA && clauseB) return 1;
+    if (clauseA && !clauseB) return -1;
+    if (clauseA === clauseB) {
+       const dateA = a.due_date ? new Date(a.due_date).getTime() : 0;
+       const dateB = b.due_date ? new Date(b.due_date).getTime() : 0;
+       return dateA - dateB;
+    }
+    return clauseA.localeCompare(clauseB);
+  });
+
+  const totalPending = baseInstallments.filter(i => i.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalPaid = baseInstallments.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalPendingCount = baseInstallments.filter(i => i.status === 'pending').length;
   const totalOverdueCount = installments.filter(i => isOverdue(i)).length;
 
   const handleMarkAsPaid = (installment: FinancialInstallment) => {
@@ -309,6 +478,32 @@ export function Finance() {
       formattedNfValue = maskMoney(installment.amount.toFixed(2).replace('.', ','));
     }
     setNfValue(formattedNfValue);
+
+    // Calcula tb o valor líquido pra criar o snampshot limpo
+    const valueNum = installment.nf_value ?? installment.amount;
+    const irpjNum = installment.tax_irpj || 0;
+    const pisNum = installment.tax_pis || 0;
+    const cofinsNum = installment.tax_cofins || 0;
+    const csllNum = installment.tax_csll || 0;
+    const net = valueNum - irpjNum - pisNum - cofinsNum - csllNum;
+    const initialNetValue = maskMoney(net.toFixed(2).replace('.', ','));
+
+    const initialState = JSON.stringify({
+      nfIssueDate: installment.nf_issue_date ? installment.nf_issue_date.split('T')[0] : todayStr,
+      nfDueDate: installment.due_date ? installment.due_date.split('T')[0] : todayStr,
+      billingDate: installment.paid_at ? installment.paid_at.split('T')[0] : todayStr,
+      nfNumber: installment.nf_number || '',
+      nfLocation: installment.nf_location || '',
+      nfNature: installment.nf_nature || '',
+      nfObservations: (installment as any).observations || '',
+      nfIrpj: installment.tax_irpj ? maskMoney(installment.tax_irpj.toFixed(2).replace('.', ',')) : '',
+      nfPis: installment.tax_pis ? maskMoney(installment.tax_pis.toFixed(2).replace('.', ',')) : '',
+      nfCofins: installment.tax_cofins ? maskMoney(installment.tax_cofins.toFixed(2).replace('.', ',')) : '',
+      nfCsll: installment.tax_csll ? maskMoney(installment.tax_csll.toFixed(2).replace('.', ',')) : '',
+      nfValue: formattedNfValue,
+      nfNetValue: initialNetValue
+    });
+    setInitialBillingState(initialState);
     
     setIsDateModalOpen(true);
   };
@@ -317,7 +512,7 @@ export function Finance() {
     if (!selectedInstallment) return;
     
     // Atualiza a parcela com a data de pagamento, status de pago e número da NF
-    await supabase.from('financial_installments')
+    const { error } = await supabase.from('financial_installments')
       .update({ 
         status: 'paid', 
         paid_at: billingDate || null,
@@ -326,19 +521,51 @@ export function Finance() {
         nf_number: nfNumber || null,
         nf_location: nfLocation || null,
         nf_nature: nfNature || null,
-        nf_value: nfValue ? parseCurrency(nfValue) : null,
-        tax_irpj: nfIrpj ? parseCurrency(nfIrpj) : null,
-        tax_pis: nfPis ? parseCurrency(nfPis) : null,
-        tax_cofins: nfCofins ? parseCurrency(nfCofins) : null,
-        tax_csll: nfCsll ? parseCurrency(nfCsll) : null,
-        net_value: nfNetValue ? parseCurrency(nfNetValue) : null,
+        nf_value: nfValue ? parseCurrency(String(nfValue)) : null,
+        tax_irpj: nfIrpj ? parseCurrency(String(nfIrpj)) : null,
+        tax_pis: nfPis ? parseCurrency(String(nfPis)) : null,
+        tax_cofins: nfCofins ? parseCurrency(String(nfCofins)) : null,
+        tax_csll: nfCsll ? parseCurrency(String(nfCsll)) : null,
+        net_value: nfNetValue ? parseCurrency(String(nfNetValue)) : null,
         observations: nfObservations || null
       })
       .eq('id', selectedInstallment.id);
       
+    if (error) {
+      console.error(error);
+      toast.error(`Erro ao salvar: ${error.message}`);
+      return;
+    }
+
     setIsDateModalOpen(false);
     toast.success(selectedInstallment.status === 'paid' ? 'Faturamento atualizado!' : 'Faturamento confirmado!');
-    fetchData();
+
+    const contractId = selectedInstallment.contract_id || (selectedInstallment.contract as any)?.id;
+    if (contractId) {
+      if (selectedInstallment.type === 'fixed_monthly_fee' || selectedInstallment.type === 'fixed') {
+        // Verifica se já existe alguma parcela futura pendente para a mesma cláusula
+        const futurePending = installments.filter(i => 
+          (i.contract_id === contractId || (i.contract as any)?.id === contractId) && 
+          i.id !== selectedInstallment.id && 
+          i.status === 'pending' &&
+          (i.type === 'fixed_monthly_fee' || i.type === 'fixed') &&
+          ((i as any).clause || '') === ((selectedInstallment as any).clause || '')
+        );
+
+        if (futurePending.length === 0) {
+          setInstallmentToGenerateNext(selectedInstallment);
+          setIsConfirmGenerateNextOpen(true);
+        } else {
+          checkAndPromptBaixa(contractId, selectedInstallment.id);
+        }
+      } else if (selectedInstallment.status === 'pending') {
+        checkAndPromptBaixa(contractId, selectedInstallment.id);
+      } else {
+        fetchData();
+      }
+    } else {
+      fetchData();
+    }
   };
 
   const handleEditDueDate = (installment: FinancialInstallment) => {
@@ -528,6 +755,11 @@ export function Finance() {
     clearFilters();
   };
 
+  const pendentesCount = installments.filter(i => i.status === 'pending' && i.contract?.status !== 'baixado').length;
+  const faturadosCount = installments.filter(i => i.status === 'paid' && i.contract?.status !== 'baixado').length;
+  const baixadosCount = installments.filter(i => i.contract?.status === 'baixado').length;
+  const todosCount = installments.length - baixadosCount;
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
 
@@ -543,22 +775,67 @@ export function Finance() {
           </div>
         </div>
 
-        {/* Ícones redondos */}
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={exportToExcel}
-            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
-            title="Exportar XLSX"
-          >
-            <Download className="h-4 w-4" />
-          </button>
-          <button
-            onClick={handleNewInvoice}
-            className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30"
-            title="Novo Lançamento"
-          >
-            <Plus className="h-5 w-5" />
-          </button>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
+          {/* Abas Navegação */}
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl w-full sm:w-auto overflow-x-auto hide-scrollbar">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === 'all' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Todos
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${statusFilter === 'all' ? 'bg-[#1e3a8a] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                {todosCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('pending')}
+              className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === 'pending' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Clock className="w-3.5 h-3.5" /> Pendentes
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${statusFilter === 'pending' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                {pendentesCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('paid')}
+              className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === 'paid' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" /> Faturados
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${statusFilter === 'paid' ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                {faturadosCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('baixado')}
+              className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === 'baixado' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Download className="w-3.5 h-3.5" /> Baixados
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${statusFilter === 'baixado' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                {baixadosCount}
+              </span>
+            </button>
+          </div>
+
+          {/* Ícones redondos */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={exportToExcel}
+              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+              title="Exportar XLSX"
+            >
+              <Download className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleNewInvoice}
+              className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30"
+              title="Novo Lançamento"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -661,7 +938,7 @@ export function Finance() {
                     {filteredInstallments.map((item) => (
                       <tr
                         key={item.id}
-                        className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
+                        className={`transition-colors cursor-pointer group ${item.contract?.status === 'baixado' ? 'bg-gray-50/50 opacity-90 hover:bg-gray-100/50' : 'hover:bg-blue-50/30'}`}
                         onClick={() => handleMarkAsPaid(item)}
                       >
                         <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{(item.contract as any)?.display_id}</td>
@@ -682,13 +959,19 @@ export function Finance() {
                           )}
                         </td>
                         <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{item.contract?.client_name}</td>
-                        <td className="p-4 text-[10px] font-semibold text-gray-500 uppercase">
-                          <div className="font-bold">HON: {item.contract?.hon_number || '-'}</div>
-                          <div className="text-[9px] text-gray-400 truncate max-w-[150px] lowercase tracking-normal">{(item as any).clause}</div>
+                        <td className="p-4 uppercase">
+                          <div className="text-[10px] font-bold text-gray-500">HON: {item.contract?.hon_number || '-'}</div>
+                          {(item as any).clause ? (
+                            <div className="text-[11px] font-black text-[#1e3a8a] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded inline-block mt-1 tracking-tight truncate max-w-[180px]" title={(item as any).clause}>
+                              {(item as any).clause}
+                            </div>
+                          ) : (
+                            <div className="text-[9px] text-gray-400 mt-1 uppercase tracking-tight">Sem cláusula</div>
+                          )}
                         </td>
                         <td className="p-4">
                           <div className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest">{getTypeLabel(item.type)}</div>
-                          <div className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Parcela {item.installment_number}/{item.total_installments}</div>
+                          <div className="text-[10px] font-black text-[#1e3a8a] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded inline-block mt-1 uppercase tracking-tight">Parcela {item.installment_number}/{item.total_installments}</div>
                         </td>
                         <td className="p-4 text-right font-black text-[#0a192f] text-xs">
                           {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -698,7 +981,11 @@ export function Finance() {
                             <button onClick={(e) => { e.stopPropagation(); handleEditDueDate(item); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-all" title="Alterar Vencimento"><CalendarDays className="w-4 h-4" /></button>
                             <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-all" title="Baixar Contrato"><FileDown className="w-4 h-4" /></button>
 
-                            {item.status === 'pending' ? (
+                            {item.contract?.status === 'baixado' ? (
+                              <div className="ml-2 bg-purple-50/50 text-purple-600 border border-purple-100 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center">
+                                <CheckCircle2 className="w-3 h-3 mr-1" /> Baixado
+                              </div>
+                            ) : item.status === 'pending' ? (
                               <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1.5 rounded-lg hover:bg-amber-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
                                 <DollarSign className="w-3 h-3 mr-1" /> Faturar
                               </button>
@@ -707,6 +994,11 @@ export function Finance() {
                                 <CheckCircle2 className="w-3 h-3 mr-1" /> Faturado
                               </div>
                             )}
+
+                            {/* EXCLUIR PARCELA */}
+                            <button onClick={(e) => { e.stopPropagation(); setItemToDelete(item); }} className="ml-2 p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all" title="Excluir Parcela">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
 
                         </td>
@@ -748,12 +1040,12 @@ export function Finance() {
         <div 
           className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[99999] p-4"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setIsDateModalOpen(false);
+            if (e.target === e.currentTarget) handleTryCloseBillingModal();
           }}
         >
           <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-3xl animate-in zoom-in-95 border border-gray-100 relative">
             <button 
-              onClick={() => setIsDateModalOpen(false)}
+              onClick={handleTryCloseBillingModal}
               className="absolute top-5 right-5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-1.5 transition-all"
             >
               <X className="w-5 h-5 pointer-events-none" />
@@ -767,10 +1059,16 @@ export function Finance() {
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                   {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirma o recebimento desta parcela e informações fiscais?'}
                 </p>
+                <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100/60">
+                   <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cliente</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.client_name || '-'}</span></div>
+                   <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">HON</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.hon_number || '-'}</span></div>
+                   <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cláusula</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{(selectedInstallment as any)?.clause || '-'}</span></div>
+                </div>
               </div>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
+                  // No need to warn if they're actively navigating elsewhere via the module link
                   setIsDateModalOpen(false);
                   handleOpenContractModal(selectedInstallment!.contract_id);
                 }}
@@ -799,26 +1097,28 @@ export function Finance() {
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Local do Fat.</label>
-                  <div className="relative">
-                    <select className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] outline-none transition-all bg-white shadow-sm hover:border-gray-300" value={nfLocation} onChange={(e) => setNfLocation(e.target.value)}>
-                      <option value="">Selecione...</option>
-                      {officeLocations.map(loc => (
-                        <option key={loc.id} value={loc.id}>{loc.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <CustomSelect 
+                    value={nfLocation} 
+                    onChange={setNfLocation} 
+                    options={[{ label: 'Selecione', value: '' }, ...billingLocations.map(l => ({ label: l, value: l }))]}
+                    actionLabel="Gerenciar Locais"
+                    actionIcon={Settings}
+                    onAction={() => setActiveManager('location')}
+                  />
                 </div>
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Natureza</label>
-                  <div className="relative">
-                    <select className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] outline-none transition-all bg-white shadow-sm hover:border-gray-300" value={nfNature} onChange={(e) => setNfNature(e.target.value)}>
-                      <option value="">Selecione...</option>
-                      <option value="COND">COND</option>
-                      <option value="EXT">EXT</option>
-                      <option value="PF">PF</option>
-                      <option value="PJ">PJ</option>
-                    </select>
-                  </div>
+                  <CustomSelect 
+                    value={nfNature} 
+                    onChange={setNfNature} 
+                    options={[
+                      { label: 'Selecione', value: '' },
+                      { label: 'COND', value: 'COND' },
+                      { label: 'EXT', value: 'EXT' },
+                      { label: 'PF', value: 'PF' },
+                      { label: 'PJ', value: 'PJ' }
+                    ]}
+                  />
                 </div>
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">NF (Opcional)</label>
@@ -873,7 +1173,7 @@ export function Finance() {
             </div>
 
             <div className="flex justify-end gap-3 mt-8">
-              <button onClick={() => setIsDateModalOpen(false)} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
+              <button onClick={handleTryCloseBillingModal} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
               <button onClick={confirmPayment} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">
                 {selectedInstallment?.status === 'paid' ? 'Salvar Alterações' : 'Confirmar Pagamento'}
               </button>
@@ -883,7 +1183,7 @@ export function Finance() {
       , document.body)}
 
       {/* MODAL: ALTERAR VENCIMENTO */}
-      {isDueDateModalOpen && (
+      {isDueDateModalOpen && createPortal(
         <div className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
           <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm animate-in zoom-in-95 border border-gray-100">
             <h3 className="text-lg font-black text-[#0a192f] mb-4 uppercase tracking-tight">Alterar Vencimento</h3>
@@ -901,7 +1201,91 @@ export function Finance() {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
+
+      {/* CONFIRM CLOSE BILLING MODAL */}
+      <ConfirmModal
+        isOpen={isConfirmCloseBillingOpen}
+        onClose={() => setIsConfirmCloseBillingOpen(false)}
+        title="Deseja salvar as alterações?"
+        description="Você realizou alterações nas informações de faturamento desta parcela. Como deseja prosseguir?"
+        confirmText="Salvar e Sair"
+        onConfirm={() => {
+          setIsConfirmCloseBillingOpen(false);
+          confirmPayment();
+        }}
+        cancelText="Voltar"
+        secondaryActionText="Sair sem Salvar"
+        onSecondaryAction={() => {
+          setIsConfirmCloseBillingOpen(false);
+          setIsDateModalOpen(false);
+        }}
+        variant="warning"
+      />
+
+      <OptionManager
+        type={activeManager || ''}
+        lists={{
+          billingLocations,
+          legalAreas: [], courtOptions: [], classOptions: [], subjectOptions: [],
+          positionsList: [], varaOptions: [], justiceOptions: [], comarcaOptions: [],
+          magistrateOptions: [], opponentOptions: [], authorOptions: [], clientOptions: []
+        }}
+        onAdd={async (val) => handleGenericAdd(activeManager!, val)}
+        onRemove={async (val) => handleGenericRemove(activeManager!, val)}
+        onEdit={async (oldV, newV) => handleGenericEdit(activeManager!, oldV, newV)}
+        isOpen={!!activeManager}
+        onClose={() => { setActiveManager(null); setEditingManagerValue(null); fetchData(); fetchAuxiliaryTables(); }}
+        editingValue={editingManagerValue}
+        setEditingValue={setEditingManagerValue}
+        placeholder="Digite o local"
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmGenerateNextOpen}
+        onClose={() => {
+          if (installmentToGenerateNext) {
+            const cId = installmentToGenerateNext.contract_id || (installmentToGenerateNext.contract as any)?.id;
+            checkAndPromptBaixa(cId, installmentToGenerateNext.id);
+          }
+          setIsConfirmGenerateNextOpen(false);
+          setInstallmentToGenerateNext(null);
+        }}
+        title="Gerar Próxima Parcela?"
+        description="Esta é uma parcela de Fixo Mensal. Deseja gerar automaticamente a parcela do próximo mês com as mesmas condições?"
+        confirmText="Sim, Gerar Próxima"
+        onConfirm={generateNextFixedInstallment}
+        cancelText="Não Gerar"
+        variant="info"
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmBaixarOpen}
+        onClose={() => {
+          setIsConfirmBaixarOpen(false);
+          setContractToBaixar(null);
+        }}
+        title="Faturamento Concluído"
+        description="Não há mais faturamento pendente para esse contrato. Deseja baixar o contrato?"
+        confirmText="Sim, Baixar Contrato"
+        onConfirm={() => {
+          setIsConfirmBaixarOpen(false);
+          handleBaixarContrato();
+        }}
+        cancelText="Não Baixar"
+        variant="info"
+      />
+      {/* MODAL EXCLUIR PARCELA */}
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        title="Excluir Parcela?"
+        description="Tem certeza que deseja excluir esta parcela do Controle Financeiro permanentemente? Essa ação não pode ser desfeita."
+        confirmText="Sim, Excluir"
+        cancelText="Cancelar"
+        variant="danger"
+        onConfirm={handleDeleteInstallment}
+      />
     </div>
   );
 }

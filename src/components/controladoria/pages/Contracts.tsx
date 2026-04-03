@@ -28,7 +28,6 @@ const getStatusColor = (status: string) => {
     case 'proposal': return 'bg-blue-100 text-blue-800 border-blue-200';
     case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
     case 'probono': return 'bg-purple-100 text-purple-800 border-purple-200';
-    case 'baixado': return 'bg-gray-200 text-gray-700 border-gray-300';
     default: return 'bg-gray-100 text-gray-800 border-gray-200';
   }
 };
@@ -40,7 +39,6 @@ const getStatusLabel = (status: string) => {
     case 'proposal': return 'Proposta Enviada';
     case 'rejected': return 'Rejeitada';
     case 'probono': return 'Probono';
-    case 'baixado': return 'Baixados';
     default: return status;
   }
 };
@@ -624,8 +622,7 @@ export function Contracts() {
     { label: 'Proposta Enviada', value: 'proposal' },
     { label: 'Contrato Fechado', value: 'active' },
     { label: 'Rejeitada', value: 'rejected' },
-    { label: 'Probono', value: 'probono' },
-    { label: 'Baixados', value: 'baixado' }
+    { label: 'Probono', value: 'probono' }
   ];
 
   const partnerOptions = partners.map(p => ({ label: p.name, value: p.id }));
@@ -841,17 +838,23 @@ export function Contracts() {
                   {filteredContracts.map(contract => (
                     <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
                       <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{contract.display_id}</td>
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(contract.status)}`}>
                           {getStatusLabel(contract.status)}
                         </span>
                       </td>
-                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
-                      <td className="p-4 text-[11px] font-semibold text-gray-600 line-clamp-1 truncate max-w-[150px]" title={getPartnerDisplay(contract)}>{getPartnerDisplay(contract)}</td>
-                      <td className="p-4 font-mono text-[10px] font-bold text-gray-400">
-                        {getHonDisplay(contract)}
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight whitespace-normal max-w-[250px] break-words">{contract.client_name}</td>
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight whitespace-normal max-w-[250px] break-words">{getPartnerDisplay(contract)}</td>
+                      <td className="p-4 whitespace-nowrap">
+                        <span className="bg-slate-100/80 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-md font-mono text-[10px] font-black tracking-widest">
+                          {getHonDisplay(contract)}
+                        </span>
                       </td>
-                      <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}</td>
+                      <td className="p-4 text-right whitespace-nowrap">
+                        <span className="bg-blue-50/50 text-[#1e3a8a] border border-blue-100/50 px-2.5 py-1 rounded-md text-[10px] font-black tracking-widest">
+                          {safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}
+                        </span>
+                      </td>
                       <td className="p-4">
                         <div className="flex justify-end gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>

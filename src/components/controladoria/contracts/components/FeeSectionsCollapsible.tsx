@@ -4,6 +4,8 @@ import { Contract } from '../../../../types/controladoria';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { FinancialInputWithInstallments } from './FinancialInputWithInstallments';
 import { parseCurrency } from '../../utils/masks';
+import { supabase } from '../../../../lib/supabase';
+import { CheckCircle2 } from 'lucide-react';
 
 interface FeeSectionsCollapsibleProps {
     formData: Contract;
@@ -38,9 +40,9 @@ interface FeeSectionsCollapsibleProps {
 }
 
 // Componente de item de honorário salvo
-const SavedFeeItem = ({ val, clause, installment, rule, isReady, feeType: _feeType, onEdit, onDelete }: {
+const SavedFeeItem = ({ val, clause, installment, rule, isReady, feeType: _feeType, onEdit, onDelete, paidInstallments = [] }: {
     val: string; clause?: string; installment?: string; rule?: string; isReady?: boolean; feeType?: string;
-    onEdit: () => void; onDelete: () => void;
+    onEdit: () => void; onDelete: () => void; paidInstallments?: any[];
 }) => {
     const titleParts = [
         clause ? clause : null,
@@ -54,6 +56,17 @@ const SavedFeeItem = ({ val, clause, installment, rule, isReady, feeType: _feeTy
             <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-sm text-[#0a192f]">{titleParts}</span>
                 {isReady && <span className="flex items-center gap-0.5 text-[9px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider"><CheckCircle className="w-2.5 h-2.5" /> Faturar</span>}
+                {/* Badges de Parcelas Pagas no Formulário */}
+                {paidInstallments.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {paidInstallments.map((pi: any, idx: number) => (
+                      <span key={idx} className="inline-flex items-center text-[7px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded border border-emerald-200 shadow-sm">
+                        <CheckCircle2 className="w-2 h-2 mr-0.5" strokeWidth={3} />
+                        Pago ({pi.installment_number || idx + 1})
+                      </span>
+                    ))}
+                  </div>
+                )}
             </div>
             {rule && <span className="text-[11px] text-gray-500 italic mt-1 line-clamp-1">{rule}</span>}
         </div>
@@ -83,6 +96,41 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
     } = props;
 
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+    const [financialInstallments, setFinancialInstallments] = useState<any[]>([]);
+
+    React.useEffect(() => {
+        const fetchFinanceInstallments = async () => {
+            if (!formData.id) return;
+            try {
+                const { data, error } = await supabase.from('financial_installments')
+                    .select('type, status, clause, installment_number')
+                    .eq('contract_id', formData.id);
+                if (!error && data) {
+                    setFinancialInstallments(data as any);
+                }
+            } catch (err) {
+                console.error('Error fetching installments', err);
+            }
+        };
+        fetchFinanceInstallments();
+    }, [formData.id]);
+
+    const getInternalType = (ft: string) => {
+        if (!ft) return '';
+        if (ft.includes('Pró-labore')) return 'pro_labore';
+        if (ft.includes('Fixo Mensal')) return 'fixed_monthly_fee';
+        if (ft.includes('Intermediário')) return 'intermediate_fee';
+        if (ft.includes('Final')) return 'final_success_fee';
+        if (ft.includes('Outros')) return 'other_fees';
+        return '';
+    };
+
+    const getPaidInstallments = (feeTypeRaw: string, clauseStr: string | undefined) => {
+        const internalFeeType = getInternalType(feeTypeRaw);
+        return financialInstallments
+            .filter((i: any) => i.status === 'paid' && i.type === internalFeeType && (i.clause || '') === (clauseStr || ''))
+            .sort((a: any, b: any) => (a.installment_number || 0) - (b.installment_number || 0));
+    };
 
     const toggleSection = (key: string) => {
         setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
@@ -165,6 +213,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     rule={(formData as any)[ruleField]}
                                     isReady={(formData as any)[readyField]}
                                     feeType={title}
+                                    paidInstallments={getPaidInstallments(title, (formData as any)[clauseField])}
                                     onEdit={() => setOpenSections(prev => ({ ...prev, [key]: true }))}
                                     onDelete={() => setFormData({ ...formData, [valueField]: '', [clauseField]: '', [installmentsField]: '1x', [ruleField]: '', [readyField]: false } as any)}
                                 />
@@ -178,6 +227,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     rule={extrasRules[idx]}
                                     isReady={extrasReady[idx]}
                                     feeType={title}
+                                    paidInstallments={getPaidInstallments(title, extrasClauses[idx])}
                                     onEdit={() => {
                                         handleEditExtra(extrasField, valueField, extrasInstallmentsField, installmentsField, extrasClausesField, clauseField as keyof Contract, extrasRulesField, ruleField, extrasReadyField, readyField, idx);
                                         setOpenSections(prev => ({ ...prev, [key]: true }));
@@ -293,6 +343,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     rule={rules[idx]}
                                     isReady={readyFlags[idx]}
                                     feeType="Êxito Intermediário"
+                                    paidInstallments={getPaidInstallments('Êxito Intermediário', clauses[idx])}
                                     onEdit={() => {
                                         setNewIntermediateFee(fee);
                                         setInterimInstallments(installments[idx] || '1x');
