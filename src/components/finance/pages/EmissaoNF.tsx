@@ -10,7 +10,8 @@ import {
   Building2,
   Coins,
   CheckCircle,
-  Loader2
+  Loader2,
+  Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SearchableSelect } from '../../crm/SearchableSelect';
@@ -444,9 +445,18 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         <div className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 h-full min-h-[600px]">
           {/* CLIENT SELECT */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-gray-100 shrink-0 relative z-30">
-            <h2 className="font-black text-lg flex items-center gap-2 text-[#0a192f] uppercase tracking-wide text-sm mb-4">
-              <Building2 className="w-5 h-5 text-[#1e3a8a]" /> Tomador (Cliente)
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-black text-lg flex items-center gap-2 text-[#0a192f] uppercase tracking-wide text-sm">
+                <Building2 className="w-5 h-5 text-[#1e3a8a]" /> Tomador (Cliente)
+              </h2>
+              <button
+                onClick={() => setIsClientModalOpen(true)}
+                className="w-7 h-7 flex items-center justify-center bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-colors shadow-sm"
+                title="Novo Cliente"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
 
             <div className="relative" ref={clientDropdownRef}>
               <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 block">Selecione o Cliente</label>
