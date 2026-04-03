@@ -282,7 +282,6 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           <div className="flex flex-col items-end mr-4">
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Valor Total</span>
             <div className="relative group flex items-center">
-              <span className="absolute left-2 text-sm font-bold text-[#1e3a8a]/50">R$</span>
               <input
                 type="text"
                 value={valorNF || valorNF === 0 ? maskMoney((valorNF * 100).toFixed(0)) : ''}
@@ -290,8 +289,8 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                   const rawValue = e.target.value.replace(/\D/g, '');
                   setValorNF(Number(rawValue) / 100);
                 }}
-                className="w-48 bg-transparent text-xl font-black text-[#1e3a8a] outline-none text-right placeholder-[#1e3a8a]/30 pl-8 pr-1 py-1 border-b-2 border-transparent hover:border-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-colors"
-                placeholder="0,00"
+                className="w-48 bg-transparent text-xl font-black text-[#1e3a8a] outline-none text-right placeholder-[#1e3a8a]/30 pl-3 pr-1 py-1 border-b-2 border-transparent hover:border-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-colors"
+                placeholder="R$ 0,00"
               />
             </div>
           </div>
