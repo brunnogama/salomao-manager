@@ -297,11 +297,14 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           <button
             onClick={handleEmitirNota}
             disabled={isUploading}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95 ${isUploading || !selectedClient || !selectedHonorario ? 'bg-gray-300 text-white cursor-not-allowed hidden' : 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white hover:shadow-xl'
-              }`}
+            title="Transmitir Nota"
+            className={`w-12 h-12 shrink-0 flex items-center justify-center rounded-full shadow-lg transition-all duration-300 active:scale-95 ${
+              isUploading || !selectedClient || !selectedHonorario 
+                ? 'bg-gray-300 text-white cursor-not-allowed hidden' 
+                : 'bg-gradient-to-br from-[#1e3a8a] to-[#0a192f] text-white hover:shadow-xl hover:-translate-y-0.5'
+            }`}
           >
-            {isUploading ? <Clock className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            {isUploading ? 'PROCESSANDO' : 'TRANSMITIR NOTA'}
+            {isUploading ? <Clock className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 -ml-0.5" />}
           </button>
         </div>
       </div>
