@@ -39,6 +39,8 @@ const EmissaoNF = () => {
   
   const [honorarios, setHonorarios] = useState<any[]>([]);
   const [selectedHonorario, setSelectedHonorario] = useState<any | null>(null);
+  const [availableContracts, setAvailableContracts] = useState<any[]>([]);
+  const [selectedContract, setSelectedContract] = useState<any | null>(null);
   const [discriminacao, setDiscriminacao] = useState("Honorários Advocatícios");
   const [valorNF, setValorNF] = useState<number>(0);
 
@@ -81,6 +83,8 @@ const EmissaoNF = () => {
     setClientSearch('');
     setSelectedHonorario(null);
     setValorNF(0);
+    setAvailableContracts([]);
+    setSelectedContract(null);
     
     // Buscar os honorários pendentes (filtra em JavaScript para igualar ao Controle Financeiro e evitar quebras de caractere)
     try {
@@ -89,7 +93,8 @@ const EmissaoNF = () => {
         .select(`
           *,
           contract:contracts (
-            id, hon_number, seq_id, reference, client_id, client_name, cnpj
+            id, hon_number, seq_id, reference, client_id, client_name, cnpj,
+            documents:contract_documents ( id, file_path, file_type )
           )
         `)
         .eq('status', 'pending');
@@ -116,13 +121,29 @@ const EmissaoNF = () => {
             display_id: i.contract.seq_id ? String(i.contract.seq_id).padStart(6, '0') : (i.contract.display_id || '-')
           }
         }));
+        
+        const uniqueContractsMap = new Map();
+        honsMapeados.forEach((hon: any) => {
+          if (hon.contract) {
+            uniqueContractsMap.set(hon.contract.id, hon.contract);
+          }
+        });
+        const uniqueContracts = Array.from(uniqueContractsMap.values());
+        
+        setAvailableContracts(uniqueContracts);
         setHonorarios(honsMapeados);
+
+        if (uniqueContracts.length === 1) {
+          setSelectedContract(uniqueContracts[0]);
+        }
       } else {
         setHonorarios([]);
+        setAvailableContracts([]);
       }
     } catch (e) {
       console.error(e);
       setHonorarios([]);
+      setAvailableContracts([]);
     }
   };
 
@@ -147,6 +168,17 @@ const EmissaoNF = () => {
     } catch (e: any) {
       toast.error("Erro inesperado", { description: e.message });
     }
+  };
+
+  const getPdfUrl = (documents: any) => {
+    if (!documents || !Array.isArray(documents) || documents.length === 0) return null;
+    let doc = documents.find((d: any) => d.file_type === 'contract');
+    if (!doc) doc = documents[0];
+    if (doc && doc.file_path) {
+      const { data } = supabase.storage.from('contracts').getPublicUrl(doc.file_path);
+      return data?.publicUrl;
+    }
+    return null;
   };
 
   const handleSelectHonorario = (hon: any) => {
@@ -395,7 +427,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                     Selecione um cliente para visualizar os honorários na fila de faturamento.
                   </p>
                 </div>
-              ) : honorarios.length === 0 ? (
+              ) : availableContracts.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-emerald-50/50 rounded-xl border border-emerald-100">
                   <div className="p-4 bg-white rounded-full shadow-sm mb-4">
                     <CheckCircle className="w-8 h-8 text-emerald-500" />
@@ -404,46 +436,101 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                     Nenhum honorário pendente de faturamento encontrado para este cliente.
                   </p>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {honorarios.map(hon => {
-                    const isSelected = selectedHonorario?.id === hon.id;
-                    return (
+              ) : availableContracts.length > 1 && !selectedContract ? (
+                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
+                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                    <p className="text-sm font-semibold text-amber-800">
+                      Este cliente possui honorários pendentes em mais de um contrato. Selecione o contrato desejado:
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {availableContracts.map(contract => (
                       <div 
-                        key={hon.id}
-                        onClick={() => handleSelectHonorario(hon)}
-                        className={`p-4 rounded-xl cursor-pointer transition-all border group relative overflow-hidden ${
-                          isSelected ? 'bg-blue-50/80 border-[#1e3a8a] ring-1 ring-[#1e3a8a]' : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
-                        }`}
+                        key={contract.id}
+                        onClick={() => setSelectedContract(contract)}
+                        className="p-4 rounded-xl cursor-pointer transition-all border bg-white border-gray-200 hover:border-[#1e3a8a] hover:shadow-md flex flex-col gap-2"
                       >
-                        {isSelected && <div className="absolute top-0 left-0 w-1 h-full bg-[#1e3a8a]" />}
-                        <div className="flex justify-between items-start mb-3">
-                          <span className={`text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-md ${isSelected ? 'bg-[#1e3a8a] text-white' : 'bg-gray-100 text-gray-600'}`}>
-                            {formatTypeText(hon.type)}
-                          </span>
-                          <span className={`text-lg font-black ${isSelected ? 'text-[#1e3a8a]' : 'text-gray-900'}`}>
-                            {maskMoney(Number(hon.amount || 0).toFixed(2))}
-                          </span>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs font-semibold text-gray-600 flex items-center justify-between">
-                            <span className="text-gray-400">Contrato:</span> 
-                            <span>{hon.contract?.hon_number || 'S/N'}</span>
-                          </p>
-                          <p className="text-xs font-semibold text-gray-600 flex items-center justify-between">
-                            <span className="text-gray-400">Parcela:</span> 
-                            <span>{hon.installment_number} de {hon.total_installments}</span>
-                          </p>
-                          {hon.due_date && (
-                            <p className="text-xs font-semibold text-gray-600 flex items-center justify-between">
-                              <span className="text-gray-400">Vencimento:</span> 
-                              <span>{new Date(hon.due_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
-                            </p>
-                          )}
-                        </div>
+                         <span className="text-sm font-black text-[#1e3a8a] break-words">
+                           {contract.reference || 'Sem referência'}
+                         </span>
+                         <span className="text-xs text-gray-500 font-semibold">
+                           Contrato HON: {contract.hon_number || 'S/N'}
+                         </span>
+                         <span className="text-xs text-emerald-700 font-bold bg-emerald-50 border border-emerald-100 self-start px-2 py-1 rounded-md">
+                           {honorarios.filter(h => h.contract?.id === contract.id).length} Honorários pendentes
+                         </span>
                       </div>
-                    )
-                  })}
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 shadow-sm flex-wrap gap-3">
+                     <div className="flex flex-col">
+                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Contrato Selecionado</span>
+                       <span className="text-sm font-black text-[#1e3a8a]">{selectedContract?.reference || 'Sem referência'}</span>
+                       <span className="text-xs font-semibold text-gray-500 mt-0.5">HON: {selectedContract?.hon_number || 'S/N'}</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                       {getPdfUrl(selectedContract?.documents) && (
+                         <button 
+                           onClick={() => window.open(getPdfUrl(selectedContract?.documents) || undefined, '_blank')}
+                           className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs font-bold transition-colors"
+                         >
+                           Ver PDF
+                         </button>
+                       )}
+                       {availableContracts.length > 1 && (
+                         <button 
+                           onClick={() => { setSelectedContract(null); setSelectedHonorario(null); setValorNF(0); }}
+                           className="px-3 py-1.5 bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200 rounded-lg text-xs font-bold transition-colors"
+                         >
+                           Trocar
+                         </button>
+                       )}
+                     </div>
+                   </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {honorarios.filter(h => h.contract?.id === selectedContract?.id).map(hon => {
+                      const isSelected = selectedHonorario?.id === hon.id;
+                      return (
+                        <div 
+                          key={hon.id}
+                          onClick={() => handleSelectHonorario(hon)}
+                          className={`p-4 rounded-xl cursor-pointer transition-all border group relative overflow-hidden ${
+                            isSelected ? 'bg-blue-50/80 border-[#1e3a8a] ring-1 ring-[#1e3a8a]' : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+                          }`}
+                        >
+                          {isSelected && <div className="absolute top-0 left-0 w-1 h-full bg-[#1e3a8a]" />}
+                          <div className="flex justify-between items-start mb-3">
+                            <span className={`text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-md ${isSelected ? 'bg-[#1e3a8a] text-white' : 'bg-gray-100 text-gray-600'}`}>
+                              {formatTypeText(hon.type)}
+                            </span>
+                            <span className={`text-lg font-black ${isSelected ? 'text-[#1e3a8a]' : 'text-gray-900'}`}>
+                              {maskMoney(Number(hon.amount || 0).toFixed(2))}
+                            </span>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-semibold text-gray-600 flex items-center justify-between">
+                              <span className="text-gray-400">Contrato:</span> 
+                              <span>{hon.contract?.hon_number || 'S/N'}</span>
+                            </p>
+                            <p className="text-xs font-semibold text-gray-600 flex items-center justify-between">
+                              <span className="text-gray-400">Parcela:</span> 
+                              <span>{hon.installment_number} de {hon.total_installments}</span>
+                            </p>
+                            {hon.due_date && (
+                              <p className="text-xs font-semibold text-gray-600 flex items-center justify-between">
+                                <span className="text-gray-400">Vencimento:</span> 
+                                <span>{new Date(hon.due_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </div>
