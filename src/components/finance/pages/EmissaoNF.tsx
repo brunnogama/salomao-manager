@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SearchableSelect } from '../../crm/SearchableSelect';
+import { ClientFormModal } from '../../controladoria/clients/ClientFormModal';
 import { supabase } from '../../../lib/supabase';
 import { maskCNPJ, maskMoney } from '../../controladoria/utils/masks';
 
@@ -65,6 +66,8 @@ const EmissaoNF = () => {
   const [clientSearch, setClientSearch] = useState('');
   const clientDropdownRef = useRef<HTMLDivElement>(null);
   
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+
   const [prestadorDetails, setPrestadorDetails] = useState<{cnpj: string, im: string, razao_social: string, fantasia: string, endereco: string, municipio: string, uf: string} | null>(null);
   const [isFetchingPrestador, setIsFetchingPrestador] = useState(false);
 
@@ -478,7 +481,21 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                     />
                   </div>
                   <div className="max-h-[250px] overflow-y-auto p-2">
-                    {filteredClients.length > 0 ? (
+                    {filteredClients.length === 0 ? (
+                      <div className="p-4 text-center">
+                        <p className="text-sm text-gray-500 mb-3">Nenhum cliente encontrado.</p>
+                        <button
+                          onClick={(e) => {
+                             e.stopPropagation();
+                             setIsClientModalOpen(true);
+                             setIsClientDropdownOpen(false);
+                          }}
+                          className="w-full py-2 bg-[#dcfce7] hover:bg-[#bbf7d0] text-[#166534] rounded-lg font-bold text-[11px] uppercase tracking-widest transition-colors"
+                        >
+                          + Confirmar e Adicionar Novo
+                        </button>
+                      </div>
+                    ) : (
                       filteredClients.map(c => (
                         <div
                           key={c.id}
@@ -493,18 +510,6 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                           )}
                         </div>
                       ))
-                    ) : (
-                      <div className="p-4 text-center space-y-3">
-                        <p className="text-xs text-gray-500 font-medium">Nenhum cliente encontrado.</p>
-                        {clientSearch.trim().length > 1 && (
-                          <button
-                            onClick={handleAddClient}
-                            className="w-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 py-2 rounded-lg text-xs font-bold transition-colors"
-                          >
-                            + Confirmar e Adicionar Novo
-                          </button>
-                        )}
-                      </div>
                     )}
                   </div>
                 </div>
@@ -821,6 +826,24 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
 
         </div>
       </div>
+
+      <ClientFormModal
+        isOpen={isClientModalOpen}
+        onClose={() => setIsClientModalOpen(false)}
+        onSave={(savedClient) => {
+          if (savedClient) {
+            const fetchClients = async () => {
+              const { data } = await supabase.from('clients').select('id, name, cnpj, email').order('name');
+              if (data) {
+                 setClients(data);
+                 const matching = data.find(c => c.id === savedClient.id) || savedClient;
+                 handleSelectClient(matching);
+              }
+            };
+            fetchClients();
+          }
+        }}
+      />
     </div>
   );
 };
