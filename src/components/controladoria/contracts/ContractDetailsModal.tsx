@@ -489,9 +489,12 @@ export function ContractDetailsModal({
     ) => {
       if (!val) return null;
       
+      const numericVal = parseCurrency(val || '');
+      const formattedVal = numericVal > 0 ? formatMoney(numericVal) : val;
+
       const titleParts = [
         clause ? clause : null,
-        val,
+        formattedVal,
         installment ? installment : '1x'
       ].filter(Boolean).join(' - ');
 

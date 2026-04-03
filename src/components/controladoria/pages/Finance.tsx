@@ -4,7 +4,7 @@ import { supabase } from '../../../lib/supabase';
 import {
   DollarSign, Download, CheckCircle2, Circle, Clock, Loader2,
   CalendarDays, Receipt, MapPin, Hash, Settings,
-  AlertTriangle, Plus, FileDown, Briefcase, ChevronDown, X
+  AlertTriangle, Plus, FileDown, Briefcase, ChevronDown, X, Trash2
 } from 'lucide-react';
 import { CustomSelect } from '../ui/CustomSelect';
 import { useContractOptions } from '../hooks/useContractOptions';
@@ -120,6 +120,8 @@ export function Finance() {
   const [isConfirmGenerateNextOpen, setIsConfirmGenerateNextOpen] = useState(false);
   const [installmentToGenerateNext, setInstallmentToGenerateNext] = useState<FinancialInstallment | null>(null);
 
+  const [itemToDelete, setItemToDelete] = useState<FinancialInstallment | null>(null);
+
   const checkAndPromptBaixa = (contractId: string, ignoreInstallmentId: string) => {
     const otherPending = installments.filter(i => 
       (i.contract_id === contractId || (i.contract as any)?.id === contractId) && 
@@ -131,6 +133,21 @@ export function Finance() {
       setIsConfirmBaixarOpen(true);
     } else {
       fetchData();
+    }
+  };
+
+  const handleDeleteInstallment = async () => {
+    if (!itemToDelete) return;
+    try {
+      const { error } = await supabase.from('financial_installments').delete().eq('id', itemToDelete.id);
+      if (error) throw error;
+      toast.success('Parcela excluída com sucesso!');
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao excluir a parcela.');
+    } finally {
+      setItemToDelete(null);
     }
   };
 
@@ -952,6 +969,11 @@ export function Finance() {
                                 <CheckCircle2 className="w-3 h-3 mr-1" /> Faturado
                               </div>
                             )}
+
+                            {/* EXCLUIR PARCELA */}
+                            <button onClick={(e) => { e.stopPropagation(); setItemToDelete(item); }} className="ml-2 p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all" title="Excluir Parcela">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
 
                         </td>
@@ -1136,7 +1158,7 @@ export function Finance() {
       , document.body)}
 
       {/* MODAL: ALTERAR VENCIMENTO */}
-      {isDueDateModalOpen && (
+      {isDueDateModalOpen && createPortal(
         <div className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
           <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm animate-in zoom-in-95 border border-gray-100">
             <h3 className="text-lg font-black text-[#0a192f] mb-4 uppercase tracking-tight">Alterar Vencimento</h3>
@@ -1154,7 +1176,7 @@ export function Finance() {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* CONFIRM CLOSE BILLING MODAL */}
       <ConfirmModal
@@ -1227,6 +1249,17 @@ export function Finance() {
         }}
         cancelText="Não Baixar"
         variant="info"
+      />
+      {/* MODAL EXCLUIR PARCELA */}
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        title="Excluir Parcela?"
+        description="Tem certeza que deseja excluir esta parcela do Controle Financeiro permanentemente? Essa ação não pode ser desfeita."
+        confirmText="Sim, Excluir"
+        cancelText="Cancelar"
+        variant="danger"
+        onConfirm={handleDeleteInstallment}
       />
     </div>
   );
