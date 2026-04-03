@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { APP_UPDATES } from '../../../config/updates';
+import { toast } from 'sonner';
+import { ConfirmModal } from '../ui/ConfirmModal';
 
 // --- TIPOS ---
 interface UserProfile {
@@ -57,6 +59,11 @@ export function Settings({
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [userForm, setUserForm] = useState({ name: '', email: '', role: 'editor', active: true });
 
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [moduleToReset, setModuleToReset] = useState<'contracts' | 'clients' | 'financial' | 'kanban' | null>(null);
+  const [factoryResetOpen, setFactoryResetOpen] = useState(false);
+  const [promptInput, setPromptInput] = useState('');
+
   // --- LÓGICA DE PERMISSÃO ---
   useEffect(() => {
     checkCurrentUser();
@@ -105,7 +112,7 @@ export function Settings({
 
   const handleSaveUser = async () => {
     if (!['admin', 'editor'].includes(currentUserRole || '')) {
-      return alert("Permissão negada. Você não tem permissão para gerenciar usuários.");
+      return toast.error("Permissão negada. Você não tem permissão para gerenciar usuários.");
     }
 
     setLoading(true);
@@ -137,8 +144,9 @@ export function Settings({
       await fetchUsers();
       setIsUserModalOpen(false);
       setEditingUser(null);
+      toast.success('Usuário salvo com sucesso!');
     } catch (error: any) {
-      alert('Erro ao salvar usuário: ' + error.message);
+      toast.error('Erro ao salvar usuário: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -146,7 +154,7 @@ export function Settings({
 
   const openUserModal = (user?: UserProfile) => {
     if (!['admin', 'editor'].includes(currentUserRole || '')) {
-      return alert("Apenas Administradores e Editores podem gerenciar usuários.");
+      return toast.error("Apenas Administradores e Editores podem gerenciar usuários.");
     }
 
     if (user) {
@@ -160,21 +168,36 @@ export function Settings({
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (currentUserRole !== 'admin') return alert("Permissão negada. Apenas Administradores podem excluir usuários.");
+    if (currentUserRole !== 'admin') return toast.error("Permissão negada. Apenas Administradores podem excluir usuários.");
+    setUserToDelete(id);
+  };
 
-    if (confirm("Tem certeza que deseja remover este usuário?")) {
-      try {
-        const { error } = await supabase.from('user_profiles').delete().eq('id', id);
-        if (error) throw error;
-        await fetchUsers();
-      } catch (error: any) {
-        alert('Erro ao excluir usuário: ' + error.message);
-      }
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    try {
+      const { error } = await supabase.from('user_profiles').delete().eq('id', userToDelete);
+      if (error) throw error;
+      toast.success("Usuário removido com sucesso!");
+      await fetchUsers();
+    } catch (error: any) {
+      toast.error('Erro ao excluir usuário: ' + error.message);
+    } finally {
+      setUserToDelete(null);
     }
   };
 
   const handleModuleReset = async (module: 'contracts' | 'clients' | 'financial' | 'kanban') => {
-    if (currentUserRole !== 'admin') return alert("Permissão negada.");
+    if (currentUserRole !== 'admin') return toast.error("Permissão negada.");
+    setModuleToReset(module);
+    setPromptInput('');
+  };
+
+  const confirmModuleReset = async () => {
+    if (!moduleToReset) return;
+    if (promptInput !== "CONFIRMAR") {
+      toast.error("Digitação incorreta. Ação cancelada.");
+      return;
+    }
 
     const labels = {
       contracts: 'CONTRATOS',
@@ -182,10 +205,7 @@ export function Settings({
       financial: 'FINANCEIRO',
       kanban: 'TAREFAS'
     };
-
-    const confirmation = window.prompt(`🚨 EXCLUSÃO DO MÓDULO: ${labels[module]} 🚨\n\nDigite "CONFIRMAR" para apagar todos os dados deste módulo.`);
-
-    if (confirmation !== "CONFIRMAR") return alert("Ação cancelada.");
+    const module = moduleToReset;
 
     setLoading(true);
     try {
@@ -208,21 +228,28 @@ export function Settings({
         if (error) throw new Error("Não é possível excluir clientes que possuem contratos vinculados.");
       }
 
-      alert(`✅ Módulo ${labels[module]} limpo com sucesso!`);
-      window.location.reload();
+      toast.success(`✅ Módulo ${labels[module]} limpo com sucesso!`);
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
       console.error(`Erro ao limpar ${module}:`, error);
-      alert(`Erro: ${error.message}`);
+      toast.error(`Erro: ${error.message}`);
     } finally {
       setLoading(false);
+      setModuleToReset(null);
     }
   };
 
   const handleFactoryReset = async () => {
-    if (currentUserRole !== 'admin') return alert("Permissão negada.");
+    if (currentUserRole !== 'admin') return toast.error("Permissão negada.");
+    setFactoryResetOpen(true);
+    setPromptInput('');
+  };
 
-    const confirmation = window.prompt("🚨 ATENÇÃO: ZONA DE PERIGO 🚨\n\nEssa ação apagará TODOS os dados do sistema.\n\nPara confirmar, digite:\nDELETAR TUDO");
-    if (confirmation !== "DELETAR TUDO") return alert("Ação cancelada.");
+  const confirmFactoryReset = async () => {
+    if (promptInput !== "DELETAR TUDO") {
+      toast.error("Digitação incorreta. Ação cancelada.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -236,12 +263,13 @@ export function Settings({
       await supabase.from('partners').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('analysts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
-      alert("✅ Sistema resetado com sucesso!");
-      window.location.reload();
+      toast.success("✅ Sistema resetado com sucesso!");
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
-      alert("Erro ao resetar: " + error.message);
+      toast.error("Erro ao resetar: " + error.message);
     } finally {
       setLoading(false);
+      setFactoryResetOpen(false);
     }
   };
 
@@ -619,6 +647,78 @@ export function Settings({
               <button onClick={() => setIsUserModalOpen(false)} className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">Cancelar</button>
               <button onClick={handleSaveUser} disabled={loading} className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-[#112240] transition-all flex items-center active:scale-95">
                 {loading ? 'Aguarde...' : <><Save className="w-4 h-4 mr-2" /> Salvar</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modals */}
+      <ConfirmModal
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={confirmDeleteUser}
+        title="Remover Usuário"
+        description="Tem certeza que deseja remover este usuário? Essa ação revogará os acessos dele ao sistema."
+        variant="danger"
+        confirmText="Excluir"
+      />
+
+      {moduleToReset && (
+        <div className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[90] p-4 text-left">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-red-100 p-6 animate-in zoom-in-95">
+            <h3 className="text-sm font-black text-red-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" /> Exclusão do Módulo
+            </h3>
+            <p className="text-xs text-gray-500 font-medium mb-6">
+              Para apagar todos os dados deste módulo, digite <strong>CONFIRMAR</strong> abaixo:
+            </p>
+            <input
+              type="text"
+              className="w-full border border-gray-200 rounded-xl p-3 text-sm font-semibold !outline-none focus:border-red-500 bg-gray-50 mb-6"
+              value={promptInput}
+              onChange={(e) => setPromptInput(e.target.value)}
+              placeholder="CONFIRMAR"
+            />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setModuleToReset(null)} className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-600">Cancelar</button>
+              <button 
+                onClick={confirmModuleReset} 
+                disabled={promptInput !== 'CONFIRMAR' || loading}
+                className="px-6 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase disabled:opacity-50"
+              >
+                {loading ? 'Aguarde...' : 'Apagar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {factoryResetOpen && (
+        <div className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[90] p-4 text-left">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-red-200 p-6 animate-in zoom-in-95">
+            <h3 className="text-base font-black text-red-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <AlertTriangle className="w-6 h-6" /> ZONA DE PERIGO
+            </h3>
+            <p className="text-xs text-gray-600 font-semibold mb-6">
+              Essa ação apagará <strong className="text-red-600">TODOS</strong> os dados do sistema permanentemente.<br/><br/>
+              Para confirmar, digite <strong>DELETAR TUDO</strong> abaixo:
+            </p>
+            <input
+              type="text"
+              className="w-full border border-gray-200 rounded-xl p-3 text-sm font-black !outline-none focus:border-red-600 bg-red-50 text-red-900 mb-6"
+              value={promptInput}
+              onChange={(e) => setPromptInput(e.target.value)}
+              placeholder="DELETAR TUDO"
+            />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setFactoryResetOpen(false)} className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-700">Cancelar</button>
+              <button 
+                onClick={confirmFactoryReset} 
+                disabled={promptInput !== 'DELETAR TUDO' || loading}
+                className="px-6 py-2.5 bg-red-700 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-red-200 disabled:opacity-50"
+              >
+                {loading ? 'Aguarde...' : 'Excluir Definitivamente'}
               </button>
             </div>
           </div>
