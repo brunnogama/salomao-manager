@@ -175,7 +175,7 @@ const EmissaoNF = () => {
     let doc = documents.find((d: any) => d.file_type === 'contract');
     if (!doc) doc = documents[0];
     if (doc && doc.file_path) {
-      const { data } = supabase.storage.from('contracts').getPublicUrl(doc.file_path);
+      const { data } = supabase.storage.from('ged-documentos').getPublicUrl(doc.file_path);
       return data?.publicUrl;
     }
     return null;
@@ -475,15 +475,16 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                        {getPdfUrl(selectedContract?.documents) && (
                          <button 
                            onClick={() => window.open(getPdfUrl(selectedContract?.documents) || undefined, '_blank')}
-                           className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs font-bold transition-colors"
+                           className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800 shadow-md hover:shadow-lg rounded-lg text-[10px] uppercase font-black tracking-[0.1em] transition-all active:scale-95"
                          >
-                           Ver PDF
+                           <FileText className="w-3.5 h-3.5" />
+                           Ver Contrato
                          </button>
                        )}
                        {availableContracts.length > 1 && (
                          <button 
                            onClick={() => { setSelectedContract(null); setSelectedHonorario(null); setValorNF(0); }}
-                           className="px-3 py-1.5 bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200 rounded-lg text-xs font-bold transition-colors"
+                           className="flex items-center gap-1.5 px-4 py-2 bg-white text-gray-600 hover:bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md rounded-lg text-[10px] uppercase font-black tracking-[0.1em] transition-all active:scale-95"
                          >
                            Trocar
                          </button>
