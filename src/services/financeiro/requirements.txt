@@ -1,0 +1,7 @@
+Flask
+flask-cors
+cryptography
+signxml
+lxml
+python-dotenv
+gunicorn

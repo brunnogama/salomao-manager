@@ -1,10 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   FileText,
-  Upload,
-  ShieldCheck,
   Globe,
-  AlertCircle,
   Send,
   CheckCircle2,
   Clock,
@@ -33,7 +30,7 @@ const formatTypeText = (typeStr: string) => {
 
 const EmissaoNF = () => {
   const [selectedCity, setSelectedCity] = useState('Rio de Janeiro');
-  const [file, setFile] = useState<File | null>(null);
+
   const [isUploading, setIsUploading] = useState(false);
 
   // Novos estados para Cliente e Honorários
@@ -168,12 +165,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
 
   // Função para processar a emissão (chamada ao serviço Python)
   const handleEmitirNota = async () => {
-    if (!file && selectedCity === 'Rio de Janeiro') {
-      toast.warning("Certificado Obrigatório", { 
-        description: "Por favor, selecione o certificado .pfx para o Rio de Janeiro." 
-      });
-      return;
-    }
+
     
     if (!selectedClient) {
       toast.warning("Cliente não selecionado", { description: "Selecione um cliente para emitir a NF." });
@@ -196,11 +188,8 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         discriminacao: discriminacao 
       }));
       
-      if (file) {
-        formData.append('certificado', file);
-      }
-
-      const response = await fetch('http://localhost:5000/assinar-nota', {
+      const apiUrl = import.meta.env.VITE_SIGNATURE_API || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/assinar-nota`, {
         method: 'POST',
         body: formData
       });
@@ -377,43 +366,8 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           </div>
           
           {/* Painel do Certificado Movido para a Lateral */}
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-gray-100 space-y-4">
-            <h2 className="font-black text-lg flex items-center gap-2 text-[#0a192f] uppercase tracking-wide text-sm">
-              <ShieldCheck className="w-5 h-5 text-emerald-600" /> Certificado (A1)
-            </h2>
-
-            <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-[#1e3a8a] hover:bg-gray-50/50 transition-all group overflow-hidden">
-              <input
-                type="file"
-                accept=".pfx,.p12"
-                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-              />
-              <div className="space-y-2 relative z-0">
-                <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center mx-auto group-hover:bg-blue-50 transition-colors shadow-sm">
-                  <Upload className="w-5 h-5 text-gray-400 group-hover:text-[#1e3a8a]" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-black text-[#0a192f] truncate px-2">
-                    {file ? file.name : "Selecionar .pfx"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-3 bg-amber-50/50 border border-amber-200 rounded-xl">
-              <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-              <div className="space-y-1">
-                <p className="text-[9px] font-black text-amber-900 uppercase tracking-widest">Segurança Local</p>
-                <p className="text-[10px] text-amber-800 leading-relaxed font-medium">
-                  Senha no `.env`.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Console Central (2 Colunas): Honorários Pendentes e Discriminação */}
+        </div>
         <div className="lg:col-span-2 space-y-4 sm:space-y-6 flex flex-col h-full">
           {/* Section: Vinculação de Honorário */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-gray-100 space-y-5 flex-1 max-h-[400px] flex flex-col">
