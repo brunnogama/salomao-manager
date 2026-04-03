@@ -104,7 +104,15 @@ const EmissaoNF = () => {
     // Safe Query (alternativa robusta)
     try {
       // Primeiro buscando os contratos do cliente
-      const { data: clientContracts } = await supabase.from('contracts').select('id, hon_number, display_id, seq_id, reference').eq('client_id', client.id);
+      const orConditions: string[] = [];
+      if (client.id) orConditions.push(`client_id.eq.${client.id}`);
+      if (client.cnpj) orConditions.push(`cnpj.eq.${client.cnpj}`);
+      if (client.name) orConditions.push(`client_name.ilike.%${client.name.trim()}%`);
+      
+      const { data: clientContracts } = await supabase
+        .from('contracts')
+        .select('id, hon_number, display_id, seq_id, reference')
+        .or(orConditions.join(','));
       if (clientContracts && clientContracts.length > 0) {
         const contractIds = clientContracts.map(c => c.id);
         const { data: hons } = await supabase
