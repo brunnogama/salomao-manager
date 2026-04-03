@@ -23,4 +23,4 @@ class CertificateSigner:
         )
         signer = XMLSigner(method=methods.enveloped, signature_algorithm="rsa-sha1")
         
-        return signer.sign(xml_element, key=private_key, cert=certificate)
+        return signer.sign(xml_element, key=private_key, cert=[certificate])
