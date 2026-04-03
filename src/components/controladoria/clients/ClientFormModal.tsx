@@ -19,9 +19,11 @@ interface Props {
   onSave: (savedClient?: Client) => void;
   showGiftsTab?: boolean;
   initialTab?: string;
+  isReadOnly?: boolean;
+  onEdit?: () => void;
 }
 
-export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab = false, initialTab = 'dados' }: Props) {
+export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab = false, initialTab = 'dados', isReadOnly = false, onEdit }: Props) {
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -266,15 +268,18 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
   return createPortal(
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl h-[85vh] flex overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
+        <button onClick={onClose} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 z-10 transition-colors">
+          <X className="w-6 h-6" />
+        </button>
 
         {/* Left Sidebar */}
         <div className="w-72 bg-white border-r border-gray-100 flex flex-col py-8 px-5 shrink-0 overflow-y-auto">
           <div className="mb-8 px-2">
             <h2 className="text-xl font-black text-[#0a192f] tracking-tight leading-tight">
-              {client ? 'Editar Cliente' : 'Novo Cliente'}
+              {isReadOnly ? 'Visualizar Cliente' : client ? 'Editar Cliente' : 'Novo Cliente'}
             </h2>
             <p className="text-xs text-gray-400 mt-1 font-medium">
-              {client ? 'Gerencie os dados do cliente' : 'Cadastre um novo cliente'}
+              {isReadOnly ? 'Visualize os dados do cliente' : client ? 'Gerencie os dados do cliente' : 'Cadastre um novo cliente'}
             </p>
           </div>
 
@@ -301,11 +306,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
             })}
           </div>
 
-          <div className="mt-auto pt-6 border-t border-gray-100">
-            <button onClick={onClose} className="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-red-500 hover:bg-red-50 p-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest">
-              <X className="w-4 h-4" /> Fechar
-            </button>
-          </div>
+
         </div>
 
         {/* Right Content */}
@@ -319,7 +320,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                   <div className="flex-1">
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">CPF/CNPJ</label>
                     <div className="flex gap-2">
-                      <input
+                      <input disabled={isReadOnly}
                         type="text"
                         disabled={formData.is_person}
                         className="flex-1 bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] disabled:bg-gray-100 transition-all"
@@ -327,8 +328,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                         onChange={e => setFormData({ ...formData, cnpj: maskCNPJ(e.target.value) })}
                         placeholder="00.000.000/0000-00"
                       />
-                      <button
-                        onClick={handleCNPJSearch}
+                      <button disabled={isReadOnly || searching} onClick={handleCNPJSearch}
                         disabled={formData.is_person || !formData.cnpj}
                         className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-all"
                       >
@@ -336,7 +336,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                       </button>
                     </div>
                     <div className="mt-3 flex items-center ml-1">
-                      <input
+                      <input disabled={isReadOnly}
                         type="checkbox"
                         id="is_person"
                         checked={formData.is_person}
@@ -348,7 +348,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                   </div>
                   <div className="flex-1">
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Sócio Responsável</label>
-                    <CustomSelect
+                    <CustomSelect disabled={isReadOnly}
                       value={formData.partner_id || ''}
                       onChange={val => setFormData({ ...formData, partner_id: val })}
                       options={[{ label: 'Selecione', value: '' }, ...partners.map(p => ({ label: p.name, value: p.id }))]}
@@ -358,7 +358,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
 
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo / Razão Social *</label>
-                  <input
+                  <input disabled={isReadOnly}
                     type="text"
                     className={`w-full bg-white border rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all ${duplicateClients.length > 0 ? 'border-amber-400 bg-amber-50' : 'border-gray-200'}`}
                     value={formData.name}
@@ -385,7 +385,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">E-mail Principal</label>
-                    <input
+                    <input disabled={isReadOnly}
                       type="email"
                       className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
                       value={formData.email || ''}
@@ -395,7 +395,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Telefone Principal</label>
-                    <input
+                    <input disabled={isReadOnly}
                       type="text"
                       className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
                       value={formData.phone || ''}
@@ -412,7 +412,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                 <div className="grid grid-cols-3 gap-6">
                   <div className="col-span-2">
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Logradouro</label>
-                    <input
+                    <input disabled={isReadOnly}
                       type="text"
                       className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
                       value={formData.address || ''}
@@ -422,7 +422,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Número</label>
-                    <input
+                    <input disabled={isReadOnly}
                       type="text"
                       className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
                       value={formData.number || ''}
@@ -433,7 +433,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Complemento</label>
-                  <input
+                  <input disabled={isReadOnly}
                     type="text"
                     className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
                     value={formData.complement || ''}
@@ -444,7 +444,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cidade</label>
-                    <input
+                    <input disabled={isReadOnly}
                       type="text"
                       className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
                       value={formData.city || ''}
@@ -454,7 +454,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Estado</label>
-                    <CustomSelect
+                    <CustomSelect disabled={isReadOnly}
                       value={formData.uf || ''}
                       onChange={val => setFormData({ ...formData, uf: val })}
                       options={UFS.map(u => ({ label: `${u.sigla} - ${u.nome}`, value: u.sigla }))}
@@ -488,17 +488,17 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                   <div className="grid grid-cols-1 gap-4">
                     {contacts.map((contact, index) => (
                       <div key={index} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4 relative group hover:border-blue-100 transition-all">
-                        <button
+                        {!isReadOnly && <button
                           onClick={() => handleRemoveContact(index)}
                           className="absolute top-3 right-3 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </button>
+                        </button>}
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="col-span-2">
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo</label>
-                            <input
+                            <input disabled={isReadOnly}
                               type="text"
                               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
                               value={contact.name || ''}
@@ -508,7 +508,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                           </div>
                           <div>
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cargo</label>
-                            <input
+                            <input disabled={isReadOnly}
                               type="text"
                               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
                               value={contact.role || ''}
@@ -518,7 +518,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                           </div>
                           <div>
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Telefone</label>
-                            <input
+                            <input disabled={isReadOnly}
                               type="text"
                               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
                               value={contact.phone || ''}
@@ -528,7 +528,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                           </div>
                           <div className="col-span-2">
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">E-mail</label>
-                            <input
+                            <input disabled={isReadOnly}
                               type="email"
                               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
                               value={contact.email || ''}
@@ -540,7 +540,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
 
                         <div className="flex items-center pt-2">
                           <label className="flex items-center gap-2 cursor-pointer group/check">
-                            <input
+                            <input disabled={isReadOnly}
                               type="checkbox"
                               checked={contact.is_main_contact}
                               onChange={e => handleContactChange(index, 'is_main_contact', e.target.checked)}
@@ -560,7 +560,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
               <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 h-full flex flex-col">
                 <div className="flex-1 flex flex-col">
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Observações Gerais</label>
-                  <textarea
+                  <textarea disabled={isReadOnly}
                     className="flex-1 w-full bg-white border border-gray-200 rounded-xl p-4 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all resize-none"
                     value={formData.notes || ''}
                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
@@ -601,7 +601,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Tipo de Brinde</label>
-                            <CustomSelect
+                            <CustomSelect disabled={isReadOnly}
                               value={contact.gift_type || ''}
                               onChange={(val) => handleContactChange(index, 'gift_type', val)}
                               options={[
@@ -615,7 +615,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                           </div>
                           <div>
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Quantidade</label>
-                            <input
+                            <input disabled={isReadOnly}
                               type="number"
                               min="1"
                               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
@@ -627,7 +627,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                           {contact.gift_type === 'Outros' && (
                             <div className="col-span-2">
                               <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Especificar Outro</label>
-                              <input
+                              <input disabled={isReadOnly}
                                 type="text"
                                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
                                 value={contact.gift_other || ''}
@@ -638,7 +638,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                           )}
                           <div className="col-span-2">
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Observações de Brinde</label>
-                            <input
+                            <input disabled={isReadOnly}
                               type="text"
                               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
                               value={contact.gift_notes || ''}
@@ -658,15 +658,41 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
 
           {/* Footer */}
           <div className="px-10 py-6 border-t border-gray-100 flex justify-end gap-3 bg-white shrink-0">
-            <button onClick={onClose} className="px-6 py-2.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
-            <button
-              onClick={handleSave}
-              disabled={loading}
-              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] hover:shadow-xl active:scale-95 disabled:opacity-50 transition-all"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Salvar Registro
-            </button>
+            {isReadOnly ? (
+              <>
+                <button
+                  onClick={onClose}
+                  className="px-6 py-2.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors"
+                >
+                  Fechar
+                </button>
+                {onEdit && (
+                  <button
+                    onClick={onEdit}
+                    className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all"
+                  >
+                    Editar Cliente
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={onClose}
+                  className="px-6 py-2.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] hover:shadow-xl active:scale-95 disabled:opacity-50 transition-all"
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  Salvar Registro
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

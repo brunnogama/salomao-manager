@@ -8,10 +8,6 @@ import {
   Building,
   User,
   Briefcase,
-  Mail,
-  Phone,
-  MapPin,
-  X,
   Download,
   Gift
 } from 'lucide-react';
@@ -20,11 +16,9 @@ import { ClientFormModal } from '../clients/ClientFormModal';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 
-import { maskCNPJ, maskPhone } from '../utils/masks';
-import { createPortal } from 'react-dom';
+import { maskCNPJ } from '../utils/masks';
 import { toast } from 'sonner';
 import { ConfirmModal } from '../ui/ConfirmModal';
-import { getGiftIconColor } from '../../../types/crmContact';
 
 const UFS = [{ sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' }, { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' }, { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' }, { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' }, { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' }, { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' }, { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' }, { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' }, { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }];
 
@@ -571,194 +565,14 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
 
       {/* Modal de Formulário */}
       <ClientFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        client={clientToEdit}
+        isOpen={isModalOpen || !!viewingGroup}
+        onClose={() => { setIsModalOpen(false); setViewingGroup(null); }}
+        client={clientToEdit || viewingGroup?.primaryClient}
         onSave={fetchData}
         showGiftsTab={true}
+        isReadOnly={!!viewingGroup}
+        onEdit={viewingGroup ? () => handleEdit(viewingGroup.primaryClient) : undefined}
       />
-
-      {/* Modal de Visualização */}
-      {
-        viewingGroup && createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setViewingGroup(null)}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-              {/* Header */}
-              <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-white shrink-0">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center shadow-lg">
-                    {viewingGroup.primaryClient.is_person ? <User className="w-6 h-6 text-white" /> : <Building className="w-6 h-6 text-white" />}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-[#0a192f]">{viewingGroup.primaryClient.name}</h2>
-                    <p className="text-sm font-semibold text-gray-500">{viewingGroup.primaryClient.cnpj ? maskCNPJ(viewingGroup.primaryClient.cnpj) : 'Sem documento'}</p>
-                  </div>
-                </div>
-                <button onClick={() => setViewingGroup(null)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              {/* Content */}
-              <div className="p-4 sm:p-6 flex-1 overflow-y-auto custom-scrollbar">
-                <div className="space-y-6">
-                  {/* Gift Summary */}
-                  {viewingGroup.allClients.some(c => c.contacts?.some((contact: any) => contact.gift_type && contact.gift_type !== 'Não recebe')) && (
-                    <div>
-                      <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Resumo de Brindes</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {viewingGroup.allClients.flatMap(c => c.contacts || [])
-                          .filter((contact: any) => contact.gift_type && contact.gift_type !== 'Não recebe')
-                          .map((c: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                              <div className={`p-2 rounded-lg bg-gradient-to-br ${getGiftIconColor(c.gift_type || '')}`}>
-                                <Gift className="w-3 h-3 text-white" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-gray-800 truncate">{c.name}</p>
-                                <div className="flex gap-2 text-[10px] text-gray-500 mt-0.5">
-                                  <span>{c.gift_type}</span>
-                                  {c.gift_quantity && <span>(x{c.gift_quantity})</span>}
-                                </div>
-                              </div>
-                            </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Informações Básicas */}
-                  <div>
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Informações Básicas</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                        <Mail className="w-4 h-4 text-gray-400 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-gray-500">Email</p>
-                          <p className="text-sm font-bold text-gray-800 truncate">{viewingGroup.primaryClient.email || '-'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                        <Phone className="w-4 h-4 text-gray-400 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-gray-500">Telefone</p>
-                          <p className="text-sm font-bold text-gray-800 truncate">{viewingGroup.primaryClient.phone ? maskPhone(viewingGroup.primaryClient.phone) : '-'}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Endereço */}
-                  {viewingGroup.primaryClient.address && (
-                    <div>
-                      <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Endereço</h3>
-                      <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
-                        <MapPin className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-gray-800 break-words">
-                            {viewingGroup.primaryClient.address}, {viewingGroup.primaryClient.number}
-                            {viewingGroup.primaryClient.complement && ` - ${viewingGroup.primaryClient.complement}`}
-                          </p>
-                          <p className="text-sm text-gray-600 mt-1 truncate">
-                            {viewingGroup.primaryClient.city}, {viewingGroup.primaryClient.uf}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Sócios Responsáveis e Contratos */}
-                  {viewingGroup.partners.length > 0 && (
-                    <div>
-                      <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
-                        {viewingGroup.partners.length === 1 ? 'Sócio Responsável' : 'Sócios Responsáveis'}
-                      </h3>
-                      <div className="space-y-3">
-                        {viewingGroup.partners.map((partner, idx) => (
-                          <div key={idx} className="p-3 bg-blue-50 rounded-xl">
-                            <div className="flex items-center gap-3">
-                              <User className="w-4 h-4 text-blue-600 shrink-0" />
-                              <p className="text-sm font-bold text-blue-900 truncate">{partner.partner_name}</p>
-                            </div>
-                            {partner.contracts.length > 0 && (
-                              <div className="mt-2 ml-7 space-y-1">
-                                {partner.contracts.map((contract, cIdx) => (
-                                  <div key={cIdx} className="flex items-center gap-2">
-                                    <Briefcase className="w-3 h-3 text-blue-400 shrink-0" />
-                                    <span className="text-[11px] font-semibold text-blue-700">
-                                      {contract.hon_number
-                                        ? `HON ${contract.hon_number}`
-                                        : `Caso ${String(contract.seq_id || 0).padStart(6, '0')}`
-                                      }
-                                    </span>
-                                    <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                                      contract.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
-                                      contract.status === 'proposal' ? 'bg-amber-100 text-amber-700' :
-                                      contract.status === 'analysis' ? 'bg-blue-100 text-blue-700' :
-                                      'bg-gray-100 text-gray-600'
-                                    }`}>
-                                      {contract.status === 'active' ? 'Ativo' :
-                                       contract.status === 'proposal' ? 'Proposta' :
-                                       contract.status === 'analysis' ? 'Análise' :
-                                       contract.status === 'rejected' ? 'Rejeitado' :
-                                       contract.status === 'probono' ? 'Pro Bono' :
-                                       contract.status}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Total de Contratos */}
-                  {viewingGroup.totalContracts > 0 && (
-                    <div>
-                      <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Total de Contratos</h3>
-                      <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl">
-                        <Briefcase className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <p className="text-sm font-bold text-emerald-900 truncate">{viewingGroup.totalContracts} contrato(s)</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Observações */}
-                  {viewingGroup.primaryClient.notes && (
-                    <div>
-                      <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Observações</h3>
-                      <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap word-break">{viewingGroup.primaryClient.notes}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Footer com Botões */}
-              <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex flex-col-reverse sm:flex-row justify-end items-stretch sm:items-center gap-3 bg-gray-50 shrink-0">
-                <button
-                  onClick={() => setViewingGroup(null)}
-                  className="px-6 py-2.5 sm:py-2 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors bg-white sm:bg-transparent border sm:border-transparent border-gray-200 rounded-xl sm:rounded-none w-full sm:w-auto"
-                >
-                  Fechar
-                </button>
-                {!isReadOnly && (
-                  <button
-                    onClick={() => handleEdit(viewingGroup.primaryClient)}
-                    className="flex items-center justify-center gap-2 px-6 py-3 sm:py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
-                  >
-                    <Gift className="w-4 h-4" />
-                    Gerenciar Brindes
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        , document.body)
-      }
 
       <ConfirmModal
         isOpen={!!clientToDelete}
