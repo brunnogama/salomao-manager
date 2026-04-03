@@ -85,17 +85,22 @@ const EmissaoNF = () => {
     setSelectedHonorario(null);
     setValorNF(0);
     
-    // Buscar os contratos do cliente (seguro para caracteres especiais)
+    // Buscar os contratos do cliente de forma segura em paralelo (evita quebra de URL do Supabase com caracteres & e /)
     try {
-      const orConditions: string[] = [];
-      if (client.id) orConditions.push(`client_id.eq."${client.id}"`);
-      if (client.cnpj) orConditions.push(`cnpj.eq."${client.cnpj}"`);
-      if (client.name) orConditions.push(`client_name.ilike."%${client.name.trim()}%"`);
+      const queries = [];
+      if (client.id) queries.push(supabase.from('contracts').select('id, hon_number, display_id, seq_id, reference').eq('client_id', client.id));
+      if (client.cnpj) queries.push(supabase.from('contracts').select('id, hon_number, display_id, seq_id, reference').eq('cnpj', client.cnpj));
+      if (client.name) queries.push(supabase.from('contracts').select('id, hon_number, display_id, seq_id, reference').ilike('client_name', `%${client.name.trim()}%`));
       
-      const { data: clientContracts } = await supabase
-        .from('contracts')
-        .select('id, hon_number, display_id, seq_id, reference')
-        .or(orConditions.join(','));
+      const results = await Promise.all(queries);
+      const allContracts = results.flatMap(r => r.data || []);
+      
+      // Remover duplicados
+      const uniqueContractsMap = new Map();
+      for (const c of allContracts) {
+        if (c && c.id) uniqueContractsMap.set(c.id, c);
+      }
+      const clientContracts = Array.from(uniqueContractsMap.values());
       if (clientContracts && clientContracts.length > 0) {
         const contractIds = clientContracts.map(c => c.id);
         const { data: hons } = await supabase
