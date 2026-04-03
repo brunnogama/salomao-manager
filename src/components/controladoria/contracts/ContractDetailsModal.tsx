@@ -40,8 +40,6 @@ const ExpandableText = ({ text }: { text: string }) => {
 const getDurationBetween = (startDateStr: string, endDateStr: string): string => {
   if (!startDateStr || !endDateStr) return '-';
 
-  if (!startDateStr || !endDateStr) return '-';
-
   const start = safeDate(startDateStr);
   const end = safeDate(endDateStr);
 
@@ -51,12 +49,16 @@ const getDurationBetween = (startDateStr: string, endDateStr: string): string =>
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) return 'Mesmo dia';
-  if (diffDays > 30) {
+  if (diffDays >= 30) {
     const months = Math.floor(diffDays / 30);
     const days = diffDays % 30;
-    return days > 0 ? `${months} meses e ${days} dias` : `${months} meses`;
+    
+    const monthStr = months === 1 ? '1 mês' : `${months} meses`;
+    const dayStr = days === 1 ? '1 dia' : `${days} dias`;
+    
+    return days > 0 ? `${monthStr} e ${dayStr}` : monthStr;
   }
-  return `${diffDays} dias`;
+  return diffDays === 1 ? '1 dia' : `${diffDays} dias`;
 };
 
 // Função auxiliar para formatar moeda apenas para exibição
@@ -97,8 +99,22 @@ export function ContractDetailsModal({
 }: Props) {
   useEscKey(isOpen, onClose);
   
+  const [installments, setInstallments] = useState<any[]>([]);
+  
+  useEffect(() => {
+    if (isOpen && contract?.id) {
+      supabase.from('financial_installments')
+        .select('clause, type, status, installment_number')
+        .eq('contract_id', contract.id)
+        .then(({ data }) => setInstallments(data || []));
+    } else {
+      setInstallments([]);
+    }
+  }, [isOpen, contract?.id]);
+
   const [activeTab, setActiveTab] = useState(0);
   const [totalPaid, setTotalPaid] = useState(0);
+  const [baixadoDate, setBaixadoDate] = useState<string | null>(null);
   const [loadingAiMap, setLoadingAiMap] = useState<Record<string, boolean>>({});
   const [localSummaries, setLocalSummaries] = useState<Record<string, string>>({});
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
@@ -106,20 +122,27 @@ export function ContractDetailsModal({
   useEffect(() => {
     let isMounted = true;
     const fetchPaid = async () => {
-      if (!contract?.id || contract.status !== 'active') {
+      if (!contract?.id || !['active', 'baixado'].includes(contract.status)) {
         if (isMounted) setTotalPaid(0);
         return;
       }
       try {
         const { data, error } = await supabase
           .from('financial_installments')
-          .select('amount')
+          .select('amount, paid_at')
           .eq('contract_id', contract.id)
           .eq('status', 'paid');
           
         if (!error && data && isMounted) {
           const sum = data.reduce((acc, curr) => acc + Number(curr.amount), 0);
           setTotalPaid(sum);
+
+          if (contract.status === 'baixado' && data.length > 0) {
+             const dates = data.map(i => i.paid_at).filter(Boolean).sort();
+             if (dates.length > 0) {
+               setBaixadoDate(dates[dates.length - 1]);
+             }
+          }
         }
       } catch (err) {}
     };
@@ -206,6 +229,9 @@ export function ContractDetailsModal({
     if (contract.probono_date) {
       events.push({ label: 'Probono', date: contract.probono_date, status: 'probono', color: 'bg-purple-100 text-purple-800 border-purple-200' });
     }
+    if (contract.status === 'baixado') {
+      events.push({ label: 'Baixado', date: baixadoDate || contract.updated_at || new Date().toISOString(), status: 'baixado', color: 'bg-purple-100 text-purple-800 border-purple-200' });
+    }
 
     return events.sort((a, b) => {
       const dateA = safeDate(a.date)?.getTime() || 0;
@@ -245,6 +271,7 @@ export function ContractDetailsModal({
       case 'analysis': return contract.prospect_date || contract.created_at;
       case 'proposal': return contract.proposal_date || contract.created_at;
       case 'active': return contract.contract_date || contract.created_at;
+      case 'baixado': return baixadoDate || contract.updated_at || contract.contract_date || contract.created_at;
       case 'rejected': return contract.rejection_date || contract.created_at;
       case 'probono': return contract.probono_date || contract.contract_date || contract.created_at;
       default: return contract.created_at;
@@ -262,7 +289,7 @@ export function ContractDetailsModal({
 
   // --- LÓGICA DE CÁLCULO FINANCEIRO ---
   const calculateFinancials = () => {
-    const isFinancialRelevant = ['proposal', 'active'].includes(contract.status);
+    const isFinancialRelevant = ['proposal', 'active', 'baixado'].includes(contract.status);
 
     const formatGroupTotal = (valuesArr: (string | undefined)[], fallbackNumber: number) => {
       const validStrings = valuesArr.filter(v => v && parseCurrency(v) > 0);
@@ -462,9 +489,12 @@ export function ContractDetailsModal({
     ) => {
       if (!val) return null;
       
+      const numericVal = parseCurrency(val || '');
+      const formattedVal = numericVal > 0 ? formatMoney(numericVal) : val;
+
       const titleParts = [
         clause ? clause : null,
-        val,
+        formattedVal,
         installment ? installment : '1x'
       ].filter(Boolean).join(' - ');
 
@@ -476,13 +506,44 @@ export function ContractDetailsModal({
       };
       const t = colors[colorTheme];
 
+      // Mapeia o feeType amigável ('Pró-labore', 'Êxito Intermediário', etc) para a chave do backend
+      const getInternalType = (ft: string) => {
+        if (ft.includes('Pró-labore')) return 'pro_labore';
+        if (ft.includes('Fixo Mensal')) return 'fixed_monthly_fee';
+        if (ft.includes('Intermediário')) return 'intermediate_fee';
+        if (ft.includes('Final')) return 'final_success_fee';
+        if (ft.includes('Outros')) return 'other_fees';
+        return '';
+      };
+      
+      const internalFeeType = getInternalType(_feeType);
+      
+      // Busca parcelas pagas relacionadas a esta cláusula e tipo.
+      const paidInstallments = installments
+        .filter((i: any) => i.status === 'paid' && i.type === internalFeeType && (i.clause || '') === (clause || ''))
+        .sort((a: any, b: any) => (a.installment_number || 0) - (b.installment_number || 0));
+
       return (
         <div className={`text-xs flex flex-col ${t.bg} p-2 rounded border ${t.border} mt-1 shadow-sm`}>
           <div className="flex justify-between items-start">
-             <span className={`font-semibold ${t.text}`}>{titleParts}</span>
-             {ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+             <div className="flex flex-col gap-1.5">
+               <span className={`font-semibold ${t.text}`}>{titleParts}</span>
+               
+                {/* Badges de Parcelas Pagas */}
+               {paidInstallments.length > 0 && (
+                 <div className="flex flex-wrap gap-1 mt-0.5">
+                   {paidInstallments.map((pi: any, idx: number) => (
+                     <span key={idx} className="inline-flex items-center text-[8px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200 shadow-sm">
+                       <CheckCircle2 className="w-2 h-2 mr-1" strokeWidth={3} />
+                       Pago (Parc. {pi.installment_number || idx + 1})
+                     </span>
+                   ))}
+                 </div>
+               )}
+             </div>
+             {ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider mt-0.5 whitespace-nowrap">Faturar</span>}
           </div>
-          {rule && <span className={`text-[10px] ${t.ruleText} italic mt-1 ${t.ruleBg} p-1.5 rounded`}>{rule}</span>}
+          {rule && <span className={`text-[10px] ${t.ruleText} italic mt-1.5 ${t.ruleBg} p-1.5 rounded`}>{rule}</span>}
         </div>
       );
     };
@@ -638,7 +699,7 @@ export function ContractDetailsModal({
                   <p className="text-2xl font-black text-[#0a192f] mt-1">{formatMoney(financials.grandTotal)}</p>
                </div>
                
-               {contract.status === 'active' && (
+               {['active', 'baixado'].includes(contract.status) && (
                  <>
                    <div className="h-px bg-gray-100 w-full" />
                    <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-200">
