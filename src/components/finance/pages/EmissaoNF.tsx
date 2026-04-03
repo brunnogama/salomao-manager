@@ -9,7 +9,8 @@ import {
   ChevronDown,
   Building2,
   Coins,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SearchableSelect } from '../../crm/SearchableSelect';
@@ -63,10 +64,100 @@ const EmissaoNF = () => {
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
   const clientDropdownRef = useRef<HTMLDivElement>(null);
+  
+  const [prestadorDetails, setPrestadorDetails] = useState<{cnpj: string, im: string, razao_social: string, fantasia: string, endereco: string, municipio: string, uf: string} | null>(null);
+  const [isFetchingPrestador, setIsFetchingPrestador] = useState(false);
+
+  // Fetch Cities and CNPJ on Mount/City Change
+  useEffect(() => {
+    const fetchPrestadorInfo = async () => {
+      setIsFetchingPrestador(true);
+      try {
+        let cnpjFromDB = '';
+        const { data: locs } = await supabase.from('office_locations').select('name, cnpj').eq('active', true);
+        
+        if (locs) {
+          // Busca o loca cujo nome tenha a sigla ou a cidade
+          const sigla = getSiglaByCity(selectedCity);
+          const matched = locs.find((loc: any) => loc.name.includes(sigla) || loc.name.toLowerCase().includes(selectedCity.toLowerCase()));
+          if (matched && matched.cnpj) {
+            cnpjFromDB = matched.cnpj;
+          }
+        }
+
+        const fallback = OFFICE_DATA[selectedCity] || OFFICE_DATA['Rio de Janeiro'];
+        const cnpjToUse = cnpjFromDB || fallback?.cnpj || '';
+        const imToUse = fallback?.im || 'Não Cadastrado';
+
+        if (cnpjToUse) {
+          const cleanCnpj = cnpjToUse.replace(/\D/g, '');
+          const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
+          if (res.ok) {
+            const data = await res.json();
+            
+            // Format logradouro to avoid "undefined" strings
+            const comp = data.complemento ? ' - ' + data.complemento : '';
+            const endCompleto = `${data.descricao_tipo_de_logradouro || ''} ${data.logradouro || ''}, ${data.numero || 'SN'}${comp} - ${data.bairro || ''} - CEP: ${data.cep || ''}`.trim();
+
+            setPrestadorDetails({
+              cnpj: cnpjToUse,
+              im: imToUse,
+              razao_social: data.razao_social || 'SALOMÃO ADVOGADOS ASSOCIADOS',
+              fantasia: data.nome_fantasia || 'SALOMÃO ADVOGADOS',
+              endereco: endCompleto,
+              municipio: data.municipio || selectedCity,
+              uf: data.uf || getSiglaByCity(selectedCity)
+            });
+            return;
+          }
+        }
+        
+        // Se a API falhar ou não achar CNPJ
+        setPrestadorDetails({
+          cnpj: cnpjToUse || 'Sem Cadastro',
+          im: imToUse,
+          razao_social: 'SALOMÃO ADVOGADOS ASSOCIADOS',
+          fantasia: 'SALOMÃO ADVOGADOS',
+          endereco: fallback?.endereco || 'Endereço não cadastrado',
+          municipio: selectedCity,
+          uf: fallback?.uf || getSiglaByCity(selectedCity)
+        });
+
+      } catch (err) {
+        console.error('Erro ao buscar dados online da BrasilAPI:', err);
+        const fallback = OFFICE_DATA[selectedCity] || OFFICE_DATA['Rio de Janeiro'];
+        setPrestadorDetails({
+          cnpj: fallback?.cnpj || '...',
+          im: fallback?.im || '...',
+          razao_social: 'SALOMÃO ADVOGADOS ASSOCIADOS',
+          fantasia: 'SALOMÃO ADVOGADOS',
+          endereco: fallback?.endereco || 'Endereço Indisponível (Sem Conexão)',
+          municipio: selectedCity,
+          uf: fallback?.uf || getSiglaByCity(selectedCity)
+        });
+      } finally {
+        setIsFetchingPrestador(false);
+      }
+    };
+    fetchPrestadorInfo();
+  }, [selectedCity]);
 
   const cities = [
-    'Belém', 'Brasília', 'Florianópolis', 'Rio de Janeiro', 'São Paulo', 'Vitória'
+    'Belém', 'Brasília', 'Florianópolis', 'Rio de Janeiro', 'São Paulo', 'Vitória', 'Salvador'
   ];
+
+  const getSiglaByCity = (city: string) => {
+    const map: Record<string, string> = {
+      'Belém': 'PA',
+      'Brasília': 'DF',
+      'Florianópolis': 'SC',
+      'Rio de Janeiro': 'RJ',
+      'São Paulo': 'SP',
+      'Vitória': 'ES',
+      'Salvador': 'BA'
+    };
+    return map[city] || '';
+  };
 
   // Fetch Clients
   useEffect(() => {
@@ -225,12 +316,14 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
     const loadingToast = toast.loading("Transmitindo nota...");
 
     try {
-      const prestador = OFFICE_DATA[selectedCity] || OFFICE_DATA['Rio de Janeiro'];
       const formData = new FormData();
       formData.append('cidade', selectedCity);
 
-      // Dados do escritório selecionado
-      formData.append('prestador', JSON.stringify({ cnpj: prestador.cnpj, im: prestador.im }));
+      // Dados do escritório selecionado dinamicamente
+      const finalPrestadorCNPJ = prestadorDetails?.cnpj || '';
+      const finalPrestadorIM = prestadorDetails?.im || '';
+
+      formData.append('prestador', JSON.stringify({ cnpj: finalPrestadorCNPJ, im: finalPrestadorIM }));
       formData.append('tomador', JSON.stringify({ 
         cnpj: selectedClient.cnpj || "", 
         nome: selectedClient.name,
@@ -289,8 +382,6 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
     if (iB === -1) iB = 99;
     return iA - iB;
   });
-
-  const prestador = OFFICE_DATA[selectedCity] || OFFICE_DATA['Rio de Janeiro'];
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 min-h-[calc(100vh-60px)]">
@@ -586,16 +677,25 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                 Prestador de Serviços
               </div>
               <div className="flex flex-col p-2 sm:p-3 text-[9px] sm:text-[11px] space-y-1.5 leading-tight">
-                <div className="flex justify-between flex-wrap gap-2">
-                  <div><strong>CPF/CNPJ:</strong> {prestador.cnpj}</div>
-                  <div><strong>Inscrição Municipal:</strong> {prestador.im}</div>
-                  <div><strong>Inscrição Estadual:</strong> ISENTO</div>
-                </div>
-                <div><strong>Nome/Razão Social:</strong> SALOMÃO ADVOGADOS ASSOCIADOS</div>
-                <div className="flex justify-between flex-wrap gap-2">
-                  <div className="truncate pr-2"><strong>Endereço:</strong> {prestador.endereco}</div>
-                  <div><strong>Município:</strong> {selectedCity} - {prestador.uf}</div>
-                </div>
+                {isFetchingPrestador ? (
+                  <div className="flex items-center justify-center py-2">
+                     <Loader2 className="w-4 h-4 animate-spin text-[#1e3a8a] mr-2" />
+                     <span className="font-bold text-gray-500 uppercase tracking-widest text-[9px]">Sincronizando CNPJ com BrasilAPI...</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between flex-wrap gap-2">
+                      <div><strong>CPF/CNPJ:</strong> {prestadorDetails?.cnpj || ''}</div>
+                      <div><strong>Inscrição Municipal:</strong> {prestadorDetails?.im || ''}</div>
+                      <div><strong>Inscrição Estadual:</strong> ISENTO</div>
+                    </div>
+                    <div><strong>Nome/Razão Social:</strong> {prestadorDetails?.razao_social || ''} <span className="font-medium text-gray-500 ml-1">({prestadorDetails?.fantasia || ''})</span></div>
+                    <div className="flex justify-between flex-wrap gap-2">
+                      <div className="truncate pr-2"><strong>Endereço:</strong> {prestadorDetails?.endereco || ''}</div>
+                      <div><strong>Município:</strong> {prestadorDetails?.municipio || ''} - {prestadorDetails?.uf || ''}</div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
