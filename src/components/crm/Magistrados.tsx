@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Lock, ShieldAlert, Unlock, Shield } from 'lucide-react'
-import { Clients } from './Clients'
+import { Clients } from '../controladoria/pages/Clients'
 
 export function Magistrados() {
   const [hasAccess, setHasAccess] = useState(false)
