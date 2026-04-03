@@ -1,272 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import {
-  FileText,
-  Globe,
-  Send,
-  CheckCircle2,
-  Clock,
-  Search,
-  ChevronDown,
-  Building2,
-  Coins,
-  CheckCircle
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { SearchableSelect } from '../../crm/SearchableSelect';
-import { supabase } from '../../../lib/supabase';
-import { maskCNPJ, maskMoney } from '../../controladoria/utils/masks';
+const fs = require('fs');
+const filepath = './src/components/finance/pages/EmissaoNF.tsx';
+let content = fs.readFileSync(filepath, 'utf-8');
 
-const formatTypeText = (typeStr: string) => {
-  const map: Record<string, string> = {
-    'pro_labore': 'Pró-labore',
-    'success_fee': 'Êxito',
-    'final_success_fee': 'Êxito Final',
-    'intermediate_fee': 'Êxito Intermediário',
-    'fixed_monthly_fee': 'Fixo Mensal',
-    'other_fees': 'Outros Honorários'
-  };
-  return map[typeStr] || typeStr;
-};
-
-const EmissaoNF = () => {
-  const [selectedCity, setSelectedCity] = useState('Rio de Janeiro');
-
-  const [isUploading, setIsUploading] = useState(false);
-
-  // Novos estados para Cliente e Honorários
-  const [clients, setClients] = useState<any[]>([]);
-  const [selectedClient, setSelectedClient] = useState<any | null>(null);
-
-  const [honorarios, setHonorarios] = useState<any[]>([]);
-  const [selectedHonorario, setSelectedHonorario] = useState<any | null>(null);
-  const [availableContracts, setAvailableContracts] = useState<any[]>([]);
-  const [selectedContract, setSelectedContract] = useState<any | null>(null);
-  const [discriminacao, setDiscriminacao] = useState("Honorários Advocatícios");
-  const [valorNF, setValorNF] = useState<number>(0);
-  
-  // Taxas e Impostos
-  const [irpj, setIrpj] = useState<number>(0);
-  const [pis, setPis] = useState<number>(0);
-  const [cofins, setCofins] = useState<number>(0);
-  const [csll, setCsll] = useState<number>(0);
-
-  const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
-  const [clientSearch, setClientSearch] = useState('');
-  const clientDropdownRef = useRef<HTMLDivElement>(null);
-
-  const cities = [
-    'Belém', 'Brasília', 'Florianópolis', 'Rio de Janeiro', 'São Paulo', 'Vitória'
-  ];
-
-  // Fetch Clients
-  useEffect(() => {
-    const fetchClients = async () => {
-      const { data } = await supabase.from('clients').select('id, name, cnpj').order('name');
-      if (data) setClients(data);
-    };
-    fetchClients();
-  }, []);
-
-  // Fechar dropdown ao clicar fora
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (clientDropdownRef.current && !clientDropdownRef.current.contains(event.target as Node)) {
-        setIsClientDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const filteredClients = clients.filter(c =>
-    (c.name || '').toLowerCase().includes(clientSearch.toLowerCase()) ||
-    (c.cnpj && c.cnpj.includes(clientSearch))
-  );
-
-  const handleSelectClient = async (client: any) => {
-    setSelectedClient(client);
-    setIsClientDropdownOpen(false);
-    setClientSearch('');
-    setSelectedHonorario(null);
-    setValorNF(0);
-    setAvailableContracts([]);
-    setSelectedContract(null);
-
-    // Buscar os honorários pendentes (filtra em JavaScript para igualar ao Controle Financeiro e evitar quebras de caractere)
-    try {
-      const { data: installmentsData } = await supabase
-        .from('financial_installments')
-        .select(`
-          *,
-          contract:contracts (
-            id, hon_number, seq_id, reference, client_id, client_name, cnpj,
-            documents:contract_documents ( id, file_path, file_type )
-          )
-        `)
-        .eq('status', 'pending');
-
-      if (installmentsData) {
-        const clientNameClean = (client.name || '').toLowerCase().trim();
-        const clientCnpjClean = (client.cnpj || '').replace(/\D/g, '');
-
-        const filteredHons = installmentsData.filter((i: any) => {
-          if (!i.contract) return false;
-          const cName = (i.contract.client_name || '').toLowerCase();
-          const cCnpj = (i.contract.cnpj || '').replace(/\D/g, '');
-
-          if (client.id && i.contract.client_id === client.id) return true;
-          if (client.cnpj && cCnpj === clientCnpjClean) return true;
-          if (client.name && cName.includes(clientNameClean)) return true;
-          return false;
-        });
-
-        const honsMapeados = filteredHons.map((i: any) => ({
-          ...i,
-          contract: {
-            ...i.contract,
-            display_id: i.contract.seq_id ? String(i.contract.seq_id).padStart(6, '0') : (i.contract.display_id || '-')
-          }
-        }));
-
-        const uniqueContractsMap = new Map();
-        honsMapeados.forEach((hon: any) => {
-          if (hon.contract) {
-            uniqueContractsMap.set(hon.contract.id, hon.contract);
-          }
-        });
-        const uniqueContracts = Array.from(uniqueContractsMap.values());
-
-        setAvailableContracts(uniqueContracts);
-        setHonorarios(honsMapeados);
-
-        if (uniqueContracts.length === 1) {
-          setSelectedContract(uniqueContracts[0]);
-        }
-      } else {
-        setHonorarios([]);
-        setAvailableContracts([]);
-      }
-    } catch (e) {
-      console.error(e);
-      setHonorarios([]);
-      setAvailableContracts([]);
-    }
-  };
-
-  const handleAddClient = async () => {
-    const isCnpj = clientSearch.replace(/\D/g, '').length >= 14;
-    let fallbackName = isCnpj ? '' : clientSearch;
-    let fallbackCnpj = isCnpj ? clientSearch : '';
-
-    const promptName = window.prompt("Nome do Cliente:", fallbackName);
-    if (!promptName) return;
-    const promptCnpj = window.prompt("CNPJ do Cliente (Opcional):", fallbackCnpj);
-
-    try {
-      const { data, error } = await supabase.from('clients').insert({ name: promptName, cnpj: promptCnpj?.replace(/\D/g, '') || null }).select().single();
-      if (data) {
-        setClients(prev => [...prev, data]);
-        handleSelectClient(data);
-        toast.success("Cliente criado com sucesso!");
-      } else if (error) {
-        toast.error("Erro ao criar cliente", { description: error.message });
-      }
-    } catch (e: any) {
-      toast.error("Erro inesperado", { description: e.message });
-    }
-  };
-
-  const getPdfUrl = (documents: any) => {
-    if (!documents || !Array.isArray(documents) || documents.length === 0) return null;
-    let doc = documents.find((d: any) => d.file_type === 'contract');
-    if (!doc) doc = documents[0];
-    if (doc && doc.file_path) {
-      const { data } = supabase.storage.from('ged-documentos').getPublicUrl(doc.file_path);
-      return data?.publicUrl;
-    }
-    return null;
-  };
-
-  const handleSelectHonorario = (hon: any) => {
-    setSelectedHonorario(hon);
-    setValorNF(hon.amount || 0);
-
-    const texto = `Referente aos honorários de ${formatTypeText(hon.type)}
-ID do contrato: ${hon.contract?.display_id || hon.contract?.seq_id || 'N/A'}
-Número HON: ${hon.contract?.hon_number || 'N/A'}
-Cláusula: ${hon.clause || ''}
-Parcela: ${hon.installment_number}/${hon.total_installments}
-Referência: ${hon.contract?.reference || 'N/A'}`;
-
-    setDiscriminacao(texto);
-  };
-
-  // Função para processar a emissão (chamada ao serviço Python)
-  const handleEmitirNota = async () => {
-
-
-    if (!selectedClient) {
-      toast.warning("Cliente não selecionado", { description: "Selecione um cliente para emitir a NF." });
-      return;
-    }
-
-    setIsUploading(true);
-    const loadingToast = toast.loading("Transmitindo nota...");
-
-    try {
-      const formData = new FormData();
-      formData.append('cidade', selectedCity);
-
-      // O CNPJ do prestador (escritório) e IM podem vir de config local. 
-      // Mas podemos enviar o CNPJ do cliente/tomador tbm
-      formData.append('prestador', JSON.stringify({ cnpj: "00.000.000/0001-00", im: "123456" }));
-      formData.append('tomador', JSON.stringify({ cnpj: selectedClient.cnpj || "", nome: selectedClient.name }));
-      formData.append('servico', JSON.stringify({
-        valor: valorNF || 0,
-        discriminacao: discriminacao
-      }));
-
-      const apiUrl = import.meta.env.VITE_SIGNATURE_API || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/assinar-nota`, {
-        method: 'POST',
-        body: formData
-      });
-
-      const textResponse = await response.text();
-      let data: any = {};
-      try {
-        data = JSON.parse(textResponse);
-      } catch (e) {
-        console.error("Failed to parse json:", textResponse);
-        data = { erro: "Invalid JSON response from server" };
-      }
-
-      if (response.ok) {
-        toast.dismiss(loadingToast);
-        toast.success("Nota Fiscal Assinada com Sucesso!");
-        console.log("RPS Assinado (XML):", data.xml);
-        // Em um cenário real, aqui viria o envio para a Prefeitura
-      } else {
-        toast.dismiss(loadingToast);
-        toast.error("Erro na emissão", {
-          description: data.erro || "Falha desconhecida"
-        });
-        if (data.traceback) {
-          console.error("🐍 PYTHON STACK TRACE DA ASSINATURA:\n", data.traceback);
-        }
-      }
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      console.error("Erro ao conectar com o serviço de assinatura:", error);
-      toast.error("Serviço Indisponível", {
-        description: "O serviço de assinatura está offline. Certifique-se que o script Python está a correr."
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const honorariosSorted = honorarios.filter(h => h.contract?.id === selectedContract?.id).sort((a, b) => {
+const returnRegex = /  return \([\s\S]*\}\;/;
+const newReturn = `  const honorariosSorted = honorarios.filter(h => h.contract?.id === selectedContract?.id).sort((a, b) => {
     const order = ['pro_labore', 'intermediate_fee', 'fixed_monthly_fee', 'success_fee', 'final_success_fee', 'other_fees'];
     let iA = order.indexOf(a.type);
     let iB = order.indexOf(b.type);
@@ -316,11 +53,11 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
             onClick={handleEmitirNota}
             disabled={isUploading}
             title="Transmitir Nota"
-            className={`w-12 h-12 shrink-0 flex items-center justify-center rounded-full shadow-lg transition-all duration-300 active:scale-95 ${
+            className={\`w-12 h-12 shrink-0 flex items-center justify-center rounded-full shadow-lg transition-all duration-300 active:scale-95 \${
               isUploading || !selectedClient || !selectedHonorario 
                 ? 'bg-gray-300 text-white cursor-not-allowed hidden' 
                 : 'bg-gradient-to-br from-[#1e3a8a] to-[#0a192f] text-white hover:shadow-xl hover:-translate-y-0.5 ring-4 ring-white'
-            }`}
+            }\`}
           >
             {isUploading ? <Clock className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 -ml-0.5" />}
           </button>
@@ -341,18 +78,18 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
               <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 block">Selecione o Cliente</label>
               <div
                 onClick={() => setIsClientDropdownOpen(!isClientDropdownOpen)}
-                className={`w-full bg-gray-50 border ${isClientDropdownOpen ? 'border-[#1e3a8a] ring-2 ring-blue-100' : 'border-gray-200'} rounded-xl p-3 flex flex-col justify-center cursor-pointer hover:border-[#1e3a8a] transition-all`}
+                className={\`w-full bg-gray-50 border \${isClientDropdownOpen ? 'border-[#1e3a8a] ring-2 ring-blue-100' : 'border-gray-200'} rounded-xl p-3 flex flex-col justify-center cursor-pointer hover:border-[#1e3a8a] transition-all\`}
               >
                 <div className="flex justify-between items-center w-full">
                   <div className="flex flex-col truncate">
-                    <span className={`text-sm font-bold truncate ${selectedClient ? 'text-gray-900' : 'text-gray-400'}`}>
+                    <span className={\`text-sm font-bold truncate \${selectedClient ? 'text-gray-900' : 'text-gray-400'}\`}>
                       {selectedClient ? selectedClient.name : 'Buscar cliente...'}
                     </span>
                     {selectedClient && selectedClient.cnpj && (
                       <span className="text-[11px] font-semibold text-gray-500 mt-0.5">CNPJ: {maskCNPJ(selectedClient.cnpj)}</span>
                     )}
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isClientDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={\`w-4 h-4 text-gray-400 transition-transform \${isClientDropdownOpen ? 'rotate-180' : ''}\`} />
                 </div>
               </div>
 
@@ -491,16 +228,16 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                         <div
                           key={hon.id}
                           onClick={() => handleSelectHonorario(hon)}
-                          className={`p-4 rounded-xl cursor-pointer transition-all border group relative overflow-hidden flex flex-col ${
+                          className={\`p-4 rounded-xl cursor-pointer transition-all border group relative overflow-hidden flex flex-col \${
                             isSelected ? 'bg-blue-50/80 border-[#1e3a8a] ring-1 ring-[#1e3a8a]' : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
-                          }`}
+                          }\`}
                         >
                           {isSelected && <div className="absolute top-0 left-0 w-1 h-full bg-[#1e3a8a]" />}
                           <div className="flex justify-between items-center mb-3 gap-2">
-                            <span className={`text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-md ${isSelected ? 'bg-[#1e3a8a] text-white' : 'bg-gray-100 text-gray-600'}`}>
+                            <span className={\`text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-md \${isSelected ? 'bg-[#1e3a8a] text-white' : 'bg-gray-100 text-gray-600'}\`}>
                               {formatTypeText(hon.type)}
                             </span>
-                            <span className={`text-base font-black truncate flex-1 text-right ${isSelected ? 'text-[#1e3a8a]' : 'text-gray-900'}`}>
+                            <span className={\`text-base font-black truncate \${isSelected ? 'text-[#1e3a8a]' : 'text-gray-900'}\`}>
                               {maskMoney(Number(hon.amount || 0).toFixed(2))}
                             </span>
                           </div>
@@ -527,7 +264,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         </div>
 
         {/* PAINEL DIREITO: SIMULADOR DE NOTA FISCAL */}
-        <div className="lg:col-span-2 relative min-h-[700px] bg-white border-[3px] border-gray-800 flex flex-col outline outline-4 outline-transparent shadow-2xl shadow-gray-400/30 font-sans text-gray-900 overflow-hidden shrink-0 mt-4 lg:mt-0 lg:ml-2">
+        <div className="lg:col-span-2 relative min-h-[700px] bg-white border-[3px] border-gray-800 flex flex-col shadow-xl font-sans text-gray-900 overflow-hidden shrink-0 mt-4 lg:mt-0 xl:mr-6 lg:ml-2">
             
             {/* Watermark */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.02] rotate-[-45deg] z-0">
@@ -699,3 +436,8 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
 };
 
 export default EmissaoNF;
+`
+
+content = content.replace(returnRegex, newReturn);
+fs.writeFileSync(filepath, content);
+console.log('Layout Updated!');
