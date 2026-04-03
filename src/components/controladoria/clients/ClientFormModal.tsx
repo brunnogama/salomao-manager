@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { X, Save, Search, Loader2, AlertTriangle, Plus, Trash2, UserPlus, User, MapPin, Users, FileText, Gift } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Client, Partner, ClientContact } from '../../../types/controladoria';
-import { maskCNPJ, toTitleCase } from '../utils/masks';
+import { maskCNPJ, toTitleCase, maskPhone } from '../utils/masks';
 import { CustomSelect } from '../ui/CustomSelect';
 import { logAction } from '../../../lib/logger';
 import { toast } from 'sonner';
@@ -399,7 +399,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                       type="text"
                       className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
                       value={formData.phone || ''}
-                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={e => setFormData({ ...formData, phone: maskPhone(e.target.value) })}
                       placeholder="(00) 00000-0000"
                     />
                   </div>
@@ -522,7 +522,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                               type="text"
                               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
                               value={contact.phone || ''}
-                              onChange={e => handleContactChange(index, 'phone', e.target.value)}
+                              onChange={e => handleContactChange(index, 'phone', maskPhone(e.target.value))}
                               placeholder="(00) 00000-0000"
                             />
                           </div>

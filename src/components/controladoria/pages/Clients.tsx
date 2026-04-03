@@ -21,7 +21,8 @@ import { ClientFormModal } from '../clients/ClientFormModal';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 import { FilterBar, FilterCategory } from '../../collaborators/components/FilterBar';
 
-import { maskCNPJ } from '../utils/masks';
+import { maskCNPJ, maskPhone } from '../utils/masks';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { getGiftIconColor } from '../../../types/crmContact';
@@ -205,6 +206,16 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
     return groups.sort((a, b) => a.primaryClient.name.localeCompare(b.primaryClient.name));
   }, [clients]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && viewingGroup) {
+        setViewingGroup(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewingGroup]);
+
   const handleEdit = (client: Client) => {
     setClientToEdit(client);
     setViewingGroup(null);
@@ -387,45 +398,6 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
         </div>
       </div>
 
-      {/* CRM: Gift Statistics Cards */}
-      <div className="flex flex-wrap gap-4">
-        {/* Total Gifts Card */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-3 flex-1 min-w-[140px] sm:min-w-[180px] hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-lg bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-sm shrink-0">
-              <Gift className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Total de Brindes</p>
-              <p className="text-2xl font-black text-[#0a192f] leading-none mt-1">{totalGifts}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Gift Type Cards */}
-        {['Brinde VIP', 'Brinde Médio', 'Outros'].map((tipo) => {
-          const qtd = giftStats[tipo] || 0;
-          return (
-            <div
-              key={tipo}
-              onClick={() => setFilterGiftType(tipo === filterGiftType ? '' : tipo)}
-              className={`bg-white p-4 rounded-xl shadow-sm border-2 flex flex-col gap-3 cursor-pointer hover:shadow-md transition-all flex-1 min-w-[140px] sm:min-w-[180px] active:scale-95 ${filterGiftType === tipo ? 'border-[#1e3a8a] bg-blue-50' : 'border-gray-100 hover:border-blue-100'
-                }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-lg bg-gradient-to-br ${getGiftIconColor(tipo)} shadow-sm shrink-0`}>
-                  <Gift className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate leading-none">{tipo}</p>
-                  <p className="text-2xl font-black text-[#0a192f] leading-none mt-1">{qtd}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       {/* 2. KPI Card + FilterBar */}
       <div className="flex flex-col lg:flex-row items-stretch gap-4">
         {/* Card de KPI - Total */}
@@ -605,25 +577,22 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
 
       {/* Modal de Visualização */}
       {
-        viewingGroup && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]">
+        viewingGroup && createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setViewingGroup(null)}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
               {/* Header */}
-              <div className="flex justify-between items-start sm:items-center px-4 sm:px-6 py-4 bg-gradient-to-br from-[#1e3a8a] to-[#112240] shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-xl shrink-0 ${viewingGroup.primaryClient.is_person ? 'bg-blue-400/20' : 'bg-indigo-400/20'}`}>
-                    {viewingGroup.primaryClient.is_person ? <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" /> : <Building className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
+              <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-white shrink-0">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center shadow-lg">
+                    {viewingGroup.primaryClient.is_person ? <User className="w-6 h-6 text-white" /> : <Building className="w-6 h-6 text-white" />}
                   </div>
-                  <div className="min-w-0 pr-4">
-                    <h2 className="text-lg sm:text-xl font-black text-white truncate">{viewingGroup.primaryClient.name}</h2>
-                    <p className="text-xs sm:text-sm text-white/80 font-semibold truncate">{viewingGroup.primaryClient.cnpj ? maskCNPJ(viewingGroup.primaryClient.cnpj) : 'Sem documento'}</p>
+                  <div>
+                    <h2 className="text-xl font-black text-[#0a192f]">{viewingGroup.primaryClient.name}</h2>
+                    <p className="text-sm font-semibold text-gray-500">{viewingGroup.primaryClient.cnpj ? maskCNPJ(viewingGroup.primaryClient.cnpj) : 'Sem documento'}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setViewingGroup(null)}
-                  className="p-1 sm:p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors shrink-0"
-                >
-                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                <button onClick={() => setViewingGroup(null)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
@@ -670,7 +639,7 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
                         <Phone className="w-4 h-4 text-gray-400 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-gray-500">Telefone</p>
-                          <p className="text-sm font-bold text-gray-800 truncate">{viewingGroup.primaryClient.phone || '-'}</p>
+                          <p className="text-sm font-bold text-gray-800 truncate">{viewingGroup.primaryClient.phone ? maskPhone(viewingGroup.primaryClient.phone) : '-'}</p>
                         </div>
                       </div>
                     </div>
