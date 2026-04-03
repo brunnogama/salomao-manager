@@ -37,43 +37,44 @@ export const safeParseFloat = (value: string | number | undefined | null): numbe
     return isNaN(floatVal) ? 0 : floatVal;
 };
 
-// HELPER ESSENCIAL: Garante que o valor seja um array, mesmo que venha como string JSON do banco ou formatado incorretamente
 export const ensureArray = (val: any): string[] => {
-    if (!val) return [];
+    if (val === null || val === undefined) return [];
     
     // Tratamento para arrays corrompidos (espalhados como caracteres)
     // Ex: ['[', '"', '2', ...]
     if (Array.isArray(val) && val.length > 0 && val.every(item => typeof item === 'string' && item.length === 1)) {
-        try {
-            const joined = val.join('');
-            const parsed = JSON.parse(joined);
-            if (Array.isArray(parsed)) return parsed;
-            if (typeof parsed === 'string') return [parsed];
-            if (typeof parsed === 'number') return [String(parsed)];
-        } catch { 
-            // Se falhar o parse (ex: joined resultou em "2.1" ou "iii")
-            const joined = val.join('').replace(/^"/, '').replace(/"$/, ''); // Limpa aspas do inicio e fim se existirem
-            return [joined];
+        if (val[0] === '[' && val[val.length - 1] === ']') {
+            try {
+                const joined = val.join('');
+                const parsed = JSON.parse(joined);
+                if (Array.isArray(parsed)) return parsed.map(String);
+                if (typeof parsed === 'string') return [parsed];
+                if (typeof parsed === 'number') return [String(parsed)];
+            } catch { 
+                return [val.join('').replace(/^"/, '').replace(/"$/, '')];
+            }
         }
     }
 
-    if (Array.isArray(val)) return val;
+    if (Array.isArray(val)) return val.map(String);
     
     if (typeof val === 'string') {
         const trimmed = val.trim();
         if (trimmed.startsWith('[')) {
             try { 
                 const parsed = JSON.parse(trimmed); 
-                if (Array.isArray(parsed)) return parsed;
+                if (Array.isArray(parsed)) return parsed.map(String);
                 // Lidando com JSON string "duplamente" codificado: '"[\\"2.1\\"]"'
                 if (typeof parsed === 'string' && parsed.trim().startsWith('[')) {
                     const doubleParsed = JSON.parse(parsed.trim());
-                    if (Array.isArray(doubleParsed)) return doubleParsed;
+                    if (Array.isArray(doubleParsed)) return doubleParsed.map(String);
                 }
-            } catch { return []; }
+            } catch { /* if JSON.parse fails, fallback to [trimmed] */ }
         }
+        return [val]; // Changed from `return []` to `return [val]`
     }
-    return [];
+    
+    return [String(val)];
 };
 
 export const getEffectiveDate = (status: string, fallbackDate: string, formData: Contract) => {
