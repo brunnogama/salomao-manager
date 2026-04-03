@@ -2,6 +2,10 @@ from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.hazmat.backends import default_backend
 from signxml import XMLSigner, methods
 
+# O padrão ABRASF do governo e das prefeituras brasileiras EXIGE criptografia SHA1.
+# Por design, o `signxml` moderno proíbe o uso de SHA1 por diretrizes globais de segurança (InvalidInput).
+# Fazemos um monkeypatch para forçar a permissão, como é obrigatório na integração fiscal local.
+XMLSigner.check_deprecated_methods = lambda self: None
 class CertificateSigner:
     def __init__(self, cert_path, password, pfx_data=None):
         self.cert_path = cert_path
