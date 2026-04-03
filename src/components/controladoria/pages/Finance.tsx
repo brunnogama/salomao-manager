@@ -517,13 +517,13 @@ export function Finance() {
 
     const contractId = selectedInstallment.contract_id || (selectedInstallment.contract as any)?.id;
     if (contractId) {
-      if (selectedInstallment.type === 'fixed_monthly_fee') {
+      if (selectedInstallment.type === 'fixed_monthly_fee' || selectedInstallment.type === 'fixed') {
         // Verifica se já existe alguma parcela futura pendente para a mesma cláusula
         const futurePending = installments.filter(i => 
           (i.contract_id === contractId || (i.contract as any)?.id === contractId) && 
           i.id !== selectedInstallment.id && 
           i.status === 'pending' &&
-          i.type === 'fixed_monthly_fee' &&
+          (i.type === 'fixed_monthly_fee' || i.type === 'fixed') &&
           ((i as any).clause || '') === ((selectedInstallment as any).clause || '')
         );
 

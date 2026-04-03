@@ -448,7 +448,7 @@ export interface Client {
 export interface FinancialInstallment {
   id: string;
   contract_id: string;
-  type: 'pro_labore' | 'success_fee' | 'final_success_fee' | 'intermediate_fee' | 'fixed_monthly_fee' | 'other_fees';
+  type: 'pro_labore' | 'success_fee' | 'final_success_fee' | 'intermediate_fee' | 'fixed_monthly_fee' | 'other_fees' | 'fixed' | 'other' | string;
   amount: number;
   installment_number: number;
   total_installments: number;
