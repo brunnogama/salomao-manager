@@ -85,29 +85,12 @@ const EmissaoNF = () => {
     setSelectedHonorario(null);
     setValorNF(0);
     
-    // Fetch honorários pendentes desse cliente
+    // Buscar os contratos do cliente (seguro para caracteres especiais)
     try {
-      await supabase
-        .from('financial_installments')
-        .select(`
-          *,
-          contract:contracts!title (id, hon_number, client_id, client_name)
-        `)
-        .eq('status', 'pending')
-        .eq('contract.client_id', client.id);
-        
-      // Workaround para Supabase JS se a relação contract:contracts der problema:
-      // Pode ser necessário fazer fetch simples e filtrar ou testar
-      // Se a query acima falhar devido ao alias ou fk, usaremos abordagem segura:
-    } catch(e) {}
-
-    // Safe Query (alternativa robusta)
-    try {
-      // Primeiro buscando os contratos do cliente
       const orConditions: string[] = [];
-      if (client.id) orConditions.push(`client_id.eq.${client.id}`);
-      if (client.cnpj) orConditions.push(`cnpj.eq.${client.cnpj}`);
-      if (client.name) orConditions.push(`client_name.ilike.%${client.name.trim()}%`);
+      if (client.id) orConditions.push(`client_id.eq."${client.id}"`);
+      if (client.cnpj) orConditions.push(`cnpj.eq."${client.cnpj}"`);
+      if (client.name) orConditions.push(`client_name.ilike."%${client.name.trim()}%"`);
       
       const { data: clientContracts } = await supabase
         .from('contracts')
