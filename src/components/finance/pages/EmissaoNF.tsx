@@ -36,7 +36,7 @@ const EmissaoNF = () => {
   // Novos estados para Cliente e Honorários
   const [clients, setClients] = useState<any[]>([]);
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
-  
+
   const [honorarios, setHonorarios] = useState<any[]>([]);
   const [selectedHonorario, setSelectedHonorario] = useState<any | null>(null);
   const [availableContracts, setAvailableContracts] = useState<any[]>([]);
@@ -72,8 +72,8 @@ const EmissaoNF = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredClients = clients.filter(c => 
-    (c.name || '').toLowerCase().includes(clientSearch.toLowerCase()) || 
+  const filteredClients = clients.filter(c =>
+    (c.name || '').toLowerCase().includes(clientSearch.toLowerCase()) ||
     (c.cnpj && c.cnpj.includes(clientSearch))
   );
 
@@ -85,7 +85,7 @@ const EmissaoNF = () => {
     setValorNF(0);
     setAvailableContracts([]);
     setSelectedContract(null);
-    
+
     // Buscar os honorários pendentes (filtra em JavaScript para igualar ao Controle Financeiro e evitar quebras de caractere)
     try {
       const { data: installmentsData } = await supabase
@@ -102,12 +102,12 @@ const EmissaoNF = () => {
       if (installmentsData) {
         const clientNameClean = (client.name || '').toLowerCase().trim();
         const clientCnpjClean = (client.cnpj || '').replace(/\D/g, '');
-        
+
         const filteredHons = installmentsData.filter((i: any) => {
           if (!i.contract) return false;
           const cName = (i.contract.client_name || '').toLowerCase();
           const cCnpj = (i.contract.cnpj || '').replace(/\D/g, '');
-          
+
           if (client.id && i.contract.client_id === client.id) return true;
           if (client.cnpj && cCnpj === clientCnpjClean) return true;
           if (client.name && cName.includes(clientNameClean)) return true;
@@ -121,7 +121,7 @@ const EmissaoNF = () => {
             display_id: i.contract.seq_id ? String(i.contract.seq_id).padStart(6, '0') : (i.contract.display_id || '-')
           }
         }));
-        
+
         const uniqueContractsMap = new Map();
         honsMapeados.forEach((hon: any) => {
           if (hon.contract) {
@@ -129,7 +129,7 @@ const EmissaoNF = () => {
           }
         });
         const uniqueContracts = Array.from(uniqueContractsMap.values());
-        
+
         setAvailableContracts(uniqueContracts);
         setHonorarios(honsMapeados);
 
@@ -151,11 +151,11 @@ const EmissaoNF = () => {
     const isCnpj = clientSearch.replace(/\D/g, '').length >= 14;
     let fallbackName = isCnpj ? '' : clientSearch;
     let fallbackCnpj = isCnpj ? clientSearch : '';
-    
+
     const promptName = window.prompt("Nome do Cliente:", fallbackName);
     if (!promptName) return;
     const promptCnpj = window.prompt("CNPJ do Cliente (Opcional):", fallbackCnpj);
-    
+
     try {
       const { data, error } = await supabase.from('clients').insert({ name: promptName, cnpj: promptCnpj?.replace(/\D/g, '') || null }).select().single();
       if (data) {
@@ -184,21 +184,21 @@ const EmissaoNF = () => {
   const handleSelectHonorario = (hon: any) => {
     setSelectedHonorario(hon);
     setValorNF(hon.amount || 0);
-    
+
     const texto = `Referente aos honorários de ${formatTypeText(hon.type)}
 ID do contrato: ${hon.contract?.display_id || hon.contract?.seq_id || 'N/A'}
 Número HON: ${hon.contract?.hon_number || 'N/A'}
 Cláusula: ${hon.clause || ''}
 Parcela: ${hon.installment_number}/${hon.total_installments}
 Referência: ${hon.contract?.reference || 'N/A'}`;
-    
+
     setDiscriminacao(texto);
   };
 
   // Função para processar a emissão (chamada ao serviço Python)
   const handleEmitirNota = async () => {
 
-    
+
     if (!selectedClient) {
       toast.warning("Cliente não selecionado", { description: "Selecione um cliente para emitir a NF." });
       return;
@@ -210,16 +210,16 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
     try {
       const formData = new FormData();
       formData.append('cidade', selectedCity);
-      
+
       // O CNPJ do prestador (escritório) e IM podem vir de config local. 
       // Mas podemos enviar o CNPJ do cliente/tomador tbm
       formData.append('prestador', JSON.stringify({ cnpj: "00.000.000/0001-00", im: "123456" }));
       formData.append('tomador', JSON.stringify({ cnpj: selectedClient.cnpj || "", nome: selectedClient.name }));
-      formData.append('servico', JSON.stringify({ 
-        valor: valorNF || 0, 
-        discriminacao: discriminacao 
+      formData.append('servico', JSON.stringify({
+        valor: valorNF || 0,
+        discriminacao: discriminacao
       }));
-      
+
       const apiUrl = import.meta.env.VITE_SIGNATURE_API || 'http://localhost:5000';
       const response = await fetch(`${apiUrl}/assinar-nota`, {
         method: 'POST',
@@ -313,11 +313,11 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
             <h2 className="font-black text-lg flex items-center gap-2 text-[#0a192f] uppercase tracking-wide text-sm">
               <Building2 className="w-5 h-5 text-[#1e3a8a]" /> Tomador (Cliente)
             </h2>
-            
+
             {/* Custom Client Select (Design Elegante) */}
             <div className="relative" ref={clientDropdownRef}>
               <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 block">Selecione o Cliente</label>
-              <div 
+              <div
                 onClick={() => setIsClientDropdownOpen(!isClientDropdownOpen)}
                 className={`w-full bg-gray-50 border ${isClientDropdownOpen ? 'border-[#1e3a8a] ring-2 ring-blue-100' : 'border-gray-200'} rounded-xl p-3 flex flex-col justify-center cursor-pointer hover:border-[#1e3a8a] transition-all`}
               >
@@ -339,9 +339,9 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                 <div className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                   <div className="p-2 bg-gray-50 border-b border-gray-100 relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input 
-                      type="text" 
-                      placeholder="Nome ou CNPJ..." 
+                    <input
+                      type="text"
+                      placeholder="Nome ou CNPJ..."
                       className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm font-medium outline-none focus:border-[#1e3a8a]"
                       value={clientSearch}
                       onChange={e => setClientSearch(e.target.value)}
@@ -351,8 +351,8 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                   <div className="max-h-[250px] overflow-y-auto p-2">
                     {filteredClients.length > 0 ? (
                       filteredClients.map(c => (
-                        <div 
-                          key={c.id} 
+                        <div
+                          key={c.id}
                           onClick={() => handleSelectClient(c)}
                           className="w-full text-left p-2.5 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors flex flex-col"
                         >
@@ -368,7 +368,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                       <div className="p-4 text-center space-y-3">
                         <p className="text-xs text-gray-500 font-medium">Nenhum cliente encontrado.</p>
                         {clientSearch.trim().length > 1 && (
-                          <button 
+                          <button
                             onClick={handleAddClient}
                             className="w-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 py-2 rounded-lg text-xs font-bold transition-colors"
                           >
@@ -407,9 +407,9 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
               </p>
             </div>
           </div>
-          
+
           {/* Painel do Certificado Movido para a Lateral */}
-        {/* Console Central (2 Colunas): Honorários Pendentes e Discriminação */}
+          {/* Console Central (2 Colunas): Honorários Pendentes e Discriminação */}
         </div>
         <div className="lg:col-span-2 space-y-4 sm:space-y-6 flex flex-col h-full">
           {/* Section: Vinculação de Honorário */}
@@ -417,7 +417,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
             <h2 className="font-black text-lg flex items-center gap-2 text-[#0a192f] uppercase tracking-wide text-sm shrink-0">
               <Coins className="w-5 h-5 text-amber-500" /> Vínculo Financeiro Pendente
             </h2>
-            
+
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 mb-2">
               {!selectedClient ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
@@ -446,63 +446,62 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {availableContracts.map(contract => (
-                      <div 
+                      <div
                         key={contract.id}
                         onClick={() => setSelectedContract(contract)}
                         className="p-4 rounded-xl cursor-pointer transition-all border bg-white border-gray-200 hover:border-[#1e3a8a] hover:shadow-md flex flex-col gap-2"
                       >
-                         <span className="text-sm font-black text-[#1e3a8a] break-words">
-                           {contract.reference || 'Sem referência'}
-                         </span>
-                         <span className="text-xs text-gray-500 font-semibold">
-                           Contrato HON: {contract.hon_number || 'S/N'}
-                         </span>
-                         <span className="text-xs text-emerald-700 font-bold bg-emerald-50 border border-emerald-100 self-start px-2 py-1 rounded-md">
-                           {honorarios.filter(h => h.contract?.id === contract.id).length} Honorários pendentes
-                         </span>
+                        <span className="text-sm font-black text-[#1e3a8a] break-words">
+                          {contract.reference || 'Sem referência'}
+                        </span>
+                        <span className="text-xs text-gray-500 font-semibold">
+                          Contrato HON: {contract.hon_number || 'S/N'}
+                        </span>
+                        <span className="text-xs text-emerald-700 font-bold bg-emerald-50 border border-emerald-100 self-start px-2 py-1 rounded-md">
+                          {honorarios.filter(h => h.contract?.id === contract.id).length} Honorários pendentes
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4 animate-in fade-in duration-300">
-                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 shadow-sm flex-wrap gap-3">
-                     <div className="flex flex-col">
-                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Contrato Selecionado</span>
-                       <span className="text-sm font-black text-[#1e3a8a]">{selectedContract?.reference || 'Sem referência'}</span>
-                       <span className="text-xs font-semibold text-gray-500 mt-0.5">HON: {selectedContract?.hon_number || 'S/N'}</span>
-                     </div>
-                     <div className="flex items-center gap-2">
-                       {getPdfUrl(selectedContract?.documents) && (
-                         <button 
-                           onClick={() => window.open(getPdfUrl(selectedContract?.documents) || undefined, '_blank')}
-                           className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800 shadow-md hover:shadow-lg rounded-lg text-[10px] uppercase font-black tracking-[0.1em] transition-all active:scale-95"
-                         >
-                           <FileText className="w-3.5 h-3.5" />
-                           Ver Contrato
-                         </button>
-                       )}
-                       {availableContracts.length > 1 && (
-                         <button 
-                           onClick={() => { setSelectedContract(null); setSelectedHonorario(null); setValorNF(0); }}
-                           className="flex items-center gap-1.5 px-4 py-2 bg-white text-gray-600 hover:bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md rounded-lg text-[10px] uppercase font-black tracking-[0.1em] transition-all active:scale-95"
-                         >
-                           Trocar
-                         </button>
-                       )}
-                     </div>
-                   </div>
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 shadow-sm flex-wrap gap-3">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Contrato Selecionado</span>
+                      <span className="text-sm font-black text-[#1e3a8a]">{selectedContract?.reference || 'Sem referência'}</span>
+                      <span className="text-xs font-semibold text-gray-500 mt-0.5">HON: {selectedContract?.hon_number || 'S/N'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getPdfUrl(selectedContract?.documents) && (
+                        <button
+                          onClick={() => window.open(getPdfUrl(selectedContract?.documents) || undefined, '_blank')}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800 shadow-md hover:shadow-lg rounded-lg text-[10px] uppercase font-black tracking-[0.1em] transition-all active:scale-95"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          Ver Contrato
+                        </button>
+                      )}
+                      {availableContracts.length > 1 && (
+                        <button
+                          onClick={() => { setSelectedContract(null); setSelectedHonorario(null); setValorNF(0); }}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-white text-gray-600 hover:bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md rounded-lg text-[10px] uppercase font-black tracking-[0.1em] transition-all active:scale-95"
+                        >
+                          Trocar
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {honorarios.filter(h => h.contract?.id === selectedContract?.id).map(hon => {
                       const isSelected = selectedHonorario?.id === hon.id;
                       return (
-                        <div 
+                        <div
                           key={hon.id}
                           onClick={() => handleSelectHonorario(hon)}
-                          className={`p-4 rounded-xl cursor-pointer transition-all border group relative overflow-hidden ${
-                            isSelected ? 'bg-blue-50/80 border-[#1e3a8a] ring-1 ring-[#1e3a8a]' : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
-                          }`}
+                          className={`p-4 rounded-xl cursor-pointer transition-all border group relative overflow-hidden ${isSelected ? 'bg-blue-50/80 border-[#1e3a8a] ring-1 ring-[#1e3a8a]' : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+                            }`}
                         >
                           {isSelected && <div className="absolute top-0 left-0 w-1 h-full bg-[#1e3a8a]" />}
                           <div className="flex justify-between items-start mb-3">
@@ -515,16 +514,16 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                           </div>
                           <div className="space-y-1">
                             <p className="text-xs font-semibold text-gray-600 flex items-center justify-between">
-                              <span className="text-gray-400">Contrato:</span> 
+                              <span className="text-gray-400">Contrato:</span>
                               <span>{hon.contract?.hon_number || 'S/N'}</span>
                             </p>
                             <p className="text-xs font-semibold text-gray-600 flex items-center justify-between">
-                              <span className="text-gray-400">Parcela:</span> 
+                              <span className="text-gray-400">Parcela:</span>
                               <span>{hon.installment_number} de {hon.total_installments}</span>
                             </p>
                             {hon.due_date && (
                               <p className="text-xs font-semibold text-gray-600 flex items-center justify-between">
-                                <span className="text-gray-400">Vencimento:</span> 
+                                <span className="text-gray-400">Vencimento:</span>
                                 <span>{new Date(hon.due_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
                               </p>
                             )}
@@ -541,12 +540,12 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           {/* Section: Corpo da NF */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-gray-100 flex-1 flex flex-col min-h-[300px]">
             <div className="flex justify-between items-center mb-4 shrink-0">
-               <h2 className="font-black text-lg flex items-center gap-2 text-[#0a192f] uppercase tracking-wide text-sm">
+              <h2 className="font-black text-lg flex items-center gap-2 text-[#0a192f] uppercase tracking-wide text-sm">
                 <FileText className="w-5 h-5 text-emerald-600" /> Corpo da Nota Fiscal (Discriminação)
-               </h2>
-               {selectedHonorario && (
-                 <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md uppercase tracking-wider">Mapeamento Automático</span>
-               )}
+              </h2>
+              {selectedHonorario && (
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md uppercase tracking-wider">Mapeamento Automático</span>
+              )}
             </div>
 
             <textarea
@@ -558,7 +557,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                 ${selectedClient ? 'bg-gray-50 border-gray-200 focus:border-[#1e3a8a] focus:bg-white focus:ring-4 focus:ring-blue-50' : 'bg-gray-100/50 border-dashed border-gray-200 text-gray-400 cursor-not-allowed'}
               `}
             />
-            
+
             <p className="text-[10px] text-gray-400 font-medium mt-3 italic text-right">
               Este texto será injetado no XML oficial transmitido para a prefeitura.
             </p>
