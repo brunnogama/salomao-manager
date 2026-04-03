@@ -28,6 +28,15 @@ const formatTypeText = (typeStr: string) => {
   return map[typeStr] || typeStr;
 };
 
+const OFFICE_DATA: Record<string, { cnpj: string; im: string; endereco: string; uf: string }> = {
+  'Rio de Janeiro': { cnpj: '33.333.333/0001-33', im: '123456-7', endereco: 'Avenida Rio Branco, 1 - Centro - CEP: 20000-000', uf: 'RJ' },
+  'São Paulo': { cnpj: '33.333.333/0002-44', im: '123456-8', endereco: 'Avenida Paulista, 1000 - Bela Vista - CEP: 01310-100', uf: 'SP' },
+  'Belém': { cnpj: '33.333.333/0003-55', im: '123456-9', endereco: 'Avenida Presidente Vargas, 10 - Centro - CEP: 66010-000', uf: 'PA' },
+  'Brasília': { cnpj: '33.333.333/0004-66', im: '123456-0', endereco: 'SCS Quadra 1 Bloco A - Asa Sul - CEP: 70301-000', uf: 'DF' },
+  'Florianópolis': { cnpj: '33.333.333/0005-77', im: '123456-1', endereco: 'Rua Felipe Schmidt, 50 - Centro - CEP: 88010-000', uf: 'SC' },
+  'Vitória': { cnpj: '33.333.333/0006-88', im: '123456-2', endereco: 'Avenida Nossa Senhora da Penha, 500 - Praia do Canto - CEP: 29055-130', uf: 'ES' },
+};
+
 const EmissaoNF = () => {
   const [selectedCity, setSelectedCity] = useState('Rio de Janeiro');
 
@@ -43,6 +52,7 @@ const EmissaoNF = () => {
   const [selectedContract, setSelectedContract] = useState<any | null>(null);
   const [discriminacao, setDiscriminacao] = useState("Honorários Advocatícios");
   const [valorNF, setValorNF] = useState<number>(0);
+  const [clientEmail, setClientEmail] = useState('');
   
   // Taxas e Impostos
   const [irpj, setIrpj] = useState<number>(0);
@@ -61,7 +71,7 @@ const EmissaoNF = () => {
   // Fetch Clients
   useEffect(() => {
     const fetchClients = async () => {
-      const { data } = await supabase.from('clients').select('id, name, cnpj').order('name');
+      const { data } = await supabase.from('clients').select('id, name, cnpj, email').order('name');
       if (data) setClients(data);
     };
     fetchClients();
@@ -89,6 +99,7 @@ const EmissaoNF = () => {
     setClientSearch('');
     setSelectedHonorario(null);
     setValorNF(0);
+    setClientEmail(client.email || '');
     setAvailableContracts([]);
     setSelectedContract(null);
 
@@ -214,13 +225,17 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
     const loadingToast = toast.loading("Transmitindo nota...");
 
     try {
+      const prestador = OFFICE_DATA[selectedCity] || OFFICE_DATA['Rio de Janeiro'];
       const formData = new FormData();
       formData.append('cidade', selectedCity);
 
-      // O CNPJ do prestador (escritório) e IM podem vir de config local. 
-      // Mas podemos enviar o CNPJ do cliente/tomador tbm
-      formData.append('prestador', JSON.stringify({ cnpj: "00.000.000/0001-00", im: "123456" }));
-      formData.append('tomador', JSON.stringify({ cnpj: selectedClient.cnpj || "", nome: selectedClient.name }));
+      // Dados do escritório selecionado
+      formData.append('prestador', JSON.stringify({ cnpj: prestador.cnpj, im: prestador.im }));
+      formData.append('tomador', JSON.stringify({ 
+        cnpj: selectedClient.cnpj || "", 
+        nome: selectedClient.name,
+        email: clientEmail
+      }));
       formData.append('servico', JSON.stringify({
         valor: valorNF || 0,
         discriminacao: discriminacao
@@ -274,6 +289,8 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
     if (iB === -1) iB = 99;
     return iA - iB;
   });
+
+  const prestador = OFFICE_DATA[selectedCity] || OFFICE_DATA['Rio de Janeiro'];
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 min-h-[calc(100vh-60px)]">
@@ -570,14 +587,14 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
               </div>
               <div className="flex flex-col p-2 sm:p-3 text-[9px] sm:text-[11px] space-y-1.5 leading-tight">
                 <div className="flex justify-between flex-wrap gap-2">
-                  <div><strong>CPF/CNPJ:</strong> 00.000.000/0001-00</div>
-                  <div><strong>Inscrição Municipal:</strong> 123456</div>
+                  <div><strong>CPF/CNPJ:</strong> {prestador.cnpj}</div>
+                  <div><strong>Inscrição Municipal:</strong> {prestador.im}</div>
                   <div><strong>Inscrição Estadual:</strong> ISENTO</div>
                 </div>
                 <div><strong>Nome/Razão Social:</strong> SALOMÃO ADVOGADOS ASSOCIADOS</div>
                 <div className="flex justify-between flex-wrap gap-2">
-                  <div className="truncate pr-2"><strong>Endereço:</strong> Rua Exemplo, 123 - Centro - CEP: 00000-000</div>
-                  <div><strong>Município:</strong> {selectedCity} - {selectedCity === 'Rio de Janeiro' ? 'RJ' : 'UF'}</div>
+                  <div className="truncate pr-2"><strong>Endereço:</strong> {prestador.endereco}</div>
+                  <div><strong>Município:</strong> {selectedCity} - {prestador.uf}</div>
                 </div>
               </div>
             </div>
@@ -599,6 +616,16 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                     <div className="flex justify-between flex-wrap gap-2 text-gray-600">
                       <div><strong>Endereço:</strong> Conforme Cadastro Vínculado</div>
                       <div><strong>Município:</strong> Brasil</div>
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 border-t border-gray-200 pt-1.5">
+                      <strong>E-mail para NFS-e:</strong> 
+                      <input 
+                        type="email" 
+                        value={clientEmail} 
+                        onChange={e => setClientEmail(e.target.value)} 
+                        placeholder="cliente@email.com"
+                        className="bg-gray-100 px-2 py-0.5 rounded text-[10px] sm:text-[11px] flex-1 outline-none focus:ring-1 focus:ring-[#1e3a8a] text-gray-800 font-semibold"
+                      />
                     </div>
                   </>
                 ) : (
