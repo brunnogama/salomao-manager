@@ -268,8 +268,8 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
   return createPortal(
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl h-[85vh] flex overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
-        <button onClick={onClose} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 z-10 transition-colors">
-          <X className="w-6 h-6" />
+        <button onClick={onClose} className="absolute top-6 right-6 p-2 text-gray-500 bg-white shadow-sm border border-gray-100 hover:bg-gray-50 hover:text-gray-800 rounded-xl z-[70] transition-all">
+          <X className="w-5 h-5" />
         </button>
 
         {/* Left Sidebar */}
@@ -312,7 +312,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
         {/* Right Content */}
         <div className="flex-1 flex flex-col min-w-0 bg-[#fafafa]">
           {/* Scrollable Body */}
-          <div className="flex-1 overflow-y-auto px-10 py-8 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-10 pt-16 pb-8 custom-scrollbar">
 
             {activeTab === 'dados' && (
               <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
@@ -320,16 +320,16 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                   <div className="flex-1">
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">CPF/CNPJ</label>
                     <div className="flex gap-2">
-                      <input disabled={isReadOnly}
+                      <input
                         type="text"
-                        disabled={formData.is_person}
+                        disabled={isReadOnly || formData.is_person}
                         className="flex-1 bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] disabled:bg-gray-100 transition-all"
                         value={formData.cnpj || ''}
                         onChange={e => setFormData({ ...formData, cnpj: maskCNPJ(e.target.value) })}
                         placeholder="00.000.000/0000-00"
                       />
-                      <button disabled={isReadOnly || searching} onClick={handleCNPJSearch}
-                        disabled={formData.is_person || !formData.cnpj}
+                      <button onClick={handleCNPJSearch}
+                        disabled={isReadOnly || searching || formData.is_person || !formData.cnpj}
                         className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-all"
                       >
                         {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
