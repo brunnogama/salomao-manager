@@ -85,40 +85,41 @@ const EmissaoNF = () => {
     setSelectedHonorario(null);
     setValorNF(0);
     
-    // Buscar os contratos do cliente de forma segura em paralelo (evita quebra de URL do Supabase com caracteres & e /)
+    // Buscar os honorários pendentes (filtra em JavaScript para igualar ao Controle Financeiro e evitar quebras de caractere)
     try {
-      const queries = [];
-      if (client.id) queries.push(supabase.from('contracts').select('id, hon_number, display_id, seq_id, reference').eq('client_id', client.id));
-      if (client.cnpj) queries.push(supabase.from('contracts').select('id, hon_number, display_id, seq_id, reference').eq('cnpj', client.cnpj));
-      if (client.name) queries.push(supabase.from('contracts').select('id, hon_number, display_id, seq_id, reference').ilike('client_name', `%${client.name.trim()}%`));
-      
-      const results = await Promise.all(queries);
-      const allContracts = results.flatMap(r => r.data || []);
-      
-      // Remover duplicados
-      const uniqueContractsMap = new Map();
-      for (const c of allContracts) {
-        if (c && c.id) uniqueContractsMap.set(c.id, c);
-      }
-      const clientContracts = Array.from(uniqueContractsMap.values());
-      if (clientContracts && clientContracts.length > 0) {
-        const contractIds = clientContracts.map(c => c.id);
-        const { data: hons } = await supabase
-          .from('financial_installments')
-          .select('*')
-          .in('contract_id', contractIds)
-          .eq('status', 'pending');
+      const { data: installmentsData } = await supabase
+        .from('financial_installments')
+        .select(`
+          *,
+          contract:contracts (
+            id, hon_number, display_id, seq_id, reference, client_id, client_name, cnpj
+          )
+        `)
+        .eq('status', 'pending');
+
+      if (installmentsData) {
+        const clientNameClean = (client.name || '').toLowerCase().trim();
+        const clientCnpjClean = (client.cnpj || '').replace(/\D/g, '');
         
-        if (hons) {
-          // Atrela o hon_number visualmente
-          const honsMapeados = hons.map((h: any) => ({
-            ...h,
-            contract: clientContracts.find(c => c.id === h.contract_id)
-          }));
-          setHonorarios(honsMapeados);
-        } else {
-          setHonorarios([]);
-        }
+        const filteredHons = installmentsData.filter((i: any) => {
+          if (!i.contract) return false;
+          const cName = (i.contract.client_name || '').toLowerCase();
+          const cCnpj = (i.contract.cnpj || '').replace(/\D/g, '');
+          
+          if (client.id && i.contract.client_id === client.id) return true;
+          if (client.cnpj && cCnpj === clientCnpjClean) return true;
+          if (client.name && cName.includes(clientNameClean)) return true;
+          return false;
+        });
+
+        const honsMapeados = filteredHons.map((i: any) => ({
+          ...i,
+          contract: {
+            ...i.contract,
+            display_id: i.contract.seq_id ? String(i.contract.seq_id).padStart(6, '0') : (i.contract.display_id || '-')
+          }
+        }));
+        setHonorarios(honsMapeados);
       } else {
         setHonorarios([]);
       }
