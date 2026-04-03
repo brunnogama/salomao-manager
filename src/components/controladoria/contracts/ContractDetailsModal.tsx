@@ -99,6 +99,19 @@ export function ContractDetailsModal({
 }: Props) {
   useEscKey(isOpen, onClose);
   
+  const [installments, setInstallments] = useState<any[]>([]);
+  
+  useEffect(() => {
+    if (isOpen && contract?.id) {
+      supabase.from('financial_installments')
+        .select('clause, type, status, installment_number')
+        .eq('contract_id', contract.id)
+        .then(({ data }) => setInstallments(data || []));
+    } else {
+      setInstallments([]);
+    }
+  }, [isOpen, contract?.id]);
+
   const [activeTab, setActiveTab] = useState(0);
   const [totalPaid, setTotalPaid] = useState(0);
   const [baixadoDate, setBaixadoDate] = useState<string | null>(null);
@@ -490,13 +503,44 @@ export function ContractDetailsModal({
       };
       const t = colors[colorTheme];
 
+      // Mapeia o feeType amigável ('Pró-labore', 'Êxito Intermediário', etc) para a chave do backend
+      const getInternalType = (ft: string) => {
+        if (ft.includes('Pró-labore')) return 'pro_labore';
+        if (ft.includes('Fixo Mensal')) return 'fixed_monthly_fee';
+        if (ft.includes('Intermediário')) return 'intermediate_fee';
+        if (ft.includes('Final')) return 'final_success_fee';
+        if (ft.includes('Outros')) return 'other_fees';
+        return '';
+      };
+      
+      const internalFeeType = getInternalType(_feeType);
+      
+      // Busca parcelas pagas relacionadas a esta cláusula e tipo.
+      const paidInstallments = installments
+        .filter((i: any) => i.status === 'paid' && i.type === internalFeeType && (i.clause || '') === (clause || ''))
+        .sort((a: any, b: any) => (a.installment_number || 0) - (b.installment_number || 0));
+
       return (
         <div className={`text-xs flex flex-col ${t.bg} p-2 rounded border ${t.border} mt-1 shadow-sm`}>
           <div className="flex justify-between items-start">
-             <span className={`font-semibold ${t.text}`}>{titleParts}</span>
-             {ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider">Faturar</span>}
+             <div className="flex flex-col gap-1.5">
+               <span className={`font-semibold ${t.text}`}>{titleParts}</span>
+               
+                {/* Badges de Parcelas Pagas */}
+               {paidInstallments.length > 0 && (
+                 <div className="flex flex-wrap gap-1 mt-0.5">
+                   {paidInstallments.map((pi: any, idx: number) => (
+                     <span key={idx} className="inline-flex items-center text-[8px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200 shadow-sm">
+                       <CheckCircle2 className="w-2 h-2 mr-1" strokeWidth={3} />
+                       Pago (Parc. {pi.installment_number || idx + 1})
+                     </span>
+                   ))}
+                 </div>
+               )}
+             </div>
+             {ready && <span className="text-[8px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider mt-0.5 whitespace-nowrap">Faturar</span>}
           </div>
-          {rule && <span className={`text-[10px] ${t.ruleText} italic mt-1 ${t.ruleBg} p-1.5 rounded`}>{rule}</span>}
+          {rule && <span className={`text-[10px] ${t.ruleText} italic mt-1.5 ${t.ruleBg} p-1.5 rounded`}>{rule}</span>}
         </div>
       );
     };
