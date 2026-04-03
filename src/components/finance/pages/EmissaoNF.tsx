@@ -249,7 +249,17 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         <div className="flex items-center gap-3 shrink-0 w-full md:w-auto mt-2 md:mt-0 justify-end flex-wrap">
           <div className="flex flex-col items-end mr-4">
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Valor Total</span>
-            <span className="text-xl font-black text-[#1e3a8a]">{maskMoney(valorNF.toFixed(2))}</span>
+            <div className="relative group flex items-center">
+              <span className="absolute left-2 text-sm font-bold text-[#1e3a8a]/50">R$</span>
+              <input
+                type="number"
+                value={valorNF || ''}
+                onChange={(e) => setValorNF(parseFloat(e.target.value) || 0)}
+                className="w-32 bg-transparent text-xl font-black text-[#1e3a8a] outline-none text-right placeholder-[#1e3a8a]/30 pl-8 pr-1 py-1 border-b-2 border-transparent hover:border-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-colors"
+                placeholder="0.00"
+                step="0.01"
+              />
+            </div>
           </div>
           <button
             onClick={handleEmitirNota}
