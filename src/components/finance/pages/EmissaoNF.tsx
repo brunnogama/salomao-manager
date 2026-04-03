@@ -92,7 +92,7 @@ const EmissaoNF = () => {
         .select(`
           *,
           contract:contracts (
-            id, hon_number, display_id, seq_id, reference, client_id, client_name, cnpj
+            id, hon_number, seq_id, reference, client_id, client_name, cnpj
           )
         `)
         .eq('status', 'pending');
