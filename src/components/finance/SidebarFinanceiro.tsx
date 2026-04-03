@@ -79,7 +79,7 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
     { path: '/financeiro/contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle },
     { path: '/financeiro/oab', label: 'OAB', icon: GraduationCap },
     { path: '/financeiro/gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane },
-    { path: '/financeiro/clientes', label: 'Clientes Vínculo', icon: Users },
+    { path: '/financeiro/clientes', label: 'Clientes', icon: Users },
     { path: '/financeiro/ged', label: 'GED', icon: Folder },
   ]
 
