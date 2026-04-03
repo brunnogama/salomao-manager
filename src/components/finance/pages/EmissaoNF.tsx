@@ -143,7 +143,7 @@ const EmissaoNF = () => {
   }, [selectedCity]);
 
   const cities = [
-    'Belém', 'Brasília', 'Florianópolis', 'Rio de Janeiro', 'São Paulo', 'Vitória', 'Salvador'
+    'Belém', 'Brasília', 'Florianópolis', 'Rio de Janeiro', 'Salvador', 'São Paulo', 'Vitória'
   ];
 
   const getSiglaByCity = (city: string) => {
