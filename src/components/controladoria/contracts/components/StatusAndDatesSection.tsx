@@ -23,7 +23,6 @@ interface StatusAndDatesSectionProps {
     setActiveManager: (manager: string) => void;
     signatureOptions: { label: string; value: string }[];
     formatForInput: (val: string | number | undefined) => string | number;
-    handleAddToList: (listField: string, valueField: any, installmentsListField?: string, installmentsSourceField?: any, ruleListField?: string, ruleSourceField?: any, readyListField?: string, readySourceField?: any) => void;
     removeExtra: (field: string, index: number, installmentsListField?: string) => void;
     newIntermediateFee: string;
     setNewIntermediateFee: (v: string) => void;
@@ -48,7 +47,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
         formData, setFormData, statusOptions, handleCreateStatus, ensureDateValue,
         analystSelectOptions, onOpenAnalystManager, rejectionByOptions, rejectionReasonOptions,
         partnerSelectOptions, billingOptions, maskHon, setActiveManager, signatureOptions,
-        formatForInput, handleAddToList,
+        formatForInput,
         newIntermediateFee, setNewIntermediateFee, interimInstallments, setInterimInstallments,
         handleAddIntermediateFee, interimClause, setInterimClause, interimRule, setInterimRule, interimReady, setInterimReady, handleRemoveIntermediateFee, ensureArray,
         dateWarningMessage, duplicateHonCase, getStatusLabel
@@ -61,63 +60,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
         return String(val);
     };
 
-    const handleEditExtra = (
-        listField: string,
-        valueField: keyof Contract,
-        installmentsListField: string,
-        installmentsSourceField: keyof Contract,
-        clauseListField: string,
-        clauseSourceField: keyof Contract,
-        ruleListField: string,
-        ruleSourceField: keyof Contract,
-        readyListField: string,
-        readySourceField: keyof Contract,
-        index: number
-    ) => {
-        setFormData((prev: any) => {
-            const valueToEdit = prev[listField][index];
-            const installmentToEdit = prev[installmentsListField]?.[index] || '1x';
-            const clauseToEdit = prev[clauseListField]?.[index] || '';
-            const ruleToEdit = prev[ruleListField]?.[index] || '';
-            const readyToEdit = prev[readyListField]?.[index] || false;
 
-            const newList = [...(prev[listField] || [])];
-            const newClausesList = [...ensureArray(prev[clauseListField])];
-            const newInstList = [...ensureArray(prev[installmentsListField])];
-            const newRulesList = [...ensureArray(prev[ruleListField])];
-            const newReadyList = prev[readyListField] ? [...prev[readyListField]] : [];
-
-            // Prevent data loss: if main slot has a non-zero value, move it to the extra list before overwriting it
-            const currentMainValue = prev[valueField];
-            if (currentMainValue && currentMainValue !== 'R$ 0,00' && currentMainValue !== '') {
-                newList.push(currentMainValue);
-                newInstList.push(prev[installmentsSourceField] || '1x');
-                newClausesList.push(prev[clauseSourceField] || '');
-                newRulesList.push(prev[ruleSourceField] || '');
-                newReadyList.push(prev[readySourceField] || false);
-            }
-
-            newList.splice(index, 1);
-            newClausesList.splice(index, 1);
-            newInstList.splice(index, 1);
-            if (newRulesList.length > index) newRulesList.splice(index, 1);
-            if (newReadyList.length > index) newReadyList.splice(index, 1);
-
-            return {
-                ...prev,
-                [valueField]: valueToEdit,
-                [installmentsSourceField]: installmentToEdit,
-                [clauseSourceField]: clauseToEdit,
-                [ruleSourceField]: ruleToEdit,
-                [readySourceField]: readyToEdit,
-                [listField]: newList,
-                [clauseListField]: newClausesList,
-                [installmentsListField]: newInstList,
-                [ruleListField]: newRulesList,
-                [readyListField]: newReadyList
-            };
-        });
-    };
 
     useEffect(() => {
         const rawVal = newIntermediateFee;
@@ -388,8 +331,6 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                     isTimesheet={isTimesheet}
                     safeString={safeString}
                     formatForInput={formatForInput}
-                    handleAddToList={handleAddToList}
-                    handleEditExtra={handleEditExtra}
                     ensureArray={ensureArray}
                     newIntermediateFee={newIntermediateFee}
                     setNewIntermediateFee={setNewIntermediateFee}

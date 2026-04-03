@@ -386,57 +386,7 @@ export function ContractFormModal(props: Props) {
     }
   };
 
-  const handleAddToList = (
-    listField: string, 
-    valueField: keyof Contract, 
-    installmentsListField?: string, 
-    installmentsSourceField?: keyof Contract,
-    ruleListField?: string,
-    ruleSourceField?: keyof Contract,
-    readyListField?: string,
-    readySourceField?: keyof Contract
-  ) => {
-    const value = (formData as any)[valueField], clauseValue = (formData as any)[valueField + '_clause'];
-    if (!value || value === 'R$ 0,00' || value === '') return;
-    
-    const currentList = (formData as any)[listField] || [];
-    const currentClausesList = ensureArray((formData as any)[listField + '_clauses']);
-    
-    const updates: any = { 
-        [listField]: [...currentList, value], 
-        [listField + '_clauses']: [...currentClausesList, clauseValue || ''], 
-        [valueField]: '', 
-        [valueField + '_clause']: '' 
-    };
-    
-    if (installmentsListField && installmentsSourceField) {
-      updates[installmentsListField] = [...ensureArray((formData as any)[installmentsListField]), (formData as any)[installmentsSourceField] || '1x'];
-      updates[installmentsSourceField] = '1x';
-    }
 
-    if (ruleListField && ruleSourceField) {
-      updates[ruleListField] = [...ensureArray((formData as any)[ruleListField]), (formData as any)[ruleSourceField] || ''];
-      updates[ruleSourceField] = '';
-    }
-
-    if (readyListField && readySourceField) {
-      updates[readyListField] = [...((formData as any)[readyListField] || []), (formData as any)[readySourceField] || false];
-      updates[readySourceField] = false;
-    }
-
-    // Try to clear the breakdown field if it exists
-    const breakdownFieldMap: Record<string, string> = {
-      'pro_labore': 'pro_labore_breakdown',
-      'final_success_fee': 'final_success_fee_breakdown',
-      'fixed_monthly_fee': 'fixed_monthly_fee_breakdown',
-      'other_fees': 'other_fees_breakdown'
-    };
-    if (breakdownFieldMap[valueField as string]) {
-      updates[breakdownFieldMap[valueField as string]] = [];
-    }
-
-    setFormData(prev => ({ ...prev, ...updates }));
-  };
 
   const removeExtra = (field: string, index: number, installmentsListField?: string) => {
     setFormData((prev: any) => {
@@ -483,8 +433,6 @@ export function ContractFormModal(props: Props) {
   };
 
   const handleRemoveIntermediateFee = (index: number) => {
-    const parsed = ensureArray((formData as any).intermediate_fees_installments);
-    if (!parsed || parsed.length <= index) return;
     removeIntermediateFee(index);
     
     const currentClauses = [...ensureArray((formData as any).intermediate_fees_clauses)]; currentClauses.splice(index, 1);
@@ -1104,7 +1052,6 @@ export function ContractFormModal(props: Props) {
                   setActiveManager={openOptionManager}
                   signatureOptions={signatureOptions}
                   formatForInput={formatForInput}
-                  handleAddToList={handleAddToList}
                   removeExtra={removeExtra}
                   newIntermediateFee={newIntermediateFee}
                   setNewIntermediateFee={setNewIntermediateFee}

@@ -13,8 +13,6 @@ interface FeeSectionsCollapsibleProps {
     isTimesheet: boolean;
     safeString: (val: string | number | undefined) => string;
     formatForInput: (val: string | number | undefined) => string | number;
-    handleAddToList: (listField: string, valueField: any, installmentsListField?: string, installmentsSourceField?: any, ruleListField?: string, ruleSourceField?: any, readyListField?: string, readySourceField?: any) => void;
-    handleEditExtra: (listField: string, valueField: keyof Contract, installmentsListField: string, installmentsSourceField: keyof Contract, clauseListField: string, clauseSourceField: keyof Contract, ruleListField: string, ruleSourceField: keyof Contract, readyListField: string, readySourceField: keyof Contract, index: number) => void;
     ensureArray: (val: any) => string[];
     newIntermediateFee: string;
     setNewIntermediateFee: (v: string) => void;
@@ -39,7 +37,6 @@ interface FeeSectionsCollapsibleProps {
     partnerSelectOptions: { label: string; value: string }[];
 }
 
-// Componente de item de honorário salvo
 const SavedFeeItem = ({ val, clause, installment, rule, isReady, feeType: _feeType, onEdit, onDelete, paidInstallments = [] }: {
     val: string; clause?: string; installment?: string; rule?: string; isReady?: boolean; feeType?: string;
     onEdit: () => void; onDelete: () => void; paidInstallments?: any[];
@@ -56,7 +53,6 @@ const SavedFeeItem = ({ val, clause, installment, rule, isReady, feeType: _feeTy
             <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-sm text-[#0a192f]">{titleParts}</span>
                 {isReady && <span className="flex items-center gap-0.5 text-[9px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-wider"><CheckCircle className="w-2.5 h-2.5" /> Faturar</span>}
-                {/* Badges de Parcelas Pagas no Formulário */}
                 {paidInstallments.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {paidInstallments.map((pi: any, idx: number) => (
@@ -82,12 +78,10 @@ const SavedFeeItem = ({ val, clause, installment, rule, isReady, feeType: _feeTy
     );
 };
 
-
-
 export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
     const {
         formData, setFormData, isTimesheet, safeString, formatForInput,
-        handleAddToList, handleEditExtra, ensureArray,
+        ensureArray,
         newIntermediateFee, setNewIntermediateFee, interimInstallments, setInterimInstallments,
         handleAddIntermediateFee, interimClause, setInterimClause, interimRule, setInterimRule,
         interimReady, setInterimReady, handleRemoveIntermediateFee,
@@ -95,8 +89,8 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
         billingOptions, maskHon, setActiveManager, signatureOptions, duplicateHonCase, getStatusLabel
     } = props;
 
-    const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
     const [financialInstallments, setFinancialInstallments] = useState<any[]>([]);
+    const [editingKey, setEditingKey] = useState<string | null>(null);
 
     React.useEffect(() => {
         const fetchFinanceInstallments = async () => {
@@ -132,32 +126,59 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
             .sort((a: any, b: any) => (a.installment_number || 0) - (b.installment_number || 0));
     };
 
-    const toggleSection = (key: string) => {
-        setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
-    };
-
-    // Helper para remover extra com confirmação visual
-    const removeExtra = (field: string, index: number, installmentsListField?: string) => {
+    const removeExtra = (field: string, index: number, installmentsListField: string, clauseListField: string, ruleListField: string, readyListField: string) => {
         setFormData((prev: any) => {
-            const newList = [...(prev[field] || [])];
-            const newClausesList = [...(ensureArray(prev[field + '_clauses']))];
-            const newRulesList = [...(ensureArray(prev[field + '_rules']))];
-            const newReadyList = prev[field + '_ready'] ? [...prev[field + '_ready']] : [];
+            const newList = [...ensureArray(prev[field])];
+            const newClausesList = [...ensureArray(prev[clauseListField])];
+            const newRulesList = [...ensureArray(prev[ruleListField])];
+            const newReadyList = prev[readyListField] ? [...prev[readyListField]] : [];
+            const newInstList = [...ensureArray(prev[installmentsListField])];
+
             newList.splice(index, 1);
             if (newClausesList.length > index) newClausesList.splice(index, 1);
             if (newRulesList.length > index) newRulesList.splice(index, 1);
             if (newReadyList.length > index) newReadyList.splice(index, 1);
-            const updates: any = { [field]: newList, [field + '_clauses']: newClausesList, [field + '_rules']: newRulesList, [field + '_ready']: newReadyList };
-            if (installmentsListField) {
-                const newInstList = [...ensureArray(prev[installmentsListField])];
-                if (newInstList.length > index) newInstList.splice(index, 1);
-                updates[installmentsListField] = newInstList;
-            }
-            return { ...prev, ...updates };
+            if (newInstList.length > index) newInstList.splice(index, 1);
+
+            return { 
+                ...prev, 
+                [field]: newList, 
+                [clauseListField]: newClausesList, 
+                [ruleListField]: newRulesList, 
+                [readyListField]: newReadyList,
+                [installmentsListField]: newInstList
+            };
         });
+        if (editingKey === `${field}_ext_${index}`) {
+            setEditingKey(null);
+        }
     };
 
-    // Renderiza uma categoria genérica de honorário (Pró-labore, Fixo Mensal, Êxito Final, Outros)
+    const addNewExtra = (extrasField: string, installmentsField: string, clausesField: string, rulesField: string, readyField: string) => {
+        setFormData((prev: any) => {
+            const newList = [...ensureArray(prev[extrasField]), ''];
+            const newClausesList = [...ensureArray(prev[clausesField]), ''];
+            const newRulesList = [...ensureArray(prev[rulesField]), ''];
+            const newInstList = [...ensureArray(prev[installmentsField]), '1x'];
+            const newReadyList = prev[readyField] ? [...prev[readyField], false] : [false];
+            return {
+                ...prev,
+                [extrasField]: newList,
+                [clausesField]: newClausesList,
+                [rulesField]: newRulesList,
+                [installmentsField]: newInstList,
+                [readyField]: newReadyList
+            }
+        });
+        const currentExtras = ensureArray((formData as any)[extrasField]);
+        setEditingKey(`${extrasField}_ext_${currentExtras.length}`);
+    };
+
+    const clearMain = (valueField: string, clauseField: string, installmentsField: string, ruleField: string, readyField: string) => {
+        setFormData(prev => ({ ...prev, [valueField]: '', [clauseField]: '', [installmentsField]: '1x', [ruleField]: '', [readyField]: false } as any));
+        if (editingKey === `${valueField}_main`) setEditingKey(null);
+    };
+
     const renderGenericFeeCategory = (config: {
         key: string;
         title: string;
@@ -175,25 +196,39 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
         breakdownField: string;
     }) => {
         const { key, title, icon, valueField, extrasField, installmentsField, extrasInstallmentsField, extrasClausesField, clauseField, ruleField, extrasRulesField, readyField, extrasReadyField, breakdownField } = config;
+        
+        const mainValue = safeString(formatForInput((formData as any)[valueField]));
+        let hasMain = parseCurrency(mainValue) > 0 || mainValue !== '';
+        // Treat as not having main if it's strictly empty or "R$ 0,00" but we only trust strictly empty for logic
+        if (mainValue === '' || mainValue === 'R$ 0,00') hasMain = false;
+
         const extras = ensureArray((formData as any)[extrasField]);
         const extrasClauses = ensureArray((formData as any)[extrasClausesField]);
         const extrasInstallments = ensureArray((formData as any)[extrasInstallmentsField]);
         const extrasRules = ensureArray((formData as any)[extrasRulesField]);
         const extrasReady = (formData as any)[extrasReadyField] || [];
 
-        const isOpen = openSections[key] || false;
-
+        // Verifica se há algo ativo
+        const totalItemsCount = (hasMain ? 1 : 0) + extras.length;
+        const defaultOpen = totalItemsCount > 0;
+        
         return (
             <div className="border border-gray-200 rounded-xl overflow-hidden bg-white/80 backdrop-blur-sm">
                 <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                     <div className="flex items-center gap-2.5">
                         {React.createElement(icon, { className: 'w-4 h-4 text-[#1e3a8a]' })}
                         <span className="text-sm font-bold text-[#0a192f]">{title}</span>
-                        {extras.length > 0 && <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{extras.length}</span>}
+                        {totalItemsCount > 0 && <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{totalItemsCount}</span>}
                     </div>
                     <button
                         type="button"
-                        onClick={() => toggleSection(key)}
+                        onClick={() => {
+                            if (!hasMain) {
+                                setEditingKey(`${valueField}_main`);
+                            } else {
+                                addNewExtra(extrasField, extrasInstallmentsField, extrasClausesField, extrasRulesField, extrasReadyField);
+                            }
+                        }}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-200"
                     >
                         <Plus className="w-3.5 h-3.5" />
@@ -202,10 +237,42 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                 </div>
 
                 <div className="px-5 py-3">
-                    {/* Itens salvos */}
-                    {(parseCurrency(safeString((formData as any)[valueField])) > 0 || extras.length > 0) && (
-                        <div className="flex flex-col gap-2 mb-3">
-                            {parseCurrency(safeString((formData as any)[valueField])) > 0 && (
+                    <div className="flex flex-col gap-2 mb-3">
+                        {/* Render Main Item */}
+                        {hasMain || editingKey === `${valueField}_main` ? (
+                            editingKey === `${valueField}_main` ? (
+                                <div className="animate-in fade-in slide-in-from-top-2 duration-200 bg-blue-50/30 border border-blue-200 rounded-lg p-4 mt-1 mb-2">
+                                    <FinancialInputWithInstallments
+                                        label={`Valor - ${title} (Principal)`}
+                                        value={safeString(formatForInput((formData as any)[valueField]))}
+                                        onChangeValue={(v: any) => setFormData({ ...formData, [valueField]: v })}
+                                        installments={(formData as any)[installmentsField]}
+                                        onChangeInstallments={(v: any) => setFormData({ ...formData, [installmentsField]: v })}
+                                        clause={(formData as any)[clauseField]}
+                                        onChangeClause={(v: any) => setFormData({ ...formData, [clauseField]: v } as any)}
+                                        rule={(formData as any)[ruleField]}
+                                        onChangeRule={(v: any) => setFormData({ ...formData, [ruleField]: v })}
+                                        readyToInvoice={(formData as any)[readyField]}
+                                        onToggleReady={() => setFormData({ ...formData, [readyField]: !(formData as any)[readyField] })}
+                                    />
+                                    {renderInstallmentBreakdown(title, valueField, breakdownField, installmentsField)}
+                                    <div className="mt-2 bg-white/50 p-2.5 rounded-lg border border-gray-200">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center mb-1.5">Regra para recebimento:</label>
+                                        <textarea
+                                            className="w-full text-xs p-2 border border-gray-300 rounded bg-white focus:border-salomao-blue outline-none resize-none leading-relaxed"
+                                            placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
+                                            rows={2}
+                                            value={(formData as any)[ruleField] || ''}
+                                            onChange={(e) => setFormData({ ...formData, [ruleField]: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="flex justify-end gap-2 mt-3">
+                                        <button type="button" onClick={() => setEditingKey(null)} className="flex items-center gap-1.5 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-sm">
+                                            <Save className="w-3.5 h-3.5" /> Concluir Edição
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
                                 <SavedFeeItem
                                     val={safeString(formatForInput((formData as any)[valueField]))}
                                     clause={(formData as any)[clauseField]}
@@ -214,13 +281,66 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     isReady={(formData as any)[readyField]}
                                     feeType={title}
                                     paidInstallments={getPaidInstallments(title, (formData as any)[clauseField])}
-                                    onEdit={() => setOpenSections(prev => ({ ...prev, [key]: true }))}
-                                    onDelete={() => setFormData({ ...formData, [valueField]: '', [clauseField]: '', [installmentsField]: '1x', [ruleField]: '', [readyField]: false } as any)}
+                                    onEdit={() => setEditingKey(`${valueField}_main`)}
+                                    onDelete={() => clearMain(valueField as string, clauseField, installmentsField as string, ruleField as string, readyField as string)}
                                 />
-                            )}
-                            {extras.map((val: string, idx: number) => (
+                            )
+                        ) : null}
+
+                        {/* Render Extra Items */}
+                        {extras.map((val: string, idx: number) => (
+                            editingKey === `${extrasField}_ext_${idx}` ? (
+                                <div key={`edit_ext_${idx}`} className="animate-in fade-in slide-in-from-top-2 duration-200 bg-blue-50/30 border border-blue-200 rounded-lg p-4 mt-1 mb-2">
+                                    <FinancialInputWithInstallments
+                                        label={`Valor - ${title} (Listagem)`}
+                                        value={val}
+                                        onChangeValue={(v: any) => {
+                                            const n = [...extras]; n[idx] = v;
+                                            setFormData({ ...formData, [extrasField]: n });
+                                        }}
+                                        installments={extrasInstallments[idx]}
+                                        onChangeInstallments={(v: any) => {
+                                            const n = [...extrasInstallments]; n[idx] = v;
+                                            setFormData({ ...formData, [extrasInstallmentsField]: n });
+                                        }}
+                                        clause={extrasClauses[idx]}
+                                        onChangeClause={(v: any) => {
+                                            const n = [...extrasClauses]; n[idx] = v;
+                                            setFormData({ ...formData, [extrasClausesField]: n } as any);
+                                        }}
+                                        rule={extrasRules[idx]}
+                                        onChangeRule={(v: any) => {
+                                            const n = [...extrasRules]; n[idx] = v;
+                                            setFormData({ ...formData, [extrasRulesField]: n });
+                                        }}
+                                        readyToInvoice={extrasReady[idx]}
+                                        onToggleReady={() => {
+                                            const n = [...extrasReady]; n[idx] = !n[idx];
+                                            setFormData({ ...formData, [extrasReadyField]: n });
+                                        }}
+                                    />
+                                    <div className="mt-2 bg-white/50 p-2.5 rounded-lg border border-gray-200">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center mb-1.5">Regra para recebimento:</label>
+                                        <textarea
+                                            className="w-full text-xs p-2 border border-gray-300 rounded bg-white focus:border-salomao-blue outline-none resize-none leading-relaxed"
+                                            placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
+                                            rows={2}
+                                            value={extrasRules[idx] || ''}
+                                            onChange={(e) => {
+                                                const n = [...extrasRules]; n[idx] = e.target.value;
+                                                setFormData({ ...formData, [extrasRulesField]: n });
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="flex justify-end gap-2 mt-3">
+                                        <button type="button" onClick={() => setEditingKey(null)} className="flex items-center gap-1.5 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-sm">
+                                            <Save className="w-3.5 h-3.5" /> Concluir Edição
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
                                 <SavedFeeItem
-                                    key={idx}
+                                    key={`ext_${idx}`}
                                     val={val}
                                     clause={extrasClauses[idx]}
                                     installment={extrasInstallments[idx]}
@@ -228,90 +348,28 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     isReady={extrasReady[idx]}
                                     feeType={title}
                                     paidInstallments={getPaidInstallments(title, extrasClauses[idx])}
-                                    onEdit={() => {
-                                        handleEditExtra(extrasField, valueField, extrasInstallmentsField, installmentsField, extrasClausesField, clauseField as keyof Contract, extrasRulesField, ruleField, extrasReadyField, readyField, idx);
-                                        setOpenSections(prev => ({ ...prev, [key]: true }));
-                                    }}
-                                    onDelete={() => removeExtra(extrasField, idx, extrasInstallmentsField)}
+                                    onEdit={() => setEditingKey(`${extrasField}_ext_${idx}`)}
+                                    onDelete={() => removeExtra(extrasField, idx, extrasInstallmentsField, extrasClausesField, extrasRulesField, extrasReadyField)}
                                 />
-                            ))}
-                        </div>
-                    )}
+                            )
+                        ))}
+                    </div>
 
-                    {parseCurrency(safeString((formData as any)[valueField])) === 0 && extras.length === 0 && !isOpen && (
+                    {!hasMain && extras.length === 0 && editingKey !== `${valueField}_main` && (
                         <p className="text-xs text-gray-400 italic">Nenhum valor cadastrado.</p>
-                    )}
-
-                    {/* Formulário inline */}
-                    {isOpen && (
-                        <div className="animate-in fade-in slide-in-from-top-2 duration-200 bg-gray-50/50 border border-gray-200 rounded-lg p-4 mt-1">
-                            <FinancialInputWithInstallments
-                                label={`Valor - ${title}`}
-                                value={safeString(formatForInput((formData as any)[valueField]))}
-                                onChangeValue={(v: any) => setFormData({ ...formData, [valueField]: v })}
-                                installments={(formData as any)[installmentsField]}
-                                onChangeInstallments={(v: any) => setFormData({ ...formData, [installmentsField]: v })}
-                                clause={(formData as any)[clauseField]}
-                                onChangeClause={(v: any) => setFormData({ ...formData, [clauseField]: v } as any)}
-                                rule={(formData as any)[ruleField]}
-                                onChangeRule={(v: any) => setFormData({ ...formData, [ruleField]: v })}
-                                readyToInvoice={(formData as any)[readyField]}
-                                onToggleReady={() => setFormData({ ...formData, [readyField]: !(formData as any)[readyField] })}
-                            />
-                            {renderInstallmentBreakdown(title, valueField, breakdownField, installmentsField)}
-                            <div className="mt-2 bg-gray-50/50 p-2.5 rounded-lg border border-gray-200">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center mb-1.5">Regra para recebimento:</label>
-                                <textarea
-                                    className="w-full text-xs p-2 border border-gray-300 rounded bg-white focus:border-salomao-blue outline-none resize-none leading-relaxed"
-                                    placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
-                                    rows={2}
-                                    value={(formData as any)[ruleField] || ''}
-                                    onChange={(e) => setFormData({ ...formData, [ruleField]: e.target.value })}
-                                />
-                            </div>
-                            <div className="flex justify-end gap-2 mt-3">
-                                <button
-                                    type="button"
-                                    onClick={() => toggleSection(key)}
-                                    className="px-4 py-2 text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
-                                >
-                                    Fechar
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        handleAddToList(extrasField, valueField, extrasInstallmentsField, installmentsField, extrasRulesField, ruleField as any, extrasReadyField, readyField as any);
-                                    }}
-                                    className="flex items-center gap-1.5 px-4 py-2 text-[#1e3a8a] bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors shadow-sm"
-                                    title="Salvar este e abrir espaço para adicionar mais um do mesmo tipo"
-                                >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    Adicionar Outro
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => toggleSection(key)}
-                                    className="flex items-center gap-1.5 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-sm"
-                                >
-                                    <Save className="w-3.5 h-3.5" />
-                                    Salvar
-                                </button>
-                            </div>
-                        </div>
                     )}
                 </div>
             </div>
         );
     };
 
-    // Renderiza a seção do Êxito Intermediário (lógica especial com state próprio)
+    // Renderiza a seção do Êxito Intermediário (lógica especial com states separados para o draft)
     const renderIntermediateSection = () => {
         const fees = ensureArray(formData.intermediate_fees);
         const clauses = ensureArray((formData as any).intermediate_fees_clauses);
         const installments = ensureArray((formData as any).intermediate_fees_installments);
         const rules = ensureArray((formData as any).intermediate_fees_rules);
         const readyFlags = (formData as any).intermediate_fees_ready || [];
-        const isOpen = openSections['intermediate'] || false;
 
         return (
             <div className="border border-gray-200 rounded-xl overflow-hidden bg-white/80 backdrop-blur-sm">
@@ -323,7 +381,15 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                     </div>
                     <button
                         type="button"
-                        onClick={() => toggleSection('intermediate')}
+                        onClick={() => {
+                            // Clear new draft fields
+                            setNewIntermediateFee('');
+                            setInterimInstallments('1x');
+                            setInterimClause('');
+                            setInterimRule?.('');
+                            setInterimReady?.(false);
+                            setEditingKey('intermediate_new');
+                        }}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-200"
                     >
                         <Plus className="w-3.5 h-3.5" />
@@ -332,9 +398,58 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                 </div>
 
                 <div className="px-5 py-3">
-                    {fees.length > 0 && (
-                        <div className="flex flex-col gap-2 mb-3">
-                            {fees.map((fee: string, idx: number) => (
+                    <div className="flex flex-col gap-2 mb-3">
+                        {fees.map((fee: string, idx: number) => (
+                            editingKey === `intermediate_ext_${idx}` ? (
+                                <div key={`edit_inter_${idx}`} className="animate-in fade-in slide-in-from-top-2 duration-200 bg-blue-50/30 border border-blue-200 rounded-lg p-4 mt-1 mb-2">
+                                    <FinancialInputWithInstallments
+                                        label="Valor - Êxito Intermediário"
+                                        value={fee}
+                                        onChangeValue={(v: any) => {
+                                            const n = [...fees]; n[idx] = v;
+                                            setFormData({ ...formData, intermediate_fees: n });
+                                        }}
+                                        installments={installments[idx] || '1x'}
+                                        onChangeInstallments={(v: any) => {
+                                            const n = [...installments]; n[idx] = v;
+                                            setFormData({ ...formData, intermediate_fees_installments: n } as any);
+                                        }}
+                                        clause={clauses[idx]}
+                                        onChangeClause={(v: any) => {
+                                            const n = [...clauses]; n[idx] = v;
+                                            setFormData({ ...formData, intermediate_fees_clauses: n } as any);
+                                        }}
+                                        rule={rules[idx]}
+                                        onChangeRule={(v: any) => {
+                                            const n = [...rules]; n[idx] = v;
+                                            setFormData({ ...formData, intermediate_fees_rules: n } as any);
+                                        }}
+                                        readyToInvoice={readyFlags[idx]}
+                                        onToggleReady={() => {
+                                            const n = [...readyFlags]; n[idx] = !n[idx];
+                                            setFormData({ ...formData, intermediate_fees_ready: n } as any);
+                                        }}
+                                    />
+                                    <div className="mt-2 bg-white/50 p-2.5 rounded-lg border border-gray-200">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center mb-1.5">Regra para recebimento:</label>
+                                        <textarea
+                                            className="w-full text-xs p-2 border border-gray-300 rounded bg-white focus:border-salomao-blue outline-none resize-none leading-relaxed"
+                                            placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
+                                            rows={2}
+                                            value={rules[idx] || ''}
+                                            onChange={(e) => {
+                                                const n = [...rules]; n[idx] = e.target.value;
+                                                setFormData({ ...formData, intermediate_fees_rules: n } as any);
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="flex justify-end gap-2 mt-3">
+                                        <button type="button" onClick={() => setEditingKey(null)} className="flex items-center gap-1.5 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-sm">
+                                            <Save className="w-3.5 h-3.5" /> Concluir Edição
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
                                 <SavedFeeItem
                                     key={idx}
                                     val={fee}
@@ -344,29 +459,21 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     isReady={readyFlags[idx]}
                                     feeType="Êxito Intermediário"
                                     paidInstallments={getPaidInstallments('Êxito Intermediário', clauses[idx])}
-                                    onEdit={() => {
-                                        setNewIntermediateFee(fee);
-                                        setInterimInstallments(installments[idx] || '1x');
-                                        setInterimClause(clauses[idx] || '');
-                                        setInterimRule?.(rules[idx] || '');
-                                        setInterimReady?.(readyFlags[idx] || false);
-                                        handleRemoveIntermediateFee(idx);
-                                        setOpenSections(prev => ({ ...prev, intermediate: true }));
-                                    }}
+                                    onEdit={() => setEditingKey(`intermediate_ext_${idx}`)}
                                     onDelete={() => handleRemoveIntermediateFee(idx)}
                                 />
-                            ))}
-                        </div>
-                    )}
+                            )
+                        ))}
+                    </div>
 
-                    {fees.length === 0 && !isOpen && (
+                    {fees.length === 0 && editingKey !== 'intermediate_new' && (
                         <p className="text-xs text-gray-400 italic">Nenhum valor cadastrado.</p>
                     )}
 
-                    {isOpen && (
+                    {editingKey === 'intermediate_new' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-200 bg-gray-50/50 border border-gray-200 rounded-lg p-4 mt-1">
                             <FinancialInputWithInstallments
-                                label="Valor - Êxito Intermediário"
+                                label="Novo Valor - Êxito Intermediário"
                                 value={newIntermediateFee}
                                 onChangeValue={setNewIntermediateFee}
                                 installments={interimInstallments}
@@ -389,17 +496,19 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     onChange={(e) => setInterimRule?.(e.target.value)}
                                 />
                             </div>
-                            <div className="flex justify-end mt-3">
+                            <div className="flex justify-end gap-2 mt-3">
+                                <button type="button" onClick={() => setEditingKey(null)} className="px-4 py-2 text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors">
+                                    Cancelar
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => {
                                         handleAddIntermediateFee();
-                                        toggleSection('intermediate');
+                                        setEditingKey(null);
                                     }}
                                     className="flex items-center gap-1.5 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-sm"
                                 >
-                                    <Save className="w-3.5 h-3.5" />
-                                    Salvar
+                                    <Save className="w-3.5 h-3.5" /> Adicionar
                                 </button>
                             </div>
                         </div>
@@ -409,11 +518,8 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
         );
     };
 
-
-
     return (
         <div className="space-y-6 animate-in slide-in-from-top-2 pt-4 border-t border-gray-100">
-            {/* Campos de Contrato Fechado (HON, Faturamento, Assinatura) */}
             {formData.status === 'active' && (
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end mb-4 animate-in fade-in">
                     <div className="md:col-span-4">
@@ -431,7 +537,6 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                 </div>
             )}
 
-            {/* Categorias de Honorários */}
             <div className={`space-y-4 ${isTimesheet ? 'opacity-40 pointer-events-none filter grayscale' : ''}`}>
                 {renderGenericFeeCategory({
                     key: 'pro_labore', title: 'Pró-Labore', icon: DollarSign,
@@ -474,11 +579,8 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                     readyField: 'other_fees_ready', extrasReadyField: 'other_fees_extras_ready',
                     breakdownField: 'other_fees_breakdown'
                 })}
-
-
             </div>
 
-            {/* Timesheet */}
             <div className="border border-gray-200 rounded-xl overflow-hidden bg-white/80 backdrop-blur-sm">
                 <div className="flex items-center justify-between px-5 py-3.5">
                     <div className="flex items-center gap-2.5">
@@ -495,3 +597,4 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
         </div>
     );
 }
+
