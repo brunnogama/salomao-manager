@@ -91,6 +91,7 @@ export const MODULE_CONFIG = {
       'contas-receber': ArrowDownCircle,
       oab: Briefcase,
       'gestao-aeronave': Plane,
+      clientes: Users,
       ged: FolderSearch
     },
     titles: {
@@ -102,6 +103,7 @@ export const MODULE_CONFIG = {
       'contas-receber': 'Contas a Receber',
       oab: 'OAB',
       'gestao-aeronave': 'Gestão da Aeronave',
+      clientes: 'Clientes Vínculo',
       ged: 'Gestão Eletrônica de Documentos'
     },
     descriptions: {
@@ -113,6 +115,7 @@ export const MODULE_CONFIG = {
       'contas-receber': 'Controle de receitas e faturamentos.',
       oab: 'Controle de anuidades e registros OAB.',
       'gestao-aeronave': 'Controle de custos e manutenção da aeronave.',
+      clientes: 'Base de clientes vinculados',
       ged: 'Arquivo digital e organização de documentos.'
     }
   },

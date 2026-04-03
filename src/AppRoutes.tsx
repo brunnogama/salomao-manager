@@ -320,6 +320,7 @@ export function AppRoutes() {
                     <Route path="contas-receber" element={<WithProps Component={FinanceContasReceber} />} />
                     <Route path="oab" element={<WithProps Component={ListaOAB} />} />
                     <Route path="gestao-aeronave" element={<WithProps Component={GestaoAeronave} />} />
+                    <Route path="clientes" element={<WithProps Component={ControlClients} />} />
                     <Route path="ged" element={<WithProps Component={FinanceGED} />} />
                 </Route>
 
