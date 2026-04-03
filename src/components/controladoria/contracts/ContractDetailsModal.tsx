@@ -230,12 +230,13 @@ export function ContractDetailsModal({
       case 'active': return 'bg-green-100 text-green-800 border-green-200';
       case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
       case 'probono': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'baixado': return 'bg-gray-200 text-gray-700 border-gray-300';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getStatusLabel = (status: string) => {
-    const map: any = { analysis: 'Sob Análise', proposal: 'Proposta Enviada', active: 'Contrato Fechado', rejected: 'Rejeitada', probono: 'Probono' };
+    const map: any = { analysis: 'Sob Análise', proposal: 'Proposta Enviada', active: 'Contrato Fechado', rejected: 'Rejeitada', probono: 'Probono', baixado: 'Baixados' };
     return map[status] || status;
   };
   

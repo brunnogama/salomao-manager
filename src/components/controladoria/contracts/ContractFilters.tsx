@@ -28,7 +28,8 @@ export function ContractFilters({
     { label: 'Proposta Enviada', value: 'proposal' },
     { label: 'Contrato Fechado', value: 'active' },
     { label: 'Rejeitado', value: 'rejected' },
-    { label: 'Probono', value: 'probono' }
+    { label: 'Probono', value: 'probono' },
+    { label: 'Baixados', value: 'baixado' }
   ];
 
   const partnerOptions = [

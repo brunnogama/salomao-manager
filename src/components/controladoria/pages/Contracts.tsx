@@ -28,6 +28,7 @@ const getStatusColor = (status: string) => {
     case 'proposal': return 'bg-blue-100 text-blue-800 border-blue-200';
     case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
     case 'probono': return 'bg-purple-100 text-purple-800 border-purple-200';
+    case 'baixado': return 'bg-gray-200 text-gray-700 border-gray-300';
     default: return 'bg-gray-100 text-gray-800 border-gray-200';
   }
 };
@@ -39,6 +40,7 @@ const getStatusLabel = (status: string) => {
     case 'proposal': return 'Proposta Enviada';
     case 'rejected': return 'Rejeitada';
     case 'probono': return 'Probono';
+    case 'baixado': return 'Baixados';
     default: return status;
   }
 };
@@ -622,7 +624,8 @@ export function Contracts() {
     { label: 'Proposta Enviada', value: 'proposal' },
     { label: 'Contrato Fechado', value: 'active' },
     { label: 'Rejeitada', value: 'rejected' },
-    { label: 'Probono', value: 'probono' }
+    { label: 'Probono', value: 'probono' },
+    { label: 'Baixados', value: 'baixado' }
   ];
 
   const partnerOptions = partners.map(p => ({ label: p.name, value: p.id }));

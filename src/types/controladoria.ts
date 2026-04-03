@@ -305,7 +305,7 @@ export interface Contract {
   has_legal_process?: boolean;
   processes?: ContractProcess[];
   process_count?: number;
-  status: 'analysis' | 'proposal' | 'active' | 'rejected' | 'probono';
+  status: 'analysis' | 'proposal' | 'active' | 'rejected' | 'probono' | 'baixado';
   prospect_date?: string;
   proposal_date?: string;
   contract_date?: string;
