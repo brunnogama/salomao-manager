@@ -216,15 +216,17 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
 
       if (response.ok) {
         toast.dismiss(loadingToast);
-        toast.success("Sucesso", {
-          description: "Nota assinada e enviada com sucesso!"
-        });
-        console.log("XML de Retorno:", data.xml);
+        toast.success("Nota Fiscal Assinada com Sucesso!");
+        console.log("RPS Assinado (XML):", data.xml);
+        // Em um cenário real, aqui viria o envio para a Prefeitura
       } else {
         toast.dismiss(loadingToast);
         toast.error("Erro na emissão", {
           description: data.erro || "Falha desconhecida"
         });
+        if (data.traceback) {
+          console.error("🐍 PYTHON STACK TRACE DA ASSINATURA:\n", data.traceback);
+        }
       }
     } catch (error) {
       toast.dismiss(loadingToast);
