@@ -16,8 +16,8 @@ for folder in folders:
 
 # 2. Criação do arquivo .env (Cofre de Senhas)
 env_content = """# Senhas dos Certificados por Cidade
-CERT_PASSWORD_RJ="mudar_para_senha_real"
-CERT_PASSWORD_SP="mudar_para_senha_real"
+CERT_PASSWORD_RJ=""
+CERT_PASSWORD_SP=""
 
 # Endpoints de Homologação (Ambiente de Testes)
 URL_WSDL_RJ="https://homologacao.notacarioca.rio.gov.br/WSNacional/nfse.asmx?wsdl"

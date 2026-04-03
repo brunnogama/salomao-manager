@@ -21,7 +21,7 @@ export default function ReportControladoria() {
                 // Verifica no banco de dados se esse token existe e está ativo
                 // Criaremos um token estático ou usaremos o da tabela 'system_settings' futuramente.
                 // Para acelerar a automação provisória via Make, podemos usar uma validação via Env ou token fixo (seguro apenas para leitura)
-                const EXPECTED_REPORT_TOKEN = import.meta.env.VITE_REPORT_TOKEN || 'SLM-CTRL-89XF-2026';
+                const EXPECTED_REPORT_TOKEN = import.meta.env.VITE_REPORT_TOKEN;
 
                 if (tokenUrl === EXPECTED_REPORT_TOKEN) {
                     // Precisamos fazer login silencioso para passar pelo RLS (Segurança de Linhas) do Supabase
