@@ -177,7 +177,32 @@ export function Finance() {
     try {
       const { error } = await supabase.from('financial_installments').insert([newInstallment]);
       if (error) throw error;
-      toast.success('Próxima parcela gerada com sucesso!');
+
+      // Inserir a nova parcela gerada também no formulário do contrato (Casos) -> fixed_monthly_extras
+      const contractIdToUpdate = installmentToGenerateNext.contract_id || (installmentToGenerateNext.contract as any)?.id;
+      if (contractIdToUpdate) {
+        const { data: contractData, error: contractError } = await supabase.from('contracts').select('fixed_monthly_extras, fixed_monthly_extras_rules, fixed_monthly_extras_clauses, fixed_monthly_extras_ready, fixed_monthly_extras_installments').eq('id', contractIdToUpdate).single();
+        
+        if (!contractError && contractData) {
+          const currentExtras = Array.isArray(contractData.fixed_monthly_extras) ? contractData.fixed_monthly_extras : [];
+          const currentRules = Array.isArray(contractData.fixed_monthly_extras_rules) ? contractData.fixed_monthly_extras_rules : [];
+          const currentClauses = Array.isArray(contractData.fixed_monthly_extras_clauses) ? contractData.fixed_monthly_extras_clauses : [];
+          const currentReady = Array.isArray(contractData.fixed_monthly_extras_ready) ? contractData.fixed_monthly_extras_ready : [];
+          const currentInsts = Array.isArray(contractData.fixed_monthly_extras_installments) ? contractData.fixed_monthly_extras_installments : [];
+
+          const formattedValue = "R$ " + installmentToGenerateNext.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+          await supabase.from('contracts').update({
+            fixed_monthly_extras: [...currentExtras, formattedValue],
+            fixed_monthly_extras_rules: [...currentRules, `Continuídade da parcela paga em ${new Date().toLocaleDateString('pt-BR')}`],
+            fixed_monthly_extras_clauses: [...currentClauses, installmentToGenerateNext.clause || ''],
+            fixed_monthly_extras_ready: [...currentReady, false],
+            fixed_monthly_extras_installments: [...currentInsts, '1x']
+          }).eq('id', contractIdToUpdate);
+        }
+      }
+
+      toast.success('Próxima parcela gerada com sucesso e vinculada ao contrato!');
     } catch (e: any) {
       console.error(e);
       toast.error(`Erro ao gerar próxima parcela: ${e.message}`);
