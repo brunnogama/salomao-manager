@@ -11,8 +11,8 @@ class RioJaneiroProvider:
         Este é um exemplo básico e deve ser ajustado com 
         os campos exatos requeridos pelo web service da prefeitura.
         """
-        # Criando o elemento raiz e adicionando o namespace
-        root = ET.Element('EnviarLoteRpsEnvio', xmlns="http://www.abrasf.org.br/nfse.xsd")
+        # Criando o elemento raiz e adicionando o namespace (Id obrigatório para o signxml)
+        root = ET.Element('EnviarLoteRpsEnvio', xmlns="http://www.abrasf.org.br/nfse.xsd", id="RPS_SIGN")
         
         lote_rps = ET.SubElement(root, 'LoteRps', id="LOTE1", versao="1.00")
         
