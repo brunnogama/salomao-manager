@@ -284,12 +284,14 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
             <div className="relative group flex items-center">
               <span className="absolute left-2 text-sm font-bold text-[#1e3a8a]/50">R$</span>
               <input
-                type="number"
-                value={valorNF || ''}
-                onChange={(e) => setValorNF(parseFloat(e.target.value) || 0)}
-                className="w-32 bg-transparent text-xl font-black text-[#1e3a8a] outline-none text-right placeholder-[#1e3a8a]/30 pl-8 pr-1 py-1 border-b-2 border-transparent hover:border-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-colors"
-                placeholder="0.00"
-                step="0.01"
+                type="text"
+                value={valorNF || valorNF === 0 ? maskMoney((valorNF * 100).toFixed(0)) : ''}
+                onChange={(e) => {
+                  const rawValue = e.target.value.replace(/\D/g, '');
+                  setValorNF(Number(rawValue) / 100);
+                }}
+                className="w-48 bg-transparent text-xl font-black text-[#1e3a8a] outline-none text-right placeholder-[#1e3a8a]/30 pl-8 pr-1 py-1 border-b-2 border-transparent hover:border-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-colors"
+                placeholder="0,00"
               />
             </div>
           </div>
