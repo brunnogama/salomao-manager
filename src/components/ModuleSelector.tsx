@@ -202,9 +202,9 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         <div className="flex items-center gap-4 group cursor-default">
           <div className="relative">
             <img
-              src="/logo-salomao.png"
+              src="/logo-branca.png"
               alt="Salomão Advogados"
-              className="h-11 w-auto object-contain filter brightness-0 invert drop-shadow-lg transition-transform duration-500 group-hover:scale-105"
+              className="h-11 w-auto object-contain drop-shadow-lg transition-transform duration-500 group-hover:scale-105"
             />
           </div>
         </div>
