@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import {
   DollarSign, Download, CheckCircle2, Circle, Clock, Loader2,
   CalendarDays, Receipt, MapPin, Hash, Settings,
-  AlertTriangle, Plus, FileDown, Briefcase, ChevronDown, X, Trash2
+  AlertTriangle, Plus, FileDown, Briefcase, ChevronDown, X, Trash2, Upload, Eye
 } from 'lucide-react';
 import { CustomSelect } from '../ui/CustomSelect';
 import { useContractOptions } from '../hooks/useContractOptions';
@@ -65,6 +65,57 @@ export function Finance() {
   const [nfNetValue, setNfNetValue] = useState('');
   const [nfObservations, setNfObservations] = useState('');
   const [nfPdf, setNfPdf] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      toast.error('Por favor, selecione um arquivo PDF.');
+      return;
+    }
+
+    const toastId = toast.loading('Enviando PDF...');
+    try {
+      const fileName = `${Date.now()}_nf_${selectedInstallment?.id || 'new'}.pdf`;
+      const filePath = `nf/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('ged-documentos')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      setNfPdf(filePath);
+      toast.success('PDF vinculado com sucesso!', { id: toastId });
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Erro ao subir PDF: ${e.message}`, { id: toastId });
+    }
+  };
+
+  const handleOpenNfPdf = async () => {
+    if (!nfPdf) return;
+    const toastId = toast.loading('Abrindo PDF...');
+    try {
+      if (nfPdf.startsWith('http')) {
+        window.open(nfPdf, '_blank');
+        toast.dismiss(toastId);
+        return;
+      }
+      const { data, error } = await supabase.storage.from('ged-documentos').createSignedUrl(nfPdf, 60);
+      if (error) throw error;
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+        toast.success('PDF aberto', { id: toastId });
+      }
+    } catch(e: any) {
+      console.error(e);
+      toast.error('Erro ao abrir o PDF', { id: toastId });
+    }
+  };
+
 
   useEffect(() => {
     const value = parseCurrency(nfValue) || 0;
@@ -1115,7 +1166,7 @@ export function Finance() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Local do Fat.</label>
                   <CustomSelect 
@@ -1143,15 +1194,24 @@ export function Finance() {
                 </div>
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">NF (Opcional)</label>
-                  <input type="text" placeholder="Nº NF/Boleto" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" value={nfNumber} onChange={(e) => setNfNumber(e.target.value)} />
-                </div>
-                <div className="sm:col-span-1">
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">NF PDF Link (Opcional)</label>
-                  <input type="text" placeholder="URL do PDF da NF" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" value={nfPdf} onChange={(e) => setNfPdf(e.target.value)} />
-                </div>
-                <div className="sm:col-span-1">
-                  <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">Valor Bruto (R$)</label>
-                  <input type="text" className="w-full border border-[#1e3a8a]/20 bg-blue-50/30 rounded-xl p-3 text-sm font-black text-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all" placeholder="R$ 0,00" value={nfValue} onChange={(e) => setNfValue(maskMoney(e.target.value))} />
+                  <div className="flex gap-2">
+                    <input type="text" placeholder="Nº NF/Boleto" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" value={nfNumber} onChange={(e) => setNfNumber(e.target.value)} />
+                    <input type="file" accept="application/pdf" className="hidden" ref={fileInputRef} onChange={handlePdfUpload} />
+                    {!nfPdf ? (
+                      <button title="Vincular PDF da NF" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} className="bg-gray-50 border border-gray-200 text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-100 flex items-center justify-center shrink-0 transition-all shadow-sm">
+                        <Upload className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <>
+                        <button title="Ver PDF da NF" onClick={(e) => { e.preventDefault(); handleOpenNfPdf(); }} className="bg-blue-50 border border-blue-100 text-[#1e3a8a] px-3 py-2 rounded-xl hover:bg-blue-100 flex items-center justify-center shrink-0 transition-all shadow-sm">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button title="Remover PDF da NF" onClick={(e) => { e.preventDefault(); setNfPdf(''); }} className="bg-red-50 border border-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-100 flex items-center justify-center shrink-0 transition-all shadow-sm">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1174,15 +1234,29 @@ export function Finance() {
                 </div>
               </div>
 
-              <div className="mt-4 bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl flex justify-between items-center transition-all">
-                <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest shrink-0">Valor Líquido Recebido</span>
-                <input 
-                  type="text" 
-                  className="text-right w-full bg-transparent text-2xl font-black text-emerald-600 outline-none focus:bg-white/50 focus:ring-2 focus:ring-emerald-200/50 rounded-lg px-2 -mr-2 transition-all"
-                  value={nfNetValue}
-                  onChange={(e) => setNfNetValue(maskMoney(e.target.value))}
-                  placeholder="R$ 0,00"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl flex flex-col justify-center transition-all relative overflow-hidden group">
+                  <div className="absolute left-0 top-0 h-full w-1 bg-emerald-500"></div>
+                  <label className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-1 select-none">Valor Líquido Recebido</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-transparent text-2xl font-black text-emerald-600 outline-none focus:bg-white/50 focus:ring-2 focus:ring-emerald-200/50 rounded-lg px-2 -ml-2 transition-all"
+                    value={nfNetValue}
+                    onChange={(e) => setNfNetValue(maskMoney(e.target.value))}
+                    placeholder="R$ 0,00"
+                  />
+                </div>
+                <div className="bg-blue-50/50 border border-[#1e3a8a]/20 p-4 rounded-xl flex flex-col justify-center transition-all relative overflow-hidden group">
+                  <div className="absolute left-0 top-0 h-full w-1 bg-[#1e3a8a]"></div>
+                  <label className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1 select-none">Valor Bruto</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-transparent text-2xl font-black text-[#1e3a8a] outline-none focus:bg-white/50 focus:ring-2 focus:ring-[#1e3a8a]/30 rounded-lg px-2 -ml-2 transition-all"
+                    value={nfValue}
+                    onChange={(e) => setNfValue(maskMoney(e.target.value))}
+                    placeholder="R$ 0,00"
+                  />
+                </div>
               </div>
               
               <div className="mt-4">
