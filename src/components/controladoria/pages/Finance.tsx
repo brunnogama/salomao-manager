@@ -14,6 +14,7 @@ import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocum
 import { EmptyState } from '../ui/EmptyState';
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
 import { ConfirmModal } from '../ui/ConfirmModal';
+import { AlertModal } from '../../ui/AlertModal';
 import { exportToStandardXLSX } from '../../../utils/exportUtils';
 import { toast } from 'sonner';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
@@ -192,6 +193,7 @@ export function Finance() {
   const [installmentToGenerateNext, setInstallmentToGenerateNext] = useState<FinancialInstallment | null>(null);
 
   const [itemToDelete, setItemToDelete] = useState<FinancialInstallment | null>(null);
+  const [blockDeleteOpen, setBlockDeleteOpen] = useState(false);
 
   const checkAndPromptBaixa = (contractId: string, ignoreInstallmentId: string) => {
     const otherPending = installments.filter(i => 
@@ -1164,7 +1166,17 @@ export function Finance() {
                             )}
 
                             {/* EXCLUIR PARCELA */}
-                            <button onClick={(e) => { e.stopPropagation(); setItemToDelete(item); }} className="ml-2 p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all" title="Excluir Parcela">
+                            <button onClick={(e) => { 
+                                e.stopPropagation(); 
+                                if (item.contract_id) {
+                                  setBlockDeleteOpen(true);
+                                } else {
+                                  setItemToDelete(item); 
+                                }
+                              }} 
+                              className="ml-2 p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all" 
+                              title="Excluir Parcela"
+                            >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -1670,6 +1682,15 @@ export function Finance() {
         cancelText="Cancelar"
         variant="danger"
         onConfirm={handleDeleteInstallment}
+      />
+      
+      {/* MODAL BLOQUEIO DE EXCLUSÃO */}
+      <AlertModal
+        isOpen={blockDeleteOpen}
+        onClose={() => setBlockDeleteOpen(false)}
+        title="Ação Bloqueada"
+        description="Esta parcela não pode ser excluída diretamente pelo Controle Financeiro pois ela foi gerada automaticamente por um contrato. Para excluí-la, por favor acesse a aba 'Finanças' dentro dos detalhes do Contrato/Caso e realize a remoção por lá."
+        variant="warning"
       />
     </div>
   );

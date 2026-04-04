@@ -191,16 +191,11 @@ export const generateFinancialInstallments = async (contractId: string, sourceDa
 };
 
 export const forceUpdateFinancials = async (contractId: string, sourceData: Contract) => {
-    const cleanPL = safeParseFloat(sourceData.pro_labore || "");
-    const cleanSuccess = safeParseFloat(sourceData.final_success_fee || "");
-    const cleanFixed = safeParseFloat(sourceData.fixed_monthly_fee || "");
-    const cleanOther = safeParseFloat(sourceData.other_fees || "");
-
     await supabase.from('contracts').update({
-      pro_labore: cleanPL,
-      final_success_fee: cleanSuccess,
-      fixed_monthly_fee: cleanFixed,
-      other_fees: cleanOther,
+      pro_labore: sourceData.pro_labore,
+      final_success_fee: sourceData.final_success_fee,
+      fixed_monthly_fee: sourceData.fixed_monthly_fee,
+      other_fees: sourceData.other_fees,
       
       // GARANTINDO QUE AS PARCELAS SEJAM SALVAS EXPLICITAMENTE
       pro_labore_installments: (sourceData as any).pro_labore_installments,
