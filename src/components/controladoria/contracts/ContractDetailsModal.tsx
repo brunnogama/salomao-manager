@@ -579,7 +579,7 @@ export function ContractDetailsModal({
                 Detalhes das Fases e Honorários
              </div>
              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-               {financials.totalProLabore > 0 && (
+               {financials.formattedProLabore !== "R$ 0,00" && (
                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
                     <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
                        <span className="text-[10px] font-bold text-gray-500 uppercase">Pró-Labore (Total)</span>
@@ -601,7 +601,7 @@ export function ContractDetailsModal({
                  </div>
                )}
 
-               {financials.intermediateTotal > 0 && (
+               {financials.formattedIntermediate !== "R$ 0,00" && (
                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 flex flex-col shadow-sm">
                     <div className="flex justify-between items-center border-b border-blue-200 pb-2 mb-2">
                        <span className="text-[10px] font-bold text-blue-700 uppercase">Ex. Intermediário (Total)</span>
@@ -620,7 +620,7 @@ export function ContractDetailsModal({
                  </div>
                )}
 
-               {financials.totalFinalFee > 0 && (
+               {financials.formattedFinalFee !== "R$ 0,00" && (
                  <div className="bg-green-50 p-3 rounded-lg border border-green-200 flex flex-col shadow-sm">
                     <div className="flex justify-between items-center border-b border-green-200 pb-2 mb-2">
                        <span className="text-[10px] font-bold text-green-800 uppercase">Êxito Final (Total)</span>
@@ -642,7 +642,7 @@ export function ContractDetailsModal({
                  </div>
                )}
 
-               {financials.totalFixedMonthly > 0 && (
+               {financials.formattedFixedMonthly !== "R$ 0,00" && (
                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
                     <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
                        <span className="text-[10px] font-bold text-gray-500 uppercase">Fixo Mensal (Total)</span>
@@ -664,7 +664,7 @@ export function ContractDetailsModal({
                  </div>
                )}
 
-               {financials.totalOtherFees > 0 && (
+               {financials.formattedOtherFees !== "R$ 0,00" && (
                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
                     <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
                        <span className="text-[10px] font-bold text-gray-500 uppercase">Outros Honorários (Total)</span>
