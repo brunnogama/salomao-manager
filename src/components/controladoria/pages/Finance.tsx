@@ -459,7 +459,7 @@ export function Finance() {
     setSelectedInstallment(installment);
     setNfIssueDate(installment.nf_issue_date ? installment.nf_issue_date.split('T')[0] : todayStr);
     setNfDueDate(installment.due_date ? installment.due_date.split('T')[0] : todayStr);
-    setBillingDate(installment.paid_at ? installment.paid_at.split('T')[0] : todayStr);
+    setBillingDate(installment.paid_at ? installment.paid_at.split('T')[0] : '');
     setNfNumber(installment.nf_number || '');
     setNfLocation(installment.nf_location || '');
     setNfNature(installment.nf_nature || '');
@@ -491,7 +491,7 @@ export function Finance() {
     const initialState = JSON.stringify({
       nfIssueDate: installment.nf_issue_date ? installment.nf_issue_date.split('T')[0] : todayStr,
       nfDueDate: installment.due_date ? installment.due_date.split('T')[0] : todayStr,
-      billingDate: installment.paid_at ? installment.paid_at.split('T')[0] : todayStr,
+      billingDate: installment.paid_at ? installment.paid_at.split('T')[0] : '',
       nfNumber: installment.nf_number || '',
       nfLocation: installment.nf_location || '',
       nfNature: installment.nf_nature || '',
