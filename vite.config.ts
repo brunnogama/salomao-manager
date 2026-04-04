@@ -8,27 +8,23 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'logo.png', 'logo-branca.png'],
+      includeAssets: ['favicon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
         name: 'Salomão Manager',
         short_name: 'Salomão',
         description: 'Salomão Manager - Portal de Gestão',
-        theme_color: '#0a192f',
-        background_color: '#0a192f',
+        theme_color: '#1e3a8a',
+        background_color: '#1e3a8a',
         display: 'standalone',
         icons: [
           {
-            src: 'logo.png',
+            src: 'pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: 'logo.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: 'logo.png',
+            src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
