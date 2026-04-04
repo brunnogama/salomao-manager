@@ -15,6 +15,7 @@ export interface KanbanItem {
   date: string;
   priority: Priority;
   columnId: ColumnId;
+  isContract?: boolean;
 }
 
 
@@ -71,17 +72,40 @@ export function KanbanModal() {
           .eq('user_email', user?.email)
           .maybeSingle();
 
-        if (error) {
-          console.error("Supabase load error:", error);
-          setItems([]);
-          return;
+        let personalTasks: KanbanItem[] = [];
+        if (!error && data && data.tasks) {
+          personalTasks = data.tasks;
         }
 
-        if (data && data.tasks) {
-          setItems(data.tasks);
-        } else {
-          setItems([]);
+        // Buscar contratos que não tem assinatura física
+        const { data: unsignedContracts } = await supabase
+          .from('contracts')
+          .select('id, client_name, created_at')
+          .eq('status', 'active')
+          .eq('physical_signature', false);
+
+        if (unsignedContracts) {
+           const existingContractIds = personalTasks.map(t => t.id);
+           unsignedContracts.forEach(c => {
+              const cid = `contract_${c.id}`;
+              if (!existingContractIds.includes(cid)) {
+                 personalTasks.push({
+                    id: cid,
+                    title: c.client_name,
+                    description: 'Contrato ativo aguardando assinatura física',
+                    date: c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                    priority: 'ALTA',
+                    columnId: 'cobrar-assinatura',
+                    isContract: true
+                 });
+              } else {
+                 const existingTask = personalTasks.find(t => t.id === cid);
+                 if (existingTask) existingTask.isContract = true;
+              }
+           });
         }
+
+        setItems(personalTasks);
       } catch (err) {
         console.error('Erro ao carregar kanban:', err);
         setItems([]);
@@ -91,6 +115,11 @@ export function KanbanModal() {
     }
 
     loadTasks();
+    
+    // Auto-redimensionar para caber 4 colunas perfeitamente (1450px)
+    if (window.outerWidth < 1450) {
+      window.resizeTo(1450, window.outerHeight || 900);
+    }
   }, [user?.email, loading]);
 
   // Salvar no Supabase sempre que items mudar (apenas se já carregou a versão do usuário)
@@ -158,6 +187,16 @@ export function KanbanModal() {
          const destItemPivot = destItems[destIndex];
          const pivotIndex = newItems.findIndex(i => i.id === destItemPivot.id);
          newItems.splice(pivotIndex, 0, removed);
+      }
+      
+      // Update global contract status if moved from/to concluido
+      if (removed.isContract) {
+         const contractId = removed.id.replace('contract_', '');
+         if (destCol === 'concluido') {
+            supabase.from('contracts').update({ physical_signature: true }).eq('id', contractId).then();
+         } else if (sourceCol === 'concluido') {
+            supabase.from('contracts').update({ physical_signature: false }).eq('id', contractId).then();
+         }
       }
     } else {
       // Re-ordenar na mesma coluna
@@ -241,7 +280,7 @@ export function KanbanModal() {
         {/* Board content */}
         <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
           <DragDropContext onDragEnd={onDragEnd}>
-            <div className="flex flex-col md:flex-row gap-6 h-full min-w-max md:min-w-0">
+            <div className="flex flex-col md:flex-row gap-6 h-full min-w-max">
               
               {columns.map((colId) => {
                 const columnItems = items
