@@ -996,33 +996,34 @@ export function Finance() {
           
           <div
             onClick={totalOverdueCount > 0 ? handleFilterOverdue : undefined}
-            className={`min-w-[110px] flex-1 p-3.5 rounded-[14px] border flex flex-col justify-between relative overflow-hidden group transition-all shrink-0 ${totalOverdueCount > 0
+            className={`min-w-[110px] xl:min-w-[130px] flex-1 p-3.5 pl-4 rounded-[14px] border flex flex-col justify-center relative overflow-hidden group transition-all shrink-0 ${totalOverdueCount > 0
               ? 'bg-red-50 border-red-100 cursor-pointer hover:shadow-md'
-              : 'bg-white border-gray-100 shadow-sm'
+              : 'bg-white border-gray-100 shadow-sm hover:shadow-md'
               }`}
           >
-            <div className={`absolute right-0 top-0 h-full w-[3px] ${totalOverdueCount > 0 ? 'bg-red-600' : 'bg-[#1e3a8a]'}`}></div>
-            <p className={`text-[9px] font-black uppercase tracking-widest ${totalOverdueCount > 0 ? 'text-red-400' : 'text-gray-400'}`}>A Receber</p>
-            <div className="mt-1">
-              <p className={`text-xl font-black leading-none ${totalOverdueCount > 0 ? 'text-red-900' : 'text-[#1e3a8a]'}`}>{totalPendingCount} <span className="text-[10px] tracking-widest font-bold uppercase text-gray-400">parc.</span></p>
-              {totalOverdueCount > 0 && (
-                <p className="text-[9px] font-bold text-red-600 uppercase tracking-widest animate-pulse mt-1">
-                  ! {totalOverdueCount} {totalOverdueCount === 1 ? 'venc.' : 'venc.'}
-                </p>
-              )}
+            <div className={`absolute left-0 top-0 h-full w-[3px] ${totalOverdueCount > 0 ? 'bg-red-600' : 'bg-[#1e3a8a]'}`}></div>
+            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${totalOverdueCount > 0 ? 'text-red-400/80' : 'text-gray-400'}`}>A Receber</p>
+            <div className="flex items-baseline gap-1">
+              <p className={`text-[17px] font-black leading-none ${totalOverdueCount > 0 ? 'text-red-900' : 'text-[#1e3a8a]'}`}>{totalPendingCount}</p>
+              <span className={`text-[9px] font-bold uppercase tracking-widest ${totalOverdueCount > 0 ? 'text-red-400' : 'text-gray-400'}`}>parc.</span>
             </div>
+            {totalOverdueCount > 0 && (
+              <p className="text-[9px] font-bold text-red-600 uppercase tracking-widest animate-pulse mt-1 truncate">
+                ! {totalOverdueCount} venc.
+              </p>
+            )}
           </div>
 
-          <div className="min-w-[130px] flex-1 bg-white p-3.5 rounded-[14px] border border-gray-100 shadow-sm flex flex-col justify-between relative overflow-hidden shrink-0">
-            <div className="absolute right-0 top-0 h-full w-[3px] bg-amber-500"></div>
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Pendente</p>
-            <p className="text-[22px] font-black text-amber-900 mt-1 leading-none">{formatCompactMoney(totalPending)}</p>
+          <div className="min-w-[110px] xl:min-w-[130px] flex-1 bg-white p-3.5 pl-4 rounded-[14px] border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden group hover:shadow-md transition-all shrink-0">
+            <div className="absolute left-0 top-0 h-full w-[3px] bg-amber-500"></div>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Pendente</p>
+            <p className="text-[17px] font-black text-amber-900 leading-none truncate" title={formatCompactMoney(totalPending)}>{formatCompactMoney(totalPending)}</p>
           </div>
 
-          <div className="min-w-[130px] flex-1 bg-white p-3.5 rounded-[14px] border border-gray-100 shadow-sm flex flex-col justify-between relative overflow-hidden shrink-0">
-            <div className="absolute right-0 top-0 h-full w-[3px] bg-emerald-500"></div>
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Faturado</p>
-            <p className="text-[22px] font-black text-emerald-900 mt-1 leading-none">{formatCompactMoney(totalPaid)}</p>
+          <div className="min-w-[110px] xl:min-w-[130px] flex-1 bg-white p-3.5 pl-4 rounded-[14px] border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden group hover:shadow-md transition-all shrink-0">
+            <div className="absolute left-0 top-0 h-full w-[3px] bg-emerald-500"></div>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Faturado</p>
+            <p className="text-[17px] font-black text-emerald-900 leading-none truncate" title={formatCompactMoney(totalPaid)}>{formatCompactMoney(totalPaid)}</p>
           </div>
           
         </div>
