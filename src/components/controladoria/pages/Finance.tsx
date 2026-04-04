@@ -544,22 +544,27 @@ export function Finance() {
     setNfCsll(installment.tax_csll ? maskMoney(installment.tax_csll.toFixed(2).replace('.', ',')) : '');
 
     let formattedNfValue = '';
+    const isPercentageFee = (installment.clause || '').includes('(%)');
+
     if (installment.nf_value) {
       formattedNfValue = maskMoney(installment.nf_value.toFixed(2).replace('.', ','));
-    } else if (installment.amount) {
-      // Se não tem valor NF definido, insere o valor da parcela como sugestão
+    } else if (installment.amount && !isPercentageFee) {
+      // Se não tem valor NF definido e NÃO é percentual abstrato, insere o valor da parcela como sugestão
       formattedNfValue = maskMoney(installment.amount.toFixed(2).replace('.', ','));
     }
     setNfValue(formattedNfValue);
 
     // Calcula tb o valor líquido pra criar o snampshot limpo
-    const valueNum = installment.nf_value ?? installment.amount;
+    const valueNum = installment.nf_value ?? (isPercentageFee ? 0 : installment.amount);
     const irpjNum = installment.tax_irpj || 0;
     const pisNum = installment.tax_pis || 0;
     const cofinsNum = installment.tax_cofins || 0;
     const csllNum = installment.tax_csll || 0;
     const net = valueNum - irpjNum - pisNum - cofinsNum - csllNum;
-    const initialNetValue = maskMoney(net.toFixed(2).replace('.', ','));
+    
+    // Se isPercentageFee e não tem nf_value, o net pode ser negativo (ou zero), o input ficará vazio
+    const initialNetValue = valueNum > 0 || net > 0 ? maskMoney(net.toFixed(2).replace('.', ',')) : '';
+    setNfNetValue(initialNetValue);
 
     const initialState = JSON.stringify({
       nfIssueDate: installment.nf_issue_date ? installment.nf_issue_date.split('T')[0] : todayStr,
@@ -786,7 +791,7 @@ export function Finance() {
       'Cláusula': (i as any).clause || '',
       'Tipo': getTypeLabel(i.type),
       'Parcela': `${i.installment_number}/${i.total_installments}`,
-      'Valor': i.amount,
+      'Valor': ((i as any).clause || '').includes('(%)') ? `${Number(i.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : i.amount,
       'Vencimento': i.due_date ? safeDate(i.due_date)?.toLocaleDateString() : '-',
       'Status': i.status === 'paid' ? 'Faturado' : 'Pendente',
       'Data Faturamento': i.paid_at ? safeDate(i.paid_at)?.toLocaleDateString() : '-',
@@ -1135,7 +1140,9 @@ export function Finance() {
                           <div className="text-[10px] font-black text-[#1e3a8a] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded inline-block mt-1 uppercase tracking-tight">Parcela {item.installment_number}/{item.total_installments}</div>
                         </td>
                         <td className="p-4 text-right font-black text-[#0a192f] text-xs">
-                          {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          {((item as any).clause || '').includes('(%)') 
+                            ? Number(item.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%'
+                            : item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex justify-end gap-1 opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>

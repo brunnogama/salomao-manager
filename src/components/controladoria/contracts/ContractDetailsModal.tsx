@@ -327,33 +327,37 @@ export function ContractDetailsModal({
       return formatMoney(fallbackNumber);
     };
 
-    const proLaboreBase = parseCurrency(contract.pro_labore);
+    const sumMonetaryValue = (values: (string | undefined)[]) => {
+      return values.reduce((acc: number, val) => {
+        if (!val || typeof val !== 'string') return acc;
+        if (val.includes('%')) return acc; // Ignore percentages for monetary sums
+        return acc + parseCurrency(val);
+      }, 0);
+    };
+
+    const proLaboreBase = contract.pro_labore;
     const proLaboreExtrasList = (contract as any).pro_labore_extras;
-    const proLaboreExtrasTotal = (Array.isArray(proLaboreExtrasList) ? proLaboreExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
-    const totalProLabore = proLaboreBase + proLaboreExtrasTotal;
-    const formattedProLabore = formatGroupTotal([contract.pro_labore, ...(Array.isArray(proLaboreExtrasList) ? proLaboreExtrasList : [])], totalProLabore);
+    const totalProLabore = sumMonetaryValue([proLaboreBase, ...(Array.isArray(proLaboreExtrasList) ? proLaboreExtrasList : [])]);
+    const formattedProLabore = formatGroupTotal([proLaboreBase, ...(Array.isArray(proLaboreExtrasList) ? proLaboreExtrasList : [])], totalProLabore);
 
     const intermediateList = contract.intermediate_fees;
-    const intermediateTotal = (Array.isArray(intermediateList) ? intermediateList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
+    const intermediateTotal = sumMonetaryValue(Array.isArray(intermediateList) ? intermediateList : []);
     const formattedIntermediate = formatGroupTotal(Array.isArray(intermediateList) ? intermediateList : [], intermediateTotal);
 
-    const finalFeeBase = parseCurrency(contract.final_success_fee);
+    const finalFeeBase = contract.final_success_fee;
     const finalFeeExtrasList = (contract as any).final_success_extras;
-    const finalFeeExtrasTotal = (Array.isArray(finalFeeExtrasList) ? finalFeeExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
-    const totalFinalFee = finalFeeBase + finalFeeExtrasTotal;
-    const formattedFinalFee = formatGroupTotal([contract.final_success_fee, ...(Array.isArray(finalFeeExtrasList) ? finalFeeExtrasList : [])], totalFinalFee);
+    const totalFinalFee = sumMonetaryValue([finalFeeBase, ...(Array.isArray(finalFeeExtrasList) ? finalFeeExtrasList : [])]);
+    const formattedFinalFee = formatGroupTotal([finalFeeBase, ...(Array.isArray(finalFeeExtrasList) ? finalFeeExtrasList : [])], totalFinalFee);
 
-    const otherFeesBase = parseCurrency(contract.other_fees);
+    const otherFeesBase = contract.other_fees;
     const otherFeesExtrasList = (contract as any).other_fees_extras;
-    const otherFeesExtrasTotal = (Array.isArray(otherFeesExtrasList) ? otherFeesExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
-    const totalOtherFees = otherFeesBase + otherFeesExtrasTotal;
-    const formattedOtherFees = formatGroupTotal([contract.other_fees, ...(Array.isArray(otherFeesExtrasList) ? otherFeesExtrasList : [])], totalOtherFees);
+    const totalOtherFees = sumMonetaryValue([otherFeesBase, ...(Array.isArray(otherFeesExtrasList) ? otherFeesExtrasList : [])]);
+    const formattedOtherFees = formatGroupTotal([otherFeesBase, ...(Array.isArray(otherFeesExtrasList) ? otherFeesExtrasList : [])], totalOtherFees);
 
-    const fixedMonthlyBase = parseCurrency(contract.fixed_monthly_fee);
+    const fixedMonthlyBase = contract.fixed_monthly_fee;
     const fixedMonthlyExtrasList = (contract as any).fixed_monthly_extras;
-    const fixedMonthlyExtrasTotal = (Array.isArray(fixedMonthlyExtrasList) ? fixedMonthlyExtrasList : []).reduce((acc: number, val: string) => acc + parseCurrency(val), 0) || 0;
-    const totalFixedMonthly = fixedMonthlyBase + fixedMonthlyExtrasTotal;
-    const formattedFixedMonthly = formatGroupTotal([contract.fixed_monthly_fee, ...(Array.isArray(fixedMonthlyExtrasList) ? fixedMonthlyExtrasList : [])], totalFixedMonthly);
+    const totalFixedMonthly = sumMonetaryValue([fixedMonthlyBase, ...(Array.isArray(fixedMonthlyExtrasList) ? fixedMonthlyExtrasList : [])]);
+    const formattedFixedMonthly = formatGroupTotal([fixedMonthlyBase, ...(Array.isArray(fixedMonthlyExtrasList) ? fixedMonthlyExtrasList : [])], totalFixedMonthly);
 
     const grandTotal = totalProLabore + intermediateTotal + totalFinalFee + totalOtherFees + totalFixedMonthly;
     
@@ -374,14 +378,14 @@ export function ContractDetailsModal({
       grandTotal,
       lackToPay: lackToPay > 0 ? lackToPay : 0,
 
-      hasProLaboreExtras: proLaboreExtrasTotal > 0,
-      hasFinalFeeExtras: finalFeeExtrasTotal > 0,
-      hasOtherFeesExtras: otherFeesExtrasTotal > 0,
-      hasFixedMonthlyExtras: fixedMonthlyExtrasTotal > 0,
-      hasIntermediate: intermediateTotal > 0,
+      hasProLaboreExtras: Array.isArray(proLaboreExtrasList) && proLaboreExtrasList.length > 0,
+      hasFinalFeeExtras: Array.isArray(finalFeeExtrasList) && finalFeeExtrasList.length > 0,
+      hasOtherFeesExtras: Array.isArray(otherFeesExtrasList) && otherFeesExtrasList.length > 0,
+      hasFixedMonthlyExtras: Array.isArray(fixedMonthlyExtrasList) && fixedMonthlyExtrasList.length > 0,
+      hasIntermediate: Array.isArray(intermediateList) && intermediateList.length > 0,
 
-      hasFixed: totalFixedMonthly > 0,
-      hasOther: totalOtherFees > 0
+      hasFixed: totalFixedMonthly > 0 || !!fixedMonthlyBase,
+      hasOther: totalOtherFees > 0 || !!otherFeesBase
     };
   };
 

@@ -30,6 +30,10 @@ export const generateFinancialInstallments = async (contractId: string, sourceDa
             const itemValue = parseCurrency(item.value);
             // Ignora parcelas zeradas ou datas inválidas se houver
             if (itemValue > 0 && item.date) {
+                const isItemPercent = item.value?.includes('%');
+                const baseClause = clause || '';
+                const finalClause = isItemPercent && !baseClause.includes('(%)') ? `${baseClause} (%)`.trim() : baseClause;
+
                 installmentsToInsert.push({
                     contract_id: contractId,
                     type: type,
@@ -38,7 +42,7 @@ export const generateFinancialInstallments = async (contractId: string, sourceDa
                     amount: itemValue,
                     status: 'pending',
                     due_date: item.date, // Usa a data exata do input
-                    clause: clause || null
+                    clause: finalClause || null
                 });
             }
         });
@@ -46,6 +50,10 @@ export const generateFinancialInstallments = async (contractId: string, sourceDa
       }
 
       // LÓGICA 2: Cálculo Automático (Legado)
+      const isPercent = totalValueStr?.includes('%');
+      const baseTotalClause = clause || '';
+      const finalTotalClause = isPercent && !baseTotalClause.includes('(%)') ? `${baseTotalClause} (%)`.trim() : baseTotalClause;
+
       // Força garantia de valor numérico válido ANTES de qualquer processamento
       const numInstallments = (() => {
         if (!installmentsStr) return 1;
@@ -67,7 +75,7 @@ export const generateFinancialInstallments = async (contractId: string, sourceDa
             amount: amountPerInstallment, 
             status: 'pending', 
             due_date: addMonths(new Date(), i).toISOString(),
-            clause: clause || null
+            clause: finalTotalClause || null
         });
       }
     };
