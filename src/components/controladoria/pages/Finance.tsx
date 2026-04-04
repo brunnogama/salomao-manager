@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import {
   DollarSign, Download, CheckCircle2, Circle, Clock, Loader2,
-  CalendarDays, Receipt, MapPin, Hash, Settings,
+  CalendarDays, Receipt, MapPin, Hash, Settings, Search,
   AlertTriangle, Plus, FileDown, Briefcase, ChevronDown, X, Trash2, Upload, Eye
 } from 'lucide-react';
 import { CustomSelect } from '../ui/CustomSelect';
@@ -68,9 +68,13 @@ export function Finance() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // States para Faturamento Avulso
-  const [availableContracts, setAvailableContracts] = useState<{ id: string; client_name: string; hon_number: string }[]>([]);
+  const [availableContracts, setAvailableContracts] = useState<{ id: string; client_name: string; hon_number: string; cnpj: string }[]>([]);
   const [selectedAvulsoContractId, setSelectedAvulsoContractId] = useState('');
   const [avulsoClause, setAvulsoClause] = useState('Faturamento Avulso');
+  const [avulsoHonorarioType, setAvulsoHonorarioType] = useState('other_fees');
+  const [isContractDropdownOpen, setIsContractDropdownOpen] = useState(false);
+  const [contractSearch, setContractSearch] = useState('');
+  const contractDropdownRef = useRef<HTMLDivElement>(null);
 
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -131,6 +135,16 @@ export function Finance() {
     const net = value - irpj - pis - cofins - csll;
     setNfNetValue(maskMoney(net.toFixed(2).replace('.', ',')));
   }, [nfValue, nfIrpj, nfPis, nfCofins, nfCsll]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (contractDropdownRef.current && !contractDropdownRef.current.contains(event.target as Node)) {
+        setIsContractDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const [isDueDateModalOpen, setIsDueDateModalOpen] = useState(false);
   const [installmentToEdit, setInstallmentToEdit] = useState<FinancialInstallment | null>(null);
@@ -583,7 +597,7 @@ export function Finance() {
       
       const newInst = {
         contract_id: selectedAvulsoContractId,
-        type: 'other_fees', // Tratado como outros honorários/avulso nativamente
+        type: avulsoHonorarioType, // Tratado dinamicamente
         amount: val,
         installment_number: 1,
         total_installments: 1,
@@ -741,6 +755,9 @@ export function Finance() {
     setSelectedInstallment(null);
     setSelectedAvulsoContractId('');
     setAvulsoClause('');
+    setAvulsoHonorarioType('other_fees');
+    setContractSearch('');
+    setIsContractDropdownOpen(false);
     setNfIssueDate(todayStr); // emissão default
     setNfDueDate(todayStr); // venc default
     setBillingDate(''); // previne pgt auto
@@ -754,7 +771,7 @@ export function Finance() {
     setInitialBillingState('');
     
     const toastId = toast.loading('Carregando cadastro de avulso...');
-    const { data: contractsData } = await supabase.from('contracts').select('id, client_name, hon_number').eq('status', 'active').order('client_name');
+    const { data: contractsData } = await supabase.from('contracts').select('id, client_name, hon_number, cnpj').eq('status', 'active').order('client_name');
     toast.dismiss(toastId);
     
     setAvailableContracts(contractsData || []);
@@ -1221,24 +1238,97 @@ export function Finance() {
             {/* Informações de Contexto do Contrato */}
             {!selectedInstallment ? (
             <div className="bg-gray-50/80 rounded-[20px] p-5 border border-blue-100 mb-6 flex flex-col gap-4 shadow-sm">
-               <div className="flex flex-col md:flex-row gap-5">
-                 <div className="flex-[2] z-[70] relative">
-                   <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Selecione o Cliente / Contrato base</span>
-                   <CustomSelect 
-                     value={selectedAvulsoContractId}
-                     onChange={setSelectedAvulsoContractId}
-                     options={availableContracts.map(c => ({ label: `${c.client_name} - ${c.hon_number || 'Sem HON'}`, value: c.id }))}
-                     placeholder="Buscar contratos ativos..."
-                   />
+               
+               <div className="flex flex-col z-[70] relative" ref={contractDropdownRef}>
+                 <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Selecione o Cliente / Contrato base</span>
+                 <div
+                   onClick={() => setIsContractDropdownOpen(!isContractDropdownOpen)}
+                   className={`w-full bg-white border ${isContractDropdownOpen ? 'border-[#1e3a8a] ring-2 ring-blue-100' : 'border-gray-200'} rounded-xl p-3 h-[60px] flex flex-col justify-center cursor-pointer hover:border-[#1e3a8a] transition-all`}
+                 >
+                   <div className="flex justify-between items-center w-full">
+                     <div className="flex flex-col truncate">
+                       {(() => {
+                         const sel = availableContracts.find(c => c.id === selectedAvulsoContractId);
+                         if (sel) {
+                           return (
+                             <>
+                               <span className="text-sm font-bold truncate text-gray-900">{sel.client_name}</span>
+                               <span className="text-[11px] font-semibold text-gray-500 mt-0.5">HON: {sel.hon_number || 'S/N'}{sel.cnpj ? ` | CNPJ: ${sel.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5")}` : ''}</span>
+                             </>
+                           );
+                         }
+                         return <span className="text-sm font-bold text-gray-400">Buscar clientes ativos...</span>;
+                       })()}
+                     </div>
+                     <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isContractDropdownOpen ? 'rotate-180' : ''}`} />
+                   </div>
                  </div>
-                 <div className="flex-1">
-                   <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Cláusula / Honorário</span>
+
+                 {isContractDropdownOpen && (
+                   <div className="absolute z-50 w-full mt-[64px] top-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                     <div className="p-2 bg-gray-50 border-b border-gray-100 relative">
+                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                       <input
+                         type="text"
+                         placeholder="Buscar por nome do cliente, HON ou CNPJ..."
+                         className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm font-medium outline-none focus:border-[#1e3a8a]"
+                         value={contractSearch}
+                         onChange={e => setContractSearch(e.target.value)}
+                         autoFocus
+                       />
+                     </div>
+                     <div className="max-h-[250px] overflow-y-auto p-2">
+                       {(() => {
+                         const searchClean = contractSearch.replace(/\D/g, '').length > 0 ? contractSearch.replace(/\D/g, '') : contractSearch.toLowerCase();
+                         const filtered = availableContracts.filter(c => 
+                           (c.client_name || '').toLowerCase().includes(contractSearch.toLowerCase()) ||
+                           (c.hon_number || '').toLowerCase().includes(contractSearch.toLowerCase()) ||
+                           (c.cnpj && c.cnpj.replace(/\D/g, '').includes(searchClean))
+                         );
+                         if (filtered.length === 0) return <div className="p-4 text-center text-sm font-semibold text-gray-500">Nenhum contrato encontrado.</div>;
+                         return filtered.map(c => (
+                           <div
+                             key={c.id}
+                             onClick={() => {
+                               setSelectedAvulsoContractId(c.id);
+                               setIsContractDropdownOpen(false);
+                               setContractSearch('');
+                             }}
+                             className="w-full text-left p-2.5 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors flex flex-col"
+                           >
+                             <span className="text-sm font-bold text-gray-800">{c.client_name}</span>
+                             <span className="text-[11px] font-semibold text-gray-500 mt-0.5">HON: {c.hon_number || 'S/N'}{c.cnpj ? ` | CNPJ: ${c.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5")}` : ''}</span>
+                           </div>
+                         ));
+                       })()}
+                     </div>
+                   </div>
+                 )}
+               </div>
+
+               <div className="flex flex-col md:flex-row gap-5 relative z-[65]">
+                 <div className="flex-[1.5]">
+                   <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Cláusula Adicional (Opcional)</span>
                    <input 
                       type="text"
-                      placeholder="Ex: Honorário Pró-Êxito"
+                      placeholder="Ex: Pagamento Extraordinário"
                       className="w-full border border-gray-200 rounded-lg px-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] outline-none transition-all h-[42px] bg-white placeholder:text-gray-300 placeholder:font-medium" 
                       value={avulsoClause} 
                       onChange={(e) => setAvulsoClause(e.target.value)} 
+                   />
+                 </div>
+                 <div className="flex-1">
+                   <span className="text-[10px] text-[#1e3a8a] font-bold uppercase tracking-widest block mb-1">Tipo Honorário</span>
+                   <CustomSelect 
+                     value={avulsoHonorarioType}
+                     onChange={setAvulsoHonorarioType}
+                     options={[
+                       { label: 'Pró-labore', value: 'pro_labore' },
+                       { label: 'Êxito Intermediário', value: 'intermediate_fee' },
+                       { label: 'Êxito Final', value: 'final_success_fee' },
+                       { label: 'Fixo Mensal', value: 'fixed_monthly_fee' },
+                       { label: 'Outros', value: 'other_fees' }
+                     ]}
                    />
                  </div>
                </div>
