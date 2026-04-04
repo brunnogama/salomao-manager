@@ -1115,21 +1115,21 @@ export function Finance() {
             if (e.target === e.currentTarget) handleTryCloseBillingModal();
           }}
         >
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-3xl animate-in zoom-in-95 border border-gray-100 relative">
+          <div className="bg-white p-6 md:p-8 rounded-[24px] shadow-2xl w-full max-w-4xl animate-in zoom-in-95 border border-gray-100 relative">
             <button 
               onClick={handleTryCloseBillingModal}
-              className="absolute top-5 right-5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-1.5 transition-all"
+              className="absolute top-5 right-5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-1.5 transition-all outline-none"
             >
               <X className="w-5 h-5 pointer-events-none" />
             </button>
 
-            <div className="flex justify-between items-start mb-4 pr-12">
-              <div className="flex-1 min-w-0 mr-4">
-                <h3 className="text-lg font-black text-[#0a192f] mb-1 uppercase tracking-tight">
+            <div className="flex justify-between items-start mb-6 pr-10">
+              <div>
+                <h3 className="text-2xl font-black text-[#0a192f] tracking-tight">
                   {selectedInstallment?.status === 'paid' ? 'Detalhes do Faturamento' : 'Confirmar Faturamento'}
                 </h3>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirma o recebimento desta parcela e informações fiscais?'}
+                <p className="text-sm font-semibold text-gray-500 mt-1">
+                  {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirme os dados e os impostos para faturar esta parcela'}
                 </p>
               </div>
               <button 
@@ -1138,176 +1138,205 @@ export function Finance() {
                   setIsDateModalOpen(false);
                   handleOpenContractModal(selectedInstallment!.contract_id);
                 }}
-                className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 flex items-center transition-all shrink-0 mt-1"
+                className="bg-gray-50 hover:bg-gray-100 text-[#0a192f] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center border border-gray-200 outline-none"
               >
-                <Briefcase className="w-3.5 h-3.5 mr-2" /> Visualizar Contrato
+                <Briefcase className="w-4 h-4 mr-2 text-gray-500" /> Contrato
               </button>
             </div>
 
-            <div className="grid grid-cols-12 gap-3 mb-6 pb-4 border-b border-gray-100 items-end">
-              <div className="col-span-3 min-w-0">
-                 <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">Cliente</span>
-                 <span className="text-[11px] font-black text-[#0a192f] truncate block" title={selectedInstallment?.contract?.client_name || '-'}>{selectedInstallment?.contract?.client_name || '-'}</span>
-              </div>
-              <div className="col-span-2 min-w-0">
-                 <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">HON</span>
-                 <span className="text-[11px] font-black text-[#0a192f] truncate block" title={selectedInstallment?.contract?.hon_number || '-'}>{selectedInstallment?.contract?.hon_number || '-'}</span>
-              </div>
-              <div className="col-span-2 min-w-0">
-                 <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">Cláusula</span>
-                 <span className="text-[11px] font-black text-[#0a192f] truncate block" title={(selectedInstallment as any)?.clause || '-'}>{(selectedInstallment as any)?.clause || '-'}</span>
-              </div>
-              
-              <div className="col-span-2 min-w-0 z-[60] relative">
-                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 w-full truncate">Natureza</label>
-                 <CustomSelect 
-                   value={nfNature} 
-                   onChange={setNfNature} 
-                   options={[
-                     { label: 'Selecione', value: '' },
-                     { label: 'COND', value: 'COND' },
-                     { label: 'EXT', value: 'EXT' },
-                     { label: 'PF', value: 'PF' },
-                     { label: 'PJ', value: 'PJ' }
-                   ]}
-                 />
-              </div>
-              
-              <div className="col-span-3 min-w-0 z-[60] relative">
-                 <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1.5 w-full truncate text-right">Local do Fat.</label>
-                 <CustomSelect 
-                   value={nfLocation} 
-                   onChange={setNfLocation} 
-                   options={[{ label: 'Selecione', value: '' }, ...billingLocations.map(l => ({ label: l, value: l }))]}
-                   actionLabel="Locais"
-                   actionIcon={Settings}
-                   onAction={() => setActiveManager('location')}
-                 />
-              </div>
+            {/* Informações de Contexto do Contrato */}
+            <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 mb-6 flex flex-wrap gap-5 items-center">
+               <div className="flex-1 min-w-[150px]">
+                 <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Cliente</span>
+                 <span className="text-sm font-black text-[#0a192f] truncate block" title={selectedInstallment?.contract?.client_name || '-'}>{selectedInstallment?.contract?.client_name || '-'}</span>
+               </div>
+               <div className="w-[1px] h-8 bg-gray-200 hidden md:block"></div>
+               <div className="min-w-[100px]">
+                 <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">HON</span>
+                 <span className="text-sm font-black text-[#0a192f] block">{selectedInstallment?.contract?.hon_number || '-'}</span>
+               </div>
+               <div className="w-[1px] h-8 bg-gray-200 hidden md:block"></div>
+               <div className="min-w-[100px]">
+                 <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Cláusula</span>
+                 <span className="text-sm font-black text-[#0a192f] truncate max-w-[140px] block" title={(selectedInstallment as any)?.clause || '-'}>{(selectedInstallment as any)?.clause || '-'}</span>
+               </div>
+               <div className="w-[1px] h-8 bg-gray-200 hidden lg:block"></div>
+               <div className="flex-1 flex gap-3 z-[60] relative min-w-[220px]">
+                  <div className="flex-1">
+                     <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Natureza</span>
+                     <CustomSelect 
+                       value={nfNature} 
+                       onChange={setNfNature} 
+                       options={[
+                         { label: 'Sel.', value: '' },
+                         { label: 'COND', value: 'COND' },
+                         { label: 'EXT', value: 'EXT' },
+                         { label: 'PF', value: 'PF' },
+                         { label: 'PJ', value: 'PJ' }
+                       ]}
+                     />
+                  </div>
+                  <div className="flex-[1.5]">
+                     <span className="text-[10px] text-[#1e3a8a] font-bold uppercase tracking-widest block mb-1 text-right">Local do Fat.</span>
+                     <CustomSelect 
+                       value={nfLocation} 
+                       onChange={setNfLocation} 
+                       options={[{ label: 'Local', value: '' }, ...billingLocations.map(l => ({ label: l, value: l }))]}
+                       actionLabel="Gerenciar"
+                       actionIcon={Settings}
+                       onAction={() => setActiveManager('location')}
+                     />
+                  </div>
+               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
-                <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Emissão</label>
-                  <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={nfIssueDate} onChange={(e) => setNfIssueDate(e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Vencimento</label>
-                  <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={nfDueDate} onChange={(e) => setNfDueDate(e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Pagamento</label>
-                  <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={billingDate} onChange={(e) => setBillingDate(e.target.value)} />
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+              {/* Left Column: Formulário de Datas, Impostos e NF */}
+              <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+                 
+                 {/* Datas */}
+                 <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Emissão</label>
+                      <input type="date" className="w-full border-b-[1.5px] border-gray-200 pb-2 px-1 text-sm font-bold text-[#0a192f] bg-transparent focus:border-[#1e3a8a] outline-none transition-all cursor-pointer" value={nfIssueDate} onChange={(e) => setNfIssueDate(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Vencimento</label>
+                      <input type="date" className="w-full border-b-[1.5px] border-gray-200 pb-2 px-1 text-sm font-bold text-[#0a192f] bg-transparent focus:border-[#1e3a8a] outline-none transition-all cursor-pointer" value={nfDueDate} onChange={(e) => setNfDueDate(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-[var(--accent)] uppercase tracking-widest mb-1.5 ml-1">Pagamento</label>
+                      <input type="date" className="w-full border-b-[1.5px] border-gray-200 pb-2 px-1 text-sm font-bold text-[#0a192f] bg-transparent focus:border-emerald-500 outline-none transition-all cursor-pointer" value={billingDate} onChange={(e) => setBillingDate(e.target.value)} />
+                    </div>
+                 </div>
+
+                 {/* Impostos */}
+                 <div>
+                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Retenções e Impostos</label>
+                   <div className="grid grid-cols-4 gap-3 bg-gray-50/50 p-3 rounded-2xl border border-gray-100">
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 px-1">IRPJ (R$)</label>
+                        <input type="text" className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-bold text-[#0a192f] hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all shadow-sm" placeholder="0,00" value={nfIrpj} onChange={(e) => setNfIrpj(maskMoney(e.target.value))} />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 px-1">PIS (R$)</label>
+                        <input type="text" className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-bold text-[#0a192f] hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all shadow-sm" placeholder="0,00" value={nfPis} onChange={(e) => setNfPis(maskMoney(e.target.value))} />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 px-1">COFINS (R$)</label>
+                        <input type="text" className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-bold text-[#0a192f] hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all shadow-sm" placeholder="0,00" value={nfCofins} onChange={(e) => setNfCofins(maskMoney(e.target.value))} />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 px-1">CSLL (R$)</label>
+                        <input type="text" className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-bold text-[#0a192f] hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all shadow-sm" placeholder="0,00" value={nfCsll} onChange={(e) => setNfCsll(maskMoney(e.target.value))} />
+                      </div>
+                   </div>
+                 </div>
+
+                 {/* NF & Observações */}
+                 <div className="grid grid-cols-2 gap-4 pt-1">
+                    {/* NF Column */}
+                    <div>
+                      <label className="flex items-center justify-between text-[10px] font-bold text-[#0a192f] uppercase tracking-widest mb-2 ml-1">
+                         <span>Dados da Nota Fiscal</span>
+                         {selectedInstallment?.status !== 'paid' && (
+                           <button onClick={(e) => { e.preventDefault(); confirmPayment('nf_emitida'); }} className="text-[#1e3a8a] hover:text-blue-700 hover:bg-blue-50 px-2 py-0.5 rounded-[6px] transition-all flex items-center">
+                              <CheckCircle2 className="w-3 h-3 mr-1" /> Marcar NF Emitida
+                           </button>
+                         )}
+                      </label>
+                      <input type="file" accept="application/pdf" className="hidden" ref={fileInputRef} onChange={handlePdfUpload} />
+                      
+                      <div className="flex border border-gray-200 rounded-xl overflow-hidden shadow-sm h-11 focus-within:border-[#1e3a8a] focus-within:ring-2 focus-within:ring-[#1e3a8a]/10 transition-all bg-white relative">
+                        <input 
+                            type="text" 
+                            placeholder="Nº da NF ou Boleto" 
+                            className="flex-1 px-3.5 text-[13px] font-bold text-[#0a192f] outline-none w-full bg-transparent border-0 placeholder:text-gray-400 placeholder:font-medium" 
+                            value={nfNumber} 
+                            onChange={(e) => setNfNumber(e.target.value)} 
+                        />
+                        {!nfPdf ? (
+                           <button 
+                             onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}
+                             className="px-4 bg-orange-50 text-orange-600 hover:bg-orange-100 flex items-center justify-center border-l border-gray-200 transition-all cursor-pointer group"
+                             title="Vincular PDF da NF"
+                           >
+                              <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
+                           </button>
+                        ) : (
+                           <div className="flex border-l border-gray-200 items-stretch shrink-0">
+                               <button 
+                                 onClick={(e) => { e.preventDefault(); handleOpenNfPdf(); }}
+                                 className="px-3.5 bg-blue-50 text-[#1e3a8a] hover:bg-blue-100 flex items-center justify-center transition-all cursor-pointer group"
+                                 title="Visualizar PDF"
+                               >
+                                  <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                               </button>
+                               <button 
+                                 onClick={(e) => { e.preventDefault(); setNfPdf(''); }}
+                                 className="px-3 bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center border-l border-red-100/50 transition-all cursor-pointer group"
+                                 title="Remover PDF"
+                               >
+                                  <Trash2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                               </button>
+                           </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Observações Column */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Observações</label>
+                      <input 
+                        type="text"
+                        className="w-full h-11 border border-gray-200 rounded-xl px-3.5 text-[13px] font-medium text-gray-700 shadow-sm focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/10 outline-none transition-all placeholder:text-gray-400"
+                        placeholder="Informações adicionais..."
+                        value={nfObservations}
+                        onChange={(e) => setNfObservations(e.target.value)}
+                      />
+                    </div>
+                 </div>
+
               </div>
 
-              {/* The Natureza and NF fields were moved: Natureza is at the header, NF is below the values */}
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-2">
-                <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">IRPJ (R$)</label>
-                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] shadow-sm hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" placeholder="R$ 0,00" value={nfIrpj} onChange={(e) => setNfIrpj(maskMoney(e.target.value))} />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">PIS (R$)</label>
-                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] shadow-sm hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" placeholder="R$ 0,00" value={nfPis} onChange={(e) => setNfPis(maskMoney(e.target.value))} />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">COFINS (R$)</label>
-                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] shadow-sm hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" placeholder="R$ 0,00" value={nfCofins} onChange={(e) => setNfCofins(maskMoney(e.target.value))} />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">CSLL (R$)</label>
-                  <input type="text" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] shadow-sm hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" placeholder="R$ 0,00" value={nfCsll} onChange={(e) => setNfCsll(maskMoney(e.target.value))} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                <div className="bg-blue-50/50 border border-[#1e3a8a]/20 p-4 rounded-xl flex flex-col justify-center transition-all relative overflow-hidden group">
-                  <div className="absolute left-0 top-0 h-full w-1 bg-[#1e3a8a]"></div>
-                  <label className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1 select-none">Valor Bruto (R$)</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-transparent text-2xl font-black text-[#1e3a8a] outline-none focus:bg-white/50 focus:ring-2 focus:ring-[#1e3a8a]/50 rounded-lg px-2 -ml-2 transition-all"
-                    placeholder="R$ 0,00" 
-                    value={nfValue} 
-                    onChange={(e) => setNfValue(maskMoney(e.target.value))} 
-                  />
-                </div>
-                <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl flex flex-col justify-center transition-all relative overflow-hidden group">
-                  <div className="absolute left-0 top-0 h-full w-1 bg-emerald-500"></div>
-                  <label className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-1 select-none">Valor Líquido Recebido</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-transparent text-2xl font-black text-emerald-600 outline-none focus:bg-white/50 focus:ring-2 focus:ring-emerald-200/50 rounded-lg px-2 -ml-2 transition-all"
-                    value={nfNetValue}
-                    onChange={(e) => setNfNetValue(maskMoney(e.target.value))}
-                    placeholder="R$ 0,00"
-                  />
-                </div>
-              </div>
-              
-              <div className="mt-4 flex gap-4 w-full">
-                  <div className="flex-1">
-                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Nº NF</label>
+              {/* Right Column: Values */}
+              <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
+                 <div className="bg-white border-2 border-dashed border-gray-200 p-5 rounded-[20px] flex flex-col items-center justify-center transition-all group focus-within:border-[#1e3a8a]/30">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Valor Bruto</label>
                     <input 
                       type="text" 
-                      placeholder="NF/Boleto" 
-                      maxLength={15} 
-                      className="w-full h-[42px] border border-gray-200 rounded-xl px-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal text-center" 
-                      value={nfNumber} 
-                      onChange={(e) => setNfNumber(e.target.value)} 
+                      className="w-full bg-transparent text-3xl font-black text-[#1e3a8a] outline-none text-center transition-all"
+                      placeholder="R$ 0,00" 
+                      value={nfValue} 
+                      onChange={(e) => setNfValue(maskMoney(e.target.value))} 
                     />
-                  </div>
-                  
-                  <div className="flex-1">
-                    <label className="block text-[9px] font-black text-transparent select-none uppercase tracking-widest mb-2">.</label>
-                    <input type="file" accept="application/pdf" className="hidden" ref={fileInputRef} onChange={handlePdfUpload} />
-                    {!nfPdf ? (
-                      <button title="Vincular PDF da NF" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} className="w-full h-[42px] bg-amber-50 border border-amber-200 text-amber-700 px-5 rounded-xl hover:bg-amber-100 flex items-center justify-center transition-all shadow-sm font-black text-[10px] uppercase tracking-widest">
-                        <Upload className="w-3.5 h-3.5 mr-2" /> Vincular NF
-                      </button>
-                    ) : (
-                      <div className="flex gap-2 w-full h-[42px]">
-                        <button title="Ver PDF da NF" onClick={(e) => { e.preventDefault(); handleOpenNfPdf(); }} className="flex-1 h-full bg-[#1e3a8a] border border-[#112240] text-white px-5 rounded-xl hover:bg-[#112240] flex items-center justify-center transition-all shadow-md font-black text-[10px] uppercase tracking-widest mb-0">
-                          <Eye className="w-3.5 h-3.5 mr-2" /> Visualizar NF
-                        </button>
-                        <button title="Remover PDF da NF" onClick={(e) => { e.preventDefault(); setNfPdf(''); }} className="h-full px-4 bg-red-50 border border-red-100 text-red-600 rounded-xl hover:bg-red-100 flex items-center justify-center shrink-0 transition-all shadow-sm mb-0">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                 </div>
 
-                  {selectedInstallment?.status !== 'paid' && (
-                    <div className="flex-1">
-                      <label className="block text-[9px] font-black text-transparent select-none uppercase tracking-widest mb-2">.</label>
-                      <button 
-                        onClick={() => confirmPayment('nf_emitida')} 
-                        className="w-full h-[42px] bg-[#1e3a8a] text-white px-5 rounded-xl hover:bg-[#112240] shadow-md font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center mb-0"
-                      >
-                        NF Emitida
-                      </button>
+                 <div className="relative bg-[#0a192f] p-6 rounded-[20px] flex flex-col items-center justify-center transition-all shadow-xl shadow-[#0a192f]/20 overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
+                    <div className="absolute -bottom-4 -right-4 p-3 opacity-[0.03] group-hover:opacity-[0.05] group-hover:scale-110 transition-all duration-700 pointer-events-none">
+                       <DollarSign className="w-32 h-32 text-white" />
                     </div>
-                  )}
-              </div>
-
-              <div className="mt-4">
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Observações (Opcional)</label>
-                <textarea 
-                  className="w-full border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-700 shadow-sm hover:border-gray-300 focus:border-[#1e3a8a] outline-none transition-all placeholder:text-gray-400 resize-none"
-                  rows={2}
-                  placeholder="Informações adicionais sobre o faturamento..."
-                  value={nfObservations}
-                  onChange={(e) => setNfObservations(e.target.value)}
-                ></textarea>
+                    <label className="text-[10px] font-black text-[#64ffda] uppercase tracking-widest mb-2.5 z-10 flex items-center">
+                      <CheckCircle2 className="w-3 h-3 mr-1.5" /> Valor Líquido Recebido
+                    </label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-transparent text-[38px] leading-none font-black text-white outline-none text-center transition-all z-10 drop-shadow-md placeholder:text-white/30"
+                      value={nfNetValue}
+                      onChange={(e) => setNfNetValue(maskMoney(e.target.value))}
+                      placeholder="R$ 0,00"
+                    />
+                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 mt-8">
-              <button onClick={handleTryCloseBillingModal} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
-              <button onClick={() => confirmPayment('paid')} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">
+            <div className="flex justify-end gap-3 mt-8 pt-5 border-t border-gray-100">
+              <button onClick={handleTryCloseBillingModal} className="px-5 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-all">Cancelar</button>
+              <button 
+                onClick={() => confirmPayment('paid')} 
+                className="bg-emerald-600 text-white px-7 py-2.5 rounded-xl hover:bg-emerald-700 shadow-xl shadow-emerald-600/20 font-black text-xs uppercase tracking-widest transition-all hover:-translate-y-0.5 active:translate-y-0"
+              >
                 {selectedInstallment?.status === 'paid' ? 'Salvar Alterações' : 'Confirmar Pagamento'}
               </button>
             </div>
