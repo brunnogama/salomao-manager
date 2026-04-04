@@ -490,10 +490,6 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
                       <div className="col-span-3 flex items-center min-w-0">
                         {group.partners.length === 0 ? (
                           <span className="text-sm text-gray-400 font-semibold">-</span>
-                        ) : group.partners.length === 1 ? (
-                          <span className="text-sm text-gray-700 font-semibold truncate">
-                            {group.partners[0].partner_name}
-                          </span>
                         ) : (
                           <div className="flex flex-wrap gap-1">
                             {group.partners.map((p, idx) => (
@@ -503,7 +499,7 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
                                 title={`${p.partner_name} (${p.contracts.length} contrato${p.contracts.length !== 1 ? 's' : ''})`}
                               >
                                 {p.partner_name.split(' ').slice(0, 2).join(' ')}
-                                {p.contracts.length > 0 && (
+                                {p.contracts.length > 0 && group.partners.length > 1 && (
                                   <span className="text-[9px] text-blue-500">({p.contracts.length})</span>
                                 )}
                               </span>
