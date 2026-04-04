@@ -508,14 +508,16 @@ export function Finance() {
     setIsDateModalOpen(true);
   };
 
-  const confirmPayment = async () => {
+  const confirmPayment = async (targetStatus?: 'paid' | 'nf_emitida') => {
     if (!selectedInstallment) return;
     
+    const finalStatus = targetStatus || 'paid';
+
     // Atualiza a parcela com a data de pagamento, status de pago e número da NF
     const { error } = await supabase.from('financial_installments')
       .update({ 
-        status: 'paid', 
-        paid_at: billingDate || null,
+        status: finalStatus, 
+        paid_at: finalStatus === 'paid' ? (billingDate || null) : null,
         due_date: nfDueDate || selectedInstallment.due_date,
         nf_issue_date: nfIssueDate || null,
         nf_number: nfNumber || null,
@@ -538,7 +540,7 @@ export function Finance() {
     }
 
     setIsDateModalOpen(false);
-    toast.success(selectedInstallment.status === 'paid' ? 'Faturamento atualizado!' : 'Faturamento confirmado!');
+    toast.success(finalStatus === 'nf_emitida' ? 'Status alterado para NF Emitida!' : (selectedInstallment.status === 'paid' ? 'Faturamento atualizado!' : 'Faturamento confirmado!'));
 
     const contractId = selectedInstallment.contract_id || (selectedInstallment.contract as any)?.id;
     if (contractId) {
@@ -1176,7 +1178,15 @@ export function Finance() {
 
             <div className="flex justify-end gap-3 mt-8">
               <button onClick={handleTryCloseBillingModal} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
-              <button onClick={confirmPayment} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">
+              {selectedInstallment?.status !== 'paid' && (
+                <button 
+                  onClick={() => confirmPayment('nf_emitida')} 
+                  className="bg-[#1e3a8a] text-white px-6 py-2.5 rounded-xl hover:bg-[#112240] shadow-lg shadow-blue-500/20 font-black text-[10px] uppercase tracking-widest transition-all"
+                >
+                  NF Emitida
+                </button>
+              )}
+              <button onClick={() => confirmPayment('paid')} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">
                 {selectedInstallment?.status === 'paid' ? 'Salvar Alterações' : 'Confirmar Pagamento'}
               </button>
             </div>
