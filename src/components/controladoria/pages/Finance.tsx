@@ -1689,7 +1689,7 @@ export function Finance() {
         isOpen={blockDeleteOpen}
         onClose={() => setBlockDeleteOpen(false)}
         title="Ação Bloqueada"
-        description="Esta parcela não pode ser excluída diretamente pelo Controle Financeiro pois ela foi gerada automaticamente por um contrato. Para excluí-la, por favor acesse a aba 'Finanças' dentro dos detalhes do Contrato/Caso e realize a remoção por lá."
+        description="Esta parcela não pode ser excluída diretamente pelo Controle Financeiro pois ela foi gerada automaticamente por um contrato. Para excluí-la, por favor acesse a aba 'Casos' do módulo Controladoria para excluir direto do respectivo contrato."
         variant="warning"
       />
     </div>
