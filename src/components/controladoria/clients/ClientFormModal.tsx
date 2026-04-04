@@ -9,6 +9,31 @@ import { maskCNPJ, toTitleCase, maskPhone } from '../utils/masks';
 import { CustomSelect } from '../ui/CustomSelect';
 import { logAction } from '../../../lib/logger';
 import { toast } from 'sonner';
+import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'active': return 'bg-green-100 text-green-800 border-green-200';
+    case 'analysis': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'proposal': return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
+    case 'probono': return 'bg-purple-100 text-purple-800 border-purple-200';
+    case 'baixado': return 'bg-purple-100 text-purple-800 border-purple-200';
+    default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'active': return 'Contrato Fechado';
+    case 'analysis': return 'Sob Análise';
+    case 'proposal': return 'Proposta Enviada';
+    case 'rejected': return 'Rejeitada';
+    case 'probono': return 'Probono';
+    case 'baixado': return 'Baixado';
+    default: return status ? status.toUpperCase() : 'DESCONHECIDO';
+  }
+};
 
 const UFS = [{ sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' }, { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' }, { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' }, { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' }, { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' }, { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' }, { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' }, { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' }, { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }];
 
@@ -36,6 +61,11 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
   const [contacts, setContacts] = useState<Partial<ClientContact>[]>([]);
   // Estado para contratos (nova aba)
   const [clientContracts, setClientContracts] = useState<any[]>([]);
+
+  // Estados do Modal de Contrato
+  const [selectedContract, setSelectedContract] = useState<any>(null);
+  const [selectedContractProcesses, setSelectedContractProcesses] = useState<any[]>([]);
+  const [isContractDetailsModalOpen, setIsContractDetailsModalOpen] = useState(false);
 
   const emptyClient: Client = {
     name: '',
@@ -141,6 +171,32 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
       if (data) setClientContracts(data);
     } catch (err) {
       console.error('Erro ao buscar contratos:', err);
+    }
+  };
+
+  const handleViewContract = async (contractId: string) => {
+    const toastId = toast.loading('Carregando detalhes do contrato...');
+    try {
+      const { data: cData } = await supabase.from('contracts').select('*, partner:partners(name)').eq('id', contractId).single();
+      const [procRes] = await Promise.all([
+        supabase.from('contract_processes').select('*').eq('contract_id', contractId)
+      ]);
+      
+      if (cData) {
+         setSelectedContract({
+            ...cData,
+            partner_name: cData.partner?.name || ''
+         });
+         setSelectedContractProcesses(procRes.data?.map((p: any) => ({
+            ...p,
+            cause_value: p.value_of_cause ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.value_of_cause) : ''
+          })) || []);
+         setIsContractDetailsModalOpen(true);
+      }
+      toast.dismiss(toastId);
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao carregar contrato', { id: toastId });
     }
   };
 
@@ -449,12 +505,16 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
                     {clientContracts.map((contract) => (
-                      <div key={contract.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                        <div className="p-3 bg-blue-50 text-[#1e3a8a] rounded-xl shrink-0">
+                      <div 
+                        key={contract.id} 
+                        onClick={() => handleViewContract(contract.id)}
+                        className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-[#1e3a8a] transition-all group"
+                      >
+                        <div className="p-3 bg-blue-50 text-[#1e3a8a] rounded-xl shrink-0 group-hover:scale-110 transition-transform">
                           <Briefcase className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-black text-[#0a192f] text-sm truncate">
+                          <h4 className="font-black text-[#0a192f] text-sm truncate group-hover:text-[#1e3a8a] transition-colors">
                             {contract.hon_number ? `HON ${contract.hon_number}` : `Contrato #${contract.seq_id || 'Sem número'}`}
                           </h4>
                           <p className="text-[11px] font-bold text-gray-400 uppercase mt-0.5 truncate">
@@ -462,13 +522,8 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                           </p>
                         </div>
                         <div className="shrink-0 flex items-center">
-                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                            contract.status === 'Ativo' ? 'bg-emerald-50 text-emerald-600' :
-                            contract.status === 'Encerrado' ? 'bg-gray-100 text-gray-600' :
-                            contract.status === 'Baixado' ? 'bg-blue-50 text-blue-600' :
-                            'bg-yellow-50 text-yellow-600'
-                          }`}>
-                            {contract.status || 'Desconhecido'}
+                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(contract.status)}`}>
+                            {getStatusLabel(contract.status)}
                           </span>
                         </div>
                       </div>
@@ -767,6 +822,17 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
           </div>
         </div>
       </div>
+      
+      {isContractDetailsModalOpen && selectedContract && (
+        <ContractDetailsModal
+          isOpen={isContractDetailsModalOpen}
+          onClose={() => setIsContractDetailsModalOpen(false)}
+          contract={selectedContract}
+          processes={selectedContractProcesses}
+          onEdit={() => {}}
+          onDelete={() => {}}
+        />
+      )}
     </div>,
     document.body
   );
