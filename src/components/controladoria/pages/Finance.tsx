@@ -1123,8 +1123,8 @@ export function Finance() {
               <X className="w-5 h-5 pointer-events-none" />
             </button>
 
-            <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4 pr-8">
-              <div>
+            <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4 pr-12">
+              <div className="flex-1 min-w-0 mr-4">
                 <h3 className="text-lg font-black text-[#0a192f] mb-1 uppercase tracking-tight">
                   {selectedInstallment?.status === 'paid' ? 'Detalhes do Faturamento' : 'Confirmar Faturamento'}
                 </h3>
@@ -1132,7 +1132,7 @@ export function Finance() {
                   {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirma o recebimento desta parcela e informações fiscais?'}
                 </p>
                 <div className="flex items-end gap-4 mt-3 pt-3 border-t border-gray-100/60 w-full overflow-hidden">
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 max-w-[200px]">
                      <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cliente</span>
                      <span className="text-[11px] font-black text-[#0a192f] truncate block" title={selectedInstallment?.contract?.client_name || '-'}>{selectedInstallment?.contract?.client_name || '-'}</span>
                   </div>
@@ -1145,7 +1145,7 @@ export function Finance() {
                      <span className="text-[11px] font-black text-[#0a192f] whitespace-nowrap block truncate max-w-[80px]" title={(selectedInstallment as any)?.clause || '-'}>{(selectedInstallment as any)?.clause || '-'}</span>
                   </div>
                   
-                  <div className="w-28 shrink-0 z-[60] relative mt-1 ml-2 border-l border-gray-100 pl-4">
+                  <div className="w-32 shrink-0 z-[60] relative mt-1 ml-2 border-l border-gray-100 pl-4">
                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 w-full truncate">Natureza</label>
                      <CustomSelect 
                        value={nfNature} 
@@ -1160,7 +1160,7 @@ export function Finance() {
                      />
                   </div>
                   
-                  <div className="w-40 shrink-0 z-[60] relative mt-1 pl-4 border-l border-gray-100">
+                  <div className="w-48 shrink-0 z-[60] relative mt-1 pl-4 border-l border-gray-100 ml-auto">
                      <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1.5 text-right w-full truncate">Local do Fat.</label>
                      <CustomSelect 
                        value={nfLocation} 
