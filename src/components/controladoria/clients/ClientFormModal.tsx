@@ -2,13 +2,38 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Save, Search, Loader2, AlertTriangle, Plus, Trash2, UserPlus, User, MapPin, Users, FileText, Gift } from 'lucide-react';
+import { X, Save, Search, Loader2, AlertTriangle, Plus, Trash2, UserPlus, User, MapPin, Users, FileText, Gift, Briefcase } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Client, Partner, ClientContact } from '../../../types/controladoria';
 import { maskCNPJ, toTitleCase, maskPhone } from '../utils/masks';
 import { CustomSelect } from '../ui/CustomSelect';
 import { logAction } from '../../../lib/logger';
 import { toast } from 'sonner';
+import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'active': return 'bg-green-100 text-green-800 border-green-200';
+    case 'analysis': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'proposal': return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
+    case 'probono': return 'bg-purple-100 text-purple-800 border-purple-200';
+    case 'baixado': return 'bg-purple-100 text-purple-800 border-purple-200';
+    default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'active': return 'Contrato Fechado';
+    case 'analysis': return 'Sob Análise';
+    case 'proposal': return 'Proposta Enviada';
+    case 'rejected': return 'Rejeitada';
+    case 'probono': return 'Probono';
+    case 'baixado': return 'Baixado';
+    default: return status ? status.toUpperCase() : 'DESCONHECIDO';
+  }
+};
 
 const UFS = [{ sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' }, { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' }, { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' }, { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' }, { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' }, { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' }, { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' }, { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' }, { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }];
 
@@ -34,6 +59,13 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
 
   // Estado para múltiplos contatos
   const [contacts, setContacts] = useState<Partial<ClientContact>[]>([]);
+  // Estado para contratos (nova aba)
+  const [clientContracts, setClientContracts] = useState<any[]>([]);
+
+  // Estados do Modal de Contrato
+  const [selectedContract, setSelectedContract] = useState<any>(null);
+  const [selectedContractProcesses, setSelectedContractProcesses] = useState<any[]>([]);
+  const [isContractDetailsModalOpen, setIsContractDetailsModalOpen] = useState(false);
 
   const emptyClient: Client = {
     name: '',
@@ -59,8 +91,10 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
       fetchPartners();
       if (client?.id) {
         fetchContacts(client.id);
+        fetchClientContracts(client.id);
       } else {
         setContacts([]);
+        setClientContracts([]);
       }
     }
   }, [isOpen, client, initialTab]);
@@ -117,6 +151,52 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
       if (data) setPartners(data);
     } catch (err) {
       console.error('Erro ao buscar sócios:', err);
+    }
+  };
+
+  const fetchClientContracts = async (clientId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('contracts')
+        .select(`
+          id,
+          hon_number,
+          seq_id,
+          status,
+          contract_partner:partners!contracts_partner_id_fkey(name)
+        `)
+        .eq('client_id', clientId)
+        .order('seq_id', { ascending: false });
+      if (error) throw error;
+      if (data) setClientContracts(data);
+    } catch (err) {
+      console.error('Erro ao buscar contratos:', err);
+    }
+  };
+
+  const handleViewContract = async (contractId: string) => {
+    const toastId = toast.loading('Carregando detalhes do contrato...');
+    try {
+      const { data: cData } = await supabase.from('contracts').select('*, partner:partners(name)').eq('id', contractId).single();
+      const [procRes] = await Promise.all([
+        supabase.from('contract_processes').select('*').eq('contract_id', contractId)
+      ]);
+      
+      if (cData) {
+         setSelectedContract({
+            ...cData,
+            partner_name: cData.partner?.name || ''
+         });
+         setSelectedContractProcesses(procRes.data?.map((p: any) => ({
+            ...p,
+            cause_value: p.value_of_cause ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.value_of_cause) : ''
+          })) || []);
+         setIsContractDetailsModalOpen(true);
+      }
+      toast.dismiss(toastId);
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao carregar contrato', { id: toastId });
     }
   };
 
@@ -254,6 +334,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
 
   const tabs = [
     { id: 'dados', label: 'Dados do Cliente', icon: User },
+    { id: 'contratos', label: 'Contratos', icon: Briefcase },
     { id: 'endereco', label: 'Endereço', icon: MapPin },
     { id: 'contatos', label: 'Contatos', icon: Users },
     { id: 'obs', label: 'Observações', icon: FileText },
@@ -404,6 +485,51 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                     />
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'contratos' && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[#0a192f]">Contratos Vinculados</h3>
+                    <p className="text-[11px] text-gray-400 font-medium">Contratos associados a este cliente</p>
+                  </div>
+                </div>
+
+                {clientContracts.length === 0 ? (
+                  <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                    <Briefcase className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                    <p className="text-xs text-gray-400 font-bold">Nenhum contrato vinculado a este cliente</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {clientContracts.map((contract) => (
+                      <div 
+                        key={contract.id} 
+                        onClick={() => handleViewContract(contract.id)}
+                        className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-[#1e3a8a] transition-all group"
+                      >
+                        <div className="p-3 bg-blue-50 text-[#1e3a8a] rounded-xl shrink-0 group-hover:scale-110 transition-transform">
+                          <Briefcase className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-black text-[#0a192f] text-sm truncate group-hover:text-[#1e3a8a] transition-colors">
+                            {contract.hon_number ? `HON ${contract.hon_number}` : `Contrato #${contract.seq_id || 'Sem número'}`}
+                          </h4>
+                          <p className="text-[11px] font-bold text-gray-400 uppercase mt-0.5 truncate">
+                            Sócio Responsável: <span className="text-gray-700">{contract.contract_partner?.name || 'Não atribuído'}</span>
+                          </p>
+                        </div>
+                        <div className="shrink-0 flex items-center">
+                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(contract.status)}`}>
+                            {getStatusLabel(contract.status)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -615,13 +741,13 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                           </div>
                           <div>
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Quantidade</label>
-                            <input disabled={isReadOnly}
+                            <input 
                               type="number"
                               min="1"
                               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
                               value={contact.gift_quantity || 1}
                               onChange={e => handleContactChange(index, 'gift_quantity', parseInt(e.target.value) || 1)}
-                              disabled={!contact.gift_type || contact.gift_type === 'Não recebe'}
+                              disabled={isReadOnly || !contact.gift_type || contact.gift_type === 'Não recebe'}
                             />
                           </div>
                           {contact.gift_type === 'Outros' && (
@@ -696,6 +822,17 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
           </div>
         </div>
       </div>
+      
+      {isContractDetailsModalOpen && selectedContract && (
+        <ContractDetailsModal
+          isOpen={isContractDetailsModalOpen}
+          onClose={() => setIsContractDetailsModalOpen(false)}
+          contract={selectedContract}
+          processes={selectedContractProcesses}
+          onEdit={() => {}}
+          onDelete={() => {}}
+        />
+      )}
     </div>,
     document.body
   );

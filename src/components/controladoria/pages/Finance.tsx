@@ -292,7 +292,7 @@ export function Finance() {
 
   const todayStr = new Date().toISOString().split('T')[0];
   const isOverdue = (inst: FinancialInstallment) => {
-    if (inst.status !== 'pending' || !inst.due_date) return false;
+    if ((inst.status !== 'pending' && inst.status !== 'nf_emitida') || !inst.due_date) return false;
     const dueDateStr = inst.due_date.split('T')[0];
     return dueDateStr < todayStr;
   };
@@ -424,6 +424,7 @@ export function Finance() {
   const filteredInstallments = baseInstallments.filter(i => {
     let matchesStatus = true;
     if (statusFilter === 'pending') matchesStatus = i.status === 'pending' && i.contract?.status !== 'baixado';
+    if (statusFilter === 'nf_emitida') matchesStatus = i.status === 'nf_emitida' && i.contract?.status !== 'baixado';
     if (statusFilter === 'paid') matchesStatus = i.status === 'paid' && i.contract?.status !== 'baixado';
     if (statusFilter === 'baixado') matchesStatus = i.contract?.status === 'baixado';
     if (statusFilter === 'all') matchesStatus = i.contract?.status !== 'baixado';
@@ -451,16 +452,16 @@ export function Finance() {
     return clauseA.localeCompare(clauseB);
   });
 
-  const totalPending = baseInstallments.filter(i => i.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalPending = baseInstallments.filter(i => i.status === 'pending' || i.status === 'nf_emitida').reduce((acc, curr) => acc + curr.amount, 0);
   const totalPaid = baseInstallments.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0);
-  const totalPendingCount = baseInstallments.filter(i => i.status === 'pending').length;
+  const totalPendingCount = baseInstallments.filter(i => i.status === 'pending' || i.status === 'nf_emitida').length;
   const totalOverdueCount = installments.filter(i => isOverdue(i)).length;
 
   const handleMarkAsPaid = (installment: FinancialInstallment) => {
     setSelectedInstallment(installment);
     setNfIssueDate(installment.nf_issue_date ? installment.nf_issue_date.split('T')[0] : todayStr);
     setNfDueDate(installment.due_date ? installment.due_date.split('T')[0] : todayStr);
-    setBillingDate(installment.paid_at ? installment.paid_at.split('T')[0] : todayStr);
+    setBillingDate(installment.paid_at ? installment.paid_at.split('T')[0] : '');
     setNfNumber(installment.nf_number || '');
     setNfLocation(installment.nf_location || '');
     setNfNature(installment.nf_nature || '');
@@ -493,7 +494,7 @@ export function Finance() {
     const initialState = JSON.stringify({
       nfIssueDate: installment.nf_issue_date ? installment.nf_issue_date.split('T')[0] : todayStr,
       nfDueDate: installment.due_date ? installment.due_date.split('T')[0] : todayStr,
-      billingDate: installment.paid_at ? installment.paid_at.split('T')[0] : todayStr,
+      billingDate: installment.paid_at ? installment.paid_at.split('T')[0] : '',
       nfNumber: installment.nf_number || '',
       nfLocation: installment.nf_location || '',
       nfNature: installment.nf_nature || '',
@@ -511,14 +512,16 @@ export function Finance() {
     setIsDateModalOpen(true);
   };
 
-  const confirmPayment = async () => {
+  const confirmPayment = async (targetStatus?: 'paid' | 'nf_emitida') => {
     if (!selectedInstallment) return;
     
+    const finalStatus = targetStatus || 'paid';
+
     // Atualiza a parcela com a data de pagamento, status de pago e número da NF
     const { error } = await supabase.from('financial_installments')
       .update({ 
-        status: 'paid', 
-        paid_at: billingDate || null,
+        status: finalStatus, 
+        paid_at: finalStatus === 'paid' ? (billingDate || null) : null,
         due_date: nfDueDate || selectedInstallment.due_date,
         nf_issue_date: nfIssueDate || null,
         nf_number: nfNumber || null,
@@ -542,7 +545,7 @@ export function Finance() {
     }
 
     setIsDateModalOpen(false);
-    toast.success(selectedInstallment.status === 'paid' ? 'Faturamento atualizado!' : 'Faturamento confirmado!');
+    toast.success(finalStatus === 'nf_emitida' ? 'Status alterado para NF Emitida!' : (selectedInstallment.status === 'paid' ? 'Faturamento atualizado!' : 'Faturamento confirmado!'));
 
     const contractId = selectedInstallment.contract_id || (selectedInstallment.contract as any)?.id;
     if (contractId) {
@@ -562,7 +565,7 @@ export function Finance() {
         } else {
           checkAndPromptBaixa(contractId, selectedInstallment.id);
         }
-      } else if (selectedInstallment.status === 'pending') {
+      } else if (selectedInstallment.status === 'pending' || selectedInstallment.status === 'nf_emitida') {
         checkAndPromptBaixa(contractId, selectedInstallment.id);
       } else {
         fetchData();
@@ -671,6 +674,7 @@ export function Finance() {
   const statusOptions = [
     { label: 'Todos Status', value: 'all' },
     { label: 'A Faturar', value: 'pending' },
+    { label: 'NF Emitidas', value: 'nf_emitida' },
     { label: 'Faturado', value: 'paid' },
     { label: 'Vencidos', value: 'overdue' },
   ];
@@ -760,6 +764,7 @@ export function Finance() {
   };
 
   const pendentesCount = installments.filter(i => i.status === 'pending' && i.contract?.status !== 'baixado').length;
+  const nfEmitidasCount = installments.filter(i => i.status === 'nf_emitida' && i.contract?.status !== 'baixado').length;
   const faturadosCount = installments.filter(i => i.status === 'paid' && i.contract?.status !== 'baixado').length;
   const baixadosCount = installments.filter(i => i.contract?.status === 'baixado').length;
   const todosCount = installments.length - baixadosCount;
@@ -799,6 +804,16 @@ export function Finance() {
               <Clock className="w-3.5 h-3.5" /> Pendentes
               <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${statusFilter === 'pending' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
                 {pendentesCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('nf_emitida')}
+              className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === 'nf_emitida' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <CheckCircle2 className={`w-3.5 h-3.5 ${statusFilter === 'nf_emitida' ? 'text-[#1e3a8a]' : ''}`} /> NF Emitidas
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${statusFilter === 'nf_emitida' ? 'bg-[#1e3a8a] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                {nfEmitidasCount}
               </span>
             </button>
 
@@ -949,7 +964,9 @@ export function Finance() {
                         <td className="p-4">
                           {item.status === 'paid'
                             ? <span className="flex items-center text-emerald-600 text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> Faturado</span>
-                            : <span className="flex items-center text-amber-500 text-[9px] font-black uppercase tracking-widest"><Circle className="w-3 h-3 mr-1" /> Pendente</span>
+                            : item.status === 'nf_emitida'
+                              ? <span className="flex items-center text-[#1e3a8a] text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> NF Emitida</span>
+                              : <span className="flex items-center text-amber-500 text-[9px] font-black uppercase tracking-widest"><Circle className="w-3 h-3 mr-1" /> Pendente</span>
                           }
                         </td>
                         <td className="p-4 text-[11px] font-semibold">
@@ -989,7 +1006,7 @@ export function Finance() {
                               <div className="ml-2 bg-purple-50/50 text-purple-600 border border-purple-100 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center">
                                 <CheckCircle2 className="w-3 h-3 mr-1" /> Baixado
                               </div>
-                            ) : item.status === 'pending' ? (
+                            ) : item.status === 'pending' || item.status === 'nf_emitida' ? (
                               <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1.5 rounded-lg hover:bg-amber-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
                                 <DollarSign className="w-3 h-3 mr-1" /> Faturar
                               </button>
@@ -1182,7 +1199,15 @@ export function Finance() {
 
             <div className="flex justify-end gap-3 mt-8">
               <button onClick={handleTryCloseBillingModal} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
-              <button onClick={confirmPayment} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">
+              {selectedInstallment?.status !== 'paid' && (
+                <button 
+                  onClick={() => confirmPayment('nf_emitida')} 
+                  className="bg-[#1e3a8a] text-white px-6 py-2.5 rounded-xl hover:bg-[#112240] shadow-lg shadow-blue-500/20 font-black text-[10px] uppercase tracking-widest transition-all"
+                >
+                  NF Emitida
+                </button>
+              )}
+              <button onClick={() => confirmPayment('paid')} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">
                 {selectedInstallment?.status === 'paid' ? 'Salvar Alterações' : 'Confirmar Pagamento'}
               </button>
             </div>

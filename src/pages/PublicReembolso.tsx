@@ -80,8 +80,6 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
   const fetchCollaborators = async () => {
     try {
-      const allNamesMap = new Map<string, Collaborator>();
-
       const getColabs = async () => {
         let { data, error } = await supabase.from('collaborators').select('id, name, leader_id, leader_ids, email').in('status', ['active', 'Ativo']);
         if (error || !data || data.length === 0) {
@@ -117,20 +115,13 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
         }
       });
 
+      const idToNameMap = new Map<string, string>();
       colabsList.forEach((c: any) => {
-        if (c?.name && !allNamesMap.has(c.name.trim().toLowerCase())) {
-          const primaryLeader = c.leader_id || (c.leader_ids && c.leader_ids.length > 0 ? c.leader_ids[0] : null);
-          allNamesMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim(), leader_id: primaryLeader, email: c.email });
-        }
+        if (c?.name) idToNameMap.set(String(c.id), c.name.trim());
       });
       partsList.forEach((p: any) => {
-        if (p?.name && !allNamesMap.has(p.name.trim().toLowerCase())) {
-          allNamesMap.set(p.name.trim().toLowerCase(), { id: p.id, name: p.name.trim(), email: p.email });
-        }
+        if (p?.name) idToNameMap.set(String(p.id), p.name.trim());
       });
-
-      const sortedColabs = Array.from(allNamesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-      setCollaborators(sortedColabs);
 
       const authMap = new Map<string, Collaborator>();
       partsList.forEach((p: any) => {
@@ -146,6 +137,33 @@ export default function PublicReembolso({ isModal = false, onClose }: PublicReem
 
       const sortedAuth = Array.from(authMap.values()).sort((a, b) => a.name.localeCompare(b.name));
       setAuthorizers(sortedAuth);
+
+      const allNamesMap = new Map<string, Collaborator>();
+      colabsList.forEach((c: any) => {
+        if (c?.name && !allNamesMap.has(c.name.trim().toLowerCase())) {
+          let primaryLeader = c.leader_id || (c.leader_ids && c.leader_ids.length > 0 ? c.leader_ids[0] : null);
+          
+          if (primaryLeader) {
+             const leaderName = idToNameMap.get(String(primaryLeader));
+             if (leaderName) {
+                const authorizerMatch = authMap.get(leaderName.toLowerCase());
+                if (authorizerMatch) {
+                   primaryLeader = authorizerMatch.id;
+                }
+             }
+          }
+          
+          allNamesMap.set(c.name.trim().toLowerCase(), { id: c.id, name: c.name.trim(), leader_id: primaryLeader, email: c.email });
+        }
+      });
+      partsList.forEach((p: any) => {
+        if (p?.name && !allNamesMap.has(p.name.trim().toLowerCase())) {
+          allNamesMap.set(p.name.trim().toLowerCase(), { id: p.id, name: p.name.trim(), email: p.email });
+        }
+      });
+
+      const sortedColabs = Array.from(allNamesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+      setCollaborators(sortedColabs);
 
     } catch (err) {
       console.error('Erro ao buscar integrantes', err);
