@@ -1237,14 +1237,14 @@ export function Finance() {
                  <div className="grid grid-cols-2 gap-4 pt-1">
                     {/* NF Column */}
                     <div>
-                      <label className="flex items-center justify-between text-[10px] font-bold text-[#0a192f] uppercase tracking-widest mb-2 ml-1">
-                         <span>Dados da Nota Fiscal</span>
+                      <div className="flex items-end justify-between mb-2 ml-1 h-[20px]">
+                         <label className="text-[10px] font-bold text-[#0a192f] uppercase tracking-widest leading-none">Dados da NF</label>
                          {selectedInstallment?.status !== 'paid' && (
-                           <button onClick={(e) => { e.preventDefault(); confirmPayment('nf_emitida'); }} className="text-[#1e3a8a] hover:text-blue-700 hover:bg-blue-50 px-2 py-0.5 rounded-[6px] transition-all flex items-center">
+                           <button onClick={(e) => { e.preventDefault(); confirmPayment('nf_emitida'); }} className="text-[#1e3a8a] hover:text-blue-700 hover:bg-blue-50 px-2 py-0.5 rounded-[6px] transition-all flex items-center text-[9px] font-bold leading-none shrink-0" title="Marcar como NF Emitida">
                               <CheckCircle2 className="w-3 h-3 mr-1" /> Marcar NF Emitida
                            </button>
                          )}
-                      </label>
+                      </div>
                       <input type="file" accept="application/pdf" className="hidden" ref={fileInputRef} onChange={handlePdfUpload} />
                       
                       <div className="flex border border-gray-200 rounded-xl overflow-hidden shadow-sm h-11 focus-within:border-[#1e3a8a] focus-within:ring-2 focus-within:ring-[#1e3a8a]/10 transition-all bg-white relative">
@@ -1286,7 +1286,9 @@ export function Finance() {
 
                     {/* Observações Column */}
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Observações</label>
+                      <div className="flex items-end mb-2 ml-1 h-[20px]">
+                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Observações</label>
+                      </div>
                       <input 
                         type="text"
                         className="w-full h-11 border border-gray-200 rounded-xl px-3.5 text-[13px] font-medium text-gray-700 shadow-sm focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/10 outline-none transition-all placeholder:text-gray-400"
@@ -1305,24 +1307,20 @@ export function Finance() {
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Valor Bruto</label>
                     <input 
                       type="text" 
-                      className="w-full bg-transparent text-3xl font-black text-[#1e3a8a] outline-none text-center transition-all"
+                      className="w-full bg-transparent text-2xl font-black text-[#1e3a8a] outline-none text-center transition-all"
                       placeholder="R$ 0,00" 
                       value={nfValue} 
                       onChange={(e) => setNfValue(maskMoney(e.target.value))} 
                     />
                  </div>
 
-                 <div className="relative bg-[#0a192f] p-6 rounded-[20px] flex flex-col items-center justify-center transition-all shadow-xl shadow-[#0a192f]/20 overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
-                    <div className="absolute -bottom-4 -right-4 p-3 opacity-[0.03] group-hover:opacity-[0.05] group-hover:scale-110 transition-all duration-700 pointer-events-none">
-                       <DollarSign className="w-32 h-32 text-white" />
-                    </div>
-                    <label className="text-[10px] font-black text-[#64ffda] uppercase tracking-widest mb-2.5 z-10 flex items-center">
+                 <div className="relative bg-white border border-gray-100 p-6 rounded-[20px] flex flex-col items-center justify-center transition-all shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden group">
+                    <label className="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-2.5 z-10 flex items-center">
                       <CheckCircle2 className="w-3 h-3 mr-1.5" /> Valor Líquido Recebido
                     </label>
                     <input 
                       type="text" 
-                      className="w-full bg-transparent text-[38px] leading-none font-black text-white outline-none text-center transition-all z-10 drop-shadow-md placeholder:text-white/30"
+                      className="w-full bg-transparent text-3xl font-black text-emerald-600 outline-none text-center transition-all z-10 drop-shadow-sm placeholder:text-emerald-600/30"
                       value={nfNetValue}
                       onChange={(e) => setNfNetValue(maskMoney(e.target.value))}
                       placeholder="R$ 0,00"
