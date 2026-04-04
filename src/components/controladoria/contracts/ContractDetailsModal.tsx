@@ -490,7 +490,23 @@ export function ContractDetailsModal({
       if (!val) return null;
       
       const numericVal = parseCurrency(val || '');
-      const formattedVal = numericVal > 0 ? formatMoney(numericVal) : val;
+      
+      const isPercent = val?.includes('%');
+      const isUSD = val?.includes('US$');
+      const isEUR = val?.includes('€');
+
+      let formattedVal = val;
+      if (numericVal > 0) {
+        if (isPercent) {
+          formattedVal = numericVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+        } else if (isUSD) {
+          formattedVal = 'US$ ' + numericVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } else if (isEUR) {
+          formattedVal = '€ ' + numericVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } else {
+          formattedVal = formatMoney(numericVal);
+        }
+      }
 
       const titleParts = [
         clause ? clause : null,
