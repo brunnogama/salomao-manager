@@ -1123,7 +1123,7 @@ export function Finance() {
               <X className="w-5 h-5 pointer-events-none" />
             </button>
 
-            <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4 pr-12">
+            <div className="flex justify-between items-start mb-4 pr-12">
               <div className="flex-1 min-w-0 mr-4">
                 <h3 className="text-lg font-black text-[#0a192f] mb-1 uppercase tracking-tight">
                   {selectedInstallment?.status === 'paid' ? 'Detalhes do Faturamento' : 'Confirmar Faturamento'}
@@ -1131,59 +1131,59 @@ export function Finance() {
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                   {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirma o recebimento desta parcela e informações fiscais?'}
                 </p>
-                <div className="grid grid-cols-12 gap-3 mt-3 pt-3 border-t border-gray-100/60 w-full items-end">
-                  <div className="col-span-3 min-w-0">
-                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">Cliente</span>
-                     <span className="text-[11px] font-black text-[#0a192f] truncate block" title={selectedInstallment?.contract?.client_name || '-'}>{selectedInstallment?.contract?.client_name || '-'}</span>
-                  </div>
-                  <div className="col-span-2 min-w-0">
-                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">HON</span>
-                     <span className="text-[11px] font-black text-[#0a192f] truncate block" title={selectedInstallment?.contract?.hon_number || '-'}>{selectedInstallment?.contract?.hon_number || '-'}</span>
-                  </div>
-                  <div className="col-span-2 min-w-0">
-                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">Cláusula</span>
-                     <span className="text-[11px] font-black text-[#0a192f] truncate block" title={(selectedInstallment as any)?.clause || '-'}>{(selectedInstallment as any)?.clause || '-'}</span>
-                  </div>
-                  
-                  <div className="col-span-2 min-w-0 z-[60] relative">
-                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 w-full truncate">Natureza</label>
-                     <CustomSelect 
-                       value={nfNature} 
-                       onChange={setNfNature} 
-                       options={[
-                         { label: 'Selecione', value: '' },
-                         { label: 'COND', value: 'COND' },
-                         { label: 'EXT', value: 'EXT' },
-                         { label: 'PF', value: 'PF' },
-                         { label: 'PJ', value: 'PJ' }
-                       ]}
-                     />
-                  </div>
-                  
-                  <div className="col-span-3 min-w-0 z-[60] relative">
-                     <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1.5 w-full truncate text-right">Local do Fat.</label>
-                     <CustomSelect 
-                       value={nfLocation} 
-                       onChange={setNfLocation} 
-                       options={[{ label: 'Selecione', value: '' }, ...billingLocations.map(l => ({ label: l, value: l }))]}
-                       actionLabel="Locais"
-                       actionIcon={Settings}
-                       onAction={() => setActiveManager('location')}
-                     />
-                  </div>
-                </div>
               </div>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  // No need to warn if they're actively navigating elsewhere via the module link
                   setIsDateModalOpen(false);
                   handleOpenContractModal(selectedInstallment!.contract_id);
                 }}
-                className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 flex items-center transition-all shrink-0"
+                className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 flex items-center transition-all shrink-0 mt-1"
               >
                 <Briefcase className="w-3.5 h-3.5 mr-2" /> Visualizar Contrato
               </button>
+            </div>
+
+            <div className="grid grid-cols-12 gap-3 mb-6 pb-4 border-b border-gray-100 items-end">
+              <div className="col-span-3 min-w-0">
+                 <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">Cliente</span>
+                 <span className="text-[11px] font-black text-[#0a192f] truncate block" title={selectedInstallment?.contract?.client_name || '-'}>{selectedInstallment?.contract?.client_name || '-'}</span>
+              </div>
+              <div className="col-span-2 min-w-0">
+                 <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">HON</span>
+                 <span className="text-[11px] font-black text-[#0a192f] truncate block" title={selectedInstallment?.contract?.hon_number || '-'}>{selectedInstallment?.contract?.hon_number || '-'}</span>
+              </div>
+              <div className="col-span-2 min-w-0">
+                 <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">Cláusula</span>
+                 <span className="text-[11px] font-black text-[#0a192f] truncate block" title={(selectedInstallment as any)?.clause || '-'}>{(selectedInstallment as any)?.clause || '-'}</span>
+              </div>
+              
+              <div className="col-span-2 min-w-0 z-[60] relative">
+                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 w-full truncate">Natureza</label>
+                 <CustomSelect 
+                   value={nfNature} 
+                   onChange={setNfNature} 
+                   options={[
+                     { label: 'Selecione', value: '' },
+                     { label: 'COND', value: 'COND' },
+                     { label: 'EXT', value: 'EXT' },
+                     { label: 'PF', value: 'PF' },
+                     { label: 'PJ', value: 'PJ' }
+                   ]}
+                 />
+              </div>
+              
+              <div className="col-span-3 min-w-0 z-[60] relative">
+                 <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1.5 w-full truncate text-right">Local do Fat.</label>
+                 <CustomSelect 
+                   value={nfLocation} 
+                   onChange={setNfLocation} 
+                   options={[{ label: 'Selecione', value: '' }, ...billingLocations.map(l => ({ label: l, value: l }))]}
+                   actionLabel="Locais"
+                   actionIcon={Settings}
+                   onAction={() => setActiveManager('location')}
+                 />
+              </div>
             </div>
 
             <div className="space-y-6">
