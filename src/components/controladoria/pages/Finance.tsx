@@ -64,6 +64,7 @@ export function Finance() {
 
   const [nfNetValue, setNfNetValue] = useState('');
   const [nfObservations, setNfObservations] = useState('');
+  const [nfPdf, setNfPdf] = useState('');
 
   useEffect(() => {
     const value = parseCurrency(nfValue) || 0;
@@ -85,7 +86,7 @@ export function Finance() {
   const getCurrentBillingState = () => {
     return JSON.stringify({
       nfIssueDate, nfDueDate, billingDate, nfNumber, nfLocation, nfNature, nfObservations,
-      nfIrpj, nfPis, nfCofins, nfCsll, nfValue, nfNetValue
+      nfIrpj, nfPis, nfCofins, nfCsll, nfValue, nfNetValue, nfPdf
     });
   };
 
@@ -464,6 +465,7 @@ export function Finance() {
     setNfLocation(installment.nf_location || '');
     setNfNature(installment.nf_nature || '');
     setNfObservations((installment as any).observations || '');
+    setNfPdf(installment.nf_pdf || '');
     
     setNfIrpj(installment.tax_irpj ? maskMoney(installment.tax_irpj.toFixed(2).replace('.', ',')) : '');
     setNfPis(installment.tax_pis ? maskMoney(installment.tax_pis.toFixed(2).replace('.', ',')) : '');
@@ -501,7 +503,8 @@ export function Finance() {
       nfCofins: installment.tax_cofins ? maskMoney(installment.tax_cofins.toFixed(2).replace('.', ',')) : '',
       nfCsll: installment.tax_csll ? maskMoney(installment.tax_csll.toFixed(2).replace('.', ',')) : '',
       nfValue: formattedNfValue,
-      nfNetValue: initialNetValue
+      nfNetValue: initialNetValue,
+      nfPdf: installment.nf_pdf || ''
     });
     setInitialBillingState(initialState);
     
@@ -527,7 +530,8 @@ export function Finance() {
         tax_cofins: nfCofins ? parseCurrency(String(nfCofins)) : null,
         tax_csll: nfCsll ? parseCurrency(String(nfCsll)) : null,
         net_value: nfNetValue ? parseCurrency(String(nfNetValue)) : null,
-        observations: nfObservations || null
+        observations: nfObservations || null,
+        nf_pdf: nfPdf || null
       })
       .eq('id', selectedInstallment.id);
       
@@ -1123,6 +1127,10 @@ export function Finance() {
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">NF (Opcional)</label>
                   <input type="text" placeholder="Nº NF/Boleto" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" value={nfNumber} onChange={(e) => setNfNumber(e.target.value)} />
+                </div>
+                <div className="sm:col-span-1">
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">NF PDF Link (Opcional)</label>
+                  <input type="text" placeholder="URL do PDF da NF" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" value={nfPdf} onChange={(e) => setNfPdf(e.target.value)} />
                 </div>
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">Valor Bruto (R$)</label>
