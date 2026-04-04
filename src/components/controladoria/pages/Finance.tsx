@@ -1013,7 +1013,7 @@ export function Finance() {
           
           <div
             onClick={totalOverdueCount > 0 ? handleFilterOverdue : undefined}
-            className={`min-w-[110px] xl:min-w-[130px] flex-1 p-3.5 pl-4 rounded-[14px] border flex flex-col justify-center relative overflow-hidden group transition-all shrink-0 ${totalOverdueCount > 0
+            className={`min-w-[150px] xl:min-w-[180px] flex-1 p-3.5 pl-4 rounded-[14px] border flex flex-col justify-center relative overflow-hidden group transition-all shrink-0 ${totalOverdueCount > 0
               ? 'bg-red-50 border-red-100 cursor-pointer hover:shadow-md'
               : 'bg-white border-gray-100 shadow-sm hover:shadow-md'
               }`}
@@ -1031,13 +1031,13 @@ export function Finance() {
             )}
           </div>
 
-          <div className="min-w-[110px] xl:min-w-[130px] flex-1 bg-white p-3.5 pl-4 rounded-[14px] border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden group hover:shadow-md transition-all shrink-0">
+          <div className="min-w-[150px] xl:min-w-[180px] flex-1 bg-white p-3.5 pl-4 rounded-[14px] border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden group hover:shadow-md transition-all shrink-0">
             <div className="absolute left-0 top-0 h-full w-[3px] bg-amber-500"></div>
             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Pendente</p>
             <p className="text-[17px] font-black text-amber-900 leading-none truncate" title={formatCompactMoney(totalPending)}>{formatCompactMoney(totalPending)}</p>
           </div>
 
-          <div className="min-w-[110px] xl:min-w-[130px] flex-1 bg-white p-3.5 pl-4 rounded-[14px] border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden group hover:shadow-md transition-all shrink-0">
+          <div className="min-w-[150px] xl:min-w-[180px] flex-1 bg-white p-3.5 pl-4 rounded-[14px] border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden group hover:shadow-md transition-all shrink-0">
             <div className="absolute left-0 top-0 h-full w-[3px] bg-emerald-500"></div>
             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Faturado</p>
             <p className="text-[17px] font-black text-emerald-900 leading-none truncate" title={formatCompactMoney(totalPaid)}>{formatCompactMoney(totalPaid)}</p>
