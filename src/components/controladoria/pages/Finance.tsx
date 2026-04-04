@@ -989,7 +989,7 @@ export function Finance() {
                               <div className="ml-2 bg-purple-50/50 text-purple-600 border border-purple-100 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center">
                                 <CheckCircle2 className="w-3 h-3 mr-1" /> Baixado
                               </div>
-                            ) : item.status === 'pending' ? (
+                            ) : item.status === 'pending' || item.status === 'nf_emitida' ? (
                               <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1.5 rounded-lg hover:bg-amber-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
                                 <DollarSign className="w-3 h-3 mr-1" /> Faturar
                               </button>
