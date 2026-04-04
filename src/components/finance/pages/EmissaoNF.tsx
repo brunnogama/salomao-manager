@@ -63,6 +63,11 @@ const EmissaoNF = () => {
   const [cofins, setCofins] = useState<number>(0);
   const [csll, setCsll] = useState<number>(0);
 
+  // Novos campos NF Emitida
+  const [dataEmissao, setDataEmissao] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [vencimento, setVencimento] = useState<string>('');
+  const [nfNumber, setNfNumber] = useState<string>('');
+
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
   const clientDropdownRef = useRef<HTMLDivElement>(null);
@@ -296,6 +301,7 @@ const EmissaoNF = () => {
   const handleSelectHonorario = (hon: any) => {
     setSelectedHonorario(hon);
     setValorNF(hon.amount || 0);
+    setVencimento(hon.due_date ? hon.due_date.split('T')[0] : '');
 
     const texto = `Referente aos honorários de ${formatTypeText(hon.type)}
 ID do contrato: ${hon.contract?.display_id || hon.contract?.seq_id || 'N/A'}
@@ -354,10 +360,43 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
       }
 
       if (response.ok) {
+        
+        let locId: number | null = null;
+        try {
+          const sigla = getSiglaByCity(selectedCity);
+          const { data: locs } = await supabase.from('locations').select('id, name');
+          if (locs) {
+            const matched = locs.find((l: any) => l.name.includes(sigla) || l.name.toLowerCase().includes(selectedCity.toLowerCase()));
+            if (matched) locId = matched.id;
+          }
+        } catch (e) {
+          console.error("Erro buscar local:", e);
+        }
+
+        const valorLiquido = valorNF - irpj - pis - cofins - csll;
+        
+        await supabase.from('financial_installments').update({
+          status: 'nf_emitida',
+          nf_issue_date: dataEmissao || null,
+          due_date: vencimento || null,
+          nf_location: locId,
+          nf_nature: discriminacao,
+          nf_value: valorNF,
+          tax_irpj: irpj,
+          tax_pis: pis,
+          tax_cofins: cofins,
+          tax_csll: csll,
+          net_value: valorLiquido,
+          nf_number: nfNumber || null
+        }).eq('id', selectedHonorario.id);
+
         toast.dismiss(loadingToast);
-        toast.success("Nota Fiscal Assinada com Sucesso!");
+        toast.success("Nota Fiscal Assinada e Registrada!");
+        
+        setHonorarios(prev => prev.filter(h => h.id !== selectedHonorario.id));
+        setSelectedHonorario(null);
+
         console.log("RPS Assinado (XML):", data.xml);
-        // Em um cenário real, aqui viria o envio para a Prefeitura
       } else {
         toast.dismiss(loadingToast);
         toast.error("Erro na emissão", {
@@ -826,8 +865,47 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                         placeholder="0,00" />
                   </div>
                </div>
+
+               {/* VALOR LÍQUIDO */}
+               <div className="flex border-b-[3px] border-gray-800 h-14 sm:h-16">
+                  <div className="bg-gray-200 flex items-center justify-center font-black uppercase text-[11px] sm:text-[13px] px-4 sm:px-8 border-r border-gray-400 shrink-0">
+                     Valor Líquido
+                  </div>
+                  <div className="flex-1 flex items-center px-4 sm:px-6 relative group bg-emerald-50">
+                     <span className="font-bold text-gray-500 mr-2 text-sm sm:text-base">R$</span>
+                     <span className="text-xl sm:text-2xl font-black text-emerald-700">
+                        {maskMoney(((valorNF - irpj - pis - cofins - csll) * 100).toFixed(0))}
+                     </span>
+                  </div>
+               </div>
+
+               {/* DADOS ADICIONAIS NF */}
+               <div className="flex divide-x divide-gray-400 bg-white text-[10px] sm:text-[11px] h-14 border-b-[3px] border-gray-800">
+                  <div className="flex-1 flex flex-col hover:bg-gray-50 transition-colors">
+                     <span className="font-semibold px-2 py-0.5 border-b border-gray-300 text-center">Data Emissão</span>
+                     <input type="date" className="w-full h-full px-2 bg-transparent font-black outline-none text-center text-[#1e3a8a] text-[12px]" 
+                        value={dataEmissao}
+                        onChange={e => setDataEmissao(e.target.value)} 
+                     />
+                  </div>
+                  <div className="flex-1 flex flex-col hover:bg-gray-50 transition-colors">
+                     <span className="font-semibold px-2 py-0.5 border-b border-gray-300 text-center">Vencimento</span>
+                     <input type="date" className="w-full h-full px-2 bg-transparent font-black outline-none text-center text-[#1e3a8a] text-[12px]" 
+                        value={vencimento}
+                        onChange={e => setVencimento(e.target.value)} 
+                     />
+                  </div>
+                  <div className="flex-[2] flex flex-col hover:bg-gray-50 transition-colors">
+                     <span className="font-semibold px-2 py-0.5 border-b border-gray-300 text-center">NF (Opcional)</span>
+                     <input type="text" className="w-full h-full px-2 bg-transparent font-black outline-none text-center text-[#1e3a8a] text-[12px]" 
+                        value={nfNumber}
+                        onChange={e => setNfNumber(e.target.value)}
+                        placeholder="Nº da Nota Fiscal Emitida (Ex: 00000000)" 
+                     />
+                  </div>
+               </div>
                
-               <div className="border-t-[3px] border-gray-800 flex flex-col text-[9px] sm:text-[10px] p-2 sm:p-3 bg-white space-y-0.5">
+               <div className="flex flex-col text-[9px] sm:text-[10px] p-2 sm:p-3 bg-white space-y-0.5">
                   <strong className="text-black mb-1">OUTRAS INFORMAÇÕES / DEDUÇÕES</strong>
                   <span className="text-gray-700">- Documento referencial gerado eletronicamente via Integração Salomão Manager.</span>
                   <span className="text-gray-700">- Tributação conforme legislação vigente do município emissor na data atual.</span>

@@ -454,7 +454,7 @@ export interface FinancialInstallment {
   total_installments: number;
   due_date: string | null;
   paid_at?: string | null;
-  status: 'pending' | 'paid';
+  status: 'pending' | 'paid' | 'nf_emitida';
   clause?: string;
   nf_number?: string;
   nf_issue_date?: string | null;

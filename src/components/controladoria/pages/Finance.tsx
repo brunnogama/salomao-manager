@@ -291,7 +291,7 @@ export function Finance() {
 
   const todayStr = new Date().toISOString().split('T')[0];
   const isOverdue = (inst: FinancialInstallment) => {
-    if (inst.status !== 'pending' || !inst.due_date) return false;
+    if ((inst.status !== 'pending' && inst.status !== 'nf_emitida') || !inst.due_date) return false;
     const dueDateStr = inst.due_date.split('T')[0];
     return dueDateStr < todayStr;
   };
@@ -422,7 +422,7 @@ export function Finance() {
 
   const filteredInstallments = baseInstallments.filter(i => {
     let matchesStatus = true;
-    if (statusFilter === 'pending') matchesStatus = i.status === 'pending' && i.contract?.status !== 'baixado';
+    if (statusFilter === 'pending') matchesStatus = (i.status === 'pending' || i.status === 'nf_emitida') && i.contract?.status !== 'baixado';
     if (statusFilter === 'paid') matchesStatus = i.status === 'paid' && i.contract?.status !== 'baixado';
     if (statusFilter === 'baixado') matchesStatus = i.contract?.status === 'baixado';
     if (statusFilter === 'all') matchesStatus = i.contract?.status !== 'baixado';
@@ -450,9 +450,9 @@ export function Finance() {
     return clauseA.localeCompare(clauseB);
   });
 
-  const totalPending = baseInstallments.filter(i => i.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalPending = baseInstallments.filter(i => i.status === 'pending' || i.status === 'nf_emitida').reduce((acc, curr) => acc + curr.amount, 0);
   const totalPaid = baseInstallments.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0);
-  const totalPendingCount = baseInstallments.filter(i => i.status === 'pending').length;
+  const totalPendingCount = baseInstallments.filter(i => i.status === 'pending' || i.status === 'nf_emitida').length;
   const totalOverdueCount = installments.filter(i => isOverdue(i)).length;
 
   const handleMarkAsPaid = (installment: FinancialInstallment) => {
@@ -558,7 +558,7 @@ export function Finance() {
         } else {
           checkAndPromptBaixa(contractId, selectedInstallment.id);
         }
-      } else if (selectedInstallment.status === 'pending') {
+      } else if (selectedInstallment.status === 'pending' || selectedInstallment.status === 'nf_emitida') {
         checkAndPromptBaixa(contractId, selectedInstallment.id);
       } else {
         fetchData();
@@ -755,7 +755,7 @@ export function Finance() {
     clearFilters();
   };
 
-  const pendentesCount = installments.filter(i => i.status === 'pending' && i.contract?.status !== 'baixado').length;
+  const pendentesCount = installments.filter(i => (i.status === 'pending' || i.status === 'nf_emitida') && i.contract?.status !== 'baixado').length;
   const faturadosCount = installments.filter(i => i.status === 'paid' && i.contract?.status !== 'baixado').length;
   const baixadosCount = installments.filter(i => i.contract?.status === 'baixado').length;
   const todosCount = installments.length - baixadosCount;
@@ -945,7 +945,9 @@ export function Finance() {
                         <td className="p-4">
                           {item.status === 'paid'
                             ? <span className="flex items-center text-emerald-600 text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> Faturado</span>
-                            : <span className="flex items-center text-amber-500 text-[9px] font-black uppercase tracking-widest"><Circle className="w-3 h-3 mr-1" /> Pendente</span>
+                            : item.status === 'nf_emitida'
+                              ? <span className="flex items-center text-[#1e3a8a] text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> NF Emitida</span>
+                              : <span className="flex items-center text-amber-500 text-[9px] font-black uppercase tracking-widest"><Circle className="w-3 h-3 mr-1" /> Pendente</span>
                           }
                         </td>
                         <td className="p-4 text-[11px] font-semibold">
