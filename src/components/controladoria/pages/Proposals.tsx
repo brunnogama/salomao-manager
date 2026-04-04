@@ -438,24 +438,24 @@ export function Proposals() {
       reference: proposalData.reference,
       observations: proposalData.object,
 
-      pro_labore: safeParseFloat(proLaboreMain.value),
+      pro_labore: proLaboreMain.value,
       pro_labore_clause: proLaboreMain.description,
-      pro_labore_extras: proLaboreExtras.length ? proLaboreExtras.map(v => safeParseFloat(v)) : null,
+      pro_labore_extras: proLaboreExtras.length ? proLaboreExtras : null,
       pro_labore_extras_clauses: proLaboreExtrasClauses.length ? proLaboreExtrasClauses : null,
 
-      final_success_fee: firstCurrencySuccess ? safeParseFloat(firstCurrencySuccess.value) : null,
+      final_success_fee: firstCurrencySuccess ? firstCurrencySuccess.value : null,
       final_success_fee_clause: firstCurrencySuccess?.description || null,
 
       final_success_percent: firstPercentSuccess?.value || null,
       final_success_percent_clause: firstPercentSuccess?.description || null,
 
-      final_success_extras: currencyExtras.length ? currencyExtras.map(c => safeParseFloat(c.value)) : null,
+      final_success_extras: currencyExtras.length ? currencyExtras.map(c => c.value) : null,
       final_success_extras_clauses: currencyExtras.length ? currencyExtras.map(c => c.description) : null,
 
-      percent_extras: percentExtras.length ? percentExtras.map(c => safeParseFloat(c.value)) : null,
+      percent_extras: percentExtras.length ? percentExtras.map(c => c.value) : null,
       percent_extras_clauses: percentExtras.length ? percentExtras.map(c => c.description) : null,
 
-      intermediate_fees: intermediateValues.length ? intermediateValues.map(v => safeParseFloat(v)) : null,
+      intermediate_fees: intermediateValues.length ? intermediateValues : null,
       intermediate_fees_clauses: intermediateClauses.length ? intermediateClauses : null,
 
       has_legal_process: false,
