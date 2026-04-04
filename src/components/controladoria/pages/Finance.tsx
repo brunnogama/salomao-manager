@@ -422,7 +422,8 @@ export function Finance() {
 
   const filteredInstallments = baseInstallments.filter(i => {
     let matchesStatus = true;
-    if (statusFilter === 'pending') matchesStatus = (i.status === 'pending' || i.status === 'nf_emitida') && i.contract?.status !== 'baixado';
+    if (statusFilter === 'pending') matchesStatus = i.status === 'pending' && i.contract?.status !== 'baixado';
+    if (statusFilter === 'nf_emitida') matchesStatus = i.status === 'nf_emitida' && i.contract?.status !== 'baixado';
     if (statusFilter === 'paid') matchesStatus = i.status === 'paid' && i.contract?.status !== 'baixado';
     if (statusFilter === 'baixado') matchesStatus = i.contract?.status === 'baixado';
     if (statusFilter === 'all') matchesStatus = i.contract?.status !== 'baixado';
@@ -669,6 +670,7 @@ export function Finance() {
   const statusOptions = [
     { label: 'Todos Status', value: 'all' },
     { label: 'A Faturar', value: 'pending' },
+    { label: 'NF Emitidas', value: 'nf_emitida' },
     { label: 'Faturado', value: 'paid' },
     { label: 'Vencidos', value: 'overdue' },
   ];
@@ -757,7 +759,8 @@ export function Finance() {
     clearFilters();
   };
 
-  const pendentesCount = installments.filter(i => (i.status === 'pending' || i.status === 'nf_emitida') && i.contract?.status !== 'baixado').length;
+  const pendentesCount = installments.filter(i => i.status === 'pending' && i.contract?.status !== 'baixado').length;
+  const nfEmitidasCount = installments.filter(i => i.status === 'nf_emitida' && i.contract?.status !== 'baixado').length;
   const faturadosCount = installments.filter(i => i.status === 'paid' && i.contract?.status !== 'baixado').length;
   const baixadosCount = installments.filter(i => i.contract?.status === 'baixado').length;
   const todosCount = installments.length - baixadosCount;
@@ -797,6 +800,16 @@ export function Finance() {
               <Clock className="w-3.5 h-3.5" /> Pendentes
               <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${statusFilter === 'pending' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
                 {pendentesCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('nf_emitida')}
+              className={`flex shrink-0 items-center justify-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === 'nf_emitida' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <CheckCircle2 className={`w-3.5 h-3.5 ${statusFilter === 'nf_emitida' ? 'text-[#1e3a8a]' : ''}`} /> NF Emitidas
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ml-1 ${statusFilter === 'nf_emitida' ? 'bg-[#1e3a8a] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                {nfEmitidasCount}
               </span>
             </button>
 
