@@ -67,6 +67,11 @@ export function Finance() {
   const [nfPdf, setNfPdf] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // States para Faturamento Avulso
+  const [availableContracts, setAvailableContracts] = useState<{ id: string; client_name: string; hon_number: string }[]>([]);
+  const [selectedAvulsoContractId, setSelectedAvulsoContractId] = useState('');
+  const [avulsoClause, setAvulsoClause] = useState('Faturamento Avulso');
+
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -564,9 +569,53 @@ export function Finance() {
   };
 
   const confirmPayment = async (targetStatus?: 'paid' | 'nf_emitida') => {
-    if (!selectedInstallment) return;
+    if (!selectedInstallment && !selectedAvulsoContractId) {
+      toast.error('Selecione um contrato para o faturamento avulso');
+      return;
+    }
     
     const finalStatus = targetStatus || 'paid';
+
+    if (!selectedInstallment) {
+      // INSERIR MODO AVULSO
+      const net = nfNetValue ? parseCurrency(String(nfNetValue)) : null;
+      const val = nfValue ? parseCurrency(String(nfValue)) : 0;
+      
+      const newInst = {
+        contract_id: selectedAvulsoContractId,
+        type: 'other_fees', // Tratado como outros honorários/avulso nativamente
+        amount: val,
+        installment_number: 1,
+        total_installments: 1,
+        due_date: nfDueDate || todayStr,
+        paid_at: finalStatus === 'paid' ? (billingDate || null) : null,
+        status: finalStatus,
+        clause: avulsoClause,
+        nf_issue_date: nfIssueDate || null,
+        nf_number: nfNumber || null,
+        nf_location: nfLocation || null,
+        nf_nature: nfNature || null,
+        nf_value: val,
+        tax_irpj: nfIrpj ? parseCurrency(String(nfIrpj)) : null,
+        tax_pis: nfPis ? parseCurrency(String(nfPis)) : null,
+        tax_cofins: nfCofins ? parseCurrency(String(nfCofins)) : null,
+        tax_csll: nfCsll ? parseCurrency(String(nfCsll)) : null,
+        net_value: net,
+        observations: nfObservations || null,
+        nf_pdf: nfPdf || null
+      };
+
+      const { error } = await supabase.from('financial_installments').insert([newInst]);
+      if (error) {
+        console.error(error);
+        toast.error(`Erro ao salvar: ${error.message}`);
+        return;
+      }
+      setIsDateModalOpen(false);
+      toast.success('Novo lançamento inserido com sucesso!');
+      fetchData();
+      return;
+    }
 
     // Atualiza a parcela com a data de pagamento, status de pago e número da NF
     const { error } = await supabase.from('financial_installments')
@@ -688,8 +737,28 @@ export function Finance() {
     }
   };
 
-  const handleNewInvoice = () => {
-    alert("Abrir modal de Cadastro de Casos / Faturamento avulso");
+  const handleNewInvoice = async () => {
+    setSelectedInstallment(null);
+    setSelectedAvulsoContractId('');
+    setAvulsoClause('');
+    setNfIssueDate(todayStr); // emissão default
+    setNfDueDate(todayStr); // venc default
+    setBillingDate(''); // previne pgt auto
+    setNfNumber('');
+    setNfLocation('');
+    setNfNature('');
+    setNfObservations('');
+    setNfPdf('');
+    setNfIrpj(''); setNfPis(''); setNfCofins(''); setNfCsll('');
+    setNfValue(''); setNfNetValue('');
+    setInitialBillingState('');
+    
+    const toastId = toast.loading('Carregando cadastro de avulso...');
+    const { data: contractsData } = await supabase.from('contracts').select('id, client_name, hon_number').eq('status', 'active').order('client_name');
+    toast.dismiss(toastId);
+    
+    setAvailableContracts(contractsData || []);
+    setIsDateModalOpen(true);
   };
 
   const exportToExcel = () => {
@@ -820,6 +889,16 @@ export function Finance() {
   const baixadosCount = installments.filter(i => i.contract?.status === 'baixado').length;
   const todosCount = installments.length - baixadosCount;
 
+  const formatCompactMoney = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      notation: 'compact',
+      compactDisplay: 'short',
+      maximumFractionDigits: 1
+    }).format(value);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
 
@@ -909,65 +988,57 @@ export function Finance() {
         </div>
       </div>
 
-      {/* 2. Cards de Totais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div
-          onClick={totalOverdueCount > 0 ? handleFilterOverdue : undefined}
-          className={`p-5 rounded-2xl border shadow-sm flex items-center justify-between relative overflow-hidden group transition-all ${totalOverdueCount > 0
-            ? 'bg-red-50 border-red-100 cursor-pointer hover:shadow-md'
-            : 'bg-white border-gray-100'
-            }`}
-        >
-          <div className={`absolute right-0 top-0 h-full w-1 ${totalOverdueCount > 0 ? 'bg-red-600' : 'bg-blue-600'}`}></div>
-          <div>
-            <p className={`text-[10px] font-black uppercase tracking-widest ${totalOverdueCount > 0 ? 'text-red-400' : 'text-gray-400'}`}>A Receber</p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <p className={`text-2xl font-black ${totalOverdueCount > 0 ? 'text-red-900' : 'text-blue-900'}`}>{totalPendingCount}</p>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{totalPendingCount === 1 ? 'parcela' : 'parcelas'}</span>
+      {/* 2 & 3. UI Horizontal Direta: Cards + FilterBar */}
+      <div className="flex flex-col xl:flex-row gap-3 items-stretch">
+        
+        {/* Minicards */}
+        <div className="flex gap-3 overflow-x-auto hide-scrollbar shrink-0 w-full xl:w-auto">
+          
+          <div
+            onClick={totalOverdueCount > 0 ? handleFilterOverdue : undefined}
+            className={`min-w-[110px] flex-1 p-3.5 rounded-[14px] border flex flex-col justify-between relative overflow-hidden group transition-all shrink-0 ${totalOverdueCount > 0
+              ? 'bg-red-50 border-red-100 cursor-pointer hover:shadow-md'
+              : 'bg-white border-gray-100 shadow-sm'
+              }`}
+          >
+            <div className={`absolute right-0 top-0 h-full w-[3px] ${totalOverdueCount > 0 ? 'bg-red-600' : 'bg-[#1e3a8a]'}`}></div>
+            <p className={`text-[9px] font-black uppercase tracking-widest ${totalOverdueCount > 0 ? 'text-red-400' : 'text-gray-400'}`}>A Receber</p>
+            <div className="mt-1">
+              <p className={`text-xl font-black leading-none ${totalOverdueCount > 0 ? 'text-red-900' : 'text-[#1e3a8a]'}`}>{totalPendingCount} <span className="text-[10px] tracking-widest font-bold uppercase text-gray-400">parc.</span></p>
+              {totalOverdueCount > 0 && (
+                <p className="text-[9px] font-bold text-red-600 uppercase tracking-widest animate-pulse mt-1">
+                  ! {totalOverdueCount} {totalOverdueCount === 1 ? 'venc.' : 'venc.'}
+                </p>
+              )}
             </div>
-            {totalOverdueCount > 0 && (
-              <p className="text-[10px] font-black text-red-600 mt-1 uppercase tracking-widest animate-pulse">
-                {totalOverdueCount} {totalOverdueCount === 1 ? 'vencida' : 'vencidas'}
-              </p>
-            )}
           </div>
-          <div className={`p-3 rounded-xl ${totalOverdueCount > 0 ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
-            {totalOverdueCount > 0 ? <AlertTriangle className="h-6 w-6" /> : <Hash className="h-6 w-6" />}
+
+          <div className="min-w-[130px] flex-1 bg-white p-3.5 rounded-[14px] border border-gray-100 shadow-sm flex flex-col justify-between relative overflow-hidden shrink-0">
+            <div className="absolute right-0 top-0 h-full w-[3px] bg-amber-500"></div>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Pendente</p>
+            <p className="text-[22px] font-black text-amber-900 mt-1 leading-none">{formatCompactMoney(totalPending)}</p>
           </div>
+
+          <div className="min-w-[130px] flex-1 bg-white p-3.5 rounded-[14px] border border-gray-100 shadow-sm flex flex-col justify-between relative overflow-hidden shrink-0">
+            <div className="absolute right-0 top-0 h-full w-[3px] bg-emerald-500"></div>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Faturado</p>
+            <p className="text-[22px] font-black text-emerald-900 mt-1 leading-none">{formatCompactMoney(totalPaid)}</p>
+          </div>
+          
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-amber-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pendente (R$)</p>
-            <p className="text-2xl font-black text-amber-900 mt-1">{totalPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-          </div>
-          <div className="p-3 bg-amber-50 rounded-xl text-amber-600">
-            <Clock className="h-6 w-6" />
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Faturado (R$)</p>
-            <p className="text-2xl font-black text-emerald-900 mt-1">{totalPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-          </div>
-          <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600">
-            <CheckCircle2 className="h-6 w-6" />
-          </div>
+        {/* FilterBar */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          <FilterBar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            categories={filterCategories}
+            activeFilterChips={activeFilterChips}
+            activeFilterCount={activeFilterCount}
+            onClearAll={clearAllFilters}
+          />
         </div>
       </div>
-
-      {/* 3. FilterBar */}
-      <FilterBar
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        categories={filterCategories}
-        activeFilterChips={activeFilterChips}
-        activeFilterCount={activeFilterCount}
-        onClearAll={clearAllFilters}
-      />
 
       {/* 4. Área de Conteúdo */}
       <div className="flex-1">
@@ -1126,25 +1197,80 @@ export function Finance() {
             <div className="flex justify-between items-start mb-6 pr-10">
               <div>
                 <h3 className="text-2xl font-black text-[#0a192f] tracking-tight">
-                  {selectedInstallment?.status === 'paid' ? 'Detalhes do Faturamento' : 'Confirmar Faturamento'}
+                  {!selectedInstallment ? 'Novo Faturamento Avulso' : (selectedInstallment?.status === 'paid' ? 'Detalhes do Faturamento' : 'Confirmar Faturamento')}
                 </h3>
                 <p className="text-sm font-semibold text-gray-500 mt-1">
-                  {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirme os dados e os impostos para faturar esta parcela'}
+                  {!selectedInstallment ? 'Preencha os dados e selecione o contrato para registrar o honorário' : (selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirme os dados e os impostos para faturar esta parcela')}
                 </p>
               </div>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsDateModalOpen(false);
-                  handleOpenContractModal(selectedInstallment!.contract_id);
+                  if (selectedInstallment) {
+                    handleOpenContractModal(selectedInstallment.contract_id);
+                  }
                 }}
-                className="bg-gray-50 hover:bg-gray-100 text-[#0a192f] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center border border-gray-200 outline-none"
+                className={`bg-gray-50 hover:bg-gray-100 text-[#0a192f] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center border border-gray-200 outline-none ${!selectedInstallment ? 'opacity-0 pointer-events-none' : ''}`}
               >
                 <Briefcase className="w-4 h-4 mr-2 text-gray-500" /> Contrato
               </button>
             </div>
 
             {/* Informações de Contexto do Contrato */}
+            {!selectedInstallment ? (
+            <div className="bg-gray-50/80 rounded-[20px] p-5 border border-blue-100 mb-6 flex flex-col gap-4 shadow-sm">
+               <div className="flex flex-col md:flex-row gap-5">
+                 <div className="flex-[2] z-[70] relative">
+                   <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Selecione o Cliente / Contrato base</span>
+                   <CustomSelect 
+                     value={selectedAvulsoContractId}
+                     onChange={setSelectedAvulsoContractId}
+                     options={availableContracts.map(c => ({ label: `${c.client_name} - ${c.hon_number || 'Sem HON'}`, value: c.id }))}
+                     placeholder="Buscar contratos ativos..."
+                   />
+                 </div>
+                 <div className="flex-1">
+                   <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Cláusula / Honorário</span>
+                   <input 
+                      type="text"
+                      placeholder="Ex: Honorário Pró-Êxito"
+                      className="w-full border border-gray-200 rounded-lg px-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] outline-none transition-all h-[42px] bg-white placeholder:text-gray-300 placeholder:font-medium" 
+                      value={avulsoClause} 
+                      onChange={(e) => setAvulsoClause(e.target.value)} 
+                   />
+                 </div>
+               </div>
+               
+               <div className="flex gap-4 pt-4 border-t border-gray-200/60 z-[60] relative mt-1">
+                  <div className="flex-1">
+                     <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Natureza</span>
+                     <CustomSelect 
+                       value={nfNature} 
+                       onChange={setNfNature} 
+                       options={[
+                         { label: 'Sel.', value: '' },
+                         { label: 'COND', value: 'COND' },
+                         { label: 'EXT', value: 'EXT' },
+                         { label: 'PF', value: 'PF' },
+                         { label: 'PJ', value: 'PJ' }
+                       ]}
+                     />
+                  </div>
+                  <div className="flex-[2]">
+                     <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Local do Faturamento</span>
+                     <CustomSelect 
+                       value={nfLocation} 
+                       onChange={setNfLocation} 
+                       options={[{ label: 'Selecione', value: '' }, ...billingLocations.map(l => ({ label: l, value: l }))]}
+                       actionLabel="Gerenciar"
+                       actionIcon={Settings}
+                       onAction={() => setActiveManager('location')}
+                     />
+                  </div>
+               </div>
+            </div>
+            ) : (
             <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 mb-6 flex flex-wrap gap-5 items-center">
                <div className="flex-1 min-w-[150px]">
                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1">Cliente</span>
@@ -1189,6 +1315,7 @@ export function Finance() {
                   </div>
                </div>
             </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
               {/* Left Column: Formulário de Datas, Impostos e NF */}
