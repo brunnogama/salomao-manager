@@ -234,7 +234,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
           {/* Kanban Button */}
           <button
-            onClick={() => window.open('/kanban_pessoal', '_blank', 'width=1200,height=800,menubar=no,toolbar=no')}
+            onClick={() => window.open('/kanban_pessoal', 'kanban_window', 'width=1200,height=800,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes,popup=yes')}
             className="p-2.5 text-white/50 hover:text-[#d4af37] transition-all rounded-full hover:bg-white/10 active:scale-95 group relative"
             title="Kanban Pessoal"
           >
