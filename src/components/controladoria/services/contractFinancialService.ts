@@ -127,7 +127,10 @@ export const generateFinancialInstallments = async (contractId: string, sourceDa
             const instStr = installments[idx] || '1x';
             const cleanStr = String(instStr).replace(/[^0-9]/g, '');
             const numInst = parseInt(cleanStr || '1', 10);
-            const clause = clauses[idx];
+            
+            const isPercent = typeof fee === 'string' && fee.includes('%');
+            const baseClause = clauses[idx] || '';
+            const clause = isPercent && !baseClause.includes('(%)') ? `${baseClause} (%)`.trim() : baseClause;
             
             const amountPer = parseFloat((val / numInst).toFixed(2));
 
