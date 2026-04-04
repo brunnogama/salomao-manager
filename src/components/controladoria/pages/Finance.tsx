@@ -1131,35 +1131,42 @@ export function Finance() {
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                   {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirma o recebimento desta parcela e informações fiscais?'}
                 </p>
-                <div className="flex flex-wrap items-end gap-6 mt-3 pt-3 border-t border-gray-100/60">
-                  <div className="flex flex-wrap gap-4 flex-1 items-end">
-                     <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cliente</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.client_name || '-'}</span></div>
-                     <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">HON</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.hon_number || '-'}</span></div>
-                     <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cláusula</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{(selectedInstallment as any)?.clause || '-'}</span></div>
-                     
-                     <div className="w-32 shrink-0 z-50 relative mt-1 ml-4 border-l border-gray-100 pl-4">
-                       <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 w-full">Natureza</label>
-                       <CustomSelect 
-                         value={nfNature} 
-                         onChange={setNfNature} 
-                         options={[
-                           { label: 'Selecione', value: '' },
-                           { label: 'COND', value: 'COND' },
-                           { label: 'EXT', value: 'EXT' },
-                           { label: 'PF', value: 'PF' },
-                           { label: 'PJ', value: 'PJ' }
-                         ]}
-                       />
-                     </div>
+                <div className="flex items-end gap-4 mt-3 pt-3 border-t border-gray-100/60 w-full overflow-hidden">
+                  <div className="min-w-0 flex-1">
+                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cliente</span>
+                     <span className="text-[11px] font-black text-[#0a192f] truncate block" title={selectedInstallment?.contract?.client_name || '-'}>{selectedInstallment?.contract?.client_name || '-'}</span>
+                  </div>
+                  <div className="shrink-0">
+                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">HON</span>
+                     <span className="text-[11px] font-black text-[#0a192f] whitespace-nowrap block">{selectedInstallment?.contract?.hon_number || '-'}</span>
+                  </div>
+                  <div className="shrink-0">
+                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cláusula</span>
+                     <span className="text-[11px] font-black text-[#0a192f] whitespace-nowrap block truncate max-w-[80px]" title={(selectedInstallment as any)?.clause || '-'}>{(selectedInstallment as any)?.clause || '-'}</span>
                   </div>
                   
-                  <div className="w-48 shrink-0 z-50 relative mt-1">
-                     <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1.5 text-right w-full">Local do Fat.</label>
+                  <div className="w-28 shrink-0 z-[60] relative mt-1 ml-2 border-l border-gray-100 pl-4">
+                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 w-full truncate">Natureza</label>
+                     <CustomSelect 
+                       value={nfNature} 
+                       onChange={setNfNature} 
+                       options={[
+                         { label: 'Selecione', value: '' },
+                         { label: 'COND', value: 'COND' },
+                         { label: 'EXT', value: 'EXT' },
+                         { label: 'PF', value: 'PF' },
+                         { label: 'PJ', value: 'PJ' }
+                       ]}
+                     />
+                  </div>
+                  
+                  <div className="w-40 shrink-0 z-[60] relative mt-1 pl-4 border-l border-gray-100">
+                     <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1.5 text-right w-full truncate">Local do Fat.</label>
                      <CustomSelect 
                        value={nfLocation} 
                        onChange={setNfLocation} 
                        options={[{ label: 'Selecione', value: '' }, ...billingLocations.map(l => ({ label: l, value: l }))]}
-                       actionLabel="Gerenciar Locais"
+                       actionLabel="Locais"
                        actionIcon={Settings}
                        onAction={() => setActiveManager('location')}
                      />
@@ -1242,13 +1249,13 @@ export function Finance() {
               </div>
               
               <div className="mt-4 flex gap-4 w-full">
-                  <div className="w-[120px] shrink-0">
-                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">NF (Opcional)</label>
+                  <div className="flex-1">
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Nº NF</label>
                     <input 
                       type="text" 
-                      placeholder="XXXXXXXX" 
+                      placeholder="NF/Boleto" 
                       maxLength={15} 
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal text-center" 
+                      className="w-full h-[42px] border border-gray-200 rounded-xl px-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal text-center" 
                       value={nfNumber} 
                       onChange={(e) => setNfNumber(e.target.value)} 
                     />
@@ -1258,20 +1265,32 @@ export function Finance() {
                     <label className="block text-[9px] font-black text-transparent select-none uppercase tracking-widest mb-2">.</label>
                     <input type="file" accept="application/pdf" className="hidden" ref={fileInputRef} onChange={handlePdfUpload} />
                     {!nfPdf ? (
-                      <button title="Vincular PDF da NF" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} className="w-full bg-amber-50 border border-amber-200 text-amber-700 px-5 py-3 rounded-xl hover:bg-amber-100 flex items-center justify-center transition-all shadow-sm font-black text-[10px] uppercase tracking-widest">
+                      <button title="Vincular PDF da NF" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} className="w-full h-[42px] bg-amber-50 border border-amber-200 text-amber-700 px-5 rounded-xl hover:bg-amber-100 flex items-center justify-center transition-all shadow-sm font-black text-[10px] uppercase tracking-widest">
                         <Upload className="w-3.5 h-3.5 mr-2" /> Vincular NF
                       </button>
                     ) : (
-                      <div className="flex gap-2 w-full">
-                        <button title="Ver PDF da NF" onClick={(e) => { e.preventDefault(); handleOpenNfPdf(); }} className="flex-1 bg-[#1e3a8a] border border-[#112240] text-white px-5 py-3 rounded-xl hover:bg-[#112240] flex items-center justify-center transition-all shadow-md font-black text-[10px] uppercase tracking-widest">
+                      <div className="flex gap-2 w-full h-[42px]">
+                        <button title="Ver PDF da NF" onClick={(e) => { e.preventDefault(); handleOpenNfPdf(); }} className="flex-1 h-full bg-[#1e3a8a] border border-[#112240] text-white px-5 rounded-xl hover:bg-[#112240] flex items-center justify-center transition-all shadow-md font-black text-[10px] uppercase tracking-widest mb-0">
                           <Eye className="w-3.5 h-3.5 mr-2" /> Visualizar NF
                         </button>
-                        <button title="Remover PDF da NF" onClick={(e) => { e.preventDefault(); setNfPdf(''); }} className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl hover:bg-red-100 flex items-center justify-center shrink-0 transition-all shadow-sm">
+                        <button title="Remover PDF da NF" onClick={(e) => { e.preventDefault(); setNfPdf(''); }} className="h-full px-4 bg-red-50 border border-red-100 text-red-600 rounded-xl hover:bg-red-100 flex items-center justify-center shrink-0 transition-all shadow-sm mb-0">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     )}
                   </div>
+
+                  {selectedInstallment?.status !== 'paid' && (
+                    <div className="flex-1">
+                      <label className="block text-[9px] font-black text-transparent select-none uppercase tracking-widest mb-2">.</label>
+                      <button 
+                        onClick={() => confirmPayment('nf_emitida')} 
+                        className="w-full h-[42px] bg-[#1e3a8a] text-white px-5 rounded-xl hover:bg-[#112240] shadow-md font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center mb-0"
+                      >
+                        NF Emitida
+                      </button>
+                    </div>
+                  )}
               </div>
 
               <div className="mt-4">
@@ -1288,14 +1307,6 @@ export function Finance() {
 
             <div className="flex justify-end gap-3 mt-8">
               <button onClick={handleTryCloseBillingModal} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
-              {selectedInstallment?.status !== 'paid' && (
-                <button 
-                  onClick={() => confirmPayment('nf_emitida')} 
-                  className="bg-[#1e3a8a] text-white px-6 py-2.5 rounded-xl hover:bg-[#112240] shadow-lg shadow-blue-500/20 font-black text-[10px] uppercase tracking-widest transition-all"
-                >
-                  NF Emitida
-                </button>
-              )}
               <button onClick={() => confirmPayment('paid')} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all">
                 {selectedInstallment?.status === 'paid' ? 'Salvar Alterações' : 'Confirmar Pagamento'}
               </button>
