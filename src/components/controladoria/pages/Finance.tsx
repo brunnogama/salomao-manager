@@ -1131,21 +1131,21 @@ export function Finance() {
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                   {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirma o recebimento desta parcela e informações fiscais?'}
                 </p>
-                <div className="flex items-end gap-4 mt-3 pt-3 border-t border-gray-100/60 w-full overflow-hidden">
-                  <div className="min-w-0 flex-1 max-w-[200px]">
-                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cliente</span>
+                <div className="grid grid-cols-12 gap-3 mt-3 pt-3 border-t border-gray-100/60 w-full items-end">
+                  <div className="col-span-3 min-w-0">
+                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">Cliente</span>
                      <span className="text-[11px] font-black text-[#0a192f] truncate block" title={selectedInstallment?.contract?.client_name || '-'}>{selectedInstallment?.contract?.client_name || '-'}</span>
                   </div>
-                  <div className="shrink-0">
-                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">HON</span>
-                     <span className="text-[11px] font-black text-[#0a192f] whitespace-nowrap block">{selectedInstallment?.contract?.hon_number || '-'}</span>
+                  <div className="col-span-2 min-w-0">
+                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">HON</span>
+                     <span className="text-[11px] font-black text-[#0a192f] truncate block" title={selectedInstallment?.contract?.hon_number || '-'}>{selectedInstallment?.contract?.hon_number || '-'}</span>
                   </div>
-                  <div className="shrink-0">
-                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cláusula</span>
-                     <span className="text-[11px] font-black text-[#0a192f] whitespace-nowrap block truncate max-w-[80px]" title={(selectedInstallment as any)?.clause || '-'}>{(selectedInstallment as any)?.clause || '-'}</span>
+                  <div className="col-span-2 min-w-0">
+                     <span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest mb-3">Cláusula</span>
+                     <span className="text-[11px] font-black text-[#0a192f] truncate block" title={(selectedInstallment as any)?.clause || '-'}>{(selectedInstallment as any)?.clause || '-'}</span>
                   </div>
                   
-                  <div className="w-32 shrink-0 z-[60] relative mt-1 ml-2 border-l border-gray-100 pl-4">
+                  <div className="col-span-2 min-w-0 z-[60] relative">
                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 w-full truncate">Natureza</label>
                      <CustomSelect 
                        value={nfNature} 
@@ -1160,8 +1160,8 @@ export function Finance() {
                      />
                   </div>
                   
-                  <div className="w-48 shrink-0 z-[60] relative mt-1 pl-4 border-l border-gray-100 ml-auto">
-                     <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1.5 text-right w-full truncate">Local do Fat.</label>
+                  <div className="col-span-3 min-w-0 z-[60] relative">
+                     <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1.5 w-full truncate text-right">Local do Fat.</label>
                      <CustomSelect 
                        value={nfLocation} 
                        onChange={setNfLocation} 
