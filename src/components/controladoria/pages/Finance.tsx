@@ -1131,10 +1131,24 @@ export function Finance() {
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                   {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirma o recebimento desta parcela e informações fiscais?'}
                 </p>
-                <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100/60">
-                   <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cliente</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.client_name || '-'}</span></div>
-                   <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">HON</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.hon_number || '-'}</span></div>
-                   <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cláusula</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{(selectedInstallment as any)?.clause || '-'}</span></div>
+                <div className="flex flex-wrap items-end gap-6 mt-3 pt-3 border-t border-gray-100/60">
+                  <div className="flex flex-wrap gap-4 flex-1">
+                     <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cliente</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.client_name || '-'}</span></div>
+                     <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">HON</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.hon_number || '-'}</span></div>
+                     <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cláusula</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{(selectedInstallment as any)?.clause || '-'}</span></div>
+                  </div>
+                  
+                  <div className="w-56 shrink-0 z-50 relative mt-1">
+                     <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1.5 text-right w-full">Local do Fat.</label>
+                     <CustomSelect 
+                       value={nfLocation} 
+                       onChange={setNfLocation} 
+                       options={[{ label: 'Selecione', value: '' }, ...billingLocations.map(l => ({ label: l, value: l }))]}
+                       actionLabel="Gerenciar Locais"
+                       actionIcon={Settings}
+                       onAction={() => setActiveManager('location')}
+                     />
+                  </div>
                 </div>
               </div>
               <button 
@@ -1166,18 +1180,7 @@ export function Finance() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <div className="sm:col-span-1">
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Local do Fat.</label>
-                  <CustomSelect 
-                    value={nfLocation} 
-                    onChange={setNfLocation} 
-                    options={[{ label: 'Selecione', value: '' }, ...billingLocations.map(l => ({ label: l, value: l }))]}
-                    actionLabel="Gerenciar Locais"
-                    actionIcon={Settings}
-                    onAction={() => setActiveManager('location')}
-                  />
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
                 <div className="sm:col-span-1">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Natureza</label>
                   <CustomSelect 
@@ -1192,21 +1195,21 @@ export function Finance() {
                     ]}
                   />
                 </div>
-                <div className="sm:col-span-1">
+                <div className="sm:col-span-3">
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">NF (Opcional)</label>
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="Nº NF/Boleto" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" value={nfNumber} onChange={(e) => setNfNumber(e.target.value)} />
+                  <div className="flex flex-wrap sm:flex-nowrap gap-2">
+                    <input type="text" placeholder="Nº NF/Boleto" className="flex-1 min-w-[200px] border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" value={nfNumber} onChange={(e) => setNfNumber(e.target.value)} />
                     <input type="file" accept="application/pdf" className="hidden" ref={fileInputRef} onChange={handlePdfUpload} />
                     {!nfPdf ? (
-                      <button title="Vincular PDF da NF" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} className="bg-gray-50 border border-gray-200 text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-100 flex items-center justify-center shrink-0 transition-all shadow-sm">
-                        <Upload className="w-4 h-4" />
+                      <button title="Vincular PDF da NF" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} className="bg-amber-500 border border-amber-600 text-white px-5 py-3 rounded-xl hover:bg-amber-600 flex items-center justify-center shrink-0 transition-all shadow-md font-black text-[10px] uppercase tracking-widest">
+                        <Upload className="w-3.5 h-3.5 mr-2" /> Vincular NF
                       </button>
                     ) : (
                       <>
-                        <button title="Ver PDF da NF" onClick={(e) => { e.preventDefault(); handleOpenNfPdf(); }} className="bg-blue-50 border border-blue-100 text-[#1e3a8a] px-3 py-2 rounded-xl hover:bg-blue-100 flex items-center justify-center shrink-0 transition-all shadow-sm">
-                          <Eye className="w-4 h-4" />
+                        <button title="Ver PDF da NF" onClick={(e) => { e.preventDefault(); handleOpenNfPdf(); }} className="bg-[#1e3a8a] border border-[#112240] text-white px-5 py-3 rounded-xl hover:bg-[#112240] flex items-center justify-center shrink-0 transition-all shadow-md font-black text-[10px] uppercase tracking-widest">
+                          <Eye className="w-3.5 h-3.5 mr-2" /> Visualizar NF
                         </button>
-                        <button title="Remover PDF da NF" onClick={(e) => { e.preventDefault(); setNfPdf(''); }} className="bg-red-50 border border-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-100 flex items-center justify-center shrink-0 transition-all shadow-sm">
+                        <button title="Remover PDF da NF" onClick={(e) => { e.preventDefault(); setNfPdf(''); }} className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl hover:bg-red-100 flex items-center justify-center shrink-0 transition-all shadow-sm">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </>
@@ -1235,6 +1238,17 @@ export function Finance() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div className="bg-blue-50/50 border border-[#1e3a8a]/20 p-4 rounded-xl flex flex-col justify-center transition-all relative overflow-hidden group">
+                  <div className="absolute left-0 top-0 h-full w-1 bg-[#1e3a8a]"></div>
+                  <label className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1 select-none">Valor Bruto (R$)</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-transparent text-2xl font-black text-[#1e3a8a] outline-none focus:bg-white/50 focus:ring-2 focus:ring-[#1e3a8a]/50 rounded-lg px-2 -ml-2 transition-all"
+                    placeholder="R$ 0,00" 
+                    value={nfValue} 
+                    onChange={(e) => setNfValue(maskMoney(e.target.value))} 
+                  />
+                </div>
                 <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl flex flex-col justify-center transition-all relative overflow-hidden group">
                   <div className="absolute left-0 top-0 h-full w-1 bg-emerald-500"></div>
                   <label className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-1 select-none">Valor Líquido Recebido</label>
@@ -1243,17 +1257,6 @@ export function Finance() {
                     className="w-full bg-transparent text-2xl font-black text-emerald-600 outline-none focus:bg-white/50 focus:ring-2 focus:ring-emerald-200/50 rounded-lg px-2 -ml-2 transition-all"
                     value={nfNetValue}
                     onChange={(e) => setNfNetValue(maskMoney(e.target.value))}
-                    placeholder="R$ 0,00"
-                  />
-                </div>
-                <div className="bg-blue-50/50 border border-[#1e3a8a]/20 p-4 rounded-xl flex flex-col justify-center transition-all relative overflow-hidden group">
-                  <div className="absolute left-0 top-0 h-full w-1 bg-[#1e3a8a]"></div>
-                  <label className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1 select-none">Valor Bruto</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-transparent text-2xl font-black text-[#1e3a8a] outline-none focus:bg-white/50 focus:ring-2 focus:ring-[#1e3a8a]/30 rounded-lg px-2 -ml-2 transition-all"
-                    value={nfValue}
-                    onChange={(e) => setNfValue(maskMoney(e.target.value))}
                     placeholder="R$ 0,00"
                   />
                 </div>
