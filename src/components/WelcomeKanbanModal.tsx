@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 
 // Tipos
 export type Priority = 'ALTA' | 'MÉDIA' | 'BAIXA';
-export type ColumnId = 'fa-fazer' | 'em-progresso' | 'concluido';
+export type ColumnId = 'fa-fazer' | 'em-progresso' | 'concluido' | 'cobrar-assinatura';
 
 export interface KanbanItem {
   id: string;
@@ -29,12 +29,14 @@ const COLUMN_COLORS = {
   'fa-fazer': { border: 'border-amber-500/30', bg: 'bg-amber-500/10', title: 'text-amber-400' },
   'em-progresso': { border: 'border-blue-500/30', bg: 'bg-blue-500/10', title: 'text-blue-400' },
   'concluido': { border: 'border-emerald-500/30', bg: 'bg-emerald-500/10', title: 'text-emerald-400' },
+  'cobrar-assinatura': { border: 'border-purple-500/30', bg: 'bg-purple-500/10', title: 'text-purple-400' },
 };
 
 const COLUMN_TITLES = {
   'fa-fazer': 'A FAZER',
   'em-progresso': 'EM PROGRESSO',
   'concluido': 'CONCLUÍDOS',
+  'cobrar-assinatura': 'COBRAR ASSINATURA',
 };
 
 export function KanbanModal() {
@@ -216,7 +218,7 @@ export function KanbanModal() {
     setItems(items.filter(item => item.id !== id));
   };
 
-  const columns: ColumnId[] = ['fa-fazer', 'em-progresso', 'concluido'];
+  const columns: ColumnId[] = ['fa-fazer', 'em-progresso', 'concluido', 'cobrar-assinatura'];
 
   return (
     <div className="h-full w-full flex flex-col bg-[#0a192f] p-4 sm:p-6 overflow-hidden min-h-0">
