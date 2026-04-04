@@ -263,7 +263,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                             placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
                                             rows={2}
                                             value={(formData as any)[ruleField] || ''}
-                                            onChange={(e) => setFormData({ ...formData, [ruleField]: e.target.value })}
+                                            onChange={(e) => setFormData({ ...formData, [ruleField]: e.target.value.replace(/[\r\n]+/g, ' ') })}
                                         />
                                     </div>
                                     <div className="flex justify-end gap-2 mt-3">
@@ -327,7 +327,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                             rows={2}
                                             value={extrasRules[idx] || ''}
                                             onChange={(e) => {
-                                                const n = [...extrasRules]; n[idx] = e.target.value;
+                                                const n = [...extrasRules]; n[idx] = e.target.value.replace(/[\r\n]+/g, ' ');
                                                 setFormData({ ...formData, [extrasRulesField]: n });
                                             }}
                                         />
@@ -438,7 +438,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                             rows={2}
                                             value={rules[idx] || ''}
                                             onChange={(e) => {
-                                                const n = [...rules]; n[idx] = e.target.value;
+                                                const n = [...rules]; n[idx] = e.target.value.replace(/[\r\n]+/g, ' ');
                                                 setFormData({ ...formData, intermediate_fees_rules: n } as any);
                                             }}
                                         />
@@ -493,7 +493,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     placeholder="Ex: Condição exigida para que este valor seja cobrado (Somente após sentença, etc.)..."
                                     rows={2}
                                     value={interimRule || ''}
-                                    onChange={(e) => setInterimRule?.(e.target.value)}
+                                    onChange={(e) => setInterimRule?.(e.target.value.replace(/[\r\n]+/g, ' '))}
                                 />
                             </div>
                             <div className="flex justify-end gap-2 mt-3">
