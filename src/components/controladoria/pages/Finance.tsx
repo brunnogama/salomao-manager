@@ -1132,13 +1132,28 @@ export function Finance() {
                   {selectedInstallment?.status === 'paid' ? 'Visualize ou edite as informações fiscais desta parcela' : 'Confirma o recebimento desta parcela e informações fiscais?'}
                 </p>
                 <div className="flex flex-wrap items-end gap-6 mt-3 pt-3 border-t border-gray-100/60">
-                  <div className="flex flex-wrap gap-4 flex-1">
+                  <div className="flex flex-wrap gap-4 flex-1 items-end">
                      <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cliente</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.client_name || '-'}</span></div>
                      <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">HON</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{selectedInstallment?.contract?.hon_number || '-'}</span></div>
                      <div><span className="text-[9px] text-gray-400 block font-bold uppercase tracking-widest">Cláusula</span><span className="text-[11px] font-black text-[#0a192f] line-clamp-1">{(selectedInstallment as any)?.clause || '-'}</span></div>
+                     
+                     <div className="w-32 shrink-0 z-50 relative mt-1 ml-4 border-l border-gray-100 pl-4">
+                       <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 w-full">Natureza</label>
+                       <CustomSelect 
+                         value={nfNature} 
+                         onChange={setNfNature} 
+                         options={[
+                           { label: 'Selecione', value: '' },
+                           { label: 'COND', value: 'COND' },
+                           { label: 'EXT', value: 'EXT' },
+                           { label: 'PF', value: 'PF' },
+                           { label: 'PJ', value: 'PJ' }
+                         ]}
+                       />
+                     </div>
                   </div>
                   
-                  <div className="w-56 shrink-0 z-50 relative mt-1">
+                  <div className="w-48 shrink-0 z-50 relative mt-1">
                      <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-1.5 text-right w-full">Local do Fat.</label>
                      <CustomSelect 
                        value={nfLocation} 
@@ -1180,43 +1195,7 @@ export function Finance() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
-                <div className="sm:col-span-1">
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Natureza</label>
-                  <CustomSelect 
-                    value={nfNature} 
-                    onChange={setNfNature} 
-                    options={[
-                      { label: 'Selecione', value: '' },
-                      { label: 'COND', value: 'COND' },
-                      { label: 'EXT', value: 'EXT' },
-                      { label: 'PF', value: 'PF' },
-                      { label: 'PJ', value: 'PJ' }
-                    ]}
-                  />
-                </div>
-                <div className="sm:col-span-3">
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">NF (Opcional)</label>
-                  <div className="flex flex-wrap sm:flex-nowrap gap-2">
-                    <input type="text" placeholder="Nº NF/Boleto" className="flex-1 min-w-[200px] border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal" value={nfNumber} onChange={(e) => setNfNumber(e.target.value)} />
-                    <input type="file" accept="application/pdf" className="hidden" ref={fileInputRef} onChange={handlePdfUpload} />
-                    {!nfPdf ? (
-                      <button title="Vincular PDF da NF" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} className="bg-amber-500 border border-amber-600 text-white px-5 py-3 rounded-xl hover:bg-amber-600 flex items-center justify-center shrink-0 transition-all shadow-md font-black text-[10px] uppercase tracking-widest">
-                        <Upload className="w-3.5 h-3.5 mr-2" /> Vincular NF
-                      </button>
-                    ) : (
-                      <>
-                        <button title="Ver PDF da NF" onClick={(e) => { e.preventDefault(); handleOpenNfPdf(); }} className="bg-[#1e3a8a] border border-[#112240] text-white px-5 py-3 rounded-xl hover:bg-[#112240] flex items-center justify-center shrink-0 transition-all shadow-md font-black text-[10px] uppercase tracking-widest">
-                          <Eye className="w-3.5 h-3.5 mr-2" /> Visualizar NF
-                        </button>
-                        <button title="Remover PDF da NF" onClick={(e) => { e.preventDefault(); setNfPdf(''); }} className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl hover:bg-red-100 flex items-center justify-center shrink-0 transition-all shadow-sm">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
+              {/* The Natureza and NF fields were moved: Natureza is at the header, NF is below the values */}
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-2">
                 <div>
@@ -1262,6 +1241,39 @@ export function Finance() {
                 </div>
               </div>
               
+              <div className="mt-4 flex gap-4 w-full">
+                  <div className="w-[120px] shrink-0">
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">NF (Opcional)</label>
+                    <input 
+                      type="text" 
+                      placeholder="XXXXXXXX" 
+                      maxLength={15} 
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] shadow-sm hover:border-gray-300 outline-none transition-all placeholder:text-gray-400 placeholder:font-normal text-center" 
+                      value={nfNumber} 
+                      onChange={(e) => setNfNumber(e.target.value)} 
+                    />
+                  </div>
+                  
+                  <div className="flex-1">
+                    <label className="block text-[9px] font-black text-transparent select-none uppercase tracking-widest mb-2">.</label>
+                    <input type="file" accept="application/pdf" className="hidden" ref={fileInputRef} onChange={handlePdfUpload} />
+                    {!nfPdf ? (
+                      <button title="Vincular PDF da NF" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} className="w-full bg-amber-50 border border-amber-200 text-amber-700 px-5 py-3 rounded-xl hover:bg-amber-100 flex items-center justify-center transition-all shadow-sm font-black text-[10px] uppercase tracking-widest">
+                        <Upload className="w-3.5 h-3.5 mr-2" /> Vincular NF
+                      </button>
+                    ) : (
+                      <div className="flex gap-2 w-full">
+                        <button title="Ver PDF da NF" onClick={(e) => { e.preventDefault(); handleOpenNfPdf(); }} className="flex-1 bg-[#1e3a8a] border border-[#112240] text-white px-5 py-3 rounded-xl hover:bg-[#112240] flex items-center justify-center transition-all shadow-md font-black text-[10px] uppercase tracking-widest">
+                          <Eye className="w-3.5 h-3.5 mr-2" /> Visualizar NF
+                        </button>
+                        <button title="Remover PDF da NF" onClick={(e) => { e.preventDefault(); setNfPdf(''); }} className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl hover:bg-red-100 flex items-center justify-center shrink-0 transition-all shadow-sm">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+              </div>
+
               <div className="mt-4">
                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Observações (Opcional)</label>
                 <textarea 
