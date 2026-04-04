@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Save, Search, Loader2, AlertTriangle, Plus, Trash2, UserPlus, User, MapPin, Users, FileText, Gift } from 'lucide-react';
+import { X, Save, Search, Loader2, AlertTriangle, Plus, Trash2, UserPlus, User, MapPin, Users, FileText, Gift, Briefcase } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Client, Partner, ClientContact } from '../../../types/controladoria';
 import { maskCNPJ, toTitleCase, maskPhone } from '../utils/masks';
@@ -34,6 +34,8 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
 
   // Estado para múltiplos contatos
   const [contacts, setContacts] = useState<Partial<ClientContact>[]>([]);
+  // Estado para contratos (nova aba)
+  const [clientContracts, setClientContracts] = useState<any[]>([]);
 
   const emptyClient: Client = {
     name: '',
@@ -59,8 +61,10 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
       fetchPartners();
       if (client?.id) {
         fetchContacts(client.id);
+        fetchClientContracts(client.id);
       } else {
         setContacts([]);
+        setClientContracts([]);
       }
     }
   }, [isOpen, client, initialTab]);
@@ -117,6 +121,26 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
       if (data) setPartners(data);
     } catch (err) {
       console.error('Erro ao buscar sócios:', err);
+    }
+  };
+
+  const fetchClientContracts = async (clientId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('contracts')
+        .select(`
+          id,
+          hon_number,
+          seq_id,
+          status,
+          contract_partner:partners!contracts_partner_id_fkey(name)
+        `)
+        .eq('client_id', clientId)
+        .order('seq_id', { ascending: false });
+      if (error) throw error;
+      if (data) setClientContracts(data);
+    } catch (err) {
+      console.error('Erro ao buscar contratos:', err);
     }
   };
 
@@ -254,6 +278,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
 
   const tabs = [
     { id: 'dados', label: 'Dados do Cliente', icon: User },
+    { id: 'contratos', label: 'Contratos', icon: Briefcase },
     { id: 'endereco', label: 'Endereço', icon: MapPin },
     { id: 'contatos', label: 'Contatos', icon: Users },
     { id: 'obs', label: 'Observações', icon: FileText },
@@ -404,6 +429,52 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                     />
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'contratos' && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[#0a192f]">Contratos Vinculados</h3>
+                    <p className="text-[11px] text-gray-400 font-medium">Contratos associados a este cliente</p>
+                  </div>
+                </div>
+
+                {clientContracts.length === 0 ? (
+                  <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                    <Briefcase className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                    <p className="text-xs text-gray-400 font-bold">Nenhum contrato vinculado a este cliente</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {clientContracts.map((contract) => (
+                      <div key={contract.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div className="p-3 bg-blue-50 text-[#1e3a8a] rounded-xl shrink-0">
+                          <Briefcase className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-black text-[#0a192f] text-sm truncate">
+                            {contract.hon_number ? `HON ${contract.hon_number}` : `Contrato #${contract.seq_id || 'Sem número'}`}
+                          </h4>
+                          <p className="text-[11px] font-bold text-gray-400 uppercase mt-0.5 truncate">
+                            Sócio Responsável: <span className="text-gray-700">{contract.contract_partner?.name || 'Não atribuído'}</span>
+                          </p>
+                        </div>
+                        <div className="shrink-0 flex items-center">
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                            contract.status === 'Ativo' ? 'bg-emerald-50 text-emerald-600' :
+                            contract.status === 'Encerrado' ? 'bg-gray-100 text-gray-600' :
+                            contract.status === 'Baixado' ? 'bg-blue-50 text-blue-600' :
+                            'bg-yellow-50 text-yellow-600'
+                          }`}>
+                            {contract.status || 'Desconhecido'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -615,13 +686,13 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                           </div>
                           <div>
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Quantidade</label>
-                            <input disabled={isReadOnly}
+                            <input 
                               type="number"
                               min="1"
                               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
                               value={contact.gift_quantity || 1}
                               onChange={e => handleContactChange(index, 'gift_quantity', parseInt(e.target.value) || 1)}
-                              disabled={!contact.gift_type || contact.gift_type === 'Não recebe'}
+                              disabled={isReadOnly || !contact.gift_type || contact.gift_type === 'Não recebe'}
                             />
                           </div>
                           {contact.gift_type === 'Outros' && (

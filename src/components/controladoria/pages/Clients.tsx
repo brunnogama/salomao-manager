@@ -495,12 +495,14 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
                             {group.partners.map((p, idx) => (
                               <span
                                 key={idx}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-[10px] font-bold truncate max-w-[140px]"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold truncate max-w-[180px]"
                                 title={`${p.partner_name} (${p.contracts.length} contrato${p.contracts.length !== 1 ? 's' : ''})`}
                               >
                                 {p.partner_name.split(' ').slice(0, 2).join(' ')}
                                 {p.contracts.length > 0 && group.partners.length > 1 && (
-                                  <span className="text-[9px] text-blue-500">({p.contracts.length})</span>
+                                  <span className="text-[10px] text-blue-500 bg-blue-100/50 px-1.5 py-0.5 rounded-md">
+                                    {p.contracts.length}
+                                  </span>
                                 )}
                               </span>
                             ))}
