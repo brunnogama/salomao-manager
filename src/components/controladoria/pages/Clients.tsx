@@ -108,26 +108,32 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
     setLoading(false);
   };
 
-  // Agrupar clientes por CNPJ
+  const formatCorporateName = (name: string): string => {
+    if (!name) return '';
+    return name.replace(/\b(ltda|s\.a|s\/a|epp|me|eireli|s\.s|inc|corp|llc)\b\.?/gi, match => match.toUpperCase());
+  };
+
+  // Agrupar clientes por Nome
   const groupedClients = useMemo(() => {
     const groups: GroupedClient[] = [];
-    const cnpjMap = new Map<string, Client[]>();
-    const noCnpjClients: Client[] = [];
+    const nameMap = new Map<string, Client[]>();
+    const noNameClients: Client[] = [];
 
-    for (const client of clients) {
-      const cnpj = client.cnpj?.replace(/\D/g, '');
-      if (cnpj && cnpj.length > 0) {
-        if (!cnpjMap.has(cnpj)) {
-          cnpjMap.set(cnpj, []);
+    for (const rawClient of clients) {
+      const client = { ...rawClient, name: formatCorporateName(rawClient.name || '') };
+      const name = client.name.trim().toLowerCase();
+      if (name) {
+        if (!nameMap.has(name)) {
+          nameMap.set(name, []);
         }
-        cnpjMap.get(cnpj)!.push(client);
+        nameMap.get(name)!.push(client);
       } else {
-        noCnpjClients.push(client);
+        noNameClients.push(client);
       }
     }
 
-    // Processar grupos com CNPJ
-    for (const [, groupClients] of cnpjMap) {
+    // Processar grupos com Nome
+    for (const [, groupClients] of nameMap) {
       const primaryClient = groupClients[0];
       const partnersMap = new Map<string, PartnerWithContracts>();
 
@@ -173,8 +179,8 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
       });
     }
 
-    // Processar clientes sem CNPJ (cada um é seu próprio grupo)
-    for (const client of noCnpjClients) {
+    // Processar clientes sem Nome (cada um é seu próprio grupo)
+    for (const client of noNameClients) {
       const partners: PartnerWithContracts[] = [];
       if (client.partner_name) {
         const rawContracts = (client as any)._contracts_raw || [];
@@ -361,7 +367,7 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
             onClick={() => {
               const data = filteredGroups.map(g => ({
                 'Cliente': g.primaryClient.name,
-                'CNPJ': g.primaryClient.cnpj || '',
+                'CNPJ': Array.from(new Set(g.allClients.map(c => c.cnpj ? maskCNPJ(c.cnpj) : null).filter(Boolean))).join(' / ') || '',
                 'Sócio': g.partners.map(p => p.partner_name).join(', '),
                 'Contratos': g.totalContracts,
                 'UF': g.primaryClient.uf || '',
@@ -475,7 +481,7 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
                         <div className="flex-1 min-w-0">
                           <h3 className="font-black text-[#0a192f] truncate">{client.name}</h3>
                           <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide truncate">
-                            {client.cnpj ? maskCNPJ(client.cnpj) : 'Sem documento'}
+                            {Array.from(new Set(group.allClients.map(c => c.cnpj ? maskCNPJ(c.cnpj) : null).filter(Boolean))).join(' / ') || 'Sem documento'}
                           </p>
                         </div>
                       </div>
