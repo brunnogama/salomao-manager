@@ -807,7 +807,7 @@ export function Finance() {
 
   const exportToExcel = () => {
     const data = filteredInstallments.map(i => ({
-      'ID': (i.contract as any)?.display_id,
+      'ID': (i as any).display_id || (i.contract as any)?.display_id,
       'Cliente': i.contract?.client_name,
       'HON': i.contract?.hon_number,
       'Cláusula': (i as any).clause || '',

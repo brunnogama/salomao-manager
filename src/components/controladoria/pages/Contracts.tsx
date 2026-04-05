@@ -138,8 +138,7 @@ export function Contracts() {
       const formatted: Contract[] = contractsRes.data.map((c: any) => ({
         ...c,
         partner_name: c.partner?.name,
-        process_count: c.processes?.length || 0,
-        display_id: String(c.seq_id || 0).padStart(6, '0')
+        process_count: c.processes?.length || 0
       }));
       setContracts(formatted);
     }
