@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom';
 import { X, Upload, Loader2, Save, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
-import { maskMoney } from '../../controladoria/utils/masks';
+import { maskMoney, maskHon } from '../../controladoria/utils/masks';
 import { useEscKey } from '../../../hooks/useEscKey';
+import { CustomSelect } from '../../controladoria/ui/CustomSelect';
 
 interface DraftContractModalProps {
   isOpen: boolean;
@@ -158,26 +159,27 @@ export function DraftContractModal({ isOpen, onClose, client, onSave }: DraftCon
                 <input 
                   type="text" 
                   value={honNumber}
-                  onChange={e => setHonNumber(e.target.value)}
-                  placeholder="Ex: HON12345"
+                  onChange={e => setHonNumber(maskHon(e.target.value))}
+                  placeholder="Ex: 0000000/0"
                   className="w-full bg-white border border-gray-200 text-gray-800 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-[#1e3a8a] focus:ring-2 focus:ring-blue-50 transition-all shadow-sm" 
                 />
              </div>
 
              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Tipo de Honorário*</label>
-                <select 
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Tipo de Honorário*</label>
+                <CustomSelect
                   value={honorarioType}
-                  onChange={e => setHonorarioType(e.target.value)}
-                  className="w-full bg-white border border-gray-200 text-gray-800 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-[#1e3a8a] focus:ring-2 focus:ring-blue-50 transition-all shadow-sm cursor-pointer"
-                >
-                  <option value="pro_labore">Pró-labore</option>
-                  <option value="success_fee">Êxito</option>
-                  <option value="final_success_fee">Êxito Final</option>
-                  <option value="intermediate_fee">Êxito Intermediário</option>
-                  <option value="fixed_monthly_fee">Fixo Mensal</option>
-                  <option value="other_fees">Outros Honorários</option>
-                </select>
+                  onChange={(val) => setHonorarioType(val)}
+                  options={[
+                    { label: 'Pró-labore', value: 'pro_labore' },
+                    { label: 'Êxito', value: 'success_fee' },
+                    { label: 'Êxito Final', value: 'final_success_fee' },
+                    { label: 'Êxito Intermediário', value: 'intermediate_fee' },
+                    { label: 'Fixo Mensal', value: 'fixed_monthly_fee' },
+                    { label: 'Outros Honorários', value: 'other_fees' }
+                  ]}
+                  placeholder="Selecione o tipo..."
+                />
              </div>
 
              <div className="flex flex-col gap-1">
