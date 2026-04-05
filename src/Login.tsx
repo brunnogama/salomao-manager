@@ -265,14 +265,14 @@ export default function Login() {
 
         {/* Imagem de Fundo */}
         <div
-          className="absolute inset-0 z-0 bg-cover bg-center opacity-70 mix-blend-overlay"
+          className="absolute inset-0 z-0 bg-cover bg-center opacity-100"
           style={{
             backgroundImage: "url('/foto-fundo.jpg')"
           }}
         ></div>
 
         {/* Gradientes e Overlay */}
-        <div className="absolute inset-0 z-1 bg-gradient-to-br from-[#0a192f]/80 via-[#0a0a0a]/70 to-[#1a2c4e]/80"></div>
+        <div className="absolute inset-0 z-1 bg-gradient-to-br from-[#0a192f]/70 via-[#0a0a0a]/60 to-[#1a2c4e]/70"></div>
 
         {/* Pattern decorativo sutil */}
         <div className="absolute inset-0 z-5 opacity-[0.03]" style={{
