@@ -866,25 +866,38 @@ export function RHMapaAndar31({
         )}
       </div>
 
-      <div id="mapa-31-andar-wrapper" className="mx-auto" style={{ transform: `scale(${zoomScale})`, transformOrigin: 'top center', padding: isEditMode ? '20px 0' : '0', width: mapW * zoomScale, height: mapH * zoomScale, flexShrink: 0, transition: 'transform 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1), height 0.2s cubic-bezier(0.2, 0, 0, 1)' }}>
+      <div className="w-max min-w-full p-4 sm:p-8 flex items-start justify-center transition-all">
         <div 
-          ref={contentRef}
-          id="mapa-31-andar-content"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          className={`relative select-none rounded-xl shadow-md ring-1 ring-gray-200 mx-auto ${activeTool !== 'select' && isEditMode ? 'cursor-crosshair' : ''}`}
+          id="mapa-31-andar-wrapper"
+          className="relative"
           style={{ 
-            width: mapW, 
-            height: mapH, 
-            overflow: 'hidden',
-            backgroundColor: '#ffffff',
-            backgroundImage: isEditMode ? 'radial-gradient(#e5e7eb 1px, transparent 1px)' : 'none',
-            backgroundSize: '20px 20px',
-            backgroundRepeat: 'repeat',
-            backgroundPosition: '0 0'
+            width: mapW * zoomScale, 
+            height: mapH * zoomScale, 
+            flexShrink: 0, 
+            transition: 'width 0.2s cubic-bezier(0.2, 0, 0, 1), height 0.2s cubic-bezier(0.2, 0, 0, 1)' 
           }}
         >
+          <div 
+            ref={contentRef}
+            id="mapa-31-andar-content"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            className={`absolute top-0 left-0 select-none rounded-xl shadow-lg ring-1 ring-gray-200 ${activeTool !== 'select' && isEditMode ? 'cursor-crosshair' : ''}`}
+            style={{ 
+              width: mapW, 
+              height: mapH, 
+              overflow: 'hidden',
+              backgroundColor: '#ffffff',
+              backgroundImage: isEditMode ? 'radial-gradient(#e5e7eb 1px, transparent 1px)' : 'none',
+              backgroundSize: '20px 20px',
+              backgroundRepeat: 'repeat',
+              backgroundPosition: '0 0',
+              transform: `scale(${zoomScale})`,
+              transformOrigin: 'top left',
+              transition: 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)'
+            }}
+          >
           {/* SELECTION BOX (Arrastar e Multi-Selecionar) */}
           {selectionBox && (
               <div 
@@ -1233,6 +1246,7 @@ export function RHMapaAndar31({
           )}
 
         </div>
+      </div>
       </div>
     </div>
   );
