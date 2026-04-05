@@ -265,7 +265,7 @@ export default function Login() {
 
         {/* Imagem de Fundo */}
         <div
-          className="absolute inset-0 z-0 bg-cover bg-center opacity-100"
+          className="absolute inset-0 z-0 bg-cover bg-center opacity-90"
           style={{
             backgroundImage: "url('/foto-fundo.jpg')"
           }}
