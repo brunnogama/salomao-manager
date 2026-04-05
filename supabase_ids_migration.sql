@@ -29,7 +29,13 @@ FROM clients cl
 WHERE c.client_id = cl.id AND c.display_id IS NULL;
 
 -- 5. UPDATE FINANCIAL_INSTALLMENTS display_id (CONT - XXX-YYY.ZZ)
+WITH ranked_installments AS (
+  SELECT id,
+         contract_id,
+         ROW_NUMBER() OVER(PARTITION BY contract_id ORDER BY created_at ASC, id ASC) as rnk
+  FROM financial_installments
+)
 UPDATE financial_installments f
-SET display_id = c.display_id || '.' || LPAD(f.installment_number::text, 2, '0')
-FROM contracts c
-WHERE f.contract_id = c.id AND f.display_id IS NULL;
+SET display_id = c.display_id || '.' || LPAD(r.rnk::text, 2, '0')
+FROM ranked_installments r, contracts c
+WHERE f.id = r.id AND f.contract_id = c.id;
