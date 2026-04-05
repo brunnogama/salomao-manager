@@ -16,6 +16,7 @@ import {
 import { toast } from 'sonner';
 import { SearchableSelect } from '../../crm/SearchableSelect';
 import { ClientFormModal } from '../../controladoria/clients/ClientFormModal';
+import { DraftContractModal } from './DraftContractModal';
 import { supabase } from '../../../lib/supabase';
 import { maskCNPJ, maskMoney } from '../../controladoria/utils/masks';
 
@@ -73,6 +74,7 @@ const EmissaoNF = () => {
   const clientDropdownRef = useRef<HTMLDivElement>(null);
   
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [isDraftContractModalOpen, setIsDraftContractModalOpen] = useState(false);
 
   const [prestadorDetails, setPrestadorDetails] = useState<{cnpj: string, im: string, razao_social: string, fantasia: string, endereco: string, municipio: string, uf: string} | null>(null);
   const [isFetchingPrestador, setIsFetchingPrestador] = useState(false);
@@ -568,9 +570,20 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
 
           {/* VÍNCULO FINANCEIRO PENDENTE */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-gray-100 flex-1 flex flex-col overflow-hidden relative z-20">
-            <h2 className="font-black text-lg flex items-center gap-2 text-[#0a192f] uppercase tracking-wide text-sm shrink-0 mb-4">
-              <Coins className="w-5 h-5 text-amber-500" /> Vínculo Financeiro Pendente
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-black text-lg flex items-center gap-2 text-[#0a192f] uppercase tracking-wide text-sm shrink-0">
+                <Coins className="w-5 h-5 text-amber-500" /> Vínculo Financeiro Pendente
+              </h2>
+              {selectedClient && (
+                <button
+                  onClick={() => setIsDraftContractModalOpen(true)}
+                  className="w-7 h-7 flex items-center justify-center bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-colors shadow-sm"
+                  title="Novo Contrato (Rascunho)"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
+            </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 mb-2">
               {!selectedClient ? (
@@ -587,9 +600,15 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                   <div className="p-4 bg-white rounded-full shadow-sm mb-4">
                     <CheckCircle className="w-8 h-8 text-emerald-500" />
                   </div>
-                  <p className="text-sm font-semibold text-emerald-700">
+                  <p className="text-sm font-semibold text-emerald-700 mb-4">
                     Nenhum honorário pendente encontrado para este cliente.
                   </p>
+                  <button
+                    onClick={() => setIsDraftContractModalOpen(true)}
+                    className="px-4 py-2 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-lg font-bold text-[11px] uppercase tracking-widest transition-colors flex items-center gap-2 shadow-sm focus:ring-2 focus:ring-[#1e3a8a]/50"
+                  >
+                    <Plus className="w-3 h-3" /> Cadastrar Contrato
+                  </button>
                 </div>
               ) : availableContracts.length > 1 && !selectedContract ? (
                 <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
@@ -931,6 +950,13 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
             fetchClients();
           }
         }}
+      />
+      
+      <DraftContractModal
+        isOpen={isDraftContractModalOpen}
+        onClose={() => setIsDraftContractModalOpen(false)}
+        client={selectedClient}
+        onSave={() => handleSelectClient(selectedClient)}
       />
     </div>
   );
