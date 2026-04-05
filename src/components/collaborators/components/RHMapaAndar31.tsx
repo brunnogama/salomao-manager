@@ -289,10 +289,10 @@ export function RHMapaAndar31({
     }
 
     let finalW = activeTool === 'seat' ? W_STD : (dx > 5 ? dx : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 200 : (activeTool === 'icon' ? 40 : (activeTool === 'text' ? 120 : 40)))));
-    let finalH = activeTool === 'seat' ? H_STD : (dy > 5 ? dy : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 3 : (activeTool === 'icon' ? 40 : (activeTool === 'text' ? 30 : 5)))));
+    let finalH = activeTool === 'seat' ? H_STD : (dy > 5 ? dy : (activeTool === 'wall' ? 100 : (activeTool === 'line' ? 2 : (activeTool === 'icon' ? 40 : (activeTool === 'text' ? 30 : 5)))));
 
     if (activeTool === 'line') {
-        if (finalW > finalH) finalH = 3; else finalW = 3;
+        if (finalW > finalH) finalH = 2; else finalW = 2;
     }
 
     const newEl: MapElement = {
@@ -363,10 +363,14 @@ export function RHMapaAndar31({
     // Atualiza todos os nós selecionados ao mesmo tempo
     setElements(prev => prev.map(item => {
         if (movingElement.initialPositions[item.id]) {
+            // Snap to 10px grid for easy alignment. Hold Alt to disable.
+            const snap = e.altKey ? 1 : 10;
+            const newX = movingElement.initialPositions[item.id].x + dx;
+            const newY = movingElement.initialPositions[item.id].y + dy;
             return {
                 ...item,
-                x: Math.round(movingElement.initialPositions[item.id].x + dx),
-                y: Math.round(movingElement.initialPositions[item.id].y + dy)
+                x: Math.round(newX / snap) * snap,
+                y: Math.round(newY / snap) * snap
             };
         }
         return item;
@@ -411,9 +415,9 @@ export function RHMapaAndar31({
 
       if (el.type === 'line') {
           if (resizingElement.startW > resizingElement.startH) {
-              newH = 3; // mantem grossura horizontal
+              newH = 2; // mantem grossura horizontal
           } else {
-              newW = 3; // mantem grossura vertical
+              newW = 2; // mantem grossura vertical
           }
       }
 
@@ -463,6 +467,24 @@ export function RHMapaAndar31({
      setMapW(Math.round(maxX + 60)); // Adiciona uma margem
      setMapH(Math.round(maxY + 60));
      setUnsavedChanges(true);
+  };
+
+  const handleAlignTop = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (selectedIds.length === 0) return;
+      const els = elements.filter(el => selectedIds.includes(el.id));
+      const minY = Math.min(...els.map(el => el.y));
+      setElements(prev => prev.map(el => selectedIds.includes(el.id) ? { ...el, y: minY } : el));
+      setUnsavedChanges(true);
+  };
+
+  const handleAlignLeft = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (selectedIds.length === 0) return;
+      const els = elements.filter(el => selectedIds.includes(el.id));
+      const minX = Math.min(...els.map(el => el.x));
+      setElements(prev => prev.map(el => selectedIds.includes(el.id) ? { ...el, x: minX } : el));
+      setUnsavedChanges(true);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -615,7 +637,17 @@ export function RHMapaAndar31({
                         </span>
                     </div>
                     <div className="text-[11px] text-gray-500 mb-2 leading-tight">Vários elementos selecionados. Ações em lote:</div>
-                    <button onClick={handleDuplicate} className="w-full py-2 flex items-center justify-center gap-2 bg-blue-50 text-blue-600 font-bold text-xs uppercase hover:bg-blue-500 hover:text-white rounded-lg transition-colors border border-blue-100">
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                        <button onClick={handleAlignTop} className="py-2 flex items-center justify-center gap-1.5 bg-gray-50 text-gray-600 font-black tracking-tighter text-[9px] uppercase hover:bg-indigo-500 hover:text-white rounded-lg transition-colors border border-gray-200">
+                            Alinhar Topo
+                        </button>
+                        <button onClick={handleAlignLeft} className="py-2 flex items-center justify-center gap-1.5 bg-gray-50 text-gray-600 font-black tracking-tighter text-[9px] uppercase hover:bg-indigo-500 hover:text-white rounded-lg transition-colors border border-gray-200">
+                            Alinhar Esq.
+                        </button>
+                    </div>
+
+                    <button onClick={handleDuplicate} className="w-full mt-1.5 py-2 flex items-center justify-center gap-2 bg-blue-50 text-blue-600 font-bold text-xs uppercase hover:bg-blue-500 hover:text-white rounded-lg transition-colors border border-blue-100">
                         <Copy className="w-4 h-4" /> Duplicar Grupo
                     </button>
                     <button onClick={handleDelete} className="w-full py-2 flex items-center justify-center gap-2 bg-red-50 text-red-600 font-bold text-xs uppercase hover:bg-red-500 hover:text-white rounded-lg transition-colors border border-red-100">
@@ -925,7 +957,7 @@ export function RHMapaAndar31({
                         onPointerMove={handleElementPointerMove}
                         onPointerUp={handleElementPointerUp}
                         style={{ position: 'absolute', left: el.x, top: el.y, width: el.width, height: el.height }}
-                        className={`border-2 border-gray-800 bg-gray-50/50 transition-none ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                        className={`border border-gray-800 bg-gray-50/50 transition-none ${selectionClasses} ${isEditMode && activeTool === 'select' ? 'cursor-grab active:cursor-grabbing' : ''}`}
                     >
                         {isSelected && isEditMode && activeTool === 'select' && (
                             <div 
