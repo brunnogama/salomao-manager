@@ -271,8 +271,9 @@ export default function Login() {
           }}
         ></div>
 
-        {/* Camada Azul Royal */}
-        <div className="absolute inset-0 z-1 bg-[#1e3a8a]/70 mix-blend-color"></div>
+        {/* Camada Azul Royal Intensa */}
+        <div className="absolute inset-0 z-1 bg-[#1e3a8a]/90 mix-blend-multiply"></div>
+        <div className="absolute inset-0 z-1 bg-[#1e3a8a]/60 mix-blend-color"></div>
 
         {/* Gradientes e Overlay */}
         <div className="absolute inset-0 z-2 bg-gradient-to-br from-[#0a192f]/70 via-[#0a0a0a]/60 to-[#1a2c4e]/70"></div>
