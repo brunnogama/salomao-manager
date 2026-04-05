@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Upload, Loader2, Save, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { maskMoney } from '../../controladoria/utils/masks';
+import { useEscKey } from '../../../hooks/useEscKey';
 
 interface DraftContractModalProps {
   isOpen: boolean;
@@ -18,6 +20,8 @@ export function DraftContractModal({ isOpen, onClose, client, onSave }: DraftCon
   const [file, setFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEscKey(isOpen && !isSaving, onClose);
 
   if (!isOpen || !client) return null;
 
@@ -111,7 +115,7 @@ export function DraftContractModal({ isOpen, onClose, client, onSave }: DraftCon
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden max-h-[90vh]">
         {/* HEADER */}
@@ -234,6 +238,7 @@ export function DraftContractModal({ isOpen, onClose, client, onSave }: DraftCon
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
