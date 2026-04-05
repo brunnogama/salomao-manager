@@ -235,9 +235,19 @@ export function Finance() {
     d.setMonth(d.getMonth() + 1);
     const nextDueDate = d.toISOString().split('T')[0];
 
+    let newDisplayId = null;
+    try {
+        const { data: contractDb } = await supabase.from('contracts').select('display_id').eq('id', installmentToGenerateNext.contract_id).single();
+        const { count } = await supabase.from('financial_installments').select('*', { count: 'exact', head: true }).eq('contract_id', installmentToGenerateNext.contract_id);
+        if (contractDb?.display_id) {
+            newDisplayId = `${contractDb.display_id}.${String((count || 0) + 1).padStart(2, '0')}`;
+        }
+    } catch(e) {}
+
     // Limpar campos de faturamento para gerar uma parcela nova e "limpa"
     const newInstallment = {
       contract_id: installmentToGenerateNext.contract_id,
+      display_id: newDisplayId,
       type: installmentToGenerateNext.type,
       amount: installmentToGenerateNext.amount,
       installment_number: installmentToGenerateNext.installment_number + 1,
@@ -602,8 +612,18 @@ export function Finance() {
       const net = nfNetValue ? parseCurrency(String(nfNetValue)) : null;
       const val = nfValue ? parseCurrency(String(nfValue)) : 0;
       
+      let newAvulsoDisplayId = null;
+      try {
+          const { data: contractDb } = await supabase.from('contracts').select('display_id').eq('id', selectedAvulsoContractId).single();
+          const { count } = await supabase.from('financial_installments').select('*', { count: 'exact', head: true }).eq('contract_id', selectedAvulsoContractId);
+          if (contractDb?.display_id) {
+              newAvulsoDisplayId = `${contractDb.display_id}.${String((count || 0) + 1).padStart(2, '0')}`;
+          }
+      } catch(e) {}
+
       const newInst = {
         contract_id: selectedAvulsoContractId,
+        display_id: newAvulsoDisplayId,
         type: avulsoHonorarioType, // Tratado dinamicamente
         amount: val,
         installment_number: 1,
@@ -1107,7 +1127,9 @@ export function Finance() {
                         className={`transition-colors cursor-pointer group ${item.contract?.status === 'baixado' ? 'bg-gray-50/50 opacity-90 hover:bg-gray-100/50' : 'hover:bg-blue-50/30'}`}
                         onClick={() => handleMarkAsPaid(item)}
                       >
-                        <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{(item.contract as any)?.display_id}</td>
+                        <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">
+                          {(item as any).display_id || (item.contract as any)?.display_id}
+                        </td>
                         <td className="p-4">
                           {item.status === 'paid'
                             ? <span className="flex items-center text-emerald-600 text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> Faturado</span>

@@ -13,6 +13,11 @@ export const generateFinancialInstallments = async (contractId: string, sourceDa
     
     const installmentsToInsert: any[] = [];
     
+    const { data: contractDb } = await supabase.from('contracts').select('display_id').eq('id', contractId).single();
+    const contractDisplayId = contractDb?.display_id || '';
+    
+    let globalCounter = 1;
+    
     // Atualizado para aceitar o array de detalhamento (breakdown)
     const addInstallments = (
         totalValueStr: string | undefined, 
@@ -36,6 +41,7 @@ export const generateFinancialInstallments = async (contractId: string, sourceDa
 
                 installmentsToInsert.push({
                     contract_id: contractId,
+                    display_id: contractDisplayId ? `${contractDisplayId}.${String(globalCounter++).padStart(2, '0')}` : null,
                     type: type,
                     installment_number: index + 1,
                     total_installments: breakdown.length,
@@ -69,6 +75,7 @@ export const generateFinancialInstallments = async (contractId: string, sourceDa
       for (let i = 1; i <= numInstallments; i++) {
         installmentsToInsert.push({ 
             contract_id: contractId, 
+            display_id: contractDisplayId ? `${contractDisplayId}.${String(globalCounter++).padStart(2, '0')}` : null,
             type: type, 
             installment_number: i, 
             total_installments: numInstallments, 
@@ -137,6 +144,7 @@ export const generateFinancialInstallments = async (contractId: string, sourceDa
             for(let i=1; i<=numInst; i++) {
                 installmentsToInsert.push({ 
                     contract_id: contractId, 
+                    display_id: contractDisplayId ? `${contractDisplayId}.${String(globalCounter++).padStart(2, '0')}` : null,
                     type: type, 
                     installment_number: i, 
                     total_installments: numInst, 

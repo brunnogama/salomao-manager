@@ -263,6 +263,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
       let clientId = client?.id;
 
       if (clientId) {
+        // Not auto-generating for edits unless it's null, but SQL batch will handle existing ones.
         const { error } = await supabase.from('clients').update(payload).eq('id', clientId);
         if (error) throw error;
         await logAction('EDITAR', 'CONTROLADORIA', `Editou cliente: ${formData.name}`, 'Clientes');
@@ -270,6 +271,13 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
         const { data, error } = await supabase.from('clients').insert(payload).select().single();
         if (error) throw error;
         clientId = data.id;
+        // Generate display_id dynamically using the DB's assigned seq_id
+        if (data && data.seq_id && !data.display_id) {
+           const generatedDisplayId = `CLI - ${String(data.seq_id).padStart(3, '0')}`;
+           await supabase.from('clients').update({ display_id: generatedDisplayId }).eq('id', clientId);
+           payload.display_id = generatedDisplayId;
+           payload.seq_id = data.seq_id;
+        }
         await logAction('CRIAR', 'CONTROLADORIA', `Cadastrou novo cliente: ${formData.name}`, 'Clientes');
       }
 
@@ -356,8 +364,13 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
         {/* Left Sidebar */}
         <div className="w-72 bg-white border-r border-gray-100 flex flex-col py-8 px-5 shrink-0 overflow-y-auto">
           <div className="mb-8 px-2">
-            <h2 className="text-xl font-black text-[#0a192f] tracking-tight leading-tight">
+            <h2 className="text-xl font-black text-[#0a192f] tracking-tight leading-tight flex items-center flex-wrap gap-2">
               {isReadOnly ? 'Visualizar Cliente' : client ? 'Editar Cliente' : 'Novo Cliente'}
+              {formData?.display_id && (
+                <span className="px-2 py-1 bg-blue-100 text-[#1e3a8a] text-[12px] uppercase rounded-lg border border-blue-200 shadow-sm mt-1">
+                  {formData.display_id}
+                </span>
+              )}
             </h2>
             <p className="text-xs text-gray-400 mt-1 font-medium">
               {isReadOnly ? 'Visualize os dados do cliente' : client ? 'Gerencie os dados do cliente' : 'Cadastre um novo cliente'}

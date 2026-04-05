@@ -1,0 +1,11 @@
+import 'dotenv/config';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
+
+async function check() {
+  const { data, error } = await supabase.rpc('exec_sql', { query: 'SELECT 1' });
+  console.log('exec_sql:', error ? 'Not available' : 'Available', error);
+}
+
+check();

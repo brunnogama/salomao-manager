@@ -289,6 +289,7 @@ export interface ContractDocument {
 export interface Contract {
   id?: string;
   seq_id?: number;
+  client_seq_val?: number;
   display_id?: string;
   cnpj?: string;
   has_no_cnpj?: boolean;
@@ -417,6 +418,8 @@ export interface ClientContact {
 
 export interface Client {
   id?: string;
+  seq_id?: number;
+  display_id?: string;
   name: string;
   cnpj?: string;
   email?: string;
@@ -447,6 +450,7 @@ export interface Client {
 
 export interface FinancialInstallment {
   id: string;
+  display_id?: string;
   contract_id: string;
   type: 'pro_labore' | 'success_fee' | 'final_success_fee' | 'intermediate_fee' | 'fixed_monthly_fee' | 'other_fees' | 'fixed' | 'other' | string;
   amount: number;

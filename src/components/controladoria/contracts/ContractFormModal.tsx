@@ -364,6 +364,13 @@ export function ContractFormModal(props: Props) {
       partner_id: formData.partner_id
     };
 
+    const handleNewClientDisplayId = async (newClient: any) => {
+        if (newClient && newClient.seq_id && !newClient.display_id) {
+            const displayId = `CLI - ${String(newClient.seq_id).padStart(3, '0')}`;
+            await supabase.from('clients').update({ display_id: displayId }).eq('id', newClient.id);
+        }
+    };
+
     if (clientData.cnpj) {
       const { data: existingClient } = await supabase.from('clients').select('id').eq('cnpj', clientData.cnpj).maybeSingle();
       if (existingClient) {
@@ -372,6 +379,7 @@ export function ContractFormModal(props: Props) {
       } else {
         const { data: newClient, error } = await supabase.from('clients').insert(clientData).select().single();
         if (error) return console.error('Erro ao criar cliente com CNPJ:', error), null;
+        await handleNewClientDisplayId(newClient);
         return newClient.id;
       }
     } else {
@@ -381,6 +389,7 @@ export function ContractFormModal(props: Props) {
       } else {
         const { data: newClient, error } = await supabase.from('clients').insert(clientData).select().single();
         if (error) return console.error('Erro ao criar cliente sem CNPJ:', error), null;
+        await handleNewClientDisplayId(newClient);
         return newClient.id;
       }
     }
@@ -514,6 +523,23 @@ export function ContractFormModal(props: Props) {
         if (error) throw error;
         await logAction('EDITAR', 'CONTROLADORIA', `Editou contrato: ${formData.hon_number || formData.client_name}`, 'Contratos');
       } else {
+        // Calculate display_id for new contract
+        try {
+            const { data: clientObj } = await supabase.from('clients').select('seq_id').eq('id', clientId).single();
+            const { count } = await supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('client_id', clientId);
+            
+            const clientSeqVal = (count || 0) + 1;
+            contractPayload.client_seq_val = clientSeqVal;
+            
+            if (clientObj && clientObj.seq_id) {
+                const cSeqIdFormatted = String(clientObj.seq_id).padStart(3, '0');
+                const countFormatted = String(clientSeqVal).padStart(3, '0');
+                contractPayload.display_id = `CONT - ${cSeqIdFormatted}-${countFormatted}`;
+            }
+        } catch (e) {
+            console.error('Error calculating contract seq:', e);
+        }
+
         const { data, error } = await supabase.from('contracts').insert(contractPayload).select().single();
         if (error) throw error;
         savedId = data.id;
@@ -928,11 +954,16 @@ export function ContractFormModal(props: Props) {
         <div className="w-full md:w-72 bg-white border-b md:border-b-0 md:border-r border-gray-100 flex flex-col py-4 md:py-8 px-4 md:px-5 shrink-0 z-10">
           <div className="mb-4 md:mb-8 px-2 flex justify-between items-start md:items-center">
             <div>
-              <h2 className="text-xl font-black text-[#0a192f] tracking-tight leading-tight">
+              <h2 className="text-xl font-black text-[#0a192f] tracking-tight leading-tight flex flex-wrap items-center gap-2">
                 {isEditing ? 'Editar Caso' : 'Novo Caso'}
+                {formData?.display_id && (
+                  <span className="px-2 py-1 bg-blue-100 text-[#1e3a8a] text-[12px] uppercase rounded-lg border border-blue-200 shadow-sm mt-1">
+                    {formData.display_id}
+                  </span>
+                )}
               </h2>
               <p className="text-xs text-gray-400 mt-1 font-medium">
-                {(formData as any).display_id ? `Caso ID: ${(formData as any).display_id}` : 'Insira os dados do caso'}
+                Insira os dados do caso e honorários
               </p>
             </div>
             <button onClick={onClose} className="md:hidden p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
