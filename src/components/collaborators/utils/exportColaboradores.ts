@@ -125,7 +125,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
 
     const dataToExport = sortedData.map(c => {
         const matriculaStr = c.matricula_interna ? String(c.matricula_interna) : String(c.id);
-        const formatID = matriculaStr.startsWith('COL -') ? matriculaStr : `COL - ${matriculaStr}`;
+        const formatID = matriculaStr.startsWith('INT -') ? matriculaStr.replace('INT - ', 'INT - ') : (matriculaStr.startsWith('COL -') ? matriculaStr.replace('COL -', 'INT -') : `INT - ${matriculaStr}`);
 
         const fullObj = {
         'ID': formatID,

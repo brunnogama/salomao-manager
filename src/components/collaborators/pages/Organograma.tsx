@@ -1331,7 +1331,7 @@ export function Organograma() {
             if (activeTab === 'JURIDICO') return c.isJuridico;
             if (activeTab === 'ADMINISTRATIVO') {
                 // Felipe (Diretor Financeiro) and Gabriel are explicitly the primary Sócios for Administrativo
-                if (c.id === 'COL - 0002' || c.name.toLowerCase().includes('felipe dornelas') || c.id === 'COL - 0161' || c.name.toLowerCase().includes('gabriel parreiras horta')) return true;
+                if (c.id === 'INT - 0002' || c.name.toLowerCase().includes('felipe dornelas') || c.id === 'INT - 0161' || c.name.toLowerCase().includes('gabriel parreiras horta')) return true;
                 
                 // Allow Jurídico partners to appear ONLY if they verifiably hold administrative subordinates down their specific chain
                 // And ONLY if they don't have a leader themselves (otherwise they should just appear as subordinates!)

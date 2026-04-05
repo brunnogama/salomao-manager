@@ -197,7 +197,7 @@ export function ExportColumnSelectModal({ isOpen, onClose, onConfirm }: ExportCo
               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="flex items-center gap-3 p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/30 cursor-not-allowed">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                  <span className="text-sm font-medium text-emerald-900">ID (COL - XXX)</span>
+                  <span className="text-sm font-medium text-emerald-900">ID (INT - XXX)</span>
                 </div>
                 <div className="flex items-center gap-3 p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/30 cursor-not-allowed">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />

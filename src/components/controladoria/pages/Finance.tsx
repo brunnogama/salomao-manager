@@ -1127,8 +1127,10 @@ export function Finance() {
                         className={`transition-colors cursor-pointer group ${item.contract?.status === 'baixado' ? 'bg-gray-50/50 opacity-90 hover:bg-gray-100/50' : 'hover:bg-blue-50/30'}`}
                         onClick={() => handleMarkAsPaid(item)}
                       >
-                        <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">
-                          {(item as any).display_id || (item.contract as any)?.display_id}
+                        <td className="p-4">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-amber-200 shadow-sm truncate whitespace-nowrap">
+                            {(item as any).display_id || (item.contract as any)?.display_id || '-'}
+                          </span>
                         </td>
                         <td className="p-4">
                           {item.status === 'paid'

@@ -840,7 +840,11 @@ export function Contracts() {
                 <tbody className="divide-y divide-gray-50">
                   {filteredContracts.map(contract => (
                     <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
-                      <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{contract.display_id}</td>
+                      <td className="p-4">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-amber-200 shadow-sm truncate whitespace-nowrap">
+                          {contract.display_id || '-'}
+                        </span>
+                      </td>
                       <td className="p-4 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(contract.status)}`}>
                           {getStatusLabel(contract.status)}
