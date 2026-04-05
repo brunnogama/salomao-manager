@@ -14,7 +14,6 @@ import ReportControladoria from './pages/ReportControladoria';
 import { PublicDemandas } from './components/secretaria/demandas/PublicDemandas';
 import PublicReembolso from './pages/PublicReembolso';
 import PublicReembolsoAuth from './pages/PublicReembolsoAuth';
-import { Presentation } from './pages/presentation/Presentation';
 import { KanbanModal } from './components/WelcomeKanbanModal';
 import { BackupService } from './lib/BackupService';
 import { useEffect } from 'react';
@@ -278,7 +277,6 @@ export function AppRoutes() {
                     }} />
                 } />
 
-                <Route path="/apresentacao" element={<WithProps Component={Presentation} />} />
                 <Route path="/configuracoes" element={<WithProps Component={Settings} />} />
                 <Route path="/kanban_pessoal" element={<WithProps Component={KanbanModal} />} />
 

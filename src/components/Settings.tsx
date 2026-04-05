@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import {
   Shield, Users, History as HistoryIcon, Code,
-  Briefcase, EyeOff, LayoutGrid, DollarSign, Grid,
-  CheckCircle, AlertCircle, Trash2, AlertTriangle,
-  UserCircle, LogOut, Settings as SettingsIcon, Layout, Info, Database, Lock, ShieldCheck
+  Briefcase, EyeOff, LayoutGrid, DollarSign, Grid, CheckCircle, AlertCircle, Trash2, AlertTriangle,
+  UserCircle, LogOut, Settings as SettingsIcon, Layout, Info, Database, Lock, ShieldCheck, Globe
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
@@ -23,6 +22,7 @@ import { ValidationSection } from './settings/ValidationSection'
 import { TablesSection } from './settings/TablesSection'
 import { SYSTEM_VERSION } from '../config/version'
 import { APP_UPDATES } from '../config/updates'
+import { Presentation } from '../pages/presentation/Presentation'
 
 // --- INTERFACES & CONSTANTS ---
 interface UserPermissions {
@@ -53,7 +53,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   // --- STATES ---
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
-  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'permissoes' | 'crm' | 'juridico' | 'rh' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup' | 'operacoes' | 'validacao' | 'tabelas'>('menu')
+  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'permissoes' | 'crm' | 'juridico' | 'rh' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup' | 'operacoes' | 'validacao' | 'tabelas' | 'apresentacao'>('menu')
 
   const [users, setUsers] = useState<AppUser[]>([])
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
@@ -344,7 +344,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
 
   // Define which modules a normal user without module-roles can access by default (e.g. audit)
   const isAccessibleByAnyone = (modId: string) => {
-     return ['menu', 'about', 'validacao'].includes(modId);
+     return ['menu', 'about', 'validacao', 'apresentacao'].includes(modId);
   }
 
   const menuItems = [
@@ -361,6 +361,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
     { id: 'backup', label: 'Backup', icon: Database, adminOnly: true },
     { id: 'sistema', label: 'Changelog', icon: Code, adminOnly: true },
     { id: 'about', label: 'Sobre', icon: Info },
+    { id: 'apresentacao', label: 'Apresentação', icon: Globe },
   ];
 
   if (activeModule !== 'menu' && !hasAccessToModule(activeModule) && !isAccessibleByAnyone(activeModule)) {
@@ -462,6 +463,12 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
             </div>
           )}
 
+          {activeModule === 'apresentacao' && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative min-h-[600px] h-[80vh]">
+              <Presentation onModuleHome={() => setActiveModule('menu')} userName={currentUserEmail.split('@')[0]} />
+            </div>
+          )}
+
           {activeModule === 'geral' && (
             <UserManagement
               users={users}
@@ -514,7 +521,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
                 <div className="absolute left-0 top-0 h-full w-1 bg-blue-500"></div>
                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-5 flex items-center gap-2"><Code className="w-4 h-4 text-[#1e3a8a]" /> Frontend Stack</h3>
                 <ul className="space-y-2">
-                  {['React.js (v18)', 'TypeScript', 'Tailwind CSS', 'Vite Engine'].map(tech => (
+                  {['React.js (v18)', 'TypeScript', 'Tailwind CSS', 'Vite Engine', 'PWA (Progressive Web App)'].map(tech => (
                     <li key={tech} className="flex items-center text-[11px] font-bold text-gray-600 bg-gray-50 p-2.5 rounded-xl border border-gray-100 uppercase tracking-tight">{tech}</li>
                   ))}
                 </ul>
@@ -524,7 +531,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
                 <div className="absolute left-0 top-0 h-full w-1 bg-emerald-500"></div>
                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-5 flex items-center gap-2"><Database className="w-4 h-4 text-emerald-600" /> Infrastructure</h3>
                 <ul className="space-y-2">
-                  {['Supabase (PostgreSQL)', 'Row Level Security', 'Edge Functions', 'Storage Buckets'].map(tech => (
+                  {['Supabase (PostgreSQL)', 'Row Level Security', 'Edge Functions', 'Storage Buckets', 'Service Workers'].map(tech => (
                     <li key={tech} className="flex items-center text-[11px] font-bold text-gray-600 bg-gray-50 p-2.5 rounded-xl border border-gray-100 uppercase tracking-tight">{tech}</li>
                   ))}
                 </ul>
