@@ -179,7 +179,6 @@ export function DraftContractModal({ isOpen, onClose, client, onSave }: DraftCon
              <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Valor do Honorário*</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">R$</span>
                   <input 
                     type="text" 
                     value={valor || valor === 0 ? maskMoney((valor * 100).toFixed(0)) : ''}
@@ -188,7 +187,7 @@ export function DraftContractModal({ isOpen, onClose, client, onSave }: DraftCon
                        setValor(Number(rawValue) / 100);
                     }}
                     placeholder="0,00"
-                    className="w-full bg-white border border-gray-200 text-[#1e3a8a] text-sm font-black rounded-xl pl-10 pr-4 py-2.5 outline-none focus:border-[#1e3a8a] focus:ring-2 focus:ring-blue-50 transition-all shadow-sm" 
+                    className="w-full bg-white border border-gray-200 text-[#1e3a8a] text-sm font-black rounded-xl px-4 py-2.5 outline-none focus:border-[#1e3a8a] focus:ring-2 focus:ring-blue-50 transition-all shadow-sm" 
                   />
                 </div>
              </div>
