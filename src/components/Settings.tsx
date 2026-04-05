@@ -464,7 +464,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
           )}
 
           {activeModule === 'apresentacao' && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative min-h-[600px] h-[80vh]">
+            <div className="rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative bg-[#0a192f]">
               <Presentation onModuleHome={() => setActiveModule('menu')} userName={currentUserEmail.split('@')[0]} />
             </div>
           )}
