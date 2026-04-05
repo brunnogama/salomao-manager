@@ -265,14 +265,14 @@ export default function Login() {
 
         {/* Imagem de Fundo */}
         <div
-          className="absolute inset-0 z-0 bg-cover bg-center opacity-60"
+          className="absolute inset-0 z-0 bg-cover bg-center opacity-90"
           style={{
             backgroundImage: "url('/foto-fundo.jpg')"
           }}
         ></div>
 
         {/* Camada Azul Royal */}
-        <div className="absolute inset-0 z-1 bg-[#1e3a8a]/40 mix-blend-color"></div>
+        <div className="absolute inset-0 z-1 bg-[#1e3a8a]/70 mix-blend-color"></div>
 
         {/* Gradientes e Overlay */}
         <div className="absolute inset-0 z-2 bg-gradient-to-br from-[#0a192f]/70 via-[#0a0a0a]/60 to-[#1a2c4e]/70"></div>
