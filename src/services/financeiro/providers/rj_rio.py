@@ -44,11 +44,29 @@ class RioJaneiroProvider:
         data_emissao = ET.SubElement(inf_rps, 'DataEmissao')
         data_emissao.text = dados.get('dataEmissao', '')
         
+        import json
+        servico_str = dados.get('servico', '{}')
+        if isinstance(servico_str, str):
+            try:
+                servico = json.loads(servico_str)
+            except:
+                servico = {}
+        else:
+            servico = servico_str
+
+        optante_simples = servico.get('optante_simples', '2')
+        tributacao_issqn = servico.get('tributacao_issqn', '1')
+        regime_especial = servico.get('regime_especial', '0')
+        
+        if regime_especial != '0':
+            reg_esp = ET.SubElement(inf_rps, 'RegimeEspecialTributacao')
+            reg_esp.text = regime_especial
+
         natureza = ET.SubElement(inf_rps, 'NaturezaOperacao')
-        natureza.text = "1"
+        natureza.text = tributacao_issqn
         
         optante = ET.SubElement(inf_rps, 'OptanteSimplesNacional')
-        optante.text = "2" # 2 = Não
+        optante.text = optante_simples
         
         incentivador = ET.SubElement(inf_rps, 'IncentivadorCultural')
         incentivador.text = "2" # 2 = Não

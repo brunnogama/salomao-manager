@@ -11,7 +11,8 @@ import {
   Coins,
   CheckCircle,
   Loader2,
-  Plus
+  Plus,
+  Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SearchableSelect } from '../../crm/SearchableSelect';
@@ -106,7 +107,17 @@ const EmissaoNF = () => {
   const [codigoTributacao, setCodigoTributacao] = useState('17.14.01 - Advocacia');
   const [codigoComplementar, setCodigoComplementar] = useState('17.14.01.001 - Advocacia');
   const [codigoNbs, setCodigoNbs] = useState('113019000 - Serviços jurídicos não classificados');
-  const [tipoRetencao, setTipoRetencao] = useState('1'); // 1 = Retidos, 2 = Não Retidos, etc. 
+  const [tipoRetencao, setTipoRetencao] = useState('1'); // 1 = PIS/COFINS Retido
+
+  // Modo Avançado e Retenções Complementares (Nacional)
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
+  const [optanteSimples, setOptanteSimples] = useState('2'); // 2 = Não Optante
+  const [tributacaoIssqn, setTributacaoIssqn] = useState('1'); // 1 = Operação Tributável
+  const [regimeEspecial, setRegimeEspecial] = useState('0'); // 0 = Nenhum
+  const [issRetido, setIssRetido] = useState('2'); // 2 = Não
+  const [exigibilidadeSuspensa, setExigibilidadeSuspensa] = useState('2'); // 2 = Não
+  const [imunidade, setImunidade] = useState('2'); // 2 = Não
+  const [beneficioMunicipal, setBeneficioMunicipal] = useState('2'); // 2 = Não
 
   // Fetch Cities and CNPJ on Mount/City Change
   useEffect(() => {
@@ -479,7 +490,14 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         codigo_tributacao: codigoTributacao.split(' -')[0].trim(),
         codigo_complementar: codigoComplementar.split(' -')[0].trim(),
         codigo_nbs: codigoNbs.split(' -')[0].trim(),
-        tipo_retencao: tipoRetencao
+        tipo_retencao: tipoRetencao,
+        optante_simples: optanteSimples,
+        tributacao_issqn: tributacaoIssqn,
+        regime_especial: regimeEspecial,
+        iss_retido: issRetido,
+        exigibilidade_suspensa: exigibilidadeSuspensa,
+        imunidade: imunidade,
+        beneficio_municipal: beneficioMunicipal
       }));
 
       const apiUrl = import.meta.env.VITE_SIGNATURE_API || 'http://localhost:5000';
@@ -969,6 +987,79 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                  )}
                </div>
             </div>
+
+            {/* TOGGLE MODO AVANÇADO */}
+            <div className="bg-gray-100/80 px-4 py-2 flex justify-between items-center border-[3px] border-x-0 border-t-0 border-gray-800 shrink-0">
+               <span className="text-[9px] sm:text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-1.5"><Settings className="w-3.5 h-3.5"/> PREENCHIMENTO MANUAL</span>
+               <label className="flex items-center gap-2 cursor-pointer group">
+                 <span className={`text-[10px] sm:text-[11px] font-black uppercase transition-colors ${isAdvancedMode ? 'text-[#1e3a8a]' : 'text-gray-400 group-hover:text-gray-600'}`}>{isAdvancedMode ? 'Ligado' : 'Desligado'}</span>
+                 <div className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${isAdvancedMode ? 'bg-[#1e3a8a]' : 'bg-gray-300'}`}>
+                    <div className={`bg-white w-3 h-3 rounded-full shadow-md transform transition-transform ${isAdvancedMode ? 'translate-x-4' : 'translate-x-0'}`} />
+                 </div>
+                 <input type="checkbox" className="hidden" checked={isAdvancedMode} onChange={(e) => setIsAdvancedMode(e.target.checked)} />
+               </label>
+            </div>
+
+            {/* MODO AVANÇADO CONTROLS */}
+            {isAdvancedMode && (
+              <div className="border-b-[3px] border-[#1e3a8a] flex flex-col relative z-20 bg-blue-50/50 text-[10px] sm:text-[11px] shrink-0 animate-in slide-in-from-top-2 duration-300">
+                 <div className="bg-[#1e3a8a] text-white text-center font-black uppercase text-[10px] sm:text-[11px] py-1 tracking-wider flex items-center justify-center gap-2">
+                    <Settings className="w-3.5 h-3.5" /> Parâmetros Avançados (Emissor Nacional)
+                 </div>
+                 <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                    <div className="flex flex-col gap-1">
+                       <label className="font-bold text-[#1e3a8a]">Optante pelo Simples Nacional</label>
+                       <select className="bg-white border border-blue-200 rounded p-1.5 focus:border-[#1e3a8a] outline-none font-semibold text-gray-800" value={optanteSimples} onChange={e => setOptanteSimples(e.target.value)}>
+                         <option value="2">Não Optante</option>
+                         <option value="1">Sim - Microempresa Municipal</option>
+                         <option value="3">Microempreendedor Individual (MEI)</option>
+                       </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                       <label className="font-bold text-[#1e3a8a]">Tributação do ISSQN</label>
+                       <select className="bg-white border border-blue-200 rounded p-1.5 focus:border-[#1e3a8a] outline-none font-semibold text-gray-800" value={tributacaoIssqn} onChange={e => setTributacaoIssqn(e.target.value)}>
+                         <option value="1">Operação Tributável</option>
+                         <option value="2">Imunidade</option>
+                         <option value="3">Exportação de Serviço</option>
+                         <option value="4">Não Incidência do ISSQN</option>
+                       </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                       <label className="font-bold text-[#1e3a8a]">Regime Especial de Tributação</label>
+                       <select className="bg-white border border-blue-200 rounded p-1.5 focus:border-[#1e3a8a] outline-none font-semibold text-gray-800" value={regimeEspecial} onChange={e => setRegimeEspecial(e.target.value)}>
+                         <option value="0">Nenhum</option>
+                         <option value="1">Microempresa Municipal</option>
+                         <option value="2">Estimativa</option>
+                         <option value="3">Sociedade de Profissionais</option>
+                         <option value="4">Cooperativa</option>
+                         <option value="5">MEI</option>
+                         <option value="6">ME ou EPP do Simples Nacional</option>
+                       </select>
+                    </div>
+                    <div className="flex flex-col gap-1.5 pt-1 border-t border-blue-200 mt-1 sm:col-span-2 xl:col-span-3">
+                       <span className="font-black text-[#1e3a8a] uppercase text-[9px] tracking-widest">Configurações Especiais do ISSQN</span>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+                         <label className="flex items-center gap-2 font-bold select-none p-1.5 rounded-lg border border-blue-200 bg-white cursor-pointer hover:bg-blue-50 transition-colors">
+                           <input type="checkbox" checked={exigibilidadeSuspensa === '1'} onChange={e => setExigibilidadeSuspensa(e.target.checked ? '1' : '2')} className="w-4 h-4 rounded border-blue-300 accent-[#1e3a8a] text-[#1e3a8a]" />
+                           Exigibilidade Suspensa?
+                         </label>
+                         <label className="flex items-center gap-2 font-bold select-none p-1.5 rounded-lg border border-blue-200 bg-white cursor-pointer hover:bg-blue-50 transition-colors">
+                           <input type="checkbox" checked={issRetido === '1'} onChange={e => setIssRetido(e.target.checked ? '1' : '2')} className="w-4 h-4 rounded border-blue-300 accent-[#1e3a8a] text-[#1e3a8a]" />
+                           ISSQN Retido na Fonte?
+                         </label>
+                         <label className="flex items-center gap-2 font-bold select-none p-1.5 rounded-lg border border-blue-200 bg-white cursor-pointer hover:bg-blue-50 transition-colors">
+                           <input type="checkbox" checked={imunidade === '1'} onChange={e => setImunidade(e.target.checked ? '1' : '2')} className="w-4 h-4 rounded border-blue-300 accent-[#1e3a8a] text-[#1e3a8a]" />
+                           Imunidade / Exportação?
+                         </label>
+                         <label className="flex items-center gap-2 font-bold select-none p-1.5 rounded-lg border border-blue-200 bg-white cursor-pointer hover:bg-blue-50 transition-colors">
+                           <input type="checkbox" checked={beneficioMunicipal === '1'} onChange={e => setBeneficioMunicipal(e.target.checked ? '1' : '2')} className="w-4 h-4 rounded border-blue-300 accent-[#1e3a8a] text-[#1e3a8a]" />
+                           Benefício Municipal?
+                         </label>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+            )}
 
             {/* CONFIGURAÇÕES DE CÓDIGOS MUNICIPAIS E RETENÇÃO */}
             <div className="border-b-[3px] border-gray-800 flex flex-col relative z-20 bg-white text-[10px] sm:text-[11px] shrink-0">
