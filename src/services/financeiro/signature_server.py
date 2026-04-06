@@ -62,20 +62,58 @@ def assinar_nota():
             else:
                 xml_string = xml_assinado.decode('utf-8') if hasattr(xml_assinado, 'decode') else str(xml_assinado)
             
-            # MOCK: Simulando o retorno oficial da Receita Federal (Nacional)
-            # Chave de acesso possui 44 dígitos
-            uf = "33" # RJ
-            ano_mes = dict(dados).get('dataEmissao', '2604').replace('-', '')[2:6]
-            cnpj_limpo = prestador.get('cnpj', '00000000000100').replace('.', '').replace('/', '').replace('-', '')
-            random_key = f"{uf}{ano_mes}{cnpj_limpo}55001{random.randint(100000000, 999999999)}1"
-            chave_acesso = random_key.zfill(44)
+            from utils.mtls_extractor import MTlsExtractor
+            import requests
+
+            # API Base URL - Emissor Nacional
+            ADN_API_URL = os.getenv("ADN_API_URL", "https://sefin.nacional.gov.br/v1/nfse")
             
-            return jsonify({
-                "status": "sucesso",
-                "xml": xml_string,
-                "chave_acesso": chave_acesso,
-                "pdf_url": f"https://www.nfse.gov.br/consultapublica?chave={chave_acesso}"
-            })
+            extractor = MTlsExtractor(cert_path=cert_path, password=password, pfx_data=pfx_data)
+            try:
+                temp_cert, temp_key = extractor.extract_to_temp_files()
+                
+                headers = {
+                    "Content-Type": "application/xml",
+                    "Accept": "application/xml"
+                }
+
+                # Executa a Transmissão via mTLS (Certificado Cliente)
+                print(f"Transmitindo DPS para a Sefin Nacional via mTLS: {ADN_API_URL}")
+                api_response = requests.post(
+                    ADN_API_URL, 
+                    data=xml_assinado, 
+                    headers=headers, 
+                    cert=(temp_cert, temp_key),
+                    timeout=15
+                )
+                
+                api_response.raise_for_status()
+                response_xml = api_response.content
+                
+                # Parse do retorno XML oficial para capturar a Chave de Acesso gerada
+                root_resp = LxmlET.fromstring(response_xml)
+                ns = {'ns': 'http://www.sped.fazenda.gov.br/nfse'}
+                ch_element = root_resp.find('.//ns:chNFSe', ns)
+                
+                if ch_element is not None and ch_element.text:
+                    chave_acesso = ch_element.text
+                else:
+                    raise ValueError(f"Tag <chNFSe> ausente ou rejeição no XML retorno: {api_response.text}")
+
+                return jsonify({
+                    "status": "sucesso",
+                    "xml": xml_string,
+                    "chave_acesso": chave_acesso,
+                    "pdf_url": f"https://www.nfse.gov.br/consultapublica?chave={chave_acesso}"
+                })
+                
+            except requests.exceptions.HTTPError as http_e:
+                raise Exception(f"Rejeição da Receita Federal (HTTP {api_response.status_code}): {api_response.text}")
+            except Exception as e:
+                raise Exception(f"Erro Crítico na Transmissão: {str(e)}")
+            finally:
+                extractor.cleanup() # Auto-destruição imediata dos arquivos temporários de chave privativa
+
 
         return jsonify({"erro": "Provedor para esta cidade ainda não implementado"}), 501
 
