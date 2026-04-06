@@ -100,7 +100,8 @@ class NacionalAdnProvider:
                 <xDescServ>{desc}</xDescServ>
                 <cNBS>{c_nbs}</cNBS>
             </cServ>
-            <valores>
+        </serv>
+        <valores>
                 <vServ>{v_serv}</vServ>
                 <trib>
                     <ISSQN>
@@ -108,7 +109,6 @@ class NacionalAdnProvider:
                     </ISSQN>
                 </trib>
             </valores>
-        </serv>
     </infDPS>
 </DPS>"""
         
