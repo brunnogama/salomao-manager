@@ -88,7 +88,9 @@ class NacionalAdnProvider:
         </prest>
         {toma_xml}
         <serv>
-            <locPrest>BR</locPrest>
+            <locPrest>
+                <cLocPrestacao>3304557</cLocPrestacao>
+            </locPrest>
             <cTribNac>{c_trib}</cTribNac>
             <cNBS>{c_nbs}</cNBS>
             <xDesc>{desc}</xDesc>
