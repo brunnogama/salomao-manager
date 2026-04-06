@@ -100,7 +100,6 @@ class NacionalAdnProvider:
         <cLocEmi>{c_loc_emi}</cLocEmi>
         <prest>
             <CNPJ>{cnpj_prestador_limpo}</CNPJ>
-            <IM>{im_prestador}</IM>
             {reg_trib_xml}
         </prest>
         {toma_xml}
