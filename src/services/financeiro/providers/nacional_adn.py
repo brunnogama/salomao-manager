@@ -45,6 +45,7 @@ class NacionalAdnProvider:
     <infDPS Id="{dps_id}">
         <tpAmb>1</tpAmb>
         <dhEmi>{dh_emi}</dhEmi>
+        <verAplic>SalomaoManager_1.0</verAplic>
         <prest>
             <CNPJ>{cnpj_prestador_limpo}</CNPJ>
             <IM>{self.inscricao_municipal}</IM>
