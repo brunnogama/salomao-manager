@@ -37,10 +37,14 @@ class NacionalAdnProvider:
         cnpj_tomador_limpo = tomador.get('cnpj', '').replace('.', '').replace('/', '').replace('-', '')
         cpf_tomador_limpo = tomador.get('cpf', '').replace('.', '').replace('-', '')
         
-        if cnpj_tomador_limpo:
-            doc_tomador = f"<CNPJ>{cnpj_tomador_limpo}</CNPJ>"
-        elif cpf_tomador_limpo:
-            doc_tomador = f"<CPF>{cpf_tomador_limpo}</CPF>"
+        # Muitos frontends enviam CPF no campo cnpj dependendo da entidade. Validamos pelo tamanho!
+        doc_unificado = cnpj_tomador_limpo or cpf_tomador_limpo
+        
+        if doc_unificado:
+            if len(doc_unificado) == 11:
+                doc_tomador = f"<CPF>{doc_unificado}</CPF>"
+            else:
+                doc_tomador = f"<CNPJ>{doc_unificado}</CNPJ>"
         else:
             doc_tomador = ""
             
