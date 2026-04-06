@@ -191,13 +191,41 @@ const EmissaoNF = () => {
     return map[city] || '';
   };
 
-  // Fetch Clients
+  // Fetch Clients and listen to realtime changes
   useEffect(() => {
     const fetchClients = async () => {
       const { data } = await supabase.from('clients').select('id, name, cnpj, email').order('name');
       if (data) setClients(data);
     };
     fetchClients();
+
+    const channel = supabase
+      .channel('nf-clients-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'clients' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setClients(prev => {
+              if (prev.find(c => c.id === payload.new.id)) return prev;
+              return [...prev, payload.new].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            setClients(prev => 
+              prev.map(c => c.id === payload.new.id ? { ...c, ...payload.new } : c)
+                  .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setClients(prev => prev.filter(c => c.id !== payload.old.id));
+            setSelectedClient((prevClient: any) => prevClient?.id === payload.old.id ? null : prevClient);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Fechar dropdown ao clicar fora
