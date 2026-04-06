@@ -72,12 +72,7 @@ const EmissaoNF = () => {
   const [nfNumber, setNfNumber] = useState<string>('');
 
   // Novo estado da Modal de Emissão
-  const [emissaoStatus, setEmissaoStatus] = useState<{
-    isOpen: boolean;
-    status: NFStatus;
-    errorDetails: { message: string; traceback?: string } | null;
-    successData?: { xml?: string; pdfUrl?: string } | null;
-  }>({
+  const [emissaoStatus, setEmissaoStatus] = useState<EmissaoStatus>({
     isOpen: false,
     status: 'idle',
     errorDetails: null,
@@ -548,12 +543,12 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           nf_pdf: data.pdf_url || null
         }).eq('id', selectedHonorario.id);
 
-        setEmissaoStatus({ isOpen: true, status: 'success', errorDetails: null, successData: { xml: data.xml, pdfUrl: data.pdf_url } });
+        setEmissaoStatus({ isOpen: true, status: 'success', errorDetails: null, successData: { xml: data.xml, pdfUrl: data.pdf_url, chaveAcesso: data.chave_acesso } });
         
         setHonorarios(prev => prev.filter(h => h.id !== selectedHonorario.id));
         setSelectedHonorario(null);
 
-        console.log("RPS Assinado (XML):", data.xml);
+        console.log("DPS Assinada (XML):", data.xml);
       } else {
         setEmissaoStatus({ 
           isOpen: true, 

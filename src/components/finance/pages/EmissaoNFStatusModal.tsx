@@ -8,7 +8,7 @@ interface EmissaoNFStatusModalProps {
   isOpen: boolean;
   status: NFStatus;
   errorDetails?: { message: string; traceback?: string } | null;
-  successData?: { xml?: string } | null;
+  successData?: { xml?: string; pdfUrl?: string; chaveAcesso?: string } | null;
   onClose: () => void;
 }
 
@@ -103,6 +103,24 @@ export function EmissaoNFStatusModal({ isOpen, status, errorDetails, successData
                 O documento foi protocolado e registrado no sistema.
               </p>
 
+              {successData?.chaveAcesso && (
+                <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-center mb-4">
+                  <p className="text-[10px] font-black tracking-widest text-gray-500 uppercase mb-1">Chave de Acesso (DNA)</p>
+                  <p className="text-[12px] font-mono font-bold text-gray-800 break-all">{successData.chaveAcesso}</p>
+                </div>
+              )}
+
+              {successData?.pdfUrl && (
+                <a
+                  href={successData.pdfUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 mb-2 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[12px] uppercase tracking-widest rounded-xl hover:bg-emerald-100 transition-all shadow-sm"
+                >
+                  <FileText className="w-4 h-4" /> Acessar DANFSE Nacional
+                </a>
+              )}
+
               {successData?.xml && (
                 <button
                   onClick={() => {
@@ -110,7 +128,7 @@ export function EmissaoNFStatusModal({ isOpen, status, errorDetails, successData
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `RPS_assinado_${new Date().getTime()}.xml`;
+                    a.download = `DPS_assinado_${new Date().getTime()}.xml`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
@@ -118,7 +136,7 @@ export function EmissaoNFStatusModal({ isOpen, status, errorDetails, successData
                   }}
                   className="w-full flex items-center justify-center gap-2 py-2.5 mb-3 bg-blue-50 text-[#1e3a8a] border border-blue-200 font-bold text-[12px] uppercase tracking-widest rounded-xl hover:bg-blue-100 transition-all shadow-sm"
                 >
-                  <Download className="w-4 h-4" /> Baixar XML Emitido
+                  <Download className="w-4 h-4" /> Baixar XML da DPS
                 </button>
               )}
 
