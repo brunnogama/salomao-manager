@@ -1,6 +1,6 @@
 from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.hazmat.backends import default_backend
-from signxml import XMLSigner, methods
+from signxml import XMLSigner, methods, namespaces
 
 # O padrão ABRASF do governo e das prefeituras brasileiras EXIGE criptografia SHA1.
 # Por design, o `signxml` moderno proíbe o uso de SHA1 por diretrizes globais de segurança (InvalidInput).
@@ -22,5 +22,9 @@ class CertificateSigner:
             pfx_data, self.password, default_backend()
         )
         signer = XMLSigner(method=methods.enveloped, signature_algorithm="rsa-sha1")
+        
+        # A API Nacional da Receita Federal rejeita estritamente qualquer tag com prefixo (E6155).
+        # Devemos forçar o signxml a injetar as tags de assinatura no namespace padrão (sem prefixo 'ds:')
+        signer.namespaces = {None: namespaces.ds}
         
         return signer.sign(xml_element, key=private_key, cert=[certificate])
