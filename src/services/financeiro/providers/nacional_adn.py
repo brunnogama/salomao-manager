@@ -102,8 +102,10 @@ class NacionalAdnProvider:
             </cServ>
         </serv>
         <valores>
+            <vServPrest>
                 <vServ>{v_serv}</vServ>
-                <trib>
+            </vServPrest>
+            <trib>
                     <ISSQN>
                         <tpRet>{iss_retido}</tpRet>
                     </ISSQN>
