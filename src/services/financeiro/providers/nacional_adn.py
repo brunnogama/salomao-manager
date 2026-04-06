@@ -14,8 +14,19 @@ class NacionalAdnProvider:
         Prepara o XML da Declaração de Prestação de Serviço (DPS)
         sem prefixos indesejados (ns0:), usando parse nativo de raw string.
         """
-        # A Sefin Nacional exige obrigatoriamente "DPS" seguido de 42 números inteiros
-        dps_numerico = ''.join([str(random.randint(0, 9)) for _ in range(42)])
+        cnpj_prestador_limpo = self.cnpj_prestador.replace('.', '').replace('/', '').replace('-', '')
+        if not cnpj_prestador_limpo:
+            cnpj_prestador_limpo = '14493710000105'
+        cnpj_prestador_limpo = cnpj_prestador_limpo.zfill(14)
+            
+        # A Sefin Nacional exige (E0004) "DPS" seguido de exatos 42 números matematicamente arranjados
+        # Formato: cLocEmi(7) + tpInscFed(1) + cpfCnpj(14) + serie(5) + nMDF(15)
+        c_loc_emi = '3304557'
+        tp_insc_fed = '2' # 2 = CNPJ
+        serie_dps = '1'
+        n_dps = str(random.randint(1000, 99999))
+        
+        dps_numerico = f"{c_loc_emi}{tp_insc_fed}{cnpj_prestador_limpo}{serie_dps.zfill(5)}{n_dps.zfill(15)}"
         dps_id = f"DPS{dps_numerico}"
         
         # Datas e Formatações (Fuso Horário BR -03:00 para evitar erro de emissão no futuro no servidor AWS/Render em UTC)
@@ -24,7 +35,6 @@ class NacionalAdnProvider:
         
         dh_emi = agora_br.strftime("%Y-%m-%dT%H:%M:%S-03:00")
         d_compet = agora_br.strftime("%Y-%m-%d")
-        cnpj_prestador_limpo = self.cnpj_prestador.replace('.', '').replace('/', '').replace('-', '')
         if not cnpj_prestador_limpo:
             cnpj_prestador_limpo = '14493710000105'
             
@@ -83,11 +93,11 @@ class NacionalAdnProvider:
         <tpAmb>1</tpAmb>
         <dhEmi>{dh_emi}</dhEmi>
         <verAplic>SalomaoManager_1.0</verAplic>
-        <serie>1</serie>
-        <nDPS>{random.randint(1000, 99999)}</nDPS>
+        <serie>{serie_dps}</serie>
+        <nDPS>{n_dps}</nDPS>
         <dCompet>{d_compet}</dCompet>
         <tpEmit>1</tpEmit>
-        <cLocEmi>3304557</cLocEmi>
+        <cLocEmi>{c_loc_emi}</cLocEmi>
         <prest>
             <CNPJ>{cnpj_prestador_limpo}</CNPJ>
             <IM>{im_prestador}</IM>
