@@ -100,6 +100,7 @@ class NacionalAdnProvider:
         # vamos injetar a tag <cTribMun> localmente também!
         c_trib_raw = servico.get('codigo_tributacao', '171401').replace('.', '').replace('-', '')
         c_trib_nac = c_trib_raw.zfill(6)
+        c_trib_mun = c_trib_raw.zfill(20)  # O Padrão Nacional fixa o TCCodTribMun em exatos 20 dígitos numéricos!
             
         c_nbs = servico.get('codigo_nbs', '113019000').replace('.', '').replace('-', '')
         desc = servico.get('discriminacao', 'Honorários Advocatícios')
@@ -129,7 +130,7 @@ class NacionalAdnProvider:
             </locPrest>
             <cServ>
                 <cTribNac>{c_trib_nac}</cTribNac>
-                <cTribMun>{c_trib_nac}</cTribMun>
+                <cTribMun>{c_trib_mun}</cTribMun>
                 <xDescServ>{desc}</xDescServ>
                 <cNBS>{c_nbs}</cNBS>
             </cServ>
