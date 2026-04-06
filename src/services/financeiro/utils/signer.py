@@ -27,7 +27,13 @@ class CertificateSigner:
         ref_uri = f"#{node_to_sign.get('Id')}" if node_to_sign is not None else None
         
         # O Ambiente de Dados Nacional (ADN) utiliza criptografia moderna SHA256
-        signer = XMLSigner(method=methods.enveloped, signature_algorithm="rsa-sha256", digest_algorithm="sha256")
+        # CUIDADO: SEFAZ e RECEITA FEDERAL apenas suportam C14N 1.0 (20010315). O SignXML moderno defaults to C14N 1.1!
+        signer = XMLSigner(
+            method=methods.enveloped, 
+            signature_algorithm="rsa-sha256", 
+            digest_algorithm="sha256",
+            c14n_algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"
+        )
         
         # A API Nacional da Receita Federal rejeita estritamente qualquer tag com prefixo (E6155).
         # Devemos forçar o signxml a injetar as tags de assinatura no namespace padrão (sem prefixo 'ds:')
