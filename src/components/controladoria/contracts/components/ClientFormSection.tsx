@@ -34,14 +34,16 @@ export function ClientFormSection(props: ClientFormSectionProps) {
         <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-black/5 pb-2">Dados do Cliente</h3>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
           <div className="md:col-span-3">
-            <label className="block text-xs font-medium text-gray-600 mb-1">CNPJ/CPF</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              {formData.has_no_cnpj ? 'CPF' : 'CNPJ/CPF'}
+            </label>
             <div className="flex gap-2 items-center">
               <input 
                 type="text" 
-                disabled={formData.has_no_cnpj} 
                 className="flex-1 border border-gray-300 rounded-lg p-2.5 text-sm bg-white focus:border-salomao-blue outline-none min-w-0" 
-                placeholder="00.000.000/0000-00" 
-                value={formData.cnpj || ''} 
+                placeholder={formData.has_no_cnpj ? '000.000.000-00' : '00.000.000/0000-00'} 
+                value={formData.cnpj || ''}
+                maxLength={formData.has_no_cnpj ? 14 : 18} 
                 onChange={(e) => setFormData({...formData, cnpj: maskCNPJ(e.target.value)})}
               />
               <button 
@@ -59,7 +61,11 @@ export function ClientFormSection(props: ClientFormSectionProps) {
                 id="no_cnpj" 
                 className="rounded text-salomao-blue focus:ring-salomao-blue" 
                 checked={formData.has_no_cnpj || false} 
-                onChange={(e) => setFormData({...formData, has_no_cnpj: e.target.checked, cnpj: ''})}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  const newCnpj = checked && formData.cnpj ? formData.cnpj.replace(/\D/g, '').substring(0, 11) : formData.cnpj;
+                  setFormData({...formData, has_no_cnpj: checked, cnpj: newCnpj ? maskCNPJ(newCnpj) : ''});
+                }}
               />
               <label htmlFor="no_cnpj" className="ml-2 text-xs text-gray-500">Sem CNPJ (Pessoa Física)</label>
             </div>

@@ -919,8 +919,16 @@ export function ContractFormModal(props: Props) {
     const newName = toTitleCase(name);
     setFormData(prev => ({ ...prev, client_name: newName }));
     if (!newName) return;
-    const { data } = await supabase.from('clients').select('cnpj, id').eq('name', newName).maybeSingle();
-    if (data && data.cnpj) setFormData(prev => ({ ...prev, client_name: newName, client_id: data.id, cnpj: maskCNPJ(data.cnpj) }));
+    const { data } = await supabase.from('clients').select('cnpj, id, is_person').eq('name', newName).maybeSingle();
+    if (data) {
+      setFormData(prev => ({
+        ...prev,
+        client_name: newName,
+        client_id: data.id,
+        cnpj: data.cnpj ? maskCNPJ(data.cnpj) : '',
+        has_no_cnpj: data.is_person || false
+      }));
+    }
   };
 
   const partnerSelectOptions = [{ label: 'Selecione', value: '' }, ...partners.map((p: any) => ({ label: p.name, value: p.id }))];
