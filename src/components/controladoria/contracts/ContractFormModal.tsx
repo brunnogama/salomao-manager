@@ -709,7 +709,7 @@ export function ContractFormModal(props: Props) {
               
             if (!docsError && docs && docs.length > 0) {
               const { data: signedUrls, error: urlsError } = await supabase.storage.from('ged-documentos')
-                .createSignedUrls(docs.map(d => d.file_path), 3600);
+                .createSignedUrls(docs.map(d => d.file_path), 315360000); // 10 anos de validade
                 
               if (!urlsError && signedUrls) {
                 attachmentsHtml = signedUrls.map((u, i) =>
