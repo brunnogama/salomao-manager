@@ -48,6 +48,14 @@ class NacionalAdnProvider:
             {doc_tomador}
         </toma>""" if doc_tomador else ""
         
+        # Tags de Regime Tributário Obrigatórias
+        reg_ap_trib = "<regApTribSN>1</regApTribSN>" if optante_simples == '1' else ""
+        reg_trib_xml = f"""<regTrib>
+                <opSimpNac>{optante_simples}</opSimpNac>
+                {reg_ap_trib}
+                <regEspTrib>0</regEspTrib>
+            </regTrib>"""
+        
         # Dados do Servico
         c_trib = servico.get('codigo_tributacao', '171401')
         c_nbs = servico.get('codigo_nbs', '113019000')
@@ -70,9 +78,7 @@ class NacionalAdnProvider:
         <prest>
             <CNPJ>{cnpj_prestador_limpo}</CNPJ>
             <IM>{self.inscricao_municipal}</IM>
-            <regTrib>
-                <opSimpNac>{optante_simples}</opSimpNac>
-            </regTrib>
+            {reg_trib_xml}
         </prest>
         {toma_xml}
         <serv>
