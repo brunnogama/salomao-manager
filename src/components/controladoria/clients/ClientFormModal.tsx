@@ -412,15 +412,18 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
               <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
                 <div className="flex gap-4 items-start">
                   <div className="flex-1">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">CPF/CNPJ</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                      {formData.is_person ? 'CPF' : 'CNPJ'}
+                    </label>
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        disabled={isReadOnly || formData.is_person}
+                        disabled={isReadOnly}
                         className="flex-1 bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] disabled:bg-gray-100 transition-all"
                         value={formData.cnpj || ''}
+                        maxLength={formData.is_person ? 14 : 18}
                         onChange={e => setFormData({ ...formData, cnpj: maskCNPJ(e.target.value) })}
-                        placeholder="00.000.000/0000-00"
+                        placeholder={formData.is_person ? '000.000.000-00' : '00.000.000/0000-00'}
                       />
                       <button onClick={handleCNPJSearch}
                         disabled={isReadOnly || searching || formData.is_person || !formData.cnpj}
@@ -434,7 +437,11 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
                         type="checkbox"
                         id="is_person"
                         checked={formData.is_person}
-                        onChange={e => setFormData({ ...formData, is_person: e.target.checked, cnpj: undefined })}
+                        onChange={e => {
+                          const checked = e.target.checked;
+                          const newCnpj = checked && formData.cnpj ? formData.cnpj.replace(/\D/g, '').substring(0, 11) : formData.cnpj;
+                          setFormData({ ...formData, is_person: checked, cnpj: newCnpj ? maskCNPJ(newCnpj) : undefined });
+                        }}
                         className="rounded text-[#1e3a8a] focus:ring-[#1e3a8a]"
                       />
                       <label htmlFor="is_person" className="ml-2 text-xs font-bold text-gray-500">Pessoa Física</label>

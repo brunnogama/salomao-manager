@@ -238,11 +238,14 @@ export function Proposals() {
     } else if (name === 'isPerson') {
       // Checkbox handling
       const checked = (e.target as HTMLInputElement).checked;
-      setProposalData(prev => ({
-        ...prev,
-        isPerson: checked,
-        cnpj: checked ? '' : prev.cnpj // Clear CNPJ if person, or keep? User said disable. Let's clear to avoid confusion.
-      }));
+      setProposalData(prev => {
+        const newCnpj = checked && prev.cnpj ? prev.cnpj.replace(/\D/g, '').substring(0, 11) : prev.cnpj;
+        return {
+          ...prev,
+          isPerson: checked,
+          cnpj: newCnpj ? maskCNPJ(newCnpj) : ''
+        };
+      });
     } else {
       setProposalData(prev => ({ ...prev, [name]: value }));
     }
@@ -1504,7 +1507,9 @@ export function Proposals() {
             {language === 'pt' && (
               <div>
                 <div className="flex items-center justify-between mb-1.5 ml-1">
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">CNPJ [da Empresa Cliente]</label>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                    {proposalData.isPerson ? 'CPF [do Cliente]' : 'CNPJ [da Empresa Cliente]'}
+                  </label>
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <div className="relative flex items-center">
                       <input
@@ -1529,10 +1534,10 @@ export function Proposals() {
                     name="cnpj"
                     value={proposalData.cnpj}
                     onChange={handleChange}
-                    placeholder="00.000.000/0000-00"
-                    disabled={proposalData.isPerson}
+                    maxLength={proposalData.isPerson ? 14 : 18}
+                    placeholder={proposalData.isPerson ? '000.000.000-00' : '00.000.000/0000-00'}
                     onFocus={() => jumpToFieldPage('cnpj')}
-                    className={`w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all ${proposalData.isPerson ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
+                    className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
                   />
                   <button
                     onClick={handleCNPJSearch}
