@@ -82,7 +82,7 @@ def assinar_nota():
                 print(f"Transmitindo DPS para a Sefin Nacional via mTLS: {ADN_API_URL}")
                 api_response = requests.post(
                     ADN_API_URL, 
-                    data=xml_assinado, 
+                    data=xml_string.encode('utf-8'), 
                     headers=headers, 
                     cert=(temp_cert, temp_key),
                     timeout=15
