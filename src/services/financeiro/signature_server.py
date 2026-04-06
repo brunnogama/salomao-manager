@@ -64,6 +64,9 @@ def assinar_nota():
             
             from utils.mtls_extractor import MTlsExtractor
             import requests
+            import gzip
+            import base64
+            import json
 
             # API Base URL - Emissor Nacional (Produção)
             # Conforme portal Gov.br: https://sefin.nfse.gov.br/SefinNacional/docs/index
@@ -73,33 +76,55 @@ def assinar_nota():
             try:
                 temp_cert, temp_key = extractor.extract_to_temp_files()
                 
+                # A Sefin Nacional exige (Documentação):
+                # 1. XML assinado compactado em GZIP
+                # 2. Codificado em Base64
+                # 3. Encapsulado e enviado via JSON
+                xml_bytes = xml_string.encode('utf-8')
+                xml_gzipped = gzip.compress(xml_bytes)
+                xml_base64 = base64.b64encode(xml_gzipped).decode('utf-8')
+                
+                payload = {
+                    "dpsXmlGZipB64": xml_base64
+                }
+
                 headers = {
-                    "Content-Type": "application/xml",
-                    "Accept": "application/xml"
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
                 }
 
                 # Executa a Transmissão via mTLS (Certificado Cliente)
-                print(f"Transmitindo DPS para a Sefin Nacional via mTLS: {ADN_API_URL}")
+                print(f"Transmitindo DPS para a Sefin Nacional via mTLS (JSON Base64Gzip): {ADN_API_URL}")
                 api_response = requests.post(
                     ADN_API_URL, 
-                    data=xml_string.encode('utf-8'), 
+                    json=payload, 
                     headers=headers, 
                     cert=(temp_cert, temp_key),
                     timeout=15
                 )
                 
                 api_response.raise_for_status()
-                response_xml = api_response.content
+                response_data = api_response.json() if 'application/json' in api_response.headers.get('Content-Type', '') else api_response.content
                 
-                # Parse do retorno XML oficial para capturar a Chave de Acesso gerada
-                root_resp = LxmlET.fromstring(response_xml)
-                ns = {'ns': 'http://www.sped.fazenda.gov.br/nfse'}
-                ch_element = root_resp.find('.//ns:chNFSe', ns)
-                
-                if ch_element is not None and ch_element.text:
-                    chave_acesso = ch_element.text
-                else:
-                    raise ValueError(f"Tag <chNFSe> ausente ou rejeição no XML retorno: {api_response.text}")
+                try:
+                    # Descompactar resposta se ela vier encapsulada em JSON base64
+                    if isinstance(response_data, dict) and "nfseXmlGZipB64" in response_data:
+                        b64_resp_gz = base64.b64decode(response_data["nfseXmlGZipB64"])
+                        response_xml_str = gzip.decompress(b64_resp_gz).decode('utf-8')
+                    else:
+                        response_xml_str = api_response.text
+
+                    # Parse do retorno XML oficial para capturar a Chave de Acesso gerada
+                    root_resp = LxmlET.fromstring(response_xml_str.encode('utf-8'))
+                    ns = {'ns': 'http://www.sped.fazenda.gov.br/nfse'}
+                    ch_element = root_resp.find('.//ns:chNFSe', ns)
+                    
+                    if ch_element is not None and ch_element.text:
+                        chave_acesso = ch_element.text
+                    else:
+                        raise ValueError(f"Tag <chNFSe> ausente. Retorno: {response_xml_str}")
+                except Exception as parse_e:
+                    raise ValueError(f"Falha ao ler XML de Retorno: {str(parse_e)}. Raw: {api_response.text}")
 
                 return jsonify({
                     "status": "sucesso",
