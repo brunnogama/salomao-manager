@@ -67,7 +67,7 @@ class NacionalAdnProvider:
                 </trib>
             </valores>
         </serv>
-    </InfDPS>
+    </infDPS>
 </DPS>"""
         
         # Parsing limpo para ElementTree mantendo o namespace raiz intacto
