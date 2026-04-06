@@ -49,11 +49,10 @@ class NacionalAdnProvider:
         </toma>""" if doc_tomador else ""
         
         # Tags de Regime Tributário Obrigatórias
-        reg_ap_trib = "<regApTribSN>1</regApTribSN>" if optante_simples == '1' else ""
         reg_trib_xml = f"""<regTrib>
                 <opSimpNac>{optante_simples}</opSimpNac>
-                {reg_ap_trib}
-                <regEspTrib>0</regEspTrib>
+                <regApTribSN>1</regApTribSN>
+                <regEspTrib>6</regEspTrib>
             </regTrib>"""
         
         # Dados do Servico
