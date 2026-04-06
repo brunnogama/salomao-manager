@@ -99,8 +99,9 @@ class NacionalAdnProvider:
         # Revertemos para 171401 (que o Nacional entende) mas como o RJ exige administração municipal vinculada,
         # vamos injetar a tag <cTribMun> localmente também!
         c_trib_raw = servico.get('codigo_tributacao', '171401').replace('.', '').replace('-', '')
-        c_trib_nac = c_trib_raw.zfill(6)
-        c_trib_mun = c_trib_raw.zfill(20)  # O Padrão Nacional fixa o TCCodTribMun em exatos 20 dígitos numéricos!
+        c_trib_nac = c_trib_raw[:6].zfill(6)
+        # Conforme evidência do Portal Nacional (RJ): Código Complementar de Advocacia é '17.14.01.001'
+        c_trib_mun = (c_trib_raw + '001') if c_trib_raw == '171401' else c_trib_raw
             
         c_nbs = servico.get('codigo_nbs', '113019000').replace('.', '').replace('-', '')
         desc = servico.get('discriminacao', 'Honorários Advocatícios')
