@@ -2,7 +2,7 @@ import json
 import uuid
 import random
 from lxml import etree as ET
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 class NacionalAdnProvider:
     def __init__(self, inscricao_municipal, cnpj_prestador):
@@ -18,9 +18,12 @@ class NacionalAdnProvider:
         dps_numerico = ''.join([str(random.randint(0, 9)) for _ in range(42)])
         dps_id = f"DPS{dps_numerico}"
         
-        # Datas e Formatações
-        dh_emi = datetime.now().strftime("%Y-%m-%dT%H:%M:%S-03:00")
-        d_compet = datetime.now().strftime("%Y-%m-%d")
+        # Datas e Formatações (Fuso Horário BR -03:00 para evitar erro de emissão no futuro no servidor AWS/Render em UTC)
+        fuso_br = timezone(timedelta(hours=-3))
+        agora_br = datetime.now(fuso_br)
+        
+        dh_emi = agora_br.strftime("%Y-%m-%dT%H:%M:%S-03:00")
+        d_compet = agora_br.strftime("%Y-%m-%d")
         cnpj_prestador_limpo = self.cnpj_prestador.replace('.', '').replace('/', '').replace('-', '')
         if not cnpj_prestador_limpo:
             cnpj_prestador_limpo = '14493710000105'
