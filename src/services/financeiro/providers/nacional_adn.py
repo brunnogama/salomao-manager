@@ -46,6 +46,8 @@ class NacionalAdnProvider:
         <tpAmb>1</tpAmb>
         <dhEmi>{dh_emi}</dhEmi>
         <verAplic>SalomaoManager_1.0</verAplic>
+        <serie>1</serie>
+        <nDPS>{random.randint(1000, 99999)}</nDPS>
         <prest>
             <CNPJ>{cnpj_prestador_limpo}</CNPJ>
             <IM>{self.inscricao_municipal}</IM>
