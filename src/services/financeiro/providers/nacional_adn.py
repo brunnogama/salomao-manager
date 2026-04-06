@@ -63,8 +63,8 @@ class NacionalAdnProvider:
             </regTrib>"""
         
         # Dados do Servico
-        c_trib = servico.get('codigo_tributacao', '171401')
-        c_nbs = servico.get('codigo_nbs', '113019000')
+        c_trib = servico.get('codigo_tributacao', '171401').replace('.', '').replace('-', '')
+        c_nbs = servico.get('codigo_nbs', '113019000').replace('.', '').replace('-', '')
         desc = servico.get('discriminacao', 'Honorários Advocatícios')
         v_serv = str(servico.get('valor', '0'))
         
