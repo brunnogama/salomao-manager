@@ -3,8 +3,8 @@ import { useLocation } from 'react-router-dom';
 import {
   Plus, Filter, Calendar, User, Briefcase,
   Loader2,
-  Download, Edit, Trash2, Bell,
-  FileSignature, FileSearch, Eye
+  Download, Bell,
+  FileSignature, FileSearch
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import XLSX from 'xlsx-js-style';
@@ -60,7 +60,13 @@ const calculateTotalSuccess = (c: Contract) => {
   return total;
 };
 
-
+const calculateTotalProLabore = (c: Contract) => {
+  let total = parseCurrency(c.pro_labore);
+  if ((c as any).pro_labore_extras && Array.isArray((c as any).pro_labore_extras)) {
+    (c as any).pro_labore_extras.forEach((fee: string) => total += parseCurrency(fee));
+  }
+  return total;
+};
 
 export function Contracts() {
 
@@ -254,11 +260,6 @@ export function Contracts() {
   const handleDelete = () => {
     if (!formData.id) return;
     triggerDelete(formData.id);
-  };
-
-  const handleDeleteFromList = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    triggerDelete(id);
   };
 
   const confirmDelete = async () => {
@@ -828,21 +829,22 @@ export function Contracts() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">HON/PROP</th>
-                    <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Data</th>
-                    <th className="p-4 sticky right-0 bg-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)]">Ações</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">ID</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Status</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Cliente</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Responsável</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">HON/PROP</th>
+                    <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Pró-Labore</th>
+                    <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Êxitos</th>
+                    <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Data</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filteredContracts.map(contract => (
                     <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-amber-200 shadow-sm truncate whitespace-nowrap">
-                          {contract.display_id || '-'}
+                          {contract.display_id ? contract.display_id.replace('CONT - ', '') : '-'}
                         </span>
                       </td>
                       <td className="p-4 whitespace-nowrap">
@@ -850,24 +852,23 @@ export function Contracts() {
                           {getStatusLabel(contract.status)}
                         </span>
                       </td>
-                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight whitespace-normal max-w-[250px] break-words">{contract.client_name}</td>
-                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight whitespace-normal max-w-[250px] break-words">{getPartnerDisplay(contract)}</td>
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight whitespace-nowrap">{contract.client_name}</td>
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight whitespace-nowrap">{getPartnerDisplay(contract)}</td>
                       <td className="p-4 whitespace-nowrap">
                         <span className="bg-slate-100/80 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-md font-mono text-[10px] font-black tracking-widest">
                           {getHonDisplay(contract)}
                         </span>
                       </td>
+                      <td className="p-4 text-right whitespace-nowrap text-[11px] font-black text-[#0a192f]">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(calculateTotalProLabore(contract))}
+                      </td>
+                      <td className="p-4 text-right whitespace-nowrap text-[11px] font-black text-[#0a192f]">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(calculateTotalSuccess(contract))}
+                      </td>
                       <td className="p-4 text-right whitespace-nowrap">
                         <span className="bg-blue-50/50 text-[#1e3a8a] border border-blue-100/50 px-2.5 py-1 rounded-md text-[10px] font-black tracking-widest">
                           {safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}
                         </span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex justify-end gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 hover:text-blue-700 transition-all"><Edit className="w-4 h-4" /></button>
-                          <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all"><Trash2 className="w-4 h-4" /></button>
-                        </div>
                       </td>
                     </tr>
                   ))}
