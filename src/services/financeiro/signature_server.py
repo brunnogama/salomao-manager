@@ -58,9 +58,11 @@ def assinar_nota():
             # Serialize o Element do lxml para string UTF-8
             from lxml import etree as LxmlET
             if isinstance(xml_assinado, LxmlET._Element):
-                xml_string = LxmlET.tostring(xml_assinado, encoding='utf-8').decode('utf-8')
+                xml_string = LxmlET.tostring(xml_assinado, encoding='UTF-8', xml_declaration=True).decode('utf-8')
             else:
                 xml_string = xml_assinado.decode('utf-8') if hasattr(xml_assinado, 'decode') else str(xml_assinado)
+                if not xml_string.startswith('<?xml'):
+                    xml_string = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_string
             
             from utils.mtls_extractor import MTlsExtractor
             import requests
