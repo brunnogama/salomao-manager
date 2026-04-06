@@ -48,8 +48,11 @@ class NacionalAdnProvider:
         else:
             doc_tomador = ""
             
+        nome_tomador = tomador.get('nome', 'Cliente Não Identificado').replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')[:150]
+            
         toma_xml = f"""<toma>
             {doc_tomador}
+            <xNome>{nome_tomador}</xNome>
         </toma>""" if doc_tomador else ""
         
         # Tags de Regime Tributário Obrigatórias
