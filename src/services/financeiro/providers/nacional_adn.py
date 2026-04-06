@@ -25,9 +25,9 @@ class NacionalAdnProvider:
         if not cnpj_prestador_limpo:
             cnpj_prestador_limpo = '14493710000105'
             
-        im_prestador = str(self.inscricao_municipal).strip()
+        im_prestador = str(self.inscricao_municipal).replace('.', '').replace('-', '').strip()
         if not im_prestador:
-            im_prestador = '0000000'
+            im_prestador = '05286735'
         
         # Parse servico
         servico_str = dados.get('servico', '{}')
