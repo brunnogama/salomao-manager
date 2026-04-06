@@ -97,8 +97,8 @@ class NacionalAdnProvider:
             </locPrest>
             <cServ>
                 <cTribNac>{c_trib}</cTribNac>
-                <cNBS>{c_nbs}</cNBS>
                 <xDescServ>{desc}</xDescServ>
+                <cNBS>{c_nbs}</cNBS>
             </cServ>
             <valores>
                 <vServ>{v_serv}</vServ>
