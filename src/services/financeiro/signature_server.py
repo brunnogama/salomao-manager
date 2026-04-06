@@ -58,11 +58,18 @@ def assinar_nota():
             # Serialize o Element do lxml para string UTF-8
             from lxml import etree as LxmlET
             if isinstance(xml_assinado, LxmlET._Element):
-                xml_string = LxmlET.tostring(xml_assinado, encoding='UTF-8', xml_declaration=True).decode('utf-8')
+                xml_string = LxmlET.tostring(xml_assinado, encoding='UTF-8', xml_declaration=False).decode('utf-8')
             else:
                 xml_string = xml_assinado.decode('utf-8') if hasattr(xml_assinado, 'decode') else str(xml_assinado)
-                if not xml_string.startswith('<?xml'):
-                    xml_string = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_string
+            
+            # Purifica os nós em Base64 de quebras de linha originadas pelo signxml. O validador da Receita (Sefin) C# falha fatalmente
+            # com quebras de linha \n durante a decodificação Base64, vomitando o infame "E0715 - Certificado Digital Inválido".
+            import re
+            xml_string = re.sub(r'<X509Certificate>\s*([^<]+)\s*</X509Certificate>', lambda m: '<X509Certificate>' + m.group(1).replace('\n', '').replace('\r', '').strip() + '</X509Certificate>', xml_string)
+            xml_string = re.sub(r'<SignatureValue>\s*([^<]+)\s*</SignatureValue>', lambda m: '<SignatureValue>' + m.group(1).replace('\n', '').replace('\r', '').strip() + '</SignatureValue>', xml_string)
+            
+            if not xml_string.startswith('<?xml'):
+                xml_string = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_string
             
             from utils.mtls_extractor import MTlsExtractor
             import requests
