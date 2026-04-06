@@ -60,12 +60,69 @@ const calculateTotalSuccess = (c: Contract) => {
   return total;
 };
 
-const calculateTotalProLabore = (c: Contract) => {
-  let total = parseCurrency(c.pro_labore);
-  if ((c as any).pro_labore_extras && Array.isArray((c as any).pro_labore_extras)) {
-    (c as any).pro_labore_extras.forEach((fee: string) => total += parseCurrency(fee));
+const getSuccessDisplay = (c: Contract) => {
+  let totalBrl = 0;
+  const otherParts: string[] = [];
+
+  const processFee = (val: string | undefined | null) => {
+    if (!val) return;
+    const str = String(val).trim();
+    if (str === 'R$ 0,00' || str === '0%' || str === '0' || str === '') return;
+    if (str.includes('%') || (str.includes('$') && !str.includes('R$')) || str.includes('€')) {
+      otherParts.push(str);
+      return;
+    }
+    totalBrl += parseCurrency(str);
+  };
+
+  processFee(c.final_success_fee);
+  processFee((c as any).final_success_percent);
+  if ((c as any).final_success_extras && Array.isArray((c as any).final_success_extras)) {
+    (c as any).final_success_extras.forEach(processFee);
   }
-  return total;
+  if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
+    c.intermediate_fees.forEach(processFee);
+  }
+  if ((c as any).percent_extras && Array.isArray((c as any).percent_extras)) {
+    (c as any).percent_extras.forEach(processFee);
+  }
+
+  const parts = [];
+  if (totalBrl > 0 || (totalBrl === 0 && otherParts.length === 0)) {
+    parts.push(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalBrl));
+  }
+  if (otherParts.length > 0) parts.push(...otherParts);
+  return parts.join(' + ');
+};
+
+
+
+const getProLaboreDisplay = (c: Contract) => {
+  let totalBrl = 0;
+  const otherParts: string[] = [];
+
+  const processFee = (val: string | undefined | null) => {
+    if (!val) return;
+    const str = String(val).trim();
+    if (str === 'R$ 0,00' || str === '0%' || str === '0' || str === '') return;
+    if (str.includes('%') || (str.includes('$') && !str.includes('R$')) || str.includes('€')) {
+      otherParts.push(str);
+      return;
+    }
+    totalBrl += parseCurrency(str);
+  };
+
+  processFee(c.pro_labore);
+  if ((c as any).pro_labore_extras && Array.isArray((c as any).pro_labore_extras)) {
+    (c as any).pro_labore_extras.forEach(processFee);
+  }
+
+  const parts = [];
+  if (totalBrl > 0 || (totalBrl === 0 && otherParts.length === 0)) {
+    parts.push(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalBrl));
+  }
+  if (otherParts.length > 0) parts.push(...otherParts);
+  return parts.join(' + ');
 };
 
 export function Contracts() {
@@ -852,18 +909,18 @@ export function Contracts() {
                           {getStatusLabel(contract.status)}
                         </span>
                       </td>
-                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight whitespace-nowrap">{contract.client_name}</td>
-                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight whitespace-nowrap">{getPartnerDisplay(contract)}</td>
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight truncate max-w-[200px]" title={contract.client_name}>{contract.client_name}</td>
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight truncate max-w-[150px]" title={getPartnerDisplay(contract)}>{getPartnerDisplay(contract)}</td>
                       <td className="p-4 whitespace-nowrap">
                         <span className="bg-slate-100/80 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-md font-mono text-[10px] font-black tracking-widest">
                           {getHonDisplay(contract)}
                         </span>
                       </td>
                       <td className="p-4 text-right whitespace-nowrap text-[11px] font-black text-[#0a192f]">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(calculateTotalProLabore(contract))}
+                        {getProLaboreDisplay(contract)}
                       </td>
                       <td className="p-4 text-right whitespace-nowrap text-[11px] font-black text-[#0a192f]">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(calculateTotalSuccess(contract))}
+                        {getSuccessDisplay(contract)}
                       </td>
                       <td className="p-4 text-right whitespace-nowrap">
                         <span className="bg-blue-50/50 text-[#1e3a8a] border border-blue-100/50 px-2.5 py-1 rounded-md text-[10px] font-black tracking-widest">
