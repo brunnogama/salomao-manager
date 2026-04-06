@@ -788,7 +788,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         </div>
 
         {/* PAINEL DIREITO: SIMULADOR DE NOTA FISCAL */}
-        <div className="lg:col-span-2 relative min-h-[850px] bg-white border-[3px] border-gray-800 flex flex-col outline outline-4 outline-transparent shadow-2xl shadow-gray-400/30 font-sans text-gray-900 overflow-hidden shrink-0 mt-4 lg:mt-0 lg:ml-2">
+        <div className="lg:col-span-2 relative min-h-[1000px] bg-white border-[3px] border-gray-800 flex flex-col outline outline-4 outline-transparent shadow-2xl shadow-gray-400/30 font-sans text-gray-900 overflow-hidden shrink-0 mt-4 lg:mt-0 lg:ml-2">
             
             {/* Watermark */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.02] rotate-[-45deg] z-0">
@@ -890,7 +890,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
             </div>
 
             {/* DISCRIMINAÇÃO */}
-            <div className="border-b-[3px] border-gray-800 flex flex-col flex-1 relative z-10 bg-white">
+            <div className="border-b-[3px] border-gray-800 flex flex-col flex-1 relative z-10 bg-white min-h-[250px] sm:min-h-[300px]">
                <div className="bg-gray-200 text-center font-black uppercase text-[10px] sm:text-[11px] py-1 border-b border-gray-400 shrink-0 flex items-center justify-center gap-2">
                   Discriminação dos Serviços
                   {selectedHonorario && <span className="text-[8px] bg-green-200 text-green-800 font-bold px-1.5 py-0.5 rounded-sm">AUTOMÁTICO</span>}
