@@ -23,6 +23,7 @@ import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 
 const getStatusColor = (status: string) => {
   switch (status) {
+    case 'draft': return 'bg-slate-800 text-white border-slate-700 shadow-md font-bold';
     case 'active': return 'bg-green-100 text-green-800 border-green-200';
     case 'analysis': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     case 'proposal': return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -35,6 +36,7 @@ const getStatusColor = (status: string) => {
 
 const getStatusLabel = (status: string) => {
   switch (status) {
+    case 'draft': return 'Rascunho';
     case 'active': return 'Contrato Fechado';
     case 'analysis': return 'Sob Análise';
     case 'proposal': return 'Proposta Enviada';
@@ -415,6 +417,7 @@ export function Contracts() {
 
   const getRelevantDate = (c: Contract) => {
     switch (c.status) {
+      case 'draft': return c.created_at;
       case 'analysis': return c.prospect_date || c.created_at;
       case 'proposal': return c.proposal_date || c.created_at;
       case 'active': return c.contract_date || c.created_at;
@@ -487,6 +490,9 @@ export function Contracts() {
 
     return matchesSearch && matchesStatus && matchesPartner && matchesDate;
   }).sort((a: Contract, b: Contract) => {
+    if (a.status === 'draft' && b.status !== 'draft') return -1;
+    if (a.status !== 'draft' && b.status === 'draft') return 1;
+
     const da = safeDate(getRelevantDate(a)) || new Date(0);
     const db = safeDate(getRelevantDate(b)) || new Date(0);
     return db.getTime() - da.getTime(); // newest to oldest
@@ -678,6 +684,7 @@ export function Contracts() {
   const hasActiveFilters = searchTerm !== '' || statusFilter !== '' || partnerFilter !== '' || filterPeriodo.start !== '' || filterPeriodo.end !== '';
 
   const statusOptions = [
+    { label: 'Rascunho', value: 'draft' },
     { label: 'Sob Análise', value: 'analysis' },
     { label: 'Proposta Enviada', value: 'proposal' },
     { label: 'Contrato Fechado', value: 'active' },

@@ -305,6 +305,7 @@ export function ContractFormModal(props: Props) {
       console.error('Erro ao buscar status:', err);
     }
     const defaultStatuses = [
+      { label: 'Rascunho', value: 'draft' },
       { label: 'Sob Análise', value: 'analysis' },
       { label: 'Proposta Enviada', value: 'proposal' },
       { label: 'Contrato Fechado', value: 'active' },
@@ -314,7 +315,7 @@ export function ContractFormModal(props: Props) {
     ];
 
     if (data && data.length > 0) {
-      const order = ['analysis', 'proposal', 'active', 'rejected', 'probono', 'baixado'];
+      const order = ['draft', 'analysis', 'proposal', 'active', 'rejected', 'probono', 'baixado'];
       const sortedData = data.sort((a, b) => {
         const iA = order.indexOf(a.value), iB = order.indexOf(b.value);
         if (iA !== -1 && iB !== -1) return iA - iB;
