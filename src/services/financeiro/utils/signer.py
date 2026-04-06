@@ -21,10 +21,16 @@ class CertificateSigner:
         private_key, certificate, _ = pkcs12.load_key_and_certificates(
             pfx_data, self.password, default_backend()
         )
-        signer = XMLSigner(method=methods.enveloped, signature_algorithm="rsa-sha1")
+        
+        # Identificar a raiz assinável (infDPS) para gerar a Reference URI correta
+        node_to_sign = xml_element.find('.//*[@Id]')
+        ref_uri = f"#{node_to_sign.get('Id')}" if node_to_sign is not None else None
+        
+        # O Ambiente de Dados Nacional (ADN) utiliza criptografia moderna SHA256
+        signer = XMLSigner(method=methods.enveloped, signature_algorithm="rsa-sha256", digest_algorithm="sha256")
         
         # A API Nacional da Receita Federal rejeita estritamente qualquer tag com prefixo (E6155).
         # Devemos forçar o signxml a injetar as tags de assinatura no namespace padrão (sem prefixo 'ds:')
         signer.namespaces = {None: namespaces.ds}
         
-        return signer.sign(xml_element, key=private_key, cert=[certificate])
+        return signer.sign(xml_element, key=private_key, cert=[certificate], reference_uri=ref_uri)
