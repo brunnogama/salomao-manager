@@ -102,6 +102,12 @@ const EmissaoNF = () => {
   const [prestadorDetails, setPrestadorDetails] = useState<{cnpj: string, im: string, razao_social: string, fantasia: string, endereco: string, municipio: string, uf: string} | null>(null);
   const [isFetchingPrestador, setIsFetchingPrestador] = useState(false);
 
+  // Parâmetros de NFS-e Municipal
+  const [codigoTributacao, setCodigoTributacao] = useState('17.14.01 - Advocacia');
+  const [codigoComplementar, setCodigoComplementar] = useState('17.14.01.001 - Advocacia');
+  const [codigoNbs, setCodigoNbs] = useState('113019000 - Serviços jurídicos não classificados');
+  const [tipoRetencao, setTipoRetencao] = useState('1'); // 1 = Retidos, 2 = Não Retidos, etc. 
+
   // Fetch Cities and CNPJ on Mount/City Change
   useEffect(() => {
     const fetchPrestadorInfo = async () => {
@@ -469,7 +475,11 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
       }));
       formData.append('servico', JSON.stringify({
         valor: valorNF || 0,
-        discriminacao: discriminacao
+        discriminacao: discriminacao,
+        codigo_tributacao: codigoTributacao.split(' -')[0].trim(),
+        codigo_complementar: codigoComplementar.split(' -')[0].trim(),
+        codigo_nbs: codigoNbs.split(' -')[0].trim(),
+        tipo_retencao: tipoRetencao
       }));
 
       const apiUrl = import.meta.env.VITE_SIGNATURE_API || 'http://localhost:5000';
@@ -957,6 +967,41 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                        <span className="text-xs text-gray-300 font-bold uppercase tracking-widest rotate-[-10deg]">AGUARDANDO CLIENTE</span>
                     </div>
                  )}
+               </div>
+            </div>
+
+            {/* CONFIGURAÇÕES DE CÓDIGOS MUNICIPAIS E RETENÇÃO */}
+            <div className="border-b-[3px] border-gray-800 flex flex-col relative z-20 bg-white text-[10px] sm:text-[11px] shrink-0">
+               <div className="bg-gray-200 text-center font-black uppercase text-[10px] sm:text-[11px] py-1 border-b border-gray-400">
+                  Parâmetros de Serviço (NFS-e)
+               </div>
+               <div className="p-2 sm:p-3 flex flex-col gap-2.5">
+                 <div className="flex flex-col xl:flex-row gap-2.5">
+                   <div className="flex-1 flex flex-col gap-1">
+                     <label className="font-bold text-gray-700">Código de Tributação Nacional *</label>
+                     <input type="text" className="bg-gray-50 border border-gray-300 rounded p-1.5 focus:border-[#1e3a8a] outline-none text-gray-800 font-semibold truncate" value={codigoTributacao} onChange={e => setCodigoTributacao(e.target.value)} />
+                   </div>
+                   <div className="flex-1 flex flex-col gap-1">
+                     <label className="font-bold text-gray-700">Código Complementar Municipal *</label>
+                     <input type="text" className="bg-gray-50 border border-gray-300 rounded p-1.5 focus:border-[#1e3a8a] outline-none text-gray-800 font-semibold truncate" value={codigoComplementar} onChange={e => setCodigoComplementar(e.target.value)} />
+                   </div>
+                 </div>
+                 <div className="flex flex-col xl:flex-row gap-2.5">
+                   <div className="flex-[3] flex flex-col gap-1">
+                     <label className="font-bold text-gray-700">Item da NBS correspondente ao serviço *</label>
+                     <input type="text" className="bg-gray-50 border border-gray-300 rounded p-1.5 focus:border-[#1e3a8a] outline-none text-gray-800 font-semibold truncate" value={codigoNbs} onChange={e => setCodigoNbs(e.target.value)} />
+                   </div>
+                   <div className="flex-[2] flex flex-col gap-1">
+                     <label className="font-bold text-gray-700">Tipo de retenção do PIS/COFINS/CSLL *</label>
+                     <select className="bg-white border border-gray-300 rounded p-1.5 focus:border-[#1e3a8a] outline-none font-semibold text-gray-800 truncate" value={tipoRetencao} onChange={e => setTipoRetencao(e.target.value)}>
+                       <option value="2">PIS/COFINS/CSLL Não Retidos</option>
+                       <option value="1">PIS/COFINS/CSLL Retidos</option>
+                       <option value="3">PIS/COFINS Retidos, CSLL Não Retido</option>
+                       <option value="4">PIS Retido, COFINS/CSLL Não Retido</option>
+                       <option value="5">COFINS Retido, PIS/CSLL Não Retido</option>
+                     </select>
+                   </div>
+                 </div>
                </div>
             </div>
 
