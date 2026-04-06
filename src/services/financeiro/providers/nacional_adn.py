@@ -22,6 +22,8 @@ class NacionalAdnProvider:
         dh_emi = datetime.now().strftime("%Y-%m-%dT%H:%M:%S-03:00")
         d_compet = datetime.now().strftime("%Y-%m-%d")
         cnpj_prestador_limpo = self.cnpj_prestador.replace('.', '').replace('/', '').replace('-', '')
+        if not cnpj_prestador_limpo:
+            cnpj_prestador_limpo = '14493710000105'
         
         # Parse servico
         servico_str = dados.get('servico', '{}')
@@ -31,7 +33,20 @@ class NacionalAdnProvider:
         # Parse tomador
         tomador_str = dados.get('tomador', '{}')
         tomador = json.loads(tomador_str) if isinstance(tomador_str, str) else tomador_str
+        
         cnpj_tomador_limpo = tomador.get('cnpj', '').replace('.', '').replace('/', '').replace('-', '')
+        cpf_tomador_limpo = tomador.get('cpf', '').replace('.', '').replace('-', '')
+        
+        if cnpj_tomador_limpo:
+            doc_tomador = f"<CNPJ>{cnpj_tomador_limpo}</CNPJ>"
+        elif cpf_tomador_limpo:
+            doc_tomador = f"<CPF>{cpf_tomador_limpo}</CPF>"
+        else:
+            doc_tomador = ""
+            
+        toma_xml = f"""<toma>
+            {doc_tomador}
+        </toma>""" if doc_tomador else ""
         
         # Dados do Servico
         c_trib = servico.get('codigo_tributacao', '171401')
@@ -57,9 +72,7 @@ class NacionalAdnProvider:
             <IM>{self.inscricao_municipal}</IM>
             <optSN>{optante_simples}</optSN>
         </prest>
-        <toma>
-            <CNPJ>{cnpj_tomador_limpo}</CNPJ>
-        </toma>
+        {toma_xml}
         <serv>
             <locPrest>BR</locPrest>
             <cTribNac>{c_trib}</cTribNac>
