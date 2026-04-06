@@ -51,6 +51,7 @@ class NacionalAdnProvider:
         <nDPS>{random.randint(1000, 99999)}</nDPS>
         <dCompet>{d_compet}</dCompet>
         <tpEmit>1</tpEmit>
+        <cLocEmi>3304557</cLocEmi>
         <prest>
             <CNPJ>{cnpj_prestador_limpo}</CNPJ>
             <IM>{self.inscricao_municipal}</IM>
