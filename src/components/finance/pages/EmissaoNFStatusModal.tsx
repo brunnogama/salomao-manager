@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, XCircle, X, Loader2, FileText, Server, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, XCircle, X, Loader2, FileText, Server, AlertTriangle, Download } from 'lucide-react';
 
 export type NFStatus = 'idle' | 'preparing' | 'transmitting' | 'processing' | 'success' | 'error';
 
@@ -8,10 +8,11 @@ interface EmissaoNFStatusModalProps {
   isOpen: boolean;
   status: NFStatus;
   errorDetails?: { message: string; traceback?: string } | null;
+  successData?: { xml?: string } | null;
   onClose: () => void;
 }
 
-export function EmissaoNFStatusModal({ isOpen, status, errorDetails, onClose }: EmissaoNFStatusModalProps) {
+export function EmissaoNFStatusModal({ isOpen, status, errorDetails, successData, onClose }: EmissaoNFStatusModalProps) {
   if (!isOpen) return null;
 
   const getStepStatus = (step: 'preparing' | 'transmitting' | 'processing') => {
@@ -101,6 +102,26 @@ export function EmissaoNFStatusModal({ isOpen, status, errorDetails, onClose }: 
               <p className="text-sm font-semibold text-gray-500 mb-6">
                 O documento foi protocolado e registrado no sistema.
               </p>
+
+              {successData?.xml && (
+                <button
+                  onClick={() => {
+                    const blob = new Blob([successData.xml!], { type: 'text/xml' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `RPS_assinado_${new Date().getTime()}.xml`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 mb-3 bg-blue-50 text-[#1e3a8a] border border-blue-200 font-bold text-[12px] uppercase tracking-widest rounded-xl hover:bg-blue-100 transition-all shadow-sm"
+                >
+                  <Download className="w-4 h-4" /> Baixar XML Emitido
+                </button>
+              )}
+
               <button 
                 onClick={onClose}
                 className="w-full py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-bold text-sm rounded-xl transition-all shadow-md hover:shadow-lg"

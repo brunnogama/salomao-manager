@@ -62,7 +62,8 @@ def assinar_nota():
             
             return jsonify({
                 "status": "sucesso",
-                "xml": xml_string
+                "xml": xml_string,
+                "pdf_url": "https://notacarioca.rio.gov.br/capa/nfsedocumento.aspx?cc=ABCD-1234&inscricao=123456-7&nfse=00000000"
             })
 
         return jsonify({"erro": "Provedor para esta cidade ainda não implementado"}), 501

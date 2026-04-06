@@ -75,10 +75,12 @@ const EmissaoNF = () => {
     isOpen: boolean;
     status: NFStatus;
     errorDetails: { message: string; traceback?: string } | null;
+    successData?: { xml?: string; pdfUrl?: string } | null;
   }>({
     isOpen: false,
     status: 'idle',
-    errorDetails: null
+    errorDetails: null,
+    successData: null
   });
 
   // Novos campos para Configuração e Tributação
@@ -517,7 +519,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           nf_number: nfNumber || null
         }).eq('id', selectedHonorario.id);
 
-        setEmissaoStatus({ isOpen: true, status: 'success', errorDetails: null });
+        setEmissaoStatus({ isOpen: true, status: 'success', errorDetails: null, successData: { xml: data.xml, pdfUrl: data.pdf_url } });
         
         setHonorarios(prev => prev.filter(h => h.id !== selectedHonorario.id));
         setSelectedHonorario(null);
