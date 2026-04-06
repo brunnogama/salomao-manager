@@ -24,6 +24,10 @@ class NacionalAdnProvider:
         cnpj_prestador_limpo = self.cnpj_prestador.replace('.', '').replace('/', '').replace('-', '')
         if not cnpj_prestador_limpo:
             cnpj_prestador_limpo = '14493710000105'
+            
+        im_prestador = str(self.inscricao_municipal).strip()
+        if not im_prestador:
+            im_prestador = '0000000'
         
         # Parse servico
         servico_str = dados.get('servico', '{}')
@@ -83,7 +87,7 @@ class NacionalAdnProvider:
         <cLocEmi>3304557</cLocEmi>
         <prest>
             <CNPJ>{cnpj_prestador_limpo}</CNPJ>
-            <IM>{self.inscricao_municipal}</IM>
+            <IM>{im_prestador}</IM>
             {reg_trib_xml}
         </prest>
         {toma_xml}
