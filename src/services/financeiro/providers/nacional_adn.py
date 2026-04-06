@@ -1,5 +1,6 @@
 import json
 import uuid
+import random
 from lxml import etree as ET
 from datetime import datetime
 
@@ -13,7 +14,9 @@ class NacionalAdnProvider:
         Prepara o XML da Declaração de Prestação de Serviço (DPS)
         sem prefixos indesejados (ns0:), usando parse nativo de raw string.
         """
-        dps_id = f"DPS_{uuid.uuid4().hex}"
+        # A Sefin Nacional exige obrigatoriamente "DPS" seguido de 42 números inteiros
+        dps_numerico = ''.join([str(random.randint(0, 9)) for _ in range(42)])
+        dps_id = f"DPS{dps_numerico}"
         
         # Datas e Formatações
         dh_emi = datetime.now().strftime("%Y-%m-%dT%H:%M:%S-03:00")
@@ -38,8 +41,8 @@ class NacionalAdnProvider:
         iss_retido = '1' if str(servico.get('iss_retido', '2')) == '1' else '2'
         
         # Template XML Raw (Garante zero namespaces espúrios como ns0:)
-        xml_template = f"""<DPS xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00" id="{dps_id}">
-    <InfDPS Id="INF1">
+        xml_template = f"""<DPS xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">
+    <infDPS id="{dps_id}">
         <tpAmb>1</tpAmb>
         <dhEmi>{dh_emi}</dhEmi>
         <prest>
