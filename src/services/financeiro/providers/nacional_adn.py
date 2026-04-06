@@ -111,7 +111,11 @@ class NacionalAdnProvider:
                     <tpRetISSQN>{iss_retido}</tpRetISSQN>
                 </tribMun>
                 <totTrib>
-                    <vTotTrib>0.00</vTotTrib>
+                    <vTotTrib>
+                        <vTotTribFed>0.00</vTotTribFed>
+                        <vTotTribEst>0.00</vTotTribEst>
+                        <vTotTribMun>0.00</vTotTribMun>
+                    </vTotTrib>
                 </totTrib>
             </trib>
             </valores>
