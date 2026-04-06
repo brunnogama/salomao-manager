@@ -72,10 +72,26 @@ class NacionalAdnProvider:
             <xNome>{nome_tomador}</xNome>
         </toma>""" if doc_tomador else ""
         
+        # Parse servico
+        servico_str = dados.get('servico', '{}')
+        servico = json.loads(servico_str) if isinstance(servico_str, str) else servico_str
+        
+        # Sefin Nacional ADN schema values: 1 = Não Optante / 2 = MEI / 3 = Optante ME/EPP
+        opt_sn_val = str(servico.get('optante_simples', 'False')).lower()
+        is_simples = opt_sn_val in ['true', '1', 'sim', 'yes']
+        optante_simples = '3' if is_simples else '1'
+        
         # Tags de Regime Tributário Obrigatórias
-        reg_trib_xml = f"""<regTrib>
+        if is_simples:
+            reg_trib_xml = f"""<regTrib>
                 <opSimpNac>{optante_simples}</opSimpNac>
                 <regApTribSN>1</regApTribSN>
+                <regEspTrib>6</regEspTrib>
+            </regTrib>"""
+        else:
+            # Não optantes (1) não devem conter a tag regApTribSN no grupo
+            reg_trib_xml = f"""<regTrib>
+                <opSimpNac>{optante_simples}</opSimpNac>
                 <regEspTrib>6</regEspTrib>
             </regTrib>"""
         
