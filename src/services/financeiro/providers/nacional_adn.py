@@ -72,7 +72,7 @@ class NacionalAdnProvider:
         desc = servico.get('discriminacao', 'Honorários Advocatícios')
         v_serv = str(servico.get('valor', '0'))
         
-        iss_retido = '1' if str(servico.get('iss_retido', '2')) == '1' else '2'
+        iss_retido = '2' if str(servico.get('iss_retido', False)).lower() == 'true' else '1'
         
         # Template XML Raw (Garante zero namespaces espúrios como ns0:)
         xml_template = f"""<DPS xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">
@@ -106,10 +106,11 @@ class NacionalAdnProvider:
                 <vServ>{v_serv}</vServ>
             </vServPrest>
             <trib>
-                    <ISSQN>
-                        <tpRet>{iss_retido}</tpRet>
-                    </ISSQN>
-                </trib>
+                <tribMun>
+                    <tribISSQN>1</tribISSQN>
+                    <tpRetISSQN>{iss_retido}</tpRetISSQN>
+                </tribMun>
+            </trib>
             </valores>
     </infDPS>
 </DPS>"""
