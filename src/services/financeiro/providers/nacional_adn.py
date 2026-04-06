@@ -96,14 +96,10 @@ class NacionalAdnProvider:
             </regTrib>"""
         
         # Dados do Servico
-        # A Lei Complementar 116/03 define Advocacia como item 17.14 (sem subitens).
-        # A tabela Nacional Sefin MAPEIA itens sem subitem com o final '00' (ex: 171400).
-        # Códigos como 171401 geram erro E0312 de não administrado pelo município!
-        c_trib_raw = servico.get('codigo_tributacao', '171400').replace('.', '').replace('-', '')
-        if not c_trib_raw or c_trib_raw in ['171401', '1714']:
-            c_trib_nac = '171400'
-        else:
-            c_trib_nac = c_trib_raw.zfill(6)
+        # Revertemos para 171401 (que o Nacional entende) mas como o RJ exige administração municipal vinculada,
+        # vamos injetar a tag <cTribMun> localmente também!
+        c_trib_raw = servico.get('codigo_tributacao', '171401').replace('.', '').replace('-', '')
+        c_trib_nac = c_trib_raw.zfill(6)
             
         c_nbs = servico.get('codigo_nbs', '113019000').replace('.', '').replace('-', '')
         desc = servico.get('discriminacao', 'Honorários Advocatícios')
@@ -133,6 +129,7 @@ class NacionalAdnProvider:
             </locPrest>
             <cServ>
                 <cTribNac>{c_trib_nac}</cTribNac>
+                <cTribMun>{c_trib_nac}</cTribMun>
                 <xDescServ>{desc}</xDescServ>
                 <cNBS>{c_nbs}</cNBS>
             </cServ>
