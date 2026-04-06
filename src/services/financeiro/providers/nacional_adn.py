@@ -50,7 +50,7 @@ class NacionalAdnProvider:
         <serie>1</serie>
         <nDPS>{random.randint(1000, 99999)}</nDPS>
         <dCompet>{d_compet}</dCompet>
-        <stat>1</stat>
+        <tpEmit>1</tpEmit>
         <prest>
             <CNPJ>{cnpj_prestador_limpo}</CNPJ>
             <IM>{self.inscricao_municipal}</IM>
