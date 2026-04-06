@@ -42,7 +42,7 @@ class NacionalAdnProvider:
         
         # Template XML Raw (Garante zero namespaces espúrios como ns0:)
         xml_template = f"""<DPS xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">
-    <infDPS id="{dps_id}">
+    <infDPS Id="{dps_id}">
         <tpAmb>1</tpAmb>
         <dhEmi>{dh_emi}</dhEmi>
         <prest>
