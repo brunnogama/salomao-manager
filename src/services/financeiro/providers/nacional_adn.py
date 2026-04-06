@@ -132,7 +132,7 @@ class NacionalAdnProvider:
                 <cLocPrestacao>3304557</cLocPrestacao>
             </locPrest>
             <cServ>
-                <cTribNac>{c_trib}</cTribNac>
+                <cTribNac>{c_trib_nac}</cTribNac>
                 <xDescServ>{desc}</xDescServ>
                 <cNBS>{c_nbs}</cNBS>
             </cServ>
