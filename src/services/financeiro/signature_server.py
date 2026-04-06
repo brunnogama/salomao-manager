@@ -2,7 +2,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utils.signer import CertificateSigner
-from providers.rj_rio import RioJaneiroProvider
+from providers.nacional_adn import NacionalAdnProvider
 import os
 import xml.etree.ElementTree as ET
 from dotenv import load_dotenv
@@ -42,14 +42,16 @@ def assinar_nota():
             if not os.path.exists(cert_path):
                 return jsonify({"erro": "Certificado não enviado na requisição e não encontrado localmente."}), 400
 
-        # 2. Prepara o XML (Exemplo Rio de Janeiro)
+        # 2. Prepara o XML (Padrão Nacional ADN / DPS)
         if cidade == "Rio de Janeiro":
             import json
-            prestador = json.loads(dados.get('prestador', '{}')) if isinstance(dados.get('prestador'), str) else dados.get('prestador', {})
-            provider = RioJaneiroProvider(inscricao_municipal=prestador.get('im', '12345'), cnpj_prestador=prestador.get('cnpj', '00000000000100'))
-            xml_bruto = provider.preparar_rps(dados)
+            import random
             
-            # 3. Assina
+            prestador = json.loads(dados.get('prestador', '{}')) if isinstance(dados.get('prestador'), str) else dados.get('prestador', {})
+            provider = NacionalAdnProvider(inscricao_municipal=prestador.get('im', '12345'), cnpj_prestador=prestador.get('cnpj', '00000000000100'))
+            xml_bruto = provider.preparar_dps(dados)
+            
+            # 3. Assina (TODO: Adicionar mTLS no futuro para transmissão real)
             signer = CertificateSigner(cert_path=cert_path, password=password, pfx_data=pfx_data)
             xml_assinado = signer.sign_xml(xml_bruto)
             
@@ -60,10 +62,19 @@ def assinar_nota():
             else:
                 xml_string = xml_assinado.decode('utf-8') if hasattr(xml_assinado, 'decode') else str(xml_assinado)
             
+            # MOCK: Simulando o retorno oficial da Receita Federal (Nacional)
+            # Chave de acesso possui 44 dígitos
+            uf = "33" # RJ
+            ano_mes = dict(dados).get('dataEmissao', '2604').replace('-', '')[2:6]
+            cnpj_limpo = prestador.get('cnpj', '00000000000100').replace('.', '').replace('/', '').replace('-', '')
+            random_key = f"{uf}{ano_mes}{cnpj_limpo}55001{random.randint(100000000, 999999999)}1"
+            chave_acesso = random_key.zfill(44)
+            
             return jsonify({
                 "status": "sucesso",
                 "xml": xml_string,
-                "pdf_url": "https://notacarioca.rio.gov.br/capa/nfsedocumento.aspx?cc=ABCD-1234&inscricao=123456-7&nfse=00000000"
+                "chave_acesso": chave_acesso,
+                "pdf_url": f"https://www.nfse.gov.br/consultapublica?chave={chave_acesso}"
             })
 
         return jsonify({"erro": "Provedor para esta cidade ainda não implementado"}), 501
