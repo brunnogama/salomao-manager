@@ -91,9 +91,11 @@ class NacionalAdnProvider:
             <locPrest>
                 <cLocPrestacao>3304557</cLocPrestacao>
             </locPrest>
-            <cTribNac>{c_trib}</cTribNac>
-            <cNBS>{c_nbs}</cNBS>
-            <xDesc>{desc}</xDesc>
+            <cServ>
+                <cTribNac>{c_trib}</cTribNac>
+                <cNBS>{c_nbs}</cNBS>
+                <xDescServ>{desc}</xDescServ>
+            </cServ>
             <valores>
                 <vServ>{v_serv}</vServ>
                 <trib>
