@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { SearchableSelect } from '../../crm/SearchableSelect';
 import { ClientFormModal } from '../../controladoria/clients/ClientFormModal';
 import { DraftContractModal } from './DraftContractModal';
+import { EmissaoNFStatusModal, NFStatus } from './EmissaoNFStatusModal';
 import { supabase } from '../../../lib/supabase';
 import { maskCNPJ, maskMoney } from '../../controladoria/utils/masks';
 
@@ -68,6 +69,17 @@ const EmissaoNF = () => {
   const [dataEmissao, setDataEmissao] = useState<string>(new Date().toISOString().split('T')[0]);
   const [vencimento, setVencimento] = useState<string>('');
   const [nfNumber, setNfNumber] = useState<string>('');
+
+  // Novo estado da Modal de Emissão
+  const [emissaoStatus, setEmissaoStatus] = useState<{
+    isOpen: boolean;
+    status: NFStatus;
+    errorDetails: { message: string; traceback?: string } | null;
+  }>({
+    isOpen: false,
+    status: 'idle',
+    errorDetails: null
+  });
 
   // Novos campos para Configuração e Tributação
   const [valorLiquidoState, setValorLiquidoState] = useState<number>(0);
@@ -400,16 +412,18 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
   // Função para processar a emissão (chamada ao serviço Python)
   const handleEmitirNota = async () => {
 
-
     if (!selectedClient) {
       toast.warning("Cliente não selecionado", { description: "Selecione um cliente para emitir a NF." });
       return;
     }
 
     setIsUploading(true);
-    const loadingToast = toast.loading("Transmitindo nota...");
+    setEmissaoStatus({ isOpen: true, status: 'preparing', errorDetails: null });
 
     try {
+      await new Promise(r => setTimeout(r, 800)); // Simulando "Preparando Lote RPS..."
+      setEmissaoStatus(prev => ({ ...prev, status: 'transmitting' }));
+
       const formData = new FormData();
       formData.append('cidade', selectedCity);
 
@@ -433,6 +447,9 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         method: 'POST',
         body: formData
       });
+
+      setEmissaoStatus(prev => ({ ...prev, status: 'processing' }));
+      await new Promise(r => setTimeout(r, 600));
 
       const textResponse = await response.text();
       let data: any = {};
@@ -472,27 +489,28 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           nf_number: nfNumber || null
         }).eq('id', selectedHonorario.id);
 
-        toast.dismiss(loadingToast);
-        toast.success("Nota Fiscal Assinada e Registrada!");
+        setEmissaoStatus({ isOpen: true, status: 'success', errorDetails: null });
         
         setHonorarios(prev => prev.filter(h => h.id !== selectedHonorario.id));
         setSelectedHonorario(null);
 
         console.log("RPS Assinado (XML):", data.xml);
       } else {
-        toast.dismiss(loadingToast);
-        toast.error("Erro na emissão", {
-          description: data.erro || "Falha desconhecida"
+        setEmissaoStatus({ 
+          isOpen: true, 
+          status: 'error', 
+          errorDetails: { message: data.erro || "Falha desconhecida", traceback: data.traceback } 
         });
         if (data.traceback) {
           console.error("🐍 PYTHON STACK TRACE DA ASSINATURA:\n", data.traceback);
         }
       }
     } catch (error) {
-      toast.dismiss(loadingToast);
       console.error("Erro ao conectar com o serviço de assinatura:", error);
-      toast.error("Serviço Indisponível", {
-        description: "O serviço de assinatura está offline. Certifique-se que o script Python está a correr."
+      setEmissaoStatus({ 
+        isOpen: true, 
+        status: 'error', 
+        errorDetails: { message: "Serviço Indisponível", traceback: "O serviço de assinatura está offline. Certifique-se que o script Python está a correr." } 
       });
     } finally {
       setIsUploading(false);
@@ -1108,6 +1126,13 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         onClose={() => setIsDraftContractModalOpen(false)}
         client={selectedClient}
         onSave={() => handleSelectClient(selectedClient)}
+      />
+
+      <EmissaoNFStatusModal 
+        isOpen={emissaoStatus.isOpen}
+        status={emissaoStatus.status}
+        errorDetails={emissaoStatus.errorDetails}
+        onClose={() => setEmissaoStatus(prev => ({ ...prev, isOpen: false }))}
       />
     </div>
   );
