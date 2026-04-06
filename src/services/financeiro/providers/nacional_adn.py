@@ -11,83 +11,63 @@ class NacionalAdnProvider:
     def preparar_dps(self, dados):
         """
         Prepara o XML da Declaração de Prestação de Serviço (DPS)
-        no novo Padrão Nacional da Receita Federal (ADN).
+        sem prefixos indesejados (ns0:), usando parse nativo de raw string.
         """
-        # Criando o elemento raiz da DPS
-        root = ET.Element('DPS', xmlns="http://www.sped.fazenda.gov.br/nfse", id=f"DPS_{uuid.uuid4().hex}")
+        dps_id = f"DPS_{uuid.uuid4().hex}"
         
-        inf_dps = ET.SubElement(root, 'InfDPS', Id="INF1")
-        
-        # 1. Ambiente (1 - Produção, 2 - Homologação)
-        amb = ET.SubElement(inf_dps, 'tpAmb')
-        amb.text = "1"
-        
-        # 2. Data de Emissão
-        dh_emi = ET.SubElement(inf_dps, 'dhEmi')
-        dh_emi.text = datetime.now().strftime("%Y-%m-%dT%H:%M:%S-03:00")
-        
-        # 3. Dados do Prestador
-        prest = ET.SubElement(inf_dps, 'prest')
-        cnpj_p = ET.SubElement(prest, 'CNPJ')
-        cnpj_p.text = self.cnpj_prestador.replace('.', '').replace('/', '').replace('-', '')
-        im_p = ET.SubElement(prest, 'IM')
-        im_p.text = self.inscricao_municipal
+        # Datas e Formatações
+        dh_emi = datetime.now().strftime("%Y-%m-%dT%H:%M:%S-03:00")
+        cnpj_prestador_limpo = self.cnpj_prestador.replace('.', '').replace('/', '').replace('-', '')
         
         # Parse servico
         servico_str = dados.get('servico', '{}')
-        if isinstance(servico_str, str):
-            try:
-                servico = json.loads(servico_str)
-            except:
-                servico = {}
-        else:
-            servico = servico_str
-            
-        optante_simples = servico.get('optante_simples', '2') # 1=Sim, 2=Não
+        servico = json.loads(servico_str) if isinstance(servico_str, str) else servico_str
+        optante_simples = '1' if str(servico.get('optante_simples', '2')) == '1' else '2'
         
-        # Tributação / Regime
-        trib = ET.SubElement(prest, 'optSN')
-        trib.text = '1' if optante_simples == '1' else '2'
-        
-        # 4. Dados do Tomador
+        # Parse tomador
         tomador_str = dados.get('tomador', '{}')
-        if isinstance(tomador_str, str):
-            try:
-                tomador = json.loads(tomador_str)
-            except:
-                tomador = {}
-        else:
-            tomador = tomador_str
-            
-        toma = ET.SubElement(inf_dps, 'toma')
-        cnpj_t = ET.SubElement(toma, 'CNPJ')
-        cnpj_t.text = tomador.get('cnpj', '').replace('.', '').replace('/', '').replace('-', '')
+        tomador = json.loads(tomador_str) if isinstance(tomador_str, str) else tomador_str
+        cnpj_tomador_limpo = tomador.get('cnpj', '').replace('.', '').replace('/', '').replace('-', '')
         
-        # 5. Serviço Prestado e Impostos
-        serv = ET.SubElement(inf_dps, 'serv')
+        # Dados do Servico
+        c_trib = servico.get('codigo_tributacao', '171401')
+        c_nbs = servico.get('codigo_nbs', '113019000')
+        desc = servico.get('discriminacao', 'Honorários Advocatícios')
+        v_serv = str(servico.get('valor', '0'))
         
-        loc_prest = ET.SubElement(serv, 'locPrest')
-        loc_prest.text = "BR" # Padrão
+        iss_retido = '1' if str(servico.get('iss_retido', '2')) == '1' else '2'
         
-        c_trib = ET.SubElement(serv, 'cTribNac')
-        c_trib.text = servico.get('codigo_tributacao', '171401')
+        # Template XML Raw (Garante zero namespaces espúrios como ns0:)
+        xml_template = f"""<DPS xmlns="http://www.sped.fazenda.gov.br/nfse" id="{dps_id}">
+    <InfDPS Id="INF1">
+        <tpAmb>1</tpAmb>
+        <dhEmi>{dh_emi}</dhEmi>
+        <prest>
+            <CNPJ>{cnpj_prestador_limpo}</CNPJ>
+            <IM>{self.inscricao_municipal}</IM>
+            <optSN>{optante_simples}</optSN>
+        </prest>
+        <toma>
+            <CNPJ>{cnpj_tomador_limpo}</CNPJ>
+        </toma>
+        <serv>
+            <locPrest>BR</locPrest>
+            <cTribNac>{c_trib}</cTribNac>
+            <cNBS>{c_nbs}</cNBS>
+            <xDesc>{desc}</xDesc>
+            <valores>
+                <vServ>{v_serv}</vServ>
+                <trib>
+                    <ISSQN>
+                        <tpRet>{iss_retido}</tpRet>
+                    </ISSQN>
+                </trib>
+            </valores>
+        </serv>
+    </InfDPS>
+</DPS>"""
         
-        c_nbs = ET.SubElement(serv, 'cNBS')
-        c_nbs.text = servico.get('codigo_nbs', '113019000')
-        
-        desc = ET.SubElement(serv, 'xDesc')
-        desc.text = servico.get('discriminacao', 'Honorários Advocatícios')
-        
-        # Valores
-        valores = ET.SubElement(serv, 'valores')
-        v_serv = ET.SubElement(valores, 'vServ')
-        v_serv.text = str(servico.get('valor', 0))
-        
-        # Retenções
-        iss_retido = servico.get('iss_retido', '2')
-        retencoes = ET.SubElement(valores, 'trib')
-        v_iss = ET.SubElement(retencoes, 'ISSQN')
-        tp_ret = ET.SubElement(v_iss, 'tpRet')
-        tp_ret.text = '1' if iss_retido == '1' else '2' # 1 = Retido, 2 = Não Retido
-        
+        # Parsing limpo para ElementTree mantendo o namespace raiz intacto
+        parser = ET.XMLParser(remove_blank_text=True)
+        root = ET.fromstring(xml_template.encode('utf-8'), parser)
         return root
