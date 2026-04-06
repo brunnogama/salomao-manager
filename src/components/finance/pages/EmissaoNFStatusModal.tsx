@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, XCircle, X, Loader2, FileText, Server, AlertTriangle, Download } from 'lucide-react';
+import { CheckCircle2, XCircle, X, Loader2, FileText, Server, AlertTriangle, Download, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 
 export type NFStatus = 'idle' | 'preparing' | 'transmitting' | 'processing' | 'success' | 'error';
 
@@ -76,10 +77,23 @@ export function EmissaoNFStatusModal({ isOpen, status, errorDetails, successData
               </p>
               
               {errorDetails?.traceback && (
-                <div className="w-full text-left bg-gray-50 rounded-xl border border-gray-200 p-3 mb-4 max-h-32 overflow-y-auto custom-scrollbar">
-                  <span className="text-[10px] font-black tracking-widest text-gray-400 mb-1 flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3 text-amber-500" /> DETALHES TÉCNICOS
-                  </span>
+                <div className="w-full text-left bg-gray-50 rounded-xl border border-gray-200 p-3 mb-4 max-h-32 overflow-y-auto custom-scrollbar relative">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-black tracking-widest text-gray-400 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3 text-amber-500" /> DETALHES TÉCNICOS
+                    </span>
+                    <button
+                      onClick={() => {
+                        const text = `ERRO:\n${errorDetails.message}\n\nTRACEBACK:\n${errorDetails.traceback}`;
+                        navigator.clipboard.writeText(text);
+                        toast.success('Erro técnico copiado com sucesso!');
+                      }}
+                      className="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-[#1e3a8a] transition-colors"
+                      title="Copiar log de erro"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                   <pre className="text-[10px] text-red-800 font-mono whitespace-pre-wrap leading-tight mt-1">
                     {errorDetails.traceback}
                   </pre>
