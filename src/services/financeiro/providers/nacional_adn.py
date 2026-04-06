@@ -71,7 +71,7 @@ class NacionalAdnProvider:
             <CNPJ>{cnpj_prestador_limpo}</CNPJ>
             <IM>{self.inscricao_municipal}</IM>
             <regTrib>
-                <optSN>{optante_simples}</optSN>
+                <opSimpNac>{optante_simples}</opSimpNac>
             </regTrib>
         </prest>
         {toma_xml}
