@@ -66,7 +66,7 @@ def assinar_nota():
             import requests
 
             # API Base URL - Emissor Nacional
-            ADN_API_URL = os.getenv("ADN_API_URL", "https://sefin.nacional.gov.br/v1/nfse")
+            ADN_API_URL = os.getenv("ADN_API_URL", "https://api.nfse.gov.br/v1/nfse")
             
             extractor = MTlsExtractor(cert_path=cert_path, password=password, pfx_data=pfx_data)
             try:
