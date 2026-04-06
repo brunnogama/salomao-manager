@@ -69,6 +69,15 @@ const EmissaoNF = () => {
   const [vencimento, setVencimento] = useState<string>('');
   const [nfNumber, setNfNumber] = useState<string>('');
 
+  // Novos campos para Configuração e Tributação
+  const [valorLiquidoState, setValorLiquidoState] = useState<number>(0);
+  type TipoClienteType = 'PJ' | 'PF' | 'Condominio' | 'Exterior' | 'Fundos' | 'Outros';
+  const [tipoCliente, setTipoCliente] = useState<TipoClienteType>('PJ');
+  const [impostosAtivos, setImpostosAtivos] = useState({ irpj: true, pis: true, cofins: true, csll: true });
+  type GrossUpType = 'nenhum' | 'retencoes' | 'total';
+  const [grossUpMode, setGrossUpMode] = useState<GrossUpType>('nenhum');
+  const [originalAmount, setOriginalAmount] = useState<number>(0);
+
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
   const clientDropdownRef = useRef<HTMLDivElement>(null);
@@ -300,10 +309,83 @@ const EmissaoNF = () => {
     return null;
   };
 
+  const ALIQUOTAS = { irpj: 0.015, pis: 0.0065, cofins: 0.03, csll: 0.01 };
+  
+  const applyTaxesAndLiquido = (base: number, configAtivos: { irpj: boolean, pis: boolean, cofins: boolean, csll: boolean }) => {
+    setValorNF(base);
+    const iIRPJ = configAtivos.irpj ? base * ALIQUOTAS.irpj : 0;
+    const iPIS = configAtivos.pis ? base * ALIQUOTAS.pis : 0;
+    const iCOFINS = configAtivos.cofins ? base * ALIQUOTAS.cofins : 0;
+    const iCSLL = configAtivos.csll ? base * ALIQUOTAS.csll : 0;
+    
+    setIrpj(iIRPJ);
+    setPis(iPIS);
+    setCofins(iCOFINS);
+    setCsll(iCSLL);
+    
+    setValorLiquidoState(base - iIRPJ - iPIS - iCOFINS - iCSLL);
+  };
+
+  const handleApplyGrossUp = (mode: GrossUpType, currentBase: number, config: typeof impostosAtivos) => {
+    let newBase = currentBase;
+    if (mode === 'retencoes') newBase = currentBase / 0.9385;
+    else if (mode === 'total') newBase = currentBase / 0.8438;
+    applyTaxesAndLiquido(newBase, config);
+  };
+
+  const handleGrossUpChange = (mode: GrossUpType) => {
+    setGrossUpMode(mode);
+    handleApplyGrossUp(mode, originalAmount, impostosAtivos);
+  };
+
+  const handleChangeTipoCliente = (tipo: TipoClienteType) => {
+    setTipoCliente(tipo);
+    const TYPE_TAX_CONFIG: Record<TipoClienteType, typeof impostosAtivos> = {
+      'PJ': { irpj: true, pis: true, cofins: true, csll: true },
+      'PF': { irpj: false, pis: false, cofins: false, csll: false },
+      'Condominio': { irpj: false, pis: true, cofins: true, csll: true },
+      'Exterior': { irpj: false, pis: false, cofins: false, csll: false },
+      'Fundos': { irpj: false, pis: false, cofins: false, csll: false },
+      'Outros': { irpj: false, pis: false, cofins: false, csll: false }
+    };
+    const config = typeof TYPE_TAX_CONFIG[tipo] !== "undefined" ? TYPE_TAX_CONFIG[tipo] : { irpj: true, pis: true, cofins: true, csll: true };
+    setImpostosAtivos(config);
+    handleApplyGrossUp(grossUpMode, originalAmount, config);
+  };
+
+  const handleToggleImposto = (imp: keyof typeof impostosAtivos) => {
+    const newConfig = { ...impostosAtivos, [imp]: !impostosAtivos[imp] };
+    setImpostosAtivos(newConfig);
+    handleApplyGrossUp(grossUpMode, originalAmount, newConfig);
+  };
+
   const handleSelectHonorario = (hon: any) => {
     setSelectedHonorario(hon);
-    setValorNF(hon.amount || 0);
+    const amt = Number(hon.amount || 0);
+    setOriginalAmount(amt);
+    setGrossUpMode('nenhum');
     setVencimento(hon.due_date ? hon.due_date.split('T')[0] : '');
+    
+    let guessedTipo: TipoClienteType = 'PJ';
+    if (selectedClient?.cnpj) {
+       const cleanC = selectedClient.cnpj.replace(/\D/g, '');
+       if (cleanC.length === 11) guessedTipo = 'PF';
+    } else if (selectedClient?.name && selectedClient.name.toLowerCase().includes('condominio')) {
+       guessedTipo = 'Condominio';
+    }
+    
+    setTipoCliente(guessedTipo);
+    const TYPE_TAX_CONFIG: Record<string, typeof impostosAtivos> = {
+      'PJ': { irpj: true, pis: true, cofins: true, csll: true },
+      'PF': { irpj: false, pis: false, cofins: false, csll: false },
+      'Condominio': { irpj: false, pis: true, cofins: true, csll: true },
+      'Exterior': { irpj: false, pis: false, cofins: false, csll: false },
+      'Fundos': { irpj: false, pis: false, cofins: false, csll: false },
+      'Outros': { irpj: false, pis: false, cofins: false, csll: false }
+    };
+    const config = TYPE_TAX_CONFIG[guessedTipo] || { irpj: true, pis: true, cofins: true, csll: true };
+    setImpostosAtivos(config);
+    handleApplyGrossUp('nenhum', amt, config);
 
     const texto = `Referente aos honorários de ${formatTypeText(hon.type)}
 ID do contrato: ${hon.contract?.display_id || hon.contract?.seq_id || 'N/A'}
@@ -374,8 +456,6 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         } catch (e) {
           console.error("Erro buscar local:", e);
         }
-
-        const valorLiquido = valorNF - irpj - pis - cofins - csll;
         
         await supabase.from('financial_installments').update({
           status: 'nf_emitida',
@@ -388,7 +468,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           tax_pis: pis,
           tax_cofins: cofins,
           tax_csll: csll,
-          net_value: valorLiquido,
+          net_value: valorLiquidoState,
           nf_number: nfNumber || null
         }).eq('id', selectedHonorario.id);
 
@@ -708,7 +788,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         </div>
 
         {/* PAINEL DIREITO: SIMULADOR DE NOTA FISCAL */}
-        <div className="lg:col-span-2 relative min-h-[700px] bg-white border-[3px] border-gray-800 flex flex-col outline outline-4 outline-transparent shadow-2xl shadow-gray-400/30 font-sans text-gray-900 overflow-hidden shrink-0 mt-4 lg:mt-0 lg:ml-2">
+        <div className="lg:col-span-2 relative min-h-[850px] bg-white border-[3px] border-gray-800 flex flex-col outline outline-4 outline-transparent shadow-2xl shadow-gray-400/30 font-sans text-gray-900 overflow-hidden shrink-0 mt-4 lg:mt-0 lg:ml-2">
             
             {/* Watermark */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.02] rotate-[-45deg] z-0">
@@ -831,6 +911,66 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                </div>
             </div>
 
+            {/* CONFIGURAÇÕES DE TRIBUTAÇÃO */}
+            <div className="border-b-[3px] border-gray-800 flex flex-col relative z-20 bg-white text-[10px] sm:text-[11px] shrink-0">
+              <div className="bg-gradient-to-r from-gray-200 to-gray-300 text-center font-black uppercase text-[10px] sm:text-[11px] py-1 border-b border-gray-400 text-gray-800 tracking-wider">
+                Detalhamento Tributário e Gross Up
+              </div>
+              <div className="flex flex-col sm:flex-row border-b border-gray-300">
+                <div className="p-2 sm:p-3 flex-1 flex flex-col gap-2 bg-[#f8fbff] sm:border-r border-b sm:border-b-0 border-gray-300">
+                  <label className="font-bold text-[#1e3a8a] uppercase tracking-wide flex items-center gap-1"><Coins className="w-3.5 h-3.5"/> Categoria do Cliente:</label>
+                  <select
+                     value={tipoCliente}
+                     onChange={(e) => handleChangeTipoCliente(e.target.value as TipoClienteType)}
+                     className="w-full bg-white border border-blue-200 text-[#1e3a8a] font-black rounded-lg p-2 outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] shadow-sm appearance-none cursor-pointer"
+                  >
+                     <option value="PJ">PJ (Pessoa Jurídica)</option>
+                     <option value="PF">PF (Pessoa Física)</option>
+                     <option value="Condominio">Condomínio</option>
+                     <option value="Exterior">Exterior</option>
+                     <option value="Fundos">Fundos</option>
+                     <option value="Outros">Outros</option>
+                  </select>
+                </div>
+                <div className="p-2 sm:p-3 flex-1 flex flex-col gap-2 bg-purple-50">
+                  <label className="font-bold text-purple-800 uppercase tracking-wide flex items-center gap-1"><Plus className="w-3.5 h-3.5"/> Gross Up (Adicional):</label>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-1 font-semibold text-purple-900 bg-white p-2 rounded-lg border border-purple-100 shadow-sm">
+                    <label className="flex items-center gap-1.5 cursor-pointer hover:text-purple-700 transition-colors">
+                      <input type="radio" name="grossup" checked={grossUpMode === 'nenhum'} onChange={() => handleGrossUpChange('nenhum')} className="w-3.5 h-3.5 accent-purple-600" /> Nenhuma
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer hover:text-purple-700 transition-colors">
+                      <input type="radio" name="grossup" checked={grossUpMode === 'retencoes'} onChange={() => handleGrossUpChange('retencoes')} className="w-3.5 h-3.5 accent-purple-600" /> +6,15% (Ret.)
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer hover:text-purple-700 transition-colors">
+                      <input type="radio" name="grossup" checked={grossUpMode === 'total'} onChange={() => handleGrossUpChange('total')} className="w-3.5 h-3.5 accent-purple-600" /> +15,62% (Total)
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div className="p-2 sm:p-3 bg-white flex flex-col">
+                 <span className="font-bold text-gray-700 uppercase tracking-wide mb-2">Impostos Retidos na Fonte:</span>
+                 <div className="flex flex-wrap gap-x-6 gap-y-2">
+                    {(['irpj', 'pis', 'cofins', 'csll'] as const).map(imp => {
+                       const labels: any = { irpj: 'IRRF (1,50%)', pis: 'PIS (0,65%)', cofins: 'COFINS (3,00%)', csll: 'CSLL (1,00%)' };
+                       const isChecked = impostosAtivos[imp];
+                       return (
+                         <label key={imp} className={`flex items-center gap-2 font-bold select-none p-1.5 rounded-lg border transition-all ${tipoCliente === 'Outros' ? 'cursor-pointer hover:bg-gray-50 border-gray-200' : 'cursor-default border-transparent'} ${isChecked ? 'text-[#1e3a8a] bg-blue-50/50 border-blue-100' : 'text-gray-400'}`}>
+                           <input 
+                             type="checkbox" 
+                             checked={isChecked} 
+                             onChange={() => handleToggleImposto(imp)}
+                             disabled={tipoCliente !== 'Outros'}
+                             className={`w-4 h-4 rounded border-gray-300 focus:ring-0 ${isChecked ? 'accent-[#1e3a8a] text-[#1e3a8a]' : 'opacity-40'} disabled:cursor-default`}
+                           />
+                           {labels[imp]}
+                         </label>
+                       )
+                    })}
+                 </div>
+                 {tipoCliente === 'Outros' && <span className="text-[9px] font-bold text-amber-600 mt-2 bg-amber-50 self-start px-2 py-0.5 rounded">* Marque manualmente os impostos que serão cobrados neste cenário.</span>}
+              </div>
+            </div>
+
             {/* VALOR DA NOTA E IMPOSTOS */}
             <div className="flex flex-col shrink-0 relative z-10 bg-white">
                {/* MAIN VALOR */}
@@ -846,7 +986,11 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                       value={valorNF || valorNF === 0 ? maskMoney((valorNF * 100).toFixed(0)) : ''}
                       onChange={(e) => {
                         const rawValue = e.target.value.replace(/\D/g, '');
-                        setValorNF(Number(rawValue) / 100);
+                        const val = Number(rawValue) / 100;
+                        setValorNF(val);
+                        setOriginalAmount(val);
+                        setGrossUpMode('nenhum');
+                        applyTaxesAndLiquido(val, impostosAtivos);
                       }}
                       placeholder="0,00"
                     />
@@ -858,29 +1002,29 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                   <div className="flex-1 flex flex-col hover:bg-gray-100 transition-colors">
                      <span className="font-semibold px-2 py-0.5 border-b border-gray-300 text-center">IRPJ (R$)</span>
                      <input type="text" className="w-full h-full px-2 bg-transparent font-black outline-none text-center text-gray-800" 
-                        value={irpj || irpj === 0 ? maskMoney((irpj * 100).toFixed(0)) : ''}
-                        onChange={(e) => { const raw = e.target.value.replace(/\D/g,''); setIrpj(Number(raw)/100); }} 
+                         value={irpj || irpj === 0 ? maskMoney((irpj * 100).toFixed(0)) : ''}
+                        onChange={(e) => { const raw = e.target.value.replace(/\D/g,''); const r=Number(raw)/100; setIrpj(r); setValorLiquidoState(valorNF - r - pis - cofins - csll); }} 
                         placeholder="0,00" />
                   </div>
                   <div className="flex-1 flex flex-col hover:bg-gray-100 transition-colors">
                      <span className="font-semibold px-2 py-0.5 border-b border-gray-300 text-center">PIS (R$)</span>
                      <input type="text" className="w-full h-full px-2 bg-transparent font-black outline-none text-center text-gray-800" 
-                        value={pis || pis === 0 ? maskMoney((pis * 100).toFixed(0)) : ''}
-                        onChange={(e) => { const raw = e.target.value.replace(/\D/g,''); setPis(Number(raw)/100); }} 
+                         value={pis || pis === 0 ? maskMoney((pis * 100).toFixed(0)) : ''}
+                        onChange={(e) => { const raw = e.target.value.replace(/\D/g,''); const r=Number(raw)/100; setPis(r); setValorLiquidoState(valorNF - irpj - r - cofins - csll); }} 
                         placeholder="0,00" />
                   </div>
                   <div className="flex-1 flex flex-col hover:bg-gray-100 transition-colors">
                      <span className="font-semibold px-2 py-0.5 border-b border-gray-300 text-center">COFINS (R$)</span>
                      <input type="text" className="w-full h-full px-2 bg-transparent font-black outline-none text-center text-gray-800" 
-                        value={cofins || cofins === 0 ? maskMoney((cofins * 100).toFixed(0)) : ''}
-                        onChange={(e) => { const raw = e.target.value.replace(/\D/g,''); setCofins(Number(raw)/100); }} 
+                         value={cofins || cofins === 0 ? maskMoney((cofins * 100).toFixed(0)) : ''}
+                        onChange={(e) => { const raw = e.target.value.replace(/\D/g,''); const r=Number(raw)/100; setCofins(r); setValorLiquidoState(valorNF - irpj - pis - r - csll); }} 
                         placeholder="0,00" />
                   </div>
                   <div className="flex-1 flex flex-col hover:bg-gray-100 transition-colors">
                      <span className="font-semibold px-2 py-0.5 border-b border-gray-300 text-center">CSLL (R$)</span>
                      <input type="text" className="w-full h-full px-2 bg-transparent font-black outline-none text-center text-gray-800" 
-                        value={csll || csll === 0 ? maskMoney((csll * 100).toFixed(0)) : ''}
-                        onChange={(e) => { const raw = e.target.value.replace(/\D/g,''); setCsll(Number(raw)/100); }} 
+                         value={csll || csll === 0 ? maskMoney((csll * 100).toFixed(0)) : ''}
+                        onChange={(e) => { const raw = e.target.value.replace(/\D/g,''); const r=Number(raw)/100; setCsll(r); setValorLiquidoState(valorNF - irpj - pis - cofins - r); }} 
                         placeholder="0,00" />
                   </div>
                </div>
@@ -892,9 +1036,16 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                   </div>
                   <div className="flex-1 flex items-center px-4 sm:px-6 relative group bg-emerald-50">
                      <span className="font-bold text-gray-500 mr-2 text-sm sm:text-base">R$</span>
-                     <span className="text-xl sm:text-2xl font-black text-emerald-700">
-                        {maskMoney(((valorNF - irpj - pis - cofins - csll) * 100).toFixed(0))}
-                     </span>
+                     <input
+                       type="text"
+                       className="w-full bg-transparent text-xl sm:text-2xl font-black outline-none text-emerald-700 hover:bg-emerald-100/50 focus:bg-emerald-100 transition-colors rounded px-1"
+                       value={valorLiquidoState || valorLiquidoState === 0 ? maskMoney((valorLiquidoState * 100).toFixed(0)) : ''}
+                       onChange={(e) => {
+                         const rawValue = e.target.value.replace(/\D/g, '');
+                         setValorLiquidoState(Number(rawValue) / 100);
+                       }}
+                       placeholder="0,00"
+                     />
                   </div>
                </div>
 
