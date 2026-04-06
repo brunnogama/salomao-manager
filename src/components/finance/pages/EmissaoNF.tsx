@@ -137,8 +137,9 @@ const EmissaoNF = () => {
 
         if (cnpjToUse) {
           const cleanCnpj = cnpjToUse.replace(/\D/g, '');
-          const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
-          if (res.ok) {
+          try {
+            const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://brasilapi.com.br/api/cnpj/v1/' + cleanCnpj)}`);
+            if (res.ok) {
             const data = await res.json();
             
             // Format logradouro to avoid "undefined" strings
@@ -155,6 +156,9 @@ const EmissaoNF = () => {
               uf: data.uf || getSiglaByCity(selectedCity)
             });
             return;
+          }
+          } catch (fetchError) {
+             console.warn("Proxy/BrasilAPI Indisponível. Usando fallback de escritório...");
           }
         }
         
