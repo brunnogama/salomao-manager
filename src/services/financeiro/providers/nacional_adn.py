@@ -38,7 +38,7 @@ class NacionalAdnProvider:
         iss_retido = '1' if str(servico.get('iss_retido', '2')) == '1' else '2'
         
         # Template XML Raw (Garante zero namespaces espúrios como ns0:)
-        xml_template = f"""<DPS xmlns="http://www.sped.fazenda.gov.br/nfse" id="{dps_id}">
+        xml_template = f"""<DPS xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00" id="{dps_id}">
     <InfDPS Id="INF1">
         <tpAmb>1</tpAmb>
         <dhEmi>{dh_emi}</dhEmi>
