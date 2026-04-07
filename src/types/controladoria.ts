@@ -466,6 +466,7 @@ export interface FinancialInstallment {
   nf_nature?: string | null;
   nf_value?: number | null;
   nf_pdf?: string | null;
+  nf_access_key?: string | null;
   tax_irpj?: number | null;
   tax_pis?: number | null;
   tax_cofins?: number | null;

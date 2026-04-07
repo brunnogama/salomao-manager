@@ -19,6 +19,7 @@ import { SearchableSelect } from '../../crm/SearchableSelect';
 import { ClientFormModal } from '../../controladoria/clients/ClientFormModal';
 import { DraftContractModal } from './DraftContractModal';
 import { EmissaoNFStatusModal, NFStatus } from './EmissaoNFStatusModal';
+import { HistoricoNFs } from '../components/HistoricoNFs';
 import { supabase } from '../../../lib/supabase';
 import { maskCNPJ, maskMoney } from '../../controladoria/utils/masks';
 import { DANFSePreview } from '../components/DANFSePreview';
@@ -87,6 +88,8 @@ const EmissaoNF = () => {
 
   const [chaveAcessoGerada, setChaveAcessoGerada] = useState<string>('');
   const [numeroNFsGerado, setNumeroNFsGerado] = useState<string>('');
+
+  const [activeTab, setActiveTab] = useState<'emissao' | 'historico'>('emissao');
 
   // Novos campos para Configuração e Tributação
   const [valorLiquidoState, setValorLiquidoState] = useState<number>(0);
@@ -553,7 +556,8 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           tax_csll: csll,
           net_value: valorLiquidoState,
           nf_number: data.nf_number || nfNumber || null,
-          nf_pdf: data.pdf_url || null
+          nf_access_key: data.chave_acesso || null,
+            nf_pdf: data.pdf_url || null
         }).eq('id', selectedHonorario.id);
 
         setEmissaoStatus({ isOpen: true, status: 'success', errorDetails: null, successData: { xml: data.xml, pdfUrl: data.pdf_url, chaveAcesso: data.chave_acesso } });
@@ -603,13 +607,29 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
             <FileText className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
-          <div>
+          <div className="flex flex-col">
             <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
               Emissão de NF
             </h1>
-            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
-              Gestão centralizada de faturação para múltiplas capitais
-            </p>
+            <div className="flex items-center gap-4 mt-3 border-b border-gray-200">
+              <button
+                className={`pb-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'emissao' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                onClick={() => setActiveTab('emissao')}
+              >
+                Emissão
+              </button>
+              <button
+                className={`pb-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'historico' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                onClick={() => setActiveTab('historico')}
+              >
+                NF's Emitidas
+              </button>
+            </div>
+            {activeTab === 'emissao' && (
+               <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-2">
+                 Gestão centralizada de faturação para múltiplas capitais
+               </p>
+            )}
           </div>
         </div>
 
@@ -642,11 +662,14 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                 : 'bg-gradient-to-br from-[#1e3a8a] to-[#0a192f] text-white hover:shadow-xl hover:-translate-y-0.5 ring-4 ring-white'
             }`}
           >
-            {isUploading ? <Clock className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 -ml-0.5" />}
+            {activeTab === 'emissao' ? (
+               isUploading ? <Clock className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 -ml-0.5" />
+            ) : null}
           </button>
         </div>
       </div>
 
+      {activeTab === 'emissao' ? (
       <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 w-full flex-1">
         
         {/* PAINEL ESQUERDO: CLIENTE E HONORÁRIOS */}
@@ -1176,6 +1199,11 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
 
         </div>
       </div>
+      ) : (
+        <div className="flex-1 overflow-auto rounded-2xl shadow-sm border border-gray-100 bg-white">
+          <HistoricoNFs />
+        </div>
+      )}
 
       <ClientFormModal
         isOpen={isClientModalOpen}
