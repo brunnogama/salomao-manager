@@ -43,6 +43,7 @@ import {
 import { RHChartTooltip } from '../components/RHChartTooltip'
 import { RHChartDataLabel } from '../components/RHChartDataLabel'
 import { RHChartPieLabel } from '../components/RHChartPieLabel'
+import { CopyChartButton } from '../../controladoria/ui/CopyChartButton'
 
 export function RHTurnover() {
   const { colaboradores, loading, teams: masterTeams, partners: masterPartners } = useColaboradores()
@@ -415,15 +416,18 @@ export function RHTurnover() {
       {/* 3. Charts Row 1: Evolution & Vol/Invol */}
       <div id="export-turnover-evolucao" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Evolution Chart */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-2 flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-              <TrendingUp className="w-5 h-5" />
+        <div id="chart-turnover-evolucao" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-2 flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Evolução do Turnover ({filterYear === 'todos' ? new Date().getFullYear() : filterYear})</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Histórico Mensal de Rotatividade</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Evolução do Turnover ({filterYear === 'todos' ? new Date().getFullYear() : filterYear})</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Histórico Mensal de Rotatividade</p>
-            </div>
+            <CopyChartButton targetId="chart-turnover-evolucao" />
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -450,15 +454,18 @@ export function RHTurnover() {
         </div>
 
         {/* Voluntário vs Involuntário */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-orange-50 text-orange-600">
-              <PieChartIcon className="w-5 h-5" />
+        <div id="chart-turnover-tipo" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-orange-50 text-orange-600">
+                <PieChartIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Tipo de Desligamento</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Iniciativa da Rescisão</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Tipo de Desligamento</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Iniciativa da Rescisão</p>
-            </div>
+            <CopyChartButton targetId="chart-turnover-tipo" />
           </div>
           <div className="flex-grow min-h-[250px] relative flex flex-col justify-center">
             {filteredTerminations.length > 0 ? (
@@ -496,15 +503,18 @@ export function RHTurnover() {
       <div id="export-turnover-risco-cargos" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Tenure at Exit */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
-              <Activity className="w-5 h-5" />
+        <div id="chart-turnover-risco" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
+                <Activity className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Risco por Tempo de Casa</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Quando as pessoas saem?</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Risco por Tempo de Casa</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Quando as pessoas saem?</p>
-            </div>
+            <CopyChartButton targetId="chart-turnover-risco" />
           </div>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -522,15 +532,18 @@ export function RHTurnover() {
         </div>
 
         {/* Categoria/Cargo */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-2">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-green-50 text-green-600">
-              <BarChart2 className="w-5 h-5" />
+        <div id="chart-turnover-cargos" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-2">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-green-50 text-green-600">
+                <BarChart2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Principais Cargos/Equipes Afetados</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Desligamentos por Função</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Principais Cargos/Equipes Afetados</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Desligamentos por Função</p>
-            </div>
+            <CopyChartButton targetId="chart-turnover-cargos" />
           </div>
           <div className="h-[250px] w-full flex gap-4">
             {/* Roles BarChart */}
