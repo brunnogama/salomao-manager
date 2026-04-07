@@ -47,8 +47,21 @@ export function DraftContractModal({ isOpen, onClose, client, onSave }: DraftCon
         cnpj: client.cnpj,
         hon_number: honNumber,
         reference: `RASCUNHO - ${client.name}`,
-        status: 'rascunho',
-      };
+        status: 'draft',
+      } as any;
+
+      const valorFormatado = maskMoney((valor * 100).toFixed(0));
+      if (honorarioType === 'pro_labore') {
+        contractPayload.pro_labore = valorFormatado;
+      } else if (honorarioType === 'success_fee' || honorarioType === 'final_success_fee') {
+        contractPayload.final_success_fee = valorFormatado;
+      } else if (honorarioType === 'intermediate_fee') {
+        contractPayload.intermediate_fees = [valorFormatado];
+      } else if (honorarioType === 'fixed_monthly_fee') {
+        contractPayload.fixed_monthly_fee = valorFormatado;
+      } else if (honorarioType === 'other_fees') {
+        contractPayload.other_fees = valorFormatado;
+      }
 
       const { data: newContract, error: contractError } = await supabase
         .from('contracts')
@@ -62,7 +75,10 @@ export function DraftContractModal({ isOpen, onClose, client, onSave }: DraftCon
 
       // 2. Upload GED if exists
       if (file) {
-        const filePath = `contracts/${contractId}/${Date.now()}_${file.name}`;
+        const sanitizedName = file.name.replace(/[^a-z0-9.]/gi, '').replace(/\.{2,}/g, '.').toLowerCase();
+        const finalName = sanitizedName.length > 60 ? sanitizedName.substring(sanitizedName.length - 60) : sanitizedName;
+        const filePath = `${contractId}/${Date.now()}_${finalName}`;
+        
         const { error: uploadError } = await supabase.storage
           .from('ged-documentos')
           .upload(filePath, file);

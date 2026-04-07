@@ -905,7 +905,15 @@ export function Contracts() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filteredContracts.map(contract => (
-                    <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
+                    <tr 
+                      key={contract.id} 
+                      onClick={() => handleView(contract)} 
+                      className={`cursor-pointer group transition-all duration-200 ${
+                        contract.status === 'draft' 
+                          ? 'bg-amber-50/60 hover:bg-amber-100/80 border-b border-amber-100' 
+                          : 'hover:bg-blue-50/30 bg-white border-b border-gray-50'
+                      }`}
+                    >
                       <td className="p-4 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-amber-200 shadow-sm truncate whitespace-nowrap">
                           {contract.display_id ? contract.display_id.replace('CONT - ', '') : '-'}
