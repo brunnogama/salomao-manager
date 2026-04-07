@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Calendar, Building, FileDigit, Key, Search, Loader2, Copy, CheckCircle2 } from 'lucide-react';
+import { Calendar, Building, FileDigit, Key, Search, Loader2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface HistoricoNF {
@@ -33,6 +33,7 @@ export const HistoricoNFs: React.FC = () => {
           contract:contracts(client_name)
         `)
         .eq('status', 'nf_emitida')
+        .not('nf_access_key', 'is', null)
         .order('nf_issue_date', { ascending: false });
 
       if (error) throw error;
