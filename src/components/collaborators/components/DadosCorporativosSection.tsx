@@ -871,7 +871,8 @@ export function DadosCorporativosSection({
                         
                         setRefreshInterview(r => r + 1);
                         
-                        const url = `${window.location.origin}/desligamento/${tokenStr}`;
+                        const safeName = (formData.name || 'colaborador').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-");
+                        const url = `${window.location.origin}/desligamento/${safeName}/${tokenStr}`;
                         setGeneratedLink(url);
                         await navigator.clipboard.writeText(url);
                         window.open(url, '_blank');

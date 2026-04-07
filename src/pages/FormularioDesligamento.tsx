@@ -44,8 +44,8 @@ export default function FormularioDesligamento() {
                 // Calculate default tempo permanencia if hire date and termination date exist
                 let defaultTempo = '';
                 if (data.collaborator_hire_date && data.collaborator_termination_date) {
-                    const d1 = new Date(data.collaborator_hire_date);
-                    const d2 = new Date(data.collaborator_termination_date);
+                    const d1 = new Date(data.collaborator_hire_date + 'T12:00:00');
+                    const d2 = new Date(data.collaborator_termination_date + 'T12:00:00');
                     const months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
                     if (months <= 3) defaultTempo = "Até 3 meses";
                     else if (months <= 6) defaultTempo = "3 a 6 meses";
@@ -218,14 +218,14 @@ export default function FormularioDesligamento() {
                                 {interviewData?.collaborator_hire_date && interviewData?.collaborator_termination_date && (
                                     <div className="hidden sm:block">
                                         <p className="text-xs font-medium text-gray-400 mb-0.5">Admissão</p>
-                                        <p className="font-semibold text-gray-200">{new Date(interviewData.collaborator_hire_date).toLocaleDateString()}</p>
+                                        <p className="font-semibold text-gray-200">{new Date(interviewData.collaborator_hire_date + 'T12:00:00').toLocaleDateString()}</p>
                                     </div>
                                 )}
 
                                 {interviewData?.collaborator_termination_date && (
                                     <div>
                                         <p className="text-xs font-medium text-gray-400 mb-0.5">Data de Saída</p>
-                                        <p className="font-semibold text-gray-200">{new Date(interviewData.collaborator_termination_date).toLocaleDateString()}</p>
+                                        <p className="font-semibold text-gray-200">{new Date(interviewData.collaborator_termination_date + 'T12:00:00').toLocaleDateString()}</p>
                                     </div>
                                 )}
                             </div>
