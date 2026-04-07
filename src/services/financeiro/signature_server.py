@@ -158,8 +158,8 @@ def assinar_nota():
                     if not nf_number and chave_acesso:
                         import time
                         print(f"Número da NF pendente. Iniciando polling para a chave {chave_acesso}...")
-                        for attempt in range(8): # Tenta por até 24 segundos
-                            time.sleep(3)
+                        for attempt in range(4): # Tenta por até 8 segundos
+                            time.sleep(2)
                             try:
                                 poll_resp = requests.get(
                                     f"{ADN_API_URL}/{chave_acesso}",
