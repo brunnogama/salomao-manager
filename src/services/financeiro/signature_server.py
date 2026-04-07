@@ -219,6 +219,7 @@ def cancelar_nota():
         dados = request.json or {}
         chave_acesso = dados.get('chave_acesso')
         motivo = dados.get('motivo', '1') # 1 = Erro na Emissão
+        justificativa = dados.get('justificativa', '').strip()
         cidade = dados.get('cidade', 'Rio de Janeiro')
 
         password = os.getenv(f"CERT_PASSWORD_{cidade.upper().replace(' ', '_')}")
@@ -230,11 +231,13 @@ def cancelar_nota():
         if not os.path.exists(cert_path):
             return jsonify({"erro": "Certificado não encontrado."}), 400
             
+        x_motivo_xml = f"        <xMotivo>{justificativa[:255]}</xMotivo>\n" if justificativa else ""
+        
         xml_template = f'''<pedCancNfse xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">
     <infPedCanc Id="ID{chave_acesso}">
         <chNFSe>{chave_acesso}</chNFSe>
         <cMotivo>{motivo}</cMotivo>
-    </infPedCanc>
+{x_motivo_xml}    </infPedCanc>
 </pedCancNfse>'''
 
         from lxml import etree as LxmlET

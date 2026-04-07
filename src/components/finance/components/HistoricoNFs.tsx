@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Calendar, Building, FileDigit, Key, Search, Loader2, Copy, DollarSign, FileDown, RefreshCw, XCircle, AlertTriangle } from 'lucide-react';
+import { Calendar, Building, FileDigit, Key, Search, Loader2, Copy, DollarSign, FileDown, RefreshCw, XCircle, AlertTriangle, ChevronDown } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import XLSX from 'xlsx-js-style';
 import { toast } from 'sonner';
@@ -12,6 +12,7 @@ interface HistoricoNF {
   nf_access_key: string;
   nf_value?: number;
   net_value?: number;
+  status?: string;
   contract: any;
 }
 
@@ -23,6 +24,8 @@ export const HistoricoNFs: React.FC = () => {
   // Modals e Ações
   const [nfToCancel, setNfToCancel] = useState<HistoricoNF | null>(null);
   const [cancelMotivo, setCancelMotivo] = useState<string>('1');
+  const [isCancelMotivoDropdownOpen, setIsCancelMotivoDropdownOpen] = useState(false);
+  const [cancelJustificativa, setCancelJustificativa] = useState<string>('');
   const [nfToSubstitute, setNfToSubstitute] = useState<HistoricoNF | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
 
@@ -37,12 +40,13 @@ export const HistoricoNFs: React.FC = () => {
         .from('financial_installments')
         .select(`
           id,
+          status,
           nf_issue_date,
           nf_number,
           nf_access_key, nf_value, net_value,
           contract:contracts(client_name)
         `)
-        .eq('status', 'nf_emitida')
+        .in('status', ['nf_emitida', 'cancelada', 'substituida'])
         .not('nf_access_key', 'is', null)
         .order('nf_issue_date', { ascending: false });
 
@@ -81,7 +85,8 @@ export const HistoricoNFs: React.FC = () => {
         body: JSON.stringify({
           nf_number: nfToCancel.nf_number,
           chave_acesso: nfToCancel.nf_access_key,
-          motivo: cancelMotivo
+          motivo: cancelMotivo,
+          justificativa: cancelJustificativa
         })
       });
 
@@ -97,7 +102,7 @@ export const HistoricoNFs: React.FC = () => {
       if (error) throw error;
       
       toast.success('Nota fiscal cancelada com sucesso!');
-      setHistorico(prev => prev.filter(n => n.id !== nfToCancel.id));
+      setHistorico(prev => prev.map(n => n.id === nfToCancel.id ? { ...n, status: 'cancelada' } : n));
     } catch (err) {
       console.error('Erro de API no Cancelamento:', err);
       toast.error('Ocorreu um erro ao cancelar. O endpoint ou serviço está indisponível.');
@@ -105,6 +110,8 @@ export const HistoricoNFs: React.FC = () => {
       setIsProcessingAction(false);
       setNfToCancel(null);
       setCancelMotivo('1');
+      setCancelJustificativa('');
+      setIsCancelMotivoDropdownOpen(false);
     }
   };
 
@@ -138,8 +145,8 @@ export const HistoricoNFs: React.FC = () => {
 
       if (error) throw error;
       
-      toast.success('A NF original foi cancelada! A parcela retornou para status pendente e já pode ser reenviada.');
-      setHistorico(prev => prev.filter(n => n.id !== nfToSubstitute.id));
+      toast.success('A NF original foi substituída e uma nova parcela retornou para status pendente para reenvio.');
+      setHistorico(prev => prev.map(n => n.id === nfToSubstitute.id ? { ...n, status: 'substituida' } : n));
     } catch (err) {
       console.error('Erro de API na Substituição:', err);
       toast.error('Erro ao substituir NF. O endpoint ou serviço está indisponível.');
@@ -310,20 +317,28 @@ export const HistoricoNFs: React.FC = () => {
                        )}
                     </div>
                     <div className="p-4 flex items-center justify-end gap-2">
-                       <button
-                         onClick={() => setNfToSubstitute(nf)}
-                         className="p-1.5 bg-white border border-amber-200 text-amber-600 rounded-lg hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 transition-all shadow-sm group/btn tooltip relative"
-                         title="Substituir Nota"
-                       >
-                         <RefreshCw className="w-4 h-4" />
-                       </button>
-                       <button
-                         onClick={() => setNfToCancel(nf)}
-                         className="p-1.5 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all shadow-sm group/btn tooltip relative"
-                         title="Cancelar Nota"
-                       >
-                         <XCircle className="w-4 h-4" />
-                       </button>
+                       {nf.status === 'nf_emitida' ? (
+                        <>
+                          <button
+                            onClick={() => setNfToSubstitute(nf)}
+                            className="p-1.5 bg-white border border-amber-200 text-amber-600 rounded-lg hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 transition-all shadow-sm group/btn tooltip relative"
+                            title="Substituir Nota"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setNfToCancel(nf)}
+                            className="p-1.5 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all shadow-sm group/btn tooltip relative"
+                            title="Cancelar Nota"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        </>
+                       ) : (
+                         <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${nf.status === 'cancelada' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                           {nf.status === 'cancelada' ? 'Cancelada' : 'Substituída'}
+                         </span>
+                       )}
                     </div>
                   </div>
                 ))}
@@ -344,25 +359,66 @@ export const HistoricoNFs: React.FC = () => {
               </div>
               <h2 className="text-center text-xl font-black text-gray-900 mb-2 tracking-tight">Cancelar NF-e?</h2>
               <p className="text-center text-sm text-gray-500 mb-6 font-medium px-4 leading-relaxed">
-                Você confirmou o cancelamento no sistema da prefeitura para a NF <strong className="text-red-600 font-bold">{nfToCancel.nf_number}</strong>? Ela deixará de aparecer neste histórico e esta ação é irreversível.
+                Você confirmou o cancelamento no sistema da prefeitura para a NF <strong className="text-red-600 font-bold">{nfToCancel.nf_number}</strong>? Ela será marcada como <strong className="text-red-600">Cancelada</strong> e esta ação é irreversível.
               </p>
               
               <div className="mb-6 px-4">
                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 block">Motivo do cancelamento<span className="text-red-500 ml-1">*</span></label>
-                <select 
-                    value={cancelMotivo}
-                    onChange={(e) => setCancelMotivo(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 text-[#1e3a8a] text-sm font-bold rounded-xl p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-50 transition-all cursor-pointer hover:border-red-300"
+                
+                <div className="relative">
+                  <div
+                    onClick={() => setIsCancelMotivoDropdownOpen(!isCancelMotivoDropdownOpen)}
+                    className={`w-full bg-gray-50 border ${isCancelMotivoDropdownOpen ? 'border-red-500 ring-2 ring-red-50' : 'border-gray-200'} rounded-xl p-3 flex justify-between items-center cursor-pointer hover:border-red-300 transition-all`}
                   >
-                   <option value="1">Erro na emissão</option>
-                   <option value="2">Serviço não prestado</option>
-                   <option value="9">Outros</option>
-                </select>
+                    <span className="text-sm font-bold text-[#1e3a8a]">
+                      {cancelMotivo === '1' ? 'Erro na emissão' : (cancelMotivo === '2' ? 'Serviço não prestado' : 'Outros')}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-[#1e3a8a]/50 transition-transform ${isCancelMotivoDropdownOpen ? 'rotate-180 text-red-500' : 'group-hover:text-red-300'}`} />
+                  </div>
+
+                  {isCancelMotivoDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                      <div className="max-h-[200px] overflow-y-auto p-2">
+                        {[
+                          { value: '1', label: 'Erro na emissão' },
+                          { value: '2', label: 'Serviço não prestado' },
+                          { value: '9', label: 'Outros' }
+                        ].map((m) => (
+                          <div
+                            key={m.value}
+                            onClick={() => {
+                              setCancelMotivo(m.value);
+                              setIsCancelMotivoDropdownOpen(false);
+                              if (m.value !== '9') setCancelJustificativa('');
+                            }}
+                            className={`p-3 rounded-lg cursor-pointer transition-all flex items-center justify-between text-sm 
+                              ${cancelMotivo === m.value ? 'bg-red-50 text-red-700 font-bold' : 'text-gray-600 font-semibold hover:bg-gray-50 hover:text-[#1e3a8a]'}`}
+                          >
+                            {m.label}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {cancelMotivo === '9' && (
+                  <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 block">Justificativa<span className="text-red-500 ml-1">*</span></label>
+                    <textarea 
+                      rows={3}
+                      value={cancelJustificativa}
+                      onChange={e => setCancelJustificativa(e.target.value)}
+                      placeholder="Descreva brevemente o motivo do cancelamento..."
+                      className="w-full bg-gray-50 border border-gray-200 text-[#1e3a8a] text-sm rounded-xl p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-50 transition-all font-medium resize-none"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => { setNfToCancel(null); setCancelMotivo('1'); }}
+                  onClick={() => { setNfToCancel(null); setCancelMotivo('1'); setIsCancelMotivoDropdownOpen(false); setCancelJustificativa(''); }}
                   disabled={isProcessingAction}
                   className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-bold transition-all shadow-sm"
                 >
