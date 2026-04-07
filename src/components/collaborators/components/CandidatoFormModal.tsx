@@ -848,13 +848,26 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                         candidato_id: finalCandidatoId
                     };
 
-                    let query = supabase.from('collaborators').select('id');
-                    if (formData.email) {
-                        query = query.or(`email.eq.${formData.email},name.ilike.${formData.nome || formData.name}`);
-                    } else {
-                        query = query.ilike('name', formData.nome || formData.name);
+                    // Try to find if already linked
+                    let existingColab = null;
+                    if (finalCandidatoId) {
+                        const { data: linkedColab } = await supabase.from('collaborators').select('id, status').eq('candidato_id', finalCandidatoId).maybeSingle();
+                        if (linkedColab) existingColab = linkedColab;
                     }
-                    const { data: existingColab } = await query.maybeSingle();
+
+                    // If not linked by ID, try email or name exact
+                    if (!existingColab) {
+                        let query = supabase.from('collaborators').select('id, status');
+                        if (formData.email) {
+                            query = query.eq('email', formData.email);
+                        } else {
+                            query = query.ilike('name', formData.nome || formData.name);
+                        }
+                        const { data: existingColabs } = await query;
+                        if (existingColabs && existingColabs.length === 1) {
+                            existingColab = existingColabs[0];
+                        }
+                    }
 
                     if (!existingColab) {
                         const newColab = {
@@ -878,14 +891,23 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave, initi
                             });
                         }
                     } else {
-                        const { error: updateColabErr } = await supabase.from('collaborators').update(commonFields).eq('id', existingColab.id);
+                        const updateFields: Record<string, any> = { ...commonFields };
+                        // Se o colaborador já existe e está ativo/inativo (ex: promoção interna, transferência),
+                        // NUNCA subscrever status, hire_date_etc para evitar deletar dados reais do Integrante.
+                        if (existingColab.status === 'active' || existingColab.status === 'inactive') {
+                            delete updateFields.status;
+                            delete updateFields.hire_date;
+                            // Somente atrela o candidato ao integrante
+                        }
+                        
+                        const { error: updateColabErr } = await supabase.from('collaborators').update(updateFields).eq('id', existingColab.id);
                         if (updateColabErr) console.error("Error updating existing colab", updateColabErr);
 
                         setSavedCandidatoData({
                             ...formData,
                             id: existingColab.id,
                             name: formData.nome || formData.name,
-                            ...commonFields,
+                            ...updateFields,
                             status_selecao: undefined,
                             motivo_reprovacao: undefined
                         });

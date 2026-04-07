@@ -411,14 +411,25 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                         .single();
 
                     if (candData) {
-                        let query = supabase.from('collaborators').select('id');
-                        if (candData.email) {
-                            query = query.or(`email.eq.${candData.email},name.ilike.${candData.nome}`);
-                        } else {
-                            query = query.ilike('name', candData.nome);
-                        }
+                        let existingColab = null;
+                        
+                        // Primeiro busca pelo ID já atrelado
+                        const { data: linkedColab } = await supabase.from('collaborators').select('id, status').eq('candidato_id', payload.candidato_aprovado_id).maybeSingle();
+                        if (linkedColab) existingColab = linkedColab;
 
-                        const { data: existingColab } = await query.maybeSingle();
+                        // Se não encontrar, tenta por email ou nome exato
+                        if (!existingColab) {
+                            let query = supabase.from('collaborators').select('id, status');
+                            if (candData.email) {
+                                query = query.eq('email', candData.email);
+                            } else {
+                                query = query.ilike('name', candData.nome);
+                            }
+                            const { data: existingColabs } = await query;
+                            if (existingColabs && existingColabs.length === 1) {
+                                existingColab = existingColabs[0];
+                            }
+                        }
 
                         const commonFields = {
                             status: 'Pré-Cadastro',
@@ -442,9 +453,16 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess, viewMode, in
                             const { error: colabErr } = await supabase.from('collaborators').insert([newColab]);
                             if (colabErr) console.error("Error inserting auto colab", colabErr);
                         } else {
+                            const updateFields: Record<string, any> = { ...commonFields };
+                            // Evitar subscrever dados de Integrantes Ativos/Inativos (promoção interna)
+                            if (existingColab.status === 'active' || existingColab.status === 'inactive') {
+                                delete updateFields.status;
+                                delete updateFields.hire_date;
+                            }
+                            
                             const { error: updateColabErr } = await supabase
                                 .from('collaborators')
-                                .update(commonFields)
+                                .update(updateFields)
                                 .eq('id', existingColab.id);
                             if (updateColabErr) console.error("Error updating existing colab with candidate data", updateColabErr);
                         }
