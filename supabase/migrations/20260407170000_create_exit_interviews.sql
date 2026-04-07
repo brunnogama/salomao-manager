@@ -253,8 +253,8 @@ BEGIN
         'status', v_interview.status,
         'answers', v_interview.answers,
         'collaborator_name', v_collaborator.name,
-        'collaborator_position', v_collaborator.cargo_atual,
-        'collaborator_area', v_collaborator.atuacao_id,
+        'collaborator_position', v_collaborator.role,
+        'collaborator_area', v_collaborator.area,
         'template_schema', v_template.schema,
         'template_name', v_template.name
     );
