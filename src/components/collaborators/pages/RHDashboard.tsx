@@ -2,6 +2,9 @@ import {
   LayoutDashboard,
   Maximize2,
   Minimize2,
+  Download,
+  FileDown,
+  Loader2
 } from 'lucide-react'
 import { usePresentation } from '../../../contexts/PresentationContext'
 import { RHEvolucaoPessoal } from './RHEvolucaoPessoal'
@@ -15,11 +18,90 @@ import { toast } from 'sonner'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { useState } from 'react'
+import XLSX from 'xlsx-js-style'
+import { useColaboradores } from '../hooks/useColaboradores'
+import { getSegment, isActiveAtDate, calculateTenure } from '../utils/rhChartUtils'
 
 export function RHDashboard() {
   const { isPresentationMode, togglePresentationMode } = usePresentation()
   const [showExportModal, setShowExportModal] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
+  
+  const { colaboradores } = useColaboradores()
+
+  const handleExportXLSX = () => {
+    if (!colaboradores || colaboradores.length === 0) {
+      toast.error('Nenhum dado carregado para exportar.');
+      return;
+    }
+
+    try {
+      const wb = XLSX.utils.book_new();
+      const applyHeaderStyle = (ws: any) => {
+        const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+        for (let col = range.s.c; col <= range.e.c; col++) {
+          const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+          if (ws[cellRef]) ws[cellRef].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0A192F" } }, alignment: { horizontal: "center", vertical: "center" } };
+        }
+      }
+
+      // 1. Base Completa
+      const rawData = colaboradores.map(c => ({
+        "Nome": c.name,
+        "Segmento": getSegment(c),
+        "Área": c.area,
+        "Local": c.locations?.name || String(c.local),
+        "Cargo": c.roles?.name || String(c.role),
+        "Status": isActiveAtDate(c, new Date()) ? "Ativo" : "Inativo",
+        "Data de Contratação": c.hire_date ? new Date(c.hire_date + 'T12:00:00').toLocaleDateString('pt-BR') : '',
+        "Data de Desligamento": c.termination_date ? new Date(c.termination_date + 'T12:00:00').toLocaleDateString('pt-BR') : '',
+        "Tempo de Casa (Anos)": c.hire_date ? calculateTenure(c.hire_date, new Date(), c.termination_date).toFixed(1).replace('.', ',') : ''
+      }));
+      const wsRaw = XLSX.utils.json_to_sheet(rawData);
+      applyHeaderStyle(wsRaw);
+      wsRaw['!cols'] = [{ wch: 40 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, wsRaw, "Base de Colaboradores");
+
+      // 2. Headcount Resumo
+      const ativos = colaboradores.filter(c => isActiveAtDate(c, new Date()));
+      const admCount = ativos.filter(c => getSegment(c) === 'Administrativo').length;
+      const jurCount = ativos.filter(c => getSegment(c) === 'Jurídico').length;
+      const tercCount = ativos.filter(c => getSegment(c) === 'Terceirizada').length;
+
+      const wsHeadcount = XLSX.utils.json_to_sheet([
+         { "Métrica": "Total de Ativos", "Quantidade": ativos.length },
+         { "Métrica": "Ativos Administrativo", "Quantidade": admCount },
+         { "Métrica": "Ativos Jurídico", "Quantidade": jurCount },
+         { "Métrica": "Ativos Terceirizados", "Quantidade": tercCount },
+      ]);
+      applyHeaderStyle(wsHeadcount);
+      wsHeadcount['!cols'] = [{ wch: 30 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(wb, wsHeadcount, "Headcount Atual");
+
+      // 3. Cargos
+      const cargoCount = ativos.reduce((acc, c) => {
+        const cargo = c.roles?.name || String(c.role) || 'Não definido';
+        acc[cargo] = (acc[cargo] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const cargoData = Object.entries(cargoCount).map(([cargo, qtd]) => ({
+         "Cargo": cargo,
+         "Quantidade": qtd
+      })).sort((a,b) => b.Quantidade - a.Quantidade);
+
+      const wsCargos = XLSX.utils.json_to_sheet(cargoData);
+      applyHeaderStyle(wsCargos);
+      wsCargos['!cols'] = [{ wch: 40 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(wb, wsCargos, "Distribuição por Cargo");
+
+      XLSX.writeFile(wb, `Dados_Dashboard_RH_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success('Excel com dados dos gráficos gerado!');
+    } catch(err) {
+      console.error(err);
+      toast.error('Erro ao gerar o arquivo XLSX.');
+    }
+  }
 
   const handleExportPDF = async (selectedIds: string[]) => {
     setIsExportingPDF(true);
@@ -135,22 +217,6 @@ export function RHDashboard() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Botão de Exportar PDF */}
-          <button
-            onClick={() => setShowExportModal(true)}
-            disabled={isExportingPDF}
-            title="Exportar Dashboard em PDF (Relatório Executivo)"
-            className="flex justify-center items-center h-10 px-4 rounded-xl transition-all active:scale-95 bg-red-600 text-white hover:bg-red-700 border-none disabled:opacity-50 disabled:cursor-not-allowed gap-2"
-            style={{ boxShadow: '0 4px 14px rgba(220, 38, 38, 0.4)' }}
-          >
-            {isExportingPDF ? (
-              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0"></span>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            )}
-            <span className="text-sm font-bold hidden sm:block">Exportar PDF</span>
-          </button>
-
           {/* Botão de Apresentação */}
           <button
             onClick={togglePresentationMode}
@@ -161,9 +227,32 @@ export function RHDashboard() {
               }`}
           >
             {isPresentationMode ? (
-              <Minimize2 className="w-4 h-4" />
+              <Minimize2 className="w-5 h-5" />
             ) : (
-              <Maximize2 className="w-4 h-4" />
+              <Maximize2 className="w-5 h-5" />
+            )}
+          </button>
+
+          {/* Botão de Exportar XLSX */}
+          <button
+            onClick={handleExportXLSX}
+            title="Exportar Planilha Excel com Dados Brutos"
+            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-[#00b87c] text-white hover:bg-[#00a36e] shrink-0"
+          >
+            <FileDown className="w-5 h-5" />
+          </button>
+
+          {/* Botão de Exportar PDF */}
+          <button
+            onClick={() => setShowExportModal(true)}
+            disabled={isExportingPDF}
+            title="Exportar Dashboard em PDF (Alta Resolução)"
+            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-[#ff4d4f] text-white hover:bg-[#ff3030] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isExportingPDF ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Download className="w-5 h-5" />
             )}
           </button>
         </div>

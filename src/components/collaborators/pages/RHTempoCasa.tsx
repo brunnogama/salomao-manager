@@ -42,6 +42,7 @@ import {
 import { RHChartTooltip } from '../components/RHChartTooltip'
 import { RHChartDataLabel } from '../components/RHChartDataLabel'
 import { RHChartPieLabel } from '../components/RHChartPieLabel'
+import { CopyChartButton } from '../../controladoria/ui/CopyChartButton'
 
 // --- Main Component ---
 
@@ -465,14 +466,17 @@ export function RHTempoCasa() {
 
       {/* 3. Charts Row 1: Evolution */}
       <div id="export-evolucao-estabilidade" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-green-50 text-green-600">
-            <TrendingUp className="w-5 h-5" />
+        <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-green-50 text-green-600">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Evolução da Estabilidade Média (Anos)</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Histórico de Retenção</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-black text-gray-800 tracking-tight">Evolução da Estabilidade Média (Anos)</h3>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Histórico de Retenção</p>
-          </div>
+          <CopyChartButton targetId="export-evolucao-estabilidade" />
         </div>
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -535,14 +539,17 @@ export function RHTempoCasa() {
 
         {/* Tenure by Area */}
         <div id="export-tempo-area" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-              <Briefcase className="w-5 h-5" />
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Tempo Médio por Área</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Comparativo Setorial</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Tempo Médio por Área</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Comparativo Setorial</p>
-            </div>
+            <CopyChartButton targetId="export-tempo-area" />
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -573,14 +580,17 @@ export function RHTempoCasa() {
 
         {/* Experience Concentration */}
         <div id="export-concentracao-experiencia" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
-              <Scale className="w-5 h-5" />
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
+                <Scale className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Concentração Jurídico por Experiência</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Distribuição de Senioridade</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Concentração Jurídico por Experiência</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Distribuição de Senioridade</p>
-            </div>
+            <CopyChartButton targetId="export-concentracao-experiencia" />
           </div>
           <div className="flex flex-col md:flex-row items-center justify-around h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -611,14 +621,17 @@ export function RHTempoCasa() {
 
       {/* 5. Tenure by Leader */}
       <div id="export-tempo-lider" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-        <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
-            <Users className="w-5 h-5" />
+        <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Tempo Médio por Líder</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Liderança de Equipes</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-black text-gray-800 tracking-tight">Tempo Médio por Líder</h3>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Liderança de Equipes</p>
-          </div>
+          <CopyChartButton targetId="export-tempo-lider" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
           {leaderJuridicoSocios.length > 0 && (

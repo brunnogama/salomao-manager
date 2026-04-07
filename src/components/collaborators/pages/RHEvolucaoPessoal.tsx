@@ -33,6 +33,7 @@ import {
   Segment,
   getJuridicoRoleWeight
 } from '../utils/rhChartUtils'
+import { CopyChartButton } from '../../controladoria/ui/CopyChartButton'
 
 const formatCompact = (val: number | undefined | null) => {
   if (val === undefined || val === null || isNaN(val)) return '0'
@@ -627,6 +628,7 @@ export function RHEvolucaoPessoal() {
               </p>
             </div>
           </div>
+          <CopyChartButton targetId="export-evolucao-acumulada" />
         </div>
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -664,15 +666,18 @@ export function RHEvolucaoPessoal() {
       {/* Current Role Distribution (Fotografia Atual) */}
       <div id="export-distribuicao-cargo" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 mb-6">
         {/* Admin Distribution */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#ea580c]/10 text-[#ea580c]">
-              <Briefcase className="w-5 h-5" />
+        <div id="chart-evolucao-dist-adm" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-[#ea580c]/10 text-[#ea580c]">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Cargo (Adm)</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fotografia Atual dos Ativos</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Cargo (Adm)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fotografia Atual dos Ativos</p>
-            </div>
+            <CopyChartButton targetId="chart-evolucao-dist-adm" />
           </div>
           <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
             <div className="w-full" style={{ height: Math.max(300, roleDistributionAdmin.length * 35) }}>
@@ -716,15 +721,18 @@ export function RHEvolucaoPessoal() {
         </div>
 
         {/* Juridico Distribution */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
-              <Scale className="w-5 h-5" />
+        <div id="chart-evolucao-dist-jur" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
+                <Scale className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Cargo (Jurídico)</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fotografia Atual dos Ativos</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Cargo (Jurídico)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fotografia Atual dos Ativos</p>
-            </div>
+            <CopyChartButton targetId="chart-evolucao-dist-jur" />
           </div>
           <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
             <div className="w-full" style={{ height: Math.max(300, roleDistributionJuridico.length * 35) }}>
@@ -770,15 +778,19 @@ export function RHEvolucaoPessoal() {
 
       {/* Administrative Hiring Ranking */}
       <div id="export-ranking-contratacoes" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#ea580c]/10 text-[#ea580c]">
-              <Briefcase className="w-5 h-5" />
+        {/* Admin Hiring Ranking */}
+        <div id="chart-evolucao-contr-adm" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-[#ea580c]/10 text-[#ea580c]">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Adm)</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Adm)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
-            </div>
+            <CopyChartButton targetId="chart-evolucao-contr-adm" />
           </div>
           <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
             <div className="w-full" style={{ height: Math.max(300, hiringAdminRanking.length * 35) }}>
@@ -822,15 +834,18 @@ export function RHEvolucaoPessoal() {
         </div>
 
         {/* Legal Hiring Ranking */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
-              <Scale className="w-5 h-5" />
+        <div id="chart-evolucao-contr-jur" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
+                <Scale className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Jur)</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Jur)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
-            </div>
+            <CopyChartButton targetId="chart-evolucao-contr-jur" />
           </div>
           <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
             <div className="w-full" style={{ height: Math.max(300, hiringLegalRanking.length * 35) }}>
@@ -874,15 +889,18 @@ export function RHEvolucaoPessoal() {
         </div>
 
         {/* Terceirizada Hiring Ranking */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#0d9488]/10 text-[#0d9488]">
-              <Users className="w-5 h-5" />
+        <div id="chart-evolucao-contr-terc" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-[#0d9488]/10 text-[#0d9488]">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Terc)</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Terc)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
-            </div>
+            <CopyChartButton targetId="chart-evolucao-contr-terc" />
           </div>
           <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
             <div className="w-full" style={{ height: Math.max(300, hiringTerceirizadaRanking.length * 35) }}>
@@ -932,9 +950,12 @@ export function RHEvolucaoPessoal() {
 
         {/* Chart 3: Hiring Flow (Historical) */}
         <div id="export-fluxo-contratacoes" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
-          <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-            <UserPlus className="w-4 h-4 text-[#ea580c]" />
-            <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Contratações (Anual)</h3>
+          <div className="mb-4 pb-2 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4 text-[#ea580c]" />
+              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Contratações (Anual)</h3>
+            </div>
+            <CopyChartButton targetId="export-fluxo-contratacoes" />
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -960,9 +981,12 @@ export function RHEvolucaoPessoal() {
 
         {/* Chart 4: Turnover Flow (Historical) */}
         <div id="export-fluxo-desligamentos" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
-          <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-            <UserMinus className="w-4 h-4 text-[#1e3a8a]" />
-            <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Desligamentos (Anual)</h3>
+          <div className="mb-4 pb-2 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <UserMinus className="w-4 h-4 text-[#1e3a8a]" />
+              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Desligamentos (Anual)</h3>
+            </div>
+            <CopyChartButton targetId="export-fluxo-desligamentos" />
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">

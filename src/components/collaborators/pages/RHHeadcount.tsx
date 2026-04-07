@@ -37,7 +37,7 @@ import {
   normalizeString
 } from '../utils/rhChartUtils'
 import { RHChartTooltip } from '../components/RHChartTooltip'
-
+import { CopyChartButton } from '../../controladoria/ui/CopyChartButton'
 
 // --- Main Component ---
 
@@ -523,15 +523,18 @@ export function RHHeadcount() {
       <div id="export-headcount-mapa" className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* Local & Area (Stacked Bar) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
-              <MapIcon className="w-5 h-5" />
+        <div id="chart-headcount-local-area" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
+                <MapIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Local e Área</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Geolocalização do Time</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Local e Área</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Geolocalização do Time</p>
-            </div>
+            <CopyChartButton targetId="chart-headcount-local-area" />
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -554,15 +557,18 @@ export function RHHeadcount() {
         </div>
 
         {/* Advogados x Estagiários por Local */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-              <Scale className="w-5 h-5" />
+        <div id="chart-headcount-adv-est" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                <Scale className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Advogados x Estagiários por Local</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Composição Jurídica</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Advogados x Estagiários por Local</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Composição Jurídica</p>
-            </div>
+            <CopyChartButton targetId="chart-headcount-adv-est" />
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -588,14 +594,17 @@ export function RHHeadcount() {
 
       {/* Collaborators per Team Leader */}
       <div id="export-headcount-lideres" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-        <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
-            <Users className="w-5 h-5" />
+        <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Integrantes por Líder</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lideranças</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-black text-gray-800 tracking-tight">Integrantes por Líder</h3>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lideranças</p>
-          </div>
+          <CopyChartButton targetId="export-headcount-lideres" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
           {leaderJuridicoSocios.length > 0 && (
@@ -657,15 +666,18 @@ export function RHHeadcount() {
       <div id="export-headcount-demografico" className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
         {/* Gender (Donut) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-1">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-pink-50 text-pink-600">
-              <PieChartIcon className="w-5 h-5" />
+        <div id="chart-headcount-gender" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-1">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-pink-50 text-pink-600">
+                <PieChartIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Gênero</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Diversidade</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Gênero</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Diversidade</p>
-            </div>
+            <CopyChartButton targetId="chart-headcount-gender" />
           </div>
           <div className="flex-1 flex items-center justify-center min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -748,15 +760,18 @@ export function RHHeadcount() {
 
 
         {/* Age Distribution (Legal) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-2">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-              <TrendingUp size={20} />
+        <div id="chart-headcount-age-jur" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-2">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                <TrendingUp size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Faixa Etária (Jurídico)</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Distribuição por Gênero</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Faixa Etária (Jurídico)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Distribuição por Gênero</p>
-            </div>
+            <CopyChartButton targetId="chart-headcount-age-jur" />
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -804,15 +819,18 @@ export function RHHeadcount() {
         </div>
 
         {/* Age Distribution (Administrative) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-2">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-orange-50 text-orange-600">
-              <TrendingUp size={20} />
+        <div id="chart-headcount-age-adm" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-2">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-orange-50 text-orange-600">
+                <TrendingUp size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Faixa Etária (Administrativo)</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Distribuição por Gênero</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Faixa Etária (Administrativo)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Distribuição por Gênero</p>
-            </div>
+            <CopyChartButton targetId="chart-headcount-age-adm" />
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -866,15 +884,18 @@ export function RHHeadcount() {
 
 
         {/* Legal Levels */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
-              <Scale className="w-5 h-5" />
+        <div id="chart-headcount-legal-levels" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
+                <Scale className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Nível (Jurídico)</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Senioridade da Equipe</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Nível (Jurídico)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Senioridade da Equipe</p>
-            </div>
+            <CopyChartButton targetId="chart-headcount-legal-levels" />
           </div>
           <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
