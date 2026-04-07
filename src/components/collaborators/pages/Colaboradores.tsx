@@ -1697,9 +1697,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
         const colab = colaboradores.find(c => c.id === id);
         if (colab) {
+          const displayId = colab.matricula_interna ? colab.matricula_interna.replace(/\s+/g, '') : 'INT-0000';
+          const safeSlug = displayId.toLowerCase();
           newLinks.push({
             name: colab.name,
-            url: `${window.location.origin}/atualizacao-cadastral/${token}`
+            url: `${window.location.origin}/atualizacao-cadastral/${safeSlug}/${token}`
           });
         }
       }

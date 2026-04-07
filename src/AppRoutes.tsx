@@ -234,6 +234,7 @@ export function AppRoutes() {
 
             {/* Public Routes accessible by everyone (including logged in users) */}
             <Route path="/atualizacao-cadastral/:token" element={<AtualizacaoCadastral />} />
+            <Route path="/atualizacao-cadastral/:slug/:token" element={<AtualizacaoCadastral />} />
             <Route path="/desligamento/:token" element={<FormularioDesligamento />} />
             <Route path="/desligamento/:slug/:token" element={<FormularioDesligamento />} />
             <Route path="/solicitacao-ferias/:token" element={<SolicitacaoFerias />} />
