@@ -150,7 +150,8 @@ def assinar_nota():
 
                 return jsonify({
                     "status": "sucesso",
-                    "xml": xml_string,
+                    "xml_enviado": xml_string,
+                    "xml": response_xml_str,
                     "chave_acesso": chave_acesso,
                     "pdf_url": f"https://www.nfse.gov.br/consultapublica?chave={chave_acesso}"
                 })
