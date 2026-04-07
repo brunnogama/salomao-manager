@@ -50,6 +50,9 @@ const EmissaoNF = () => {
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
 
+  const [isCategoriaDropdownOpen, setIsCategoriaDropdownOpen] = useState(false);
+  const categoriaDropdownRef = useRef<HTMLDivElement>(null);
+
   const [isUploading, setIsUploading] = useState(false);
 
   // Novos estados para Cliente e Honorários
@@ -268,6 +271,9 @@ const EmissaoNF = () => {
       }
       if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
         setIsCityDropdownOpen(false);
+      }
+      if (categoriaDropdownRef.current && !categoriaDropdownRef.current.contains(event.target as Node)) {
+        setIsCategoriaDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -702,26 +708,60 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           </div>
 
           {/* DETALHAMENTO TRIBUTÁRIO E GROSS UP */}
-          <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-xl border border-gray-100 shrink-0 relative z-30 flex flex-col gap-4">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-xl border border-gray-100 shrink-0 relative z-40 flex flex-col gap-4">
              <h2 className="font-black text-lg flex items-center gap-2 text-[#0a192f] uppercase tracking-wide text-sm mb-1">
                 <Coins className="w-5 h-5 text-[#1e3a8a]" /> Tributação e Acréscimos
              </h2>
 
             {/* Categoria do Cliente */}
-            <div>
+            <div className="relative z-[42]" ref={categoriaDropdownRef}>
               <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 block">Categoria do Cliente</label>
-              <select
-                value={tipoCliente}
-                onChange={(e) => handleChangeTipoCliente(e.target.value as TipoClienteType)}
-                className="w-full bg-gray-50 border border-gray-200 text-[#1e3a8a] text-sm font-bold rounded-xl p-3 outline-none focus:border-[#1e3a8a] focus:ring-2 focus:ring-blue-50 transition-all cursor-pointer hover:border-[#1e3a8a]/50"
+              
+              <div
+                onClick={() => setIsCategoriaDropdownOpen(!isCategoriaDropdownOpen)}
+                className={`w-full bg-gray-50 border ${isCategoriaDropdownOpen ? 'border-[#1e3a8a] ring-2 ring-blue-100' : 'border-gray-200'} rounded-xl p-3 flex justify-between items-center cursor-pointer hover:border-[#1e3a8a] transition-all`}
               >
-                <option value="PJ">PJ (Pessoa Jurídica)</option>
-                <option value="PF">PF (Pessoa Física)</option>
-                <option value="Condominio">Condomínio</option>
-                <option value="Exterior">Exterior</option>
-                <option value="Fundos">Fundos</option>
-                <option value="Outros">Outros</option>
-              </select>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-[#1e3a8a]">
+                    {[
+                      { value: 'PJ', label: 'PJ (Pessoa Jurídica)' },
+                      { value: 'PF', label: 'PF (Pessoa Física)' },
+                      { value: 'Condominio', label: 'Condomínio' },
+                      { value: 'Exterior', label: 'Exterior' },
+                      { value: 'Fundos', label: 'Fundos' },
+                      { value: 'Outros', label: 'Outros' }
+                    ].find(o => o.value === tipoCliente)?.label || tipoCliente}
+                  </span>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-[#1e3a8a]/50 transition-transform ${isCategoriaDropdownOpen ? 'rotate-180 text-[#1e3a8a]' : 'group-hover:text-[#1e3a8a]'}`} />
+              </div>
+
+              {isCategoriaDropdownOpen && (
+                <div className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                  <div className="max-h-[250px] overflow-y-auto p-2">
+                    {[
+                      { value: 'PJ', label: 'PJ (Pessoa Jurídica)' },
+                      { value: 'PF', label: 'PF (Pessoa Física)' },
+                      { value: 'Condominio', label: 'Condomínio' },
+                      { value: 'Exterior', label: 'Exterior' },
+                      { value: 'Fundos', label: 'Fundos' },
+                      { value: 'Outros', label: 'Outros' }
+                    ].map((categoria) => (
+                      <div
+                        key={categoria.value}
+                        onClick={() => {
+                          handleChangeTipoCliente(categoria.value as any);
+                          setIsCategoriaDropdownOpen(false);
+                        }}
+                        className={`w-full text-left p-2.5 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors flex items-center justify-between ${tipoCliente === categoria.value ? 'bg-blue-50 text-[#1e3a8a]' : 'text-gray-800'}`}
+                      >
+                         <span className="text-sm font-bold">{categoria.label}</span>
+                         {tipoCliente === categoria.value && <CheckCircle2 className="w-4 h-4 text-[#1e3a8a]" />}
+                       </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Gross Up */}
