@@ -82,21 +82,22 @@ INSERT INTO form_templates (name, vinculo_type, schema) VALUES (
     "title": "Motivo do Desligamento",
     "questions": [
       {
-        "id": "motivo_principal",
+        "id": "q1",
         "type": "radio",
-        "label": "Marque a opção do motivo do seu desligamento (marque apenas 1 opção)",
+        "label": "1. Qual foi o principal fator que levou a sua saída do Salomão Advogados?",
         "options": [
-          "Redução de quadro de pessoal", "Clima organizacional", "Melhor proposta de trabalho", "Carga Horária",
-          "Problemas particulares", "Problemas de relacionamento com a liderança", "Término do contrato", "Não adaptação às atividades",
-          "Dedicação aos estudos", "Falta de perspectivas profissionais", "Desligado pelo líder", "Outro"
+          "Melhor proposta de trabalho", "Mudança na minha escolha profissional", "Dificuldades de relacionamento com o líder", "Intercâmbio/curso", "Não alinhamento com a cultura do escritório e equipe", "Outros"
         ]
       },
       {
-        "id": "motivo_melhor_proposta",
+        "id": "q2",
         "type": "checkbox",
-        "label": "Em caso de ''melhor proposta'' marque a opção que melhor define sua decisão",
+        "label": "Marque a opção que melhor define sua decisão",
+        "dependsOn": {
+          "questionId": "q1",
+          "value": "Melhor proposta de trabalho"
+        },
         "options": [
-          "Localização (facilidade de acesso)", "Desenvolvimento profissional", "Home Office 100%",
           "Melhor remuneração", "Melhores benefícios", "Bolsa auxílio extra de fim de ano", "Outros"
         ]
       }

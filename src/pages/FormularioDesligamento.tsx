@@ -156,13 +156,13 @@ export default function FormularioDesligamento() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#112240] to-[#0a192f] py-10 px-4 sm:px-6 lg:px-8 font-sans">
-            <div className="max-w-4xl mx-auto space-y-6 animate-in slide-in-from-bottom-6 duration-700">
+            <div className="max-w-6xl mx-auto space-y-6 animate-in slide-in-from-bottom-6 duration-700">
                 {/* Header Horizontal */}
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl">
-                    <div className="shrink-0 bg-white p-4 rounded-3xl shadow-xl">
-                        <img src="/logo-salomao.png" alt="Salomão" className="h-[55px] object-contain" />
+                    <div className="shrink-0 p-4">
+                        <img src="/logo-branca.png" alt="Salomão" className="h-[65px] object-contain" />
                     </div>
-                    <div className="text-center sm:text-left flex-1 min-w-0">
+                    <div className="text-center sm:text-left flex-1 min-w-0 md:pt-4">
                         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none mb-2">Entrevista de Desligamento</h1>
                         <p className="text-blue-200 text-sm sm:text-base opacity-80 mb-6">{interviewData?.template_name}</p>
                         
@@ -195,8 +195,16 @@ export default function FormularioDesligamento() {
                                 </div>
                                 
                                 <div className="space-y-8 ml-1 sm:ml-11">
-                                    {section.questions?.map((q: any) => (
-                                        <div key={q.id} className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100/50">
+                                    {section.questions?.map((q: any) => {
+                                        if (q.dependsOn) {
+                                            const dependentAnswer = answers[q.dependsOn.questionId];
+                                            if (dependentAnswer !== q.dependsOn.value) {
+                                                return null;
+                                            }
+                                        }
+
+                                        return (
+                                        <div key={q.id} className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100/50 animate-in fade-in zoom-in-95">
                                             <label className="text-sm font-bold text-[#0a192f] mb-4 block leading-relaxed">
                                                 {q.label}
                                             </label>
@@ -281,6 +289,7 @@ export default function FormularioDesligamento() {
                                                 <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden bg-white">
                                                     <div className="overflow-x-auto">
                                                         <table className="w-full text-sm text-left">
+
                                                             <thead className="bg-[#f8fafc] text-[10px] uppercase font-black text-gray-500 tracking-wider">
                                                                 <tr>
                                                                     <th className="px-4 py-4 min-w-[200px]">Item</th>
@@ -334,7 +343,8 @@ export default function FormularioDesligamento() {
                                                 </div>
                                             )}
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         ))}
