@@ -158,18 +158,21 @@ export default function FormularioDesligamento() {
         <div className="min-h-screen bg-gradient-to-br from-[#112240] to-[#0a192f] py-10 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-6xl mx-auto space-y-6 animate-in slide-in-from-bottom-6 duration-700">
                 {/* Header Horizontal */}
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl">
-                    <div className="shrink-0 p-4">
-                        <img src="/logo-branca.png" alt="Salomão" className="h-[65px] object-contain" />
+                <div className="flex flex-col items-center gap-4 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl text-center">
+                    <div className="shrink-0 p-2">
+                        <img src="/logo-branca.png" alt="Salomão" className="h-[65px] object-contain mx-auto" />
                     </div>
-                    <div className="text-center sm:text-left flex-1 min-w-0 md:pt-4">
-                        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none mb-2">Entrevista de Desligamento</h1>
-                        <p className="text-blue-200 text-sm sm:text-base opacity-80 mb-6">{interviewData?.template_name}</p>
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none mb-6">Entrevista de Desligamento - Estagiários</h1>
                         
                         <div className="inline-flex items-center gap-3 bg-white/10 px-5 py-3 rounded-2xl border border-white/5">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#d4af37] to-yellow-600 text-white flex items-center justify-center text-lg font-bold font-serif shadow-inner border border-white/20">
-                                {interviewData?.collaborator_name?.charAt(0).toUpperCase()}
-                            </div>
+                            {interviewData?.collaborator_foto_url ? (
+                                <img src={interviewData.collaborator_foto_url} alt="" className="w-10 h-10 rounded-full object-cover shadow-inner border border-white/20" />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#d4af37] to-yellow-600 text-white flex items-center justify-center text-lg font-bold font-serif shadow-inner border border-white/20">
+                                    {interviewData?.collaborator_name?.charAt(0).toUpperCase()}
+                                </div>
+                            )}
                             <div className="text-left">
                                 <p className="text-sm font-bold text-white truncate max-w-[200px] sm:max-w-xs">{interviewData?.collaborator_name}</p>
                                 <p className="text-[10px] uppercase font-black tracking-widest text-[#d4af37]">{interviewData?.collaborator_position}</p>

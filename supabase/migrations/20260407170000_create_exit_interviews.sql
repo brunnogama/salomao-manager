@@ -277,6 +277,7 @@ BEGIN
         'status', v_interview.status,
         'answers', v_interview.answers,
         'collaborator_name', v_collaborator.name,
+        'collaborator_foto_url', v_collaborator.foto_url,
         'collaborator_position', v_role.name,
         'collaborator_area', v_collaborator.area,
         'collaborator_termination_date', v_collaborator.termination_date,
