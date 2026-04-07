@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Calendar, Building, FileDigit, Key, Search, Loader2, Copy, DollarSign, FileDown } from 'lucide-react';
+import { Calendar, Building, FileDigit, Key, Search, Loader2, Copy, DollarSign, FileDown, RefreshCw, XCircle, AlertTriangle } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import XLSX from 'xlsx-js-style';
 import { toast } from 'sonner';
 
@@ -18,6 +19,11 @@ export const HistoricoNFs: React.FC = () => {
   const [historico, setHistorico] = useState<HistoricoNF[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modals e Ações
+  const [nfToCancel, setNfToCancel] = useState<HistoricoNF | null>(null);
+  const [nfToSubstitute, setNfToSubstitute] = useState<HistoricoNF | null>(null);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
 
   useEffect(() => {
     fetchHistorico();
@@ -62,6 +68,83 @@ export const HistoricoNFs: React.FC = () => {
     const key = (item.nf_access_key || '').toLowerCase();
     return clientName.includes(searchLower) || nfNumber.includes(searchLower) || key.includes(searchLower);
   });
+
+  const handleConfirmCancel = async () => {
+    if (!nfToCancel) return;
+    setIsProcessingAction(true);
+    try {
+      const apiUrl = import.meta.env.VITE_SIGNATURE_API || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/cancelar-nota`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nf_number: nfToCancel.nf_number,
+          chave_acesso: nfToCancel.nf_access_key
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Serviço de cancelamento indisponível ou erro na prefeitura');
+      }
+
+      const { error } = await supabase
+        .from('financial_installments')
+        .update({ status: 'cancelada' })
+        .eq('id', nfToCancel.id);
+
+      if (error) throw error;
+      
+      toast.success('Nota fiscal cancelada com sucesso!');
+      setHistorico(prev => prev.filter(n => n.id !== nfToCancel.id));
+    } catch (err) {
+      console.error('Erro de API no Cancelamento:', err);
+      toast.error('Ocorreu um erro ao cancelar. O endpoint ou serviço está indisponível.');
+    } finally {
+      setIsProcessingAction(false);
+      setNfToCancel(null);
+    }
+  };
+
+  const handleConfirmSubstitute = async () => {
+    if (!nfToSubstitute) return;
+    setIsProcessingAction(true);
+    try {
+      const apiUrl = import.meta.env.VITE_SIGNATURE_API || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/substituir-nota`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nf_number: nfToSubstitute.nf_number,
+          chave_acesso: nfToSubstitute.nf_access_key
+        })
+      });
+
+      if (!response.ok) {
+         throw new Error('Serviço de substituição indisponível ou erro na prefeitura');
+      }
+
+      const { error } = await supabase
+        .from('financial_installments')
+        .update({
+          status: 'pending',
+          nf_access_key: null,
+          nf_number: null,
+          nf_pdf: null
+        })
+        .eq('id', nfToSubstitute.id);
+
+      if (error) throw error;
+      
+      toast.success('A NF original foi cancelada! A parcela retornou para status pendente e já pode ser reenviada.');
+      setHistorico(prev => prev.filter(n => n.id !== nfToSubstitute.id));
+    } catch (err) {
+      console.error('Erro de API na Substituição:', err);
+      toast.error('Erro ao substituir NF. O endpoint ou serviço está indisponível.');
+    } finally {
+      setIsProcessingAction(false);
+      setNfToSubstitute(null);
+    }
+  };
 
   const handleExportXLSX = () => {
     if (filteredHistorico.length === 0) {
@@ -160,13 +243,14 @@ export const HistoricoNFs: React.FC = () => {
         <div className="overflow-x-auto">
           <div className="min-w-[1100px]">
             {/* Table Header */}
-            <div className="grid grid-cols-[1.5fr_3fr_1.5fr_1.5fr_1.5fr_4fr] bg-gray-50 border-b border-gray-200 text-xs font-black text-gray-500 uppercase tracking-wider">
+            <div className="grid grid-cols-[1fr_3.5fr_1.5fr_1.5fr_1.5fr_3fr_1.2fr] bg-gray-50 border-b border-gray-200 text-xs font-black text-gray-500 uppercase tracking-wider">
               <div className="p-4 flex items-center gap-2"><Calendar className="w-4 h-4" /> Data</div>
               <div className="p-4 flex items-center gap-2"><Building className="w-4 h-4" /> Cliente (Tomador)</div>
-              <div className="p-4 flex items-center gap-2"><FileDigit className="w-4 h-4" /> Número da NFS-e</div>
+              <div className="p-4 flex items-center gap-2"><FileDigit className="w-4 h-4" /> Número</div>
               <div className="p-4 flex items-center gap-2"><DollarSign className="w-4 h-4" /> Bruto</div>
               <div className="p-4 flex items-center gap-2"><DollarSign className="w-4 h-4 text-emerald-600" /> Líquido</div>
               <div className="p-4 flex items-center gap-2"><Key className="w-4 h-4" /> Chave de Acesso</div>
+              <div className="p-4 flex items-center justify-end">Ações</div>
             </div>
 
             {/* Table Body */}
@@ -183,7 +267,7 @@ export const HistoricoNFs: React.FC = () => {
             ) : (
               <div className="divide-y divide-gray-100">
                 {filteredHistorico.map((nf) => (
-                  <div key={nf.id} className="grid grid-cols-[1.5fr_3fr_1.5fr_1.5fr_1.5fr_4fr] text-sm hover:bg-emerald-50/50 transition-colors group">
+                  <div key={nf.id} className="grid grid-cols-[1fr_3.5fr_1.5fr_1.5fr_1.5fr_3fr_1.2fr] text-sm hover:bg-emerald-50/50 transition-colors group">
                     <div className="p-4 flex items-center font-semibold text-gray-700">
                       {nf.nf_issue_date ? new Date(nf.nf_issue_date).toLocaleDateString('pt-BR') : '-'}
                     </div>
@@ -213,7 +297,7 @@ export const HistoricoNFs: React.FC = () => {
                        {nf.nf_access_key ? (
                           <div 
                             onClick={() => handleCopy(nf.nf_access_key, 'Chave de Acesso')}
-                            className="bg-gray-100/80 border border-gray-200 text-[#1e3a8a] font-mono font-semibold px-2.5 py-1.5 rounded-md text-xs cursor-pointer hover:bg-blue-50 hover:text-blue-900 hover:border-blue-200 transition-all flex items-center justify-between gap-3 w-full group/copy"
+                            className="bg-gray-100/80 border border-gray-200 text-[#1e3a8a] font-mono font-semibold px-2.5 py-1.5 rounded-md text-[10px] cursor-pointer hover:bg-blue-50 hover:text-blue-900 hover:border-blue-200 transition-all flex items-center justify-between gap-2 w-full group/copy"
                           >
                              <span className="truncate">{nf.nf_access_key}</span>
                              <Copy className="w-3.5 h-3.5 opacity-50 group-hover/copy:opacity-100 group-hover/copy:text-blue-600 shrink-0 transition-opacity" />
@@ -221,6 +305,22 @@ export const HistoricoNFs: React.FC = () => {
                        ) : (
                          <span className="text-gray-400 font-semibold italic text-xs">Não disponível</span>
                        )}
+                    </div>
+                    <div className="p-4 flex items-center justify-end gap-2">
+                       <button
+                         onClick={() => setNfToSubstitute(nf)}
+                         className="p-1.5 bg-white border border-amber-200 text-amber-600 rounded-lg hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 transition-all shadow-sm group/btn tooltip relative"
+                         title="Substituir Nota"
+                       >
+                         <RefreshCw className="w-4 h-4" />
+                       </button>
+                       <button
+                         onClick={() => setNfToCancel(nf)}
+                         className="p-1.5 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all shadow-sm group/btn tooltip relative"
+                         title="Cancelar Nota"
+                       >
+                         <XCircle className="w-4 h-4" />
+                       </button>
                     </div>
                   </div>
                 ))}
@@ -230,6 +330,74 @@ export const HistoricoNFs: React.FC = () => {
         </div>
 
       </div>
+
+      {/* CANCEL MODAL */}
+      {nfToCancel && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-300">
+            <div className="p-6">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <AlertTriangle className="w-8 h-8 text-red-600" />
+              </div>
+              <h2 className="text-center text-xl font-black text-gray-900 mb-2 tracking-tight">Cancelar NF-e?</h2>
+              <p className="text-center text-sm text-gray-500 mb-8 font-medium px-4 leading-relaxed">
+                Você confirmou o cancelamento no sistema da prefeitura para a NF <strong className="text-red-600 font-bold">{nfToCancel.nf_number}</strong>? Ela deixará de aparecer neste histórico e esta ação é irreversível.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setNfToCancel(null)}
+                  disabled={isProcessingAction}
+                  className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-bold transition-all shadow-sm"
+                >
+                  Voltar
+                </button>
+                <button
+                  onClick={handleConfirmCancel}
+                  disabled={isProcessingAction}
+                  className="flex-[1.5] px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-red-600/30 transition-all flex items-center justify-center gap-2"
+                >
+                  {isProcessingAction ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirmar Cancelamento'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* SUBSTITUTE MODAL */}
+      {nfToSubstitute && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-300">
+            <div className="p-6">
+              <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <RefreshCw className="w-8 h-8 text-amber-600" />
+              </div>
+              <h2 className="text-center text-xl font-black text-gray-900 mb-2 tracking-tight">Substituir NF-e?</h2>
+              <p className="text-center text-sm text-gray-500 mb-8 font-medium px-4 leading-relaxed">
+                A NF <strong className="text-amber-600 font-bold">{nfToSubstitute.nf_number}</strong> será substituída e retornará à aba de <strong className="text-gray-700">Emissão (Pendente)</strong> para que você possa corrigir os dados e gerar uma nova chave.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setNfToSubstitute(null)}
+                  disabled={isProcessingAction}
+                  className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-bold transition-all shadow-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmSubstitute}
+                  disabled={isProcessingAction}
+                  className="flex-[1.5] px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/30 transition-all flex items-center justify-center gap-2"
+                >
+                  {isProcessingAction ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Garantir Substituição'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
