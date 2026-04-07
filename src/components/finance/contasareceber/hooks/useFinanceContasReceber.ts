@@ -62,8 +62,9 @@ export function useFinanceContasReceber() {
     loadFaturas();
 
     // Configurar realtime para atualizações automáticas
+    const channelTopic = `finance_faturas_changes_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel('finance_faturas_changes')
+      .channel(channelTopic)
       .on(
         'postgres_changes',
         {
