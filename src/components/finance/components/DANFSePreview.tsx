@@ -1,6 +1,7 @@
 import React from 'react';
 import { maskMoney, maskCNPJ } from '../../controladoria/utils/masks';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface DANFSePreviewProps {
   prestadorDetails: any;
@@ -42,6 +43,12 @@ export const DANFSePreview: React.FC<DANFSePreviewProps> = ({
     return (val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
+  const handleCopy = (text: string, title: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    toast.success(`${title} copiado!`, { description: text });
+  };
+
   const padraoEnderecoCliente = selectedClient ? 'Conforme Cadastro Vínculado' : '-';
   const padraoMunicipioCliente = selectedClient ? 'Brasil' : '-';
 
@@ -77,7 +84,11 @@ export const DANFSePreview: React.FC<DANFSePreviewProps> = ({
           <div className="p-1 border-b border-gray-300">
             <div className="font-bold">Chave de Acesso da NFS-e</div>
             {chaveAcesso ? (
-              <div className="bg-emerald-200 border border-emerald-400 text-emerald-900 font-bold inline-block font-mono mt-0.5 px-2 py-0.5 text-[12px] shadow-sm animate-pulse rounded-sm">
+              <div 
+                onClick={() => handleCopy(chaveAcesso, 'Chave de Acesso')}
+                className="bg-emerald-200 border border-emerald-400 text-emerald-900 font-bold inline-block font-mono mt-0.5 px-2 py-0.5 text-[12px] shadow-sm animate-pulse rounded-sm cursor-pointer hover:bg-emerald-300 transition-colors"
+                title="Clique para copiar"
+              >
                  {chaveAcesso}
               </div>
             ) : (
@@ -90,7 +101,13 @@ export const DANFSePreview: React.FC<DANFSePreviewProps> = ({
             <div className="w-1/3 p-1 border-r border-gray-300">
               <div className="font-bold">Número da NFS-e</div>
               {numeroNota ? (
-                 <div className="bg-emerald-200 border border-emerald-400 text-emerald-900 font-bold inline-block px-2 py-0.5 mt-0.5 font-mono text-[12px] shadow-sm animate-pulse rounded-sm">{numeroNota}</div>
+                 <div 
+                   onClick={() => handleCopy(numeroNota, 'Número da NFS-e')}
+                   className="bg-emerald-200 border border-emerald-400 text-emerald-900 font-bold inline-block px-2 py-0.5 mt-0.5 font-mono text-[12px] shadow-sm animate-pulse rounded-sm cursor-pointer hover:bg-emerald-300 transition-colors"
+                   title="Clique para copiar"
+                 >
+                   {numeroNota}
+                 </div>
               ) : (
                  <div className="bg-yellow-200 inline-block px-1 mt-0.5 font-mono">000000</div>
               )}
