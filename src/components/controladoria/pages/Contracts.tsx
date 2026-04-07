@@ -23,7 +23,7 @@ import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'draft': return 'bg-slate-800 text-white border-slate-700 shadow-md font-bold';
+    case 'rascunho': return 'bg-slate-800 text-white border-slate-700 shadow-md font-bold';
     case 'active': return 'bg-green-100 text-green-800 border-green-200';
     case 'analysis': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     case 'proposal': return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -36,7 +36,7 @@ const getStatusColor = (status: string) => {
 
 const getStatusLabel = (status: string) => {
   switch (status) {
-    case 'draft': return 'Rascunho';
+    case 'rascunho': return 'Rascunho';
     case 'active': return 'Contrato Fechado';
     case 'analysis': return 'Sob Análise';
     case 'proposal': return 'Proposta Enviada';
@@ -417,7 +417,7 @@ export function Contracts() {
 
   const getRelevantDate = (c: Contract) => {
     switch (c.status) {
-      case 'draft': return c.created_at;
+      case 'rascunho': return c.created_at;
       case 'analysis': return c.prospect_date || c.created_at;
       case 'proposal': return c.proposal_date || c.created_at;
       case 'active': return c.contract_date || c.created_at;
@@ -490,8 +490,8 @@ export function Contracts() {
 
     return matchesSearch && matchesStatus && matchesPartner && matchesDate;
   }).sort((a: Contract, b: Contract) => {
-    if (a.status === 'draft' && b.status !== 'draft') return -1;
-    if (a.status !== 'draft' && b.status === 'draft') return 1;
+    if (a.status === 'rascunho' && b.status !== 'rascunho') return -1;
+    if (a.status !== 'rascunho' && b.status === 'rascunho') return 1;
 
     const da = safeDate(getRelevantDate(a)) || new Date(0);
     const db = safeDate(getRelevantDate(b)) || new Date(0);
@@ -684,7 +684,7 @@ export function Contracts() {
   const hasActiveFilters = searchTerm !== '' || statusFilter !== '' || partnerFilter !== '' || filterPeriodo.start !== '' || filterPeriodo.end !== '';
 
   const statusOptions = [
-    { label: 'Rascunho', value: 'draft' },
+    { label: 'Rascunho', value: 'rascunho' },
     { label: 'Sob Análise', value: 'analysis' },
     { label: 'Proposta Enviada', value: 'proposal' },
     { label: 'Contrato Fechado', value: 'active' },
@@ -909,7 +909,7 @@ export function Contracts() {
                       key={contract.id} 
                       onClick={() => handleView(contract)} 
                       className={`cursor-pointer group transition-all duration-200 ${
-                        contract.status === 'draft' 
+                        contract.status === 'rascunho' 
                           ? 'bg-amber-50/60 hover:bg-amber-100/80 border-b border-amber-100' 
                           : 'hover:bg-blue-50/30 bg-white border-b border-gray-50'
                       }`}

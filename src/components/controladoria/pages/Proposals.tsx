@@ -436,7 +436,7 @@ export function Proposals() {
       client_name: proposalData.clientName,
       cnpj: proposalData.cnpj,
       partner_id: primaryPartner?.id,
-      status: 'draft',
+      status: 'rascunho',
       proposal_date: new Date().toISOString(),
       reference: proposalData.reference,
       observations: proposalData.object,
