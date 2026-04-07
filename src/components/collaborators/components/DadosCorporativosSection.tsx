@@ -29,6 +29,29 @@ export function DadosCorporativosSection({
   const [pendingReactivation, setPendingReactivation] = useState(false)
   const [readmissionDate, setReadmissionDate] = useState('')
 
+  const [exitInterview, setExitInterview] = useState<any>(null)
+  const [refreshInterview, setRefreshInterview] = useState(0)
+
+  // Fetch Existing Interview status
+  useEffect(() => {
+    async function fetchInterview() {
+      if (!formData.id) return;
+      
+      const { data, error } = await supabase
+        .from('exit_interviews')
+        .select('*')
+        .eq('collaborator_id', formData.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data && !error) {
+        setExitInterview(data);
+      }
+    }
+    fetchInterview();
+  }, [formData.id, refreshInterview])
+
   const [roleName, setRoleName] = useState<string>('')
 
   const [refMaps, setRefMaps] = useState<{
@@ -777,6 +800,140 @@ export function DadosCorporativosSection({
                 />
               </div>
             </div>
+
+            {/* Formulário de Desligamento via Link Mágico */}
+            {formData.id && (
+              <div className="bg-[#1e3a8a]/5 p-6 rounded-xl border border-[#1e3a8a]/20 shadow-sm animate-in zoom-in-95 duration-500 mt-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <AlertTriangle className="w-24 h-24 text-[#1e3a8a]" />
+                </div>
+                <h4 className="text-[12px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2 flex items-center gap-2 relative z-10">
+                  <AlertTriangle className="h-5 w-5" /> Formulário de Desligamento
+                </h4>
+                <p className="text-[10px] text-gray-600 font-medium mb-6 relative z-10 max-w-xl leading-relaxed">
+                  Gere o link único do formulário de avaliação para o integrante. O modelo das perguntas é adaptado automaticamente pelo RH de acordo com o vínculo <span className="font-bold">({formData.contract_type || 'Estagiário'})</span>.
+                </p>
+                <div className="relative z-10 flex flex-wrap gap-4">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!formData.id) return;
+                      const btn = document.getElementById('btn-magic-link-desligamento');
+                      if (btn) btn.innerHTML = '<span class="animate-spin mr-2">⏳</span> Gerando...';
+                      try {
+                        const { data: template, error: tmplError } = await supabase
+                          .from('form_templates')
+                          .select('id')
+                          .eq('vinculo_type', formData.contract_type || 'Estagiário')
+                          .limit(1)
+                          .maybeSingle();
+                        
+                        if (tmplError || !template) {
+                           alert('Nenhum template ativo encontrado para este tipo de vínculo (' + formData.contract_type + '). Crie um modelo primeiro nas Configurações.');
+                           if (btn) btn.innerHTML = 'Gerar Link do Formulário em Nova Aba';
+                           return;
+                        }
+
+                        let tokenStr = '';
+                        const { data: existing, error: existErr } = await supabase
+                          .from('exit_interviews')
+                          .select('token')
+                          .eq('collaborator_id', formData.id)
+                          .maybeSingle();
+                        
+                        if (existing) {
+                           tokenStr = existing.token;
+                        } else {
+                           const { data, error } = await supabase
+                             .from('exit_interviews')
+                             .insert({
+                                collaborator_id: formData.id,
+                                template_id: template.id
+                             })
+                             .select('token')
+                             .single();
+                           if (error) throw error;
+                           tokenStr = data?.token;
+                        }
+                        
+                        setRefreshInterview(r => r + 1);
+                        
+                        const url = `${window.location.origin}/desligamento/${tokenStr}`;
+                        await navigator.clipboard.writeText(url);
+                        window.open(url, '_blank');
+                        if (btn) btn.innerHTML = '✓ Link Copiado e Aberto!';
+                        setTimeout(() => {
+                           if (btn) btn.innerHTML = 'Gerar e Copiar Link Mágico Novamente';
+                        }, 4000);
+                      } catch (err: any) {
+                        console.error('Erro ao gerar formulário de desligamento:', err);
+                        alert('Erro ao gerar link. Detalhes: ' + err.message);
+                        if (btn) btn.innerHTML = 'Tentar Novamente';
+                      }
+                    }}
+                    id="btn-magic-link-desligamento"
+                    className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-[11px] font-black tracking-[0.2em] uppercase rounded-xl shadow-lg shadow-[#1e3a8a]/20 text-white bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] hover:scale-[1.02] hover:shadow-xl active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1e3a8a]"
+                  >
+                    Gerar e Copiar Link Mágico
+                  </button>
+                  {exitInterview?.status === 'pending' && (
+                     <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-3 rounded-xl border border-amber-100 text-xs font-bold w-full sm:w-auto">
+                        <Clock className="w-4 h-4 shrink-0" />
+                        Formulário Gerado e Aguardando Resposta
+                     </div>
+                  )}
+                </div>
+                
+                {exitInterview?.status === 'completed' && (
+                  <div className="mt-6 space-y-4 relative z-10 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="bg-white p-5 rounded-xl border border-emerald-100 text-sm shadow-sm">
+                       <div className="flex items-center gap-2 mb-3">
+                         <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                            <Clock className="w-4 h-4" />
+                         </div>
+                         <div>
+                           <p className="text-gray-500 font-black text-[10px] uppercase tracking-widest">Status do Link Mágico</p>
+                           <p className="text-emerald-700 font-bold">Respostas salvas em: {new Date(exitInterview.completed_at).toLocaleDateString()}</p>
+                         </div>
+                       </div>
+                       <p className="text-gray-600 text-xs pl-10 border-l-2 border-emerald-50 ml-4">
+                         As respostas desta entrevista estão disponíveis na base de dados de People Analytics e serão utilizadas nos novos painéis gerenciais (Turnover).
+                       </p>
+                    </div>
+                    
+                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                       <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 block flex items-center gap-2">
+                         <Crown className="w-4 h-4" /> Observações do RH (Notas Internas)
+                       </label>
+                       <div className="flex flex-col sm:flex-row items-end gap-3">
+                         <textarea
+                           className="w-full bg-gray-50 border border-gray-200 text-sm rounded-xl px-4 py-3 outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a]/20 transition-all resize-y"
+                           rows={3}
+                           placeholder="Anotações internas do RH sobre esta entrevista (apenas visão gerencial)..."
+                           defaultValue={exitInterview.rh_notes || ''}
+                           id={`rh-notes-${exitInterview.id}`}
+                         />
+                         <button
+                           type="button"
+                           onClick={async () => {
+                              const notes = (document.getElementById(`rh-notes-${exitInterview.id}`) as HTMLTextAreaElement)?.value;
+                              const btn = document.getElementById(`btn-rh-notes-${exitInterview.id}`);
+                              if (btn) btn.innerText = '⏳';
+                              await supabase.from('exit_interviews').update({ rh_notes: notes }).eq('id', exitInterview.id);
+                              if (btn) btn.innerText = '✓ Salvo';
+                              setTimeout(() => { if (btn) btn.innerText = 'Salvar Notas'; }, 2000);
+                           }}
+                           id={`btn-rh-notes-${exitInterview.id}`}
+                           className="w-full sm:w-auto shrink-0 bg-[#0a192f] text-white px-6 py-3 rounded-xl font-bold tracking-widest text-[10px] uppercase hover:bg-[#112240] transition-colors shadow-lg"
+                         >
+                           Salvar Notas
+                         </button>
+                       </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* TIMELINE */}
             {formData.termination_date && duration && (

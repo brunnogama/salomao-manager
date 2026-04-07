@@ -7,6 +7,7 @@ import { ModuleSelector } from './components/ModuleSelector';
 import Login from './Login';
 import ResetPassword from './ResetPassword';
 import AtualizacaoCadastral from './pages/AtualizacaoCadastral';
+import FormularioDesligamento from './pages/FormularioDesligamento';
 import SolicitacaoFerias from './pages/SolicitacaoFerias';
 import AprovacaoFeriasPeloLider from './pages/AprovacaoFeriasPeloLider';
 import { CandidatoPublicProfile } from './components/collaborators/pages/CandidatoPublicProfile';
@@ -233,6 +234,7 @@ export function AppRoutes() {
 
             {/* Public Routes accessible by everyone (including logged in users) */}
             <Route path="/atualizacao-cadastral/:token" element={<AtualizacaoCadastral />} />
+            <Route path="/desligamento/:token" element={<FormularioDesligamento />} />
             <Route path="/solicitacao-ferias/:token" element={<SolicitacaoFerias />} />
             <Route path="/aprovacao-ferias/:token" element={<AprovacaoFeriasPeloLider />} />
             <Route path="/candidato/perfil/:identifier" element={<CandidatoPublicProfile />} />
