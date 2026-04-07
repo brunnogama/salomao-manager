@@ -6,9 +6,10 @@ import { PartnerDetailModal } from './PartnerDetailModal';
 
 interface PartnerStatsProps {
   contractsByPartner: any[];
+  periodLabel: string;
 }
 
-export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
+export function PartnerStats({ contractsByPartner, periodLabel }: PartnerStatsProps) {
   const [selectedPartner, setSelectedPartner] = useState<any | null>(null);
 
   return (
@@ -22,7 +23,7 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
             </div>
             <div>
               <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
-                Contratos por Sócio
+                Contratos por Sócio ({periodLabel})
               </h2>
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
                 Visão Financeira e Distribuição por status

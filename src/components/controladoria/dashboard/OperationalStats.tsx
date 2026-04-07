@@ -7,9 +7,10 @@ interface OperationalStatsProps {
     sources: any[];
   };
   metrics: any;
+  periodLabel: string;
 }
 
-export function OperationalStats({ rejectionData, metrics }: OperationalStatsProps) {
+export function OperationalStats({ rejectionData, metrics, periodLabel }: OperationalStatsProps) {
   // Cálculo de Assinatura
   const totalAssinaturasCalculo = (metrics?.geral?.assinados || 0) + (metrics?.geral?.naoAssinados || 0);
   const percentualSemAssinatura = totalAssinaturasCalculo > 0
@@ -29,7 +30,7 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
             </div>
             <div>
               <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
-                Análise de Rejeições
+                Análise de Rejeições ({periodLabel})
               </h2>
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
                 Motivos e origens dos casos declinados
@@ -44,10 +45,10 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
           <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div>
             {rejectionData.reasons.length === 0 ? (
-              'Não há dados de propostas declinadas para análise.'
+              'Não há dados de propostas declinadas para análise no período selecionado.'
             ) : (
               <>
-                Do total de propostas que não avançaram, a principal causa foi <strong>{rejectionData.reasons[0]?.label || 'não informada'}</strong>, representando <strong>{rejectionData.reasons[0]?.percent?.toFixed(1) || 0}%</strong> das recusas, sendo que a maior fonte de declínio partiu de <strong>{rejectionData.sources[0]?.label || 'não identificada'}</strong> (com <strong>{rejectionData.sources[0]?.percent?.toFixed(1) || 0}%</strong>).
+                Das propostas que não avançaram ao longo do período ({periodLabel}), a principal causa foi <strong>{rejectionData.reasons[0]?.label || 'não informada'}</strong>, representando <strong>{rejectionData.reasons[0]?.percent?.toFixed(1) || 0}%</strong> das recusas, sendo que a maior fonte de declínio partiu de <strong>{rejectionData.sources[0]?.label || 'não identificada'}</strong> (com <strong>{rejectionData.sources[0]?.percent?.toFixed(1) || 0}%</strong>).
               </>
             )}
           </div>
@@ -152,7 +153,7 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
             </div>
             <div>
               <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
-                Status de Assinatura
+                Status de Assinatura ({periodLabel})
               </h2>
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
                 Contratos fechados
@@ -167,10 +168,10 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
           <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div>
             {totalAssinaturasCalculo === 0 ? (
-              'Não há contratos fechados recentemente para análise de assinatura.'
+              'Não há contratos fechados no período selecionado para análise de assinatura.'
             ) : (
               <>
-                Dos <strong>{totalAssinaturasCalculo}</strong> contratos fechados recentemente, {metrics?.geral?.assinados === 0 ? 'nenhum teve assinatura física confirmada' : <><strong>{metrics?.geral?.assinados}</strong> já tiveram suas assinaturas físicas confirmadas</>}, enquanto {metrics?.geral?.naoAssinados === 0 ? 'não há contratos aguardando assinatura' : <><strong>{metrics?.geral?.naoAssinados}</strong> (cerca de <strong>{percentualSemAssinatura.toFixed(1)}%</strong>) ainda aguardam a conclusão dessa etapa</>}.
+                Dos <strong>{totalAssinaturasCalculo}</strong> contratos fechados no período ({periodLabel}), {metrics?.geral?.assinados === 0 ? 'nenhum teve assinatura física confirmada' : <><strong>{metrics?.geral?.assinados}</strong> já tiveram suas assinaturas físicas confirmadas</>}, enquanto {metrics?.geral?.naoAssinados === 0 ? 'não há contratos aguardando assinatura' : <><strong>{metrics?.geral?.naoAssinados}</strong> (cerca de <strong>{percentualSemAssinatura.toFixed(1)}%</strong>) ainda aguardam a conclusão dessa etapa</>}.
               </>
             )}
           </div>

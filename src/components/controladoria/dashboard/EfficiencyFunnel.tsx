@@ -4,9 +4,10 @@ import { CopyChartButton } from '../ui/CopyChartButton';
 interface EfficiencyFunnelProps {
   funil: any;
   evolucaoMensal?: any[];
+  periodLabel: string;
 }
 
-export function EfficiencyFunnel({ funil, evolucaoMensal }: EfficiencyFunnelProps) {
+export function EfficiencyFunnel({ funil, evolucaoMensal, periodLabel }: EfficiencyFunnelProps) {
   const emAnalise = Math.max(0, funil.totalEntrada - funil.perdaAnalise - funil.qualificadosProposta);
   const emNegociacao = Math.max(0, funil.qualificadosProposta - funil.fechados - (funil.perdaNegociacao || 0));
 
@@ -41,10 +42,10 @@ export function EfficiencyFunnel({ funil, evolucaoMensal }: EfficiencyFunnelProp
         <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
         <div>
           {funil.totalEntrada === 0 ? (
-            'Ainda não recebemos nenhum prospect desde junho de 2025.'
+            `No período de ${periodLabel}, não recebemos nenhum prospect.`
           ) : (
             <>
-              Recebemos desde <strong>junho de 2025</strong> um total de <strong>{funil.totalEntrada} {funil.totalEntrada === 1 ? 'prospect' : 'prospects'}</strong>. Deste total, {funil.perdaAnalise === 0 ? 'nenhum foi rejeitado' : <><strong>{funil.perdaAnalise}</strong> foram rejeitados</>}, {emAnalise === 0 ? 'ninguém continua em análise' : <><strong>{emAnalise}</strong> continuam em análise pelo escritório</>} e {funil.qualificadosProposta === 0 ? 'nenhum avançou' : <><strong>{funil.qualificadosProposta}</strong> avançaram</>} para a fase de proposta. Destes <strong>{funil.qualificadosProposta}</strong>, {funil.fechados === 0 ? 'ainda não fechamos contratos' : <>fechamos <strong>{funil.fechados}</strong> contratos</>}{funil.perdaNegociacao > 0 && <span>, <strong>{funil.perdaNegociacao}</strong> foram rejeitadas</span>} e {emNegociacao === 0 ? 'não há propostas enviadas aguardando resposta' : <>estamos com <strong>{emNegociacao}</strong> propostas enviadas aos clientes e aguardando resposta</>}.
+              Recebemos no período analisado (<strong>{periodLabel}</strong>) um total de <strong>{funil.totalEntrada} {funil.totalEntrada === 1 ? 'prospect' : 'prospects'}</strong>. Deste total, {funil.perdaAnalise === 0 ? 'nenhum foi rejeitado' : <><strong>{funil.perdaAnalise}</strong> foram rejeitados</>}, {emAnalise === 0 ? 'ninguém continua em análise' : <><strong>{emAnalise}</strong> continuam em análise pelo escritório</>} e {funil.qualificadosProposta === 0 ? 'nenhum avançou' : <><strong>{funil.qualificadosProposta}</strong> avançaram</>} para a fase de proposta. Destes <strong>{funil.qualificadosProposta}</strong>, {funil.fechados === 0 ? 'ainda não fechamos contratos' : <>fechamos <strong>{funil.fechados}</strong> contratos</>}{funil.perdaNegociacao > 0 && <span>, <strong>{funil.perdaNegociacao}</strong> foram rejeitadas</span>} e {emNegociacao === 0 ? 'não há propostas enviadas aguardando resposta' : <>estamos com <strong>{emNegociacao}</strong> propostas enviadas aos clientes e aguardando resposta</>}.
             </>
           )}
         </div>

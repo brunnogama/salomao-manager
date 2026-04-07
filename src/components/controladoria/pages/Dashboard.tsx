@@ -69,7 +69,21 @@ export function Dashboard({ }: Props) {
     try {
       const wb = XLSX.utils.book_new();
 
-      // Planilha 1: Evolução Financeira (Últimos 12 Meses)
+      // Planilha 1: Entrada de Casos
+      const entradaData = evolucaoMensal.map(item => ({
+        "Mês": item.mes,
+        "Quantidade de Casos": item.qtd
+      }));
+      const wsEnt = XLSX.utils.json_to_sheet(entradaData);
+      const entRange = XLSX.utils.decode_range(wsEnt['!ref'] || 'A1:A1');
+      for (let col = entRange.s.c; col <= entRange.e.c; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (wsEnt[cellRef]) wsEnt[cellRef].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0A192F" } }, alignment: { horizontal: "center", vertical: "center" } };
+      }
+      wsEnt['!cols'] = [{ wch: 15 }, { wch: 25 }];
+      XLSX.utils.book_append_sheet(wb, wsEnt, "Entrada de Casos");
+
+      // Planilha 2: Evolução Financeira (Últimos 12 Meses)
       const finData = financeiro12Meses.map(item => ({
         "Mês": item.mes,
         "Data Ref.": item.data.toLocaleDateString(),
@@ -146,6 +160,25 @@ export function Dashboard({ }: Props) {
       }
       XLSX.utils.book_append_sheet(wb, wsPrt, "Performance por Sócio");
 
+      // Planilha 5: Análise de Rejeições
+      const rejectData = rejectionData.reasons.map(item => ({
+        "Motivo da Rejeição": item.label,
+        "Quantidade": item.value,
+        "Percentual (%)": item.percent
+      }));
+      const wsRej = XLSX.utils.json_to_sheet(rejectData);
+      const rejRange = XLSX.utils.decode_range(wsRej['!ref'] || 'A1:A1');
+      for (let col = rejRange.s.c; col <= rejRange.e.c; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (wsRej[cellRef]) wsRej[cellRef].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0A192F" } }, alignment: { horizontal: "center", vertical: "center" } };
+      }
+      wsRej['!cols'] = [{ wch: 40 }, { wch: 15 }, { wch: 15 }];
+      for (let R = 1; R <= rejRange.e.r; ++R) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: 2 });
+        if (wsRej[cellRef]) { wsRej[cellRef].t = 'n'; wsRej[cellRef].z = '0.00'; }
+      }
+      XLSX.utils.book_append_sheet(wb, wsRej, "Motivos de Rejeição");
+
       XLSX.writeFile(wb, `Relatorio_Controladoria_${new Date().toISOString().split('T')[0]}.xlsx`);
       toast.success('Relatório gerado com sucesso!');
     } catch (e) {
@@ -161,6 +194,17 @@ export function Dashboard({ }: Props) {
         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando dashboard...</p>
       </div>
     );
+  }
+
+  let periodLabel = 'Histórico Geral';
+  if (selectedPeriod.start || selectedPeriod.end) {
+    if (selectedPeriod.start && selectedPeriod.end) {
+      periodLabel = `${new Date(selectedPeriod.start + 'T12:00:00').toLocaleDateString('pt-BR')} até ${new Date(selectedPeriod.end + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+    } else if (selectedPeriod.start) {
+      periodLabel = `A partir de ${new Date(selectedPeriod.start + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+    } else if (selectedPeriod.end) {
+      periodLabel = `Até ${new Date(selectedPeriod.end + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+    }
   }
 
   return (
@@ -201,7 +245,7 @@ export function Dashboard({ }: Props) {
       <div id="dashboard-content-to-capture" className="space-y-6 pb-12">
         {/* Visão Geral */}
         <div id="pdf-section-1" className="flex flex-col gap-6 bg-gray-50 pb-2">
-          <EfficiencyFunnel funil={funil} evolucaoMensal={evolucaoMensal} />
+          <EfficiencyFunnel funil={funil} evolucaoMensal={evolucaoMensal} periodLabel={periodLabel} />
           <PortfolioFinancialOverview metrics={metrics} />
           <div className="grid grid-cols-1 gap-6">
             <WeeklySummary metrics={metrics} />
@@ -220,13 +264,14 @@ export function Dashboard({ }: Props) {
             statsPropostas={statsPropostas}
             statsFinanceiro={statsFinanceiro}
             funilTotalEntrada={funil.totalEntrada}
+            periodLabel={periodLabel}
           />
         </div>
 
         {/* Operacional & Sócios */}
         <div id="pdf-section-3" className="flex flex-col gap-6 bg-gray-50 pb-2">
-          <PartnerStats contractsByPartner={contractsByPartner} />
-          <OperationalStats rejectionData={rejectionData} metrics={metrics} />
+          <PartnerStats contractsByPartner={contractsByPartner} periodLabel={periodLabel} />
+          <OperationalStats rejectionData={rejectionData} metrics={metrics} periodLabel={periodLabel} />
         </div>
       </div>
 

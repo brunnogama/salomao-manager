@@ -39,6 +39,7 @@ interface EvolutionChartsProps {
   statsPropostas: { total: number, media: number, diff: number };
   statsFinanceiro: { total: number, media: number, diff: number };
   funilTotalEntrada?: number;
+  periodLabel: string;
 }
 
 export function EvolutionCharts({
@@ -49,7 +50,8 @@ export function EvolutionCharts({
   mediasFinanceiras,
   statsPropostas,
   statsFinanceiro,
-  funilTotalEntrada
+  funilTotalEntrada,
+  periodLabel
 }: EvolutionChartsProps) {
 
   // Cálculos Entrada de Casos
@@ -58,9 +60,9 @@ export function EvolutionCharts({
     propostas12Meses?.length || 0,
     financeiro12Meses?.length || 0
   ) || 1;
-  const periodTextTitle = mesesCount >= 12 ? '12 Meses' : `${mesesCount} ${mesesCount === 1 ? 'Mês' : 'Meses'}`;
-  const periodTextLower = mesesCount >= 12 ? '12 meses' : `${mesesCount} ${mesesCount === 1 ? 'mês' : 'meses'}`;
-  const periodTextShort = mesesCount >= 12 ? '12m' : `${mesesCount}m`;
+  const periodTextTitle = periodLabel !== 'Histórico Geral' ? periodLabel : mesesCount >= 12 ? '12 Meses' : `${mesesCount} ${mesesCount === 1 ? 'Mês' : 'Meses'}`;
+  const periodTextLower = periodLabel !== 'Histórico Geral' ? `o período (${periodLabel})` : mesesCount >= 12 ? '12 meses' : `${mesesCount} ${mesesCount === 1 ? 'mês' : 'meses'}`;
+  const periodTextShort = periodLabel !== 'Histórico Geral' ? periodLabel : mesesCount >= 12 ? '12m' : `${mesesCount}m`;
 
   const totalEntrada12 = funilTotalEntrada !== undefined ? funilTotalEntrada : evolucaoMensal.reduce((acc, curr) => acc + curr.qtd, 0);
   const mediaEntrada = evolucaoMensal.length > 0 ? (totalEntrada12 / evolucaoMensal.length).toFixed(1) : '0';
@@ -342,7 +344,7 @@ export function EvolutionCharts({
                 Entrada de Casos
               </h2>
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
-                Volume de novos negócios nos últimos {periodTextLower}
+                Volume de novos negócios durante {periodTextLower}
               </p>
             </div>
           </div>
@@ -353,7 +355,7 @@ export function EvolutionCharts({
         <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
           <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div>
-            No acumulado dos últimos {periodTextLower}, {totalEntrada12 === 0 ? 'não registramos a entrada de novos prospects' : <>registramos a entrada de <strong>{totalEntrada12}</strong> novos prospects</>}, com uma média de <strong>{mediaEntrada}</strong> análises por mês. Comparando o volume atual com o mês anterior, observamos {diffEntrada > 0 ? <>um crescimento de <strong>+{diffEntrada}</strong></> : diffEntrada < 0 ? <>uma redução de <strong>{diffEntrada}</strong></> : <>estabilidade no número de</>} novas entradas neste período.
+            No acumulado referente a {periodTextLower}, {totalEntrada12 === 0 ? 'não registramos a entrada de novos prospects' : <>registramos a entrada de <strong>{totalEntrada12}</strong> novos prospects</>}, com uma média de <strong>{mediaEntrada}</strong> análises por mês. Comparando o volume atual com o mês anterior, observamos {diffEntrada > 0 ? <>um crescimento de <strong>+{diffEntrada}</strong></> : diffEntrada < 0 ? <>uma redução de <strong>{diffEntrada}</strong></> : <>estabilidade no número de</>} novas entradas neste período.
           </div>
         </div>
 
@@ -440,7 +442,7 @@ export function EvolutionCharts({
         <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
           <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div>
-            Nossa expansão financeira nos últimos {periodTextLower} apresenta {statsPropostas.total === 0 ? 'nenhuma proposta enviada aos clientes' : <>a elaboração de <strong>{formatMoney(statsPropostas.total)}</strong> em propostas enviadas aos clientes (com ticket médio mensal de <strong>{formatMoney(statsPropostas.media)}</strong>)</>} versus {statsFinanceiro.total === 0 ? 'nenhum contrato firmado' : <>a concretização de <strong>{formatMoney(statsFinanceiro.total)}</strong> em contratos firmados, que impulsionam um ganho recorrente médio de <strong>{formatMoney(statsFinanceiro.media)}</strong> mensais para a carteira do escritório</>}.
+            Nossa expansão financeira analisando {periodTextLower} apresenta {statsPropostas.total === 0 ? 'nenhuma proposta enviada aos clientes' : <>a elaboração de <strong>{formatMoney(statsPropostas.total)}</strong> em propostas enviadas aos clientes (com ticket médio mensal de <strong>{formatMoney(statsPropostas.media)}</strong>)</>} versus {statsFinanceiro.total === 0 ? 'nenhum contrato firmado' : <>a concretização de <strong>{formatMoney(statsFinanceiro.total)}</strong> em contratos firmados, que impulsionam um ganho recorrente médio de <strong>{formatMoney(statsFinanceiro.media)}</strong> mensais para a carteira do escritório</>}.
           </div>
         </div>
 
