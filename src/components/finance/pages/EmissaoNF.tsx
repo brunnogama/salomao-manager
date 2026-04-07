@@ -47,6 +47,8 @@ const OFFICE_DATA: Record<string, { cnpj: string; im: string; endereco: string; 
 
 const EmissaoNF = () => {
   const [selectedCity, setSelectedCity] = useState('Rio de Janeiro');
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
 
   const [isUploading, setIsUploading] = useState(false);
 
@@ -258,11 +260,14 @@ const EmissaoNF = () => {
     };
   }, []);
 
-  // Fechar dropdown ao clicar fora
+  // Fechar dropdowns ao clicar fora
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (clientDropdownRef.current && !clientDropdownRef.current.contains(event.target as Node)) {
         setIsClientDropdownOpen(false);
+      }
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
+        setIsCityDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -661,20 +666,38 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           
           {/* CIDADE DE EMISSÃO SELECT */}
           <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-xl border border-gray-100 shrink-0 relative z-30">
-            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Cidade de Emissão</label>
-            <div className="relative group w-full">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1e3a8a]/50" />
-              <select
-                value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full appearance-none bg-gray-50 border border-gray-200 text-[#1e3a8a] text-sm font-bold rounded-xl pl-9 pr-8 py-3 outline-none focus:border-[#1e3a8a] focus:ring-2 focus:ring-blue-50 transition-all cursor-pointer shadow-sm hover:border-[#1e3a8a]/50"
+            <div className="relative" ref={cityDropdownRef}>
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 block">Cidade de Emissão da Nota</label>
+              <div
+                onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                className={`w-full bg-gray-50 border ${isCityDropdownOpen ? 'border-[#1e3a8a] ring-2 ring-blue-100' : 'border-gray-200'} rounded-xl p-3 flex justify-between items-center cursor-pointer hover:border-[#1e3a8a] transition-all`}
               >
-                <option value="" disabled>Selecione a cidade</option>
-                {cities.map(city => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1e3a8a]/50 pointer-events-none group-hover:text-[#1e3a8a]" />
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-[#1e3a8a]/50" />
+                  <span className="text-sm font-bold text-[#1e3a8a]">{selectedCity}</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-[#1e3a8a]/50 transition-transform ${isCityDropdownOpen ? 'rotate-180 text-[#1e3a8a]' : 'group-hover:text-[#1e3a8a]'}`} />
+              </div>
+
+              {isCityDropdownOpen && (
+                <div className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                  <div className="max-h-[250px] overflow-y-auto p-2">
+                    {cities.map((city) => (
+                      <div
+                        key={city}
+                        onClick={() => {
+                          setSelectedCity(city);
+                          setIsCityDropdownOpen(false);
+                        }}
+                        className={`w-full text-left p-2.5 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors flex items-center justify-between ${selectedCity === city ? 'bg-blue-50 text-[#1e3a8a]' : 'text-gray-800'}`}
+                      >
+                         <span className="text-sm font-bold">{city}</span>
+                         {selectedCity === city && <CheckCircle2 className="w-4 h-4 text-[#1e3a8a]" />}
+                       </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
