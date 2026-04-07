@@ -16,6 +16,8 @@ interface DANFSePreviewProps {
   dataEmissao: string;
   isFetchingPrestador: boolean;
   selectedCity: string;
+  chaveAcesso?: string;
+  numeroNota?: string;
 }
 
 export const DANFSePreview: React.FC<DANFSePreviewProps> = ({
@@ -31,7 +33,9 @@ export const DANFSePreview: React.FC<DANFSePreviewProps> = ({
   valorLiquido,
   dataEmissao,
   isFetchingPrestador,
-  selectedCity
+  selectedCity,
+  chaveAcesso,
+  numeroNota
 }) => {
   const formatMoney = (val: number) => {
     if (!val && val !== 0) return '0,00';
@@ -72,14 +76,24 @@ export const DANFSePreview: React.FC<DANFSePreviewProps> = ({
         <div className="w-3/4 flex flex-col">
           <div className="p-1 border-b border-gray-300">
             <div className="font-bold">Chave de Acesso da NFS-e</div>
-            <div className="bg-yellow-200 inline-block font-mono mt-0.5 px-1 text-[11px]">
-               00000000000000000000000000000000000000000000000000
-            </div>
+            {chaveAcesso ? (
+              <div className="bg-emerald-200 border border-emerald-400 text-emerald-900 font-bold inline-block font-mono mt-0.5 px-2 py-0.5 text-[12px] shadow-sm animate-pulse rounded-sm">
+                 {chaveAcesso}
+              </div>
+            ) : (
+              <div className="bg-yellow-200 inline-block font-mono mt-0.5 px-1 text-[11px]">
+                 00000000000000000000000000000000000000000000000000
+              </div>
+            )}
           </div>
           <div className="flex border-b border-gray-300 h-full">
             <div className="w-1/3 p-1 border-r border-gray-300">
               <div className="font-bold">Número da NFS-e</div>
-              <div className="bg-yellow-200 inline-block px-1 mt-0.5 font-mono">000000</div>
+              {numeroNota ? (
+                 <div className="bg-emerald-200 border border-emerald-400 text-emerald-900 font-bold inline-block px-2 py-0.5 mt-0.5 font-mono text-[12px] shadow-sm animate-pulse rounded-sm">{numeroNota}</div>
+              ) : (
+                 <div className="bg-yellow-200 inline-block px-1 mt-0.5 font-mono">000000</div>
+              )}
             </div>
             <div className="w-1/3 p-1 border-r border-gray-300">
               <div className="font-bold">Competência da NFS-e</div>

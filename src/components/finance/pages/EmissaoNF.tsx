@@ -83,8 +83,10 @@ const EmissaoNF = () => {
     isOpen: false,
     status: 'idle',
     errorDetails: null,
-    successData: null
   });
+
+  const [chaveAcessoGerada, setChaveAcessoGerada] = useState<string>('');
+  const [numeroNFsGerado, setNumeroNFsGerado] = useState<string>('');
 
   // Novos campos para Configuração e Tributação
   const [valorLiquidoState, setValorLiquidoState] = useState<number>(0);
@@ -555,6 +557,8 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         }).eq('id', selectedHonorario.id);
 
         setEmissaoStatus({ isOpen: true, status: 'success', errorDetails: null, successData: { xml: data.xml, pdfUrl: data.pdf_url, chaveAcesso: data.chave_acesso } });
+        setChaveAcessoGerada(data.chave_acesso || '');
+        setNumeroNFsGerado(data.nf_number || '');
         
         setHonorarios(prev => prev.filter(h => h.id !== selectedHonorario.id));
         setSelectedHonorario(null);
@@ -887,6 +891,8 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                dataEmissao={dataEmissao}
                isFetchingPrestador={isFetchingPrestador}
                selectedCity={selectedCity}
+               chaveAcesso={chaveAcessoGerada}
+               numeroNota={numeroNFsGerado || nfNumber}
             />
 
             {/* TOGGLE MODO AVANÇADO */}
