@@ -164,7 +164,7 @@ INSERT INTO form_templates (name, vinculo_type, schema) VALUES (
            {"id": "adm_ti", "label": "TI - Tecnologia da Informação"},
            {"id": "adm_fin", "label": "Financeiro"},
            {"id": "adm_rh", "label": "Recursos Humanos"},
-           {"id": "adm_recepcao", "label": "Setor administrativo (recepção, facilites, capa, etc)"}
+           {"id": "adm_recepcao", "label": "Setor administrativo (recepção, facilites, copa, etc)"}
          ],
          "has_comments": true
       },
@@ -221,9 +221,30 @@ INSERT INTO form_templates (name, vinculo_type, schema) VALUES (
         "options": ["Ambiente de trabalho", "Aprendizado", "Estrutura física", "Reconhecimento profissional", "Reconhecimento do escritório no mercado", "Outros"]
       },
       {
+        "id": "aspectos_positivo_quais",
+        "type": "text",
+        "label": "Quais?",
+        "dependsOn": {
+          "questionId": "aspecto_positivo",
+          "value": "Outros"
+        }
+      },
+      {
         "id": "aspectos_melhorar",
         "type": "textarea",
         "label": "Quais os aspectos que você acredita que devem ser melhorados?"
+      }
+    ]
+  },
+  {
+    "id": "sec_rh",
+    "title": "Uso Exclusivo do RH",
+    "description": "Seção reservada para anotações do entrevistador.",
+    "questions": [
+      {
+        "id": "rh_notes",
+        "type": "textarea",
+        "label": "Observações do RH (entrevistador)"
       }
     ]
   }
@@ -239,6 +260,7 @@ DECLARE
     v_interview exit_interviews%ROWTYPE;
     v_template form_templates%ROWTYPE;
     v_collaborator collaborators%ROWTYPE;
+    v_role roles%ROWTYPE;
     v_result JSONB;
 BEGIN
     SELECT * INTO v_interview FROM exit_interviews WHERE token = p_token;
@@ -248,14 +270,16 @@ BEGIN
 
     SELECT * INTO v_template FROM form_templates WHERE id = v_interview.template_id;
     SELECT * INTO v_collaborator FROM collaborators WHERE id = v_interview.collaborator_id;
+    SELECT * INTO v_role FROM roles WHERE id::TEXT = v_collaborator.role::TEXT;
 
     v_result = jsonb_build_object(
         'interview_id', v_interview.id,
         'status', v_interview.status,
         'answers', v_interview.answers,
         'collaborator_name', v_collaborator.name,
-        'collaborator_position', v_collaborator.role,
+        'collaborator_position', v_role.name,
         'collaborator_area', v_collaborator.area,
+        'collaborator_termination_date', v_collaborator.termination_date,
         'template_schema', v_template.schema,
         'template_name', v_template.name
     );

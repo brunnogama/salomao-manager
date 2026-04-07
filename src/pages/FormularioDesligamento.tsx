@@ -173,6 +173,11 @@ export default function FormularioDesligamento() {
                             <div className="text-left">
                                 <p className="text-sm font-bold text-white truncate max-w-[200px] sm:max-w-xs">{interviewData?.collaborator_name}</p>
                                 <p className="text-[10px] uppercase font-black tracking-widest text-[#d4af37]">{interviewData?.collaborator_position}</p>
+                                {interviewData?.collaborator_termination_date && (
+                                    <p className="text-[10px] font-medium text-gray-400 mt-0.5">
+                                        Data de Saída: {new Date(interviewData.collaborator_termination_date).toLocaleDateString()}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
