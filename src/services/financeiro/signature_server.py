@@ -213,6 +213,99 @@ def assinar_nota():
             "traceback": trace
         }), 500
 
+@app.route('/cancelar-nota', methods=['POST'])
+def cancelar_nota():
+    try:
+        dados = request.json or {}
+        chave_acesso = dados.get('chave_acesso')
+        motivo = dados.get('motivo', '1') # 1 = Erro na Emissão
+        cidade = dados.get('cidade', 'Rio de Janeiro')
+
+        password = os.getenv(f"CERT_PASSWORD_{cidade.upper().replace(' ', '_')}")
+        if not password: return jsonify({"erro": "Senha do certificado ausente."}), 400
+        
+        cert_name = f"certificado_{cidade.lower().replace(' ', '_')}.pfx"
+        cert_path = os.path.join(os.path.dirname(__file__), 'certs', cert_name)
+        
+        if not os.path.exists(cert_path):
+            return jsonify({"erro": "Certificado não encontrado."}), 400
+            
+        xml_template = f'''<pedCancNfse xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">
+    <infPedCanc Id="ID{chave_acesso}">
+        <chNFSe>{chave_acesso}</chNFSe>
+        <cMotivo>{motivo}</cMotivo>
+    </infPedCanc>
+</pedCancNfse>'''
+
+        from lxml import etree as LxmlET
+        parser = LxmlET.XMLParser(remove_blank_text=True)
+        root = LxmlET.fromstring(xml_template.encode('utf-8'), parser)
+
+        # Assina apenas o escopo da TAG
+        signer = CertificateSigner(cert_path=cert_path, password=password)
+        xml_assinado = signer.sign_xml(root)
+        
+        if isinstance(xml_assinado, LxmlET._Element):
+            xml_string = LxmlET.tostring(xml_assinado, encoding='UTF-8', xml_declaration=False).decode('utf-8')
+        else:
+            xml_string = xml_assinado.decode('utf-8') if hasattr(xml_assinado, 'decode') else str(xml_assinado)
+
+        import re
+        xml_string = re.sub(r'<X509Certificate>\s*([^<]+)\s*</X509Certificate>', lambda m: '<X509Certificate>' + m.group(1).replace('\n', '').replace('\r', '').strip() + '</X509Certificate>', xml_string)
+        xml_string = re.sub(r'<SignatureValue>\s*([^<]+)\s*</SignatureValue>', lambda m: '<SignatureValue>' + m.group(1).replace('\n', '').replace('\r', '').strip() + '</SignatureValue>', xml_string)
+        
+        if not xml_string.startswith('<?xml'):
+            xml_string = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_string
+            
+        from utils.mtls_extractor import MTlsExtractor
+        import requests, gzip, base64
+
+        ADN_API_URL = os.getenv("ADN_API_URL", "https://sefin.nfse.gov.br/SefinNacional/nfse")
+        EVENTO_URL = f"{ADN_API_URL}/{chave_acesso}/eventos"
+
+        extractor = MTlsExtractor(cert_path=cert_path, password=password)
+        try:
+            temp_cert, temp_key = extractor.extract_to_temp_files()
+            
+            xml_bytes = xml_string.encode('utf-8')
+            xml_gzipped = gzip.compress(xml_bytes)
+            xml_base64 = base64.b64encode(xml_gzipped).decode('utf-8')
+            
+            payload = {
+                "eventoXmlGZipB64": xml_base64
+            }
+
+            api_response = requests.post(
+                EVENTO_URL,
+                json=payload,
+                headers={"Content-Type": "application/json", "Accept": "application/json"},
+                cert=(temp_cert, temp_key),
+                timeout=15
+            )
+            
+            api_response.raise_for_status()
+            
+            return jsonify({
+                "status": "sucesso",
+                "mensagem": "Cancelamento enviado com sucesso",
+                "xml_enviado": xml_string,
+                "retorno_bruto": api_response.text
+            })
+            
+        except requests.exceptions.HTTPError as he:
+            raise Exception(f"Sefin rejeitou cancelamento (HTTP {api_response.status_code}): {api_response.text}")
+        finally:
+            extractor.cleanup()
+
+    except Exception as e:
+        import traceback
+        trace = traceback.format_exc()
+        print("ERRO CANCELAMENTO:", trace)
+        return jsonify({"erro": str(e), "traceback": trace}), 500
+
+@app.route('/substituir-nota', methods=['POST'])
+def substituir_nota():
+    return jsonify({'erro': 'Substituição requer novo DPS (Em desenvolvimento)'}), 501
+
 if __name__ == '__main__':
-    # Roda na porta 5000 para o React consumir
     app.run(port=5000)

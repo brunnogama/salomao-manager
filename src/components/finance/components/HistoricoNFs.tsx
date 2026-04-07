@@ -22,6 +22,7 @@ export const HistoricoNFs: React.FC = () => {
   
   // Modals e Ações
   const [nfToCancel, setNfToCancel] = useState<HistoricoNF | null>(null);
+  const [cancelMotivo, setCancelMotivo] = useState<string>('1');
   const [nfToSubstitute, setNfToSubstitute] = useState<HistoricoNF | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
 
@@ -79,7 +80,8 @@ export const HistoricoNFs: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nf_number: nfToCancel.nf_number,
-          chave_acesso: nfToCancel.nf_access_key
+          chave_acesso: nfToCancel.nf_access_key,
+          motivo: cancelMotivo
         })
       });
 
@@ -102,6 +104,7 @@ export const HistoricoNFs: React.FC = () => {
     } finally {
       setIsProcessingAction(false);
       setNfToCancel(null);
+      setCancelMotivo('1');
     }
   };
 
@@ -340,12 +343,26 @@ export const HistoricoNFs: React.FC = () => {
                 <AlertTriangle className="w-8 h-8 text-red-600" />
               </div>
               <h2 className="text-center text-xl font-black text-gray-900 mb-2 tracking-tight">Cancelar NF-e?</h2>
-              <p className="text-center text-sm text-gray-500 mb-8 font-medium px-4 leading-relaxed">
+              <p className="text-center text-sm text-gray-500 mb-6 font-medium px-4 leading-relaxed">
                 Você confirmou o cancelamento no sistema da prefeitura para a NF <strong className="text-red-600 font-bold">{nfToCancel.nf_number}</strong>? Ela deixará de aparecer neste histórico e esta ação é irreversível.
               </p>
+              
+              <div className="mb-6 px-4">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 block">Motivo do cancelamento<span className="text-red-500 ml-1">*</span></label>
+                <select 
+                    value={cancelMotivo}
+                    onChange={(e) => setCancelMotivo(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 text-[#1e3a8a] text-sm font-bold rounded-xl p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-50 transition-all cursor-pointer hover:border-red-300"
+                  >
+                   <option value="1">Erro na emissão</option>
+                   <option value="2">Serviço não prestado</option>
+                   <option value="9">Outros</option>
+                </select>
+              </div>
+
               <div className="flex gap-3">
                 <button
-                  onClick={() => setNfToCancel(null)}
+                  onClick={() => { setNfToCancel(null); setCancelMotivo('1'); }}
                   disabled={isProcessingAction}
                   className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-bold transition-all shadow-sm"
                 >
