@@ -9,6 +9,7 @@ import { differenceInMonths, differenceInYears } from 'date-fns'
 import { TransporteSection } from './TransporteSection'
 import { supabase } from '../../../lib/supabase'
 import { getInternScholarshipValue, formatDbMoneyToDisplay } from '../utils/colaboradoresUtils'
+import { AlertModal } from '../../../components/ui/AlertModal'
 import { ATUACOES_ADMINISTRATIVA, CARGOS_ADMINISTRATIVA, ATUACOES_JURIDICA, CARGOS_JURIDICA, ATUACOES_TERCEIRIZADA, CARGOS_TERCEIRIZADA } from '../utils/cargosAtuacoesUtils'
 
 interface DadosCorporativosSectionProps {
@@ -31,6 +32,8 @@ export function DadosCorporativosSection({
 
   const [exitInterview, setExitInterview] = useState<any>(null)
   const [refreshInterview, setRefreshInterview] = useState(0)
+  
+  const [alertInfo, setAlertInfo] = useState<{ isOpen: boolean, title: string, description: string, variant: 'warning'|'error'|'success'|'info' } | null>(null);
 
   // Fetch Existing Interview status
   useEffect(() => {
@@ -824,12 +827,17 @@ export function DadosCorporativosSection({
                         const { data: template, error: tmplError } = await supabase
                           .from('form_templates')
                           .select('id')
-                          .eq('vinculo_type', formData.contract_type || 'Estagiário')
+                          .ilike('vinculo_type', formData.contract_type || 'Estagiário')
                           .limit(1)
                           .maybeSingle();
                         
                         if (tmplError || !template) {
-                           alert('Nenhum template ativo encontrado para este tipo de vínculo (' + formData.contract_type + '). Crie um modelo primeiro nas Configurações.');
+                           setAlertInfo({
+                               isOpen: true,
+                               title: 'Atenção',
+                               description: `Nenhum modelo de formulário ativo encontrado para este tipo de vínculo (${formData.contract_type || 'Estagiário'}).\n\nCrie ou configure um modelo na aba de Configurações do Manager primeiro.`,
+                               variant: 'warning'
+                           });
                            if (btn) btn.innerHTML = 'Gerar Link do Formulário em Nova Aba';
                            return;
                         }
@@ -867,7 +875,12 @@ export function DadosCorporativosSection({
                         }, 4000);
                       } catch (err: any) {
                         console.error('Erro ao gerar formulário de desligamento:', err);
-                        alert('Erro ao gerar link. Detalhes: ' + err.message);
+                        setAlertInfo({
+                           isOpen: true,
+                           title: 'Erro de Geração',
+                           description: 'Ocorreu um erro ao gerar o Link Mágico. Detalhes técnicos:\n' + err.message,
+                           variant: 'error'
+                        });
                         if (btn) btn.innerHTML = 'Tentar Novamente';
                       }
                     }}
@@ -1031,6 +1044,17 @@ export function DadosCorporativosSection({
           </div>
         ) : null}
       </div>
+
+      {alertInfo && (
+        <AlertModal
+          isOpen={alertInfo.isOpen}
+          onClose={() => setAlertInfo(null)}
+          title={alertInfo.title}
+          description={alertInfo.description}
+          variant={alertInfo.variant}
+          confirmText="Entendi"
+        />
+      )}
     </section>
   )
 }
