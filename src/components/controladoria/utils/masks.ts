@@ -61,21 +61,42 @@ export const maskCNJ = (value: string) => {
   return v.slice(0, 25);
 };
 
-export const parseCurrency = (value: string | undefined): number => {
-  if (!value) return 0;
+export const parseCurrency = (value: string | number | undefined): number => {
+  if (value === undefined || value === null || value === '') return 0;
   if (typeof value === 'number') return value;
   
-  let stringToParse = value;
+  let stringToParse = String(value).trim();
   // If the value is "US$ 10,00 | R$ 51,50", extract the BRL part
-  if (value.includes(' | ')) {
-    stringToParse = value.split(' | ')[1];
+  if (stringToParse.includes(' | ')) {
+    stringToParse = stringToParse.split(' | ')[1].trim();
   }
 
-  // Remove everything except digits, comma, and minus sign
-  // This ensures we keep negative signs and the decimal comma.
-  const clean = stringToParse.replace(/[^\d,\-]/g, '').replace(',', '.');
-  const parsed = parseFloat(clean);
-  return isNaN(parsed) ? 0 : parsed;
+  const withoutCurrencyAndSpace = stringToParse.replace(/[^\d,\.\-]/g, '');
+  
+  if (withoutCurrencyAndSpace.includes(',')) {
+     const clean = withoutCurrencyAndSpace.replace(/\./g, '').replace(',', '.');
+     const parsed = parseFloat(clean);
+     return isNaN(parsed) ? 0 : parsed;
+  } else {
+     const dotsCount = (withoutCurrencyAndSpace.match(/\./g) || []).length;
+     if (dotsCount === 0) {
+        const parsed = parseFloat(withoutCurrencyAndSpace);
+        return isNaN(parsed) ? 0 : parsed;
+     } else if (dotsCount === 1) {
+        const parts = withoutCurrencyAndSpace.split('.');
+        // Treat it as a thousands separator if there are exactly 3 digits after the dot
+        if (parts[1].length === 3) {
+            const parsed = parseFloat(withoutCurrencyAndSpace.replace('.', ''));
+            return isNaN(parsed) ? 0 : parsed;
+        } else {
+            const parsed = parseFloat(withoutCurrencyAndSpace);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+     } else {
+        const parsed = parseFloat(withoutCurrencyAndSpace.replace(/\./g, ''));
+        return isNaN(parsed) ? 0 : parsed;
+     }
+  }
 };
 
 export const toTitleCase = (str: string) => {
