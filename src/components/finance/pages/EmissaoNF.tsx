@@ -671,7 +671,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         <div className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 h-full min-h-[600px]">
           
           {/* CIDADE DE EMISSÃO SELECT */}
-          <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-xl border border-gray-100 shrink-0 relative z-40">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-xl border border-gray-100 shrink-0 relative z-50">
             <div className="relative" ref={cityDropdownRef}>
               <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 block">Cidade de Emissão da Nota</label>
               <div
