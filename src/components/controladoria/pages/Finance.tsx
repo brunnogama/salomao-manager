@@ -107,11 +107,21 @@ export function Finance() {
 
   const handleOpenNfPdf = async () => {
     if (!nfPdf) return;
-    const toastId = toast.loading('Abrindo PDF...');
+    const toastId = toast.loading('Processando...');
     try {
       if (nfPdf.startsWith('http')) {
+        if (nfPdf.includes('nfse.gov.br') && nfPdf.includes('chave=')) {
+          const match = nfPdf.match(/chave=([^&]+)/);
+          if (match && match[1]) {
+            navigator.clipboard.writeText(match[1]).catch(() => {});
+            toast.success('Chave copiada! Cole no campo do site da Receita Federal.', { id: toastId, duration: 5000 });
+          } else {
+            toast.dismiss(toastId);
+          }
+        } else {
+          toast.dismiss(toastId);
+        }
         window.open(nfPdf, '_blank');
-        toast.dismiss(toastId);
         return;
       }
       const { data, error } = await supabase.storage.from('ged-documentos').createSignedUrl(nfPdf, 60);
