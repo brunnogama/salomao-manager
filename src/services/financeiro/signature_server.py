@@ -123,17 +123,30 @@ def assinar_nota():
                     else:
                         response_xml_str = api_response.text
 
-                    # Parse do retorno XML oficial para capturar a Chave de Acesso gerada
-                    root_resp = LxmlET.fromstring(response_xml_str.encode('utf-8'))
-                    ns = {'ns': 'http://www.sped.fazenda.gov.br/nfse'}
-                    ch_element = root_resp.find('.//ns:chNFSe', ns)
-                    
-                    if ch_element is not None and ch_element.text:
-                        chave_acesso = ch_element.text
-                    else:
-                        raise ValueError(f"Tag <chNFSe> ausente. Retorno: {response_xml_str}")
+                    chave_acesso = None
+                    if isinstance(response_data, dict) and "chaveAcesso" in response_data:
+                        chave_acesso = response_data["chaveAcesso"]
+
+                    if not chave_acesso:
+                        # Parse do retorno XML oficial para capturar a Chave de Acesso gerada (fallback)
+                        root_resp = LxmlET.fromstring(response_xml_str.encode('utf-8'))
+                        ns = {'ns': 'http://www.sped.fazenda.gov.br/nfse'}
+                        ch_element = root_resp.find('.//ns:chNFSe', ns)
+                        
+                        if ch_element is not None and ch_element.text:
+                            chave_acesso = ch_element.text
+                        else:
+                            # Fallback pelo atributo Id
+                            inf_nfse = root_resp.find('.//ns:infNFSe', ns)
+                            if inf_nfse is not None:
+                                id_attr = inf_nfse.get('Id', '')
+                                if id_attr.startswith('NFS'):
+                                    chave_acesso = id_attr.replace('NFS', '')
+
+                    if not chave_acesso:
+                        raise ValueError(f"Chave de acesso não encontrada. Retorno: {response_xml_str}")
                 except Exception as parse_e:
-                    raise ValueError(f"Falha ao ler XML de Retorno: {str(parse_e)}. Raw: {api_response.text}")
+                    raise ValueError(f"Falha ao ler XML/Chave de Retorno: {str(parse_e)}. Raw: {api_response.text}")
 
                 return jsonify({
                     "status": "sucesso",
