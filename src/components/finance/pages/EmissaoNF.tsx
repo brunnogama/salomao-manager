@@ -634,23 +634,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
             </button>
           </div>
 
-          <div className="flex items-center gap-3 ml-0 sm:ml-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden sm:block">Cidade de Emissão:</label>
-            <div className="relative group">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1e3a8a]/50" />
-              <select
-                value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-48 sm:w-56 appearance-none bg-gray-50 border border-gray-200 text-[#1e3a8a] text-sm font-bold rounded-lg pl-9 pr-8 py-2.5 outline-none focus:border-[#1e3a8a] focus:ring-2 focus:ring-blue-50 transition-all cursor-pointer shadow-sm hover:border-[#1e3a8a]/50"
-              >
-                <option value="" disabled>Selecione a cidade</option>
-                {cities.map(city => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1e3a8a]/50 pointer-events-none group-hover:text-[#1e3a8a]" />
-            </div>
-          </div>
+
 
           <button
             onClick={handleEmitirNota}
@@ -674,6 +658,26 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         
         {/* PAINEL ESQUERDO: CLIENTE E HONORÁRIOS */}
         <div className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 h-full min-h-[600px]">
+          
+          {/* CIDADE DE EMISSÃO SELECT */}
+          <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-xl border border-gray-100 shrink-0 relative z-30">
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Cidade de Emissão</label>
+            <div className="relative group w-full">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1e3a8a]/50" />
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="w-full appearance-none bg-gray-50 border border-gray-200 text-[#1e3a8a] text-sm font-bold rounded-xl pl-9 pr-8 py-3 outline-none focus:border-[#1e3a8a] focus:ring-2 focus:ring-blue-50 transition-all cursor-pointer shadow-sm hover:border-[#1e3a8a]/50"
+              >
+                <option value="" disabled>Selecione a cidade</option>
+                {cities.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1e3a8a]/50 pointer-events-none group-hover:text-[#1e3a8a]" />
+            </div>
+          </div>
+
           {/* CLIENT SELECT */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-gray-100 shrink-0 relative z-30">
             <div className="flex justify-between items-center mb-4">

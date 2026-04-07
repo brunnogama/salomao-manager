@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Calendar, Building, FileDigit, Key, Search, Loader2, Copy } from 'lucide-react';
+import { Calendar, Building, FileDigit, Key, Search, Loader2, Copy, DollarSign, FileDown } from 'lucide-react';
+import XLSX from 'xlsx-js-style';
 import { toast } from 'sonner';
 
 interface HistoricoNF {
@@ -8,6 +9,8 @@ interface HistoricoNF {
   nf_issue_date: string;
   nf_number: string;
   nf_access_key: string;
+  nf_value?: number;
+  net_value?: number;
   contract: any;
 }
 
@@ -29,7 +32,7 @@ export const HistoricoNFs: React.FC = () => {
           id,
           nf_issue_date,
           nf_number,
-          nf_access_key,
+          nf_access_key, nf_value, net_value,
           contract:contracts(client_name)
         `)
         .eq('status', 'nf_emitida')
@@ -60,6 +63,63 @@ export const HistoricoNFs: React.FC = () => {
     return clientName.includes(searchLower) || nfNumber.includes(searchLower) || key.includes(searchLower);
   });
 
+  const handleExportXLSX = () => {
+    if (filteredHistorico.length === 0) {
+      toast.error('Nenhum dado para exportar.');
+      return;
+    }
+
+    const exportRawData = filteredHistorico.map(nf => ({
+      "Data Emissão": nf.nf_issue_date ? new Date(nf.nf_issue_date).toLocaleDateString('pt-BR') : '-',
+      "Cliente": nf.contract?.client_name || '-',
+      "NF": nf.nf_number || 'Pendente',
+      "Valor Bruto": nf.nf_value || 0,
+      "Valor Líquido": nf.net_value || 0,
+      "Chave de Acesso": nf.nf_access_key || 'Não disponível'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportRawData);
+
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellRef = XLSX.utils.encode_cell({ r: 0, c: col }); 
+      if (!ws[cellRef]) continue;
+
+      ws[cellRef].s = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "0A192F" } }, 
+        alignment: { horizontal: "center", vertical: "center" }
+      };
+    }
+
+    ws['!cols'] = [
+      { wch: 15 }, // Data
+      { wch: 40 }, // Cliente
+      { wch: 15 }, // NF
+      { wch: 20 }, // Bruto
+      { wch: 20 }, // Liquido
+      { wch: 50 }, // Chave
+    ];
+
+    for (let R = 1; R <= range.e.r; ++R) {
+      const cellBruto = XLSX.utils.encode_cell({ r: R, c: 3 });
+      if (ws[cellBruto] && typeof ws[cellBruto].v === 'number') {
+        ws[cellBruto].t = 'n';
+        ws[cellBruto].z = '"R$"#,##0.00;"R$"-#,##0.00';
+      }
+      const cellLiq = XLSX.utils.encode_cell({ r: R, c: 4 });
+      if (ws[cellLiq] && typeof ws[cellLiq].v === 'number') {
+        ws[cellLiq].t = 'n';
+        ws[cellLiq].z = '"R$"#,##0.00;"R$"-#,##0.00';
+      }
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "NFs Emitidas");
+    XLSX.writeFile(wb, `Historico_NFs_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Planilha gerada com sucesso!');
+  };
+
   return (
     <div className="w-full flex flex-col gap-6 p-4 sm:p-6 bg-gray-50/50 min-h-full">
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col">
@@ -74,27 +134,39 @@ export const HistoricoNFs: React.FC = () => {
             </p>
           </div>
           
-          <div className="relative max-w-sm w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por cliente, número ou chave..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a]/20 transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="relative max-w-sm w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por cliente, número ou chave..."
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a]/20 transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <button
+              onClick={handleExportXLSX}
+              title="Exportar Planilha"
+              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+            >
+              <FileDown className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
         {/* TABLE LIST */}
         <div className="overflow-x-auto">
-          <div className="min-w-[800px]">
+          <div className="min-w-[1100px]">
             {/* Table Header */}
-            <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-200 text-xs font-black text-gray-500 uppercase tracking-wider">
-              <div className="col-span-2 p-4 flex items-center gap-2"><Calendar className="w-4 h-4" /> Data da Emissão</div>
-              <div className="col-span-3 p-4 flex items-center gap-2"><Building className="w-4 h-4" /> Cliente (Tomador)</div>
-              <div className="col-span-2 p-4 flex items-center gap-2"><FileDigit className="w-4 h-4" /> Número da NFS-e</div>
-              <div className="col-span-5 p-4 flex items-center gap-2"><Key className="w-4 h-4" /> Chave de Acesso</div>
+            <div className="grid grid-cols-[1.5fr_3fr_1.5fr_1.5fr_1.5fr_4fr] bg-gray-50 border-b border-gray-200 text-xs font-black text-gray-500 uppercase tracking-wider">
+              <div className="p-4 flex items-center gap-2"><Calendar className="w-4 h-4" /> Data</div>
+              <div className="p-4 flex items-center gap-2"><Building className="w-4 h-4" /> Cliente (Tomador)</div>
+              <div className="p-4 flex items-center gap-2"><FileDigit className="w-4 h-4" /> Número da NFS-e</div>
+              <div className="p-4 flex items-center gap-2"><DollarSign className="w-4 h-4" /> Bruto</div>
+              <div className="p-4 flex items-center gap-2"><DollarSign className="w-4 h-4 text-emerald-600" /> Líquido</div>
+              <div className="p-4 flex items-center gap-2"><Key className="w-4 h-4" /> Chave de Acesso</div>
             </div>
 
             {/* Table Body */}
@@ -111,14 +183,14 @@ export const HistoricoNFs: React.FC = () => {
             ) : (
               <div className="divide-y divide-gray-100">
                 {filteredHistorico.map((nf) => (
-                  <div key={nf.id} className="grid grid-cols-12 text-sm hover:bg-emerald-50/50 transition-colors group">
-                    <div className="col-span-2 p-4 flex items-center font-semibold text-gray-700">
+                  <div key={nf.id} className="grid grid-cols-[1.5fr_3fr_1.5fr_1.5fr_1.5fr_4fr] text-sm hover:bg-emerald-50/50 transition-colors group">
+                    <div className="p-4 flex items-center font-semibold text-gray-700">
                       {nf.nf_issue_date ? new Date(nf.nf_issue_date).toLocaleDateString('pt-BR') : '-'}
                     </div>
-                    <div className="col-span-3 p-4 flex items-center font-bold text-[#0a192f] truncate pr-4">
+                    <div className="p-4 flex items-center font-bold text-[#0a192f] truncate pr-4">
                       {nf.contract?.client_name || '-'}
                     </div>
-                    <div className="col-span-2 p-4 flex items-center group/btn relative">
+                    <div className="p-4 flex items-center group/btn relative">
                       {nf.nf_number ? (
                          <div 
                            onClick={() => handleCopy(nf.nf_number, 'Número NFS-e')}
@@ -131,14 +203,20 @@ export const HistoricoNFs: React.FC = () => {
                          <span className="text-gray-400 font-semibold italic text-xs">Pendente</span>
                       )}
                     </div>
-                    <div className="col-span-5 p-4 flex items-center group/btn relative max-w-full">
+                    <div className="p-4 flex items-center font-bold text-gray-600">
+                      {nf.nf_value ? (nf.nf_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                    </div>
+                    <div className="p-4 flex items-center font-bold text-emerald-600">
+                      {nf.net_value ? (nf.net_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                    </div>
+                    <div className="p-4 flex items-center group/btn relative max-w-full">
                        {nf.nf_access_key ? (
                           <div 
                             onClick={() => handleCopy(nf.nf_access_key, 'Chave de Acesso')}
-                            className="bg-gray-100/80 border border-gray-200 text-gray-700 font-mono font-semibold px-2.5 py-1 rounded-md text-xs cursor-pointer hover:bg-gray-200 hover:text-black hover:border-gray-300 transition-all flex items-center justify-between gap-3 w-full"
+                            className="bg-gray-100/80 border border-gray-200 text-[#1e3a8a] font-mono font-semibold px-2.5 py-1.5 rounded-md text-xs cursor-pointer hover:bg-blue-50 hover:text-blue-900 hover:border-blue-200 transition-all flex items-center justify-between gap-3 w-full group/copy"
                           >
                              <span className="truncate">{nf.nf_access_key}</span>
-                             <Copy className="w-3 h-3 opacity-50 shrink-0" />
+                             <Copy className="w-3.5 h-3.5 opacity-50 group-hover/copy:opacity-100 group-hover/copy:text-blue-600 shrink-0 transition-opacity" />
                           </div>
                        ) : (
                          <span className="text-gray-400 font-semibold italic text-xs">Não disponível</span>
