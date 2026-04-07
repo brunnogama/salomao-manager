@@ -252,8 +252,8 @@ INSERT INTO form_templates (name, vinculo_type, schema) VALUES (
 );
 
 INSERT INTO form_templates (name, vinculo_type, schema) VALUES (
-    'Formulário de Desligamento - Advogados',
-    'Advogado',
+    'Entrevista de Desligamento - Advogados',
+    'ADVOGADO ASSOCIADO',
     '[
   {
     "id": "sec_motivo",
