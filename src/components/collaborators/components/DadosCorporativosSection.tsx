@@ -864,6 +864,10 @@ export function DadosCorporativosSection({
                            tokenStr = data?.token;
                         }
                         
+                        if (!tokenStr) {
+                           throw new Error('Falha ao obter o identificador único do formulário (Token não retornado pelo servidor).');
+                        }
+                        
                         setRefreshInterview(r => r + 1);
                         
                         const url = `${window.location.origin}/desligamento/${tokenStr}`;
@@ -871,7 +875,7 @@ export function DadosCorporativosSection({
                         window.open(url, '_blank');
                         if (btn) btn.innerHTML = '✓ Link Copiado e Aberto!';
                         setTimeout(() => {
-                           if (btn) btn.innerHTML = 'Gerar e Copiar Link Mágico Novamente';
+                           if (btn) btn.innerHTML = 'Gerar Link do Formulário Novamente';
                         }, 4000);
                       } catch (err: any) {
                         console.error('Erro ao gerar formulário de desligamento:', err);
@@ -887,7 +891,7 @@ export function DadosCorporativosSection({
                     id="btn-magic-link-desligamento"
                     className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-[11px] font-black tracking-[0.2em] uppercase rounded-xl shadow-lg shadow-[#1e3a8a]/20 text-white bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] hover:scale-[1.02] hover:shadow-xl active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1e3a8a]"
                   >
-                    Gerar e Copiar Link Mágico
+                    Gerar Link do Formulário
                   </button>
                   {exitInterview?.status === 'pending' && (
                      <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-3 rounded-xl border border-amber-100 text-xs font-bold w-full sm:w-auto">

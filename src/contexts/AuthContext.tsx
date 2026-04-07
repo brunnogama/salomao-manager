@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // We must log the user out to enforce the "logout on browser close" rule.
                 if (!hasSessionCookie()) {
                     // Não forçar logout em rotas públicas que não precisam de sessão
-                    const publicPaths = ['/candidato/perfil/', '/atualizacao-cadastral/', '/report/controladoria', '/kanban_pessoal'];
+                    const publicPaths = ['/candidato/perfil/', '/atualizacao-cadastral/', '/desligamento/', '/report/controladoria', '/kanban_pessoal'];
                     const isPublicRoute = publicPaths.some(p => window.location.pathname.startsWith(p));
                     if (!isPublicRoute) {
                         console.log('🚪 Browser restart detected (no session cookie). Logging out automatically.');
