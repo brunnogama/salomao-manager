@@ -542,7 +542,8 @@ export default function AtualizacaoCadastral() {
                             <div className="pt-0.5">
                                 <h3 className="text-emerald-900 font-bold text-sm mb-1">Privacidade e Proteção de Dados (LGPD)</h3>
                                 <p className="text-emerald-700/90 text-xs sm:text-sm leading-relaxed">
-                                    Estes dados são confidenciais e utilizados apenas para fins de gestão interna. Por favor, revise seus dados abaixo e atualize o que for necessário.
+                                    Estes dados são confidenciais e utilizados apenas para fins de gestão interna. <br/>
+                                    Por favor, revise seus dados abaixo e atualize o que for necessário.
                                 </p>
                             </div>
                         </div>
