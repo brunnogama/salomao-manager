@@ -34,6 +34,7 @@ export function DadosCorporativosSection({
   const [refreshInterview, setRefreshInterview] = useState(0)
   
   const [alertInfo, setAlertInfo] = useState<{ isOpen: boolean, title: string, description: string, variant: 'warning'|'error'|'success'|'info' } | null>(null);
+  const [generatedLink, setGeneratedLink] = useState('');
 
   // Fetch Existing Interview status
   useEffect(() => {
@@ -871,6 +872,7 @@ export function DadosCorporativosSection({
                         setRefreshInterview(r => r + 1);
                         
                         const url = `${window.location.origin}/desligamento/${tokenStr}`;
+                        setGeneratedLink(url);
                         await navigator.clipboard.writeText(url);
                         window.open(url, '_blank');
                         if (btn) btn.innerHTML = '✓ Link Copiado e Aberto!';
@@ -893,13 +895,44 @@ export function DadosCorporativosSection({
                   >
                     Gerar Link do Formulário
                   </button>
-                  {exitInterview?.status === 'pending' && (
+                  {exitInterview?.status === 'pending' && !generatedLink && (
                      <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-3 rounded-xl border border-amber-100 text-xs font-bold w-full sm:w-auto">
                         <Clock className="w-4 h-4 shrink-0" />
                         Formulário Gerado e Aguardando Resposta
                      </div>
                   )}
                 </div>
+
+                {generatedLink && (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl relative z-10 animate-in fade-in slide-in-from-top-2">
+                    <label className="text-[10px] font-black uppercase text-blue-800 tracking-widest block mb-2">Link Gerado (Copie e Envie)</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        readOnly 
+                        value={generatedLink} 
+                        className="flex-1 bg-white border border-blue-200 text-blue-900 text-xs rounded-lg px-3 py-2 outline-none"
+                        onClick={(e) => (e.target as HTMLInputElement).select()}
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(generatedLink);
+                          const btn = document.getElementById('btn-copy-generated');
+                          if (btn) {
+                            const original = btn.innerText;
+                            btn.innerText = 'Copiado!';
+                            setTimeout(() => { btn.innerText = original; }, 2000);
+                          }
+                        }}
+                        id="btn-copy-generated"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+                      >
+                        Copiar
+                      </button>
+                    </div>
+                  </div>
+                )}
                 
                 {exitInterview?.status === 'completed' && (
                   <div className="mt-6 space-y-4 relative z-10 animate-in fade-in slide-in-from-bottom-2">
