@@ -223,9 +223,9 @@ export function DashboardHeader({
             <button
               onClick={onExportXLSX}
               title="Exportar Planilha Excel com Dados Brutos"
-              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+              className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 bg-[#00b87c] text-white hover:bg-[#00a36e] shrink-0"
             >
-              <FileDown className="h-5 w-5" />
+              <FileDown className="w-5 h-5" />
             </button>
           )}
 
@@ -234,12 +234,12 @@ export function DashboardHeader({
             onClick={handleExportPDF}
             disabled={isExportingPDF || isCapturing}
             title="Exportar Dashboard em PDF (Alta Resolução)"
-            className="flex items-center justify-center w-10 h-10 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-lg shadow-red-500/30 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg shadow-red-500/20 transition-all active:scale-95 bg-[#ff4d4f] text-white hover:bg-[#ff3030] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isExportingPDF ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              <Download className="h-5 w-5" />
+              <Download className="w-5 h-5" />
             )}
           </button>
 
