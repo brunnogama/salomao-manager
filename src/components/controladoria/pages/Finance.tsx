@@ -351,7 +351,7 @@ export function Finance() {
       .order('due_date', { ascending: true });
 
     if (installmentsData) {
-      const allowedStatuses = ['proposal', 'active', 'baixado'];
+      const allowedStatuses = ['proposal', 'active', 'baixado', 'rascunho'];
       const filteredInstallments = installmentsData.filter((i: any) =>
         i.contract?.status && allowedStatuses.includes(i.contract.status)
       );
