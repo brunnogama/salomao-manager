@@ -20,7 +20,7 @@ import jsPDF from 'jspdf'
 import { useState } from 'react'
 import XLSX from 'xlsx-js-style'
 import { useColaboradores } from '../hooks/useColaboradores'
-import { getSegment, isActiveAtDate, calculateTenure } from '../utils/rhChartUtils'
+import { getSegment, calculateTenure } from '../utils/rhChartUtils'
 
 export function RHDashboard() {
   const { isPresentationMode, togglePresentationMode } = usePresentation()
@@ -52,7 +52,7 @@ export function RHDashboard() {
         "Área": c.area,
         "Local": c.locations?.name || String(c.local),
         "Cargo": c.roles?.name || String(c.role),
-        "Status": isActiveAtDate(c, new Date()) ? "Ativo" : "Inativo",
+        "Status": c.status === 'active' ? "Ativo" : "Inativo",
         "Data de Contratação": c.hire_date ? new Date(c.hire_date + 'T12:00:00').toLocaleDateString('pt-BR') : '',
         "Data de Desligamento": c.termination_date ? new Date(c.termination_date + 'T12:00:00').toLocaleDateString('pt-BR') : '',
         "Tempo de Casa (Anos)": c.hire_date ? calculateTenure(c.hire_date, new Date(), c.termination_date).toFixed(1).replace('.', ',') : ''
@@ -63,7 +63,7 @@ export function RHDashboard() {
       XLSX.utils.book_append_sheet(wb, wsRaw, "Base de Colaboradores");
 
       // 2. Headcount Resumo
-      const ativos = colaboradores.filter(c => isActiveAtDate(c, new Date()));
+      const ativos = colaboradores.filter(c => c.status === 'active');
       const admCount = ativos.filter(c => getSegment(c) === 'Administrativo').length;
       const jurCount = ativos.filter(c => getSegment(c) === 'Jurídico').length;
       const tercCount = ativos.filter(c => getSegment(c) === 'Terceirizada').length;
