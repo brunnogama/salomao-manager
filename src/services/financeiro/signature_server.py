@@ -154,6 +154,34 @@ def assinar_nota():
                     except Exception:
                         pass
                         
+                    # POLLING DA PREFEITURA: Aguardar o número da NF
+                    if not nf_number and chave_acesso:
+                        import time
+                        print(f"Número da NF pendente. Iniciando polling para a chave {chave_acesso}...")
+                        for attempt in range(8): # Tenta por até 24 segundos
+                            time.sleep(3)
+                            try:
+                                poll_resp = requests.get(
+                                    f"{ADN_API_URL}/{chave_acesso}",
+                                    headers={"Accept": "application/json"},
+                                    cert=(temp_cert, temp_key),
+                                    timeout=10
+                                )
+                                if poll_resp.status_code == 200:
+                                    poll_data = poll_resp.json() if 'application/json' in poll_resp.headers.get('Content-Type', '') else poll_resp.content
+                                    if isinstance(poll_data, dict) and "nfseXmlGZipB64" in poll_data:
+                                        b64_gz = base64.b64decode(poll_data["nfseXmlGZipB64"])
+                                        p_xml_str = gzip.decompress(b64_gz).decode('utf-8')
+                                        p_root = LxmlET.fromstring(p_xml_str.encode('utf-8'))
+                                        p_element = p_root.find('.//ns:nNFSe', ns)
+                                        if p_element is not None and p_element.text:
+                                            nf_number = p_element.text
+                                            response_xml_str = p_xml_str # Atualiza XML oficial
+                                            print(f"✓ Sucesso no Polling! NF Gerada: {nf_number}")
+                                            break
+                            except Exception as poll_err:
+                                print(f"Aguardando processamento ({attempt+1}/8)... {str(poll_err)}")
+                                
                 except Exception as parse_e:
                     raise ValueError(f"Falha ao ler XML/Chave de Retorno: {str(parse_e)}. Raw: {api_response.text}")
 
