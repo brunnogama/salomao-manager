@@ -124,6 +124,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [filterLocal, setFilterLocal] = useState<string[]>([])
   const [filterCargo, setFilterCargo] = useState<string[]>([])
   const [filterArea, setFilterArea] = useState<string[]>([])
+  const [filterVinculo, setFilterVinculo] = useState<string[]>([])
 
   // New Tabs State
   const [activeMainTab, setActiveMainTab] = useState<'Integrantes' | 'Relatórios' | 'Tabelas'>('Integrantes');
@@ -602,7 +603,26 @@ export function Colaboradores({ }: ColaboradoresProps) {
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [colaboradores]);
 
+  const vinculoOptions = React.useMemo(() => {
+    const vinculos = new Set<string>();
+    colaboradores.forEach(c => {
+      if (c.contract_type) vinculos.add(c.contract_type);
+    });
+    return Array.from(vinculos)
+      .map(v => ({ label: v, value: v }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [colaboradores]);
+
   const filterCategories = React.useMemo((): FilterCategory[] => [
+    {
+      key: 'vinculo',
+      label: 'Vínculo',
+      icon: LinkIcon,
+      type: 'multi',
+      options: vinculoOptions,
+      value: filterVinculo,
+      onChange: setFilterVinculo,
+    },
     {
       key: 'lider',
       label: 'Líder',
@@ -648,14 +668,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
       value: filterArea,
       onChange: setFilterArea,
     },
-  ], [filterLider, filterPartner, filterLocal, filterCargo, filterArea, liderOptions, partnerOptions, locationOptions, roleOptions, areaOptions]);
+  ], [filterVinculo, filterLider, filterPartner, filterLocal, filterCargo, filterArea, vinculoOptions, liderOptions, partnerOptions, locationOptions, roleOptions, areaOptions]);
 
   const activeFilterCount = React.useMemo(() => {
-    return filterLider.length + filterPartner.length + filterLocal.length + filterCargo.length + filterArea.length;
-  }, [filterLider, filterPartner, filterLocal, filterCargo, filterArea]);
+    return filterVinculo.length + filterLider.length + filterPartner.length + filterLocal.length + filterCargo.length + filterArea.length;
+  }, [filterVinculo, filterLider, filterPartner, filterLocal, filterCargo, filterArea]);
 
   const activeFilterChips = React.useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
+    filterVinculo.forEach(id => {
+      const label = vinculoOptions.find(opt => opt.value === id)?.label || id;
+      chips.push({ key: `vinculo-${id}`, label: `Vínculo: ${label}`, onClear: () => setFilterVinculo(prev => prev.filter(v => v !== id)) });
+    });
     filterLider.forEach(id => {
       const label = liderOptions.find(l => l.value === id)?.label || id;
       chips.push({ key: `lider-${id}`, label: `Líder: ${label}`, onClear: () => setFilterLider(prev => prev.filter(v => v !== id)) });
@@ -677,9 +701,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
       chips.push({ key: `area-${id}`, label: `Área: ${label}`, onClear: () => setFilterArea(prev => prev.filter(v => v !== id)) });
     });
     return chips;
-  }, [filterLider, filterPartner, filterLocal, filterCargo, filterArea, liderOptions, partnerOptions, locationOptions, roleOptions, areaOptions]);
+  }, [filterVinculo, filterLider, filterPartner, filterLocal, filterCargo, filterArea, vinculoOptions, liderOptions, partnerOptions, locationOptions, roleOptions, areaOptions]);
 
   const clearAllFilters = () => {
+    setFilterVinculo([]);
     setFilterLider([]);
     setFilterPartner([]);
     setFilterLocal([]);
@@ -1424,8 +1449,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const matchLocal = filterLocal.length > 0 ? filterLocal.includes(String(c.local)) : true
     const matchCargo = filterCargo.length > 0 ? filterCargo.some(fc => fc === 'unassigned' ? (!c.role || String(c.role) === 'Não definido' || String(c.role) === 'null') : String(c.role) === fc) : true
     const matchArea = filterArea.length > 0 ? filterArea.includes(String(c.area)) : true
+    const matchVinculo = filterVinculo.length > 0 ? filterVinculo.includes(String(c.contract_type)) : true
     const matchUpdated = showUpdatedOnly ? c.cadastro_atualizado === true : true
-    return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchArea && matchUpdated
+    return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchArea && matchVinculo && matchUpdated
   })
   const getAdvancedFiltered = (overrideStatus?: string) => {
     return colaboradores.filter(c => {
