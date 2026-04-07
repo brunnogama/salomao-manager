@@ -251,6 +251,205 @@ INSERT INTO form_templates (name, vinculo_type, schema) VALUES (
 ]'::jsonb
 );
 
+INSERT INTO form_templates (name, vinculo_type, schema) VALUES (
+    'Formulário de Desligamento - Advogados',
+    'Advogado',
+    '[
+  {
+    "id": "sec_motivo",
+    "title": "Motivo do Desligamento",
+    "questions": [
+      {
+        "id": "tempo_permanencia",
+        "type": "radio",
+        "label": "Tempo de permanência",
+        "options": ["Até 3 meses", "3 a 6 meses", "6 a 12 meses", "Mais de 12 meses"]
+      },
+      {
+        "id": "q1",
+        "type": "radio",
+        "label": "Marque a opção do motivo da sua saída (marque apenas 1 opção)",
+        "options": [
+          "Redução de quadro de pessoal", "Clima organizacional", "Melhor proposta", "Horário das atividades",
+          "Problemas particulares", "Problemas de relacionamento com a liderança", "Término do contrato", "Não adaptação às atividades",
+          "Dedicação aos estudos", "Falta de perspectivas profissionais", "Retirada da sociedade", "Outro"
+        ]
+      },
+      {
+        "id": "q2",
+        "type": "checkbox",
+        "label": "Em caso de \"melhor proposta\" marque a opção que melhor define a sua decisão",
+        "dependsOn": {
+          "questionId": "q1",
+          "value": "Melhor proposta"
+        },
+        "options": [
+          "Localização (facilidade de acesso e proximidade da residência)", "Melhor remuneração",
+          "Desenvolvimento profissional", "Melhores benefícios",
+          "Home Office 100%", "Bônus",
+          "Outros (s)"
+        ]
+      },
+      {
+        "id": "q2_outros_quais",
+        "type": "text",
+        "label": "Outros benefícios quais?",
+        "dependsOn": {
+          "questionId": "q2",
+          "value": "Outros (s)"
+        }
+      }
+    ]
+  },
+  {
+    "id": "sec_avaliacao",
+    "title": "Assinale, abaixo, a sua avaliação quanto aos itens mencionados",
+    "description": "",
+    "questions": [
+      {
+         "id": "grid_lider",
+         "type": "grid",
+         "label": "Relacionamento com o líder",
+         "options": ["Muito satisfeito", "Satisfeito", "Insatisfeito", "Muito insatisfeito"],
+         "items": [
+           {"id": "lider_qualidade", "label": "Qualidade de relacionamento com o líder"},
+           {"id": "lider_repasse", "label": "Repasse das informações e/ou orientações que facilitavam a realização do seu trabalho"},
+           {"id": "lider_feedback", "label": "Recebi feedbacks do líder sobre as atividades realizadas"}
+         ],
+         "has_comments": true
+      },
+      {
+         "id": "grid_ambiente",
+         "type": "grid",
+         "label": "Ambiente",
+         "options": ["Muito satisfeito", "Satisfeito", "Insatisfeito", "Muito insatisfeito"],
+         "items": [
+           {"id": "ambiente_condicoes", "label": "Condições de trabalho (higiene, móveis e instalações, iluminação)"},
+           {"id": "ambiente_ti", "label": "Infraestrutura de TI"}
+         ],
+         "has_comments": true
+      },
+      {
+         "id": "grid_comunicacao",
+         "type": "grid",
+         "label": "Comunicação interna e relacionamento interpessoais",
+         "options": ["Muito satisfeito", "Satisfeito", "Insatisfeito", "Muito insatisfeito"],
+         "items": [
+           {"id": "com_equipe", "label": "Avalie o relacionamento entre os integrantes da sua equipe"},
+           {"id": "com_areas", "label": "Avalie o relacionamento com as outras áreas"},
+           {"id": "com_metas", "label": "Comunicação de metas e objetivos da sua área"},
+           {"id": "com_reunioes", "label": "Participou de reuniões suficientes para que pudesse trocar ideias e dar sugestões"}
+         ],
+         "has_comments": true
+      },
+      {
+         "id": "grid_desenvolvimento",
+         "type": "grid",
+         "label": "Desenvolvimento profissional",
+         "options": ["Muito satisfeito", "Satisfeito", "Insatisfeito", "Muito insatisfeito"],
+         "items": [
+           {"id": "dev_oportunidades", "label": "Foram dadas oportunidades de executar atividades diversas daquelas desenvolvidas na sua rotina"},
+           {"id": "dev_profissional", "label": "Obteve oportunidade de se desenvolver profissionalmente"}
+         ],
+         "has_comments": true
+      },
+      {
+         "id": "grid_atendimento",
+         "type": "grid",
+         "label": "Avalie o atendimento das áreas administrativas",
+         "options": ["Muito satisfeito", "Satisfeito", "Insatisfeito", "Muito insatisfeito"],
+         "items": [
+           {"id": "adm_ti", "label": "TI - Tecnologia da Informação"},
+           {"id": "adm_fin", "label": "Financeiro"},
+           {"id": "adm_rh", "label": "Recursos Humanos"},
+           {"id": "adm_recepcao", "label": "Setor administrativo (recepção, facilites, copa, etc)"}
+         ],
+         "has_comments": true
+      },
+      {
+         "id": "grid_itens",
+         "type": "grid",
+         "label": "Itens",
+         "options": ["Muito satisfeito", "Satisfeito", "Insatisfeito", "Muito insatisfeito"],
+         "items": [
+           {"id": "item_remuneracao", "label": "Remuneração"},
+           {"id": "item_bonus", "label": "Bônus"},
+           {"id": "item_vr", "label": "Vale Refeição"},
+           {"id": "item_parcerias", "label": "Parcerias e convênios"},
+           {"id": "item_totalpass", "label": "TotalPass"},
+           {"id": "item_hibrido", "label": "Regime híbrido"},
+           {"id": "item_oab", "label": "Anuidade da OAB"},
+           {"id": "item_referral", "label": "Referral"},
+           {"id": "item_ajuda", "label": "Ajuda de custo | cursos e eventos"},
+           {"id": "item_eventos", "label": "Eventos internos"}
+         ],
+         "has_comments": true
+      }
+    ]
+  },
+  {
+    "id": "sec_finais",
+    "title": "Considerações Finais",
+    "questions": [
+      {
+        "id": "prioridade_beneficios",
+        "type": "textarea",
+        "label": "Cite e enumere por ordem de prioridade os benefícios que gostaria de ter recebido"
+      },
+      {
+        "id": "expectativas_atingidas",
+        "type": "radio",
+        "label": "Suas expectativas quanto ao escritório foram atingidas?",
+        "options": ["Sim", "Não"]
+      },
+      {
+        "id": "expectativas_pq",
+        "type": "text",
+        "label": "Por que?"
+      },
+      {
+        "id": "voltaria_trabalhar",
+        "type": "radio",
+        "label": "Voltaria a trabalhar conosco?",
+        "options": ["Sim", "Não"]
+      },
+      {
+        "id": "aspecto_positivo",
+        "type": "radio",
+        "label": "Assinale dentre os itens abaixo o principal aspecto positivo do escritório (apenas 1 opção)",
+        "options": ["Ambiente de trabalho", "Estrutura física", "Reconhecimento do escritório no mercado", "Aprendizado", "Reconhecimento profissional", "Outros (s)"]
+      },
+      {
+        "id": "aspecto_positivo_quais",
+        "type": "text",
+        "label": "Quais?",
+        "dependsOn": {
+          "questionId": "aspecto_positivo",
+          "value": "Outros (s)"
+        }
+      },
+      {
+        "id": "aspectos_melhorar",
+        "type": "textarea",
+        "label": "Quais os aspectos que você acredita que devem ser melhorados?"
+      }
+    ]
+  },
+  {
+    "id": "sec_rh",
+    "title": "Uso Exclusivo do RH",
+    "description": "Seção reservada para anotações do entrevistador.",
+    "questions": [
+      {
+        "id": "rh_notes",
+        "type": "textarea",
+        "label": "Observações do RH (entrevistador)"
+      }
+    ]
+  }
+]'::jsonb
+);
+
 CREATE OR REPLACE FUNCTION get_exit_interview_public(p_token UUID)
 RETURNS JSONB
 LANGUAGE plpgsql

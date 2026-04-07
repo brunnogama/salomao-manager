@@ -163,7 +163,9 @@ export default function FormularioDesligamento() {
                         <img src="/logo-branca.png" alt="Salomão" className="h-[65px] object-contain mx-auto" />
                     </div>
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none mb-6">Entrevista de Desligamento - Estagiários</h1>
+                        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none mb-6">
+                            {interviewData?.template_name || "Entrevista de Desligamento"}
+                        </h1>
                         
                         <div className="inline-flex items-center gap-3 bg-white/10 px-5 py-3 rounded-2xl border border-white/5">
                             {interviewData?.collaborator_foto_url ? (
@@ -206,7 +208,11 @@ export default function FormularioDesligamento() {
                                     {section.questions?.map((q: any) => {
                                         if (q.dependsOn) {
                                             const dependentAnswer = answers[q.dependsOn.questionId];
-                                            if (dependentAnswer !== q.dependsOn.value) {
+                                            const conditionMet = Array.isArray(dependentAnswer) 
+                                                ? dependentAnswer.includes(q.dependsOn.value)
+                                                : dependentAnswer === q.dependsOn.value;
+                                                
+                                            if (!conditionMet) {
                                                 return null;
                                             }
                                         }
