@@ -871,8 +871,9 @@ export function DadosCorporativosSection({
                         
                         setRefreshInterview(r => r + 1);
                         
-                        const safeName = (formData.name || 'colaborador').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-");
-                        const url = `${window.location.origin}/desligamento/${safeName}/${tokenStr}`;
+                        const displayId = formData.matricula_interna ? formData.matricula_interna.replace(/\s+/g, '') : 'INT-0000';
+                        const safeSlug = displayId.toLowerCase();
+                        const url = `${window.location.origin}/desligamento/${safeSlug}/${tokenStr}`;
                         setGeneratedLink(url);
                         await navigator.clipboard.writeText(url);
                         window.open(url, '_blank');
