@@ -145,6 +145,15 @@ def assinar_nota():
 
                     if not chave_acesso:
                         raise ValueError(f"Chave de acesso não encontrada. Retorno: {response_xml_str}")
+                        
+                    nf_number = None
+                    try:
+                        n_element = root_resp.find('.//ns:nNFSe', ns)
+                        if n_element is not None and n_element.text:
+                            nf_number = n_element.text
+                    except Exception:
+                        pass
+                        
                 except Exception as parse_e:
                     raise ValueError(f"Falha ao ler XML/Chave de Retorno: {str(parse_e)}. Raw: {api_response.text}")
 
@@ -153,6 +162,7 @@ def assinar_nota():
                     "xml_enviado": xml_string,
                     "xml": response_xml_str,
                     "chave_acesso": chave_acesso,
+                    "nf_number": nf_number,
                     "pdf_url": f"https://www.nfse.gov.br/consultapublica?chave={chave_acesso}"
                 })
                 

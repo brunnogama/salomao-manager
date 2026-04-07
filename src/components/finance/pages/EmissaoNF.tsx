@@ -543,7 +543,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           tax_cofins: cofins,
           tax_csll: csll,
           net_value: valorLiquidoState,
-          nf_number: nfNumber || null,
+          nf_number: data.nf_number || nfNumber || null,
           nf_pdf: data.pdf_url || null
         }).eq('id', selectedHonorario.id);
 
