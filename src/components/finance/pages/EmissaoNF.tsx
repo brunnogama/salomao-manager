@@ -21,6 +21,7 @@ import { DraftContractModal } from './DraftContractModal';
 import { EmissaoNFStatusModal, NFStatus } from './EmissaoNFStatusModal';
 import { supabase } from '../../../lib/supabase';
 import { maskCNPJ, maskMoney } from '../../controladoria/utils/masks';
+import { DANFSePreview } from '../components/DANFSePreview';
 
 const formatTypeText = (typeStr: string) => {
   const map: Record<string, string> = {
@@ -72,6 +73,12 @@ const EmissaoNF = () => {
   const [nfNumber, setNfNumber] = useState<string>('');
 
   // Novo estado da Modal de Emissão
+  interface EmissaoStatus {
+    isOpen: boolean;
+    status: NFStatus;
+    errorDetails: any;
+    successData?: any;
+  }
   const [emissaoStatus, setEmissaoStatus] = useState<EmissaoStatus>({
     isOpen: false,
     status: 'idle',
@@ -866,126 +873,21 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         {/* PAINEL DIREITO: SIMULADOR DE NOTA FISCAL */}
         <div className="lg:col-span-2 relative min-h-[1000px] bg-white border-[3px] border-gray-800 flex flex-col outline outline-4 outline-transparent shadow-2xl shadow-gray-400/30 font-sans text-gray-900 overflow-hidden shrink-0 mt-4 lg:mt-0 lg:ml-2">
             
-            {/* Watermark */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.02] rotate-[-45deg] z-0">
-              <span className="text-[120px] font-black tracking-[0.3em] uppercase">SIMULAÇÃO</span>
-            </div>
-
-            {/* HEADER NF */}
-            <div className="flex border-b-[3px] border-gray-800 relative z-10 shrink-0 bg-white">
-              <div className="w-24 sm:w-32 flex items-center justify-center border-r-[3px] border-gray-800 p-2 sm:p-4 shrink-0">
-                <Globe className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300" strokeWidth={1.5} />
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-2 hidden sm:flex">
-                <h2 className="font-black text-[11px] sm:text-[13px] uppercase tracking-wide">Prefeitura da Cidade do {selectedCity}</h2>
-                <h3 className="font-bold text-[9px] sm:text-[11px] uppercase mb-1">Secretaria Municipal de Fazenda</h3>
-                <h1 className="font-black text-sm sm:text-lg uppercase tracking-wide mt-1">Nota Fiscal de Serviços Eletrônica</h1>
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-2 sm:hidden">
-                <h1 className="font-black text-sm uppercase tracking-wide leading-tight">NFS-e<br/>{selectedCity}</h1>
-              </div>
-              <div className="w-32 sm:w-44 border-l-[3px] border-gray-800 flex flex-col text-[9px] sm:text-[10px] shrink-0">
-                <div className="border-b-[3px] border-gray-800 p-1 flex flex-col flex-1 justify-center bg-gray-50">
-                  <span className="font-semibold px-1">Número da Nota</span>
-                  <span className="font-black text-sm sm:text-base text-center">00000000</span>
-                </div>
-                <div className="border-b-[3px] border-gray-800 p-1 flex flex-col flex-1 justify-center">
-                  <span className="font-semibold px-1">Data e Hora</span>
-                  <span className="font-black text-center">{new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span>
-                </div>
-                <div className="p-1 flex flex-col flex-1 justify-center bg-gray-50">
-                  <span className="font-semibold px-1">Código Verificação</span>
-                  <span className="font-black text-center text-xs tracking-widest text-[#1e3a8a]">ABCD-1234</span>
-                </div>
-              </div>
-            </div>
-
-            {/* PRESTADOR */}
-            <div className="border-b-[3px] border-gray-800 flex flex-col relative z-10 shrink-0 bg-white">
-              <div className="bg-gray-200 text-center font-black uppercase text-[10px] sm:text-[11px] py-1 border-b border-gray-400">
-                Prestador de Serviços
-              </div>
-              <div className="flex flex-col p-2 sm:p-3 text-[9px] sm:text-[11px] space-y-1.5 leading-tight">
-                {isFetchingPrestador ? (
-                  <div className="flex items-center justify-center py-2">
-                     <Loader2 className="w-4 h-4 animate-spin text-[#1e3a8a] mr-2" />
-                     <span className="font-bold text-gray-500 uppercase tracking-widest text-[9px]">Sincronizando CNPJ com BrasilAPI...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex justify-between flex-wrap gap-2">
-                      <div><strong>CPF/CNPJ:</strong> {prestadorDetails?.cnpj || ''}</div>
-                      <div><strong>Inscrição Municipal:</strong> {prestadorDetails?.im || ''}</div>
-                      <div><strong>Inscrição Estadual:</strong> ISENTO</div>
-                    </div>
-                    <div><strong>Nome/Razão Social:</strong> {prestadorDetails?.razao_social || ''} <span className="font-medium text-gray-500 ml-1">({prestadorDetails?.fantasia || ''})</span></div>
-                    <div className="flex justify-between flex-wrap gap-2">
-                      <div className="truncate pr-2"><strong>Endereço:</strong> {prestadorDetails?.endereco || ''}</div>
-                      <div><strong>Município:</strong> {prestadorDetails?.municipio || ''} - {prestadorDetails?.uf || ''}</div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* TOMADOR */}
-            <div className="border-b-[3px] border-gray-800 flex flex-col relative z-10 shrink-0 bg-white">
-              <div className="bg-gray-200 text-center font-black uppercase text-[10px] sm:text-[11px] py-1 border-b border-gray-400">
-                Tomador de Serviços
-              </div>
-              <div className="flex flex-col p-2 sm:p-3 text-[9px] sm:text-[11px] space-y-1.5 leading-tight min-h-[70px]">
-                {selectedClient ? (
-                  <>
-                    <div className="flex justify-between flex-wrap gap-2">
-                      <div><strong>CPF/CNPJ:</strong> {maskCNPJ(selectedClient.cnpj || '') || 'Não Informado'}</div>
-                      <div><strong>Inscrição Municipal:</strong> ----</div>
-                      <div><strong>Inscrição Estadual:</strong> ----</div>
-                    </div>
-                    <div><strong>Nome/Razão Social:</strong> <span className="font-bold">{selectedClient.name}</span></div>
-                    <div className="flex justify-between flex-wrap gap-2 text-gray-600">
-                      <div><strong>Endereço:</strong> Conforme Cadastro Vínculado</div>
-                      <div><strong>Município:</strong> Brasil</div>
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 border-t border-gray-200 pt-1.5">
-                      <strong>E-mail para NFS-e:</strong> 
-                      <input 
-                        type="email" 
-                        value={clientEmail} 
-                        onChange={e => setClientEmail(e.target.value)} 
-                        placeholder="cliente@email.com"
-                        className="bg-gray-100 px-2 py-0.5 rounded text-[10px] sm:text-[11px] flex-1 outline-none focus:ring-1 focus:ring-[#1e3a8a] text-gray-800 font-semibold"
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-gray-400 italic text-center mt-3 font-medium flex items-center justify-center gap-2">
-                    <Search className="w-3 h-3" /> Selecione um cliente à esquerda para auto-preencher os dados do tomador.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* DISCRIMINAÇÃO */}
-            <div className="border-b-[3px] border-gray-800 flex flex-col flex-1 relative z-10 bg-white min-h-[250px] sm:min-h-[300px]">
-               <div className="bg-gray-200 text-center font-black uppercase text-[10px] sm:text-[11px] py-1 border-b border-gray-400 shrink-0 flex items-center justify-center gap-2">
-                  Discriminação dos Serviços
-                  {selectedHonorario && <span className="text-[8px] bg-green-200 text-green-800 font-bold px-1.5 py-0.5 rounded-sm">AUTOMÁTICO</span>}
-               </div>
-               <div className="flex-1 flex p-1 relative">
-                 <textarea
-                    value={discriminacao}
-                    onChange={(e) => setDiscriminacao(e.target.value)}
-                    disabled={!selectedClient}
-                    spellCheck={false}
-                    className="w-full h-full resize-none outline-none bg-transparent text-[11px] sm:text-[13px] font-mono leading-relaxed p-2 sm:p-3 focus:ring-inset focus:ring-2 focus:ring-[#1e3a8a]/20 disabled:text-gray-500 custom-scrollbar"
-                 />
-                 {!selectedClient && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                       <span className="text-xs text-gray-300 font-bold uppercase tracking-widest rotate-[-10deg]">AGUARDANDO CLIENTE</span>
-                    </div>
-                 )}
-               </div>
-            </div>
+            <DANFSePreview 
+               prestadorDetails={prestadorDetails}
+               selectedClient={selectedClient}
+               discriminacao={discriminacao}
+               setDiscriminacao={setDiscriminacao}
+               valorNF={valorNF}
+               irpj={irpj}
+               pis={pis}
+               cofins={cofins}
+               csll={csll}
+               valorLiquido={valorLiquidoState}
+               dataEmissao={dataEmissao}
+               isFetchingPrestador={isFetchingPrestador}
+               selectedCity={selectedCity}
+            />
 
             {/* TOGGLE MODO AVANÇADO */}
             <div className="bg-gray-100/80 px-4 py-2 flex justify-between items-center border-[3px] border-x-0 border-t-0 border-gray-800 shrink-0">

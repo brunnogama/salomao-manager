@@ -1,11 +1,51 @@
 import React from 'react';
+import { maskMoney, maskCNPJ } from '../../controladoria/utils/masks';
+import { Loader2 } from 'lucide-react';
 
-export const DANFSePreview: React.FC = () => {
+interface DANFSePreviewProps {
+  prestadorDetails: any;
+  selectedClient: any;
+  discriminacao: string;
+  setDiscriminacao: (val: string) => void;
+  valorNF: number;
+  irpj: number;
+  pis: number;
+  cofins: number;
+  csll: number;
+  valorLiquido: number;
+  dataEmissao: string;
+  isFetchingPrestador: boolean;
+  selectedCity: string;
+}
+
+export const DANFSePreview: React.FC<DANFSePreviewProps> = ({
+  prestadorDetails,
+  selectedClient,
+  discriminacao,
+  setDiscriminacao,
+  valorNF,
+  irpj,
+  pis,
+  cofins,
+  csll,
+  valorLiquido,
+  dataEmissao,
+  isFetchingPrestador,
+  selectedCity
+}) => {
+  const formatMoney = (val: number) => {
+    if (!val && val !== 0) return '0,00';
+    return (val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
+  const padraoEnderecoCliente = selectedClient ? 'Conforme Cadastro Vínculado' : '-';
+  const padraoMunicipioCliente = selectedClient ? 'Brasil' : '-';
+
   return (
-    <div className="max-w-[800px] mx-auto bg-white border-2 border-gray-400 text-[10px] text-gray-800 font-sans leading-tight shadow-lg">
+    <div className="w-full bg-white border border-gray-400 text-[10px] text-gray-800 font-sans leading-tight shadow-sm select-none">
       
       {/* HEADER ROW */}
-      <div className="flex border-b-2 border-gray-400 p-2 items-center">
+      <div className="flex border-b border-gray-400 p-2 items-center">
         <div className="w-1/4">
           <div className="flex items-center gap-1">
             <span className="text-3xl font-bold text-emerald-600 tracking-tighter">NFS<span className="text-blue-600">e</span></span>
@@ -20,17 +60,15 @@ export const DANFSePreview: React.FC = () => {
           <div className="font-bold text-sm">Documento Auxiliar da NFS-e</div>
         </div>
         <div className="w-1/4 flex justify-end items-center gap-2">
-          {/* Brasão Rio placeholder */}
-          <div className="w-8 h-10 bg-gray-200 border border-gray-300"></div>
           <div className="flex flex-col text-[10px] items-start">
-            <span className="font-bold">Prefeitura da Cidade do Rio de Janeiro</span>
-            <span>SMF / Receita Rio</span>
+            <span className="font-bold">Prefeitura da Cidade do {selectedCity}</span>
+            <span>SMF / Receita</span>
           </div>
         </div>
       </div>
 
       {/* CHAVE DE ACESSO & INFORMAÇÕES BÁSICAS */}
-      <div className="flex border-b-2 border-gray-400">
+      <div className="flex border-b border-gray-400">
         <div className="w-3/4 flex flex-col">
           <div className="p-1 border-b border-gray-300">
             <div className="font-bold">Chave de Acesso da NFS-e</div>
@@ -41,35 +79,37 @@ export const DANFSePreview: React.FC = () => {
           <div className="flex border-b border-gray-300 h-full">
             <div className="w-1/3 p-1 border-r border-gray-300">
               <div className="font-bold">Número da NFS-e</div>
-              <div className="bg-yellow-200 inline-block px-1 mt-0.5">000</div>
+              <div className="bg-yellow-200 inline-block px-1 mt-0.5 font-mono">000000</div>
             </div>
             <div className="w-1/3 p-1 border-r border-gray-300">
               <div className="font-bold">Competência da NFS-e</div>
-              <div className="bg-yellow-200 inline-block px-1 mt-0.5">MM/YYYY</div>
+              <div className="bg-yellow-200 inline-block px-1 mt-0.5">
+                 {dataEmissao ? new Date(dataEmissao).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' }) : 'MM/YYYY'}
+              </div>
             </div>
             <div className="w-1/3 p-1">
               <div className="font-bold">Data e Hora da emissão da NFS-e</div>
-              <div className="bg-yellow-200 inline-block px-1 mt-0.5">DD/MM/YYYY HH:MM:SS</div>
+              <div className="bg-yellow-200 inline-block px-1 mt-0.5">{dataEmissao ? new Date(dataEmissao).toLocaleDateString('pt-BR') : 'DD/MM/YYYY'}</div>
             </div>
           </div>
           <div className="flex h-full">
             <div className="w-1/3 p-1 border-r border-gray-300">
               <div className="font-bold">Número da DPS</div>
-              <div>00</div>
+              <div>000000</div>
             </div>
             <div className="w-1/3 p-1 border-r border-gray-300">
               <div className="font-bold">Série da DPS</div>
-              <div className="bg-yellow-200 inline-block px-1 mt-0.5">00000</div>
+              <div className="bg-yellow-200 inline-block px-1 mt-0.5">0000</div>
             </div>
             <div className="w-1/3 p-1">
               <div className="font-bold">Data e Hora da emissão da DPS</div>
-              <div className="bg-yellow-200 inline-block px-1 mt-0.5">DD/MM/YYYY HH:MM:SS</div>
+              <div className="bg-yellow-200 inline-block px-1 mt-0.5">{dataEmissao ? new Date(dataEmissao).toLocaleDateString('pt-BR') : 'DD/MM/YYYY'}</div>
             </div>
           </div>
         </div>
         <div className="w-1/4 flex flex-col p-2 items-center justify-center border-l border-gray-300">
-          <div className="w-20 h-20 bg-yellow-200 border border-gray-400 p-1 flex items-center justify-center text-center">
-             [ QR CODE MOCK ]
+          <div className="w-16 h-16 bg-yellow-200 border border-gray-400 flex items-center justify-center text-center text-[8px] font-bold">
+             [QR CODE]
           </div>
           <div className="text-[7px] text-center mt-2 leading-tight">
             A autenticidade desta NFS-e pode ser verificada pela leitura deste código QR ou pela consulta da chave de acesso no portal nacional da NFS-e
@@ -78,17 +118,18 @@ export const DANFSePreview: React.FC = () => {
       </div>
 
       {/* EMITENTE DA NFS-e */}
-      <div className="border-b-2 border-gray-400 p-1 bg-gray-50 uppercase text-[9px] font-bold">
+      <div className="border-b border-gray-400 p-1 bg-gray-50 uppercase text-[9px] font-bold flex items-center gap-2">
         Emitente da NFS-e
+        {isFetchingPrestador && <Loader2 className="w-3 h-3 animate-spin text-blue-600" />}
       </div>
       <div className="flex border-b border-gray-300">
         <div className="w-1/3 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">CNPJ / CPF / NIF</div>
-             <div className="mt-0.5">14.493.710/0001-05</div>
+             <div className="mt-0.5">{prestadorDetails?.cnpj || '-'}</div>
         </div>
         <div className="w-1/3 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Inscrição Municipal</div>
-             <div className="mt-0.5">-</div>
+             <div className="mt-0.5">{prestadorDetails?.im || '-'}</div>
         </div>
         <div className="w-1/3 p-1">
              <div className="font-bold text-[9px]">Telefone</div>
@@ -98,7 +139,7 @@ export const DANFSePreview: React.FC = () => {
       <div className="flex border-b border-gray-300">
         <div className="w-1/2 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Nome / Nome Empresarial</div>
-             <div className="mt-0.5">SALOMAO, KAIUCA, ABRAHAO, RAPOSO & COTTA SOCIEDADE DE ADVOGADOS</div>
+             <div className="mt-0.5">{prestadorDetails?.razao_social || 'SALOMAO, KAIUCA, ABRAHAO...'}</div>
         </div>
         <div className="w-1/2 p-1">
              <div className="font-bold text-[9px]">E-mail</div>
@@ -108,15 +149,15 @@ export const DANFSePreview: React.FC = () => {
       <div className="flex border-b border-gray-300">
         <div className="w-1/2 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Endereço</div>
-             <div className="mt-0.5">AVENIDA ALMIRANTE BARROSO, 52, CENTRO</div>
+             <div className="mt-0.5 truncate pr-2">{prestadorDetails?.endereco || '-'}</div>
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Município</div>
-             <div className="mt-0.5">Rio de Janeiro - RJ</div>
+             <div className="mt-0.5">{prestadorDetails?.municipio || selectedCity} - {prestadorDetails?.uf || 'RJ'}</div>
         </div>
          <div className="w-1/4 p-1">
              <div className="font-bold text-[9px]">CEP</div>
-             <div className="mt-0.5">20031-918</div>
+             <div className="mt-0.5">-</div>
         </div>
       </div>
       <div className="flex border-b border-gray-400">
@@ -131,13 +172,15 @@ export const DANFSePreview: React.FC = () => {
       </div>
 
       {/* TOMADOR DO SERVIÇO - ALL YELLOW */}
-      <div className="border-b-2 border-gray-400 p-1 bg-yellow-200 uppercase text-[9px] font-bold border-t border-gray-400">
+      <div className="border-b border-gray-400 p-1 bg-yellow-200 uppercase text-[9px] font-bold">
         Tomador do Serviço
       </div>
-      <div className="flex border-b border-gray-300 bg-yellow-100">
+      <div className="flex border-b border-gray-300 bg-yellow-100/50">
         <div className="w-1/3 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">CNPJ / CPF / NIF</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">[CNPJ_CLIENTE]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">
+                {selectedClient ? (selectedClient.cnpj ? maskCNPJ(selectedClient.cnpj) : 'Sem CNPJ vinculado') : '-'}
+             </div>
         </div>
         <div className="w-1/3 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Inscrição Municipal</div>
@@ -148,38 +191,38 @@ export const DANFSePreview: React.FC = () => {
              <div className="mt-0.5 bg-yellow-200 inline-block px-1">-</div>
         </div>
       </div>
-      <div className="flex border-b border-gray-300 bg-yellow-100">
+      <div className="flex border-b border-gray-300 bg-yellow-100/50">
         <div className="w-1/2 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Nome / Nome Empresarial</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">[NOME_CLIENTE]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">{selectedClient ? selectedClient.name : 'Aguardando Seleção de Cliente...'}</div>
         </div>
-        <div className="w-1/2 p-1">
+        <div className="w-1/2 p-1 relative group cursor-pointer z-50">
              <div className="font-bold text-[9px]">E-mail</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">[EMAIL_CLIENTE]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">{selectedClient && selectedClient.email ? selectedClient.email : 'Preenchido no menu lateral'}</div>
         </div>
       </div>
-      <div className="flex border-b border-gray-400 bg-yellow-100">
+      <div className="flex border-b border-gray-400 bg-yellow-100/50">
         <div className="w-1/2 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Endereço</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">[ENDERECO_CLIENTE]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">{padraoEnderecoCliente}</div>
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Município</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">[MUNICIPIO_CLIENTE]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">{padraoMunicipioCliente}</div>
         </div>
          <div className="w-1/4 p-1">
              <div className="font-bold text-[9px]">CEP</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">[CEP_CLIENTE]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">-</div>
         </div>
       </div>
 
       {/* INTERMEDIÁRIO DO SERVIÇO */}
-      <div className="border-b-2 border-gray-400 p-1 text-center font-bold text-[9px] uppercase bg-gray-50">
+      <div className="border-b border-gray-400 p-1 text-center font-bold text-[9px] uppercase bg-gray-50">
         INTERMEDIÁRIO DO SERVIÇO NÃO IDENTIFICADO NA NFS-e
       </div>
 
       {/* SERVIÇO PRESTADO */}
-      <div className="border-b-2 border-gray-400 p-1 font-bold text-[9px] uppercase bg-gray-50 border-t border-gray-400">
+      <div className="border-b border-gray-400 p-1 font-bold text-[9px] uppercase bg-gray-50">
         Serviço Prestado
       </div>
       <div className="flex border-b border-gray-300">
@@ -193,19 +236,24 @@ export const DANFSePreview: React.FC = () => {
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Local da Prestação</div>
-             <div className="mt-0.5">Rio de Janeiro - RJ</div>
+             <div className="mt-0.5">{selectedCity || '-'}</div>
         </div>
          <div className="w-1/4 p-1">
              <div className="font-bold text-[9px]">País da Prestação</div>
              <div className="mt-0.5">-</div>
         </div>
       </div>
-      <div className="p-1 border-b border-gray-400">
+      <div className="p-1 border-b border-gray-400 flex flex-col group relative">
          <div className="font-bold text-[9px]">Descrição do Serviço</div>
-         <div className="mt-0.5 bg-yellow-200 inline-block px-1 whitespace-pre-wrap">
-            [DESCRICAO_DO_SERVICO_HONORARIOS_CONTRATO_ETC]
-         </div>
-         <div className="mt-1 text-[9px] text-gray-600">
+         {/* TEXTAREA ATRAVESSANDO O VISUAL PARA EDIÇÃO REAIS */}
+         <textarea 
+            value={discriminacao}
+            onChange={(e) => setDiscriminacao(e.target.value)}
+            disabled={!selectedClient}
+            className={`mt-0.5 bg-yellow-200 w-full min-h-[60px] p-1 font-mono text-[10px] resize-none outline-none focus:ring-1 focus:ring-[#1e3a8a] ${!selectedClient ? 'opacity-50' : ''} custom-scrollbar block z-50 relative`}
+            placeholder="Digite a discriminação do serviço após selecionar o cliente..."
+         />
+         <div className="mt-1 text-[9px] text-gray-600 pointer-events-none">
            Dados bancários:<br/>
            Banco: Itaú (341)<br/>
            Agência: 6157-2<br/>
@@ -213,6 +261,11 @@ export const DANFSePreview: React.FC = () => {
            Favorecido: Salomão, Kaiuca, Abrahão, Raposo e Cotta Sociedade de Advogados<br/>
            CNPJ 14.493.710/0001-05
          </div>
+         {!selectedClient && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 bg-white/40">
+               <span className="text-xs text-gray-400 font-bold uppercase tracking-widest rotate-[-5deg]">AGUARDANDO CLIENTE</span>
+            </div>
+         )}
       </div>
 
       {/* TRIBUTAÇÃO MUNICIPAL */}
@@ -230,7 +283,7 @@ export const DANFSePreview: React.FC = () => {
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Município de Incidência do ISSQN</div>
-             <div className="mt-0.5">Rio de Janeiro - RJ</div>
+             <div className="mt-0.5">{selectedCity || '-'}</div>
         </div>
          <div className="w-1/4 p-1">
              <div className="font-bold text-[9px]">Regime Especial de Tributação</div>
@@ -255,10 +308,10 @@ export const DANFSePreview: React.FC = () => {
              <div className="mt-0.5">-</div>
         </div>
       </div>
-      <div className="flex border-b border-gray-300">
+      <div className="flex border-b border-gray-400">
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Valor do Serviço</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1 font-bold">R$ [VALOR_SERVICO]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1 font-bold">{formatMoney(valorNF)}</div>
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Desconto Incondicionado</div>
@@ -273,33 +326,15 @@ export const DANFSePreview: React.FC = () => {
              <div className="mt-0.5">-</div>
         </div>
       </div>
-      <div className="flex border-b border-gray-400">
-        <div className="w-1/4 p-1 border-r border-gray-300">
-             <div className="font-bold text-[9px]">BC ISSQN</div>
-             <div className="mt-0.5">-</div>
-        </div>
-        <div className="w-1/4 p-1 border-r border-gray-300">
-             <div className="font-bold text-[9px]">Alíquota Aplicada</div>
-             <div className="mt-0.5">-</div>
-        </div>
-        <div className="w-1/4 p-1 border-r border-gray-300">
-             <div className="font-bold text-[9px]">Retenção do ISSQN</div>
-             <div className="mt-0.5">Não Retido</div>
-        </div>
-         <div className="w-1/4 p-1">
-             <div className="font-bold text-[9px]">ISSQN Apurado</div>
-             <div className="mt-0.5">-</div>
-        </div>
-      </div>
 
       {/* TRIBUTAÇÃO FEDERAL - ALL YELLOW */}
       <div className="border-b border-gray-400 p-1 font-bold text-[9px] uppercase bg-yellow-200">
         Tributação Federal
       </div>
-      <div className="flex border-b border-gray-300 bg-yellow-100">
+      <div className="flex border-b border-gray-300 bg-yellow-100/50">
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">IRRF</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">R$ [VALOR_IRRF]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">{formatMoney(irpj)}</div>
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Contribuição Previdenciária - Retida</div>
@@ -307,21 +342,21 @@ export const DANFSePreview: React.FC = () => {
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Contribuições Sociais - Retidas</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">R$ [VALOR_CSLL]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">{formatMoney(csll)}</div>
         </div>
          <div className="w-1/4 p-1">
              <div className="font-bold text-[9px]">Descrição Contrib. Sociais - Retidas</div>
              <div className="mt-0.5 bg-yellow-200 inline-block px-1">3 - PIS/COFINS/CSLL Retidos</div>
         </div>
       </div>
-      <div className="flex border-b border-gray-400 bg-yellow-100">
+      <div className="flex border-b border-gray-400 bg-yellow-100/50">
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">PIS - Débito Apuração Própria</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">R$ [VALOR_PIS]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">{formatMoney(pis)}</div>
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">COFINS - Débito Apuração Própria</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">R$ [VALOR_COFINS]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">{formatMoney(cofins)}</div>
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300">
              
@@ -335,10 +370,10 @@ export const DANFSePreview: React.FC = () => {
       <div className="border-b border-gray-400 p-1 font-bold text-[9px] uppercase bg-yellow-200">
         Valor Total da NFS-e
       </div>
-      <div className="flex border-b border-gray-300 bg-yellow-100">
+      <div className="flex border-b border-gray-300 bg-yellow-100/50">
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Valor do Serviço</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">R$ [VALOR_SERVICO]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">{formatMoney(valorNF)}</div>
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Desconto Condicionado</div>
@@ -353,21 +388,21 @@ export const DANFSePreview: React.FC = () => {
              <div className="mt-0.5 bg-yellow-200 inline-block px-1">-</div>
         </div>
       </div>
-      <div className="flex border-b border-gray-400 bg-yellow-100 items-center">
+      <div className="flex border-b border-gray-400 bg-yellow-100/50 items-center">
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">Total das Retenções Federais</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">R$ [TOTAL_RETENCOES]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">{formatMoney(irpj + csll)}</div>
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300">
              <div className="font-bold text-[9px]">PIS/COFINS - Débito Apur. Própria</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1">R$ [TOTAL_APURACAO]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1">{formatMoney(pis + cofins)}</div>
         </div>
         <div className="w-1/4 p-1 border-r border-gray-300 h-full">
              
         </div>
          <div className="w-1/4 p-1 flex flex-col justify-center">
              <div className="font-bold text-[9px]">Valor Líquido da NFS-e</div>
-             <div className="mt-0.5 bg-yellow-200 inline-block px-1 font-bold text-sm">R$ [VALOR_LIQUIDO]</div>
+             <div className="mt-0.5 bg-yellow-200 inline-block px-1 font-bold text-sm">{formatMoney(valorLiquido)}</div>
         </div>
       </div>
 
