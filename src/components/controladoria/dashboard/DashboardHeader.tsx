@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Users, MapPin, Maximize2, Minimize2, Camera, Loader2, Download } from 'lucide-react';
+import { LayoutDashboard, Users, MapPin, Maximize2, Minimize2, Camera, Loader2, Download, FileDown } from 'lucide-react';
 import { usePresentation } from '../../../contexts/PresentationContext';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -15,6 +15,7 @@ interface DashboardHeaderProps {
   locationsList: string[];
   selectedPeriod?: { start: string; end: string };
   setSelectedPeriod?: (val: { start: string; end: string }) => void;
+  onExportXLSX?: () => void;
   hideTitle?: boolean;
   className?: string;
 }
@@ -31,6 +32,7 @@ export function DashboardHeader({
   locationsList,
   selectedPeriod,
   setSelectedPeriod,
+  onExportXLSX,
   hideTitle = false,
   className = ""
 }: DashboardHeaderProps) {
@@ -215,6 +217,17 @@ export function DashboardHeader({
               <Camera className="w-5 h-5" />
             )}
           </button>
+
+          {/* Botão de Exportar XLSX */}
+          {onExportXLSX && (
+            <button
+              onClick={onExportXLSX}
+              title="Exportar Planilha Excel com Dados Brutos"
+              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+            >
+              <FileDown className="h-5 w-5" />
+            </button>
+          )}
 
           {/* Botão de Exportar PDF */}
           <button

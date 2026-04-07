@@ -66,29 +66,26 @@ export function DateFilterSelect({ value, onChange, placeholder = 'Período' }: 
               <button
                 onClick={() => {
                   const today = new Date();
-                  const day = today.getDay();
-                  const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-                  const start = new Date(today.setDate(diff));
-                  const end = new Date(start);
-                  end.setDate(end.getDate() + 6);
+                  const start = new Date(today.setMonth(today.getMonth() - 3));
+                  const end = new Date();
                   onChange({ start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] });
                   setIsOpen(false);
                 }}
                 className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a] ring-1 ring-transparent hover:ring-[#1e3a8a]/10 transition-all outline-none"
               >
-                Semana Atual
+                Últimos 3 Meses
               </button>
               <button
                 onClick={() => {
-                  const date = new Date();
-                  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-                  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-                  onChange({ start: firstDay.toISOString().split('T')[0], end: lastDay.toISOString().split('T')[0] });
+                  const today = new Date();
+                  const start = new Date(today.setMonth(today.getMonth() - 6));
+                  const end = new Date();
+                  onChange({ start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] });
                   setIsOpen(false);
                 }}
                 className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:border-[#1e3a8a]/30 hover:text-[#1e3a8a] ring-1 ring-transparent hover:ring-[#1e3a8a]/10 transition-all outline-none"
               >
-                Mês Atual
+                Últimos 6 Meses
               </button>
             </div>
 

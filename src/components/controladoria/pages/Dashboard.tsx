@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import XLSX from 'xlsx-js-style';
+import { toast } from 'sonner';
 import {
   Loader2,
   LayoutDashboard
@@ -63,6 +65,95 @@ export function Dashboard({ }: Props) {
     }
   };
 
+  const handleExportXLSX = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+
+      // Planilha 1: Evolução Financeira (Últimos 12 Meses)
+      const finData = financeiro12Meses.map(item => ({
+        "Mês": item.mes,
+        "Data Ref.": item.data.toLocaleDateString(),
+        "Pró-Labore": item.pl,
+        "Fixo Recorrente": item.fixo,
+        "Êxito": item.exito,
+        "Total Fechado": item.pl + item.fixo + item.exito
+      }));
+      const wsFin = XLSX.utils.json_to_sheet(finData);
+      const finRange = XLSX.utils.decode_range(wsFin['!ref'] || 'A1:A1');
+      for (let col = finRange.s.c; col <= finRange.e.c; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (wsFin[cellRef]) wsFin[cellRef].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0A192F" } }, alignment: { horizontal: "center", vertical: "center" } };
+      }
+      wsFin['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
+      for (let R = 1; R <= finRange.e.r; ++R) {
+        [2, 3, 4, 5].forEach(C => {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (wsFin[cellRef]) { wsFin[cellRef].t = 'n'; wsFin[cellRef].z = '"R$"#,##0.00;"R$"-#,##0.00'; }
+        });
+      }
+      XLSX.utils.book_append_sheet(wb, wsFin, "Receitas Fechadas");
+
+      // Planilha 2: Evolução de Propostas
+      const propData = propostas12Meses.map(item => ({
+        "Mês": item.mes,
+        "Data Ref.": item.data.toLocaleDateString(),
+        "Pró-Labore Estimado": item.pl,
+        "Fixo Estimado": item.fixo,
+        "Êxito Estimado": item.exito,
+        "Total em Negociação": item.pl + item.fixo + item.exito
+      }));
+      const wsProp = XLSX.utils.json_to_sheet(propData);
+      const propRange = XLSX.utils.decode_range(wsProp['!ref'] || 'A1:A1');
+      for (let col = propRange.s.c; col <= propRange.e.c; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (wsProp[cellRef]) wsProp[cellRef].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0A192F" } }, alignment: { horizontal: "center", vertical: "center" } };
+      }
+      wsProp['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
+      for (let R = 1; R <= propRange.e.r; ++R) {
+        [2, 3, 4, 5].forEach(C => {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (wsProp[cellRef]) { wsProp[cellRef].t = 'n'; wsProp[cellRef].z = '"R$"#,##0.00;"R$"-#,##0.00'; }
+        });
+      }
+      XLSX.utils.book_append_sheet(wb, wsProp, "Propostas");
+
+      // Planilha 3: Dados Operacionais por Sócio
+      const partnerData = contractsByPartner.map(item => ({
+        "Sócio": item.name,
+        "Casos Totais": item.total,
+        "Em Análise": item.analysis,
+        "Propostas": item.proposal,
+        "Fechados (Ativos)": item.active,
+        "Rejeitados": item.rejected,
+        "Probono": item.probono,
+        "Pró-Labore Fechado": item.pl,
+        "Fixo Recorrente Fechado": item.fixo,
+        "Êxito Fechado": item.exito,
+        "Receita Total": item.pl + item.fixo + item.exito
+      }));
+      const wsPrt = XLSX.utils.json_to_sheet(partnerData);
+      const prtRange = XLSX.utils.decode_range(wsPrt['!ref'] || 'A1:A1');
+      for (let col = prtRange.s.c; col <= prtRange.e.c; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (wsPrt[cellRef]) wsPrt[cellRef].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0A192F" } }, alignment: { horizontal: "center", vertical: "center" } };
+      }
+      wsPrt['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
+      for (let R = 1; R <= prtRange.e.r; ++R) {
+        [7, 8, 9, 10].forEach(C => {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (wsPrt[cellRef]) { wsPrt[cellRef].t = 'n'; wsPrt[cellRef].z = '"R$"#,##0.00;"R$"-#,##0.00'; }
+        });
+      }
+      XLSX.utils.book_append_sheet(wb, wsPrt, "Performance por Sócio");
+
+      XLSX.writeFile(wb, `Relatorio_Controladoria_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success('Relatório gerado com sucesso!');
+    } catch (e) {
+      console.error(e);
+      toast.error('Ocorreu um erro ao gerar o arquivo Excel.');
+    }
+  };
+
   if (loadingData) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50 gap-4">
@@ -99,6 +190,7 @@ export function Dashboard({ }: Props) {
             locationsList={locationsList}
             selectedPeriod={selectedPeriod}
             setSelectedPeriod={setSelectedPeriod}
+            onExportXLSX={handleExportXLSX}
             hideTitle={true}
             className="!p-0 !border-0 !shadow-none !bg-transparent"
           />
