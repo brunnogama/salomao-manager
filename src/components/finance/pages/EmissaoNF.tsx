@@ -507,7 +507,7 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
         email: clientEmail
       }));
       formData.append('servico', JSON.stringify({
-        valor: valorNF || 0,
+        valor: Number(Number(valorNF || 0).toFixed(2)),
         discriminacao: discriminacao,
         codigo_tributacao: codigoTributacao.split(' -')[0].trim(),
         codigo_complementar: codigoComplementar.split(' -')[0].trim(),
