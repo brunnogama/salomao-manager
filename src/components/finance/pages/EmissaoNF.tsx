@@ -701,6 +701,70 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
             </div>
           </div>
 
+          {/* DETALHAMENTO TRIBUTÁRIO E GROSS UP */}
+          <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-xl border border-gray-100 shrink-0 relative z-30 flex flex-col gap-4">
+             <h2 className="font-black text-lg flex items-center gap-2 text-[#0a192f] uppercase tracking-wide text-sm mb-1">
+                <Coins className="w-5 h-5 text-[#1e3a8a]" /> Tributação e Acréscimos
+             </h2>
+
+            {/* Categoria do Cliente */}
+            <div>
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 block">Categoria do Cliente</label>
+              <select
+                value={tipoCliente}
+                onChange={(e) => handleChangeTipoCliente(e.target.value as TipoClienteType)}
+                className="w-full bg-gray-50 border border-gray-200 text-[#1e3a8a] text-sm font-bold rounded-xl p-3 outline-none focus:border-[#1e3a8a] focus:ring-2 focus:ring-blue-50 transition-all cursor-pointer hover:border-[#1e3a8a]/50"
+              >
+                <option value="PJ">PJ (Pessoa Jurídica)</option>
+                <option value="PF">PF (Pessoa Física)</option>
+                <option value="Condominio">Condomínio</option>
+                <option value="Exterior">Exterior</option>
+                <option value="Fundos">Fundos</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+
+            {/* Gross Up */}
+            <div>
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 block flex items-center gap-1">Gross Up (Adicional)</label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <label className={`flex-1 flex items-center justify-center gap-1.5 text-[11px] font-bold cursor-pointer rounded-xl p-2.5 border transition-all ${grossUpMode === 'nenhum' ? 'bg-blue-50 border-[#1e3a8a] text-[#1e3a8a]' : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-100'}`}>
+                  <input type="radio" className="hidden" checked={grossUpMode === 'nenhum'} onChange={() => handleGrossUpChange('nenhum')} /> Nenhuma
+                </label>
+                <label className={`flex-[1.5] flex items-center justify-center gap-1.5 text-[11px] font-bold cursor-pointer rounded-xl p-2.5 border transition-all ${grossUpMode === 'retencoes' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-100'}`}>
+                  <input type="radio" className="hidden" checked={grossUpMode === 'retencoes'} onChange={() => handleGrossUpChange('retencoes')} /> +6,15% (Ret.)
+                </label>
+                <label className={`flex-[1.5] flex items-center justify-center gap-1.5 text-[11px] font-bold cursor-pointer rounded-xl p-2.5 border transition-all ${grossUpMode === 'total' ? 'bg-emerald-50 border-emerald-600 text-emerald-700' : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-100'}`}>
+                  <input type="radio" className="hidden" checked={grossUpMode === 'total'} onChange={() => handleGrossUpChange('total')} /> +15,62% (Total)
+                </label>
+              </div>
+            </div>
+
+            {/* Impostos Retidos*/}
+            <div className="pt-1">
+               <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Impostos Retidos na Fonte</label>
+               <div className="grid grid-cols-2 gap-2">
+                  {(['irpj', 'pis', 'cofins', 'csll'] as const).map(imp => {
+                     const labels: any = { irpj: 'IRRF (1,50%)', pis: 'PIS (0,65%)', cofins: 'COFINS (3%)', csll: 'CSLL (1%)' };
+                     const isChecked = impostosAtivos[imp];
+                     return (
+                       <label key={imp} className={`flex items-center gap-2 text-[11px] font-bold select-none p-2 rounded-xl border transition-all ${tipoCliente === 'Outros' ? 'cursor-pointer hover:bg-gray-100 border-gray-200' : 'cursor-default border-transparent'} ${isChecked ? 'text-[#1e3a8a] bg-blue-50/50 border-blue-200 shadow-sm' : 'text-gray-400 bg-gray-50'}`}>
+                         <input 
+                           type="checkbox" 
+                           checked={isChecked} 
+                           onChange={() => handleToggleImposto(imp)}
+                           disabled={tipoCliente !== 'Outros'}
+                           className={`w-3.5 h-3.5 rounded border-gray-300 focus:ring-0 ${isChecked ? 'accent-[#1e3a8a]' : 'opacity-40'} disabled:cursor-default`}
+                         />
+                         {labels[imp]}
+                       </label>
+                     )
+                  })}
+               </div>
+               {tipoCliente === 'Outros' && <span className="text-[10px] font-bold text-amber-600 mt-2 block">* Você deve marcar manualmente os impostos para a categoria "Outros".</span>}
+            </div>
+          </div>
+
           {/* CLIENT SELECT */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-gray-100 shrink-0 relative z-30">
             <div className="flex justify-between items-center mb-4">
@@ -1053,65 +1117,6 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
                </div>
             </div>
 
-            {/* CONFIGURAÇÕES DE TRIBUTAÇÃO */}
-            <div className="border-b-[3px] border-gray-800 flex flex-col relative z-20 bg-white text-[10px] sm:text-[11px] shrink-0">
-              <div className="bg-gradient-to-r from-gray-200 to-gray-300 text-center font-black uppercase text-[10px] sm:text-[11px] py-1 border-b border-gray-400 text-gray-800 tracking-wider">
-                Detalhamento Tributário e Gross Up
-              </div>
-              <div className="flex flex-col sm:flex-row border-b border-gray-300">
-                <div className="p-2 sm:p-3 flex-1 flex flex-col gap-2 bg-[#f8fbff] sm:border-r border-b sm:border-b-0 border-gray-300">
-                  <label className="font-bold text-[#1e3a8a] uppercase tracking-wide flex items-center gap-1"><Coins className="w-3.5 h-3.5"/> Categoria do Cliente:</label>
-                  <select
-                     value={tipoCliente}
-                     onChange={(e) => handleChangeTipoCliente(e.target.value as TipoClienteType)}
-                     className="w-full bg-white border border-blue-200 text-[#1e3a8a] font-black rounded-lg p-2 outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] shadow-sm appearance-none cursor-pointer"
-                  >
-                     <option value="PJ">PJ (Pessoa Jurídica)</option>
-                     <option value="PF">PF (Pessoa Física)</option>
-                     <option value="Condominio">Condomínio</option>
-                     <option value="Exterior">Exterior</option>
-                     <option value="Fundos">Fundos</option>
-                     <option value="Outros">Outros</option>
-                  </select>
-                </div>
-                <div className="p-2 sm:p-3 flex-1 flex flex-col gap-2 bg-purple-50">
-                  <label className="font-bold text-purple-800 uppercase tracking-wide flex items-center gap-1"><Plus className="w-3.5 h-3.5"/> Gross Up (Adicional):</label>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-1 font-semibold text-purple-900 bg-white p-2 rounded-lg border border-purple-100 shadow-sm">
-                    <label className="flex items-center gap-1.5 cursor-pointer hover:text-purple-700 transition-colors">
-                      <input type="radio" name="grossup" checked={grossUpMode === 'nenhum'} onChange={() => handleGrossUpChange('nenhum')} className="w-3.5 h-3.5 accent-purple-600" /> Nenhuma
-                    </label>
-                    <label className="flex items-center gap-1.5 cursor-pointer hover:text-purple-700 transition-colors">
-                      <input type="radio" name="grossup" checked={grossUpMode === 'retencoes'} onChange={() => handleGrossUpChange('retencoes')} className="w-3.5 h-3.5 accent-purple-600" /> +6,15% (Ret.)
-                    </label>
-                    <label className="flex items-center gap-1.5 cursor-pointer hover:text-purple-700 transition-colors">
-                      <input type="radio" name="grossup" checked={grossUpMode === 'total'} onChange={() => handleGrossUpChange('total')} className="w-3.5 h-3.5 accent-purple-600" /> +15,62% (Total)
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div className="p-2 sm:p-3 bg-white flex flex-col">
-                 <span className="font-bold text-gray-700 uppercase tracking-wide mb-2">Impostos Retidos na Fonte:</span>
-                 <div className="flex flex-wrap gap-x-6 gap-y-2">
-                    {(['irpj', 'pis', 'cofins', 'csll'] as const).map(imp => {
-                       const labels: any = { irpj: 'IRRF (1,50%)', pis: 'PIS (0,65%)', cofins: 'COFINS (3,00%)', csll: 'CSLL (1,00%)' };
-                       const isChecked = impostosAtivos[imp];
-                       return (
-                         <label key={imp} className={`flex items-center gap-2 font-bold select-none p-1.5 rounded-lg border transition-all ${tipoCliente === 'Outros' ? 'cursor-pointer hover:bg-gray-50 border-gray-200' : 'cursor-default border-transparent'} ${isChecked ? 'text-[#1e3a8a] bg-blue-50/50 border-blue-100' : 'text-gray-400'}`}>
-                           <input 
-                             type="checkbox" 
-                             checked={isChecked} 
-                             onChange={() => handleToggleImposto(imp)}
-                             disabled={tipoCliente !== 'Outros'}
-                             className={`w-4 h-4 rounded border-gray-300 focus:ring-0 ${isChecked ? 'accent-[#1e3a8a] text-[#1e3a8a]' : 'opacity-40'} disabled:cursor-default`}
-                           />
-                           {labels[imp]}
-                         </label>
-                       )
-                    })}
-                 </div>
-                 {tipoCliente === 'Outros' && <span className="text-[9px] font-bold text-amber-600 mt-2 bg-amber-50 self-start px-2 py-0.5 rounded">* Marque manualmente os impostos que serão cobrados neste cenário.</span>}
-              </div>
-            </div>
 
             {/* VALOR DA NOTA E IMPOSTOS */}
             <div className="flex flex-col shrink-0 relative z-10 bg-white">
