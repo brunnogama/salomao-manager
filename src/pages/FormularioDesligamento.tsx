@@ -41,12 +41,26 @@ export default function FormularioDesligamento() {
                     setSuccess(true);
                 }
 
+                // Calculate default tempo permanencia if hire date and termination date exist
+                let defaultTempo = '';
+                if (data.collaborator_hire_date && data.collaborator_termination_date) {
+                    const d1 = new Date(data.collaborator_hire_date);
+                    const d2 = new Date(data.collaborator_termination_date);
+                    const months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+                    if (months <= 3) defaultTempo = "Até 3 meses";
+                    else if (months <= 6) defaultTempo = "3 a 6 meses";
+                    else if (months <= 12) defaultTempo = "6 a 12 meses";
+                    else defaultTempo = "Mais de 12 meses";
+                }
+
                 setInterviewData(data);
                 if (data.answers && Object.keys(data.answers).length > 0) {
                    setAnswers(data.answers);
                    if (data.answers._comments) {
                       setComments(data.answers._comments);
                    }
+                } else if (defaultTempo) {
+                   setAnswers({ tempo_permanencia: defaultTempo });
                 }
             } catch (err: any) {
                 console.error('Erro ao buscar dados:', err);
@@ -154,6 +168,10 @@ export default function FormularioDesligamento() {
         );
     }
 
+    const titleStr = interviewData?.template_name || 'Formulário de Saída';
+    const finalTitle = titleStr.toLowerCase().includes('advogado') ? 'Formulário de Saída - Advogados' : 'Formulário de Saída - Estagiários';
+    const displayPosition = String(interviewData?.collaborator_position || '').toLowerCase().includes('advogado') ? 'Advogado' : (interviewData?.collaborator_position || '');
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#112240] to-[#0a192f] py-10 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-6xl mx-auto space-y-6 animate-in slide-in-from-bottom-6 duration-700">
@@ -162,26 +180,53 @@ export default function FormularioDesligamento() {
                     <div className="shrink-0 p-2">
                         <img src="/logo-branca.png" alt="Salomão" className="h-[65px] object-contain mx-auto" />
                     </div>
-                    <div>
-                        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none mb-6">
-                            {interviewData?.template_name || "Entrevista de Desligamento"}
+                    <div className="w-full">
+                        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none mb-6 uppercase">
+                            {finalTitle}
                         </h1>
                         
-                        <div className="inline-flex items-center gap-3 bg-white/10 px-5 py-3 rounded-2xl border border-white/5">
+                        <div className="inline-flex items-center gap-4 bg-white/10 px-6 py-4 rounded-3xl border border-white/5 flex-wrap justify-center shadow-inner w-auto mx-auto lg:max-w-4xl max-w-full">
                             {interviewData?.collaborator_foto_url ? (
-                                <img src={interviewData.collaborator_foto_url} alt="" className="w-10 h-10 rounded-full object-cover shadow-inner border border-white/20" />
+                                <img src={interviewData.collaborator_foto_url} alt="" className="w-12 h-12 rounded-full object-cover shadow-md border border-white/20 shrink-0" />
                             ) : (
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#d4af37] to-yellow-600 text-white flex items-center justify-center text-lg font-bold font-serif shadow-inner border border-white/20">
-                                    {interviewData?.collaborator_name?.charAt(0).toUpperCase()}
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#d4af37] to-yellow-600 text-white flex items-center justify-center text-xl font-bold font-serif shadow-md border border-white/20 shrink-0">
+                                    {interviewData?.collaborator_name?.charAt(0).toUpperCase() || '?'}
                                 </div>
                             )}
-                            <div className="text-left">
-                                <p className="text-sm font-bold text-white truncate max-w-[200px] sm:max-w-xs">{interviewData?.collaborator_name}</p>
-                                <p className="text-[10px] uppercase font-black tracking-widest text-[#d4af37]">{interviewData?.collaborator_position}</p>
+                            
+                            <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-left">
+                                <div className="min-w-[120px]">
+                                    <p className="text-xs font-medium text-gray-400 mb-0.5">Nome / Posição</p>
+                                    <p className="font-bold text-white max-w-[200px] truncate leading-tight">{interviewData?.collaborator_name}</p>
+                                    <p className="text-[10px] uppercase font-black tracking-widest text-[#d4af37] leading-tight">{displayPosition}</p>
+                                </div>
+                                
+                                {interviewData?.collaborator_area && (
+                                    <div className="hidden sm:block">
+                                        <p className="text-xs font-medium text-gray-400 mb-0.5">Área de atuação</p>
+                                        <p className="font-semibold text-gray-200">{interviewData.collaborator_area}</p>
+                                    </div>
+                                )}
+                                
+                                {interviewData?.collaborator_leader_name && (
+                                    <div className="hidden sm:block">
+                                        <p className="text-xs font-medium text-gray-400 mb-0.5">Líder</p>
+                                        <p className="font-semibold text-gray-200">{interviewData.collaborator_leader_name}</p>
+                                    </div>
+                                )}
+
+                                {interviewData?.collaborator_hire_date && interviewData?.collaborator_termination_date && (
+                                    <div className="hidden sm:block">
+                                        <p className="text-xs font-medium text-gray-400 mb-0.5">Admissão</p>
+                                        <p className="font-semibold text-gray-200">{new Date(interviewData.collaborator_hire_date).toLocaleDateString()}</p>
+                                    </div>
+                                )}
+
                                 {interviewData?.collaborator_termination_date && (
-                                    <p className="text-[10px] font-medium text-gray-400 mt-0.5">
-                                        Data de Saída: {new Date(interviewData.collaborator_termination_date).toLocaleDateString()}
-                                    </p>
+                                    <div>
+                                        <p className="text-xs font-medium text-gray-400 mb-0.5">Data de Saída</p>
+                                        <p className="font-semibold text-gray-200">{new Date(interviewData.collaborator_termination_date).toLocaleDateString()}</p>
+                                    </div>
                                 )}
                             </div>
                         </div>

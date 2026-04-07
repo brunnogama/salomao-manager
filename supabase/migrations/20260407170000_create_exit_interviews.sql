@@ -434,22 +434,6 @@ INSERT INTO form_templates (name, vinculo_type, schema) VALUES (
         "label": "Quais os aspectos que você acredita que devem ser melhorados?"
       }
     ]
-  },
-  {
-    "id": "sec_rh",
-    "title": "Uso Exclusivo do RH",
-    "description": "Seção reservada para anotações do entrevistador.",
-    "questions": [
-      {
-        "id": "rh_notes",
-        "type": "textarea",
-        "label": "Observações do RH (entrevistador)"
-      }
-    ]
-  }
-]'::jsonb
-);
-
 CREATE OR REPLACE FUNCTION get_exit_interview_public(p_token UUID)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -459,6 +443,7 @@ DECLARE
     v_interview exit_interviews%ROWTYPE;
     v_template form_templates%ROWTYPE;
     v_collaborator collaborators%ROWTYPE;
+    v_leader_name TEXT;
     v_role roles%ROWTYPE;
     v_result JSONB;
 BEGIN
@@ -470,18 +455,24 @@ BEGIN
     SELECT * INTO v_template FROM form_templates WHERE id = v_interview.template_id;
     SELECT * INTO v_collaborator FROM collaborators WHERE id = v_interview.collaborator_id;
     SELECT * INTO v_role FROM roles WHERE id::TEXT = v_collaborator.role::TEXT;
+    
+    IF v_collaborator.leader_id IS NOT NULL THEN
+        SELECT name INTO v_leader_name FROM collaborators WHERE id = v_collaborator.leader_id;
+    END IF;
 
     v_result = jsonb_build_object(
         'interview_id', v_interview.id,
         'status', v_interview.status,
         'answers', v_interview.answers,
+        'template_name', v_template.name,
+        'template_schema', v_template.schema,
         'collaborator_name', v_collaborator.name,
         'collaborator_foto_url', v_collaborator.foto_url,
-        'collaborator_position', v_role.name,
-        'collaborator_area', v_collaborator.area,
+        'collaborator_position', COALESCE(v_role.name, v_collaborator.role),
         'collaborator_termination_date', v_collaborator.termination_date,
-        'template_schema', v_template.schema,
-        'template_name', v_template.name
+        'collaborator_hire_date', v_collaborator.hire_date,
+        'collaborator_area', v_collaborator.area,
+        'collaborator_leader_name', v_leader_name
     );
 
     RETURN v_result;
