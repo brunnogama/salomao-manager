@@ -41,16 +41,8 @@ export default function FormularioDesligamento() {
                     setSuccess(true);
                 }
 
-                // Calculate default tempo permanencia if hire date and termination date exist
-                let defaultTempo = '';
                 if (data.collaborator_hire_date && data.collaborator_termination_date) {
-                    const d1 = new Date(data.collaborator_hire_date + 'T12:00:00');
-                    const d2 = new Date(data.collaborator_termination_date + 'T12:00:00');
-                    const months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
-                    if (months <= 3) defaultTempo = "Até 3 meses";
-                    else if (months <= 6) defaultTempo = "3 a 6 meses";
-                    else if (months <= 12) defaultTempo = "6 a 12 meses";
-                    else defaultTempo = "Mais de 12 meses";
+                    data.answers = data.answers || {};
                 }
 
                 setInterviewData(data);
@@ -59,8 +51,6 @@ export default function FormularioDesligamento() {
                    if (data.answers._comments) {
                       setComments(data.answers._comments);
                    }
-                } else if (defaultTempo) {
-                   setAnswers({ tempo_permanencia: defaultTempo });
                 }
             } catch (err: any) {
                 console.error('Erro ao buscar dados:', err);
@@ -172,6 +162,17 @@ export default function FormularioDesligamento() {
     const finalTitle = titleStr.toLowerCase().includes('advogado') ? 'Formulário de Saída - Advogados' : 'Formulário de Saída - Estagiários';
     const displayPosition = String(interviewData?.collaborator_position || '').toLowerCase().includes('advogado') ? 'Advogado' : (interviewData?.collaborator_position || '');
 
+    let computedTempo = '';
+    if (interviewData?.collaborator_hire_date && interviewData?.collaborator_termination_date) {
+        const d1 = new Date(interviewData.collaborator_hire_date + 'T12:00:00');
+        const d2 = new Date(interviewData.collaborator_termination_date + 'T12:00:00');
+        const months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+        if (months <= 3) computedTempo = "Até 3 meses";
+        else if (months <= 6) computedTempo = "3 a 6 meses";
+        else if (months <= 12) computedTempo = "6 a 12 meses";
+        else computedTempo = "Mais de 12 meses";
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#112240] to-[#0a192f] py-10 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-6xl mx-auto space-y-6 animate-in slide-in-from-bottom-6 duration-700">
@@ -201,13 +202,6 @@ export default function FormularioDesligamento() {
                                     <p className="text-[10px] uppercase font-black tracking-widest text-[#d4af37] leading-tight">{displayPosition}</p>
                                 </div>
                                 
-                                {interviewData?.collaborator_area && (
-                                    <div className="hidden sm:block">
-                                        <p className="text-xs font-medium text-gray-400 mb-0.5">Área de atuação</p>
-                                        <p className="font-semibold text-gray-200">{interviewData.collaborator_area}</p>
-                                    </div>
-                                )}
-                                
                                 {interviewData?.collaborator_leader_name && (
                                     <div className="hidden sm:block">
                                         <p className="text-xs font-medium text-gray-400 mb-0.5">Líder</p>
@@ -226,6 +220,13 @@ export default function FormularioDesligamento() {
                                     <div>
                                         <p className="text-xs font-medium text-gray-400 mb-0.5">Data de Saída</p>
                                         <p className="font-semibold text-gray-200">{new Date(interviewData.collaborator_termination_date + 'T12:00:00').toLocaleDateString()}</p>
+                                    </div>
+                                )}
+
+                                {computedTempo && (
+                                    <div className="hidden sm:block">
+                                        <p className="text-xs font-medium text-gray-400 mb-0.5">Tempo de Casa</p>
+                                        <p className="font-semibold text-[#d4af37]">{computedTempo}</p>
                                     </div>
                                 )}
                             </div>
@@ -251,6 +252,10 @@ export default function FormularioDesligamento() {
                                 
                                 <div className="space-y-8 ml-1 sm:ml-11">
                                     {section.questions?.map((q: any) => {
+                                        if (q.label && q.label.toLowerCase().includes('tempo de perman')) {
+                                            return null;
+                                        }
+
                                         if (q.dependsOn) {
                                             const dependentAnswer = answers[q.dependsOn.questionId];
                                             const conditionMet = Array.isArray(dependentAnswer) 
