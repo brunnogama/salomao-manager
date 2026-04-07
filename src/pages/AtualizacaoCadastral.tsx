@@ -173,6 +173,14 @@ export default function AtualizacaoCadastral() {
                     })) || []
                 };
 
+                // Busca o nome do cargo (posição) na tabela roles se o role for um ID numérico
+                if (data.role && !isNaN(Number(data.role))) {
+                    const { data: roleData } = await supabase.from('roles').select('name').eq('id', data.role).single();
+                    if (roleData) {
+                        formattedColaborador.role_name = roleData.name;
+                    }
+                }
+
                 setFormData(formattedColaborador);
 
                 // Fetch existing GED docs using the found collaborator id
@@ -498,8 +506,8 @@ export default function AtualizacaoCadastral() {
                         </h1>
                         
                         <div className="inline-flex items-center gap-4 bg-white/10 px-6 py-4 rounded-3xl border border-white/5 flex-wrap justify-center shadow-inner w-auto mx-auto lg:max-w-4xl max-w-full">
-                            {formData.photo_url ? (
-                                <img src={formData.photo_url} alt="" className="w-12 h-12 rounded-full object-cover shadow-md border border-white/20 shrink-0" />
+                            {(formData as any).foto_url || formData.photo_url ? (
+                                <img src={(formData as any).foto_url || formData.photo_url} alt="" className="w-12 h-12 rounded-full object-cover shadow-md border border-white/20 shrink-0" />
                             ) : (
                                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#d4af37] to-yellow-600 text-white flex items-center justify-center text-xl font-bold font-serif shadow-md border border-white/20 shrink-0">
                                     {(formData.name || '?').charAt(0).toUpperCase()}
@@ -509,8 +517,8 @@ export default function AtualizacaoCadastral() {
                             <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-left">
                                 <div className="min-w-[120px]">
                                     <p className="text-xs font-medium text-gray-400 mb-0.5">Nome / Posição</p>
-                                    <p className="font-bold text-white max-w-[200px] truncate leading-tight">{formData.name}</p>
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-[#d4af37] leading-tight">{formData.role || 'Membro da Equipe'}</p>
+                                    <p className="font-bold text-white leading-tight">{formData.name}</p>
+                                    <p className="text-[10px] uppercase font-black tracking-widest text-[#d4af37] leading-tight flex-wrap max-w-xs">{((formData as any).role_name) || (isNaN(Number(formData.role)) ? formData.role : (formData as any).cargo || 'Membro da Equipe')}</p>
                                 </div>
                                 
                                 {formData.email && (

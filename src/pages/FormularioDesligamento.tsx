@@ -198,8 +198,8 @@ export default function FormularioDesligamento() {
                             <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-left">
                                 <div className="min-w-[120px]">
                                     <p className="text-xs font-medium text-gray-400 mb-0.5">Nome / Posição</p>
-                                    <p className="font-bold text-white max-w-[200px] truncate leading-tight">{interviewData?.collaborator_name}</p>
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-[#d4af37] leading-tight">{displayPosition}</p>
+                                    <p className="font-bold text-white leading-tight">{interviewData?.collaborator_name}</p>
+                                    <p className="text-[10px] uppercase font-black tracking-widest text-[#d4af37] leading-tight mt-1">{displayPosition}</p>
                                 </div>
                                 
                                 {interviewData?.collaborator_leader_name && (
