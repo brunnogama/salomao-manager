@@ -28,6 +28,7 @@ export function Dashboard({ }: Props) {
   const [selectedLocation, setSelectedLocation] = useState('');
   const [partnersList, setPartnersList] = useState<{ id: string, name: string }[]>([]);
   const [locationsList, setLocationsList] = useState<string[]>([]);
+  const [selectedPeriod, setSelectedPeriod] = useState<{ start: string; end: string }>({ start: '', end: '' });
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
   // Hook de Dados Profundo da Controladoria
@@ -35,7 +36,7 @@ export function Dashboard({ }: Props) {
     loading: loadingData, metrics, funil, evolucaoMensal, financeiro12Meses, statsFinanceiro,
     propostas12Meses, statsPropostas, mediasFinanceiras, mediasPropostas,
     rejectionData, contractsByPartner
-  } = useDashboardData(selectedPartner, selectedLocation);
+  } = useDashboardData(selectedPartner, selectedLocation, selectedPeriod);
 
 
 
@@ -96,6 +97,8 @@ export function Dashboard({ }: Props) {
             selectedLocation={selectedLocation}
             setSelectedLocation={setSelectedLocation}
             locationsList={locationsList}
+            selectedPeriod={selectedPeriod}
+            setSelectedPeriod={setSelectedPeriod}
             hideTitle={true}
             className="!p-0 !border-0 !shadow-none !bg-transparent"
           />

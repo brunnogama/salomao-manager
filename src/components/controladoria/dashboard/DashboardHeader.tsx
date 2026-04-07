@@ -13,11 +13,14 @@ interface DashboardHeaderProps {
   selectedLocation: string;
   setSelectedLocation: (val: string) => void;
   locationsList: string[];
+  selectedPeriod?: { start: string; end: string };
+  setSelectedPeriod?: (val: { start: string; end: string }) => void;
   hideTitle?: boolean;
   className?: string;
 }
 
 import { FilterSelect } from '../ui/FilterSelect';
+import { DateFilterSelect } from '../ui/DateFilterSelect';
 
 export function DashboardHeader({
   selectedPartner,
@@ -26,6 +29,8 @@ export function DashboardHeader({
   selectedLocation,
   setSelectedLocation,
   locationsList,
+  selectedPeriod,
+  setSelectedPeriod,
   hideTitle = false,
   className = ""
 }: DashboardHeaderProps) {
@@ -188,6 +193,14 @@ export function DashboardHeader({
             options={locationOptions}
             placeholder="Locais"
           />
+
+          {/* Filtro de Período */}
+          {selectedPeriod && setSelectedPeriod && (
+            <DateFilterSelect
+              value={selectedPeriod}
+              onChange={setSelectedPeriod}
+            />
+          )}
 
           {/* Botão de Screenshot */}
           <button

@@ -99,7 +99,7 @@ const formatDateShort = (d: Date) => {
 };
 
 // ATUALIZAÇÃO: Hook aceita filtros opcionais
-export function useDashboardData(selectedPartner?: string, selectedLocation?: string) {
+export function useDashboardData(selectedPartner?: string, selectedLocation?: string, selectedPeriod?: { start: string; end: string }) {
   const [loading, setLoading] = useState(true);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -138,10 +138,55 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     const dataInicioFixo = new Date('2025-06-01T00:00:00');
 
     // --- FILTRAGEM DOS DADOS ---
+    const getRelevantDate = (c: Contract) => {
+      switch (c.status) {
+        case 'rascunho': return c.created_at;
+        case 'analysis': return c.prospect_date || c.created_at;
+        case 'proposal': return c.proposal_date || c.created_at;
+        case 'active': return c.contract_date || c.created_at;
+        case 'rejected': return c.rejection_date || c.created_at;
+        case 'probono': return c.probono_date || c.contract_date || c.created_at;
+        case 'baixado': return c.updated_at || c.contract_date || c.created_at;
+        default: return c.created_at;
+      }
+    };
+
     const filteredContracts = contracts.filter(c => {
       const matchesPartner = selectedPartner ? c.partner_id === selectedPartner : true;
       const matchesLocation = selectedLocation ? c.billing_location === selectedLocation : true;
-      return matchesPartner && matchesLocation;
+      
+      let matchesPeriod = true;
+      if (selectedPeriod && (selectedPeriod.start || selectedPeriod.end)) {
+        const relevantDateStr = getRelevantDate(c);
+        if (relevantDateStr) {
+          const relevantDate = safeDate(relevantDateStr);
+          if (relevantDate) {
+            relevantDate.setHours(0, 0, 0, 0);
+
+            if (selectedPeriod.start) {
+              const start = safeDate(selectedPeriod.start);
+              if (start) {
+                start.setHours(0, 0, 0, 0);
+                if (relevantDate < start) matchesPeriod = false;
+              }
+            }
+
+            if (selectedPeriod.end) {
+              const end = safeDate(selectedPeriod.end);
+              if (end) {
+                end.setHours(23, 59, 59, 999);
+                if (relevantDate > end) matchesPeriod = false;
+              }
+            }
+          } else {
+            matchesPeriod = false;
+          }
+        } else {
+          matchesPeriod = false;
+        }
+      }
+
+      return matchesPartner && matchesLocation && matchesPeriod;
     });
     // ---------------------------
 
@@ -561,7 +606,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     const contractsByPartner = Object.entries(partnerCounts).map(([name, stats]: any) => ({ name, ...stats })).sort((a: any, b: any) => b.total - a.total);
 
     return { metrics, funil, evolucaoMensal, financeiro12Meses, statsFinanceiro, propostas12Meses, statsPropostas, mediasFinanceiras, mediasPropostas, rejectionData, contractsByPartner };
-  }, [contracts, partners, selectedPartner, selectedLocation]);
+  }, [contracts, partners, collaborators, selectedPartner, selectedLocation, selectedPeriod]);
 
   return { loading, refresh: fetchDashboardData, ...dashboardData };
 }
