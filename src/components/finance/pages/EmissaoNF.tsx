@@ -607,34 +607,34 @@ Referência: ${hon.contract?.reference || 'N/A'}`;
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
             <FileText className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
-          <div className="flex flex-col">
+          <div>
             <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
               Emissão de NF
             </h1>
-            <div className="flex items-center gap-4 mt-3 border-b border-gray-200">
-              <button
-                className={`pb-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'emissao' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                onClick={() => setActiveTab('emissao')}
-              >
-                Emissão
-              </button>
-              <button
-                className={`pb-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'historico' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                onClick={() => setActiveTab('historico')}
-              >
-                NF's Emitidas
-              </button>
-            </div>
-            {activeTab === 'emissao' && (
-               <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-2">
-                 Gestão centralizada de faturação para múltiplas capitais
-               </p>
-            )}
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
+              Gestão centralizada de faturação para múltiplas capitais
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 shrink-0 w-full md:w-auto mt-2 md:mt-0 justify-end flex-wrap">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto mt-2 md:mt-0 justify-end flex-wrap">
+          {/* Abas Navegação */}
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl w-full sm:w-auto overflow-x-auto hide-scrollbar">
+            <button
+              onClick={() => setActiveTab('emissao')}
+              className={`flex shrink-0 items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'emissao' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Emissão
+            </button>
+            <button
+              onClick={() => setActiveTab('historico')}
+              className={`flex shrink-0 items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'historico' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              NF's Emitidas
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 ml-0 sm:ml-2">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden sm:block">Cidade de Emissão:</label>
             <div className="relative group">
               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1e3a8a]/50" />
