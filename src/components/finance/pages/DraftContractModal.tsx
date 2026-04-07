@@ -47,7 +47,7 @@ export function DraftContractModal({ isOpen, onClose, client, onSave }: DraftCon
         cnpj: client.cnpj,
         hon_number: honNumber,
         reference: `RASCUNHO - ${client.name}`,
-        status: 'draft',
+        status: 'rascunho',
       } as any;
 
       const valorFormatado = maskMoney((valor * 100).toFixed(0));
