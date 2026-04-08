@@ -540,13 +540,7 @@ export function Contracts() {
 
     const header = [
       'ID', 'Status', 'Cliente', 'Sócio', 'HON/PROP', 'Data Relevante', 'Local Faturamento',
-      'Timesheet',
-      'Pró-Labore', 'Cláusula Pró-Labore',
-      'Outros Honorários', 'Cláusula Outros',
-      'Fixo Mensal', 'Cláusula Fixo Mensal',
-      'Êxito Intermediário', 'Cláusula Intermediário',
-      'Êxito Final', 'Cláusula Êxito Final',
-      'Total Contrato',
+      'Total Pró-Labore', 'Total Êxito Intermediário', 'Total Êxito Final', 'Total Outros Honorários', 'Fixo Mensal', 'Timesheet', 'Total Contrato',
       'Valores em %',
       'Posição do Cliente', 'Nº Processo', 'UF (Processo)', 'Tribunal', 'Comarca', 'Vara',
       'Autor', 'CNPJ Autor', 'Réu / Parte Adversa', 'CNPJ Réu', 'Assunto / Objeto',
@@ -645,53 +639,6 @@ export function Contracts() {
       const vTotalContrato = vPro + vOther + vFixed + vTotalSuccess;
       const percentsStr = percentsList.length > 0 ? percentsList.join(' + ') : '-';
 
-      const buildClauseStr = (mainClause: any, extras: any, extrasClauses: any) => {
-          let str = mainClause && mainClause !== '-' ? String(mainClause) : '';
-          if (extras && Array.isArray(extras)) {
-              const extraCls: string[] = [];
-              extras.forEach((_: any, i: number) => {
-                  const cl = (extrasClauses || [])[i];
-                  if (cl && cl !== '-') extraCls.push(String(cl));
-              });
-              if (extraCls.length > 0) {
-                  const joined = extraCls.join('\n---\n');
-                  str = str ? `${str}\n---\n${joined}` : joined;
-              }
-          }
-          return str || '-';
-      };
-
-      const plClause = buildClauseStr(
-          (c as any).pro_labore_clause,
-          (c as any).pro_labore_extras, (c as any).pro_labore_extras_clauses
-      );
-
-      const otherClause = buildClauseStr(
-          (c as any).other_fees_clause,
-          (c as any).other_fees_extras, (c as any).other_fees_extras_clauses
-      );
-
-      const fixedClause = buildClauseStr(
-          (c as any).fixed_monthly_fee_clause,
-          (c as any).fixed_monthly_extras, (c as any).fixed_monthly_extras_clauses
-      );
-
-      const finalClause = buildClauseStr(
-          (c as any).final_success_fee_clause,
-          (c as any).final_success_extras, (c as any).final_success_extras_clauses
-      );
-
-      let interClause = '';
-      if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
-          const extraCls: string[] = [];
-          c.intermediate_fees.forEach((_: any, i: number) => {
-              const cl = ((c as any).intermediate_fees_clauses || [])[i];
-              if (cl && cl !== '-') extraCls.push(String(cl));
-          });
-          interClause = extraCls.join('\n---\n');
-      }
-      interClause = interClause || '-';
-
       sumPro += vPro;
       sumOther += vOther;
       sumFixed += vFixed;
@@ -707,17 +654,12 @@ export function Contracts() {
         getHonDisplay(c),
         safeDate(getRelevantDate(c))?.toLocaleDateString('pt-BR') || '-',
         c.billing_location || '-',
-        (c as any).timesheet ? 'X' : '-',
         vPro,
-        plClause,
-        vOther,
-        otherClause,
-        vFixed,
-        fixedClause,
         vInter,
-        interClause,
         vFinal,
-        finalClause,
+        vOther,
+        vFixed,
+        (c as any).timesheet ? 'X' : '-',
         vTotalContrato,
         percentsStr,
         c.client_position || '-',
@@ -741,8 +683,7 @@ export function Contracts() {
 
     const totalRow = [
       'TOTAIS', '', '', '', '', '', '',
-      '',
-      sumPro, '', sumOther, '', sumFixed, '', sumInter, '', sumFinal, '', sumTotalContrato,
+      sumPro, sumInter, sumFinal, sumOther, sumFixed, '', sumTotalContrato,
       '',
       '', '', '', '', '', '', '', '', '', '', '', '', '',
       ''
@@ -754,7 +695,7 @@ export function Contracts() {
 
     const currencyFormat = '"R$" #,##0.00';
     const range = XLSX.utils.decode_range(ws['!ref']!);
-    const moneyCols = [8, 10, 12, 14, 16, 18];
+    const moneyCols = [7, 8, 9, 10, 11, 13];
 
     // -- STYLING PADRÃO CORPORATIVO --
     for (let col = range.s.c; col <= range.e.c; col++) {
@@ -789,7 +730,7 @@ export function Contracts() {
             if (typeof ws[cellRef].v === 'string') {
                 ws[cellRef].s = {
                     ...ws[cellRef].s,
-                    alignment: { vertical: "top", wrapText: true }
+                    alignment: { vertical: "center", horizontal: "center", wrapText: true }
                 };
             }
         }
