@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { LayoutDashboard, Users, MapPin, Maximize2, Minimize2, Camera, Loader2, Download, FileDown } from 'lucide-react';
+import { LayoutDashboard, Users, MapPin, Maximize2, Minimize2, Camera, Loader2, Download, FileDown, Presentation } from 'lucide-react';
 import { usePresentation } from '../../../contexts/PresentationContext';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import pptxgen from 'pptxgenjs';
 import { toast } from 'sonner';
 
 interface DashboardHeaderProps {
@@ -39,6 +40,7 @@ export function DashboardHeader({
   const { isPresentationMode, togglePresentationMode } = usePresentation();
   const [isCapturing, setIsCapturing] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [isExportingPPTX, setIsExportingPPTX] = useState(false);
 
   const handleExportPDF = async () => {
     setIsExportingPDF(true);
@@ -101,6 +103,56 @@ export function DashboardHeader({
     } finally {
       setIsExportingPDF(false);
       // Restaurar o scroll pra onde o usuário estava
+      window.scrollTo({ top: originalScrollY, behavior: 'instant' });
+    }
+  };
+
+  const handleExportPPTX = async () => {
+    setIsExportingPPTX(true);
+    const loadingToast = toast.loading('Gerando Apresentação PowerPoint... Isso pode levar alguns segundos.');
+
+    // Salvar scroll position
+    const originalScrollY = window.scrollY;
+    
+    // Rolar para o topo. Resolve bug crítico do html2canvas
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
+    try {
+      const sections = ['pdf-section-1', 'pdf-section-2', 'pdf-section-3'];
+      let pptx = new pptxgen();
+      
+      // Proporção 16:9 
+      pptx.layout = 'LAYOUT_16x9';
+      
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      for (let i = 0; i < sections.length; i++) {
+        const targetElement = document.getElementById(sections[i]);
+        if (!targetElement) continue;
+
+        const canvas = await html2canvas(targetElement, {
+          scale: 2, // Resolução HD
+          useCORS: true,
+          backgroundColor: '#F8FAFC', 
+          scrollY: 0, 
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        
+        let slide = pptx.addSlide();
+        slide.background = { color: 'F8FAFC' };
+        
+        // Insere a imagem cobrindo e redimensionando para caber mantendo a taxa de proporção na lâmina!
+        slide.addImage({ data: imgData, x: 0, y: 0, w: '100%', h: '100%', sizing: { type: 'contain', w: 10, h: 5.625 } });
+      }
+      
+      await pptx.writeFile({ fileName: `Dashboard_Controladoria_${new Date().toISOString().split('T')[0]}.pptx` });
+      toast.success('PowerPoint gerado com sucesso!', { id: loadingToast });
+    } catch (error) {
+      console.error("Erro ao gerar PPTX:", error);
+      toast.error('Ocorreu um erro ao gerar a apresentação do PowerPoint.', { id: loadingToast });
+    } finally {
+      setIsExportingPPTX(false);
       window.scrollTo({ top: originalScrollY, behavior: 'instant' });
     }
   };
@@ -248,7 +300,7 @@ export function DashboardHeader({
           {/* Botão de Exportar PDF */}
           <button
             onClick={handleExportPDF}
-            disabled={isExportingPDF || isCapturing}
+            disabled={isExportingPDF || isCapturing || isExportingPPTX}
             title="Exportar Dashboard em PDF (Alta Resolução)"
             className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-[#ff4d4f] text-white hover:bg-[#ff3030] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -256,6 +308,20 @@ export function DashboardHeader({
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <Download className="w-5 h-5" />
+            )}
+          </button>
+
+          {/* Botão de Exportar PPTX */}
+          <button
+            onClick={handleExportPPTX}
+            disabled={isExportingPPTX || isExportingPDF || isCapturing}
+            title="Exportar Apresentação em PowerPoint (PPTX)"
+            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-[#D04423] text-white hover:bg-[#b03518] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isExportingPPTX ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Presentation className="w-5 h-5" />
             )}
           </button>
         </div>

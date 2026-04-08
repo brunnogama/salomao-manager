@@ -35,6 +35,7 @@
     "jspdf": "^2.5.2",
     "lucide-react": "^0.468.0",
     "pdfjs-dist": "^5.6.205",
+    "pptxgenjs": "^4.0.1",
     "quill": "^2.0.3",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",
