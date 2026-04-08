@@ -645,25 +645,56 @@ export function Contracts() {
       const vTotalContrato = vPro + vOther + vFixed + vTotalSuccess;
       const percentsStr = percentsList.length > 0 ? percentsList.join(' + ') : '-';
 
-      let plClause = (c as any).pro_labore_clause || '';
-      if ((c as any).pro_labore_extras_clauses && Array.isArray((c as any).pro_labore_extras_clauses)) {
-        const joined = (c as any).pro_labore_extras_clauses.filter(Boolean).join('\n---\n');
-        if (joined) plClause = plClause ? `${plClause}\n---\n${joined}` : joined;
-      }
-      plClause = plClause || '-';
+      const buildClauseStr = (mainClause: any, mainRule: any, extras: any, extrasClauses: any, extrasRules: any) => {
+          let str = [mainClause, mainRule].filter(Boolean).filter(s => s !== '-').join(' - ');
+          if (extras && Array.isArray(extras)) {
+              const extraCls: string[] = [];
+              extras.forEach((_: any, i: number) => {
+                  const cl = (extrasClauses || [])[i] || '';
+                  const ru = (extrasRules || [])[i] || '';
+                  const fullText = [cl, ru].filter(Boolean).filter(s => s !== '-').join(' - ');
+                  if (fullText) extraCls.push(fullText);
+              });
+              if (extraCls.length > 0) {
+                  const joined = extraCls.join('\n---\n');
+                  str = str ? `${str}\n---\n${joined}` : joined;
+              }
+          }
+          return str || '-';
+      };
+
+      const plClause = buildClauseStr(
+          (c as any).pro_labore_clause, (c as any).pro_labore_rule,
+          (c as any).pro_labore_extras, (c as any).pro_labore_extras_clauses, (c as any).pro_labore_extras_rules
+      );
+
+      const otherClause = buildClauseStr(
+          (c as any).other_fees_clause, (c as any).other_fees_rule,
+          (c as any).other_fees_extras, (c as any).other_fees_extras_clauses, (c as any).other_fees_extras_rules
+      );
+
+      const fixedClause = buildClauseStr(
+          (c as any).fixed_monthly_fee_clause, (c as any).fixed_monthly_fee_rule,
+          (c as any).fixed_monthly_extras, (c as any).fixed_monthly_extras_clauses, (c as any).fixed_monthly_extras_rules
+      );
+
+      const finalClause = buildClauseStr(
+          (c as any).final_success_fee_clause, (c as any).final_success_fee_rule,
+          (c as any).final_success_extras, (c as any).final_success_extras_clauses, (c as any).final_success_extras_rules
+      );
 
       let interClause = '';
-      if ((c.intermediate_fees_clauses as any) && Array.isArray((c.intermediate_fees_clauses as any))) {
-        interClause = (c.intermediate_fees_clauses as any).filter(Boolean).join('\n---\n');
+      if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
+          const extraCls: string[] = [];
+          c.intermediate_fees.forEach((_: any, i: number) => {
+              const cl = ((c as any).intermediate_fees_clauses || [])[i] || '';
+              const ru = ((c as any).intermediate_fees_rules || [])[i] || '';
+              const fullText = [cl, ru].filter(Boolean).filter(s => s !== '-').join(' - ');
+              if (fullText) extraCls.push(fullText);
+          });
+          interClause = extraCls.join('\n---\n');
       }
       interClause = interClause || '-';
-
-      let finalClause = (c as any).final_success_fee_clause || '';
-      if ((c as any).final_success_extras_clauses && Array.isArray((c as any).final_success_extras_clauses)) {
-        const joined = (c as any).final_success_extras_clauses.filter(Boolean).join('\n---\n');
-        if (joined) finalClause = finalClause ? `${finalClause}\n---\n${joined}` : joined;
-      }
-      finalClause = finalClause || '-';
 
       sumPro += vPro;
       sumOther += vOther;
@@ -684,9 +715,9 @@ export function Contracts() {
         vPro === 0 ? 'Nenhum valor cadastrado' : vPro,
         plClause,
         vOther === 0 ? 'Nenhum valor cadastrado' : vOther,
-        (c as any).other_fees_clause || '-',
+        otherClause,
         vFixed === 0 ? 'Nenhum valor cadastrado' : vFixed,
-        (c as any).fixed_monthly_fee_clause || '-',
+        fixedClause,
         vInter === 0 ? 'Nenhum valor cadastrado' : vInter,
         interClause,
         vFinal === 0 ? 'Nenhum valor cadastrado' : vFinal,
