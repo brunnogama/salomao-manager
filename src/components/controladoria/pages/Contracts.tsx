@@ -534,7 +534,6 @@ export function Contracts() {
       'Pró-Labore', 'Cláusula Pró-Labore',
       'Outros Honorários', 'Cláusula Outros',
       'Fixo Mensal', 'Cláusula Fixo Mensal',
-      'Fixo Pontual', 'Cláusula Fixo Pontual',
       'Êxito Intermediário', 'Cláusula Intermediário',
       'Êxito Final', 'Cláusula Êxito Final',
       'Total Contrato',
@@ -603,7 +602,7 @@ export function Contracts() {
       }
 
       const vTotalSuccess = vFinal + vInter + vFinalExt;
-      const vTotalContrato = vPro + vOther + vFixed + vFixedPontual + vTotalSuccess;
+      const vTotalContrato = vPro + vOther + vFixed + vTotalSuccess;
       const percentsStr = percentsList.length > 0 ? percentsList.join(' + ') : '-';
 
       sumPro += vPro;
@@ -630,8 +629,6 @@ export function Contracts() {
         (c as any).other_fees_clause || '-',
         vFixed,
         (c as any).fixed_monthly_fee_clause || '-',
-        vFixedPontual,
-        (c as any).fixed_fee_clause || (c as any).honorarios_fixos_clause || '-',
         vInter,
         (c.intermediate_fees_clauses && (c.intermediate_fees_clauses as any).length > 0) ? 'Ver detalhe abaixo' : '-',
         vFinal,
@@ -674,7 +671,6 @@ export function Contracts() {
           '', clause.type === 'Extra Pró-Labore' ? clause.text : '',
           '', '',
           '', '',
-          '', '',
           '', clause.type === 'Intermediário' ? clause.text : '',
           '', clause.type === 'Extra Êxito Final' ? clause.text : '',
           '',
@@ -688,7 +684,7 @@ export function Contracts() {
     const totalRow = [
       'TOTAIS', '', '', '', '', '', '',
       '',
-      sumPro, '', sumOther, '', sumFixed, '', sumFixedPontual, '', sumInter, '', sumFinal, '', sumTotalContrato,
+      sumPro, '', sumOther, '', sumFixed, '', sumInter, '', sumFinal, '', sumTotalContrato,
       '',
       '', '', '', '', '', '', '', '', '', '', '', '', '',
       ''
@@ -700,7 +696,7 @@ export function Contracts() {
 
     const currencyFormat = '"R$" #,##0.00';
     const range = XLSX.utils.decode_range(ws['!ref']!);
-    const moneyCols = [8, 10, 12, 14, 16, 18, 20];
+    const moneyCols = [8, 10, 12, 14, 16, 18];
 
     // -- STYLING PADRÃO CORPORATIVO --
     for (let col = range.s.c; col <= range.e.c; col++) {
