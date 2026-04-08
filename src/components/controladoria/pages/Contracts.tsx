@@ -526,6 +526,7 @@ export function Contracts() {
     let sumInter = 0;
     let sumFinal = 0;
     let sumTotalSuccess = 0;
+    let sumTotalContrato = 0;
 
     const header = [
       'ID', 'Status', 'Cliente', 'Sócio', 'HON/PROP', 'Data Relevante', 'Local Faturamento',
@@ -536,7 +537,7 @@ export function Contracts() {
       'Fixo Pontual', 'Cláusula Fixo Pontual',
       'Êxito Intermediário', 'Cláusula Intermediário',
       'Êxito Final', 'Cláusula Êxito Final',
-      'Êxito (Total)',
+      'Êxito (Total)', 'Total Contrato',
       'Valores em %',
       'Posição do Cliente', 'Nº Processo', 'UF (Processo)', 'Tribunal', 'Comarca', 'Vara',
       'Autor', 'CNPJ Autor', 'Réu / Parte Adversa', 'CNPJ Réu', 'Assunto / Objeto',
@@ -552,11 +553,22 @@ export function Contracts() {
          if (!val) return 0;
          const str = String(val).trim();
          if (str === '0%' || str === '0' || str === '' || str === 'R$ 0,00') return 0;
-         if (str.includes('%')) {
-             percentsList.push(str);
-             return 0; // Do not sum
+         
+         const percentMatch = str.match(/(\d+(?:[.,]\d+)?\s*%)/g);
+         if (percentMatch) {
+             percentMatch.forEach(p => percentsList.push(p));
          }
-         return parseCurrency(str);
+
+         const brlMatch = str.match(/R\$\s*([\d\.]+(?:,\d{2})?)/);
+         if (brlMatch) {
+             const clean = brlMatch[1].replace(/\./g, '').replace(',', '.');
+             const parsed = parseFloat(clean);
+             if (!isNaN(parsed)) return parsed;
+         }
+         
+         let noPercentStr = str.replace(/(\d+(?:[.,]\d+)?\s*%)/g, '');
+         noPercentStr = noPercentStr.replace(/^[\w\.\(\)]+\s*-\s*/, '');
+         return parseCurrency(noPercentStr);
       };
 
       const vPro = processField(c.pro_labore);
@@ -591,6 +603,7 @@ export function Contracts() {
       }
 
       const vTotalSuccess = vFinal + vInter + vFinalExt;
+      const vTotalContrato = vPro + vOther + vFixed + vFixedPontual + vTotalSuccess;
       const percentsStr = percentsList.length > 0 ? percentsList.join(' + ') : '-';
 
       sumPro += vPro;
@@ -600,6 +613,7 @@ export function Contracts() {
       sumInter += vInter;
       sumFinal += vFinal;
       sumTotalSuccess += vTotalSuccess;
+      sumTotalContrato += vTotalContrato;
 
       rows.push([
         c.display_id,
@@ -623,6 +637,7 @@ export function Contracts() {
         vFinal,
         (c as any).final_success_fee_clause || '-',
         vTotalSuccess,
+        vTotalContrato,
         percentsStr,
         c.client_position || '-',
         c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.process_number || '-').join('\n') : '-',
@@ -665,6 +680,7 @@ export function Contracts() {
           '', clause.type === 'Extra Êxito Final' ? clause.text : '',
           '',
           '',
+          '',
           '', '', '', '', '', '', '', '', '', '', '', '', '',
           ''
         ]);
@@ -674,7 +690,7 @@ export function Contracts() {
     const totalRow = [
       'TOTAIS', '', '', '', '', '', '',
       '',
-      sumPro, '', sumOther, '', sumFixed, '', sumFixedPontual, '', sumInter, '', sumFinal, '', sumTotalSuccess,
+      sumPro, '', sumOther, '', sumFixed, '', sumFixedPontual, '', sumInter, '', sumFinal, '', sumTotalSuccess, sumTotalContrato,
       '',
       '', '', '', '', '', '', '', '', '', '', '', '', '',
       ''
@@ -686,7 +702,7 @@ export function Contracts() {
 
     const currencyFormat = '"R$" #,##0.00';
     const range = XLSX.utils.decode_range(ws['!ref']!);
-    const moneyCols = [8, 10, 12, 14, 16, 18, 20];
+    const moneyCols = [8, 10, 12, 14, 16, 18, 20, 21];
 
     // -- STYLING PADRÃO CORPORATIVO --
     for (let col = range.s.c; col <= range.e.c; col++) {
