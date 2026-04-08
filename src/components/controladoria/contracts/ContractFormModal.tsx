@@ -520,6 +520,34 @@ export function ContractFormModal(props: Props) {
 
       let savedId = formData.id;
       if (formData.id) {
+        if (!formData.display_id) {
+            try {
+                const { data: clientObj } = await supabase.from('clients').select('seq_id').eq('id', clientId).single();
+                const { data: existingContracts } = await supabase.from('contracts')
+                   .select('client_seq_val')
+                   .eq('client_id', clientId)
+                   .not('client_seq_val', 'is', null)
+                   .order('client_seq_val', { ascending: false })
+                   .limit(1);
+                   
+                let maxVal = 0;
+                if (existingContracts && existingContracts.length > 0) {
+                   maxVal = existingContracts[0].client_seq_val || 0;
+                }
+                
+                const clientSeqVal = maxVal + 1;
+                contractPayload.client_seq_val = clientSeqVal;
+                
+                if (clientObj && clientObj.seq_id) {
+                    const cSeqIdFormatted = String(clientObj.seq_id).padStart(3, '0');
+                    const countFormatted = String(clientSeqVal).padStart(3, '0');
+                    contractPayload.display_id = `CONT - ${cSeqIdFormatted}-${countFormatted}`;
+                }
+            } catch (e) {
+                console.error('Error calculating contract seq for update:', e);
+            }
+        }
+
         const { error } = await supabase.from('contracts').update(contractPayload).eq('id', formData.id);
         if (error) throw error;
         await logAction('EDITAR', 'CONTROLADORIA', `Editou contrato: ${formData.hon_number || formData.client_name}`, 'Contratos');
@@ -527,9 +555,19 @@ export function ContractFormModal(props: Props) {
         // Calculate display_id for new contract
         try {
             const { data: clientObj } = await supabase.from('clients').select('seq_id').eq('id', clientId).single();
-            const { count } = await supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('client_id', clientId);
+            const { data: existingContracts } = await supabase.from('contracts')
+               .select('client_seq_val')
+               .eq('client_id', clientId)
+               .not('client_seq_val', 'is', null)
+               .order('client_seq_val', { ascending: false })
+               .limit(1);
+               
+            let maxVal = 0;
+            if (existingContracts && existingContracts.length > 0) {
+               maxVal = existingContracts[0].client_seq_val || 0;
+            }
             
-            const clientSeqVal = (count || 0) + 1;
+            const clientSeqVal = maxVal + 1;
             contractPayload.client_seq_val = clientSeqVal;
             
             if (clientObj && clientObj.seq_id) {
