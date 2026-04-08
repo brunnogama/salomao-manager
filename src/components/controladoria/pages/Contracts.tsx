@@ -935,15 +935,24 @@ export function Contracts() {
 
       {/* KPI Card + FilterBar */}
       <div className="flex flex-col lg:flex-row items-stretch gap-4">
-        {/* Card de KPI */}
-        <div className="flex items-stretch shrink-0">
-          <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
-            <div className="p-2 rounded-lg bg-blue-50">
-              <Briefcase className="h-5 w-5 text-[#1e3a8a]" />
-            </div>
+        {/* Cards de KPI */}
+        <div className="flex items-stretch shrink-0 gap-3 overflow-x-auto custom-scrollbar pb-2 lg:pb-0">
+          <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm shrink-0">
             <div className="flex flex-col">
-              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Total</span>
-              <span className="text-xl font-black text-[#0a192f] leading-tight">{filteredContracts.length}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-amber-500 leading-none mb-1">Sob Análise</span>
+              <span className="text-xl font-black text-[#0a192f] leading-tight">{filteredContracts.filter(c => c.status === 'analysis').length}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm shrink-0">
+            <div className="flex flex-col">
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#1e3a8a] leading-none mb-1">Propostas Env.</span>
+              <span className="text-xl font-black text-[#0a192f] leading-tight">{filteredContracts.filter(c => c.status === 'proposal').length}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm shrink-0">
+            <div className="flex flex-col">
+              <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 leading-none mb-1">Contr. Fechados</span>
+              <span className="text-xl font-black text-[#0a192f] leading-tight">{filteredContracts.filter(c => c.status === 'active').length}</span>
             </div>
           </div>
         </div>
@@ -984,7 +993,6 @@ export function Contracts() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">ID</th>
                     <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Status</th>
                     <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Cliente</th>
                     <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">Responsável</th>
@@ -1005,11 +1013,6 @@ export function Contracts() {
                           : 'hover:bg-blue-50/30 bg-white border-b border-gray-50'
                       }`}
                     >
-                      <td className="p-4 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-amber-200 shadow-sm truncate whitespace-nowrap">
-                          {contract.display_id ? contract.display_id.replace('CONT - ', '') : '-'}
-                        </span>
-                      </td>
                       <td className="p-4 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(contract.status)}`}>
                           {getStatusLabel(contract.status)}
