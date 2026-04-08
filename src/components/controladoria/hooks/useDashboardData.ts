@@ -398,8 +398,47 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
       if (!partnerCounts[pName]) partnerCounts[pName] = {
         total: 0, analysis: 0, proposal: 0, active: 0, rejected: 0, probono: 0,
-        pl: 0, exito: 0, fixo: 0, photo_url: pPhotoUrl
+        pl: 0, exito: 0, fixo: 0, photo_url: pPhotoUrl,
+        has_timesheet: false,
+        percents: new Set<string>()
       };
+
+      if ((c as any).timesheet) partnerCounts[pName].has_timesheet = true;
+      
+      const processFieldForPercent = (val: string | undefined | null) => {
+         if (!val) return;
+         const str = String(val).trim();
+         if (str === '0%' || str === '0' || str === '' || str === 'R$ 0,00') return;
+         if (str.includes('%')) partnerCounts[pName].percents.add(str);
+      };
+
+      processFieldForPercent(c.pro_labore);
+      processFieldForPercent(c.other_fees);
+      processFieldForPercent(c.fixed_monthly_fee);
+      processFieldForPercent(c.final_success_fee);
+
+      const successPercentVal = (c as any).final_success_percent;
+      if (successPercentVal && String(successPercentVal).trim() !== '0%') {
+          if (String(successPercentVal).includes('%')) partnerCounts[pName].percents.add(String(successPercentVal));
+          else partnerCounts[pName].percents.add(String(successPercentVal) + '%');
+      }
+
+      if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
+        c.intermediate_fees.forEach((f: string) => processFieldForPercent(f));
+      }
+
+      if ((c as any).final_success_extras && Array.isArray((c as any).final_success_extras)) {
+        (c as any).final_success_extras.forEach((f: string) => processFieldForPercent(f));
+      }
+      
+      if ((c as any).percent_extras && Array.isArray((c as any).percent_extras)) {
+          (c as any).percent_extras.forEach((f: string) => {
+              if (f && f !== '0%') {
+                 if (f.includes('%')) partnerCounts[pName].percents.add(f);
+                 else partnerCounts[pName].percents.add(f + '%');
+              }
+          });
+      }
 
       partnerCounts[pName].total++;
       if (c.status === 'analysis') partnerCounts[pName].analysis++;
@@ -606,7 +645,11 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
     const formatRejection = (counts: Record<string, number>) => Object.entries(counts).map(([label, value]) => ({ label, value, percent: totalRejected > 0 ? (value / totalRejected) * 100 : 0 })).sort((a, b) => b.value - a.value);
     const rejectionData = { reasons: formatRejection(reasonCounts), sources: formatRejection(sourceCounts) };
-    const contractsByPartner = Object.entries(partnerCounts).map(([name, stats]: any) => ({ name, ...stats })).sort((a: any, b: any) => b.total - a.total);
+    const contractsByPartner = Object.entries(partnerCounts).map(([name, stats]: any) => ({ 
+      name, 
+      ...stats,
+      percentsStr: stats.percents && stats.percents.size > 0 ? Array.from(stats.percents).join(' + ') : '-'
+    })).sort((a: any, b: any) => b.total - a.total);
 
     return { metrics, funil, evolucaoMensal, financeiro12Meses, statsFinanceiro, propostas12Meses, statsPropostas, mediasFinanceiras, mediasPropostas, rejectionData, contractsByPartner, filteredContracts, partners };
   }, [contracts, partners, collaborators, selectedPartner, selectedLocation, selectedPeriod]);

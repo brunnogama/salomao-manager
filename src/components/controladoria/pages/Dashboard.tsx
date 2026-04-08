@@ -365,6 +365,8 @@ export function Dashboard({ }: Props) {
       // Planilha 3: Dados Operacionais por Sócio
       const partnerData = contractsByPartner.map(item => ({
         "Sócio": item.name,
+        "Timesheet": item.has_timesheet ? 'X' : '-',
+        "Honorários em %": item.percentsStr,
         "Casos Totais": item.total,
         "Em Análise": item.analysis,
         "Propostas": item.proposal,
@@ -382,9 +384,9 @@ export function Dashboard({ }: Props) {
         const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
         if (wsPrt[cellRef]) wsPrt[cellRef].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0A192F" } }, alignment: { horizontal: "center", vertical: "center" } };
       }
-      wsPrt['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
+      wsPrt['!cols'] = [{ wch: 30 }, { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
       for (let R = 1; R <= prtRange.e.r; ++R) {
-        [7, 8, 9, 10].forEach(C => {
+        [9, 10, 11, 12].forEach(C => {
           const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
           if (wsPrt[cellRef]) { wsPrt[cellRef].t = 'n'; wsPrt[cellRef].z = '"R$"#,##0.00;"R$"-#,##0.00'; }
         });
