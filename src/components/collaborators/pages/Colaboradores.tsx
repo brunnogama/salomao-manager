@@ -684,7 +684,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
       value: filterArea,
       onChange: setFilterArea,
     },
-    },
   ], [filterStatus, filterVinculo, filterLider, filterPartner, filterLocal, filterCargo, filterArea, vinculoOptions, liderOptions, partnerOptions, locationOptions, roleOptions, areaOptions]);
 
   const activeFilterCount = React.useMemo(() => {
