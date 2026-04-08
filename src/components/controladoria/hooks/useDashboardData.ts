@@ -345,6 +345,20 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     }
     const dataLimite12Meses = dataInicioFixo;
 
+    const checkInPeriod = (d: Date | null | undefined) => {
+      if (!d) return false;
+      if (!selectedPeriod || (!selectedPeriod.start && !selectedPeriod.end)) return true;
+      if (selectedPeriod.start) {
+        const s = safeDate(selectedPeriod.start);
+        if (s) { s.setHours(0,0,0,0); if (d < s) return false; }
+      }
+      if (selectedPeriod.end) {
+        const e = safeDate(selectedPeriod.end);
+        if (e) { e.setHours(23,59,59,999); if (d > e) return false; }
+      }
+      return true;
+    };
+
     // --- LOOP PRINCIPAL DE CÁLCULO (USANDO FILTRADOS) ---
     filteredContracts.forEach((c) => {
       // 1. LEITURA DOS VALORES (Foco nos totais do placeholder)
@@ -374,7 +388,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
         });
       }
 
-      // 3. DATAS E AVALIAÇÃO DE COHORT RESTRITO (Data Real de Entrada vs Filtro Atual)
+      // 3. DATAS E AVALIAÇÃO HÍBRIDA DE STATUS vs PERÍODO
       const statusDates = [c.prospect_date, c.proposal_date, c.contract_date, c.rejection_date, c.probono_date]
         .map(d => safeDate(d))
         .filter((d): d is Date => d !== null);
@@ -387,46 +401,38 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
         dataEntradaReal = createdAt || new Date();
       }
 
-      let entryInPeriod = true;
-      if (selectedPeriod && (selectedPeriod.start || selectedPeriod.end)) {
-        if (selectedPeriod.start) {
-          const s = safeDate(selectedPeriod.start);
-          if (s) {
-            s.setHours(0,0,0,0);
-            if (dataEntradaReal < s) entryInPeriod = false;
-          }
-        }
-        if (selectedPeriod.end) {
-          const e = safeDate(selectedPeriod.end);
-          if (e) {
-            e.setHours(23,59,59,999);
-            if (dataEntradaReal > e) entryInPeriod = false;
-          }
-        }
-      }
+      const isEntryInPeriod = checkInPeriod(dataEntradaReal);
+      const isPropInPeriod = checkInPeriod(safeDate(c.proposal_date) || (c.status === 'proposal' ? safeDate(c.updated_at) : null));
+      const activeContractDate = safeDate(c.contract_date) || (c.status === 'active' ? safeDate(c.updated_at) : null);
+      const isClosedInPeriod = checkInPeriod(activeContractDate);
+      const probonoDate = safeDate(c.probono_date) || safeDate(c.contract_date) || safeDate(c.updated_at);
+      const isProbonoInPeriod = checkInPeriod(probonoDate);
+      const isRejectedInPeriod = checkInPeriod(safeDate(c.rejection_date) || (c.status === 'rejected' ? safeDate(c.updated_at) : null));
 
-      // Funil (Agrupado EXCLUSIVAMENTE por Data de Entrada / Cohort. 'Quantidade')
-      if (entryInPeriod) {
+
+      // Funil Híbrido: Cada bloco quantifica a ação OCORRIDA no período
+      if (isEntryInPeriod) {
         fTotal++;
         fValorEntrada += (pl + exito + mensal + outros + fixoPontual);
-
-        const chegouEmProposta = c.status === 'proposal' || c.status === 'active' || c.status === 'probono' || (c.status === 'rejected' && c.proposal_date);
-        if (chegouEmProposta) {
-          fQualificados++;
-          fValorPropostas += (pl + exito + mensal + outros + fixoPontual);
-        }
-
-        if (c.status === 'active' || c.status === 'probono') {
-          fFechados++;
-          fValorFechados += (pl + exito + mensal + outros + fixoPontual);
-        } else if (c.status === 'rejected') {
-          c.proposal_date ? fPerdaNegociacao++ : fPerdaAnalise++;
-        }
-
+        
         // Setup para gráficos/mapas usando dataEntradaReal
         const mesAnoEntrada = dataEntradaReal.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
         if (mapaMeses[mesAnoEntrada] !== undefined) mapaMeses[mesAnoEntrada]++;
         else { if (!mapaMeses[mesAnoEntrada]) mapaMeses[mesAnoEntrada] = 0; mapaMeses[mesAnoEntrada]++; }
+      }
+
+      if (isPropInPeriod && (c.proposal_date || c.status === 'proposal' || c.status === 'active' || c.status === 'probono' || c.status === 'rejected')) {
+        fQualificados++;
+        fValorPropostas += (pl + exito + mensal + outros + fixoPontual);
+      }
+
+      if ((c.status === 'active' && isClosedInPeriod) || (c.status === 'probono' && isProbonoInPeriod)) {
+        fFechados++;
+        fValorFechados += (pl + exito + mensal + outros + fixoPontual);
+      }
+      
+      if (c.status === 'rejected' && isRejectedInPeriod) {
+        c.proposal_date ? fPerdaNegociacao++ : fPerdaAnalise++;
       }
 
       // Comparativo de Entrada (Novos) - LOGICA MTD
@@ -595,32 +601,30 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
         qtdProspectRejeicao++;
       }
 
-      // Totais Gerais
-      mGeral.totalCasos++;
-      if (c.status === 'analysis') mGeral.emAnalise++;
-      if (c.status === 'rejected') mGeral.rejeitados++;
-      if (c.status === 'probono') mGeral.probono++;
+      // Totais Gerais (Respeitando o Hybrid Cohort do Período)
+      if (isEntryInPeriod) {
+        mGeral.totalCasos++;
+        if (c.status === 'analysis') mGeral.emAnalise++;
+      }
+      
+      if (isRejectedInPeriod && c.status === 'rejected') mGeral.rejeitados++;
+      if (isProbonoInPeriod && c.status === 'probono') mGeral.probono++;
 
-      if (c.status === 'proposal') {
+      if (isPropInPeriod && c.status === 'proposal') {
         mGeral.propostasAtivas++;
-
         mGeral.valorEmNegociacaoPL += pl;
         mGeral.valorEmNegociacaoExito += exito;
         mGeral.valorEmNegociacaoMensal += mensal;
         mGeral.valorEmNegociacaoOutros += (outros + fixoPontual);
       }
 
-      if (c.status === 'active') {
+      if (isClosedInPeriod && c.status === 'active') {
         mGeral.fechados++;
-
         mGeral.receitaRecorrenteAtiva += mensal;
         mGeral.totalFechadoPL += pl;
         mGeral.totalFechadoExito += exito;
-
-        // Agrupamento de Outros + Fixo Pontual
         mGeral.totalFechadoOutros += (outros + fixoPontual);
-        mGeral.totalFechadoFixo += fixoPontual; // Mantido para legado se necessário
-
+        mGeral.totalFechadoFixo += fixoPontual;
         c.physical_signature === true ? mGeral.assinados++ : mGeral.naoAssinados++;
       }
 
@@ -641,20 +645,6 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       if (c.status === 'active' && isDateInCurrentMonth(c.contract_date, hoje)) { mMes.fechQtd++; mMes.fechPL += pl; mMes.fechExito += exito; mMes.fechMensal += mensal; }
       if (c.status === 'rejected' && isDateInCurrentMonth(c.rejection_date, hoje)) mMes.rejected++;
       if (c.status === 'probono' && isDateInCurrentMonth(c.probono_date || c.contract_date, hoje)) mMes.probono++;
-
-      // Funil
-      fTotal++;
-      fValorEntrada += (pl + exito + mensal + outros + fixoPontual);
-      const chegouEmProposta = c.status === 'proposal' || c.status === 'active' || c.status === 'probono' || (c.status === 'rejected' && c.proposal_date);
-      if (chegouEmProposta) {
-        fQualificados++;
-        fValorPropostas += (pl + exito + mensal + outros + fixoPontual);
-      }
-      if (c.status === 'active' || c.status === 'probono') {
-        fFechados++;
-        fValorFechados += (pl + exito + mensal + outros + fixoPontual);
-      }
-      else if (c.status === 'rejected') c.proposal_date ? fPerdaNegociacao++ : fPerdaAnalise++;
     });
 
     // Totais Calculados
@@ -688,6 +678,8 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
     const funil = {
       totalEntrada: fTotal,
+      emAnalise: mGeral.emAnalise,
+      emNegociacao: mGeral.propostasAtivas,
       qualificadosProposta: fQualificados,
       fechados: fFechados,
       valorEntrada: fValorEntrada,

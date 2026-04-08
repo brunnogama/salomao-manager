@@ -8,8 +8,8 @@ interface EfficiencyFunnelProps {
 }
 
 export function EfficiencyFunnel({ funil, evolucaoMensal, periodLabel }: EfficiencyFunnelProps) {
-  const emAnalise = Math.max(0, funil.totalEntrada - funil.perdaAnalise - funil.qualificadosProposta);
-  const emNegociacao = Math.max(0, funil.qualificadosProposta - funil.fechados - (funil.perdaNegociacao || 0));
+  const emAnalise = funil.emAnalise || 0;
+  const emNegociacao = funil.emNegociacao || 0;
 
   const mesesCount = evolucaoMensal && evolucaoMensal.length > 0 ? evolucaoMensal.length : 1;
   const mediaEntrada = (funil.totalEntrada / mesesCount).toFixed(1);
