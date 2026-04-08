@@ -123,6 +123,7 @@ export function Dashboard({ }: Props) {
       let sumPro = 0;
       let sumOther = 0;
       let sumFixed = 0;
+      let sumFixedPontual = 0;
       let sumInter = 0;
       let sumFinal = 0;
       let sumTotalSuccess = 0;
@@ -133,6 +134,7 @@ export function Dashboard({ }: Props) {
         'Pró-Labore', 'Cláusula Pró-Labore',
         'Outros Honorários', 'Cláusula Outros',
         'Fixo Mensal', 'Cláusula Fixo Mensal',
+        'Fixo Pontual', 'Cláusula Fixo Pontual',
         'Êxito Intermediário', 'Cláusula Intermediário',
         'Êxito Final', 'Cláusula Êxito Final',
         'Êxito (Total)',
@@ -162,6 +164,7 @@ export function Dashboard({ }: Props) {
         const vPro = processField(c.pro_labore);
         const vOther = processField(c.other_fees);
         const vFixed = processField(c.fixed_monthly_fee);
+        const vFixedPontual = processField((c as any).fixed_fee) || processField((c as any).honorarios_fixos);
         const vFinal = processField(c.final_success_fee);
 
         const successPercentVal = (c as any).final_success_percent;
@@ -195,6 +198,7 @@ export function Dashboard({ }: Props) {
         sumPro += vPro;
         sumOther += vOther;
         sumFixed += vFixed;
+        sumFixedPontual += vFixedPontual;
         sumInter += vInter;
         sumFinal += vFinal;
         sumTotalSuccess += vTotalSuccess;
@@ -214,6 +218,8 @@ export function Dashboard({ }: Props) {
           c.other_fees_clause || '-',
           vFixed,
           c.fixed_monthly_fee_clause || '-',
+          vFixedPontual,
+          (c as any).fixed_fee_clause || (c as any).honorarios_fixos_clause || '-',
           vInter,
           (c.intermediate_fees_clauses && c.intermediate_fees_clauses.length > 0) ? 'Ver detalhe abaixo' : '-',
           vFinal,
@@ -256,6 +262,7 @@ export function Dashboard({ }: Props) {
             '', clause.type === 'Extra Pró-Labore' ? clause.text : '',
             '', '',
             '', '',
+            '', '',
             '', clause.type === 'Intermediário' ? clause.text : '',
             '', clause.type === 'Extra Êxito Final' ? clause.text : '',
             '',
@@ -269,7 +276,7 @@ export function Dashboard({ }: Props) {
       const totalRow = [
         'TOTAIS', '', '', '', '', '', '',
         '',
-        sumPro, '', sumOther, '', sumFixed, '', sumInter, '', sumFinal, '', sumTotalSuccess,
+        sumPro, '', sumOther, '', sumFixed, '', sumFixedPontual, '', sumInter, '', sumFinal, '', sumTotalSuccess,
         '',
         '', '', '', '', '', '', '', '', '', '', '', '', '',
         ''
@@ -280,7 +287,7 @@ export function Dashboard({ }: Props) {
 
       const currencyFormat = '"R$" #,##0.00';
       const rangeBase = XLSX.utils.decode_range(wsBase['!ref'] || 'A1:A1');
-      const moneyCols = [8, 10, 12, 14, 16, 18];
+      const moneyCols = [8, 10, 12, 14, 16, 18, 20];
 
       for (let col = rangeBase.s.c; col <= rangeBase.e.c; col++) {
         const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });

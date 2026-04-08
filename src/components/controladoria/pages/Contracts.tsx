@@ -522,6 +522,7 @@ export function Contracts() {
     let sumPro = 0;
     let sumOther = 0;
     let sumFixed = 0;
+    let sumFixedPontual = 0;
     let sumInter = 0;
     let sumFinal = 0;
     let sumTotalSuccess = 0;
@@ -532,6 +533,7 @@ export function Contracts() {
       'Pró-Labore', 'Cláusula Pró-Labore',
       'Outros Honorários', 'Cláusula Outros',
       'Fixo Mensal', 'Cláusula Fixo Mensal',
+      'Fixo Pontual', 'Cláusula Fixo Pontual',
       'Êxito Intermediário', 'Cláusula Intermediário',
       'Êxito Final', 'Cláusula Êxito Final',
       'Êxito (Total)',
@@ -560,6 +562,7 @@ export function Contracts() {
       const vPro = processField(c.pro_labore);
       const vOther = processField(c.other_fees);
       const vFixed = processField(c.fixed_monthly_fee);
+      const vFixedPontual = processField((c as any).fixed_fee) || processField((c as any).honorarios_fixos);
       const vFinal = processField(c.final_success_fee);
 
       const successPercentVal = (c as any).final_success_percent;
@@ -593,6 +596,7 @@ export function Contracts() {
       sumPro += vPro;
       sumOther += vOther;
       sumFixed += vFixed;
+      sumFixedPontual += vFixedPontual;
       sumInter += vInter;
       sumFinal += vFinal;
       sumTotalSuccess += vTotalSuccess;
@@ -612,6 +616,8 @@ export function Contracts() {
         (c as any).other_fees_clause || '-',
         vFixed,
         (c as any).fixed_monthly_fee_clause || '-',
+        vFixedPontual,
+        (c as any).fixed_fee_clause || (c as any).honorarios_fixos_clause || '-',
         vInter,
         (c.intermediate_fees_clauses && (c.intermediate_fees_clauses as any).length > 0) ? 'Ver detalhe abaixo' : '-',
         vFinal,
@@ -654,6 +660,7 @@ export function Contracts() {
           '', clause.type === 'Extra Pró-Labore' ? clause.text : '',
           '', '',
           '', '',
+          '', '',
           '', clause.type === 'Intermediário' ? clause.text : '',
           '', clause.type === 'Extra Êxito Final' ? clause.text : '',
           '',
@@ -667,7 +674,7 @@ export function Contracts() {
     const totalRow = [
       'TOTAIS', '', '', '', '', '', '',
       '',
-      sumPro, '', sumOther, '', sumFixed, '', sumInter, '', sumFinal, '', sumTotalSuccess,
+      sumPro, '', sumOther, '', sumFixed, '', sumFixedPontual, '', sumInter, '', sumFinal, '', sumTotalSuccess,
       '',
       '', '', '', '', '', '', '', '', '', '', '', '', '',
       ''
@@ -679,7 +686,7 @@ export function Contracts() {
 
     const currencyFormat = '"R$" #,##0.00';
     const range = XLSX.utils.decode_range(ws['!ref']!);
-    const moneyCols = [8, 10, 12, 14, 16, 18];
+    const moneyCols = [8, 10, 12, 14, 16, 18, 20];
 
     // -- STYLING PADRÃO CORPORATIVO --
     for (let col = range.s.c; col <= range.e.c; col++) {
