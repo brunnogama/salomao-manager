@@ -304,6 +304,16 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                 </div>
             )}
 
+            <div className="mb-5 animate-in fade-in slide-in-from-top-1">
+                <label className="text-xs font-medium block mb-1">Observações Adicionais</label>
+                <textarea 
+                    className="w-full border border-gray-300 rounded-lg p-3 text-sm h-24 focus:border-salomao-blue outline-none bg-white resize-none" 
+                    value={formData.observations || ''} 
+                    onChange={e => setFormData({ ...formData, observations: e.target.value })} 
+                    placeholder="Adicione observações gerais ou extras sobre este caso..." 
+                />
+            </div>
+
             {formData.status === 'analysis' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2">
                     <div><CustomSelect label="Analisado Por" value={formData.analyst_id || ''} onChange={(val: string) => setFormData({ ...formData, analyst_id: val })} options={analystSelectOptions} onAction={onOpenAnalystManager} actionIcon={Settings} actionLabel="Gerenciar Analistas" /></div>
