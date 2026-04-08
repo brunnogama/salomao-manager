@@ -16,6 +16,9 @@ const safeParseMoney = (value: string | number | undefined | null): number => {
 
   const strVal = String(value).trim();
 
+  // NOVO: Impedir que valores em % sejam contados nas agregações monetárias (ex: 10% não virar R$ 10)
+  if (strVal.includes('%')) return 0;
+
   // Se já for um número em string simples (ex: "1000.50"), retorna direto
   if (!strVal.includes('R$') && !strVal.includes(',') && !isNaN(Number(strVal))) {
     return parseFloat(strVal);
@@ -605,7 +608,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     const rejectionData = { reasons: formatRejection(reasonCounts), sources: formatRejection(sourceCounts) };
     const contractsByPartner = Object.entries(partnerCounts).map(([name, stats]: any) => ({ name, ...stats })).sort((a: any, b: any) => b.total - a.total);
 
-    return { metrics, funil, evolucaoMensal, financeiro12Meses, statsFinanceiro, propostas12Meses, statsPropostas, mediasFinanceiras, mediasPropostas, rejectionData, contractsByPartner };
+    return { metrics, funil, evolucaoMensal, financeiro12Meses, statsFinanceiro, propostas12Meses, statsPropostas, mediasFinanceiras, mediasPropostas, rejectionData, contractsByPartner, filteredContracts, partners };
   }, [contracts, partners, collaborators, selectedPartner, selectedLocation, selectedPeriod]);
 
   return { loading, refresh: fetchDashboardData, ...dashboardData };

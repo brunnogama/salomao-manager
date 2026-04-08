@@ -17,6 +17,56 @@ import { MonthlySummary } from '../dashboard/MonthlySummary';
 import { EvolutionCharts } from '../dashboard/EvolutionCharts';
 import { PartnerStats } from '../dashboard/PartnerStats';
 import { OperationalStats } from '../dashboard/OperationalStats';
+import { parseCurrency, safeDate } from '../utils/masks';
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'rascunho': return 'Rascunho';
+    case 'active': return 'Contrato Fechado';
+    case 'analysis': return 'Sob Análise';
+    case 'proposal': return 'Proposta Enviada';
+    case 'rejected': return 'Rejeitada';
+    case 'probono': return 'Probono';
+    case 'baixado': return 'Baixado';
+    default: return status;
+  }
+};
+
+const getPartnerDisplay = (c: any, partnersList: any[]) => {
+  let text = c.partner_name || '-';
+  if (!text || text === '-') {
+      text = partnersList.find(p => p.id === c.partner_id)?.name || '-';
+  }
+  if (c.co_partner_ids && c.co_partner_ids.length > 0) {
+    const coNames = c.co_partner_ids.map((id: string) => partnersList.find(p => p.id === id)?.name).filter(Boolean);
+    if (coNames.length > 0) {
+      text += ` + ${coNames.join(', ')}`;
+    }
+  }
+  return text;
+};
+
+const getHonDisplay = (c: any) => {
+  if (c.status === 'proposal') return c.proposal_code || '-';
+  if (c.status === 'active') {
+    if (!c.hon_number) return '-';
+    return c.hon_number.toUpperCase().startsWith('HON') ? c.hon_number : `HON - ${c.hon_number}`;
+  }
+  return c.hon_number || c.proposal_code || '-';
+};
+
+const getRelevantDate = (c: any) => {
+  switch (c.status) {
+    case 'rascunho': return c.created_at;
+    case 'analysis': return c.prospect_date || c.created_at;
+    case 'proposal': return c.proposal_date || c.created_at;
+    case 'active': return c.contract_date || c.created_at;
+    case 'rejected': return c.rejection_date || c.created_at;
+    case 'probono': return c.probono_date || c.contract_date || c.created_at;
+    case 'baixado': return c.updated_at || c.contract_date || c.created_at;
+    default: return c.created_at;
+  }
+};
 
 interface Props {
   userName: string;
@@ -37,7 +87,7 @@ export function Dashboard({ }: Props) {
   const {
     loading: loadingData, metrics, funil, evolucaoMensal, financeiro12Meses, statsFinanceiro,
     propostas12Meses, statsPropostas, mediasFinanceiras, mediasPropostas,
-    rejectionData, contractsByPartner
+    rejectionData, contractsByPartner, filteredContracts, partners
   } = useDashboardData(selectedPartner, selectedLocation, selectedPeriod);
 
 
@@ -69,7 +119,188 @@ export function Dashboard({ }: Props) {
     try {
       const wb = XLSX.utils.book_new();
 
-      // Planilha 1: Entrada de Casos
+      // Planilha 1: Base de Dados (Lista Completa de Casos) idêntica à de Casos
+      let sumPro = 0;
+      let sumOther = 0;
+      let sumFixed = 0;
+      let sumInter = 0;
+      let sumFinal = 0;
+      let sumTotalSuccess = 0;
+
+      const baseHeader = [
+        'ID', 'Status', 'Cliente', 'Sócio', 'HON/PROP', 'Data Relevante', 'Local Faturamento',
+        'Timesheet',
+        'Pró-Labore', 'Cláusula Pró-Labore',
+        'Outros Honorários', 'Cláusula Outros',
+        'Fixo Mensal', 'Cláusula Fixo Mensal',
+        'Êxito Intermediário', 'Cláusula Intermediário',
+        'Êxito Final', 'Cláusula Êxito Final',
+        'Êxito (Total)',
+        'Valores em %',
+        'Posição do Cliente', 'Nº Processo', 'UF (Processo)', 'Tribunal', 'Comarca', 'Vara',
+        'Autor', 'CNPJ Autor', 'Réu / Parte Adversa', 'CNPJ Réu', 'Assunto / Objeto',
+        'Valor da Causa', 'Magistrados',
+        'Observações'
+      ];
+      
+      const baseRows: any[] = [];
+      const baseContracts = filteredContracts || [];
+
+      baseContracts.forEach((c: any) => {
+        const percentsList: string[] = [];
+        const processField = (val: string | undefined | null) => {
+           if (!val) return 0;
+           const str = String(val).trim();
+           if (str === '0%' || str === '0' || str === '' || str === 'R$ 0,00') return 0;
+           if (str.includes('%')) {
+               percentsList.push(str);
+               return 0; // Do not sum
+           }
+           return parseCurrency(str);
+        };
+
+        const vPro = processField(c.pro_labore);
+        const vOther = processField(c.other_fees);
+        const vFixed = processField(c.fixed_monthly_fee);
+        const vFinal = processField(c.final_success_fee);
+
+        const successPercentVal = (c as any).final_success_percent;
+        if (successPercentVal && String(successPercentVal).trim() !== '0%') {
+            if (String(successPercentVal).includes('%')) percentsList.push(String(successPercentVal));
+            else percentsList.push(String(successPercentVal) + '%');
+        }
+
+        let vInter = 0;
+        if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
+          c.intermediate_fees.forEach((f: string) => vInter += processField(f));
+        }
+
+        let vFinalExt = 0;
+        if ((c as any).final_success_extras && Array.isArray((c as any).final_success_extras)) {
+          (c as any).final_success_extras.forEach((f: string) => vFinalExt += processField(f));
+        }
+        
+        if ((c as any).percent_extras && Array.isArray((c as any).percent_extras)) {
+            (c as any).percent_extras.forEach((f: string) => {
+                if (f && f !== '0%') {
+                   if (f.includes('%')) percentsList.push(f);
+                   else percentsList.push(f + '%');
+                }
+            });
+        }
+
+        const vTotalSuccess = vFinal + vInter + vFinalExt;
+        const percentsStr = percentsList.length > 0 ? percentsList.join(' + ') : '-';
+
+        sumPro += vPro;
+        sumOther += vOther;
+        sumFixed += vFixed;
+        sumInter += vInter;
+        sumFinal += vFinal;
+        sumTotalSuccess += vTotalSuccess;
+
+        baseRows.push([
+          c.display_id,
+          getStatusLabel(c.status),
+          c.client_name,
+          getPartnerDisplay(c, partners || []),
+          getHonDisplay(c),
+          safeDate(getRelevantDate(c))?.toLocaleDateString('pt-BR') || '-',
+          c.billing_location || '-',
+          c.timesheet ? 'X' : '-',
+          vPro,
+          c.pro_labore_clause || '-',
+          vOther,
+          c.other_fees_clause || '-',
+          vFixed,
+          c.fixed_monthly_fee_clause || '-',
+          vInter,
+          (c.intermediate_fees_clauses && c.intermediate_fees_clauses.length > 0) ? 'Ver detalhe abaixo' : '-',
+          vFinal,
+          c.final_success_fee_clause || '-',
+          vTotalSuccess,
+          percentsStr,
+          c.client_position || '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.process_number || '-').join('\n') : '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.uf || '-').join('\n') : '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.court || '-').join('\n') : '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.comarca || '-').join('\n') : '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.vara || '-').join('\n') : '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.author || '-').join('\n') : '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.author_cnpj || '-').join('\n') : '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.opponent || '-').join('\n') : '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.opponent_cnpj || '-').join('\n') : '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.subject || '-').join('\n') : '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.value_of_cause ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.value_of_cause) : '-').join('\n') : '-',
+          c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.magistrates && Array.isArray(p.magistrates) && p.magistrates.length > 0 ? p.magistrates.map((m: any) => `${m.title || ''} ${m.name}`.trim()).join(' / ') : '-').join('\n') : '-',
+          c.observations || '-'
+        ]);
+
+        const clauses: { type: string, text: string }[] = [];
+
+        if (c.pro_labore_extras_clauses && Array.isArray(c.pro_labore_extras_clauses)) {
+          c.pro_labore_extras_clauses.forEach((cl: string) => clauses.push({ type: 'Extra Pró-Labore', text: cl }));
+        }
+        if (c.intermediate_fees_clauses && Array.isArray(c.intermediate_fees_clauses)) {
+          c.intermediate_fees_clauses.forEach((cl: string) => clauses.push({ type: 'Intermediário', text: cl }));
+        }
+        if (c.final_success_extras_clauses && Array.isArray(c.final_success_extras_clauses)) {
+          c.final_success_extras_clauses.forEach((cl: string) => clauses.push({ type: 'Extra Êxito Final', text: cl }));
+        }
+
+        clauses.forEach(clause => {
+          baseRows.push([
+            c.display_id,
+            '', '', '', '', '', '',
+            '', // Timesheet
+            '', clause.type === 'Extra Pró-Labore' ? clause.text : '',
+            '', '',
+            '', '',
+            '', clause.type === 'Intermediário' ? clause.text : '',
+            '', clause.type === 'Extra Êxito Final' ? clause.text : '',
+            '',
+            '', // %
+            '', '', '', '', '', '', '', '', '', '', '', '', '',
+            ''
+          ]);
+        });
+      });
+
+      const totalRow = [
+        'TOTAIS', '', '', '', '', '', '',
+        '',
+        sumPro, '', sumOther, '', sumFixed, '', sumInter, '', sumFinal, '', sumTotalSuccess,
+        '',
+        '', '', '', '', '', '', '', '', '', '', '', '', '',
+        ''
+      ];
+
+      const dataWithHeader = [baseHeader, ...baseRows, [], totalRow];
+      const wsBase = XLSX.utils.aoa_to_sheet(dataWithHeader);
+
+      const currencyFormat = '"R$" #,##0.00';
+      const rangeBase = XLSX.utils.decode_range(wsBase['!ref'] || 'A1:A1');
+      const moneyCols = [8, 10, 12, 14, 16, 18];
+
+      for (let col = rangeBase.s.c; col <= rangeBase.e.c; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (wsBase[cellRef]) wsBase[cellRef].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0A192F" } }, alignment: { horizontal: "center", vertical: "center" } };
+      }
+      wsBase['!cols'] = baseHeader.map(h => ({ wch: Math.max(h.length + 5, 15) }));
+
+      for (let R = rangeBase.s.r + 1; R <= rangeBase.e.r; ++R) {
+        moneyCols.forEach(C => {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (wsBase[cellRef] && typeof wsBase[cellRef].v === 'number') {
+            wsBase[cellRef].z = currencyFormat;
+            wsBase[cellRef].t = 'n';
+          }
+        });
+      }
+
+      XLSX.utils.book_append_sheet(wb, wsBase, "Lista de Casos");
+
+      // Planilha 2: Entrada de Casos
       const entradaData = evolucaoMensal.map(item => ({
         "Mês": item.mes,
         "Quantidade de Casos": item.qtd
