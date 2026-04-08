@@ -500,39 +500,26 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
       // Mapas Financeiros (Gráficos)
       // 1. Fechamentos (Evolução Financeira)
-      // Considera TODOS que tem data de contrato e status active (fechado)
-      if (c.status === 'active' && c.contract_date) {
-        const dContrato = safeDate(c.contract_date);
-        if (dContrato) {
-          dContrato.setDate(1); dContrato.setHours(0, 0, 0, 0);
-          if (dContrato >= dataLimite12Meses) {
-            const key = dContrato.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-            // Soma TUDO: PL + Fixo + Êxito + Outros
-            if (financeiroMap[key]) {
-              financeiroMap[key].pl += pl;
-              financeiroMap[key].fixo += (mensal + fixoPontual); 
-              financeiroMap[key].exito += exito;
-              financeiroMap[key].outros += outros; 
-            }
-          }
+      // Considera TODOS agrupados pela Data de Entrada Real (Cohort)
+      if (c.status === 'active') {
+        const key = mesAnoEntrada;
+        if (financeiroMap[key]) {
+          financeiroMap[key].pl += pl;
+          financeiroMap[key].fixo += (mensal + fixoPontual); 
+          financeiroMap[key].exito += exito;
+          financeiroMap[key].outros += outros; 
         }
       }
 
       // 2. Propostas (Evolução de Propostas)
-      // Considera TODOS que tiveram proposta (active, proposal, rejected com data)
-      if (c.proposal_date) {
-        const dProposta = safeDate(c.proposal_date);
-        if (dProposta) {
-          dProposta.setDate(1); dProposta.setHours(0, 0, 0, 0);
-          if (dProposta >= dataLimite12Meses) {
-            const key = dProposta.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-            if (propostasMap[key]) {
-              propostasMap[key].pl += pl;
-              propostasMap[key].fixo += (mensal + fixoPontual);
-              propostasMap[key].exito += exito;
-              propostasMap[key].outros += outros;
-            }
-          }
+      // Considera TODOS que chegaram na fase de proposta agrupados pela Data de Entrada
+      if (c.proposal_date || c.status === 'active' || c.status === 'proposal' || (c.status === 'rejected' && c.proposal_date)) {
+        const key = mesAnoEntrada;
+        if (propostasMap[key]) {
+          propostasMap[key].pl += pl;
+          propostasMap[key].fixo += (mensal + fixoPontual);
+          propostasMap[key].exito += exito;
+          propostasMap[key].outros += outros;
         }
       }
 
