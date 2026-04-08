@@ -522,6 +522,7 @@ export function ContractFormModal(props: Props) {
       }
       Object.keys(contractPayload).forEach(key => contractPayload[key] === undefined && delete contractPayload[key]);
 
+
       let savedId = formData.id;
       if (formData.id) {
         if (!formData.display_id) {
