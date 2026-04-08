@@ -518,7 +518,18 @@ export function Contracts() {
     return c.hon_number || c.proposal_code || '-';
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
+    toast.info('Coletando dados e convertendo moedas...', { duration: 3000 });
+    let usdRate = 5.0;
+    let eurRate = 5.4;
+    try {
+        const res = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL');
+        const data = await res.json();
+        if (data && data.USDBRL) usdRate = parseFloat(data.USDBRL.ask);
+        if (data && data.EURBRL) eurRate = parseFloat(data.EURBRL.ask);
+    } catch(e) {
+        console.warn('Falha ao buscar cotacao, valores base mantidos', e);
+    }
     let sumPro = 0;
     let sumOther = 0;
     let sumFixed = 0;
@@ -547,6 +558,7 @@ export function Contracts() {
     const rows: any[] = [];
 
     filteredContracts.forEach(c => {
+      const foreignCurrencies: string[] = [];
       const percentsList: string[] = [];
       const processField = (val: string | undefined | null) => {
          if (!val) return 0;
@@ -556,6 +568,26 @@ export function Contracts() {
          const percentMatch = str.match(/(\d+(?:[.,]\d+)?\s*%)/g);
          if (percentMatch) {
              percentMatch.forEach(p => percentsList.push(p));
+         }
+
+         const eurMatch = str.match(/(?:€|EUR)\s*([\d\.]+(?:,\d{2})?)/i);
+         if (eurMatch) {
+             const clean = eurMatch[1].replace(/\./g, '').replace(',', '.');
+             const parsed = parseFloat(clean);
+             if (!isNaN(parsed)) {
+                 foreignCurrencies.push(`€ ${eurMatch[1]}`);
+                 return parsed * eurRate;
+             }
+         }
+
+         const usdMatch = str.match(/(?:U\$|US\$|USD|U\$\$)\s*([\d\.]+(?:,\d{2})?)/i);
+         if (usdMatch) {
+             const clean = usdMatch[1].replace(/\./g, '').replace(',', '.');
+             const parsed = parseFloat(clean);
+             if (!isNaN(parsed)) {
+                 foreignCurrencies.push(`US$ ${usdMatch[1]}`);
+                 return parsed * usdRate;
+             }
          }
 
          const brlMatch = str.match(/R\$\s*([\d\.]+(?:,\d{2})?)/);
@@ -648,7 +680,9 @@ export function Contracts() {
         c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.subject || '-').join('\n') : '-',
         c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.value_of_cause ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.value_of_cause) : '-').join('\n') : '-',
         c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.magistrates && Array.isArray(p.magistrates) && p.magistrates.length > 0 ? p.magistrates.map((m: any) => `${m.title || ''} ${m.name}`.trim()).join(' / ') : '-').join('\n') : '-',
-        c.observations || '-'
+        foreignCurrencies.length > 0 
+            ? (c.observations ? c.observations + '\n\n' : '') + '⚠️ CONVERSÃO (Cotação do dia): ' + foreignCurrencies.join(' | ') 
+            : (c.observations || '-')
       ]);
 
       const clauses: { type: string, text: string }[] = [];
@@ -711,6 +745,8 @@ export function Contracts() {
     ws['!cols'] = header.map(h => ({ wch: Math.max(h.length + 5, 15) }));
     // -------------------------------
 
+    const obsColIdx = header.indexOf('Observações');
+
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
       moneyCols.forEach(C => {
         const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
@@ -719,6 +755,15 @@ export function Contracts() {
           ws[cellRef].t = 'n';
         }
       });
+      if (obsColIdx !== -1) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: obsColIdx });
+        if (ws[cellRef] && typeof ws[cellRef].v === 'string' && ws[cellRef].v.includes('⚠️ CONVERSÃO')) {
+            ws[cellRef].s = {
+                font: { color: { rgb: "FF0000" }, bold: true },
+                alignment: { vertical: "center", wrapText: true }
+            };
+        }
+      }
     }
 
     const wb = XLSX.utils.book_new();
