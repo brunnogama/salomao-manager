@@ -125,6 +125,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [filterCargo, setFilterCargo] = useState<string[]>([])
   const [filterArea, setFilterArea] = useState<string[]>([])
   const [filterVinculo, setFilterVinculo] = useState<string[]>([])
+  const [filterStatus, setFilterStatus] = useState<string[]>(['active'])
 
   // New Tabs State
   const [activeMainTab, setActiveMainTab] = useState<'Integrantes' | 'Relatórios' | 'Tabelas'>('Integrantes');
@@ -616,6 +617,20 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   const filterCategories = React.useMemo((): FilterCategory[] => [
     {
+      key: 'status',
+      label: 'Status',
+      icon: Users,
+      type: 'multi',
+      options: [
+        { label: 'Ativo', value: 'active' },
+        { label: 'Pré-admissão', value: 'Pré-admissão' },
+        { label: 'Pré-Cadastro', value: 'Pré-Cadastro' },
+        { label: 'Inativo', value: 'inactive' }
+      ],
+      value: filterStatus,
+      onChange: setFilterStatus,
+    },
+    {
       key: 'vinculo',
       label: 'Vínculo',
       icon: LinkIcon,
@@ -669,11 +684,17 @@ export function Colaboradores({ }: ColaboradoresProps) {
       value: filterArea,
       onChange: setFilterArea,
     },
-  ], [filterVinculo, filterLider, filterPartner, filterLocal, filterCargo, filterArea, vinculoOptions, liderOptions, partnerOptions, locationOptions, roleOptions, areaOptions]);
+    },
+  ], [filterStatus, filterVinculo, filterLider, filterPartner, filterLocal, filterCargo, filterArea, vinculoOptions, liderOptions, partnerOptions, locationOptions, roleOptions, areaOptions]);
 
   const activeFilterCount = React.useMemo(() => {
-    return filterVinculo.length + filterLider.length + filterPartner.length + filterLocal.length + filterCargo.length + filterArea.length;
-  }, [filterVinculo, filterLider, filterPartner, filterLocal, filterCargo, filterArea]);
+    let count = filterVinculo.length + filterLider.length + filterPartner.length + filterLocal.length + filterCargo.length + filterArea.length;
+    // Only count status if it diverged from default 'active'
+    if (filterStatus.length !== 1 || filterStatus[0] !== 'active') {
+      count += filterStatus.length;
+    }
+    return count;
+  }, [filterVinculo, filterLider, filterPartner, filterLocal, filterCargo, filterArea, filterStatus]);
 
   const activeFilterChips = React.useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
@@ -701,8 +722,17 @@ export function Colaboradores({ }: ColaboradoresProps) {
       const label = areaOptions.find(opt => opt.value === id)?.label || id;
       chips.push({ key: `area-${id}`, label: `Área: ${label}`, onClear: () => setFilterArea(prev => prev.filter(v => v !== id)) });
     });
+    
+    // Status Chips (skip default 'active' to reduce noise, unless it's mixed)
+    filterStatus.forEach(id => {
+      if (id === 'active' && filterStatus.length === 1) return;
+      const labelMap: any = { 'active': 'Ativo', 'Pré-admissão': 'Pré-admissão', 'Pré-Cadastro': 'Pré-Cadastro', 'inactive': 'Inativo' };
+      const label = labelMap[id] || id;
+      chips.push({ key: `status-${id}`, label: `Status: ${label}`, onClear: () => setFilterStatus(prev => prev.filter(v => v !== id)) });
+    });
+
     return chips;
-  }, [filterVinculo, filterLider, filterPartner, filterLocal, filterCargo, filterArea, vinculoOptions, liderOptions, partnerOptions, locationOptions, roleOptions, areaOptions]);
+  }, [filterStatus, filterVinculo, filterLider, filterPartner, filterLocal, filterCargo, filterArea, vinculoOptions, liderOptions, partnerOptions, locationOptions, roleOptions, areaOptions]);
 
   const clearAllFilters = () => {
     setFilterVinculo([]);
@@ -711,6 +741,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setFilterLocal([]);
     setFilterCargo([]);
     setFilterArea([]);
+    setFilterStatus(['active']);
   };
 
   // Inicializa estado vazio por padrão conforme solicitado
@@ -1453,7 +1484,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setColaboradorToDelete(colaborador)
   }
 
-  const filtered = colaboradores.filter(c => {
+  const baseFiltered = colaboradores.filter(c => {
     const normalizer = (str: string) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '';
     const term = normalizer(searchTerm);
     const matchSearch = normalizer(c.name).includes(term) || normalizer(c.email || '').includes(term);
@@ -1466,6 +1497,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const matchUpdated = showUpdatedOnly ? c.cadastro_atualizado === true : true
     return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchArea && matchVinculo && matchUpdated
   })
+
+  // Filtered aplica o filtro de status em cima do baseFiltered
+  const filtered = baseFiltered.filter(c => filterStatus.length > 0 ? filterStatus.includes(c.status) : true);
   const getAdvancedFiltered = (overrideStatus?: string) => {
     return colaboradores.filter(c => {
       const safeCompare = (filterVal: string, ...targetVals: (string | undefined | null)[]) => {
@@ -2300,28 +2334,28 @@ export function Colaboradores({ }: ColaboradoresProps) {
               {/* Cards de KPI */}
               <div className="flex items-stretch shrink-0 gap-3">
                 <div 
-                  onClick={() => setAdvFilterStatus((Array.isArray(advFilterStatus) && advFilterStatus.includes('active')) || advFilterStatus === 'active' ? [] : ['active'] as any)}
-                  className={`flex items-center gap-3 px-5 py-3 rounded-xl bg-white border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${((Array.isArray(advFilterStatus) && advFilterStatus.includes('active')) || advFilterStatus === 'active') ? 'border-[#1e3a8a] ring-1 ring-[#1e3a8a]' : 'border-gray-100'}`}
+                  onClick={() => setFilterStatus(filterStatus.includes('active') && filterStatus.length === 1 ? [] : ['active'])}
+                  className={`flex items-center gap-3 px-5 py-3 rounded-xl bg-white border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${filterStatus.includes('active') ? 'border-[#1e3a8a] ring-1 ring-[#1e3a8a]' : 'border-gray-100'}`}
                 >
                   <div className="p-2 rounded-lg bg-blue-50/80">
                     <Users className="h-4 w-4 text-[#1e3a8a]" />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 leading-none">Ativos</span>
-                    <span className="text-lg font-black text-[#0a192f] leading-tight mt-0.5">{filtered.filter(c => c.status === 'active').length}</span>
+                    <span className="text-lg font-black text-[#0a192f] leading-tight mt-0.5">{baseFiltered.filter(c => c.status === 'active').length}</span>
                   </div>
                 </div>
 
                 <div 
-                  onClick={() => setAdvFilterStatus((Array.isArray(advFilterStatus) && advFilterStatus.includes('Pré-admissão')) || advFilterStatus === 'Pré-admissão' ? [] : ['Pré-admissão'] as any)}
-                  className={`flex items-center gap-3 px-5 py-3 rounded-xl bg-orange-50/30 border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${((Array.isArray(advFilterStatus) && advFilterStatus.includes('Pré-admissão')) || advFilterStatus === 'Pré-admissão') ? 'border-orange-500 ring-1 ring-orange-500' : 'border-orange-200/50'}`}
+                  onClick={() => setFilterStatus(filterStatus.includes('Pré-admissão') && filterStatus.length === 1 ? ['active'] : ['Pré-admissão'])}
+                  className={`flex items-center gap-3 px-5 py-3 rounded-xl bg-orange-50/30 border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${filterStatus.includes('Pré-admissão') ? 'border-orange-500 ring-1 ring-orange-500' : 'border-orange-200/50'}`}
                 >
                   <div className="p-2 rounded-lg bg-orange-100/80 border border-orange-200/50">
                     <Calendar className="h-4 w-4 text-orange-600" />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[9px] font-black uppercase tracking-widest text-orange-700/80 leading-none">Pré-Admissão</span>
-                    <span className="text-lg font-black text-orange-800 leading-tight mt-0.5">{filtered.filter(c => c.status === 'Pré-admissão').length}</span>
+                    <span className="text-lg font-black text-orange-800 leading-tight mt-0.5">{baseFiltered.filter(c => c.status === 'Pré-admissão').length}</span>
                   </div>
                 </div>
               </div>
@@ -2383,20 +2417,30 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   ) : (
                     <>
                       {/* PRÉ-ADMISSÃO */}
-                      {filtered.some(c => c.status === 'Pré-admissão') && (
-                        <tr className="bg-orange-50/80 cursor-pointer hover:bg-orange-100/50 transition-colors" onClick={() => setIsPreAdmissaoExpanded(!isPreAdmissaoExpanded)}>
+                      {baseFiltered.some(c => c.status === 'Pré-admissão') && (
+                        <tr className="bg-orange-50/80 cursor-pointer hover:bg-orange-100/50 transition-colors" onClick={() => {
+                          const isExpanding = !isPreAdmissaoExpanded;
+                          setIsPreAdmissaoExpanded(isExpanding);
+                          if (isExpanding) {
+                            setFilterStatus(['Pré-admissão']);
+                          } else {
+                            if (filterStatus.length === 1 && filterStatus[0] === 'Pré-admissão') {
+                              setFilterStatus(['active']);
+                            }
+                          }
+                        }}>
                           <td colSpan={7} className="px-6 py-3 border-y border-orange-200">
                             <div className="flex items-center justify-between">
                               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-800 flex items-center gap-2">
                                 <Calendar className="h-4 w-4" /> Pré-admissão (Aguardando Data)
-                                <span className="bg-orange-200 text-orange-800 px-2 py-0.5 rounded-full text-[9px]">{filtered.filter(c => c.status === 'Pré-admissão').length}</span>
+                                <span className="bg-orange-200 text-orange-800 px-2 py-0.5 rounded-full text-[9px]">{baseFiltered.filter(c => c.status === 'Pré-admissão').length}</span>
                               </p>
                               {isPreAdmissaoExpanded ? <ChevronDown className="h-4 w-4 text-orange-600" /> : <ChevronRight className="h-4 w-4 text-orange-600" />}
                             </div>
                           </td>
                         </tr>
                       )}
-                      {isPreAdmissaoExpanded && filtered.filter(c => c.status === 'Pré-admissão').map((c) => {
+                      {(isPreAdmissaoExpanded || filterStatus.includes('Pré-admissão')) && baseFiltered.filter(c => c.status === 'Pré-admissão').map((c) => {
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
                         const isDateReached = c.hire_date ? new Date(c.hire_date + 'T00:00:00') <= today : false;
