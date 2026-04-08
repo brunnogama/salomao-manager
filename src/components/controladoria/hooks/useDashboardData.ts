@@ -158,18 +158,16 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       }
     }
 
-    // --- FILTRAGEM DOS DADOS ---
+    // --- FILTRAGEM DOS DADOS (BASEADA NA ENTRADA/PROSPECT) ---
     const getRelevantDate = (c: Contract) => {
-      switch (c.status) {
-        case 'rascunho': return c.created_at;
-        case 'analysis': return c.prospect_date || c.created_at;
-        case 'proposal': return c.proposal_date || c.created_at;
-        case 'active': return c.contract_date || c.created_at;
-        case 'rejected': return c.rejection_date || c.created_at;
-        case 'probono': return c.probono_date || c.contract_date || c.created_at;
-        case 'baixado': return c.updated_at || c.contract_date || c.created_at;
-        default: return c.created_at;
+      const statusDates = [c.prospect_date, c.proposal_date, c.contract_date, c.rejection_date, c.probono_date]
+        .map(d => safeDate(d))
+        .filter((d): d is Date => d !== null);
+
+      if (statusDates.length > 0) {
+        return new Date(Math.min(...statusDates.map(d => d.getTime())));
       }
+      return safeDate(c.created_at) || new Date();
     };
 
     const filteredContracts = contracts.filter(c => {
