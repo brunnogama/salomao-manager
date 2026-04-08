@@ -2296,15 +2296,25 @@ export function Colaboradores({ }: ColaboradoresProps) {
         <>
           {!isReadOnly && (
             <div className="flex flex-col lg:flex-row items-stretch gap-4">
-              {/* Card de KPI */}
-              <div className="flex items-stretch shrink-0">
-                <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm">
-                  <div className="p-2 rounded-lg bg-blue-50">
-                    <Users className="h-5 w-5 text-[#1e3a8a]" />
+              {/* Cards de KPI */}
+              <div className="flex items-stretch shrink-0 gap-3">
+                <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="p-2 rounded-lg bg-blue-50/80">
+                    <Users className="h-4 w-4 text-[#1e3a8a]" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">Ativos</span>
-                    <span className="text-xl font-black text-[#0a192f] leading-tight">{filtered.filter(c => c.status === 'active').length}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 leading-none">Ativos</span>
+                    <span className="text-lg font-black text-[#0a192f] leading-tight mt-0.5">{filtered.filter(c => c.status === 'active').length}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-orange-50/30 border border-orange-200/50 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="p-2 rounded-lg bg-orange-100/80 border border-orange-200/50">
+                    <Calendar className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-orange-700/80 leading-none">Pré-Admissão</span>
+                    <span className="text-lg font-black text-orange-800 leading-tight mt-0.5">{filtered.filter(c => c.status === 'Pré-admissão').length}</span>
                   </div>
                 </div>
               </div>

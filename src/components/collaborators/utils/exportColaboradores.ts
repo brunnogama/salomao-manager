@@ -195,7 +195,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Tipo PIX': c.pix_tipo,
         'Chave PIX': c.pix_chave,
 
-        'Status': c.status === 'active' ? 'Ativo' : 'Inativo',
+        'Status': c.status === 'active' ? 'Ativo' : (c.status === 'inactive' ? 'Inativo' : c.status),
         'Rateio': getLookupName(rateios, c.rateio_id),
         'Data Admissão': parseDateForExcel(c.hire_date),
         'Motivo Contratação': getLookupName(hiringReasons, c.hiring_reason_id),
@@ -290,16 +290,23 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
                     alignment: { vertical: "center", horizontal: "center" }
                 };
             } else {
-                const isInactive = sortedData[R - 1]?.status !== 'active';
+                const cStatus = sortedData[R - 1]?.status;
+                const isInactive = cStatus === 'inactive';
+                const isPreAdmissao = cStatus === 'Pré-admissão';
                 const isNameCol = C === nameColIndex;
                 const cellStyle: any = {};
                 
-                if (isInactive && isNameCol) {
-                    cellStyle.font = { color: { rgb: "FF0000" }, bold: true };
+                if (isInactive) {
+                    cellStyle.font = { color: { rgb: "EF4444" } }; // Red text for inactive row
+                    if (isNameCol) cellStyle.font.bold = true;
+                } else if (isPreAdmissao) {
+                    cellStyle.fill = { fgColor: { rgb: "FFEDD5" } }; // Orange background
+                    cellStyle.font = { color: { rgb: "D97706" } }; // Orange text
+                    if (isNameCol) cellStyle.font.bold = true;
                 }
                 
-                if (isFilterCol) {
-                    cellStyle.fill = { fgColor: { rgb: "FEF3C7" } }; // Light yellow data cell background
+                if (isFilterCol && !isPreAdmissao) {
+                    cellStyle.fill = { fgColor: { rgb: "FEF3C7" } }; // Light yellow data cell background (unless orange)
                 }
                 
                 if (Object.keys(cellStyle).length > 0) {
