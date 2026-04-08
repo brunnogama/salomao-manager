@@ -276,7 +276,7 @@ export function DadosCorporativosSection({
           label="Status"
           value={formData.status || 'active'}
           onChange={(v) => {
-            const newStatus = v as 'active' | 'inactive' | 'Pré-Cadastro';
+            const newStatus = v as 'active' | 'inactive' | 'Pré-Cadastro' | 'Pré-admissão';
             if (originalStatus === 'inactive' && newStatus === 'active') {
               setPendingReactivation(true);
               return;
@@ -286,6 +286,7 @@ export function DadosCorporativosSection({
           }}
           options={[
             { name: 'Ativo', id: 'active' },
+            { name: 'Pré-admissão', id: 'Pré-admissão' },
             { name: 'Pré-Cadastro (Aprovado em Vaga)', id: 'Pré-Cadastro' },
             { name: 'Inativo', id: 'inactive' }
           ]}

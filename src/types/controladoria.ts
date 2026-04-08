@@ -52,7 +52,7 @@ export interface Collaborator {
   email_pessoal?: string; // E-mail Pessoal
   telefone?: string;
   linkedin_url?: string;
-  status: 'active' | 'inactive' | 'Pré-Cadastro';
+  status: 'active' | 'inactive' | 'Pré-Cadastro' | 'Pré-admissão';
   cpf?: string;
   birthday?: string;
   gender?: string;
