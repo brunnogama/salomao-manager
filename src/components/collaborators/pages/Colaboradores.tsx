@@ -1259,7 +1259,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         previsao_formatura: formatMonthYearDateToISO(formData.previsao_formatura) || null,
         termino_contrato_estagio: formatDateToISO(formData.termino_contrato_estagio) || null,
         updated_by: user?.id,
-        updated_by_name: user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário'
+        updated_by_name: user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário',
         bolsa_valor: formData.bolsa_valor ? parseCurrency(formData.bolsa_valor) : null,
         vr_valor: formData.vr_valor ? parseCurrency(formData.vr_valor) : null,
         children_data: formData.children_data?.map(c => ({
