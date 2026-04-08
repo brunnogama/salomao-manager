@@ -643,7 +643,11 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     mMes.totalUnico = mMes.analysis + mMes.propQtd + mMes.fechQtd + mMes.rejected + mMes.probono;
 
     // Processamento dos Gráficos
-    const finArray = Object.entries(financeiroMap).map(([mes, vals]) => ({ mes, ...vals })).sort((a, b) => a.data.getTime() - b.data.getTime());
+    let finArray = Object.entries(financeiroMap).map(([mes, vals]) => ({ mes, ...vals })).sort((a, b) => a.data.getTime() - b.data.getTime());
+    const firstFin = finArray.findIndex(i => i.pl > 0 || i.fixo > 0 || i.exito > 0 || i.outros > 0);
+    if (firstFin > 0) finArray = finArray.slice(firstFin);
+    else if (firstFin === -1 && finArray.length > 3) finArray = finArray.slice(-3);
+
     const totalPL12 = finArray.reduce((acc, curr) => acc + curr.pl + curr.fixo, 0); const totalExito12 = finArray.reduce((acc, curr) => acc + curr.exito, 0);
     const monthsCount = finArray.length || 1;
     const mediasFinanceiras = { pl: totalPL12 / monthsCount, exito: totalExito12 / monthsCount };
@@ -655,7 +659,11 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     const maxValFin = Math.max(...finArray.map(i => Math.max(i.pl, i.fixo, i.exito)), 1);
     const financeiro12Meses = finArray.map(i => ({ ...i, hPl: (i.pl / maxValFin) * 100, hFixo: (i.fixo / maxValFin) * 100, hExito: (i.exito / maxValFin) * 100 }));
 
-    const propArray = Object.entries(propostasMap).map(([mes, vals]) => ({ mes, ...vals })).sort((a, b) => a.data.getTime() - b.data.getTime());
+    let propArray = Object.entries(propostasMap).map(([mes, vals]) => ({ mes, ...vals })).sort((a, b) => a.data.getTime() - b.data.getTime());
+    const firstProp = propArray.findIndex(i => i.pl > 0 || i.fixo > 0 || i.exito > 0 || i.outros > 0);
+    if (firstProp > 0) propArray = propArray.slice(firstProp);
+    else if (firstProp === -1 && propArray.length > 3) propArray = propArray.slice(-3);
+
     const totalPropPL12 = propArray.reduce((acc, curr) => acc + curr.pl + curr.fixo, 0); const totalPropExito12 = propArray.reduce((acc, curr) => acc + curr.exito, 0);
     const monthsCountProp = propArray.length || 1;
     const mediasPropostas = { pl: totalPropPL12 / monthsCountProp, exito: totalPropExito12 / monthsCountProp };
@@ -689,7 +697,14 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       diffFechados: mExecutivo.mesAtual.fechQtd - mExecutivo.mesAnterior.fechQtd
     };
 
-    const mesesGrafico = []; let iteradorGrafico = new Date(dataInicioFixo); while (iteradorGrafico <= hoje) { const key = iteradorGrafico.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }); mesesGrafico.push({ mes: key, qtd: mapaMeses[key] || 0, altura: 0 }); iteradorGrafico.setMonth(iteradorGrafico.getMonth() + 1); } const maxQtd = Math.max(...mesesGrafico.map((m) => m.qtd), 1); mesesGrafico.forEach((m) => (m.altura = (m.qtd / maxQtd) * 100));
+    let mesesGrafico = []; let iteradorGrafico = new Date(dataInicioFixo); while (iteradorGrafico <= hoje) { const key = iteradorGrafico.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }); mesesGrafico.push({ mes: key, qtd: mapaMeses[key] || 0, altura: 0 }); iteradorGrafico.setMonth(iteradorGrafico.getMonth() + 1); } 
+    
+    // Trim leading zeros in Entradas
+    const firstEvol = mesesGrafico.findIndex(i => i.qtd > 0);
+    if (firstEvol > 0) mesesGrafico = mesesGrafico.slice(firstEvol);
+    else if (firstEvol === -1 && mesesGrafico.length > 3) mesesGrafico = mesesGrafico.slice(-3);
+
+    const maxQtd = Math.max(...mesesGrafico.map((m) => m.qtd), 1); mesesGrafico.forEach((m) => (m.altura = (m.qtd / maxQtd) * 100));
     const evolucaoMensal = mesesGrafico;
 
     mGeral.mediaMensalNegociacaoPL = mGeral.valorEmNegociacaoPL / monthsCountProp; mGeral.mediaMensalNegociacaoExito = mGeral.valorEmNegociacaoExito / monthsCountProp; mGeral.mediaMensalCarteiraPL = mGeral.totalFechadoPL / monthsCount; mGeral.mediaMensalCarteiraExito = mGeral.totalFechadoExito / monthsCount;
