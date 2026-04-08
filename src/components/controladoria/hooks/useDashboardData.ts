@@ -263,25 +263,8 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     const periodoAnteriorStr = `${formatDateShort(primeiroDiaMesAnterior)} - ${formatDateShort(diaLimiteMesAnterior)}`;
     // -------------------------------------
 
-    // --- EXPANSÃO DINÂMICA DO EIXO X (GARANTIR QUE TODOS OS CASOS FILTRADOS APAREÇAM) ---
-    let minChartDate = new Date(dataInicioFixo);
-    filteredContracts.forEach(c => {
-       const statusDates = [c.prospect_date, c.proposal_date, c.contract_date, c.rejection_date, c.probono_date]
-         .map(d => safeDate(d)).filter((d): d is Date => d !== null);
-       const dReal = statusDates.length > 0 ? new Date(Math.min(...statusDates.map(d => d.getTime()))) : safeDate(c.created_at);
-       if (dReal && dReal < minChartDate) minChartDate = dReal;
-       
-       const dContrato = safeDate(c.contract_date);
-       if (c.status === 'active' && dContrato && dContrato < minChartDate) minChartDate = dContrato;
-       
-       const dProposta = safeDate(c.proposal_date);
-       if (dProposta && dProposta < minChartDate) minChartDate = dProposta;
-    });
-
-    dataInicioFixo = new Date(minChartDate);
-    dataInicioFixo.setDate(1);
-    dataInicioFixo.setHours(0, 0, 0, 0);
-    // -------------------------------------
+    // --- O Eixo X agora respeita estritamente o dataInicioFixo estipulado (Default ou via Filtro) ---
+    // Nenhuma expansão para trás é forçada, evitando o flatline de zeros no gráfico de "Entrada de Casos"
 
     const normalizeName = (name: string) => {
       if (!name) return '';
