@@ -835,6 +835,9 @@ export function ContractDetailsModal({
               <span className="font-mono text-sm font-bold text-gray-800 bg-gray-50 border border-gray-200 px-3 py-1 rounded-md">
                 {getHonOrPropStr()}
               </span>
+              <span className="text-sm font-black text-[#0a192f] truncate max-w-[200px] sm:max-w-[300px] xl:max-w-[400px]">
+                {contract.client_name}
+              </span>
             </div>
             
             <div className="flex items-center gap-2">

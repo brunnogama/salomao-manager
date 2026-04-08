@@ -1058,7 +1058,12 @@ export function ContractFormModal(props: Props) {
         {/* Right Content */}
         <div className={`flex-1 flex flex-col min-w-0 ${getThemeBackground(formData.status)} transition-colors duration-300 relative`}>
           
-          <div className="hidden md:flex absolute top-6 right-6 z-50 items-center gap-2">
+          <div className="hidden md:flex absolute top-6 right-6 z-50 items-center gap-3">
+            {formData.client_name && (
+              <span className="text-sm font-black text-[#0a192f] truncate max-w-[200px] xl:max-w-[400px] px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-100 shadow-sm">
+                {formData.client_name}
+              </span>
+            )}
             <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg p-1 border border-gray-100 shadow-sm">
               <button 
                 onClick={onPrev} 
