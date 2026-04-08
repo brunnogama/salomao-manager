@@ -37,10 +37,10 @@ const isValidDate = (d: any): boolean => {
   return d instanceof Date && !isNaN(d.getTime());
 };
 
-const isDateInCurrentWeek = (dateString?: string) => {
+const isDateInCurrentWeek = (dateString?: string, refDate: Date = new Date()) => {
   const d = safeDate(dateString);
   if (!d) return false;
-  const t = new Date();
+  const t = refDate;
   const cd = t.getDay();
   const s = new Date(t);
   s.setDate(t.getDate() - cd);
@@ -51,10 +51,10 @@ const isDateInCurrentWeek = (dateString?: string) => {
   return d >= s && d <= e;
 };
 
-const isDateInPreviousWeek = (dateString?: string) => {
+const isDateInPreviousWeek = (dateString?: string, refDate: Date = new Date()) => {
   const d = safeDate(dateString);
   if (!d) return false;
-  const t = new Date();
+  const t = refDate;
   const cd = t.getDay();
   const sc = new Date(t);
   sc.setDate(t.getDate() - cd);
@@ -67,18 +67,18 @@ const isDateInPreviousWeek = (dateString?: string) => {
   return d >= sp && d <= ep;
 };
 
-const isDateInCurrentMonth = (dateString?: string) => {
+const isDateInCurrentMonth = (dateString?: string, refDate: Date = new Date()) => {
   const d = safeDate(dateString);
   if (!d) return false;
-  const t = new Date();
+  const t = refDate;
   return d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear();
 };
 
 // Nova lógica MTD (Month to Date)
-const isDateInLastMonthMTD = (dateString?: string) => {
+const isDateInLastMonthMTD = (dateString?: string, refDate: Date = new Date()) => {
   const d = safeDate(dateString);
   if (!d) return false;
-  const today = new Date();
+  const today = refDate;
 
   // Define o mês anterior
   let lastMonth = today.getMonth() - 1;
@@ -136,9 +136,27 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
   }, []);
 
   const dashboardData = useMemo(() => {
-    const hoje = new Date();
+    let hoje = new Date();
+    if (selectedPeriod && selectedPeriod.end) {
+      const parsedEnd = safeDate(selectedPeriod.end);
+      if (parsedEnd) {
+        parsedEnd.setHours(23, 59, 59, 999);
+        if (parsedEnd < hoje) {
+          hoje = parsedEnd;
+        }
+      }
+    }
+
     // Data de início para gráficos de 12 meses (forçando UTC local para não perder os primeiros casos do mês)
-    const dataInicioFixo = new Date('2025-06-01T00:00:00');
+    let dataInicioFixo = new Date('2025-06-01T00:00:00');
+    if (selectedPeriod && selectedPeriod.start) {
+      const parsedStart = safeDate(selectedPeriod.start);
+      if (parsedStart && parsedStart > dataInicioFixo) {
+        dataInicioFixo = new Date(parsedStart);
+        dataInicioFixo.setDate(1);
+        dataInicioFixo.setHours(0, 0, 0, 0);
+      }
+    }
 
     // --- FILTRAGEM DOS DADOS ---
     const getRelevantDate = (c: Contract) => {
@@ -358,18 +376,18 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
       // Comparativo de Entrada (Novos) - LOGICA MTD
       const dataEntradaISO = dataEntradaReal.toISOString().split('T')[0];
-      if (isDateInCurrentMonth(dataEntradaISO)) mExecutivo.mesAtual.novos++;
-      if (isDateInLastMonthMTD(dataEntradaISO)) mExecutivo.mesAnterior.novos++;
+      if (isDateInCurrentMonth(dataEntradaISO, hoje)) mExecutivo.mesAtual.novos++;
+      if (isDateInLastMonthMTD(dataEntradaISO, hoje)) mExecutivo.mesAnterior.novos++;
 
       // 4. MÉTODOS DE CÁLCULO POR STATUS - LOGICA MTD
       if (c.proposal_date) {
-        if (isDateInCurrentMonth(c.proposal_date)) {
+        if (isDateInCurrentMonth(c.proposal_date, hoje)) {
           mExecutivo.mesAtual.propQtd++;
           mExecutivo.mesAtual.propPL += pl;
           mExecutivo.mesAtual.propExito += exito;
           mExecutivo.mesAtual.propMensal += mensal;
         }
-        if (isDateInLastMonthMTD(c.proposal_date)) {
+        if (isDateInLastMonthMTD(c.proposal_date, hoje)) {
           mExecutivo.mesAnterior.propQtd++;
           mExecutivo.mesAnterior.propPL += pl;
           mExecutivo.mesAnterior.propExito += exito;
@@ -378,13 +396,13 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       }
 
       if (c.status === 'active' && c.contract_date) {
-        if (isDateInCurrentMonth(c.contract_date)) {
+        if (isDateInCurrentMonth(c.contract_date, hoje)) {
           mExecutivo.mesAtual.fechQtd++;
           mExecutivo.mesAtual.fechPL += pl;
           mExecutivo.mesAtual.fechExito += exito;
           mExecutivo.mesAtual.fechMensal += mensal;
         }
-        if (isDateInLastMonthMTD(c.contract_date)) {
+        if (isDateInLastMonthMTD(c.contract_date, hoje)) {
           mExecutivo.mesAnterior.fechQtd++;
           mExecutivo.mesAnterior.fechPL += pl;
           mExecutivo.mesAnterior.fechExito += exito;
@@ -552,22 +570,22 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       }
 
       // Semana Atual
-      if (c.status === 'analysis' && isDateInCurrentWeek(c.prospect_date)) mSemana.novos++;
-      if (c.status === 'proposal' && isDateInCurrentWeek(c.proposal_date)) { mSemana.propQtd++; mSemana.propPL += pl; mSemana.propExito += exito; mSemana.propMensal += mensal; }
-      if (c.status === 'active' && isDateInCurrentWeek(c.contract_date)) { mSemana.fechQtd++; mSemana.fechPL += pl; mSemana.fechExito += exito; mSemana.fechMensal += mensal; }
-      if (c.status === 'rejected' && isDateInCurrentWeek(c.rejection_date)) mSemana.rejeitados++;
-      if (c.status === 'probono' && isDateInCurrentWeek(c.probono_date || c.contract_date)) mSemana.probono++;
+      if (c.status === 'analysis' && isDateInCurrentWeek(c.prospect_date, hoje)) mSemana.novos++;
+      if (c.status === 'proposal' && isDateInCurrentWeek(c.proposal_date, hoje)) { mSemana.propQtd++; mSemana.propPL += pl; mSemana.propExito += exito; mSemana.propMensal += mensal; }
+      if (c.status === 'active' && isDateInCurrentWeek(c.contract_date, hoje)) { mSemana.fechQtd++; mSemana.fechPL += pl; mSemana.fechExito += exito; mSemana.fechMensal += mensal; }
+      if (c.status === 'rejected' && isDateInCurrentWeek(c.rejection_date, hoje)) mSemana.rejeitados++;
+      if (c.status === 'probono' && isDateInCurrentWeek(c.probono_date || c.contract_date, hoje)) mSemana.probono++;
 
       // Semana Anterior
-      if (c.status === 'proposal' && isDateInPreviousWeek(c.proposal_date)) { mSemanaAnterior.propPL += pl; mSemanaAnterior.propExito += exito; mSemanaAnterior.propMensal += mensal; }
-      if (c.status === 'active' && isDateInPreviousWeek(c.contract_date)) { mSemanaAnterior.fechPL += pl; mSemanaAnterior.fechExito += exito; mSemanaAnterior.fechMensal += mensal; }
+      if (c.status === 'proposal' && isDateInPreviousWeek(c.proposal_date, hoje)) { mSemanaAnterior.propPL += pl; mSemanaAnterior.propExito += exito; mSemanaAnterior.propMensal += mensal; }
+      if (c.status === 'active' && isDateInPreviousWeek(c.contract_date, hoje)) { mSemanaAnterior.fechPL += pl; mSemanaAnterior.fechExito += exito; mSemanaAnterior.fechMensal += mensal; }
 
       // Mês Atual (Geral - sem MTD, para resumo do mês)
-      if (c.status === 'analysis' && isDateInCurrentMonth(c.prospect_date)) mMes.analysis++;
-      if (c.status === 'proposal' && isDateInCurrentMonth(c.proposal_date)) { mMes.propQtd++; mMes.propPL += pl; mMes.propExito += exito; mMes.propMensal += mensal; }
-      if (c.status === 'active' && isDateInCurrentMonth(c.contract_date)) { mMes.fechQtd++; mMes.fechPL += pl; mMes.fechExito += exito; mMes.fechMensal += mensal; }
-      if (c.status === 'rejected' && isDateInCurrentMonth(c.rejection_date)) mMes.rejected++;
-      if (c.status === 'probono' && isDateInCurrentMonth(c.probono_date || c.contract_date)) mMes.probono++;
+      if (c.status === 'analysis' && isDateInCurrentMonth(c.prospect_date, hoje)) mMes.analysis++;
+      if (c.status === 'proposal' && isDateInCurrentMonth(c.proposal_date, hoje)) { mMes.propQtd++; mMes.propPL += pl; mMes.propExito += exito; mMes.propMensal += mensal; }
+      if (c.status === 'active' && isDateInCurrentMonth(c.contract_date, hoje)) { mMes.fechQtd++; mMes.fechPL += pl; mMes.fechExito += exito; mMes.fechMensal += mensal; }
+      if (c.status === 'rejected' && isDateInCurrentMonth(c.rejection_date, hoje)) mMes.rejected++;
+      if (c.status === 'probono' && isDateInCurrentMonth(c.probono_date || c.contract_date, hoje)) mMes.probono++;
 
       // Funil
       fTotal++;
