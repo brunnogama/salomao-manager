@@ -528,12 +528,14 @@ export function Contracts() {
 
     const header = [
       'ID', 'Status', 'Cliente', 'Sócio', 'HON/PROP', 'Data Relevante', 'Local Faturamento',
+      'Timesheet',
       'Pró-Labore', 'Cláusula Pró-Labore',
       'Outros Honorários', 'Cláusula Outros',
       'Fixo Mensal', 'Cláusula Fixo Mensal',
       'Êxito Intermediário', 'Cláusula Intermediário',
       'Êxito Final', 'Cláusula Êxito Final',
       'Êxito (Total)',
+      'Valores em %',
       'Posição do Cliente', 'Nº Processo', 'UF (Processo)', 'Tribunal', 'Comarca', 'Vara',
       'Autor', 'CNPJ Autor', 'Réu / Parte Adversa', 'CNPJ Réu', 'Assunto / Objeto',
       'Valor da Causa', 'Magistrados',
@@ -543,17 +545,50 @@ export function Contracts() {
     const rows: any[] = [];
 
     filteredContracts.forEach(c => {
-      const vPro = parseCurrency(c.pro_labore);
-      const vOther = parseCurrency(c.other_fees);
-      const vFixed = parseCurrency(c.fixed_monthly_fee);
-      const vFinal = parseCurrency(c.final_success_fee);
+      const percentsList: string[] = [];
+      const processField = (val: string | undefined | null) => {
+         if (!val) return 0;
+         const str = String(val).trim();
+         if (str === '0%' || str === '0' || str === '' || str === 'R$ 0,00') return 0;
+         if (str.includes('%')) {
+             percentsList.push(str);
+             return 0; // Do not sum
+         }
+         return parseCurrency(str);
+      };
+
+      const vPro = processField(c.pro_labore);
+      const vOther = processField(c.other_fees);
+      const vFixed = processField(c.fixed_monthly_fee);
+      const vFinal = processField(c.final_success_fee);
+
+      const successPercentVal = (c as any).final_success_percent;
+      if (successPercentVal && String(successPercentVal).trim() !== '0%') {
+          if (String(successPercentVal).includes('%')) percentsList.push(String(successPercentVal));
+          else percentsList.push(String(successPercentVal) + '%');
+      }
 
       let vInter = 0;
       if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
-        c.intermediate_fees.forEach((f: string) => vInter += parseCurrency(f));
+        c.intermediate_fees.forEach((f: string) => vInter += processField(f));
       }
 
-      const vTotalSuccess = calculateTotalSuccess(c);
+      let vFinalExt = 0;
+      if ((c as any).final_success_extras && Array.isArray((c as any).final_success_extras)) {
+        (c as any).final_success_extras.forEach((f: string) => vFinalExt += processField(f));
+      }
+      
+      if ((c as any).percent_extras && Array.isArray((c as any).percent_extras)) {
+          (c as any).percent_extras.forEach((f: string) => {
+              if (f && f !== '0%') {
+                 if (f.includes('%')) percentsList.push(f);
+                 else percentsList.push(f + '%');
+              }
+          });
+      }
+
+      const vTotalSuccess = vFinal + vInter + vFinalExt;
+      const percentsStr = percentsList.length > 0 ? percentsList.join(' + ') : '-';
 
       sumPro += vPro;
       sumOther += vOther;
@@ -570,6 +605,7 @@ export function Contracts() {
         getHonDisplay(c),
         safeDate(getRelevantDate(c))?.toLocaleDateString('pt-BR') || '-',
         c.billing_location || '-',
+        (c as any).timesheet ? 'X' : '-',
         vPro,
         (c as any).pro_labore_clause || '-',
         vOther,
@@ -581,6 +617,7 @@ export function Contracts() {
         vFinal,
         (c as any).final_success_fee_clause || '-',
         vTotalSuccess,
+        percentsStr,
         c.client_position || '-',
         c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.process_number || '-').join('\n') : '-',
         c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.uf || '-').join('\n') : '-',
@@ -613,11 +650,13 @@ export function Contracts() {
         rows.push([
           c.display_id,
           '', '', '', '', '', '',
+          '',
           '', clause.type === 'Extra Pró-Labore' ? clause.text : '',
           '', '',
           '', '',
           '', clause.type === 'Intermediário' ? clause.text : '',
           '', clause.type === 'Extra Êxito Final' ? clause.text : '',
+          '',
           '',
           '', '', '', '', '', '', '', '', '', '', '', '', '',
           ''
@@ -627,7 +666,9 @@ export function Contracts() {
 
     const totalRow = [
       'TOTAIS', '', '', '', '', '', '',
+      '',
       sumPro, '', sumOther, '', sumFixed, '', sumInter, '', sumFinal, '', sumTotalSuccess,
+      '',
       '', '', '', '', '', '', '', '', '', '', '', '', '',
       ''
     ];
@@ -638,7 +679,7 @@ export function Contracts() {
 
     const currencyFormat = '"R$" #,##0.00';
     const range = XLSX.utils.decode_range(ws['!ref']!);
-    const moneyCols = [7, 9, 11, 13, 15, 17];
+    const moneyCols = [8, 10, 12, 14, 16, 18];
 
     // -- STYLING PADRÃO CORPORATIVO --
     for (let col = range.s.c; col <= range.e.c; col++) {
