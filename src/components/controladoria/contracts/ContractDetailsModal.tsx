@@ -360,6 +360,14 @@ export function ContractDetailsModal({
     const totalFixedMonthly = sumMonetaryValue([fixedMonthlyBase, ...(Array.isArray(fixedMonthlyExtrasList) ? fixedMonthlyExtrasList : [])]);
     const formattedFixedMonthly = formatGroupTotal([fixedMonthlyBase, ...(Array.isArray(fixedMonthlyExtrasList) ? fixedMonthlyExtrasList : [])], totalFixedMonthly);
 
+    const hasValidValue = (valuesArr: (string | undefined)[]) => {
+      const validStrings = valuesArr.filter(v => v);
+      if (validStrings.length === 0) return false;
+      return validStrings.some(v => typeof v === 'string' && (
+        v.includes('%') ? parseFloat(v.replace(/[^\d,\-]/g, '').replace(',', '.')) > 0 : parseCurrency(v) > 0
+      ));
+    };
+
     const grandTotal = totalProLabore + intermediateTotal + totalFinalFee + totalOtherFees + totalFixedMonthly;
     
     const lackToPay = grandTotal - totalPaid;
@@ -378,6 +386,12 @@ export function ContractDetailsModal({
       formattedFixedMonthly,
       grandTotal,
       lackToPay: lackToPay > 0 ? lackToPay : 0,
+
+      showProLabore: hasValidValue([proLaboreBase, ...(Array.isArray(proLaboreExtrasList) ? proLaboreExtrasList : [])]),
+      showIntermediate: hasValidValue(Array.isArray(intermediateList) ? intermediateList : []),
+      showFinalFee: hasValidValue([finalFeeBase, ...(Array.isArray(finalFeeExtrasList) ? finalFeeExtrasList : [])]),
+      showOtherFees: hasValidValue([otherFeesBase, ...(Array.isArray(otherFeesExtrasList) ? otherFeesExtrasList : [])]),
+      showFixedMonthly: hasValidValue([fixedMonthlyBase, ...(Array.isArray(fixedMonthlyExtrasList) ? fixedMonthlyExtrasList : [])]),
 
       hasProLaboreExtras: Array.isArray(proLaboreExtrasList) && proLaboreExtrasList.length > 0,
       hasFinalFeeExtras: Array.isArray(finalFeeExtrasList) && finalFeeExtrasList.length > 0,
@@ -590,7 +604,7 @@ export function ContractDetailsModal({
                  </div>
                ) : (
                  <>
-                   {financials.formattedProLabore !== "R$ 0,00" && (
+                   {financials.showProLabore && (
                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
                         <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
                            <span className="text-[10px] font-bold text-gray-500 uppercase">Pró-Labore (Total)</span>
@@ -612,7 +626,7 @@ export function ContractDetailsModal({
                      </div>
                    )}
 
-                   {financials.formattedIntermediate !== "R$ 0,00" && (
+                   {financials.showIntermediate && (
                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 flex flex-col shadow-sm">
                         <div className="flex justify-between items-center border-b border-blue-200 pb-2 mb-2">
                            <span className="text-[10px] font-bold text-blue-700 uppercase">Ex. Intermediário (Total)</span>
@@ -631,7 +645,7 @@ export function ContractDetailsModal({
                      </div>
                    )}
 
-                   {financials.formattedFinalFee !== "R$ 0,00" && (
+                   {financials.showFinalFee && (
                      <div className="bg-green-50 p-3 rounded-lg border border-green-200 flex flex-col shadow-sm">
                         <div className="flex justify-between items-center border-b border-green-200 pb-2 mb-2">
                            <span className="text-[10px] font-bold text-green-800 uppercase">Êxito Final (Total)</span>
@@ -653,7 +667,7 @@ export function ContractDetailsModal({
                      </div>
                    )}
 
-                   {financials.formattedFixedMonthly !== "R$ 0,00" && (
+                   {financials.showFixedMonthly && (
                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
                         <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
                            <span className="text-[10px] font-bold text-gray-500 uppercase">Fixo Mensal (Total)</span>
@@ -675,7 +689,7 @@ export function ContractDetailsModal({
                      </div>
                    )}
 
-                   {financials.formattedOtherFees !== "R$ 0,00" && (
+                   {financials.showOtherFees && (
                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
                         <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
                            <span className="text-[10px] font-bold text-gray-500 uppercase">Outros Honorários (Total)</span>
