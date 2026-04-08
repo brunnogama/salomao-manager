@@ -537,7 +537,7 @@ export function Contracts() {
       'Fixo Pontual', 'Cláusula Fixo Pontual',
       'Êxito Intermediário', 'Cláusula Intermediário',
       'Êxito Final', 'Cláusula Êxito Final',
-      'Êxito (Total)', 'Total Contrato',
+      'Total Contrato',
       'Valores em %',
       'Posição do Cliente', 'Nº Processo', 'UF (Processo)', 'Tribunal', 'Comarca', 'Vara',
       'Autor', 'CNPJ Autor', 'Réu / Parte Adversa', 'CNPJ Réu', 'Assunto / Objeto',
@@ -636,7 +636,6 @@ export function Contracts() {
         (c.intermediate_fees_clauses && (c.intermediate_fees_clauses as any).length > 0) ? 'Ver detalhe abaixo' : '-',
         vFinal,
         (c as any).final_success_fee_clause || '-',
-        vTotalSuccess,
         vTotalContrato,
         percentsStr,
         c.client_position || '-',
@@ -680,7 +679,6 @@ export function Contracts() {
           '', clause.type === 'Extra Êxito Final' ? clause.text : '',
           '',
           '',
-          '',
           '', '', '', '', '', '', '', '', '', '', '', '', '',
           ''
         ]);
@@ -690,7 +688,7 @@ export function Contracts() {
     const totalRow = [
       'TOTAIS', '', '', '', '', '', '',
       '',
-      sumPro, '', sumOther, '', sumFixed, '', sumFixedPontual, '', sumInter, '', sumFinal, '', sumTotalSuccess, sumTotalContrato,
+      sumPro, '', sumOther, '', sumFixed, '', sumFixedPontual, '', sumInter, '', sumFinal, '', sumTotalContrato,
       '',
       '', '', '', '', '', '', '', '', '', '', '', '', '',
       ''
@@ -702,7 +700,7 @@ export function Contracts() {
 
     const currencyFormat = '"R$" #,##0.00';
     const range = XLSX.utils.decode_range(ws['!ref']!);
-    const moneyCols = [8, 10, 12, 14, 16, 18, 20, 21];
+    const moneyCols = [8, 10, 12, 14, 16, 18, 20];
 
     // -- STYLING PADRÃO CORPORATIVO --
     for (let col = range.s.c; col <= range.e.c; col++) {
