@@ -533,7 +533,6 @@ export function Contracts() {
     let sumPro = 0;
     let sumOther = 0;
     let sumFixed = 0;
-    let sumFixedPontual = 0;
     let sumInter = 0;
     let sumFinal = 0;
     let sumTotalSuccess = 0;
@@ -602,11 +601,25 @@ export function Contracts() {
          return parseCurrency(noPercentStr);
       };
 
-      const vPro = processField(c.pro_labore);
-      const vOther = processField(c.other_fees);
-      const vFixed = processField(c.fixed_monthly_fee);
-      const vFixedPontual = processField((c as any).fixed_fee) || processField((c as any).honorarios_fixos);
-      const vFinal = processField(c.final_success_fee);
+      let vPro = processField(c.pro_labore);
+      if ((c as any).pro_labore_extras && Array.isArray((c as any).pro_labore_extras)) {
+        (c as any).pro_labore_extras.forEach((f: string) => vPro += processField(f));
+      }
+
+      let vOther = processField(c.other_fees);
+      if ((c as any).other_fees_extras && Array.isArray((c as any).other_fees_extras)) {
+        (c as any).other_fees_extras.forEach((f: string) => vOther += processField(f));
+      }
+
+      let vFixed = processField(c.fixed_monthly_fee);
+      if ((c as any).fixed_monthly_extras && Array.isArray((c as any).fixed_monthly_extras)) {
+        (c as any).fixed_monthly_extras.forEach((f: string) => vFixed += processField(f));
+      }
+
+      let vFinal = processField(c.final_success_fee);
+      if ((c as any).final_success_extras && Array.isArray((c as any).final_success_extras)) {
+        (c as any).final_success_extras.forEach((f: string) => vFinal += processField(f));
+      }
 
       const successPercentVal = (c as any).final_success_percent;
       if (successPercentVal && String(successPercentVal).trim() !== '0%') {
@@ -618,11 +631,6 @@ export function Contracts() {
       if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
         c.intermediate_fees.forEach((f: string) => vInter += processField(f));
       }
-
-      let vFinalExt = 0;
-      if ((c as any).final_success_extras && Array.isArray((c as any).final_success_extras)) {
-        (c as any).final_success_extras.forEach((f: string) => vFinalExt += processField(f));
-      }
       
       if ((c as any).percent_extras && Array.isArray((c as any).percent_extras)) {
           (c as any).percent_extras.forEach((f: string) => {
@@ -633,17 +641,15 @@ export function Contracts() {
           });
       }
 
-      const vTotalSuccess = vFinal + vInter + vFinalExt;
+      const vTotalSuccess = vFinal + vInter;
       const vTotalContrato = vPro + vOther + vFixed + vTotalSuccess;
       const percentsStr = percentsList.length > 0 ? percentsList.join(' + ') : '-';
 
       sumPro += vPro;
       sumOther += vOther;
       sumFixed += vFixed;
-      sumFixedPontual += vFixedPontual;
       sumInter += vInter;
       sumFinal += vFinal;
-      sumTotalSuccess += vTotalSuccess;
       sumTotalContrato += vTotalContrato;
 
       rows.push([
@@ -655,17 +661,17 @@ export function Contracts() {
         safeDate(getRelevantDate(c))?.toLocaleDateString('pt-BR') || '-',
         c.billing_location || '-',
         (c as any).timesheet ? 'X' : '-',
-        vPro,
+        vPro === 0 ? 'Nenhum valor cadastrado' : vPro,
         (c as any).pro_labore_clause || '-',
-        vOther,
+        vOther === 0 ? 'Nenhum valor cadastrado' : vOther,
         (c as any).other_fees_clause || '-',
-        vFixed,
+        vFixed === 0 ? 'Nenhum valor cadastrado' : vFixed,
         (c as any).fixed_monthly_fee_clause || '-',
-        vInter,
+        vInter === 0 ? 'Nenhum valor cadastrado' : vInter,
         (c.intermediate_fees_clauses && (c.intermediate_fees_clauses as any).length > 0) ? 'Ver detalhe abaixo' : '-',
-        vFinal,
+        vFinal === 0 ? 'Nenhum valor cadastrado' : vFinal,
         (c as any).final_success_fee_clause || '-',
-        vTotalContrato,
+        vTotalContrato === 0 ? 'Nenhum valor cadastrado' : vTotalContrato,
         percentsStr,
         c.client_position || '-',
         c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.process_number || '-').join('\n') : '-',
