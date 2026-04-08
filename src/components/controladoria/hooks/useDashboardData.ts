@@ -158,16 +158,18 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       }
     }
 
-    // --- FILTRAGEM DOS DADOS (BASEADA NA ENTRADA/PROSPECT) ---
+    // --- FILTRAGEM DOS DADOS (BASEADA NA MOVIMENTAÇÃO) ---
     const getRelevantDate = (c: Contract) => {
-      const statusDates = [c.prospect_date, c.proposal_date, c.contract_date, c.rejection_date, c.probono_date]
-        .map(d => safeDate(d))
-        .filter((d): d is Date => d !== null);
-
-      if (statusDates.length > 0) {
-        return new Date(Math.min(...statusDates.map(d => d.getTime())));
+      switch (c.status) {
+        case 'rascunho': return c.created_at;
+        case 'analysis': return c.prospect_date || c.created_at;
+        case 'proposal': return c.proposal_date || c.created_at;
+        case 'active': return c.contract_date || c.created_at;
+        case 'rejected': return c.rejection_date || c.created_at;
+        case 'probono': return c.probono_date || c.contract_date || c.created_at;
+        case 'baixado': return c.updated_at || c.contract_date || c.created_at;
+        default: return c.created_at;
       }
-      return safeDate(c.created_at) || new Date();
     };
 
     const filteredContracts = contracts.filter(c => {
@@ -372,25 +374,60 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
         });
       }
 
-      // 3. DATAS E FLUXO (USANDO safeDate)
+      // 3. DATAS E AVALIAÇÃO DE COHORT RESTRITO (Data Real de Entrada vs Filtro Atual)
       const statusDates = [c.prospect_date, c.proposal_date, c.contract_date, c.rejection_date, c.probono_date]
         .map(d => safeDate(d))
         .filter((d): d is Date => d !== null);
 
       let dataEntradaReal: Date;
       if (statusDates.length > 0) {
-        // Encontra a menor data válida
         dataEntradaReal = new Date(Math.min(...statusDates.map(d => d.getTime())));
       } else {
-        // Fallback para created_at ou hoje, garantindo safeDate se possível
         const createdAt = safeDate(c.created_at);
         dataEntradaReal = createdAt || new Date();
       }
 
-      // Setup para gráficos/mapas usando dataEntradaReal
-      const mesAnoEntrada = dataEntradaReal.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-      if (mapaMeses[mesAnoEntrada] !== undefined) mapaMeses[mesAnoEntrada]++;
-      else { if (!mapaMeses[mesAnoEntrada]) mapaMeses[mesAnoEntrada] = 0; mapaMeses[mesAnoEntrada]++; }
+      let entryInPeriod = true;
+      if (selectedPeriod && (selectedPeriod.start || selectedPeriod.end)) {
+        if (selectedPeriod.start) {
+          const s = safeDate(selectedPeriod.start);
+          if (s) {
+            s.setHours(0,0,0,0);
+            if (dataEntradaReal < s) entryInPeriod = false;
+          }
+        }
+        if (selectedPeriod.end) {
+          const e = safeDate(selectedPeriod.end);
+          if (e) {
+            e.setHours(23,59,59,999);
+            if (dataEntradaReal > e) entryInPeriod = false;
+          }
+        }
+      }
+
+      // Funil (Agrupado EXCLUSIVAMENTE por Data de Entrada / Cohort. 'Quantidade')
+      if (entryInPeriod) {
+        fTotal++;
+        fValorEntrada += (pl + exito + mensal + outros + fixoPontual);
+
+        const chegouEmProposta = c.status === 'proposal' || c.status === 'active' || c.status === 'probono' || (c.status === 'rejected' && c.proposal_date);
+        if (chegouEmProposta) {
+          fQualificados++;
+          fValorPropostas += (pl + exito + mensal + outros + fixoPontual);
+        }
+
+        if (c.status === 'active' || c.status === 'probono') {
+          fFechados++;
+          fValorFechados += (pl + exito + mensal + outros + fixoPontual);
+        } else if (c.status === 'rejected') {
+          c.proposal_date ? fPerdaNegociacao++ : fPerdaAnalise++;
+        }
+
+        // Setup para gráficos/mapas usando dataEntradaReal
+        const mesAnoEntrada = dataEntradaReal.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+        if (mapaMeses[mesAnoEntrada] !== undefined) mapaMeses[mesAnoEntrada]++;
+        else { if (!mapaMeses[mesAnoEntrada]) mapaMeses[mesAnoEntrada] = 0; mapaMeses[mesAnoEntrada]++; }
+      }
 
       // Comparativo de Entrada (Novos) - LOGICA MTD
       const dataEntradaISO = dataEntradaReal.toISOString().split('T')[0];
@@ -500,26 +537,39 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
       // Mapas Financeiros (Gráficos)
       // 1. Fechamentos (Evolução Financeira)
-      // Considera TODOS agrupados pela Data de Entrada Real (Cohort)
-      if (c.status === 'active') {
-        const key = mesAnoEntrada;
-        if (financeiroMap[key]) {
-          financeiroMap[key].pl += pl;
-          financeiroMap[key].fixo += (mensal + fixoPontual); 
-          financeiroMap[key].exito += exito;
-          financeiroMap[key].outros += outros; 
+      // Considera TODOS que tem data de contrato e status active (fechado)
+      if (c.status === 'active' && c.contract_date) {
+        const dContrato = safeDate(c.contract_date);
+        if (dContrato) {
+          dContrato.setDate(1); dContrato.setHours(0, 0, 0, 0);
+          if (dContrato >= dataLimite12Meses) {
+            const key = dContrato.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+            // Soma TUDO: PL + Fixo + Êxito + Outros
+            if (financeiroMap[key]) {
+              financeiroMap[key].pl += pl;
+              financeiroMap[key].fixo += (mensal + fixoPontual); 
+              financeiroMap[key].exito += exito;
+              financeiroMap[key].outros += outros; 
+            }
+          }
         }
       }
 
       // 2. Propostas (Evolução de Propostas)
-      // Considera TODOS que chegaram na fase de proposta agrupados pela Data de Entrada
-      if (c.proposal_date || c.status === 'active' || c.status === 'proposal' || (c.status === 'rejected' && c.proposal_date)) {
-        const key = mesAnoEntrada;
-        if (propostasMap[key]) {
-          propostasMap[key].pl += pl;
-          propostasMap[key].fixo += (mensal + fixoPontual);
-          propostasMap[key].exito += exito;
-          propostasMap[key].outros += outros;
+      // Considera TODOS que tiveram proposta (active, proposal, rejected com data)
+      if (c.proposal_date) {
+        const dProposta = safeDate(c.proposal_date);
+        if (dProposta) {
+          dProposta.setDate(1); dProposta.setHours(0, 0, 0, 0);
+          if (dProposta >= dataLimite12Meses) {
+            const key = dProposta.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+            if (propostasMap[key]) {
+              propostasMap[key].pl += pl;
+              propostasMap[key].fixo += (mensal + fixoPontual);
+              propostasMap[key].exito += exito;
+              propostasMap[key].outros += outros;
+            }
+          }
         }
       }
 
