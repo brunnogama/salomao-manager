@@ -1065,6 +1065,7 @@ export function Contracts() {
               onDelete={handleDelete}
               processes={processes}
               documents={(formData as any).documents}
+              partners={partners}
               canEdit={true}
               canDelete={true}
               onNext={handleNext}

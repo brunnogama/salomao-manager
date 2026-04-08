@@ -45,7 +45,7 @@ export function ContractFormModal(props: Props) {
     isOpen, onClose, formData, setFormData, onSave, loading: parentLoading, isEditing,
     partners, onOpenPartnerManager, analysts, onOpenAnalystManager,
     processes, currentProcess, setCurrentProcess, editingProcessIndex, handleProcessAction, cancelEditProcess, editProcess, removeProcess,
-    newIntermediateFee, setNewIntermediateFee, addIntermediateFee, removeIntermediateFee, getStatusLabel,
+    newIntermediateFee, setNewIntermediateFee, addIntermediateFee, removeIntermediateFee, getStatusLabel, getStatusColor,
     onPrev, onNext, hasPrev, hasNext
   } = props;
 

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
-import { Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
+import { Contract, ContractProcess, ContractDocument, Partner } from '../../../types/controladoria';
 import { useEscKey } from '../../../hooks/useEscKey';
 import { AuditLog } from '../../ui/AuditLog';
 
@@ -75,6 +75,7 @@ interface Props {
   onDelete: () => void;
   processes: ContractProcess[];
   documents?: ContractDocument[];
+  partners?: Partner[];
   canEdit?: boolean;
   canDelete?: boolean;
   onPrev?: () => void;
@@ -91,6 +92,7 @@ export function ContractDetailsModal({
   onDelete,
   processes,
   documents = [],
+  partners = [],
   canEdit = false,
   canDelete = false,
   onPrev,
@@ -882,11 +884,20 @@ export function ContractDetailsModal({
                 <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-100 rounded-2xl p-6 shadow-sm">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h2 className="text-2xl font-black text-[#0a192f] tracking-tight">{contract.client_name}</h2>
-                      <div className="flex items-center text-sm mt-2 text-gray-600 font-medium">
-                        <User className="w-4 h-4 mr-1.5" />
-                        {contract.partner_name || '-'}
-                        {contract.co_partner_ids && contract.co_partner_ids.length > 0 && <span className="ml-1 text-xs text-gray-400 font-normal"> (+{contract.co_partner_ids.length} sócio(s))</span>}
+                      <div className="flex flex-col text-sm text-gray-800 font-medium space-y-2">
+                        <div className="flex items-center text-lg font-black text-[#0a192f]">
+                          <User className="w-5 h-5 mr-2 text-[#1e3a8a]" />
+                          {contract.partner_name || '-'}
+                        </div>
+                        {contract.co_partner_ids && contract.co_partner_ids.length > 0 && (
+                           <div className="flex flex-col ml-7 space-y-1">
+                             {contract.co_partner_ids.map(id => {
+                               const pName = partners?.find(p => p.id === id)?.name;
+                               if (!pName) return null;
+                               return <span key={id} className="text-gray-600 font-medium text-sm">+ {pName}</span>;
+                             })}
+                           </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-col md:items-end justify-center">
