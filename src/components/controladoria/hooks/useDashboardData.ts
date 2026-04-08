@@ -209,6 +209,38 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
       return matchesPartner && matchesLocation && matchesPeriod;
     });
+
+    // --- CICLO DE VIDA (MÉDIAS GERAIS INDEPENDENTES DO PERÍODO) ---
+    let somaDiasProspectProposta = 0; let qtdProspectProposta = 0;
+    let somaDiasPropostaFechamento = 0; let qtdPropostaFechamento = 0;
+    let somaDiasProspectRejeicao = 0; let qtdProspectRejeicao = 0;
+
+    contracts.forEach(c => {
+      const matchesPartner = selectedPartner ? c.partner_id === selectedPartner : true;
+      const matchesLocation = selectedLocation ? c.billing_location === selectedLocation : true;
+      if (!matchesPartner || !matchesLocation) return;
+
+      const dProspect = safeDate(c.prospect_date);
+      const dProposal = safeDate(c.proposal_date);
+      const dContract = safeDate(c.contract_date);
+      const dRejection = safeDate(c.rejection_date);
+
+      if (dProspect && isValidDate(dProspect) && dProposal && isValidDate(dProposal) && dProposal >= dProspect) {
+        const diffTime = Math.abs(dProposal.getTime() - dProspect.getTime());
+        somaDiasProspectProposta += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        qtdProspectProposta++;
+      }
+      if (dProposal && isValidDate(dProposal) && dContract && isValidDate(dContract) && dContract >= dProposal) {
+        const diffTime = Math.abs(dContract.getTime() - dProposal.getTime());
+        somaDiasPropostaFechamento += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        qtdPropostaFechamento++;
+      }
+      if (c.status === 'rejected' && dProspect && isValidDate(dProspect) && dRejection && isValidDate(dRejection) && dRejection >= dProspect) {
+        const diffTime = Math.abs(dRejection.getTime() - dProspect.getTime());
+        somaDiasProspectRejeicao += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        qtdProspectRejeicao++;
+      }
+    });
     // ---------------------------
 
     // --- GERAÇÃO DOS LABELS DE PERÍODO ---
@@ -322,9 +354,6 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     let fTotal = 0; let fQualificados = 0; let fFechados = 0;
     let fValorEntrada = 0; let fValorPropostas = 0; let fValorFechados = 0;
     let fPerdaAnalise = 0; let fPerdaNegociacao = 0;
-    let somaDiasProspectProposta = 0; let qtdProspectProposta = 0;
-    let somaDiasPropostaFechamento = 0; let qtdPropostaFechamento = 0;
-    let somaDiasProspectRejeicao = 0; let qtdProspectRejeicao = 0;
 
     const mapaMeses: Record<string, number> = {};
     const financeiroMap: Record<string, { pl: number, fixo: number, exito: number, data: Date }> = {};
@@ -578,28 +607,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
           }
         }
       }
-
-      // Tempos Médios (Funil)
-      const dProspect = safeDate(c.prospect_date);
-      const dProposal = safeDate(c.proposal_date);
-      const dContract = safeDate(c.contract_date);
-      const dRejection = safeDate(c.rejection_date);
-
-      if (dProspect && isValidDate(dProspect) && dProposal && isValidDate(dProposal) && dProposal >= dProspect) {
-        const diffTime = Math.abs(dProposal.getTime() - dProspect.getTime());
-        somaDiasProspectProposta += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        qtdProspectProposta++;
-      }
-      if (dProposal && isValidDate(dProposal) && dContract && isValidDate(dContract) && dContract >= dProposal) {
-        const diffTime = Math.abs(dContract.getTime() - dProposal.getTime());
-        somaDiasPropostaFechamento += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        qtdPropostaFechamento++;
-      }
-      if (c.status === 'rejected' && dProspect && isValidDate(dProspect) && dRejection && isValidDate(dRejection) && dRejection >= dProspect) {
-        const diffTime = Math.abs(dRejection.getTime() - dProspect.getTime());
-        somaDiasProspectRejeicao += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        qtdProspectRejeicao++;
-      }
+      // O Ciclo de vida médio global já é calculado fora do loop de período filtrado!
 
       // Totais Gerais (Respeitando o Hybrid Cohort do Período)
       if (isEntryInPeriod) {
