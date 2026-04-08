@@ -13,6 +13,7 @@ import { addDays } from 'date-fns';
 import { toast } from 'sonner';
 import { useEscKey } from '../../../hooks/useEscKey';
 import { logAction } from '../../../lib/logger';
+import { useAuth } from '../../../contexts/AuthContext';
 
 // Componentes Modularizados
 import { OptionManager } from './components/OptionManager';
@@ -50,6 +51,7 @@ export function ContractFormModal(props: Props) {
 
   useEscKey(isOpen, onClose);
 
+  const { user } = useAuth();
   const [localLoading, setLocalLoading] = useState(false);
   const [documents, setDocuments] = useState<ContractDocument[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -511,6 +513,8 @@ export function ContractFormModal(props: Props) {
         pro_labore_breakdown: (formData as any).pro_labore_breakdown, final_success_fee_breakdown: (formData as any).final_success_fee_breakdown, fixed_monthly_fee_breakdown: (formData as any).fixed_monthly_fee_breakdown, other_fees_breakdown: (formData as any).other_fees_breakdown,
         co_partner_ids: formData.co_partner_ids || [],
         partner_name: undefined, analyzed_by_name: undefined, process_count: undefined, analyst: undefined, analysts: undefined, client: undefined, partner: undefined, processes: undefined, partners: undefined, id: undefined, display_id: undefined, contract_documents: undefined, documents: undefined,
+        updated_by: user?.id,
+        updated_by_name: user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário',
       };
 
       if (formData.status === 'active' && initialFormData && initialFormData.status === 'proposal') {
@@ -578,6 +582,9 @@ export function ContractFormModal(props: Props) {
         } catch (e) {
             console.error('Error calculating contract seq:', e);
         }
+
+        contractPayload.created_by = user?.id;
+        contractPayload.created_by_name = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
 
         const { data, error } = await supabase.from('contracts').insert(contractPayload).select().single();
         if (error) throw error;

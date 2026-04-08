@@ -4,6 +4,7 @@ import { User, Plus, Minus, Landmark, Linkedin, Trash2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
+import { AuditLog } from '../../ui/AuditLog'
 
 interface DadosPessoaisSectionProps {
   formData: Partial<Collaborator>
@@ -592,6 +593,15 @@ export function DadosPessoaisSection({
             ))}
           </div>
         </div>
+      )}
+
+      {isViewMode && (
+        <AuditLog 
+          createdAt={formData.created_at as string}
+          createdBy={(formData as any).created_by_name || (formData as any).created_by}
+          updatedAt={formData.updated_at as string}
+          updatedBy={(formData as any).updated_by_name || (formData as any).updated_by}
+        />
       )}
     </section>
   )

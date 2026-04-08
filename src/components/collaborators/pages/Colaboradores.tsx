@@ -1258,6 +1258,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
         escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null,
         previsao_formatura: formatMonthYearDateToISO(formData.previsao_formatura) || null,
         termino_contrato_estagio: formatDateToISO(formData.termino_contrato_estagio) || null,
+        updated_by: user?.id,
+        updated_by_name: user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário'
         bolsa_valor: formData.bolsa_valor ? parseCurrency(formData.bolsa_valor) : null,
         vr_valor: formData.vr_valor ? parseCurrency(formData.vr_valor) : null,
         children_data: formData.children_data?.map(c => ({
@@ -1329,6 +1331,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
         if (error) throw error
         await logAction('EDITAR', 'RH', `Editou colaborador: ${formData.name}`, 'Integrantes')
       } else {
+        payload.created_by = user?.id;
+        payload.created_by_name = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
+
         const { data, error } = await supabase.from('collaborators').insert(payload).select().single()
         if (error) throw error
         savedColabId = data.id;

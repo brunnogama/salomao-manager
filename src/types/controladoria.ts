@@ -228,6 +228,10 @@ export interface Collaborator {
 
   created_at?: string;
   updated_at?: string;
+  created_by?: string;
+  created_by_name?: string;
+  updated_by?: string;
+  updated_by_name?: string;
 }
 
 export interface Analyst {
@@ -395,6 +399,13 @@ export interface Contract {
   // Potential legacy fields
   fixed_fee?: string;
   honorarios_fixos?: string;
+
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+  created_by_name?: string;
+  updated_by?: string;
+  updated_by_name?: string;
 }
 
 export interface ClientContact {

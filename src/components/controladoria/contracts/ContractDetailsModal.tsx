@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import { Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 import { useEscKey } from '../../../hooks/useEscKey';
+import { AuditLog } from '../../ui/AuditLog';
 
 // ROTA CORRIGIDA: Subindo 1 nível para sair de /contracts e entrar em /utils (ambos dentro de controladoria)
 import { parseCurrency, safeDate } from '../utils/masks';
@@ -921,6 +922,13 @@ export function ContractDetailsModal({
                     </div>
                   )}
                 </div>
+
+                <AuditLog 
+                  createdAt={contract.created_at as string}
+                  createdBy={(contract as any).created_by_name || (contract as any).created_by}
+                  updatedAt={contract.updated_at as string}
+                  updatedBy={(contract as any).updated_by_name || (contract as any).updated_by}
+                />
 
                 {renderTimeline()}
               </div>
