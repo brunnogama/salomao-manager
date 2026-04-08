@@ -645,15 +645,13 @@ export function Contracts() {
       const vTotalContrato = vPro + vOther + vFixed + vTotalSuccess;
       const percentsStr = percentsList.length > 0 ? percentsList.join(' + ') : '-';
 
-      const buildClauseStr = (mainClause: any, mainRule: any, extras: any, extrasClauses: any, extrasRules: any) => {
-          let str = [mainClause, mainRule].filter(Boolean).filter(s => s !== '-').join(' - ');
+      const buildClauseStr = (mainClause: any, extras: any, extrasClauses: any) => {
+          let str = mainClause && mainClause !== '-' ? String(mainClause) : '';
           if (extras && Array.isArray(extras)) {
               const extraCls: string[] = [];
               extras.forEach((_: any, i: number) => {
-                  const cl = (extrasClauses || [])[i] || '';
-                  const ru = (extrasRules || [])[i] || '';
-                  const fullText = [cl, ru].filter(Boolean).filter(s => s !== '-').join(' - ');
-                  if (fullText) extraCls.push(fullText);
+                  const cl = (extrasClauses || [])[i];
+                  if (cl && cl !== '-') extraCls.push(String(cl));
               });
               if (extraCls.length > 0) {
                   const joined = extraCls.join('\n---\n');
@@ -664,33 +662,31 @@ export function Contracts() {
       };
 
       const plClause = buildClauseStr(
-          (c as any).pro_labore_clause, (c as any).pro_labore_rule,
-          (c as any).pro_labore_extras, (c as any).pro_labore_extras_clauses, (c as any).pro_labore_extras_rules
+          (c as any).pro_labore_clause,
+          (c as any).pro_labore_extras, (c as any).pro_labore_extras_clauses
       );
 
       const otherClause = buildClauseStr(
-          (c as any).other_fees_clause, (c as any).other_fees_rule,
-          (c as any).other_fees_extras, (c as any).other_fees_extras_clauses, (c as any).other_fees_extras_rules
+          (c as any).other_fees_clause,
+          (c as any).other_fees_extras, (c as any).other_fees_extras_clauses
       );
 
       const fixedClause = buildClauseStr(
-          (c as any).fixed_monthly_fee_clause, (c as any).fixed_monthly_fee_rule,
-          (c as any).fixed_monthly_extras, (c as any).fixed_monthly_extras_clauses, (c as any).fixed_monthly_extras_rules
+          (c as any).fixed_monthly_fee_clause,
+          (c as any).fixed_monthly_extras, (c as any).fixed_monthly_extras_clauses
       );
 
       const finalClause = buildClauseStr(
-          (c as any).final_success_fee_clause, (c as any).final_success_fee_rule,
-          (c as any).final_success_extras, (c as any).final_success_extras_clauses, (c as any).final_success_extras_rules
+          (c as any).final_success_fee_clause,
+          (c as any).final_success_extras, (c as any).final_success_extras_clauses
       );
 
       let interClause = '';
       if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
           const extraCls: string[] = [];
           c.intermediate_fees.forEach((_: any, i: number) => {
-              const cl = ((c as any).intermediate_fees_clauses || [])[i] || '';
-              const ru = ((c as any).intermediate_fees_rules || [])[i] || '';
-              const fullText = [cl, ru].filter(Boolean).filter(s => s !== '-').join(' - ');
-              if (fullText) extraCls.push(fullText);
+              const cl = ((c as any).intermediate_fees_clauses || [])[i];
+              if (cl && cl !== '-') extraCls.push(String(cl));
           });
           interClause = extraCls.join('\n---\n');
       }
@@ -712,17 +708,17 @@ export function Contracts() {
         safeDate(getRelevantDate(c))?.toLocaleDateString('pt-BR') || '-',
         c.billing_location || '-',
         (c as any).timesheet ? 'X' : '-',
-        vPro === 0 ? 'Nenhum valor cadastrado' : vPro,
+        vPro,
         plClause,
-        vOther === 0 ? 'Nenhum valor cadastrado' : vOther,
+        vOther,
         otherClause,
-        vFixed === 0 ? 'Nenhum valor cadastrado' : vFixed,
+        vFixed,
         fixedClause,
-        vInter === 0 ? 'Nenhum valor cadastrado' : vInter,
+        vInter,
         interClause,
-        vFinal === 0 ? 'Nenhum valor cadastrado' : vFinal,
+        vFinal,
         finalClause,
-        vTotalContrato === 0 ? 'Nenhum valor cadastrado' : vTotalContrato,
+        vTotalContrato,
         percentsStr,
         c.client_position || '-',
         c.processes && c.processes.length > 0 ? c.processes.map((p: any) => p.process_number || '-').join('\n') : '-',
@@ -770,7 +766,18 @@ export function Contracts() {
         alignment: { horizontal: "center", vertical: "center" }
       };
     }
-    ws['!cols'] = header.map(h => ({ wch: Math.max(h.length + 5, 15) }));
+    const colWidths = header.map((_, colIndex) => {
+        let maxLen = header[colIndex].length;
+        dataWithHeader.forEach(row => {
+            const cellVal = row[colIndex];
+            if (cellVal !== undefined && cellVal !== null) {
+                const len = String(cellVal).split('\n').map(l => l.length).reduce((a, b) => Math.max(a, b), 0);
+                if (len > maxLen) maxLen = len;
+            }
+        });
+        return { wch: Math.min(Math.max(maxLen + 2, 10), 60) };
+    });
+    ws['!cols'] = colWidths;
     // -------------------------------
 
     const obsColIdx = header.indexOf('Observações');
