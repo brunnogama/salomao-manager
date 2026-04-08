@@ -579,111 +579,123 @@ export function ContractDetailsModal({
                 Detalhes das Fases e Honorários
              </div>
              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-               {financials.formattedProLabore !== "R$ 0,00" && (
-                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
-                    <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
-                       <span className="text-[10px] font-bold text-gray-500 uppercase">Pró-Labore (Total)</span>
-                       <span className="text-sm font-black text-gray-800">{financials.formattedProLabore}</span>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.pro_labore) > 0 && (
-                          renderDetailItem(contract.pro_labore_clause, 'Pró-labore', contract.pro_labore, contract.pro_labore_installments, contract.pro_labore_ready, contract.pro_labore_rule, 'gray')
-                      )}
-                      {(contract as any).pro_labore_extras && Array.isArray((contract as any).pro_labore_extras) && (contract as any).pro_labore_extras.map((val: string, idx: number) => {
-                         const rule = (contract as any).pro_labore_extras_rules?.[idx];
-                         const ready = (contract as any).pro_labore_extras_ready?.[idx];
-                         const clause = (contract as any).pro_labore_extras_clauses?.[idx];
-                         const inst = (contract as any).pro_labore_extras_installments?.[idx];
-                         if (parseCurrency(val) === 0) return null;
-                         return <React.Fragment key={idx}>{renderDetailItem(clause, 'Pró-labore', val, inst, ready, rule, 'gray')}</React.Fragment>;
-                      })}
-                    </div>
+               {(contract as any).timesheet ? (
+                 <div className="col-span-1 md:col-span-2 bg-indigo-50 p-6 rounded-xl border border-indigo-200 flex flex-col items-center justify-center shadow-inner text-center">
+                    <Clock className="w-10 h-10 text-indigo-500 mb-3" />
+                    <h4 className="text-lg font-black text-indigo-900 uppercase tracking-widest shrink-0">Honorários via Timesheet</h4>
+                    <p className="text-sm font-medium text-indigo-700/80 mt-1 max-w-sm">
+                       A apuração financeira deste caso é baseada em horas trabalhadas (Timesheet). Valores monetários de honorários não são aplicáveis nesta visualização sumária.
+                    </p>
                  </div>
-               )}
+               ) : (
+                 <>
+                   {financials.formattedProLabore !== "R$ 0,00" && (
+                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
+                        <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
+                           <span className="text-[10px] font-bold text-gray-500 uppercase">Pró-Labore (Total)</span>
+                           <span className="text-sm font-black text-gray-800">{financials.formattedProLabore}</span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {parseCurrency(contract.pro_labore) > 0 && (
+                              renderDetailItem(contract.pro_labore_clause, 'Pró-labore', contract.pro_labore, contract.pro_labore_installments, contract.pro_labore_ready, contract.pro_labore_rule, 'gray')
+                          )}
+                          {(contract as any).pro_labore_extras && Array.isArray((contract as any).pro_labore_extras) && (contract as any).pro_labore_extras.map((val: string, idx: number) => {
+                             const rule = (contract as any).pro_labore_extras_rules?.[idx];
+                             const ready = (contract as any).pro_labore_extras_ready?.[idx];
+                             const clause = (contract as any).pro_labore_extras_clauses?.[idx];
+                             const inst = (contract as any).pro_labore_extras_installments?.[idx];
+                             if (parseCurrency(val) === 0) return null;
+                             return <React.Fragment key={idx}>{renderDetailItem(clause, 'Pró-labore', val, inst, ready, rule, 'gray')}</React.Fragment>;
+                          })}
+                        </div>
+                     </div>
+                   )}
 
-               {financials.formattedIntermediate !== "R$ 0,00" && (
-                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 flex flex-col shadow-sm">
-                    <div className="flex justify-between items-center border-b border-blue-200 pb-2 mb-2">
-                       <span className="text-[10px] font-bold text-blue-700 uppercase">Ex. Intermediário (Total)</span>
-                       <span className="text-sm font-black text-blue-900">{financials.formattedIntermediate}</span>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {contract.intermediate_fees && Array.isArray(contract.intermediate_fees) && contract.intermediate_fees.map((val: string, idx: number) => {
-                         const rule = (contract as any).intermediate_fees_rules?.[idx];
-                         const ready = (contract as any).intermediate_fees_ready?.[idx];
-                         const clause = (contract as any).intermediate_fees_clauses?.[idx];
-                         const inst = (contract as any).intermediate_fees_installments?.[idx];
-                         if (parseCurrency(val) === 0) return null;
-                         return <React.Fragment key={idx}>{renderDetailItem(clause, 'Êxito Intermediário', val, inst, ready, rule, 'blue')}</React.Fragment>;
-                      })}
-                    </div>
-                 </div>
-               )}
+                   {financials.formattedIntermediate !== "R$ 0,00" && (
+                     <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 flex flex-col shadow-sm">
+                        <div className="flex justify-between items-center border-b border-blue-200 pb-2 mb-2">
+                           <span className="text-[10px] font-bold text-blue-700 uppercase">Ex. Intermediário (Total)</span>
+                           <span className="text-sm font-black text-blue-900">{financials.formattedIntermediate}</span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {contract.intermediate_fees && Array.isArray(contract.intermediate_fees) && contract.intermediate_fees.map((val: string, idx: number) => {
+                             const rule = (contract as any).intermediate_fees_rules?.[idx];
+                             const ready = (contract as any).intermediate_fees_ready?.[idx];
+                             const clause = (contract as any).intermediate_fees_clauses?.[idx];
+                             const inst = (contract as any).intermediate_fees_installments?.[idx];
+                             if (parseCurrency(val) === 0) return null;
+                             return <React.Fragment key={idx}>{renderDetailItem(clause, 'Êxito Intermediário', val, inst, ready, rule, 'blue')}</React.Fragment>;
+                          })}
+                        </div>
+                     </div>
+                   )}
 
-               {financials.formattedFinalFee !== "R$ 0,00" && (
-                 <div className="bg-green-50 p-3 rounded-lg border border-green-200 flex flex-col shadow-sm">
-                    <div className="flex justify-between items-center border-b border-green-200 pb-2 mb-2">
-                       <span className="text-[10px] font-bold text-green-800 uppercase">Êxito Final (Total)</span>
-                       <span className="text-sm font-black text-green-900">{financials.formattedFinalFee}</span>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.final_success_fee) > 0 && (
-                          renderDetailItem(contract.final_success_fee_clause, 'Êxito Final', contract.final_success_fee, contract.final_success_fee_installments, contract.final_success_ready, contract.final_success_fee_rule, 'green')
-                      )}
-                      {(contract as any).final_success_extras && Array.isArray((contract as any).final_success_extras) && (contract as any).final_success_extras.map((val: string, idx: number) => {
-                         const rule = (contract as any).final_success_extras_rules?.[idx];
-                         const ready = (contract as any).final_success_extras_ready?.[idx];
-                         const clause = (contract as any).final_success_extras_clauses?.[idx];
-                         const inst = (contract as any).final_success_extras_installments?.[idx];
-                         if (parseCurrency(val) === 0) return null;
-                         return <React.Fragment key={idx}>{renderDetailItem(clause, 'Êxito Final', val, inst, ready, rule, 'green')}</React.Fragment>;
-                      })}
-                    </div>
-                 </div>
-               )}
+                   {financials.formattedFinalFee !== "R$ 0,00" && (
+                     <div className="bg-green-50 p-3 rounded-lg border border-green-200 flex flex-col shadow-sm">
+                        <div className="flex justify-between items-center border-b border-green-200 pb-2 mb-2">
+                           <span className="text-[10px] font-bold text-green-800 uppercase">Êxito Final (Total)</span>
+                           <span className="text-sm font-black text-green-900">{financials.formattedFinalFee}</span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {parseCurrency(contract.final_success_fee) > 0 && (
+                              renderDetailItem(contract.final_success_fee_clause, 'Êxito Final', contract.final_success_fee, contract.final_success_fee_installments, contract.final_success_ready, contract.final_success_fee_rule, 'green')
+                          )}
+                          {(contract as any).final_success_extras && Array.isArray((contract as any).final_success_extras) && (contract as any).final_success_extras.map((val: string, idx: number) => {
+                             const rule = (contract as any).final_success_extras_rules?.[idx];
+                             const ready = (contract as any).final_success_extras_ready?.[idx];
+                             const clause = (contract as any).final_success_extras_clauses?.[idx];
+                             const inst = (contract as any).final_success_extras_installments?.[idx];
+                             if (parseCurrency(val) === 0) return null;
+                             return <React.Fragment key={idx}>{renderDetailItem(clause, 'Êxito Final', val, inst, ready, rule, 'green')}</React.Fragment>;
+                          })}
+                        </div>
+                     </div>
+                   )}
 
-               {financials.formattedFixedMonthly !== "R$ 0,00" && (
-                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
-                    <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
-                       <span className="text-[10px] font-bold text-gray-500 uppercase">Fixo Mensal (Total)</span>
-                       <span className="text-sm font-black text-gray-800">{financials.formattedFixedMonthly}</span>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.fixed_monthly_fee) > 0 && (
-                          renderDetailItem(contract.fixed_monthly_fee_clause, 'Fixo Mensal', contract.fixed_monthly_fee, contract.fixed_monthly_fee_installments, contract.fixed_monthly_ready, contract.fixed_monthly_fee_rule, 'gray')
-                      )}
-                      {(contract as any).fixed_monthly_extras && Array.isArray((contract as any).fixed_monthly_extras) && (contract as any).fixed_monthly_extras.map((val: string, idx: number) => {
-                         const rule = (contract as any).fixed_monthly_extras_rules?.[idx];
-                         const ready = (contract as any).fixed_monthly_extras_ready?.[idx];
-                         const clause = (contract as any).fixed_monthly_extras_clauses?.[idx];
-                         const inst = (contract as any).fixed_monthly_extras_installments?.[idx];
-                         if (parseCurrency(val) === 0) return null;
-                         return <React.Fragment key={idx}>{renderDetailItem(clause, 'Fixo Mensal', val, inst, ready, rule, 'gray')}</React.Fragment>;
-                      })}
-                    </div>
-                 </div>
-               )}
+                   {financials.formattedFixedMonthly !== "R$ 0,00" && (
+                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
+                        <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
+                           <span className="text-[10px] font-bold text-gray-500 uppercase">Fixo Mensal (Total)</span>
+                           <span className="text-sm font-black text-gray-800">{financials.formattedFixedMonthly}</span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {parseCurrency(contract.fixed_monthly_fee) > 0 && (
+                              renderDetailItem(contract.fixed_monthly_fee_clause, 'Fixo Mensal', contract.fixed_monthly_fee, contract.fixed_monthly_fee_installments, contract.fixed_monthly_ready, contract.fixed_monthly_fee_rule, 'gray')
+                          )}
+                          {(contract as any).fixed_monthly_extras && Array.isArray((contract as any).fixed_monthly_extras) && (contract as any).fixed_monthly_extras.map((val: string, idx: number) => {
+                             const rule = (contract as any).fixed_monthly_extras_rules?.[idx];
+                             const ready = (contract as any).fixed_monthly_extras_ready?.[idx];
+                             const clause = (contract as any).fixed_monthly_extras_clauses?.[idx];
+                             const inst = (contract as any).fixed_monthly_extras_installments?.[idx];
+                             if (parseCurrency(val) === 0) return null;
+                             return <React.Fragment key={idx}>{renderDetailItem(clause, 'Fixo Mensal', val, inst, ready, rule, 'gray')}</React.Fragment>;
+                          })}
+                        </div>
+                     </div>
+                   )}
 
-               {financials.formattedOtherFees !== "R$ 0,00" && (
-                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
-                    <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
-                       <span className="text-[10px] font-bold text-gray-500 uppercase">Outros Honorários (Total)</span>
-                       <span className="text-sm font-black text-gray-800">{financials.formattedOtherFees}</span>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {parseCurrency(contract.other_fees) > 0 && (
-                          renderDetailItem(contract.other_fees_clause, 'Outros Honorários', contract.other_fees, contract.other_fees_installments, contract.other_fees_ready, contract.other_fees_rule, 'gray')
-                      )}
-                      {(contract as any).other_fees_extras && Array.isArray((contract as any).other_fees_extras) && (contract as any).other_fees_extras.map((val: string, idx: number) => {
-                         const rule = (contract as any).other_fees_extras_rules?.[idx];
-                         const ready = (contract as any).other_fees_extras_ready?.[idx];
-                         const clause = (contract as any).other_fees_extras_clauses?.[idx];
-                         const inst = (contract as any).other_fees_extras_installments?.[idx];
-                         if (parseCurrency(val) === 0) return null;
-                         return <React.Fragment key={idx}>{renderDetailItem(clause, 'Outros Honorários', val, inst, ready, rule, 'gray')}</React.Fragment>;
-                      })}
-                    </div>
-                 </div>
+                   {financials.formattedOtherFees !== "R$ 0,00" && (
+                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col shadow-sm">
+                        <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
+                           <span className="text-[10px] font-bold text-gray-500 uppercase">Outros Honorários (Total)</span>
+                           <span className="text-sm font-black text-gray-800">{financials.formattedOtherFees}</span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {parseCurrency(contract.other_fees) > 0 && (
+                              renderDetailItem(contract.other_fees_clause, 'Outros Honorários', contract.other_fees, contract.other_fees_installments, contract.other_fees_ready, contract.other_fees_rule, 'gray')
+                          )}
+                          {(contract as any).other_fees_extras && Array.isArray((contract as any).other_fees_extras) && (contract as any).other_fees_extras.map((val: string, idx: number) => {
+                             const rule = (contract as any).other_fees_extras_rules?.[idx];
+                             const ready = (contract as any).other_fees_extras_ready?.[idx];
+                             const clause = (contract as any).other_fees_extras_clauses?.[idx];
+                             const inst = (contract as any).other_fees_extras_installments?.[idx];
+                             if (parseCurrency(val) === 0) return null;
+                             return <React.Fragment key={idx}>{renderDetailItem(clause, 'Outros Honorários', val, inst, ready, rule, 'gray')}</React.Fragment>;
+                          })}
+                        </div>
+                     </div>
+                   )}
+                 </>
                )}
                
                {/* Exibir Extras de Percentual se houver */}
@@ -709,31 +721,41 @@ export function ContractDetailsModal({
            </div>
 
            {/* Box 2: Totais e Pagamentos */}
-           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm flex flex-col">
-             <div className="bg-[#1e3a8a] px-4 py-3 text-xs font-bold text-white uppercase text-center">
-                Saldo e Totais
-             </div>
-             <div className="p-4 flex-1 flex flex-col gap-4">
-               <div className="text-center">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total do Contrato</p>
-                  <p className="text-2xl font-black text-[#0a192f] mt-1">{formatMoney(financials.grandTotal)}</p>
+           {!(contract as any).timesheet ? (
+             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm flex flex-col">
+               <div className="bg-[#1e3a8a] px-4 py-3 text-xs font-bold text-white uppercase text-center">
+                  Saldo e Totais
                </div>
-               
-               {['active', 'baixado'].includes(contract.status) && (
-                 <>
-                   <div className="h-px bg-gray-100 w-full" />
-                   <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-200">
-                     <span className="text-xs font-bold text-gray-600">Total Pago:</span>
-                     <span className="text-sm font-bold text-green-600">{formatMoney(totalPaid)}</span>
-                   </div>
-                   <div className="flex justify-between items-center bg-red-50 p-2 rounded-lg border border-red-100">
-                     <span className="text-xs font-bold text-red-600">Falta Quitar:</span>
-                     <span className="text-sm font-bold text-red-700">{formatMoney(financials.lackToPay)}</span>
-                   </div>
-                 </>
-               )}
+               <div className="p-4 flex-1 flex flex-col gap-4">
+                 <div className="text-center">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total do Contrato</p>
+                    <p className="text-2xl font-black text-[#0a192f] mt-1">{formatMoney(financials.grandTotal)}</p>
+                 </div>
+                 
+                 {['active', 'baixado'].includes(contract.status) && (
+                   <>
+                     <div className="h-px bg-gray-100 w-full" />
+                     <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-200">
+                       <span className="text-xs font-bold text-gray-600">Total Pago:</span>
+                       <span className="text-sm font-bold text-green-600">{formatMoney(totalPaid)}</span>
+                     </div>
+                     <div className="flex justify-between items-center bg-red-50 p-2 rounded-lg border border-red-100">
+                       <span className="text-xs font-bold text-red-600">Falta Quitar:</span>
+                       <span className="text-sm font-bold text-red-700">{formatMoney(financials.lackToPay)}</span>
+                     </div>
+                   </>
+                 )}
+               </div>
              </div>
-           </div>
+           ) : (
+             <div className="bg-gradient-to-b from-white to-gray-50 rounded-xl border border-gray-200 overflow-hidden shadow-sm flex flex-col justify-center items-center p-6 text-center">
+               <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mb-3 shadow-inner">
+                  <Calculator className="w-6 h-6 text-indigo-500" />
+               </div>
+               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Faturamento</p>
+               <p className="text-base font-black text-[#0a192f] mt-1 uppercase">Variável via Horas (Timesheet)</p>
+             </div>
+           )}
 
          </div>
       </div>
