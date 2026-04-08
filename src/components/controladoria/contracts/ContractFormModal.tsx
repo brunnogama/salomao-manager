@@ -1065,9 +1065,6 @@ export function ContractFormModal(props: Props) {
                  <h1 className="text-2xl sm:text-3xl font-black text-[#0a192f] tracking-tight truncate max-w-[300px] sm:max-w-[400px] xl:max-w-[600px]">
                    {formData.client_name || 'Novo Caso'}
                  </h1>
-                 <span className="text-gray-400">
-                   <ChevronRight className="w-6 h-6 stroke-[3]" />
-                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border bg-white shadow-sm ${getStatusColor(formData.status)}`}>
