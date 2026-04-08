@@ -320,8 +320,9 @@ export function Dashboard({ }: Props) {
         "Data Ref.": item.data.toLocaleDateString(),
         "Pró-Labore": item.pl,
         "Fixo Recorrente": item.fixo,
+        "Outros Honorários": item.outros,
         "Êxito": item.exito,
-        "Total Fechado": item.pl + item.fixo + item.exito
+        "Total Fechado": item.pl + item.fixo + item.exito + item.outros
       }));
       const wsFin = XLSX.utils.json_to_sheet(finData);
       const finRange = XLSX.utils.decode_range(wsFin['!ref'] || 'A1:A1');
@@ -329,9 +330,9 @@ export function Dashboard({ }: Props) {
         const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
         if (wsFin[cellRef]) wsFin[cellRef].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0A192F" } }, alignment: { horizontal: "center", vertical: "center" } };
       }
-      wsFin['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
+      wsFin['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
       for (let R = 1; R <= finRange.e.r; ++R) {
-        [2, 3, 4, 5].forEach(C => {
+        [2, 3, 4, 5, 6].forEach(C => {
           const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
           if (wsFin[cellRef]) { wsFin[cellRef].t = 'n'; wsFin[cellRef].z = '"R$"#,##0.00;"R$"-#,##0.00'; }
         });
@@ -344,8 +345,9 @@ export function Dashboard({ }: Props) {
         "Data Ref.": item.data.toLocaleDateString(),
         "Pró-Labore Estimado": item.pl,
         "Fixo Estimado": item.fixo,
+        "Outros Estimados": item.outros,
         "Êxito Estimado": item.exito,
-        "Total em Negociação": item.pl + item.fixo + item.exito
+        "Total em Negociação": item.pl + item.fixo + item.exito + item.outros
       }));
       const wsProp = XLSX.utils.json_to_sheet(propData);
       const propRange = XLSX.utils.decode_range(wsProp['!ref'] || 'A1:A1');
@@ -353,9 +355,9 @@ export function Dashboard({ }: Props) {
         const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
         if (wsProp[cellRef]) wsProp[cellRef].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0A192F" } }, alignment: { horizontal: "center", vertical: "center" } };
       }
-      wsProp['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
+      wsProp['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
       for (let R = 1; R <= propRange.e.r; ++R) {
-        [2, 3, 4, 5].forEach(C => {
+        [2, 3, 4, 5, 6].forEach(C => {
           const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
           if (wsProp[cellRef]) { wsProp[cellRef].t = 'n'; wsProp[cellRef].z = '"R$"#,##0.00;"R$"-#,##0.00'; }
         });
@@ -375,8 +377,9 @@ export function Dashboard({ }: Props) {
         "Probono": item.probono,
         "Pró-Labore Fechado": item.pl,
         "Fixo Recorrente Fechado": item.fixo,
+        "Outros Honorários Fechados": item.outros,
         "Êxito Fechado": item.exito,
-        "Receita Total": item.pl + item.fixo + item.exito
+        "Receita Total": item.pl + item.fixo + item.exito + item.outros
       }));
       const wsPrt = XLSX.utils.json_to_sheet(partnerData);
       const prtRange = XLSX.utils.decode_range(wsPrt['!ref'] || 'A1:A1');
@@ -384,9 +387,9 @@ export function Dashboard({ }: Props) {
         const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
         if (wsPrt[cellRef]) wsPrt[cellRef].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0A192F" } }, alignment: { horizontal: "center", vertical: "center" } };
       }
-      wsPrt['!cols'] = [{ wch: 30 }, { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
+      wsPrt['!cols'] = [{ wch: 30 }, { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
       for (let R = 1; R <= prtRange.e.r; ++R) {
-        [9, 10, 11, 12].forEach(C => {
+        [9, 10, 11, 12, 13].forEach(C => {
           const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
           if (wsPrt[cellRef]) { wsPrt[cellRef].t = 'n'; wsPrt[cellRef].z = '"R$"#,##0.00;"R$"-#,##0.00'; }
         });

@@ -301,8 +301,8 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     let iteradorMeses = new Date(dataInicioFixo);
     while (iteradorMeses <= hoje) {
       const key = iteradorMeses.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-      financeiroMap[key] = { pl: 0, fixo: 0, exito: 0, data: new Date(iteradorMeses) };
-      propostasMap[key] = { pl: 0, fixo: 0, exito: 0, data: new Date(iteradorMeses) };
+      financeiroMap[key] = { pl: 0, fixo: 0, exito: 0, outros: 0, data: new Date(iteradorMeses) };
+      propostasMap[key] = { pl: 0, fixo: 0, exito: 0, outros: 0, data: new Date(iteradorMeses) };
       iteradorMeses.setMonth(iteradorMeses.getMonth() + 1);
     }
     const dataLimite12Meses = dataInicioFixo;
@@ -398,7 +398,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
       if (!partnerCounts[pName]) partnerCounts[pName] = {
         total: 0, analysis: 0, proposal: 0, active: 0, rejected: 0, probono: 0,
-        pl: 0, exito: 0, fixo: 0, photo_url: pPhotoUrl,
+        pl: 0, exito: 0, fixo: 0, outros: 0, photo_url: pPhotoUrl,
         has_timesheet: false,
         percents: new Set<string>()
       };
@@ -448,6 +448,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
         partnerCounts[pName].pl += pl;
         partnerCounts[pName].exito += exito;
         partnerCounts[pName].fixo += mensal;
+        partnerCounts[pName].outros += (outros + fixoPontual);
       }
       else if (c.status === 'rejected') partnerCounts[pName].rejected++;
       else if (c.status === 'probono') partnerCounts[pName].probono++;
@@ -470,15 +471,12 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
           dContrato.setDate(1); dContrato.setHours(0, 0, 0, 0);
           if (dContrato >= dataLimite12Meses) {
             const key = dContrato.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-            // Soma TUDO: PL + Fixo + Êxito + Extras
+            // Soma TUDO: PL + Fixo + Êxito + Outros
             if (financeiroMap[key]) {
               financeiroMap[key].pl += pl;
-              financeiroMap[key].fixo += mensal; // Fixo mensal inicial
-              financeiroMap[key].fixo += fixoPontual; // Somar fixo pontual aqui também para o gráfico mostrar o valor "ganho" no mês
+              financeiroMap[key].fixo += (mensal + fixoPontual); 
               financeiroMap[key].exito += exito;
-              financeiroMap[key].exito += outros; // Somar outros aqui ou num campo separado? Vamos somar ao êxito ou criar um campo "outros" no map se precisasse, mas por hora vamos agrupar em exito ou fixo.
-              // O gráfico usa pl, fixo, exito. Vamos somar 'outros' e 'fixoPontual' ao 'fixo' para simplificar a visualização ou dividir.
-              // Melhor: somar outros ao exito (variável) e fixoPontual ao fixo.
+              financeiroMap[key].outros += outros; 
             }
           }
         }
@@ -494,10 +492,9 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
             const key = dProposta.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
             if (propostasMap[key]) {
               propostasMap[key].pl += pl;
-              propostasMap[key].fixo += mensal;
-              propostasMap[key].fixo += fixoPontual;
+              propostasMap[key].fixo += (mensal + fixoPontual);
               propostasMap[key].exito += exito;
-              propostasMap[key].exito += outros;
+              propostasMap[key].outros += outros;
             }
           }
         }
