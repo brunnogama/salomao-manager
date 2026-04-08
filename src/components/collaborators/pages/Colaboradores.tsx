@@ -133,6 +133,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [showColumnSelectModal, setShowColumnSelectModal] = useState(false);
   const [exportTargetList, setExportTargetList] = useState<'active' | 'inactive' | 'all' | 'search' | null>(null);
   const [refreshTemplates, setRefreshTemplates] = useState(0);
+  const [isPreAdmissaoExpanded, setIsPreAdmissaoExpanded] = useState(false);
 
   // Advanced Filters State
   // Pessoais
@@ -2298,7 +2299,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
             <div className="flex flex-col lg:flex-row items-stretch gap-4">
               {/* Cards de KPI */}
               <div className="flex items-stretch shrink-0 gap-3">
-                <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div 
+                  onClick={() => setAdvFilterStatus((Array.isArray(advFilterStatus) && advFilterStatus.includes('active')) || advFilterStatus === 'active' ? [] : ['active'] as any)}
+                  className={`flex items-center gap-3 px-5 py-3 rounded-xl bg-white border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${((Array.isArray(advFilterStatus) && advFilterStatus.includes('active')) || advFilterStatus === 'active') ? 'border-[#1e3a8a] ring-1 ring-[#1e3a8a]' : 'border-gray-100'}`}
+                >
                   <div className="p-2 rounded-lg bg-blue-50/80">
                     <Users className="h-4 w-4 text-[#1e3a8a]" />
                   </div>
@@ -2308,7 +2312,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-orange-50/30 border border-orange-200/50 shadow-sm hover:shadow-md transition-shadow">
+                <div 
+                  onClick={() => setAdvFilterStatus((Array.isArray(advFilterStatus) && advFilterStatus.includes('Pré-admissão')) || advFilterStatus === 'Pré-admissão' ? [] : ['Pré-admissão'] as any)}
+                  className={`flex items-center gap-3 px-5 py-3 rounded-xl bg-orange-50/30 border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${((Array.isArray(advFilterStatus) && advFilterStatus.includes('Pré-admissão')) || advFilterStatus === 'Pré-admissão') ? 'border-orange-500 ring-1 ring-orange-500' : 'border-orange-200/50'}`}
+                >
                   <div className="p-2 rounded-lg bg-orange-100/80 border border-orange-200/50">
                     <Calendar className="h-4 w-4 text-orange-600" />
                   </div>
@@ -2377,15 +2384,19 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     <>
                       {/* PRÉ-ADMISSÃO */}
                       {filtered.some(c => c.status === 'Pré-admissão') && (
-                        <tr className="bg-orange-50/80">
+                        <tr className="bg-orange-50/80 cursor-pointer hover:bg-orange-100/50 transition-colors" onClick={() => setIsPreAdmissaoExpanded(!isPreAdmissaoExpanded)}>
                           <td colSpan={7} className="px-6 py-3 border-y border-orange-200">
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-800 flex items-center gap-2">
-                              <Calendar className="h-4 w-4" /> Pré-admissão (Aguardando Data)
-                            </p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-800 flex items-center gap-2">
+                                <Calendar className="h-4 w-4" /> Pré-admissão (Aguardando Data)
+                                <span className="bg-orange-200 text-orange-800 px-2 py-0.5 rounded-full text-[9px]">{filtered.filter(c => c.status === 'Pré-admissão').length}</span>
+                              </p>
+                              {isPreAdmissaoExpanded ? <ChevronDown className="h-4 w-4 text-orange-600" /> : <ChevronRight className="h-4 w-4 text-orange-600" />}
+                            </div>
                           </td>
                         </tr>
                       )}
-                      {filtered.filter(c => c.status === 'Pré-admissão').map((c) => {
+                      {isPreAdmissaoExpanded && filtered.filter(c => c.status === 'Pré-admissão').map((c) => {
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
                         const isDateReached = c.hire_date ? new Date(c.hire_date + 'T00:00:00') <= today : false;
