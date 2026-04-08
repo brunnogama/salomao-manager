@@ -645,6 +645,26 @@ export function Contracts() {
       const vTotalContrato = vPro + vOther + vFixed + vTotalSuccess;
       const percentsStr = percentsList.length > 0 ? percentsList.join(' + ') : '-';
 
+      let plClause = (c as any).pro_labore_clause || '';
+      if ((c as any).pro_labore_extras_clauses && Array.isArray((c as any).pro_labore_extras_clauses)) {
+        const joined = (c as any).pro_labore_extras_clauses.filter(Boolean).join('\n---\n');
+        if (joined) plClause = plClause ? `${plClause}\n---\n${joined}` : joined;
+      }
+      plClause = plClause || '-';
+
+      let interClause = '';
+      if ((c.intermediate_fees_clauses as any) && Array.isArray((c.intermediate_fees_clauses as any))) {
+        interClause = (c.intermediate_fees_clauses as any).filter(Boolean).join('\n---\n');
+      }
+      interClause = interClause || '-';
+
+      let finalClause = (c as any).final_success_fee_clause || '';
+      if ((c as any).final_success_extras_clauses && Array.isArray((c as any).final_success_extras_clauses)) {
+        const joined = (c as any).final_success_extras_clauses.filter(Boolean).join('\n---\n');
+        if (joined) finalClause = finalClause ? `${finalClause}\n---\n${joined}` : joined;
+      }
+      finalClause = finalClause || '-';
+
       sumPro += vPro;
       sumOther += vOther;
       sumFixed += vFixed;
@@ -662,15 +682,15 @@ export function Contracts() {
         c.billing_location || '-',
         (c as any).timesheet ? 'X' : '-',
         vPro === 0 ? 'Nenhum valor cadastrado' : vPro,
-        (c as any).pro_labore_clause || '-',
+        plClause,
         vOther === 0 ? 'Nenhum valor cadastrado' : vOther,
         (c as any).other_fees_clause || '-',
         vFixed === 0 ? 'Nenhum valor cadastrado' : vFixed,
         (c as any).fixed_monthly_fee_clause || '-',
         vInter === 0 ? 'Nenhum valor cadastrado' : vInter,
-        (c.intermediate_fees_clauses && (c.intermediate_fees_clauses as any).length > 0) ? 'Ver detalhe abaixo' : '-',
+        interClause,
         vFinal === 0 ? 'Nenhum valor cadastrado' : vFinal,
-        (c as any).final_success_fee_clause || '-',
+        finalClause,
         vTotalContrato === 0 ? 'Nenhum valor cadastrado' : vTotalContrato,
         percentsStr,
         c.client_position || '-',
@@ -690,35 +710,6 @@ export function Contracts() {
             ? (c.observations ? c.observations + '\n\n' : '') + '⚠️ CONVERSÃO (Cotação do dia): ' + foreignCurrencies.join(' | ') 
             : (c.observations || '-')
       ]);
-
-      const clauses: { type: string, text: string }[] = [];
-
-      if ((c as any).pro_labore_extras_clauses && Array.isArray((c as any).pro_labore_extras_clauses)) {
-        (c as any).pro_labore_extras_clauses.forEach((cl: string) => clauses.push({ type: 'Extra Pró-Labore', text: cl }));
-      }
-      if ((c.intermediate_fees_clauses as any) && Array.isArray((c.intermediate_fees_clauses as any))) {
-        (c.intermediate_fees_clauses as any).forEach((cl: string) => clauses.push({ type: 'Intermediário', text: cl }));
-      }
-      if ((c as any).final_success_extras_clauses && Array.isArray((c as any).final_success_extras_clauses)) {
-        (c as any).final_success_extras_clauses.forEach((cl: string) => clauses.push({ type: 'Extra Êxito Final', text: cl }));
-      }
-
-      clauses.forEach(clause => {
-        rows.push([
-          c.display_id,
-          '', '', '', '', '', '',
-          '',
-          '', clause.type === 'Extra Pró-Labore' ? clause.text : '',
-          '', '',
-          '', '',
-          '', clause.type === 'Intermediário' ? clause.text : '',
-          '', clause.type === 'Extra Êxito Final' ? clause.text : '',
-          '',
-          '',
-          '', '', '', '', '', '', '', '', '', '', '', '', '',
-          ''
-        ]);
-      });
     });
 
     const totalRow = [
@@ -754,6 +745,18 @@ export function Contracts() {
     const obsColIdx = header.indexOf('Observações');
 
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (ws[cellRef]) {
+            if (typeof ws[cellRef].v === 'string') {
+                ws[cellRef].s = {
+                    ...ws[cellRef].s,
+                    alignment: { vertical: "top", wrapText: true }
+                };
+            }
+        }
+      }
+      
       moneyCols.forEach(C => {
         const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
         if (ws[cellRef] && typeof ws[cellRef].v === 'number') {
@@ -766,7 +769,7 @@ export function Contracts() {
         if (ws[cellRef] && typeof ws[cellRef].v === 'string' && ws[cellRef].v.includes('⚠️ CONVERSÃO')) {
             ws[cellRef].s = {
                 font: { color: { rgb: "FF0000" }, bold: true },
-                alignment: { vertical: "center", wrapText: true }
+                alignment: { vertical: "top", wrapText: true }
             };
         }
       }
