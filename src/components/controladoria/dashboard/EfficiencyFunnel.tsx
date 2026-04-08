@@ -48,7 +48,7 @@ export function EfficiencyFunnel({ funil, evolucaoMensal, periodLabel }: Efficie
             <>
               <p>Neste período analisado (<strong>{periodLabel}</strong>), a operação do escritório consolidou as seguintes movimentações isoladas: recebemos <strong>{funil.totalEntrada} {funil.totalEntrada === 1 ? 'novo prospect' : 'novos prospects'}</strong> em nosso radar, e enviamos <strong>{funil.qualificadosProposta}</strong> {funil.qualificadosProposta === 1 ? 'nova proposta jurídica' : 'novas propostas jurídicas'}. Simultaneamente, dentro deste mesmo limite de datas, confirmamos a assinatura de <strong>{funil.fechados}</strong> {funil.fechados === 1 ? 'novo contrato' : 'novos contratos'}. Quanto à carteira retida e ativa gerada, possuímos atualmente <strong>{emAnalise}</strong> {emAnalise === 1 ? 'caso' : 'casos'} sob análise interna, e <strong>{emNegociacao}</strong> {emNegociacao === 1 ? 'proposta viva' : 'propostas vivas'} com os clientes, {funil.perdaNegociacao > 0 || funil.perdaAnalise > 0 ? <>sendo que <strong>{funil.perdaAnalise + funil.perdaNegociacao}</strong> negócios no total não vingaram no período.</> : 'sem registrar nenhuma interrupção oficial de negócios no horizonte atual.'}</p>
               <p className="mt-2 text-[11px] text-blue-600/80 italic border-t border-blue-100/50 pt-2">
-                *Nota: Este gráfico exibe a "Fotografia" consolidada do período em volumes absolutos. Por lidar com tração de casos mais antigos (ex: um fechamento hoje de um prospect do ano passado), os módulos operam de forma independente e não representam deduções rigorosas de uma mesma safra inicial.
+                *Nota: As métricas acima retratam a movimentação consolidada do período em volumes absolutos. Como a captação jurídica engloba trâmites de trato contínuo (ex: o fechamento atual de honorários oriundos de consultas de anos anteriores), as etapas contabilizam as atividades de forma autônoma e não representam deduções percentuais de uma mesma safra de entrada.
               </p>
             </>
           )}
@@ -58,50 +58,8 @@ export function EfficiencyFunnel({ funil, evolucaoMensal, periodLabel }: Efficie
       {/* Grid Layout Principal do Pipeline */}
       <div className='relative w-full max-w-6xl mx-auto'>
 
-        {/* Timeline do Ciclo Médio Trazida para Cima */}
-        <div className="mb-10 relative flex items-center justify-between w-full max-w-3xl mx-auto px-4 sm:px-12">
-          {/* Linha de fundo */}
-          <div className="absolute left-8 sm:left-16 right-8 sm:right-16 top-1/2 -translate-y-1/2 h-1 bg-gray-100 rounded-full z-0"></div>
-
-          {/* Node 1: Prospects */}
-          <div className="relative z-10 flex flex-col items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-amber-500 ring-4 ring-amber-50"></div>
-            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">Prospects</span>
-          </div>
-
-          {/* Info 1 -> 2 */}
-          <div className="relative z-10 flex flex-col items-center bg-white px-3 sm:px-4 py-1.5 rounded-full border border-gray-100 shadow-sm text-center">
-            <div className="flex items-center gap-1.5 text-indigo-600">
-              <Clock className="w-3.5 h-3.5" />
-              <span className="text-xs sm:text-sm font-black">{funil.tempoMedioProspectProposta}d</span>
-            </div>
-            <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-wider">Até Proposta</span>
-          </div>
-
-          {/* Node 2: Propostas */}
-          <div className="relative z-10 flex flex-col items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-blue-500 ring-4 ring-blue-50"></div>
-            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">Propostas</span>
-          </div>
-
-          {/* Info 2 -> 3 */}
-          <div className="relative z-10 flex flex-col items-center bg-white px-3 sm:px-4 py-1.5 rounded-full border border-gray-100 shadow-sm text-center">
-            <div className="flex items-center gap-1.5 text-blue-600">
-              <Clock className="w-3.5 h-3.5" />
-              <span className="text-xs sm:text-sm font-black">{funil.tempoMedioPropostaFechamento}d</span>
-            </div>
-            <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-wider">Até Fechar</span>
-          </div>
-
-          {/* Node 3: Fechados */}
-          <div className="relative z-10 flex flex-col items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-green-500 ring-4 ring-green-50"></div>
-            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">Fechados</span>
-          </div>
-        </div>
-
         {/* Cards principais */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 relative z-10 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 relative z-10 w-full mb-12">
 
           {/* ETAPA 1: START - PROSPECTS */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all flex flex-col justify-center border-t-4 border-t-amber-500">
@@ -241,6 +199,57 @@ export function EfficiencyFunnel({ funil, evolucaoMensal, periodLabel }: Efficie
           </div>
 
         </div>
+
+        {/* SECÇÃO EXTRA: CICLO DE VIDA (GLOBAL) DESAMARRADO */}
+        <div className="mt-8 bg-gray-50/50 border border-gray-100 rounded-2xl p-6 md:p-8">
+          <div className="mb-8 text-center">
+            <h3 className="text-lg font-black text-[#0a192f] tracking-tight">Ciclo de Vida Global Histórico</h3>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Tempo médio de resposta independente de período</p>
+          </div>
+
+          {/* Timeline do Ciclo Médio */}
+          <div className="relative flex items-center justify-between w-full max-w-3xl mx-auto px-4 sm:px-12">
+            {/* Linha de fundo */}
+            <div className="absolute left-8 sm:left-16 right-8 sm:right-16 top-1/2 -translate-y-1/2 h-1 bg-gray-200 rounded-full z-0"></div>
+
+            {/* Node 1: Prospects */}
+            <div className="relative z-10 flex flex-col items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-amber-500 ring-4 ring-amber-50"></div>
+              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">Entrada</span>
+            </div>
+
+            {/* Info 1 -> 2 */}
+            <div className="relative z-10 flex flex-col items-center bg-white px-4 sm:px-5 py-2 rounded-xl border border-gray-100 shadow-sm text-center transform hover:-translate-y-0.5 transition-all">
+              <div className="flex items-center gap-1.5 text-indigo-600 mb-0.5">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm sm:text-base font-black">{funil.tempoMedioProspectProposta} dias</span>
+              </div>
+              <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-wider">Até Proposta</span>
+            </div>
+
+            {/* Node 2: Propostas */}
+            <div className="relative z-10 flex flex-col items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-blue-500 ring-4 ring-blue-50"></div>
+              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">Propostas</span>
+            </div>
+
+            {/* Info 2 -> 3 */}
+            <div className="relative z-10 flex flex-col items-center bg-white px-4 sm:px-5 py-2 rounded-xl border border-gray-100 shadow-sm text-center transform hover:-translate-y-0.5 transition-all">
+              <div className="flex items-center gap-1.5 text-blue-600 mb-0.5">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm sm:text-base font-black">{funil.tempoMedioPropostaFechamento} dias</span>
+              </div>
+              <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-wider">Até Fechar</span>
+            </div>
+
+            {/* Node 3: Fechados */}
+            <div className="relative z-10 flex flex-col items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-green-500 ring-4 ring-green-50"></div>
+              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">Assinado</span>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
