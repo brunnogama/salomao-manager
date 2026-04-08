@@ -3,7 +3,7 @@ import {
   X, Edit, Trash2, User, FileText, Briefcase, MapPin, 
   History as HistoryIcon, Hourglass, CalendarCheck, Calculator, 
   Paperclip, CheckCircle2, Clock, ChevronsRight, Download,
-  PieChart, Scale, Sparkles, Bot, Loader2, AlertCircle, ArrowLeft, ArrowRight
+  PieChart, Scale, Sparkles, Bot, Loader2, AlertCircle, ArrowLeft, ArrowRight, ChevronRight
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
@@ -827,20 +827,27 @@ export function ContractDetailsModal({
         <div className="flex-1 flex flex-col min-w-0 bg-white transition-colors duration-300">
           
           {/* Header Action Bar */}
-          <div className="px-6 py-4 flex justify-between items-center bg-white sticky top-0 z-20">
-            <div className="flex items-center gap-3">
-              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${getStatusColor(contract.status)}`}>
-                {getStatusLabel(contract.status)}
-              </span>
-              <span className="font-mono text-sm font-bold text-gray-800 bg-gray-50 border border-gray-200 px-3 py-1 rounded-md">
-                {getHonOrPropStr()}
-              </span>
-              <span className="text-sm font-black text-[#0a192f] truncate max-w-[200px] sm:max-w-[300px] xl:max-w-[400px]">
-                {contract.client_name}
-              </span>
+          <div className="px-6 py-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-white sticky top-0 z-20 gap-4">
+            <div className="flex flex-col gap-2 w-full">
+              <div className="flex items-center gap-3 w-full">
+                 <h1 className="text-2xl sm:text-3xl font-black text-[#0a192f] tracking-tight truncate max-w-[300px] sm:max-w-[500px] xl:max-w-[700px]">
+                   {contract.client_name}
+                 </h1>
+                 <span className="text-gray-400">
+                   <ChevronRight className="w-6 h-6 stroke-[3]" />
+                 </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${getStatusColor(contract.status)}`}>
+                  {getStatusLabel(contract.status)}
+                </span>
+                <span className="font-mono text-sm font-bold text-gray-800 bg-gray-50 border border-gray-200 px-3 py-1 rounded-md">
+                  {getHonOrPropStr()}
+                </span>
+              </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
               <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1 mr-2 border border-gray-100">
                 <button 
                   onClick={onPrev} 

@@ -5,7 +5,7 @@ import { supabase } from '../../../lib/supabase';
 import {
   X, Scale, Clock, Save,
   FileText, Briefcase, Loader2,
-  ArrowLeft, ArrowRight
+  ArrowLeft, ArrowRight, ChevronRight
 } from 'lucide-react';
 import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst } from '../../../types/controladoria';
 import { maskCNPJ, maskMoney, maskHon, toTitleCase } from '../utils/masks';
@@ -1058,37 +1058,56 @@ export function ContractFormModal(props: Props) {
         {/* Right Content */}
         <div className={`flex-1 flex flex-col min-w-0 ${getThemeBackground(formData.status)} transition-colors duration-300 relative`}>
           
-          <div className="hidden md:flex absolute top-6 right-6 z-50 items-center gap-3">
-            {formData.client_name && (
-              <span className="text-sm font-black text-[#0a192f] truncate max-w-[200px] xl:max-w-[400px] px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-100 shadow-sm">
-                {formData.client_name}
-              </span>
-            )}
-            <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg p-1 border border-gray-100 shadow-sm">
+          {/* Sticky Header with Title and Navigation */}
+          <div className="px-6 py-6 border-b border-black/5 flex flex-col md:flex-row justify-between items-start md:items-center bg-white/50 backdrop-blur-md sticky top-0 z-50 gap-4">
+            <div className="flex flex-col gap-2 w-full">
+              <div className="flex items-center gap-3 w-full">
+                 <h1 className="text-2xl sm:text-3xl font-black text-[#0a192f] tracking-tight truncate max-w-[300px] sm:max-w-[400px] xl:max-w-[600px]">
+                   {formData.client_name || 'Novo Caso'}
+                 </h1>
+                 <span className="text-gray-400">
+                   <ChevronRight className="w-6 h-6 stroke-[3]" />
+                 </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border bg-white shadow-sm ${getStatusColor(formData.status)}`}>
+                  {getStatusLabel(formData.status)}
+                </span>
+                {formData.hon_number && (
+                  <span className="font-mono text-sm font-bold text-gray-800 bg-white border border-gray-200 px-3 py-1 rounded-md shadow-sm">
+                    HON {formData.hon_number}
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+              <div className="hidden md:flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg p-1 border border-gray-100 shadow-sm">
+                <button 
+                  onClick={onPrev} 
+                  disabled={!hasPrev}
+                  className={`p-1.5 rounded-md flex items-center justify-center transition-all ${hasPrev ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'}`}
+                  title="Caso Anterior"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={onNext} 
+                  disabled={!hasNext}
+                  className={`p-1.5 rounded-md flex items-center justify-center transition-all ${hasNext ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'}`}
+                  title="Próximo Caso"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
               <button 
-                onClick={onPrev} 
-                disabled={!hasPrev}
-                className={`p-1.5 rounded-md flex items-center justify-center transition-all ${hasPrev ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'}`}
-                title="Caso Anterior"
+                onClick={onClose} 
+                className="hidden md:flex text-gray-400 hover:text-red-500 bg-white/80 backdrop-blur-sm p-2 rounded-xl transition-all shadow-sm border border-gray-100 hover:border-red-100 cursor-pointer" 
+                title="Fechar"
               >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={onNext} 
-                disabled={!hasNext}
-                className={`p-1.5 rounded-md flex items-center justify-center transition-all ${hasNext ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'}`}
-                title="Próximo Caso"
-              >
-                <ArrowRight className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <button 
-              onClick={onClose} 
-              className="text-gray-400 hover:text-red-500 bg-white/80 backdrop-blur-sm p-2 rounded-xl transition-all shadow-sm border border-gray-100 hover:border-red-100 cursor-pointer" 
-              title="Fechar"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
 
           {/* Validation Alert */}
