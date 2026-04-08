@@ -90,7 +90,7 @@ export default function Login() {
           </div>
 
           {/* Tabs Nav */}
-          <div className="flex p-1 bg-gray-100/80 rounded-2xl mb-8">
+          <div className="hidden p-1 bg-gray-100/80 rounded-2xl mb-8">
             <button
               type="button"
               onClick={() => setActiveTab('microsoft')}
@@ -115,35 +115,49 @@ export default function Login() {
 
           <div className="min-h-[280px]">
             {activeTab === 'microsoft' ? (
-              <div className="space-y-6 flex flex-col items-center justify-center h-full animate-in fade-in zoom-in-95 duration-500">
-                <div className="text-center space-y-3 mb-4">
-                  <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100 shadow-inner">
-                    <svg className="w-8 h-8" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path d="m0 0h10v10h-10z" fill="#f25022" /><path d="m11 0h10v10h-10z" fill="#7fba00" /><path d="m0 11h10v10h-10z" fill="#00a4ef" /><path d="m11 11h10v10h-10z" fill="#ffb900" /></svg>
+              <div className="space-y-8 flex flex-col items-center justify-center h-full animate-in fade-in zoom-in-95 duration-700 mt-4">
+                <div className="text-center space-y-4 mb-2">
+                  <div className="w-20 h-20 bg-gradient-to-br from-[#f8fafc] to-[#e2e8f0] rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white relative group">
+                    <div className="absolute inset-0 bg-white/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <svg className="w-10 h-10 relative z-10 drop-shadow-sm transition-transform duration-500 group-hover:scale-110" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path d="m0 0h10v10h-10z" fill="#f25022" /><path d="m11 0h10v10h-10z" fill="#7fba00" /><path d="m0 11h10v10h-10z" fill="#00a4ef" /><path d="m11 11h10v10h-10z" fill="#ffb900" /></svg>
                   </div>
-                  <h3 className="text-sm font-bold text-[#0a192f]">Acesso Corporativo</h3>
-                  <p className="text-xs text-gray-400 font-medium">Use sua conta Microsoft do escritório para entrar com segurança.</p>
+                  <h3 className="text-xl font-black text-[#0a192f] tracking-tight">Acesso Corporativo</h3>
+                  <p className="text-sm text-gray-500 font-medium max-w-[260px] mx-auto leading-relaxed">
+                    Utilize sua conta Microsoft corporativa para uma autenticação segura e simplificada.
+                  </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleOutlookLogin}
-                  disabled={loading}
-                  className="relative w-full flex justify-center items-center py-4 px-6 rounded-2xl text-sm font-black text-white bg-[#0a192f] hover:bg-[#112240] focus:outline-none focus:ring-4 focus:ring-[#0a192f]/20 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed group active:scale-[0.98] tracking-widest overflow-hidden shadow-xl shadow-[#0a192f]/10"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                <div className="w-full flex-col space-y-4">
+                  <button
+                    type="button"
+                    onClick={handleOutlookLogin}
+                    disabled={loading}
+                    className="relative w-full flex justify-center items-center py-4 px-6 rounded-2xl text-sm font-black text-white bg-[#0a192f] hover:bg-[#112240] focus:outline-none focus:ring-4 focus:ring-[#0a192f]/20 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed group active:scale-[0.98] tracking-widest overflow-hidden shadow-xl shadow-[#0a192f]/20"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
 
-                  {loading ? (
-                    <div className="flex items-center gap-3">
-                      <Loader2 className="h-5 w-5 animate-spin text-[#d4af37]" />
-                      <span className="uppercase">Conectando...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <svg className="w-5 h-5 bg-white p-1 rounded-md" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path d="m0 0h10v10h-10z" fill="#f25022" /><path d="m11 0h10v10h-10z" fill="#7fba00" /><path d="m0 11h10v10h-10z" fill="#00a4ef" /><path d="m11 11h10v10h-10z" fill="#ffb900" /></svg>
-                      <span className="uppercase font-extrabold tracking-widest mt-0.5">Entrar com Microsoft</span>
-                    </div>
-                  )}
-                </button>
+                    {loading ? (
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin text-[#d4af37]" />
+                        <span className="uppercase">Conectando...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <span className="uppercase font-extrabold tracking-widest mt-0.5">Entrar com Microsoft</span>
+                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors ml-2">
+                          <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                  
+                  {/* Subtle decorative separator */}
+                  <div className="flex items-center justify-center pt-6 opacity-40">
+                    <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#0a192f]/20"></div>
+                    <Lock className="w-3 h-3 mx-3 text-[#0a192f]/40" />
+                    <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#0a192f]/20"></div>
+                  </div>
+                </div>
 
                 {/* Mensagem de Erro Microsoft */}
                 {error && (
