@@ -1,4 +1,4 @@
-import { Clock, XCircle, CheckCircle2, FileText, Users, TrendingDown, Lightbulb } from 'lucide-react';
+import { Clock, XCircle, CheckCircle2, FileText, Users, TrendingDown, Lightbulb, Search } from 'lucide-react';
 import { CopyChartButton } from '../ui/CopyChartButton';
 
 interface EfficiencyFunnelProps {
@@ -15,6 +15,7 @@ export function EfficiencyFunnel({ funil, evolucaoMensal, periodLabel }: Efficie
   const mediaEntrada = (funil.totalEntrada / mesesCount).toFixed(1);
   const totalRejeitadas = funil.perdaAnalise + (funil.perdaNegociacao || 0);
   const rejectPercent = funil.totalEntrada > 0 ? ((totalRejeitadas / funil.totalEntrada) * 100).toFixed(1) : '0';
+  const analisePercent = funil.totalEntrada > 0 ? ((emAnalise / funil.totalEntrada) * 100).toFixed(1) : '0';
 
   return (
     <div id="chart-funil-captacao" className='bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all p-6 md:p-8 relative'>
@@ -97,7 +98,7 @@ export function EfficiencyFunnel({ funil, evolucaoMensal, periodLabel }: Efficie
         </div>
 
         {/* Cards principais */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 relative z-10 w-full">
 
           {/* ETAPA 1: START - PROSPECTS */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all flex flex-col justify-center border-t-4 border-t-amber-500">
@@ -120,7 +121,36 @@ export function EfficiencyFunnel({ funil, evolucaoMensal, periodLabel }: Efficie
             </div>
           </div>
 
-          {/* ETAPA 2: PROPOSTAS */}
+          {/* ETAPA 2: SOB ANÁLISE */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all flex flex-col justify-center border-t-4 border-t-indigo-500">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <Search className="w-4 h-4" />
+              </div>
+              <h3 className="text-xs font-black text-indigo-900 uppercase tracking-widest">Sob Análise</h3>
+            </div>
+            <div className="flex flex-col gap-0.5 mt-2 ml-1">
+              <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{emAnalise}</span>
+              <span className="text-xs font-bold text-gray-400">casos em andamento</span>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-indigo-50 flex items-end justify-between gap-1">
+              <div>
+                <span className="text-[9px] font-black text-indigo-700 uppercase tracking-wider block mb-0.5">Proporção Local</span>
+                <span className="text-xl font-black text-indigo-600 leading-none">
+                  {analisePercent}%
+                </span>
+              </div>
+              <div className="w-[55%] flex flex-col justify-end">
+                <span className="text-[8px] font-bold text-indigo-500 text-right block mb-1 whitespace-nowrap">do total de análises</span>
+                <div className="h-1.5 w-full bg-indigo-50 rounded-full overflow-hidden shrink-0">
+                  <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000" style={{ width: `${analisePercent}%` }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ETAPA 3: PROPOSTAS */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex flex-col justify-center border-t-4 border-t-blue-500">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
@@ -149,7 +179,7 @@ export function EfficiencyFunnel({ funil, evolucaoMensal, periodLabel }: Efficie
             </div>
           </div>
 
-          {/* ETAPA 3: FECHADOS */}
+          {/* ETAPA 4: FECHADOS */}
           <div className="bg-[#f8fdf9] border border-green-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-green-300 transition-all flex flex-col justify-center border-t-4 border-t-green-500">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700">
@@ -178,7 +208,7 @@ export function EfficiencyFunnel({ funil, evolucaoMensal, periodLabel }: Efficie
             </div>
           </div>
 
-          {/* ETAPA 4: REJEITADAS */}
+          {/* ETAPA 5: REJEITADAS */}
           <div className="bg-white border border-red-100 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-red-300 transition-all flex flex-col justify-center border-t-4 border-t-red-500">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-600">
