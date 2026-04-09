@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import {
   Plus, Filter, Calendar, User, Briefcase,
   Loader2,
-  Download, Bell,
+  FileDown, Bell,
   FileSignature, FileSearch
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
@@ -875,7 +875,7 @@ export function Contracts() {
             className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#00b87c] hover:bg-gray-50 border border-gray-200 shrink-0"
             title="Exportar XLSX"
           >
-            <Download className="w-5 h-5" />
+            <FileDown className="w-5 h-5" />
           </button>
 
           {/* Novo Caso */}

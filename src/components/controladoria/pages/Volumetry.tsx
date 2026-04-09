@@ -8,7 +8,7 @@ import {
   Activity,
   Layers,
   ShieldCheck,
-  FileSpreadsheet,
+  FileDown,
   Clock,
   AlertTriangle,
   MapPin,
@@ -959,7 +959,7 @@ export function Volumetry() {
                 className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-[#00b87c] rounded-xl hover:bg-emerald-50 transition-all shadow-lg active:scale-95"
                 title="Exportar em XLSX"
               >
-                <FileSpreadsheet className="w-5 h-5" />
+                <FileDown className="w-5 h-5" />
               </button>
               
               <button 
@@ -968,7 +968,7 @@ export function Volumetry() {
                 className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-red-500 rounded-xl hover:bg-red-50 transition-all shadow-lg active:scale-95 disabled:opacity-50"
                 title="Exportar Dashboard em PDF"
               >
-                {isExportingPDF ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
+                {isExportingPDF ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileDown className="w-5 h-5" />}
               </button>
             </div>
           )}
