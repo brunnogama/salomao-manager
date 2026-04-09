@@ -946,7 +946,7 @@ export function DadosCorporativosSection({
                          </div>
                          <div>
                            <p className="text-gray-500 font-black text-[10px] uppercase tracking-widest">Status do Link Mágico</p>
-                           <p className="text-emerald-700 font-bold">Respostas salvas em: {new Date(exitInterview.completed_at).toLocaleDateString()}</p>
+                           <p className="text-emerald-700 font-bold">Respostas salvas em: {new Date(exitInterview.completed_at).toLocaleDateString('pt-BR')}</p>
                          </div>
                        </div>
                        <p className="text-gray-600 text-xs pl-10 border-l-2 border-emerald-50 ml-4">

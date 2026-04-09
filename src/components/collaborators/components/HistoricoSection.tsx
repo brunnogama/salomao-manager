@@ -1246,7 +1246,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                         <div key={log.id} className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 hover:border-emerald-200 transition-colors">
                                             <div className="flex items-start justify-between gap-4 mb-3">
                                                 <div className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                                                    <span className="bg-white border border-gray-200 px-2 py-1 rounded text-[#1e3a8a]">{date.toLocaleDateString()} às {date.toLocaleTimeString()}</span>
+                                                    <span className="bg-white border border-gray-200 px-2 py-1 rounded text-[#1e3a8a]">{date.toLocaleDateString('pt-BR')} às {date.toLocaleTimeString('pt-BR')}</span>
                                                     <span>Por: <strong className="text-[#0a192f]">{log.user_name}</strong></span>
                                                 </div>
                                                 <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
