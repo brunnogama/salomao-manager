@@ -3,7 +3,7 @@ import { Plus, CheckCircle, DollarSign, Award, Save, Edit, Trash2, Settings, Ale
 import { Contract } from '../../../../types/controladoria';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { FinancialInputWithInstallments } from './FinancialInputWithInstallments';
-import { parseCurrency } from '../../utils/masks';
+import { parseCurrency, maskMoney } from '../../utils/masks';
 import { supabase } from '../../../../lib/supabase';
 import { CheckCircle2 } from 'lucide-react';
 
@@ -91,6 +91,7 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
 
     const [financialInstallments, setFinancialInstallments] = useState<any[]>([]);
     const [editingKey, setEditingKey] = useState<string | null>(null);
+    const [showTimesheetDetails, setShowTimesheetDetails] = useState(false);
 
     React.useEffect(() => {
         const fetchFinanceInstallments = async () => {
@@ -604,64 +605,80 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                                     placeholder="R$ 0,00" 
                                     className="w-full border border-gray-300 p-2.5 rounded-lg font-mono text-sm" 
                                     value={safeString(formatForInput(formData.timesheet_forecast_value))} 
-                                    onChange={(e) => setFormData({ ...formData, timesheet_forecast_value: formatForInput(e.target.value) } as any)} 
+                                    onChange={(e) => setFormData({ ...formData, timesheet_forecast_value: maskMoney(e.target.value) } as any)} 
                                 />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-700 block mb-1">Total Realizado</label>
                                 <input 
                                     type="text" 
-                                    className="w-full border border-gray-200 p-2.5 rounded-lg font-mono text-sm bg-gray-50 text-gray-500 cursor-not-allowed select-none" 
-                                    readOnly 
-                                    value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Object.values(formData.timesheet_breakdown || {}).reduce((acc: number, val: any) => acc + parseCurrency(val), 0))} 
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-700 block mb-1">Data do Pagamento</label>
-                                <input 
-                                    type="date"
-                                    className="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:border-[#1e3a8a] outline-none"
-                                    value={safeString((formData as any).timesheet_payment_date)}
-                                    onChange={(e) => setFormData({ ...formData, timesheet_payment_date: e.target.value } as any)}
+                                    placeholder="R$ 0,00"
+                                    className="w-full border border-gray-300 p-2.5 rounded-lg font-mono text-sm focus:border-[#1e3a8a] outline-none" 
+                                    value={safeString(formatForInput(formData.timesheet_realized_value))} 
+                                    onChange={(e) => setFormData({ ...formData, timesheet_realized_value: maskMoney(e.target.value) } as any)}
                                 />
                             </div>
                         </div>
 
-                        <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white">
-                            <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 font-bold text-xs text-[#0a192f] flex justify-between items-center">
-                                Detalhamento do Realizado por Nível
-                                <span className="text-[10px] text-gray-500 font-normal">Preencha os níveis para gerar o total realizado.</span>
-                            </div>
-                            <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {[
-                                    { label: 'Sócio', key: 'socio' as const },
-                                    { label: 'Consultor', key: 'consultor' as const },
-                                    { label: 'Advogado Sênior', key: 'advogado_senior' as const },
-                                    { label: 'Advogado Pleno', key: 'advogado_pleno' as const },
-                                    { label: 'Advogado Júnior', key: 'advogado_junior' as const },
-                                    { label: 'Estagiário', key: 'estagiario' as const }
-                                ].map((level) => (
-                                    <div key={level.key}>
-                                        <label className="text-[10px] font-bold text-gray-600 uppercase tracking-widest block mb-1">{level.label}</label>
+                        <div className="flex items-center">
+                            <button
+                                type="button"
+                                onClick={() => setShowTimesheetDetails(!showTimesheetDetails)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider transition-colors ${showTimesheetDetails ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'}`}
+                            >
+                                {showTimesheetDetails ? 'Ocultar Detalhamento / Pagamento' : 'Informar Pagamento / Detalhamento'}
+                            </button>
+                        </div>
+
+                        {showTimesheetDetails && (
+                            <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white animate-in slide-in-from-top-2">
+                                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 font-bold text-xs text-[#0a192f] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <span>Detalhamento do Realizado por Nível</span>
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase">Data do Pagamento:</label>
                                         <input 
-                                            type="text" 
-                                            placeholder="R$ 0,00" 
-                                            className="w-full border border-gray-300 p-2 rounded text-xs font-mono focus:border-[#1e3a8a] outline-none" 
-                                            value={safeString(formatForInput(formData.timesheet_breakdown?.[level.key]))} 
-                                            onChange={(e) => {
-                                                const updatedBreakdown = { ...(formData.timesheet_breakdown || {}), [level.key]: formatForInput(e.target.value) };
-                                                const sumRealized = Object.values(updatedBreakdown).reduce((acc: number, val: any) => acc + parseCurrency(val), 0);
-                                                setFormData({ 
-                                                    ...formData, 
-                                                    timesheet_breakdown: updatedBreakdown as any,
-                                                    timesheet_realized_value: sumRealized > 0 ? (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(sumRealized)) : ''
-                                                } as any);
-                                            }} 
+                                            type="date"
+                                            className="border border-gray-300 p-1.5 rounded-lg text-xs focus:border-[#1e3a8a] outline-none"
+                                            value={safeString((formData as any).timesheet_payment_date)}
+                                            onChange={(e) => setFormData({ ...formData, timesheet_payment_date: e.target.value } as any)}
                                         />
                                     </div>
-                                ))}
+                                </div>
+                                <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {[
+                                        { label: 'Sócio', key: 'socio' as const },
+                                        { label: 'Consultor', key: 'consultor' as const },
+                                        { label: 'Advogado Sênior', key: 'advogado_senior' as const },
+                                        { label: 'Advogado Pleno', key: 'advogado_pleno' as const },
+                                        { label: 'Advogado Júnior', key: 'advogado_junior' as const },
+                                        { label: 'Estagiário', key: 'estagiario' as const }
+                                    ].map((level) => (
+                                        <div key={level.key}>
+                                            <label className="text-[10px] font-bold text-gray-600 uppercase tracking-widest block mb-1">{level.label}</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="R$ 0,00" 
+                                                className="w-full border border-gray-300 p-2 rounded text-xs font-mono focus:border-[#1e3a8a] outline-none" 
+                                                value={safeString(formatForInput(formData.timesheet_breakdown?.[level.key]))} 
+                                                onChange={(e) => {
+                                                    const updatedBreakdown = { ...(formData.timesheet_breakdown || {}), [level.key]: maskMoney(e.target.value) };
+                                                    const sumRealized = Object.values(updatedBreakdown).reduce((acc: number, val: any) => acc + parseCurrency(val), 0);
+                                                    setFormData({ 
+                                                        ...formData, 
+                                                        timesheet_breakdown: updatedBreakdown as any,
+                                                        timesheet_realized_value: sumRealized > 0 ? (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(sumRealized)) : formData.timesheet_realized_value
+                                                    } as any);
+                                                }} 
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="bg-gray-50 border-t border-gray-200 px-4 py-3 flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Soma dos Níveis:</span>
+                                    <span className="text-sm font-black text-[#1e3a8a]">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Object.values(formData.timesheet_breakdown || {}).reduce((acc: number, val: any) => acc + parseCurrency(val), 0))}</span>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
             </div>
