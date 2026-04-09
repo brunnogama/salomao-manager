@@ -598,24 +598,24 @@ export function ContractDetailsModal({
              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                {(contract as any).timesheet ? (
                  <div className="col-span-1 md:col-span-2 bg-indigo-50/50 p-6 rounded-xl border border-indigo-200 shadow-sm">
-                    <div className="flex flex-col md:flex-row items-center font-black md:items-start md:justify-between gap-6 mb-6 pb-6 border-b border-indigo-100">
-                        <div className="flex items-center gap-4 text-indigo-900">
-                            <div className="p-3 bg-indigo-100 rounded-full shadow-inner"><Clock className="w-8 h-8 text-indigo-600" /></div>
+                    <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 mb-6 pb-6 border-b border-indigo-100">
+                        <div className="flex items-center gap-4 text-indigo-900 w-full xl:w-auto">
+                            <div className="p-3 bg-indigo-100 rounded-full shadow-inner shrink-0"><Clock className="w-8 h-8 text-indigo-600" /></div>
                             <div>
-                                <h4 className="text-lg font-black uppercase tracking-widest shrink-0">Honorários via Timesheet</h4>
-                                <p className="text-xs font-medium text-indigo-600/80 mt-0.5">Apuração financeira baseada em horas trabalhadas.</p>
+                                <h4 className="text-lg font-black uppercase tracking-widest leading-tight">Honorários via Timesheet</h4>
+                                <p className="text-xs font-medium text-indigo-600/80 mt-1 pl-0.5">Apuração financeira baseada em horas trabalhadas.</p>
                             </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                            <div className="bg-white px-5 py-3 rounded-xl border border-indigo-100 shadow-sm flex flex-col min-w-[160px] text-center md:text-left">
-                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Valor Previsto</span>
-                                <span className="text-lg font-black text-[#0a192f] mt-1">{(contract as any).timesheet_forecast_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_forecast_value)) : 'R$ 0,00'}</span>
+                        <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto overflow-hidden">
+                            <div className="bg-white px-5 py-3 rounded-xl border border-indigo-100 shadow-sm flex flex-col flex-1 min-w-0 text-center sm:text-left">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest truncate">Valor Previsto</span>
+                                <span className="text-lg font-black text-[#0a192f] mt-1 truncate">{(contract as any).timesheet_forecast_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_forecast_value)) : 'R$ 0,00'}</span>
                             </div>
-                            <div className="bg-indigo-600 px-5 py-3 rounded-xl border border-indigo-700 shadow-sm flex flex-col min-w-[160px] text-center md:text-left text-white">
-                                <span className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest">Total Realizado</span>
-                                <span className="text-lg font-black mt-1">{(contract as any).timesheet_realized_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_realized_value)) : 'R$ 0,00'}</span>
+                            <div className="bg-indigo-600 px-5 py-3 rounded-xl border border-indigo-700 shadow-sm flex flex-col flex-1 min-w-0 text-center sm:text-left text-white">
+                                <span className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest truncate">Total Realizado</span>
+                                <span className="text-lg font-black mt-1 truncate">{(contract as any).timesheet_realized_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_realized_value)) : 'R$ 0,00'}</span>
                                 {(contract as any).timesheet_payment_date && (
-                                    <span className="text-[9px] font-medium text-indigo-300 mt-1 uppercase">Pago em: {safeDate((contract as any).timesheet_payment_date)?.toLocaleDateString('pt-BR')}</span>
+                                    <span className="text-[9px] font-medium text-indigo-300 mt-1 uppercase truncate" title={`Pago em: ${safeDate((contract as any).timesheet_payment_date)?.toLocaleDateString('pt-BR')}`}>Pago em: {safeDate((contract as any).timesheet_payment_date)?.toLocaleDateString('pt-BR')}</span>
                                 )}
                             </div>
                         </div>
