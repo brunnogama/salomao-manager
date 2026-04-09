@@ -97,13 +97,14 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
         setLoadingOrg(true)
         try {
             // 1. Fetch Superiors
+            let supData: any[] = []
             const superiorIds = [...(formData.partner_ids || []), ...(formData.leader_ids || [])].filter(Boolean)
             if (superiorIds.length > 0) {
-                const { data: supData } = await supabase
+                const { data: sData } = await supabase
                     .from('collaborators')
                     .select('id, name, role, foto_url, status')
                     .in('id', superiorIds)
-                setSuperiors(supData || [])
+                supData = sData || []
             } else {
                 setSuperiors([])
             }
@@ -121,7 +122,6 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
             const merged = [...(infLeader || []), ...(infPartner || [])]
             const uniqueInf = Array.from(new Map(merged.map(item => [item.id, item])).values())
-            setInferiors(uniqueInf)
 
             // 3. Fetch History Timeline
             // a) Suas próprias mudanças
@@ -137,14 +137,27 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                 supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('new_leader_ids', jsonParam),
                 supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('old_leader_ids', jsonParam),
                 supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('new_partner_ids', jsonParam),
-                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('old_partner_ids', jsonParam)
+                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('old_partner_ids', jsonParam),
+                supabase.from('roles').select('id, name')
             ]
             
             const results = await Promise.all(queries)
+            const rolesData = results[4].data || []
+            const rolesMap = new Map(rolesData.map((r: any) => [String(r.id), r.name]))
+
             let othersHistory: any[] = []
-            results.forEach(res => {
-                if (res.data) othersHistory.push(...res.data)
-            })
+            for(let i=0; i<4; i++) {
+                if (results[i].data) othersHistory.push(...results[i].data)
+            }
+
+            // Map Superiors and Inferiors with generic role names
+            const mapRole = (items: any[]) => items.map(item => ({
+                ...item,
+                role: item.role ? (rolesMap.get(String(item.role)) || 'CARGO NÃO DEFINIDO') : 'CARGO NÃO DEFINIDO'
+            }))
+
+            setSuperiors(mapRole(supData || []))
+            setInferiors(mapRole(uniqueInf))
 
             let allHistory = [...(ownHistory || []), ...othersHistory]
             
