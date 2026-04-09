@@ -358,6 +358,17 @@ export interface Contract {
   // Missing fields added for ContractFormModal
   client_id?: string;
   timesheet?: boolean;
+  timesheet_forecast_value?: string;
+  timesheet_realized_value?: string;
+  timesheet_payment_date?: string;
+  timesheet_breakdown?: {
+    socio: string;
+    consultor: string;
+    advogado_senior: string;
+    advogado_pleno: string;
+    advogado_junior: string;
+    estagiario: string;
+  };
 
   pro_labore_installments?: string;
   final_success_fee_installments?: string;

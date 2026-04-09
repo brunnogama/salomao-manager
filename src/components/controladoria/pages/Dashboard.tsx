@@ -130,7 +130,7 @@ export function Dashboard({ }: Props) {
 
       const baseHeader = [
         'ID', 'Status', 'Cliente', 'Sócio', 'HON/PROP', 'Data Relevante', 'Local Faturamento',
-        'Timesheet',
+        'Timesheet (Previsto)', 'Timesheet (Realizado)', 'Data Pagtº (Realizado)',
         'Pró-Labore', 'Cláusula Pró-Labore',
         'Outros Honorários', 'Cláusula Outros',
         'Fixo Mensal', 'Cláusula Fixo Mensal',
@@ -192,6 +192,9 @@ export function Dashboard({ }: Props) {
             });
         }
 
+        const vTimesheetForecast = c.timesheet ? processField(c.timesheet_forecast_value) : 0;
+        const vTimesheetRealized = c.timesheet ? processField(c.timesheet_realized_value) : 0;
+
         const vTotalSuccess = vFinal + vInter + vFinalExt;
         const percentsStr = percentsList.length > 0 ? percentsList.join(' + ') : '-';
 
@@ -203,6 +206,13 @@ export function Dashboard({ }: Props) {
         sumFinal += vFinal;
         sumTotalSuccess += vTotalSuccess;
 
+        let sumTimesheetForecast = 0;
+        let sumTimesheetRealized = 0;
+        if (c.timesheet) {
+            sumTimesheetForecast += vTimesheetForecast;
+            sumTimesheetRealized += vTimesheetRealized;
+        }
+
         baseRows.push([
           c.display_id,
           getStatusLabel(c.status),
@@ -211,7 +221,9 @@ export function Dashboard({ }: Props) {
           getHonDisplay(c),
           safeDate(getRelevantDate(c))?.toLocaleDateString('pt-BR') || '-',
           c.billing_location || '-',
-          c.timesheet ? 'X' : '-',
+          c.timesheet ? processField(c.timesheet_forecast_value) || 0 : 0,
+          c.timesheet ? processField(c.timesheet_realized_value) || 0 : 0,
+          ((c as any).timesheet_payment_date ? safeDate((c as any).timesheet_payment_date)?.toLocaleDateString('pt-BR') : '') || '-',
           vPro,
           c.pro_labore_clause || '-',
           vOther,
@@ -258,7 +270,7 @@ export function Dashboard({ }: Props) {
           baseRows.push([
             c.display_id,
             '', '', '', '', '', '',
-            '', // Timesheet
+            '', '', '', // Timesheet Previsto, Realizado, Data Pagamento
             '', clause.type === 'Extra Pró-Labore' ? clause.text : '',
             '', '',
             '', '',
@@ -275,19 +287,23 @@ export function Dashboard({ }: Props) {
 
       const totalRow = [
         'TOTAIS', '', '', '', '', '', '',
-        '',
+        // The two timesheet columns:
+        0, 0, '',
         sumPro, '', sumOther, '', sumFixed, '', sumFixedPontual, '', sumInter, '', sumFinal, '', sumTotalSuccess,
         '',
         '', '', '', '', '', '', '', '', '', '', '', '', '',
         ''
       ];
+      // Fix sum for totalRow
+      totalRow[7] = baseContracts.reduce((acc: number, c: any) => acc + (c.timesheet ? parseCurrency(c.timesheet_forecast_value) : 0), 0);
+      totalRow[8] = baseContracts.reduce((acc: number, c: any) => acc + (c.timesheet ? parseCurrency(c.timesheet_realized_value) : 0), 0);
 
       const dataWithHeader = [baseHeader, ...baseRows, [], totalRow];
       const wsBase = XLSX.utils.aoa_to_sheet(dataWithHeader);
 
       const currencyFormat = '"R$" #,##0.00';
       const rangeBase = XLSX.utils.decode_range(wsBase['!ref'] || 'A1:A1');
-      const moneyCols = [8, 10, 12, 14, 16, 18, 20];
+      const moneyCols = [7, 8, 10, 12, 14, 16, 18, 20, 22];
 
       for (let col = rangeBase.s.c; col <= rangeBase.e.c; col++) {
         const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });

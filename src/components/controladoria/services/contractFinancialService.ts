@@ -225,6 +225,10 @@ export const forceUpdateFinancials = async (contractId: string, sourceData: Cont
       other_fees_extras: (sourceData as any).other_fees_extras,
       // Salvar timesheet se existir
       timesheet: (sourceData as any).timesheet,
+      timesheet_forecast_value: (sourceData as any).timesheet_forecast_value,
+      timesheet_realized_value: (sourceData as any).timesheet_realized_value,
+      timesheet_payment_date: (sourceData as any).timesheet_payment_date,
+      timesheet_breakdown: (sourceData as any).timesheet_breakdown,
       
       // Salvar as cláusulas principais
       pro_labore_clause: (sourceData as any).pro_labore_clause,

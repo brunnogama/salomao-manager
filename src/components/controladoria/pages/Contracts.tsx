@@ -540,7 +540,7 @@ export function Contracts() {
 
     const header = [
       'ID', 'Status', 'Cliente', 'Sócio', 'HON/PROP', 'Data Relevante', 'Local Faturamento',
-      'Total Pró-Labore', 'Total Êxito Intermediário', 'Total Êxito Final', 'Total Outros Honorários', 'Fixo Mensal', 'Timesheet', 'Total Contrato',
+      'Total Pró-Labore', 'Total Êxito Intermediário', 'Total Êxito Final', 'Total Outros Honorários', 'Fixo Mensal', 'Timesheet (Previsto)', 'Timesheet (Realizado)', 'Data Pagtº (Realizado)', 'Total Contrato',
       'Valores em %',
       'Posição do Cliente', 'Nº Processo', 'UF (Processo)', 'Tribunal', 'Comarca', 'Vara',
       'Autor', 'CNPJ Autor', 'Réu / Parte Adversa', 'CNPJ Réu', 'Assunto / Objeto',
@@ -635,8 +635,12 @@ export function Contracts() {
           });
       }
 
+      const vTimesheetForecast = (c as any).timesheet ? processField((c as any).timesheet_forecast_value) : 0;
+      const vTimesheetRealized = (c as any).timesheet ? processField((c as any).timesheet_realized_value) : 0;
+      const vTimesheetConsidered = vTimesheetRealized > 0 ? vTimesheetRealized : vTimesheetForecast;
+
       const vTotalSuccess = vFinal + vInter;
-      const vTotalContrato = vPro + vOther + vFixed + vTotalSuccess;
+      const vTotalContrato = vPro + vOther + vFixed + vTotalSuccess + vTimesheetConsidered;
       const percentsStr = percentsList.length > 0 ? percentsList.join(' + ') : '-';
 
       sumPro += vPro;
@@ -645,6 +649,13 @@ export function Contracts() {
       sumInter += vInter;
       sumFinal += vFinal;
       sumTotalContrato += vTotalContrato;
+
+      let sumTimesheetForecast = 0;
+      let sumTimesheetRealized = 0;
+      if ((c as any).timesheet) {
+          sumTimesheetForecast += vTimesheetForecast;
+          sumTimesheetRealized += vTimesheetRealized;
+      }
 
       rows.push([
         c.display_id,
@@ -659,7 +670,9 @@ export function Contracts() {
         vFinal,
         vOther,
         vFixed,
-        (c as any).timesheet ? 'X' : '-',
+        vTimesheetForecast || 0,
+        vTimesheetRealized || 0,
+        ((c as any).timesheet_payment_date ? safeDate((c as any).timesheet_payment_date)?.toLocaleDateString('pt-BR') : '') || '-',
         vTotalContrato,
         percentsStr,
         c.client_position || '-',
@@ -683,11 +696,16 @@ export function Contracts() {
 
     const totalRow = [
       'TOTAIS', '', '', '', '', '', '',
-      sumPro, sumInter, sumFinal, sumOther, sumFixed, '', sumTotalContrato,
+      sumPro, sumInter, sumFinal, sumOther, sumFixed, 
+      0, // The timesheet sums will be added down the line, but keeping placeholders empty or correct
+      0, '', sumTotalContrato,
       '',
       '', '', '', '', '', '', '', '', '', '', '', '', '',
       ''
     ];
+    // Fix sum for totalRow
+    totalRow[12] = filteredContracts.reduce((acc, c) => acc + ((c as any).timesheet ? parseCurrency((c as any).timesheet_forecast_value) : 0), 0);
+    totalRow[13] = filteredContracts.reduce((acc, c) => acc + ((c as any).timesheet ? parseCurrency((c as any).timesheet_realized_value) : 0), 0);
 
     const dataWithHeader = [header, ...rows, [], totalRow];
 
@@ -695,7 +713,7 @@ export function Contracts() {
 
     const currencyFormat = '"R$" #,##0.00';
     const range = XLSX.utils.decode_range(ws['!ref']!);
-    const moneyCols = [7, 8, 9, 10, 11, 13];
+    const moneyCols = [7, 8, 9, 10, 11, 12, 13, 15];
 
     // -- STYLING PADRÃO CORPORATIVO --
     for (let col = range.s.c; col <= range.e.c; col++) {

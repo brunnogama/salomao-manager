@@ -597,12 +597,51 @@ export function ContractDetailsModal({
              </div>
              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                {(contract as any).timesheet ? (
-                 <div className="col-span-1 md:col-span-2 bg-indigo-50 p-6 rounded-xl border border-indigo-200 flex flex-col items-center justify-center shadow-inner text-center">
-                    <Clock className="w-10 h-10 text-indigo-500 mb-3" />
-                    <h4 className="text-lg font-black text-indigo-900 uppercase tracking-widest shrink-0">Honorários via Timesheet</h4>
-                    <p className="text-sm font-medium text-indigo-700/80 mt-1 max-w-sm">
-                       A apuração financeira deste caso é baseada em horas trabalhadas (Timesheet). Valores monetários de honorários não são aplicáveis nesta visualização sumária.
-                    </p>
+                 <div className="col-span-1 md:col-span-2 bg-indigo-50/50 p-6 rounded-xl border border-indigo-200 shadow-sm">
+                    <div className="flex flex-col md:flex-row items-center font-black md:items-start md:justify-between gap-6 mb-6 pb-6 border-b border-indigo-100">
+                        <div className="flex items-center gap-4 text-indigo-900">
+                            <div className="p-3 bg-indigo-100 rounded-full shadow-inner"><Clock className="w-8 h-8 text-indigo-600" /></div>
+                            <div>
+                                <h4 className="text-lg font-black uppercase tracking-widest shrink-0">Honorários via Timesheet</h4>
+                                <p className="text-xs font-medium text-indigo-600/80 mt-0.5">Apuração financeira baseada em horas trabalhadas.</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                            <div className="bg-white px-5 py-3 rounded-xl border border-indigo-100 shadow-sm flex flex-col min-w-[160px] text-center md:text-left">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Valor Previsto</span>
+                                <span className="text-lg font-black text-[#0a192f] mt-1">{(contract as any).timesheet_forecast_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_forecast_value)) : 'R$ 0,00'}</span>
+                            </div>
+                            <div className="bg-indigo-600 px-5 py-3 rounded-xl border border-indigo-700 shadow-sm flex flex-col min-w-[160px] text-center md:text-left text-white">
+                                <span className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest">Total Realizado</span>
+                                <span className="text-lg font-black mt-1">{(contract as any).timesheet_realized_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_realized_value)) : 'R$ 0,00'}</span>
+                                {(contract as any).timesheet_payment_date && (
+                                    <span className="text-[9px] font-medium text-indigo-300 mt-1 uppercase">Pago em: {safeDate((contract as any).timesheet_payment_date)?.toLocaleDateString('pt-BR')}</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Breakdown */}
+                    <div className="bg-white rounded-xl border border-indigo-50 shadow-sm overflow-hidden">
+                        <div className="bg-indigo-50/50 px-4 py-2 border-b border-indigo-50 font-bold text-[10px] text-indigo-900 uppercase tracking-widest flex items-center gap-2">
+                             Detalhamento do Realizado (Por Nível)
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-x divide-y md:divide-y-0 divide-indigo-50">
+                            {[
+                                { label: 'Sócio', key: 'socio' as const },
+                                { label: 'Consultor', key: 'consultor' as const },
+                                { label: 'Adv. Sênior', key: 'advogado_senior' as const },
+                                { label: 'Adv. Pleno', key: 'advogado_pleno' as const },
+                                { label: 'Adv. Júnior', key: 'advogado_junior' as const },
+                                { label: 'Estagiário', key: 'estagiario' as const }
+                            ].map((level) => (
+                                <div key={level.key} className="p-3 flex flex-col text-center">
+                                    <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest mb-1">{level.label}</span>
+                                    <span className="text-xs font-bold text-gray-700">{(contract as any).timesheet_breakdown?.[level.key] ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_breakdown?.[level.key])) : 'R$ 0,00'}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                  </div>
                ) : (
                  <>
@@ -765,12 +804,25 @@ export function ContractDetailsModal({
                </div>
              </div>
            ) : (
-             <div className="bg-gradient-to-b from-white to-gray-50 rounded-xl border border-gray-200 overflow-hidden shadow-sm flex flex-col justify-center items-center p-6 text-center">
-               <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mb-3 shadow-inner">
-                  <Calculator className="w-6 h-6 text-indigo-500" />
-               </div>
-               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Faturamento</p>
-               <p className="text-base font-black text-[#0a192f] mt-1 uppercase">Variável via Horas (Timesheet)</p>
+             <div className="bg-gradient-to-b from-white to-gray-50 rounded-xl border border-gray-200 overflow-hidden shadow-sm flex flex-col">
+                <div className="bg-indigo-600 px-4 py-3 text-xs font-bold text-white uppercase text-center flex items-center justify-center gap-2">
+                   <Calculator className="w-4 h-4 text-indigo-200" />
+                   Saldo e Totais (Timesheet)
+                </div>
+                <div className="p-6 flex-1 flex flex-col gap-4 text-center justify-center items-center">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
+                        Total Considerado <br />
+                        <span className="text-[9px] text-gray-400/80 font-medium normal-case flex items-center justify-center max-w-[200px] mt-1">(Usa o Realizado se preenchido. Caso contrário, o Previsto)</span>
+                    </p>
+                    <p className="text-2xl font-black text-[#0a192f] mt-1">
+                        {(() => {
+                           const realizedValue = parseCurrency((contract as any).timesheet_realized_value);
+                           const forecastValue = parseCurrency((contract as any).timesheet_forecast_value);
+                           const valueToUse = realizedValue > 0 ? realizedValue : forecastValue;
+                           return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valueToUse);
+                        })()}
+                    </p>
+                </div>
              </div>
            )}
 

@@ -592,7 +592,78 @@ export function FeeSectionsCollapsible(props: FeeSectionsCollapsibleProps) {
                         <label htmlFor="timesheet_check_new" className="text-sm text-gray-700 cursor-pointer select-none">Utilizar Timesheet</label>
                     </div>
                 </div>
-                {isTimesheet && <div className="px-5 pb-3"><p className="text-[10px] text-orange-600 animate-in fade-in">* Ao ativar o Timesheet, os honorários fixos serão zerados no salvamento.</p></div>}
+                {isTimesheet && (
+                    <div className="px-5 pb-5 space-y-4 animate-in fade-in">
+                        <p className="text-[10px] text-orange-600">* Ao ativar o Timesheet, os honorários fixos serão zerados no salvamento.</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                                <label className="text-xs font-bold text-gray-700 block mb-1">Valor Previsto</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="R$ 0,00" 
+                                    className="w-full border border-gray-300 p-2.5 rounded-lg font-mono text-sm" 
+                                    value={safeString(formatForInput(formData.timesheet_forecast_value))} 
+                                    onChange={(e) => setFormData({ ...formData, timesheet_forecast_value: formatForInput(e.target.value) } as any)} 
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-gray-700 block mb-1">Total Realizado</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full border border-gray-200 p-2.5 rounded-lg font-mono text-sm bg-gray-50 text-gray-500 cursor-not-allowed select-none" 
+                                    readOnly 
+                                    value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Object.values(formData.timesheet_breakdown || {}).reduce((acc: number, val: any) => acc + parseCurrency(val), 0))} 
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-gray-700 block mb-1">Data do Pagamento</label>
+                                <input 
+                                    type="date"
+                                    className="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:border-[#1e3a8a] outline-none"
+                                    value={safeString((formData as any).timesheet_payment_date)}
+                                    onChange={(e) => setFormData({ ...formData, timesheet_payment_date: e.target.value } as any)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white">
+                            <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 font-bold text-xs text-[#0a192f] flex justify-between items-center">
+                                Detalhamento do Realizado por Nível
+                                <span className="text-[10px] text-gray-500 font-normal">Preencha os níveis para gerar o total realizado.</span>
+                            </div>
+                            <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {[
+                                    { label: 'Sócio', key: 'socio' as const },
+                                    { label: 'Consultor', key: 'consultor' as const },
+                                    { label: 'Advogado Sênior', key: 'advogado_senior' as const },
+                                    { label: 'Advogado Pleno', key: 'advogado_pleno' as const },
+                                    { label: 'Advogado Júnior', key: 'advogado_junior' as const },
+                                    { label: 'Estagiário', key: 'estagiario' as const }
+                                ].map((level) => (
+                                    <div key={level.key}>
+                                        <label className="text-[10px] font-bold text-gray-600 uppercase tracking-widest block mb-1">{level.label}</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="R$ 0,00" 
+                                            className="w-full border border-gray-300 p-2 rounded text-xs font-mono focus:border-[#1e3a8a] outline-none" 
+                                            value={safeString(formatForInput(formData.timesheet_breakdown?.[level.key]))} 
+                                            onChange={(e) => {
+                                                const updatedBreakdown = { ...(formData.timesheet_breakdown || {}), [level.key]: formatForInput(e.target.value) };
+                                                const sumRealized = Object.values(updatedBreakdown).reduce((acc: number, val: any) => acc + parseCurrency(val), 0);
+                                                setFormData({ 
+                                                    ...formData, 
+                                                    timesheet_breakdown: updatedBreakdown as any,
+                                                    timesheet_realized_value: sumRealized > 0 ? (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(sumRealized)) : ''
+                                                } as any);
+                                            }} 
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
