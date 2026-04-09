@@ -179,7 +179,7 @@ export function EfficiencyFunnel({ funil, evolucaoMensal, periodLabel }: Efficie
             </div>
             <div className="flex flex-col gap-0.5 mt-2 ml-1">
               <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{totalRejeitadas}</span>
-              <span className="text-xs font-bold text-gray-400">operações perdidas</span>
+              <span className="text-xs font-bold text-gray-400">prospects rejeitados</span>
             </div>
 
             <div className="mt-4 pt-4 border-t border-red-50 flex items-end justify-between gap-1">

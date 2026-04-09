@@ -165,20 +165,20 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
 
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
-          <div className='flex items-center gap-3 mb-2'>
+          <div className='flex items-center gap-3'>
             <div className='p-2 rounded-xl bg-[#0a192f] text-white shadow-lg'>
               <Camera className='w-5 h-5' />
             </div>
-            <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
-              Fotografia Financeira Total
-            </h2>
+            <div>
+              <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
+                Fotografia Financeira Total
+              </h2>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
+                Visão consolidada de oportunidades e receita
+              </p>
+            </div>
           </div>
-          <div className='flex items-center gap-4'>
-            <p className='text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hidden sm:block'>
-              Visão consolidada de oportunidades e receita
-            </p>
-            <CopyChartButton targetId="chart-volume-financeiro" />
-          </div>
+          <CopyChartButton targetId="chart-volume-financeiro" />
         </div>
 
         {/* Explicação Dinâmica */}
