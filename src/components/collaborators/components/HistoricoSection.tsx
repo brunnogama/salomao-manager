@@ -37,6 +37,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
     // --- AUDIT STATE ---
     const [auditHistory, setAuditHistory] = useState<any[]>([])
     const [loadingAudit, setLoadingAudit] = useState(false)
+    const [auditRefsMap, setAuditRefsMap] = useState<Record<string, string>>({})
 
     // --- CARGOS STATE ---
     const [roleHistory, setRoleHistory] = useState<any[]>([])
@@ -127,6 +128,45 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
             } else {
                 setAuditHistory(data || [])
             }
+
+            // POPULATE REF MAP FOR AUDIT DIFFS
+            const roleIds = new Set<string>();
+            const candIds = new Set<string>();
+            const userIdsSet = new Set<string>();
+
+            const collectIds = (obj: any) => {
+                if (!obj) return;
+                if (obj.role) roleIds.add(String(obj.role));
+                if (obj.candidato_id) candIds.add(String(obj.candidato_id));
+                ['leader_ids', 'partner_ids'].forEach(field => {
+                    if (obj[field]) {
+                        let arr = obj[field];
+                        if (typeof arr === 'string') { try { arr = JSON.parse(arr); } catch { arr = [] } }
+                        if (Array.isArray(arr)) arr.forEach((id: any) => userIdsSet.add(String(id)));
+                    }
+                });
+            };
+
+            for (const log of data || []) {
+                collectIds(log.old_data);
+                collectIds(log.new_data);
+            }
+
+            const refMap: Record<string, string> = {};
+            if (roleIds.size > 0) {
+                const { data: roles } = await supabase.from('roles').select('id, name').in('id', Array.from(roleIds));
+                roles?.forEach(r => refMap[String(r.id)] = r.name);
+            }
+            if (candIds.size > 0) {
+                const { data: cand } = await supabase.from('candidatos').select('id, nome').in('id', Array.from(candIds));
+                cand?.forEach(c => refMap[String(c.id)] = c.nome);
+            }
+            if (userIdsSet.size > 0) {
+                const { data: collabs } = await supabase.from('collaborators').select('id, name').in('id', Array.from(userIdsSet));
+                collabs?.forEach(c => refMap[String(c.id)] = c.name);
+            }
+            setAuditRefsMap(refMap);
+
         } catch (error) {
             console.error('Erro ao buscar auditoria:', error)
         } finally {
@@ -419,7 +459,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
         history_observations: 'Anotações (Histórico)',
         previsao_formatura: 'Previsão de Formatura',
         termino_contrato_estagio: 'Término Previsto do Contrato',
-        candidato_id: 'Candidato (ID)'
+        candidato_id: 'Candidato'
     }
 
     const formatDiffAudit = (log: any) => {
@@ -428,13 +468,33 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
         
         if (log.action === 'UPDATE' && log.old_data && log.new_data) {
             const changes = []
+            
+            const renderVal = (v: any) => {
+                if (v === null || v === undefined || v === '') return 'Vazio';
+                if (Array.isArray(v)) {
+                    if (v.length === 0) return 'Vazio';
+                    return v.map(id => auditRefsMap[String(id)] || String(id)).join(', ');
+                }
+                if (typeof v === 'string') {
+                    try {
+                        const parsed = JSON.parse(v);
+                        if (Array.isArray(parsed)) {
+                            if (parsed.length === 0) return 'Vazio';
+                            return parsed.map((id: any) => auditRefsMap[String(id)] || String(id)).join(', ');
+                        }
+                    } catch {}
+                }
+                if (typeof v === 'boolean') return v ? 'Sim' : 'Não';
+                return auditRefsMap[String(v)] || String(v);
+            }
+
             for (const key of Object.keys(log.new_data)) {
                 if (['updated_at', 'created_at', 'created_by', 'updated_by', 'updated_by_name', 'update_token', 'update_token_expires_at', 'foto_url'].includes(key)) continue
                 if (JSON.stringify(log.new_data[key]) !== JSON.stringify(log.old_data[key])) {
                      changes.push({
                          field: fieldDict[key] || key,
-                         oldVal: log.old_data[key] || 'Vazio',
-                         newVal: log.new_data[key] || 'Vazio'
+                         oldVal: renderVal(log.old_data[key]),
+                         newVal: renderVal(log.new_data[key])
                      })
                 }
             }
