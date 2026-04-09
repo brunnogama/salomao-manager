@@ -2420,135 +2420,170 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     </tr>
                   ) : (
                     <>
-                      {/* PRÉ-ADMISSÃO */}
-                      {baseFiltered.some(c => c.status === 'Pré-admissão') && (
-                        <tr className="bg-orange-50/80 cursor-pointer hover:bg-orange-100/50 transition-colors" onClick={() => {
-                          const isExpanding = !isPreAdmissaoExpanded;
-                          setIsPreAdmissaoExpanded(isExpanding);
-                          if (isExpanding) {
-                            setFilterStatus(['Pré-admissão']);
-                          } else {
-                            if (filterStatus.length === 1 && filterStatus[0] === 'Pré-admissão') {
-                              setFilterStatus(['active']);
-                            }
-                          }
-                        }}>
-                          <td colSpan={7} className="px-6 py-3 border-y border-orange-200">
-                            <div className="flex items-center justify-between">
-                              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-800 flex items-center gap-2">
-                                <Calendar className="h-4 w-4" /> Pré-admissão (Aguardando Data)
-                                <span className="bg-orange-200 text-orange-800 px-2 py-0.5 rounded-full text-[9px]">{baseFiltered.filter(c => c.status === 'Pré-admissão').length}</span>
-                              </p>
-                              {isPreAdmissaoExpanded ? <ChevronDown className="h-4 w-4 text-orange-600" /> : <ChevronRight className="h-4 w-4 text-orange-600" />}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                      {(isPreAdmissaoExpanded || filterStatus.includes('Pré-admissão')) && baseFiltered.filter(c => c.status === 'Pré-admissão').map((c) => {
+                      {/* PRÉ-ADMISSÃO - AÇÕES PENDENTES (Fura filtro) */}
+                      {(() => {
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
-                        const isDateReached = c.hire_date ? new Date(c.hire_date + 'T00:00:00') <= today : false;
                         
+                        const actionables = baseFiltered.filter(c => {
+                          if (c.status !== 'Pré-admissão') return false;
+                          const isDateReached = c.hire_date ? new Date(c.hire_date + 'T00:00:00') <= today : false;
+                          return isDateReached;
+                        });
+
+                        const awaitings = baseFiltered.filter(c => {
+                          if (c.status !== 'Pré-admissão') return false;
+                          const isDateReached = c.hire_date ? new Date(c.hire_date + 'T00:00:00') <= today : false;
+                          return !isDateReached;
+                        });
+
                         return (
-                          <tr key={c.id} onClick={() => handleRowClick(c)} className={`${isDateReached ? 'bg-orange-100 hover:bg-orange-200/50' : 'bg-orange-50/30 hover:bg-orange-50/60'} cursor-pointer transition-colors group`}>
-                            <td className="px-6 py-4 w-12 text-center" onClick={(e) => e.stopPropagation()}>
-                              <input
-                                type="checkbox"
-                                className="w-4 h-4 rounded text-orange-600 border-orange-300 focus:ring-orange-600 cursor-pointer"
-                                checked={selectedIds.includes(c.id)}
-                                onChange={(e) => handleSelect(e, c.id)}
-                              />
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
-                                <div>
-                                  <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    {c.matricula_interna && <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-orange-100 text-orange-700 border border-orange-200">{c.matricula_interna}</span>}
-                                    <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
+                          <>
+                            {/* LINHAS FIXAS (Ações Pendentes) */}
+                            {actionables.map(c => (
+                              <tr key={c.id} onClick={() => handleRowClick(c)} className="bg-orange-100 hover:bg-orange-200/50 cursor-pointer transition-colors group">
+                                <td className="px-6 py-4 w-12 text-center" onClick={(e) => e.stopPropagation()}>
+                                  <input
+                                    type="checkbox"
+                                    className="w-4 h-4 rounded text-orange-600 border-orange-300 focus:ring-orange-600 cursor-pointer"
+                                    checked={selectedIds.includes(c.id)}
+                                    onChange={(e) => handleSelect(e, c.id)}
+                                  />
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
+                                    <div>
+                                      <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        {c.matricula_interna && <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-orange-100 text-orange-700 border border-orange-200">{c.matricula_interna}</span>}
+                                        <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
+                                      </div>
+                                    </div>
                                   </div>
-                                  {c.perfil && c.perfil.split('\n').filter((l: string) => l.trim()).length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                      <span className="px-1.5 py-0.5 bg-orange-100/50 text-orange-700 border border-orange-200/50 rounded text-[8px] font-bold uppercase tracking-wider">
-                                        {c.perfil.split('\n').filter((l: string) => l.trim()).length} tag{c.perfil.split('\n').filter((l: string) => l.trim()).length !== 1 ? 's' : ''}
-                                      </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-orange-50 text-orange-700 border-orange-200 whitespace-nowrap">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                    Pré-admissão
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                  <div className="flex flex-col items-end gap-1.5" onClick={e => e.stopPropagation()}>
+                                    <span className="text-[10px] font-bold text-orange-800 uppercase tracking-wider bg-white/50 px-2 py-0.5 rounded border border-orange-200 whitespace-nowrap">Alterar status para Ativo?</span>
+                                    <div className="flex items-center gap-2">
+                                      <button 
+                                        onClick={async (e) => { 
+                                          e.stopPropagation(); 
+                                          try {
+                                            await supabase.from('collaborators').update({ status: 'active' }).eq('id', c.id);
+                                            fetchColaboradores();
+                                          } catch (error) {
+                                            console.error(error);
+                                          }
+                                        }}
+                                        className="px-3 py-1 bg-emerald-600 text-white rounded text-[10px] font-black uppercase hover:bg-emerald-700 transition"
+                                      >
+                                        Sim
+                                      </button>
+                                      <button 
+                                        onClick={(e) => { 
+                                          e.stopPropagation(); 
+                                          handleEdit(c, 4);
+                                        }}
+                                        className="px-3 py-1 bg-red-600 text-white rounded text-[10px] font-black uppercase hover:bg-red-700 transition"
+                                      >
+                                        Não
+                                      </button>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+
+                            {/* PRÉ-ADMISSÃO GAVETA (Aguardando Data) */}
+                            {awaitings.length > 0 && (
+                              <tr className="bg-orange-50/80 cursor-pointer hover:bg-orange-100/50 transition-colors" onClick={() => {
+                                const isExpanding = !isPreAdmissaoExpanded;
+                                setIsPreAdmissaoExpanded(isExpanding);
+                                if (isExpanding) {
+                                  setFilterStatus(['Pré-admissão']);
+                                } else {
+                                  if (filterStatus.length === 1 && filterStatus[0] === 'Pré-admissão') {
+                                    setFilterStatus(['active']);
+                                  }
+                                }
+                              }}>
+                                <td colSpan={7} className="px-6 py-3 border-y border-orange-200">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-800 flex items-center gap-2">
+                                      <Calendar className="h-4 w-4" /> Pré-admissão (Aguardando Data)
+                                      <span className="bg-orange-200 text-orange-800 px-2 py-0.5 rounded-full text-[9px]">{awaitings.length}</span>
+                                    </p>
+                                    {isPreAdmissaoExpanded ? <ChevronDown className="h-4 w-4 text-orange-600" /> : <ChevronRight className="h-4 w-4 text-orange-600" />}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                            {(isPreAdmissaoExpanded || filterStatus.includes('Pré-admissão')) && awaitings.map(c => (
+                              <tr key={c.id} onClick={() => handleRowClick(c)} className="bg-orange-50/30 hover:bg-orange-50/60 cursor-pointer transition-colors group">
+                                <td className="px-6 py-4 w-12 text-center" onClick={(e) => e.stopPropagation()}>
+                                  <input
+                                    type="checkbox"
+                                    className="w-4 h-4 rounded text-orange-600 border-orange-300 focus:ring-orange-600 cursor-pointer"
+                                    checked={selectedIds.includes(c.id)}
+                                    onChange={(e) => handleSelect(e, c.id)}
+                                  />
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
+                                    <div>
+                                      <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        {c.matricula_interna && <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-orange-100 text-orange-700 border border-orange-200">{c.matricula_interna}</span>}
+                                        <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-orange-50 text-orange-700 border-orange-200 whitespace-nowrap">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                    Pré-admissão
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                  {!isReadOnly && (
+                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
+                                      <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
                                     </div>
                                   )}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
-                              {(() => {
-                                const atu = (c as any).atuacoes?.name || c.atuacao || '';
-                                const tags = atu.split(',').filter((t: string) => t.trim().length > 0);
-                                if (tags.length > 1) {
-                                  return (
-                                    <div className="flex mt-1">
-                                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 rounded text-[9px] font-bold uppercase tracking-widest">
-                                        {tags.length} tags
-                                      </span>
-                                    </div>
-                                  );
-                                }
-                                return <p className="text-[10px] text-gray-400 font-medium mt-0.5 leading-snug">{toTitleCase(atu)}</p>;
-                              })()}
-                            </td>
-                            <td className="px-6 py-4">
-                              <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
-                            </td>
-                            <td className="px-6 py-4">
-                              <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-orange-50 text-orange-700 border-orange-200">
-                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                                Pré-admissão
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              {isDateReached ? (
-                                <div className="flex flex-col items-end gap-1.5" onClick={e => e.stopPropagation()}>
-                                  <span className="text-[10px] font-bold text-orange-800 uppercase tracking-wider bg-white/50 px-2 py-0.5 rounded border border-orange-200">Alterar status para Ativo?</span>
-                                  <div className="flex items-center gap-2">
-                                    <button 
-                                      onClick={async (e) => { 
-                                        e.stopPropagation(); 
-                                        try {
-                                          await supabase.from('collaborators').update({ status: 'active' }).eq('id', c.id);
-                                          fetchColaboradores();
-                                        } catch (error) {
-                                          console.error(error);
-                                        }
-                                      }}
-                                      className="px-3 py-1 bg-emerald-600 text-white rounded text-[10px] font-black uppercase hover:bg-emerald-700 transition"
-                                    >
-                                      Sim
-                                    </button>
-                                    <button 
-                                      onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        handleEdit(c, 4); // 4 is typical index for DadosCorporativosSection or close to it
-                                      }}
-                                      className="px-3 py-1 bg-red-600 text-white rounded text-[10px] font-black uppercase hover:bg-red-700 transition"
-                                    >
-                                      Não
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                !isReadOnly && (
-                                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
-                                  </div>
-                                )
-                              )}
-                            </td>
-                          </tr>
+                                </td>
+                              </tr>
+                            ))}
+                          </>
                         );
-                      })}
+                      })()}
 
                       {/* APROVADOS (PRÉ-CADASTRO) */}
                       {filtered.some(c => c.status === 'Pré-Cadastro') && (
@@ -2613,7 +2648,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-amber-100 text-amber-800 border-amber-300">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-amber-100 text-amber-800 border-amber-300 whitespace-nowrap">
                               <div className="w-1.5 h-1.5 rounded-full bg-amber-600" />
                               Pré-Cadastro
                             </span>
@@ -2692,7 +2727,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-green-50 text-green-700 border-green-200">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-green-50 text-green-700 border-green-200 whitespace-nowrap">
                               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
                               Ativo
                             </span>
@@ -2709,14 +2744,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       ))}
 
                       {/* INATIVOS */}
-                      {filtered.some(c => c.status !== 'active' && c.status !== 'Pré-Cadastro') && (
+                      {filtered.some(c => c.status !== 'active' && c.status !== 'Pré-Cadastro' && c.status !== 'Pré-admissão') && (
                         <tr className="bg-gray-50/50">
                           <td colSpan={7} className="px-6 py-3 border-y border-gray-100">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inativos</p>
                           </td>
                         </tr>
                       )}
-                      {filtered.filter(c => c.status !== 'active' && c.status !== 'Pré-Cadastro').map(c => (
+                      {filtered.filter(c => c.status !== 'active' && c.status !== 'Pré-Cadastro' && c.status !== 'Pré-admissão').map(c => (
                         <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
                           <td className="px-6 py-4 w-12 text-center">
                             {/* Disabled checkbox for inactive users */}
@@ -2741,7 +2776,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-red-50 text-red-700 border-red-200">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-red-50 text-red-700 border-red-200 whitespace-nowrap">
                               <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
                               Inativo
                             </span>
