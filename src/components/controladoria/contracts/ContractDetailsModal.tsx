@@ -636,9 +636,11 @@ export function ContractDetailsModal({
                                 { label: 'Adv. Júnior', key: 'advogado_junior' as const },
                                 { label: 'Estagiário', key: 'estagiario' as const }
                             ].map((level) => (
-                                <div key={level.key} className="p-3 flex flex-col text-center">
-                                    <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest mb-1">{level.label}</span>
-                                    <span className="text-xs font-bold text-gray-700">{(contract as any).timesheet_breakdown?.[level.key] ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_breakdown?.[level.key])) : 'R$ 0,00'}</span>
+                                <div key={level.key} className="p-3 flex flex-col h-full justify-between text-center gap-1.5">
+                                    <div className="flex-1 flex items-center justify-center">
+                                         <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">{level.label}</span>
+                                    </div>
+                                    <span className="text-xs font-bold text-gray-700 shrink-0">{(contract as any).timesheet_breakdown?.[level.key] ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_breakdown?.[level.key])) : 'R$ 0,00'}</span>
                                 </div>
                             ))}
                         </div>
