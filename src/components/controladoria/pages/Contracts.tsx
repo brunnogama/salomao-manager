@@ -868,32 +868,32 @@ export function Contracts() {
         </div>
 
         {/* Direita: Ícones redondos */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           {/* Exportar XLSX */}
           <button
             onClick={exportToExcel}
-            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#00b87c] hover:bg-gray-50 border border-gray-200 shrink-0"
             title="Exportar XLSX"
           >
-            <Download className="h-4 w-4" />
+            <Download className="w-5 h-5" />
           </button>
 
           {/* Novo Caso */}
           <button
             onClick={handleNew}
-            className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30"
+            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#1e3a8a] hover:bg-gray-50 border border-gray-200 shrink-0"
             title="Novo Caso"
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="w-5 h-5" />
           </button>
 
           {/* Notificações */}
           <div className="relative shrink-0">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className={`flex items-center justify-center w-10 h-10 rounded-full relative transition-all ${notifications.length > 0
-                ? 'bg-red-50 text-red-500 hover:bg-red-100'
-                : 'bg-white border border-gray-200 text-gray-400 hover:bg-gray-100'
+              className={`flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 border ${notifications.length > 0
+                ? 'bg-white text-red-500 hover:bg-gray-50 border-gray-200'
+                : 'bg-white text-gray-400 hover:bg-gray-50 border-gray-200'
                 }`}
             >
               <Bell className={`w-5 h-5 ${notifications.length > 0 ? 'animate-pulse' : ''}`} />
