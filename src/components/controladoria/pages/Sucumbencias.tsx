@@ -739,17 +739,17 @@ export function Sucumbencias() {
                 <div className="flex items-center gap-2 border-l border-gray-100 pl-3 ml-1">
                   <button
                     onClick={() => setIsClearModalOpen(true)}
-                    className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-red-500 rounded-full hover:bg-red-50 transition-all shadow-sm"
+                    className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-red-500 rounded-xl hover:bg-red-50 transition-all shadow-lg active:scale-95"
                     title="Limpar Base"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+                    className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-[#00b87c] rounded-xl hover:bg-emerald-50 transition-all shadow-lg active:scale-95"
                     title="Importar Relatório LegalOne"
                   >
-                    <Upload className="w-4 h-4" />
+                    <Upload className="w-5 h-5" />
                   </button>
                 </div>
               </div>

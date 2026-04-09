@@ -382,18 +382,18 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
                 XLSX.writeFile(wb, 'Clientes_Controladoria.xlsx');
               });
             }}
-            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+            className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-[#00b87c] rounded-xl hover:bg-emerald-50 transition-all shadow-lg active:scale-95"
             title="Exportar XLSX"
           >
-            <Download className="h-4 w-4" />
+            <Download className="w-5 h-5" />
           </button>
           {!isReadOnly && (
             <button
               onClick={handleNew}
-              className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30"
+              className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-[#1e3a8a] rounded-xl hover:bg-blue-50 transition-all shadow-lg active:scale-95"
               title="Novo Cliente"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="w-5 h-5" />
             </button>
           )}
         </div>

@@ -956,19 +956,19 @@ export function Volumetry() {
             <div className="flex items-center gap-2">
               <button 
                 onClick={handleExportDashboard} 
-                className="w-10 h-10 flex items-center justify-center bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-sm active:scale-95"
+                className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-[#00b87c] rounded-xl hover:bg-emerald-50 transition-all shadow-lg active:scale-95"
                 title="Exportar em XLSX"
               >
-                <FileSpreadsheet className="h-5 w-5" />
+                <FileSpreadsheet className="w-5 h-5" />
               </button>
               
               <button 
                 onClick={handleExportPDF} 
                 disabled={isExportingPDF}
-                className="w-10 h-10 flex items-center justify-center bg-red-600 text-white rounded-full hover:bg-red-700 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-red-500 rounded-xl hover:bg-red-50 transition-all shadow-lg active:scale-95 disabled:opacity-50"
                 title="Exportar Dashboard em PDF"
               >
-                {isExportingPDF ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileText className="h-5 w-5" />}
+                {isExportingPDF ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
               </button>
             </div>
           )}

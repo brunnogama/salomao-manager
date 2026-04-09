@@ -597,17 +597,17 @@ export function Compliance() {
           <div className="flex items-center gap-2 border-l border-gray-100 pl-3 ml-1">
             <button
               onClick={exportToExcel}
-              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+              className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-[#00b87c] rounded-xl hover:bg-emerald-50 transition-all shadow-lg active:scale-95"
               title="Exportar XLSX"
             >
-              <Download className="h-4 w-4" />
+              <Download className="w-5 h-5" />
             </button>
             <button
               onClick={handleCreateNew}
-              className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30"
+              className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-[#1e3a8a] rounded-xl hover:bg-blue-50 transition-all shadow-lg active:scale-95"
               title="Nova Certidão"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="w-5 h-5" />
             </button>
           </div>
         </div>
