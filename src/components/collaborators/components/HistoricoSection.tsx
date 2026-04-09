@@ -399,6 +399,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
         city: 'Cidade',
         state: 'Estado',
         cpf: 'CPF',
+        rg: 'RG',
         birthday: 'Data de Nascimento',
         tipo: 'Tipo',
         equipe: 'Equipe',
@@ -414,6 +415,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
         civil_status: 'Estado Civil',
         area: 'Área',
         email_pessoal: 'E-mail Pessoal',
+        observacoes: 'Anotações (Histórico)',
         history_observations: 'Anotações (Histórico)',
         previsao_formatura: 'Previsão de Formatura',
         termino_contrato_estagio: 'Término Previsto do Contrato',
@@ -427,7 +429,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
         if (log.action === 'UPDATE' && log.old_data && log.new_data) {
             const changes = []
             for (const key of Object.keys(log.new_data)) {
-                if (['updated_at', 'created_at', 'update_token', 'update_token_expires_at', 'foto_url'].includes(key)) continue
+                if (['updated_at', 'created_at', 'created_by', 'updated_by', 'updated_by_name', 'update_token', 'update_token_expires_at', 'foto_url'].includes(key)) continue
                 if (JSON.stringify(log.new_data[key]) !== JSON.stringify(log.old_data[key])) {
                      changes.push({
                          field: fieldDict[key] || key,
