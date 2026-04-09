@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase, Trash2, Calendar, Users, UserX, RefreshCcw } from 'lucide-react'
+import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase, Trash2, Calendar, Users, UserX, RefreshCcw, Network, ArrowUpRight, ArrowDownRight, User } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { Collaborator } from '../../../types/controladoria'
 import { supabase } from '../../../lib/supabase'
@@ -31,7 +31,7 @@ const formatDurationExtensive = (totalDays: number) => {
 }
 
 export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, isViewMode = false }: HistoricoSectionProps) {
-    const [activeSection, setActiveSection] = useState<'none' | 'roles' | 'warnings' | 'absences' | 'observations' | 'recruiting'>('roles')
+    const [activeSection, setActiveSection] = useState<'none' | 'roles' | 'warnings' | 'absences' | 'observations' | 'recruiting' | 'org'>('roles')
     const [loading, setLoading] = useState(false)
 
     // --- CARGOS STATE ---
@@ -41,6 +41,12 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
     // --- ADVERTÊNCIAS STATE ---
     const [warningReason, setWarningReason] = useState('')
     const [warningDesc, setWarningDesc] = useState('')
+
+    // --- ORGANOGRAMA STATE ---
+    const [hierarchyHistory, setHierarchyHistory] = useState<any[]>([])
+    const [superiors, setSuperiors] = useState<any[]>([])
+    const [inferiors, setInferiors] = useState<any[]>([])
+    const [loadingOrg, setLoadingOrg] = useState(false)
 
     // --- CYCLES STATE ---
     const [pendingDeleteEventId, setPendingDeleteEventId] = useState<string | null>(null)
@@ -63,8 +69,11 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
     useEffect(() => {
         if (formData.id) {
             fetchRoleHistory()
+            if (activeSection === 'org') {
+                fetchOrgData()
+            }
         }
-    }, [formData.id])
+    }, [formData.id, activeSection])
 
     useEffect(() => {
         if (formData.candidato_id || formData.email || formData.name) {
@@ -81,6 +90,59 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
             .order('change_date', { ascending: false })
 
         if (data) setRoleHistory(data)
+    }
+
+    const fetchOrgData = async () => {
+        if (!formData.id) return
+        setLoadingOrg(true)
+        try {
+            // 1. Fetch Superiors
+            const superiorIds = [...(formData.partner_ids || []), ...(formData.leader_ids || [])].filter(Boolean)
+            if (superiorIds.length > 0) {
+                const { data: supData } = await supabase
+                    .from('collaborators')
+                    .select('id, name, role, photo_url, status')
+                    .in('id', superiorIds)
+                setSuperiors(supData || [])
+            } else {
+                setSuperiors([])
+            }
+
+            // 2. Fetch Inferiors
+            const { data: infData } = await supabase
+                .from('collaborators')
+                .select('id, name, role, photo_url, status, leader_ids, partner_ids')
+                .or(`leader_ids.cs.{"${formData.id}"},partner_ids.cs.{"${formData.id}"}`) // Contains the id 
+                
+            setInferiors(infData || [])
+
+            // 3. Fetch History Timeline
+            // a) Suas próprias mudanças
+            const { data: ownHistory } = await supabase
+                .from('collaborator_hierarchy_history')
+                .select('*, collaborators(name)')
+                .eq('collaborator_id', formData.id)
+
+            // b) Mudanças de outros (quando este usuário foi adicionado/removido)
+            const { data: othersHistory } = await supabase
+                .from('collaborator_hierarchy_history')
+                .select('*, collaborators(name)')
+                .or(`new_leader_ids.cs.{"${formData.id}"},old_leader_ids.cs.{"${formData.id}"},new_partner_ids.cs.{"${formData.id}"},old_partner_ids.cs.{"${formData.id}"}`)
+
+            let allHistory = [...(ownHistory || []), ...(othersHistory || [])]
+            
+            // Remove duplicates and sort descending
+            const uniqueHistory = Array.from(new Map(allHistory.map(item => [item.id, item])).values())
+            uniqueHistory.sort((a, b) => new Date(b.change_date).getTime() - new Date(a.change_date).getTime())
+
+            setHierarchyHistory(uniqueHistory)
+
+        } catch (e: any) {
+            console.error(e)
+            toast.error('Erro ao carregar organograma.')
+        } finally {
+            setLoadingOrg(false)
+        }
     }
 
     const fetchRecruitingHistory = async () => {
@@ -239,7 +301,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
     return (
         <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
             {/* BUTTONS GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 {/* Cargos */}
                 <button
                     type="button"
@@ -325,6 +387,28 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Observações gerais</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'observations' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-amber-500" />
+                    </div>
+                </button>
+
+                {/* Organograma */}
+                <button
+                    type="button"
+                    onClick={() => setActiveSection(activeSection === 'org' ? 'none' : 'org')}
+                    className={`
+                        col-span-2 lg:col-span-1 relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
+                        ${activeSection === 'org'
+                            ? 'bg-indigo-50 border-indigo-200 shadow-md transform scale-[1.02]'
+                            : 'bg-white border-gray-100 hover:border-indigo-200 hover:shadow-lg'
+                        }
+                    `}
+                >
+                    <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'org' ? 'bg-indigo-200 text-indigo-700' : 'bg-indigo-50 text-indigo-500 group-hover:bg-indigo-100'}`}>
+                        <Network className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Cadeia</h3>
+                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Hierarquia</p>
+                    <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'org' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
+                        <ChevronRight className="h-5 w-5 text-indigo-500" />
                     </div>
                 </button>
             </div>
@@ -782,6 +866,149 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                 </div>
                             )}
                         </div>
+                    </div>
+                )}
+
+                {/* ORGANOGRAMA E HIERARQUIA PANEL */}
+                {activeSection === 'org' && (
+                    <div className="p-8 animate-in fade-in slide-in-from-top-4 duration-300 space-y-8">
+                        <div className="flex items-center gap-3 border-b border-indigo-100 pb-4">
+                            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><Network className="h-5 w-5" /></div>
+                            <h4 className="text-lg font-black text-[#0a192f]">Organograma e Cadeia Hierárquica</h4>
+                        </div>
+
+                        {loadingOrg ? (
+                            <div className="flex justify-center items-center py-12">
+                                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                            </div>
+                        ) : (
+                            <div className="space-y-10">
+                                {/* Visão Fotográfica Atual */}
+                                <div>
+                                    <h5 className="font-black text-[#0a192f] mb-4 uppercase tracking-widest text-xs flex items-center gap-2">
+                                        <ArrowUpRight className="w-4 h-4 text-gray-400" /> Superiores (Líderes e Sócios)
+                                    </h5>
+                                    {superiors.length > 0 ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                                            {superiors.map(sup => (
+                                                <div key={sup.id} className="flex items-center gap-4 p-4 border border-gray-100 hover:border-indigo-200 bg-white rounded-xl shadow-sm transition-all duration-300">
+                                                    {sup.photo_url ? (
+                                                        <img src={sup.photo_url} alt={sup.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
+                                                    ) : (
+                                                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                                                            <User className="w-6 h-6 text-gray-400" />
+                                                        </div>
+                                                    )}
+                                                    <div className="overflow-hidden">
+                                                        <p className="text-sm font-bold text-[#0a192f] truncate">{sup.name?.split(' ').slice(0, 2).join(' ')}</p>
+                                                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider truncate">{sup.role || 'Cargo não definido'}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 rounded-xl bg-gray-50 border border-dashed border-gray-200 text-center text-sm font-medium text-gray-400">
+                                            Nenhum superior direto registrado.
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <h5 className="font-black text-[#0a192f] mb-4 uppercase tracking-widest text-xs flex items-center gap-2">
+                                        <ArrowDownRight className="w-4 h-4 text-gray-400" /> Liderados (Inferiores)
+                                    </h5>
+                                    {inferiors.length > 0 ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                                            {inferiors.map(inf => (
+                                                <div key={inf.id} className="flex items-center gap-4 p-4 border border-gray-100 hover:border-emerald-200 bg-white rounded-xl shadow-sm transition-all duration-300">
+                                                    {inf.photo_url ? (
+                                                        <img src={inf.photo_url} alt={inf.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
+                                                    ) : (
+                                                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                                                            <User className="w-6 h-6 text-gray-400" />
+                                                        </div>
+                                                    )}
+                                                    <div className="overflow-hidden">
+                                                        <p className="text-sm font-bold text-[#0a192f] truncate">{inf.name?.split(' ').slice(0, 2).join(' ')}</p>
+                                                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider truncate">{inf.role || 'Cargo não definido'}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 rounded-xl bg-gray-50 border border-dashed border-gray-200 text-center text-sm font-medium text-gray-400">
+                                            Nenhum liderado registrado para este integrante.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Linha do Tempo */}
+                                <div>
+                                    <h5 className="font-black text-[#0a192f] mb-6 uppercase tracking-widest text-xs border-t border-gray-100 pt-6">Histórico de Alterações</h5>
+                                    {hierarchyHistory.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {hierarchyHistory.map((item, index) => {
+                                                const dateObj = new Date(item.change_date)
+                                                const dateText = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()} às ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`
+                                                const isSelf = item.collaborator_id === formData.id;
+                                                const subjectName = isSelf ? "Sua respectiva liderança" : `A equipe de ${item.collaborators?.name || 'Deletado'}`;
+                                                
+                                                return (
+                                                    <div key={item.id || index} className="flex gap-4 p-5 border border-indigo-100 rounded-xl bg-indigo-50/20 hover:bg-indigo-50/50 transition-colors relative shadow-sm">
+                                                        <div className="absolute left-6 top-14 bottom-0 w-px bg-indigo-100 hidden md:block"></div>
+                                                        <div className="flex-shrink-0 z-10 w-10 h-10 bg-white border border-indigo-200 text-indigo-500 rounded-full flex items-center justify-center">
+                                                            {isSelf ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
+                                                                <h6 className="text-[#0a192f] font-bold text-sm">
+                                                                    {isSelf ? 'Mudança nas lideranças superiores' : 'Mudança nos liderados diretos'}
+                                                                </h6>
+                                                                <span className="text-xs text-gray-500 font-medium bg-white px-2 py-1 rounded shadow-sm border border-gray-100">
+                                                                    {dateText}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-gray-600 mb-3">{subjectName} sofreu alteração.</p>
+                                                            
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10px]">
+                                                                <div className="bg-red-50/50 border border-red-100 rounded-lg p-3">
+                                                                    <p className="font-black text-red-400 uppercase tracking-widest mb-1">Líderes Removidos / Antigos</p>
+                                                                    <div className="text-gray-600 font-medium whitespace-pre-wrap break-all">
+                                                                        {(() => {
+                                                                            const p = item.old_partner_ids || [];
+                                                                            const l = item.old_leader_ids || [];
+                                                                            const all = [...p, ...l].filter(Boolean);
+                                                                            return all.length > 0 ? `Total: ${all.length} Líderes / IDs` : 'Nenhum original.';
+                                                                        })()}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="bg-emerald-50/50 border border-emerald-100 rounded-lg p-3">
+                                                                    <p className="font-black text-emerald-500 uppercase tracking-widest mb-1">Líderes Adicionados / Novos</p>
+                                                                    <div className="text-gray-600 font-medium whitespace-pre-wrap break-all">
+                                                                        {(() => {
+                                                                            const p = item.new_partner_ids || [];
+                                                                            const l = item.new_leader_ids || [];
+                                                                            const all = [...p, ...l].filter(Boolean);
+                                                                            return all.length > 0 ? `Total: ${all.length} Líderes / IDs` : 'Nenhum novo.';
+                                                                        })()}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <p className="text-[9px] text-gray-400 mt-3 text-right">Editado por: {item.changed_by_name || 'Sistema'}</p>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-12">
+                                            <Network className="w-12 h-12 text-gray-300 mx-auto mb-3 opacity-50" />
+                                            <p className="text-sm font-medium text-gray-500">Nenhum histórico de hierarquia encontrado para este integrante.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
