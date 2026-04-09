@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Building2, Loader2, RefreshCw, MapPin, Layout, List, Printer, Maximize, Minimize, X } from 'lucide-react';
+import { Building2, Loader2, RefreshCw, MapPin, Layout, List, FileDown, Maximize, Minimize, X } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
@@ -476,7 +476,7 @@ export function RHPostos() {
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 xl:pb-0 w-full xl:w-auto justify-end mt-2 xl:mt-0 custom-scrollbar">
+        <div className="flex items-center gap-3 shrink-0 w-full xl:w-auto justify-end mt-2 xl:mt-0 flex-wrap">
           
           {/* Locais Tabs */}
           {viewMode === 'table' && postos.length > 0 && locations.length > 0 && (
@@ -529,9 +529,9 @@ export function RHPostos() {
                 onClick={handleExportPDF}
                 disabled={isExportingPDF}
                 title="Exportar Mapa em PDF A3"
-                className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap bg-gradient-to-r from-red-600 to-red-500 text-white shadow-sm hover:from-red-700 hover:to-red-600 disabled:opacity-50"
+                className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#ff4d4f] hover:bg-gray-50 border border-gray-200 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isExportingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />} PDF
+                {isExportingPDF ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileDown className="w-5 h-5" />}
               </button>
             </div>
           )}
@@ -541,11 +541,10 @@ export function RHPostos() {
               <button
                 onClick={handleExportTablePDF}
                 disabled={isExportingTable}
-                className="flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-800 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50 shrink-0"
                 title="Exportar Tabela em PDF"
+                className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#ff4d4f] hover:bg-gray-50 border border-gray-200 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isExportingTable ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
-                PDF
+                {isExportingTable ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileDown className="w-5 h-5" />}
               </button>
             )}
             <button

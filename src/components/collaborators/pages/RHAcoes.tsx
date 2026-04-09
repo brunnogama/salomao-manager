@@ -137,9 +137,10 @@ export function RHAcoes() {
         <div className="flex items-center gap-3 shrink-0 w-full md:w-auto mt-2 md:mt-0 justify-end flex-wrap">
           <button
             onClick={() => { setSelectedAction(null); setIsModalOpen(true) }}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#1e3a8a] hover:bg-gray-50 border border-gray-200 shrink-0"
+            title="Nova Ação"
           >
-            <Plus className="h-4 w-4" /> Nova Ação
+            <Plus className="h-5 w-5" />
           </button>
         </div>
       </div>

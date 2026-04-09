@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffe
 import { supabase } from '../../../lib/supabase';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2, ArrowUp, Download, CheckSquare, Square } from 'lucide-react';
+import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, FileDown, X, Briefcase, Mail, Phone, Tag, Building2, ArrowUp, Download, CheckSquare, Square } from 'lucide-react';
 import { AlertModal } from '../../../components/ui/AlertModal';
 import XLSX from 'xlsx-js-style';
 import { createPortal } from 'react-dom';
@@ -1853,8 +1853,7 @@ export function Organograma() {
         <div
             className={`${isMaximized ? 'fixed inset-0 z-[100] bg-white w-full h-full p-6 space-y-6 overflow-auto' : 'p-8 w-full space-y-8'} animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen print:p-0 print:bg-white`}>
 
-            {/* Header Section (Padrão Recrutamento) */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
 
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-2">
@@ -1868,7 +1867,7 @@ export function Organograma() {
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto justify-end mt-2 md:mt-0 custom-scrollbar">
+                <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end mt-2 md:mt-0 flex-wrap">
                     {/* Tabs (Padrão Recrutamento) */}
                     <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
                         <button
@@ -1933,7 +1932,7 @@ export function Organograma() {
                             className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-red-500 hover:bg-gray-50 border border-gray-200 shrink-0"
                             title="Exportar PDF"
                         >
-                            <Printer className="w-4 h-4" />
+                            <FileDown className="w-4 h-4" />
                         </button>
 
                         </div>

@@ -754,7 +754,7 @@ export function Calendario() {
         </div>
 
         {/* Right: Actions and Tabs */}
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto justify-end mt-2 md:mt-0 custom-scrollbar">
+        <div className="flex flex-wrap items-start md:items-center gap-3 shrink-0 w-full md:w-auto mt-2 md:mt-0 justify-end">
 
           {/* ABAS */}
           <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0 gap-1 overflow-x-auto">
