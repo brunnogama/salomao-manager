@@ -29,6 +29,7 @@ export function ClientFormSection(props: ClientFormSectionProps) {
   } = props;
 
   const [carteiraOptions, setCarteiraOptions] = useState<{label: string, value: string}[]>([]);
+  const [isAddingCarteira, setIsAddingCarteira] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCarteiras = async () => {
@@ -106,14 +107,37 @@ export function ClientFormSection(props: ClientFormSectionProps) {
             {formData.client_name?.toLowerCase().includes('licks') && (
                 <div className="mt-4 animate-in fade-in slide-in-from-top-2 bg-slate-50 border border-slate-200 p-4 rounded-lg shadow-sm">
                     <div className="max-w-[400px]">
-                        <CustomSelect 
-                            label="Carteira" 
-                            value={formData.carteira || ''} 
-                            onChange={(val) => setFormData({ ...formData, carteira: val })}
-                            options={carteiraOptions}
-                            placeholder="Selecione ou digite para adicionar"
-                            allowCustomValue={true}
-                        />
+                        {!isAddingCarteira ? (
+                          <CustomSelect 
+                              label="Carteira" 
+                              value={formData.carteira || ''} 
+                              onChange={(val) => setFormData({ ...formData, carteira: val })}
+                              options={carteiraOptions}
+                              placeholder="Selecione ou digite para adicionar"
+                              allowCustomValue={true}
+                              onAction={() => setIsAddingCarteira(true)}
+                              actionLabel="Adicionar Nova Carteira"
+                          />
+                        ) : (
+                          <div className="animate-in fade-in zoom-in-95 duration-200">
+                              <label className="block text-xs font-bold text-salomao-blue uppercase tracking-widest mb-1.5 flex items-center justify-between">
+                                  <span>Cadastrar Nova Carteira</span>
+                                  <button type="button" onClick={() => setIsAddingCarteira(false)} className="text-gray-400 hover:text-red-500"><X className="w-3.5 h-3.5"/></button>
+                              </label>
+                              <div className="flex gap-2">
+                                <input 
+                                    autoFocus
+                                    type="text" 
+                                    className="flex-1 border border-blue-300 p-2 text-sm bg-white focus:border-salomao-blue focus:ring-1 focus:ring-salomao-blue outline-none rounded-lg" 
+                                    value={formData.carteira || ''}
+                                    onChange={(e) => setFormData({ ...formData, carteira: e.target.value })}
+                                    placeholder="Digite o nome..."
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setIsAddingCarteira(false); } }}
+                                />
+                                <button type="button" onClick={() => setIsAddingCarteira(false)} className="px-4 bg-salomao-blue text-white rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition-colors">OK</button>
+                              </div>
+                          </div>
+                        )}
                     </div>
                 </div>
             )}
