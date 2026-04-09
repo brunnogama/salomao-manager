@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, Fragment } from 'react';
-import { Download, ShieldCheck, Clock, Eye, Trash2, Plus, Loader2, LayoutDashboard, Database, BarChart3, FileSearch, Edit, Building2, AlertTriangle } from 'lucide-react';
+import { Download, FileDown, ShieldCheck, Clock, Eye, Trash2, Plus, Loader2, LayoutDashboard, Database, BarChart3, FileSearch, Edit, Building2, AlertTriangle } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -600,7 +600,7 @@ export function Compliance() {
               className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-[#00b87c] rounded-xl hover:bg-emerald-50 transition-all shadow-lg active:scale-95"
               title="Exportar XLSX"
             >
-              <Download className="w-5 h-5" />
+              <FileDown className="w-5 h-5" />
             </button>
             <button
               onClick={handleCreateNew}

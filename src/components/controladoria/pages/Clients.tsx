@@ -8,7 +8,7 @@ import {
   Building,
   User,
   Briefcase,
-  Download,
+  FileDown,
   Gift
 } from 'lucide-react';
 import { Client } from '../../../types/controladoria';
@@ -385,7 +385,7 @@ export function Clients({ initialFilters }: ClientsProps = {}) {
             className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-[#00b87c] rounded-xl hover:bg-emerald-50 transition-all shadow-lg active:scale-95"
             title="Exportar XLSX"
           >
-            <Download className="w-5 h-5" />
+            <FileDown className="w-5 h-5" />
           </button>
           {!isReadOnly && (
             <button

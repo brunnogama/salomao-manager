@@ -6,7 +6,7 @@ import {
     Award, 
     Calendar,
     Loader2,
-    Upload,
+    Upload, FileUp,
     FileSpreadsheet,
     FileText,
     Trash2,
@@ -749,7 +749,7 @@ export function Sucumbencias() {
                     className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 text-[#00b87c] rounded-xl hover:bg-emerald-50 transition-all shadow-lg active:scale-95"
                     title="Importar Relatório LegalOne"
                   >
-                    <Upload className="w-5 h-5" />
+                    <FileUp className="w-5 h-5" />
                   </button>
                 </div>
               </div>
@@ -828,7 +828,7 @@ export function Sucumbencias() {
                                         onClick={() => fileInputRef.current?.click()}
                                         className="px-6 py-3 bg-[#0a192f] hover:bg-[#112240] text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 text-sm"
                                     >
-                                        <Upload className="w-4 h-4" />
+                                        <FileUp className="w-4 h-4" />
                                         Selecionar Planilha
                                     </button>
                                     
