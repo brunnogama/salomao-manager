@@ -129,7 +129,7 @@ export function Dashboard({ }: Props) {
       let sumTotalSuccess = 0;
 
       const baseHeader = [
-        'ID', 'Status', 'Cliente', 'Sócio', 'HON/PROP', 'Data Relevante', 'Local Faturamento',
+        'ID', 'Status', 'Cliente', 'Carteira', 'Sócio', 'HON/PROP', 'Data Relevante', 'Local Faturamento',
         'Timesheet (Previsto)', 'Timesheet (Realizado)', 'Data Pagtº (Realizado)',
         'Pró-Labore', 'Cláusula Pró-Labore',
         'Outros Honorários', 'Cláusula Outros',
@@ -217,6 +217,7 @@ export function Dashboard({ }: Props) {
           c.display_id,
           getStatusLabel(c.status),
           c.client_name,
+          c.carteira || '-',
           getPartnerDisplay(c, partners || []),
           getHonDisplay(c),
           safeDate(getRelevantDate(c))?.toLocaleDateString('pt-BR') || '-',
@@ -269,7 +270,7 @@ export function Dashboard({ }: Props) {
         clauses.forEach(clause => {
           baseRows.push([
             c.display_id,
-            '', '', '', '', '', '',
+            '', '', '', '', '', '', '',
             '', '', '', // Timesheet Previsto, Realizado, Data Pagamento
             '', clause.type === 'Extra Pró-Labore' ? clause.text : '',
             '', '',
@@ -286,7 +287,7 @@ export function Dashboard({ }: Props) {
       });
 
       const totalRow = [
-        'TOTAIS', '', '', '', '', '', '',
+        'TOTAIS', '', '', '', '', '', '', '',
         // The two timesheet columns:
         0, 0, '',
         sumPro, '', sumOther, '', sumFixed, '', sumFixedPontual, '', sumInter, '', sumFinal, '', sumTotalSuccess,
@@ -295,8 +296,8 @@ export function Dashboard({ }: Props) {
         ''
       ];
       // Fix sum for totalRow
-      totalRow[7] = baseContracts.reduce((acc: number, c: any) => acc + (c.timesheet ? parseCurrency(c.timesheet_forecast_value) : 0), 0);
-      totalRow[8] = baseContracts.reduce((acc: number, c: any) => acc + (c.timesheet ? parseCurrency(c.timesheet_realized_value) : 0), 0);
+      totalRow[8] = baseContracts.reduce((acc: number, c: any) => acc + (c.timesheet ? parseCurrency(c.timesheet_forecast_value) : 0), 0);
+      totalRow[9] = baseContracts.reduce((acc: number, c: any) => acc + (c.timesheet ? parseCurrency(c.timesheet_realized_value) : 0), 0);
 
       const dataWithHeader = [baseHeader, ...baseRows, [], totalRow];
       const wsBase = XLSX.utils.aoa_to_sheet(dataWithHeader);

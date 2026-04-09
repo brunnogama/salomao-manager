@@ -886,6 +886,11 @@ export function ContractDetailsModal({
               <div className="flex items-center gap-3 w-full">
                  <h1 className="text-2xl sm:text-3xl font-black text-[#0a192f] tracking-tight truncate max-w-[300px] sm:max-w-[500px] xl:max-w-[700px]">
                    {contract.client_name}
+                   {contract.client_name?.toLowerCase().includes('licks') && contract.carteira && (
+                       <span className="ml-3 text-sm font-bold bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-1 rounded-md uppercase align-middle whitespace-nowrap">
+                         Carteira: {contract.carteira}
+                       </span>
+                   )}
                  </h1>
               </div>
               <div className="flex items-center gap-3">
@@ -1030,7 +1035,14 @@ export function ContractDetailsModal({
                     </div>
                     <div>
                       <label className="text-xs text-gray-400 block font-bold uppercase tracking-wider">Nome do Cliente</label>
-                      <div className="text-gray-800 font-bold mt-1 text-base">{contract.client_name}</div>
+                      <div className="text-gray-800 font-bold mt-1 text-base flex flex-col items-start gap-1">
+                        {contract.client_name}
+                        {contract.client_name?.toLowerCase().includes('licks') && contract.carteira && (
+                           <div className="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-md">
+                             Carteira: {contract.carteira}
+                           </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label className="text-xs text-gray-400 block font-bold uppercase tracking-wider">Área do Direito</label>

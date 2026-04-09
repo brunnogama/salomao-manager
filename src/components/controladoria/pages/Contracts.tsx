@@ -539,7 +539,7 @@ export function Contracts() {
     let sumTotalContrato = 0;
 
     const header = [
-      'ID', 'Status', 'Cliente', 'Sócio', 'HON/PROP', 'Data Relevante', 'Local Faturamento',
+      'ID', 'Status', 'Cliente', 'Carteira', 'Sócio', 'HON/PROP', 'Data Relevante', 'Local Faturamento',
       'Total Pró-Labore', 'Total Êxito Intermediário', 'Total Êxito Final', 'Total Outros Honorários', 'Fixo Mensal', 'Timesheet (Previsto)', 'Timesheet (Realizado)', 'Data Pagtº (Realizado)', 'Total Contrato',
       'Valores em %',
       'Posição do Cliente', 'Nº Processo', 'UF (Processo)', 'Tribunal', 'Comarca', 'Vara',
@@ -661,6 +661,7 @@ export function Contracts() {
         c.display_id,
         getStatusLabel(c.status),
         c.client_name,
+        c.carteira || '-',
         getPartnerDisplay(c),
         getHonDisplay(c),
         safeDate(getRelevantDate(c))?.toLocaleDateString('pt-BR') || '-',

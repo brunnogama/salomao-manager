@@ -81,6 +81,23 @@ export function ClientFormSection(props: ClientFormSectionProps) {
                 actionLabel="Gerenciar Clientes"
                 placeholder="Selecione ou digite o nome"
             />
+            {formData.client_name?.toLowerCase().includes('licks') && (
+                <div className="mt-4 animate-in fade-in slide-in-from-top-2 bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">
+                        Carteira (Caso / Processo principal)
+                    </label>
+                    <input 
+                        type="text" 
+                        placeholder="Ex: Apple vs Ericsson"
+                        className="w-full border border-gray-300 p-2.5 rounded-lg text-sm bg-white focus:border-salomao-blue outline-none" 
+                        value={formData.carteira || ''}
+                        onChange={(e) => setFormData({ ...formData, carteira: e.target.value })}
+                    />
+                    <p className="text-[10px] text-gray-500 mt-1 italic">
+                        Identificador único desta carteira para segregação de Timesheet.
+                    </p>
+                </div>
+            )}
             {duplicateClientCases.length > 0 && (
                 <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2.5 flex flex-col gap-1">
                     <span className="text-xs text-blue-700 font-bold flex items-center">

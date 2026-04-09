@@ -299,6 +299,7 @@ export interface Contract {
   has_no_cnpj?: boolean;
   client_name: string;
   client_position?: 'Autor' | 'Réu';
+  carteira?: string;
   area?: string;
   uf?: string;
   billing_location?: string;
