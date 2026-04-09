@@ -1,5 +1,6 @@
-import React from 'react';
-import { Search, Settings, AlertCircle, Link as LinkIcon, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Settings, AlertCircle, Link as LinkIcon, Plus } from 'lucide-react';
+import { supabase } from '../../../../lib/supabase';
 import { Contract } from '../../../../types/controladoria'; 
 import { CustomSelect } from '../../ui/CustomSelect'; 
 import { CustomMultiSelect } from '../../ui/CustomMultiSelect'; 
@@ -26,6 +27,27 @@ export function ClientFormSection(props: ClientFormSectionProps) {
     duplicateClientCases, getStatusLabel, areaOptions,
     partnerSelectOptions, onOpenPartnerManager
   } = props;
+
+  const [carteiraOptions, setCarteiraOptions] = useState<{label: string, value: string}[]>([]);
+
+  useEffect(() => {
+    const fetchCarteiras = async () => {
+      if (formData.client_name?.toLowerCase().includes('licks')) {
+         const { data } = await supabase
+            .from('contracts')
+            .select('carteira')
+            .ilike('client_name', '%Licks%')
+            .not('carteira', 'is', null)
+            .neq('carteira', '');
+         
+         if (data) {
+             const uniqueCarteiras = Array.from(new Set(data.map(d => d.carteira)));
+             setCarteiraOptions(uniqueCarteiras.map(c => ({ label: c, value: c })));
+         }
+      }
+    };
+    fetchCarteiras();
+  }, [formData.client_name]);
 
   const filteredPartnerOptions = partnerSelectOptions.filter(o => o.value !== '' && o.value !== formData.partner_id);
 
@@ -82,20 +104,17 @@ export function ClientFormSection(props: ClientFormSectionProps) {
                 placeholder="Selecione ou digite o nome"
             />
             {formData.client_name?.toLowerCase().includes('licks') && (
-                <div className="mt-4 animate-in fade-in slide-in-from-top-2 bg-slate-50 border border-slate-200 p-3 rounded-lg">
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">
-                        Carteira (Caso / Processo principal)
-                    </label>
-                    <input 
-                        type="text" 
-                        placeholder="Ex: Apple vs Ericsson"
-                        className="w-full border border-gray-300 p-2.5 rounded-lg text-sm bg-white focus:border-salomao-blue outline-none" 
-                        value={formData.carteira || ''}
-                        onChange={(e) => setFormData({ ...formData, carteira: e.target.value })}
-                    />
-                    <p className="text-[10px] text-gray-500 mt-1 italic">
-                        Identificador único desta carteira para segregação de Timesheet.
-                    </p>
+                <div className="mt-4 animate-in fade-in slide-in-from-top-2 bg-slate-50 border border-slate-200 p-4 rounded-lg shadow-sm">
+                    <div className="max-w-[400px]">
+                        <CustomSelect 
+                            label="Carteira" 
+                            value={formData.carteira || ''} 
+                            onChange={(val) => setFormData({ ...formData, carteira: val })}
+                            options={carteiraOptions}
+                            placeholder="Selecione ou digite para adicionar"
+                            allowCustomValue={true}
+                        />
+                    </div>
                 </div>
             )}
             {duplicateClientCases.length > 0 && (
