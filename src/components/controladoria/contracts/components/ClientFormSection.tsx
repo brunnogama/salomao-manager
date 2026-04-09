@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Settings, AlertCircle, Link as LinkIcon, Plus } from 'lucide-react';
+import { Search, Settings, AlertCircle, Link as LinkIcon, Plus, X } from 'lucide-react';
 import { supabase } from '../../../../lib/supabase';
 import { Contract } from '../../../../types/controladoria'; 
 import { CustomSelect } from '../../ui/CustomSelect'; 
