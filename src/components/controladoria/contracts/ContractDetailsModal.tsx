@@ -606,16 +606,17 @@ export function ContractDetailsModal({
                                 <p className="text-xs font-medium text-indigo-600/80 mt-1 pl-0.5">Apuração financeira baseada em horas trabalhadas.</p>
                             </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto overflow-hidden">
-                            <div className="bg-white px-5 py-3 rounded-xl border border-indigo-100 shadow-sm flex flex-col flex-1 min-w-0 text-center sm:text-left">
-                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest truncate">Valor Previsto</span>
-                                <span className="text-lg font-black text-[#0a192f] mt-1 truncate">{(contract as any).timesheet_forecast_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_forecast_value)) : 'R$ 0,00'}</span>
+                        <div className="flex flex-col gap-3 w-full xl:min-w-[220px]">
+                            <div className="bg-white px-5 py-3 rounded-xl border border-indigo-100 shadow-sm flex flex-col text-left">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Valor Previsto</span>
+                                <span className="text-lg font-black text-[#0a192f] mt-1 whitespace-nowrap">{(contract as any).timesheet_forecast_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_forecast_value)) : 'R$ 0,00'}</span>
                             </div>
-                            <div className="bg-indigo-600 px-5 py-3 rounded-xl border border-indigo-700 shadow-sm flex flex-col flex-1 min-w-0 text-center sm:text-left text-white">
-                                <span className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest truncate">Total Realizado</span>
-                                <span className="text-lg font-black mt-1 truncate">{(contract as any).timesheet_realized_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_realized_value)) : 'R$ 0,00'}</span>
+                            <div className="bg-indigo-600 px-5 py-3 rounded-xl border border-indigo-700 shadow-sm flex flex-col text-left text-white relative overflow-hidden">
+                                <div className="absolute -right-4 -top-4 w-16 h-16 bg-white opacity-5 rounded-full blur-xl"></div>
+                                <span className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest relative z-10">Total Realizado</span>
+                                <span className="text-lg font-black mt-1 whitespace-nowrap relative z-10">{(contract as any).timesheet_realized_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseCurrency((contract as any).timesheet_realized_value)) : 'R$ 0,00'}</span>
                                 {(contract as any).timesheet_payment_date && (
-                                    <span className="text-[9px] font-medium text-indigo-300 mt-1 uppercase truncate" title={`Pago em: ${safeDate((contract as any).timesheet_payment_date)?.toLocaleDateString('pt-BR')}`}>Pago em: {safeDate((contract as any).timesheet_payment_date)?.toLocaleDateString('pt-BR')}</span>
+                                    <span className="text-[9px] font-medium text-indigo-300 mt-1 uppercase relative z-10">Pago em: {safeDate((contract as any).timesheet_payment_date)?.toLocaleDateString('pt-BR')}</span>
                                 )}
                             </div>
                         </div>
