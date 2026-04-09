@@ -101,7 +101,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
             if (superiorIds.length > 0) {
                 const { data: supData } = await supabase
                     .from('collaborators')
-                    .select('id, name, role, photo_url, status')
+                    .select('id, name, role, foto_url, status')
                     .in('id', superiorIds)
                 setSuperiors(supData || [])
             } else {
@@ -111,12 +111,12 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
             // 2. Fetch Inferiors
             const { data: infLeader } = await supabase
                 .from('collaborators')
-                .select('id, name, role, photo_url, status, leader_ids, partner_ids')
+                .select('id, name, role, foto_url, status, leader_ids, partner_ids')
                 .contains('leader_ids', [formData.id])
 
             const { data: infPartner } = await supabase
                 .from('collaborators')
-                .select('id, name, role, photo_url, status, leader_ids, partner_ids')
+                .select('id, name, role, foto_url, status, leader_ids, partner_ids')
                 .contains('partner_ids', [formData.id])
 
             const merged = [...(infLeader || []), ...(infPartner || [])]
@@ -132,11 +132,12 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
             // b) Mudanças de outros (quando este usuário foi adicionado/removido)
             // Query em paralelo para buscar de forma segura em colunas JSONB
+            const jsonParam = `["${formData.id}"]`
             const queries = [
-                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('new_leader_ids', [formData.id]),
-                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('old_leader_ids', [formData.id]),
-                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('new_partner_ids', [formData.id]),
-                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('old_partner_ids', [formData.id])
+                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('new_leader_ids', jsonParam),
+                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('old_leader_ids', jsonParam),
+                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('new_partner_ids', jsonParam),
+                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('old_partner_ids', jsonParam)
             ]
             
             const results = await Promise.all(queries)
@@ -908,8 +909,8 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                                             {superiors.map(sup => (
                                                 <div key={sup.id} className="flex items-center gap-4 p-4 border border-gray-100 hover:border-indigo-200 bg-white rounded-xl shadow-sm transition-all duration-300">
-                                                    {sup.photo_url ? (
-                                                        <img src={sup.photo_url} alt={sup.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
+                                                    {sup.foto_url ? (
+                                                        <img src={sup.foto_url} alt={sup.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
                                                     ) : (
                                                         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
                                                             <User className="w-6 h-6 text-gray-400" />
@@ -937,8 +938,8 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                                             {inferiors.map(inf => (
                                                 <div key={inf.id} className="flex items-center gap-4 p-4 border border-gray-100 hover:border-emerald-200 bg-white rounded-xl shadow-sm transition-all duration-300">
-                                                    {inf.photo_url ? (
-                                                        <img src={inf.photo_url} alt={inf.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
+                                                    {inf.foto_url ? (
+                                                        <img src={inf.foto_url} alt={inf.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
                                                     ) : (
                                                         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
                                                             <User className="w-6 h-6 text-gray-400" />
