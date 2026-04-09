@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase, Trash2, Calendar, Users, UserX, RefreshCcw, Network, ArrowUpRight, ArrowDownRight, User } from 'lucide-react'
+import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase, Trash2, Calendar, Users, UserX, RefreshCcw, Network, ArrowUpRight, ArrowDownRight, User, Activity, ArrowRight } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { Collaborator } from '../../../types/controladoria'
 import { supabase } from '../../../lib/supabase'
@@ -31,8 +31,12 @@ const formatDurationExtensive = (totalDays: number) => {
 }
 
 export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, isViewMode = false }: HistoricoSectionProps) {
-    const [activeSection, setActiveSection] = useState<'none' | 'roles' | 'warnings' | 'absences' | 'observations' | 'recruiting' | 'org'>('roles')
+    const [activeSection, setActiveSection] = useState<'none' | 'roles' | 'warnings' | 'absences' | 'observations' | 'recruiting' | 'org' | 'audits'>('roles')
     const [loading, setLoading] = useState(false)
+
+    // --- AUDIT STATE ---
+    const [auditHistory, setAuditHistory] = useState<any[]>([])
+    const [loadingAudit, setLoadingAudit] = useState(false)
 
     // --- CARGOS STATE ---
     const [roleHistory, setRoleHistory] = useState<any[]>([])
@@ -71,6 +75,8 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
             fetchRoleHistory()
             if (activeSection === 'org') {
                 fetchOrgData()
+            } else if (activeSection === 'audits') {
+                fetchAuditHistory()
             }
         }
     }, [formData.id, activeSection])
@@ -90,6 +96,42 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
             .order('change_date', { ascending: false })
 
         if (data) setRoleHistory(data)
+    }
+
+    const fetchAuditHistory = async () => {
+        if (!formData.id) return
+        setLoadingAudit(true)
+        try {
+            const { data, error } = await supabase
+                .from('audit_logs')
+                .select('*')
+                .eq('table_name', 'collaborators')
+                .eq('record_id', formData.id)
+                .order('changed_at', { ascending: false })
+
+            if (error) throw error
+
+            const userIds = [...new Set((data || []).map(log => log.user_id).filter(Boolean))]
+            if (userIds.length > 0) {
+                const { data: profiles } = await supabase
+                    .from('user_profiles')
+                    .select('id, name')
+                    .in('id', userIds)
+                
+                const profileMap = new Map((profiles || []).map(p => [p.id, p.name]))
+                const updatedLogs = (data || []).map(log => ({
+                    ...log,
+                    user_name: profileMap.get(log.user_id) || log.user_email || 'Sistema'
+                }))
+                setAuditHistory(updatedLogs)
+            } else {
+                setAuditHistory(data || [])
+            }
+        } catch (error) {
+            console.error('Erro ao buscar auditoria:', error)
+        } finally {
+            setLoadingAudit(false)
+        }
     }
 
     const fetchOrgData = async () => {
@@ -347,10 +389,75 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
         }
     }
 
+    const fieldDict: Record<string, string> = {
+        name: 'Nome Completo',
+        gender: 'Gênero',
+        zip_code: 'CEP',
+        address: 'Endereço',
+        address_number: 'Nº Endereço',
+        neighborhood: 'Bairro',
+        city: 'Cidade',
+        state: 'Estado',
+        cpf: 'CPF',
+        birthday: 'Data de Nascimento',
+        tipo: 'Tipo',
+        equipe: 'Equipe',
+        local: 'Localidade',
+        role: 'Responsabilidade / Cargo',
+        hire_date: 'Data de Admissão',
+        termination_date: 'Data de Desligamento',
+        status: 'Status',
+        email: 'E-mail Profissional',
+        leader_ids: 'Líderes Diretos',
+        partner_ids: 'Lideranças Superiores',
+        contract_type: 'Vínculo (Contrato)',
+        civil_status: 'Estado Civil',
+        area: 'Área',
+        email_pessoal: 'E-mail Pessoal',
+        history_observations: 'Anotações (Histórico)',
+        previsao_formatura: 'Previsão de Formatura',
+        termino_contrato_estagio: 'Término Previsto do Contrato',
+        candidato_id: 'Candidato (ID)'
+    }
+
+    const formatDiffAudit = (log: any) => {
+        if (log.action === 'INSERT') return <span className="font-bold text-[#0a192f]">Registro inicial criado no sistema.</span>
+        if (log.action === 'DELETE') return <span className="font-bold text-red-500">Registro foi excluído permanentemente.</span>
+        
+        if (log.action === 'UPDATE' && log.old_data && log.new_data) {
+            const changes = []
+            for (const key of Object.keys(log.new_data)) {
+                if (['updated_at', 'created_at', 'update_token', 'update_token_expires_at', 'foto_url'].includes(key)) continue
+                if (JSON.stringify(log.new_data[key]) !== JSON.stringify(log.old_data[key])) {
+                     changes.push({
+                         field: fieldDict[key] || key,
+                         oldVal: log.old_data[key] || 'Vazio',
+                         newVal: log.new_data[key] || 'Vazio'
+                     })
+                }
+            }
+            if (changes.length === 0) return <span className="text-gray-400 italic">Atualização interna do sistema (nenhum campo visível alterado).</span>
+            
+            return (
+                <div className="space-y-2 mt-2 break-words">
+                    {changes.map((c, i) => (
+                        <div key={i} className="text-[11px] sm:text-xs font-medium text-gray-700 bg-white border border-gray-100 p-2.5 rounded-lg flex items-center gap-2 flex-wrap min-w-0 shadow-sm">
+                           <span className="font-black text-[#0a192f] shrink-0 uppercase tracking-tight">{c.field}:</span>
+                           <span className="text-red-500 line-through decoration-red-200 truncate max-w-[200px]">{String(c.oldVal)}</span>
+                           <ArrowRight className="w-3.5 h-3.5 text-gray-400 mx-1 shrink-0" />
+                           <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded truncate max-w-[200px]">{String(c.newVal)}</span>
+                        </div>
+                    ))}
+                </div>
+            )
+        }
+        return <span className="text-gray-400 italic">Modificação registrada.</span>
+    }
+
     return (
         <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
             {/* BUTTONS GRID */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
                 {/* Cargos */}
                 <button
                     type="button"
@@ -444,7 +551,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     type="button"
                     onClick={() => setActiveSection(activeSection === 'org' ? 'none' : 'org')}
                     className={`
-                        col-span-2 lg:col-span-1 relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
+                        relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
                         ${activeSection === 'org'
                             ? 'bg-indigo-50 border-indigo-200 shadow-md transform scale-[1.02]'
                             : 'bg-white border-gray-100 hover:border-indigo-200 hover:shadow-lg'
@@ -458,6 +565,28 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Hierarquia Completa</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'org' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-indigo-500" />
+                    </div>
+                </button>
+
+                {/* Alterações */}
+                <button
+                    type="button"
+                    onClick={() => setActiveSection(activeSection === 'audits' ? 'none' : 'audits')}
+                    className={`
+                        relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
+                        ${activeSection === 'audits'
+                            ? 'bg-emerald-50 border-emerald-200 shadow-md transform scale-[1.02]'
+                            : 'bg-white border-gray-100 hover:border-emerald-200 hover:shadow-lg'
+                        }
+                    `}
+                >
+                    <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'audits' ? 'bg-emerald-200 text-emerald-700' : 'bg-emerald-50 text-emerald-500 group-hover:bg-emerald-100'}`}>
+                        <Activity className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Alterações</h3>
+                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Log de Histórico</p>
+                    <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'audits' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
+                        <ChevronRight className="h-5 w-5 text-emerald-500" />
                     </div>
                 </button>
             </div>
@@ -1062,6 +1191,52 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                         </div>
                                     )}
                                 </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeSection === 'audits' && (
+                    <div className="bg-white rounded-3xl p-8 border border-emerald-100 shadow-xl shadow-emerald-900/5 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <div className="flex items-center gap-3 border-b border-emerald-100 pb-4 mb-6">
+                            <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><Activity className="h-5 w-5" /></div>
+                            <h4 className="text-lg font-black text-[#0a192f]">Histórico de Alterações do Perfil</h4>
+                        </div>
+
+                        {loadingAudit ? (
+                            <div className="flex justify-center items-center py-12">
+                                <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+                            </div>
+                        ) : auditHistory.length === 0 ? (
+                            <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                <Activity className="w-12 h-12 text-gray-300 mx-auto mb-3 opacity-50" />
+                                <p className="text-sm font-medium text-gray-500">Nenhum registro de auditoria encontrado.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {auditHistory.map((log) => {
+                                    const date = new Date(log.changed_at)
+                                    return (
+                                        <div key={log.id} className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 hover:border-emerald-200 transition-colors">
+                                            <div className="flex items-start justify-between gap-4 mb-3">
+                                                <div className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                                    <span className="bg-white border border-gray-200 px-2 py-1 rounded text-[#1e3a8a]">{date.toLocaleDateString()} às {date.toLocaleTimeString()}</span>
+                                                    <span>Por: <strong className="text-[#0a192f]">{log.user_name}</strong></span>
+                                                </div>
+                                                <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+                                                    log.action === 'INSERT' ? 'bg-blue-100 text-blue-700' :
+                                                    log.action === 'UPDATE' ? 'bg-amber-100 text-amber-700' :
+                                                    'bg-red-100 text-red-700'
+                                                }`}>
+                                                    {log.action === 'INSERT' ? 'Criação' : log.action === 'UPDATE' ? 'Edição' : 'Exclusão'}
+                                                </span>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {formatDiffAudit(log)}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         )}
                     </div>

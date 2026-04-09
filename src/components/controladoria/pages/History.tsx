@@ -103,6 +103,7 @@ export function History({
       case 'clients': return 'Clientes';
       case 'kanban_tasks': return 'Tarefas Kanban';
       case 'financial_installments': return 'Financeiro';
+      case 'collaborators': return 'Integrantes';
       default: return table;
     }
   };
