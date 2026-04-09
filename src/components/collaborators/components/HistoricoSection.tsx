@@ -476,6 +476,14 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     return v.map(id => auditRefsMap[String(id)] || String(id)).join(', ');
                 }
                 if (typeof v === 'string') {
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+                        const [y, m, d] = v.split('-');
+                        return `${d}/${m}/${y}`;
+                    }
+                    if (/^\d{4}-\d{2}-\d{2}T/.test(v)) {
+                        const [y, m, d] = v.split('T')[0].split('-');
+                        return `${d}/${m}/${y}`;
+                    }
                     try {
                         const parsed = JSON.parse(v);
                         if (Array.isArray(parsed)) {
