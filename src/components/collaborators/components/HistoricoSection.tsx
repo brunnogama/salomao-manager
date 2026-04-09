@@ -109,12 +109,19 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
             }
 
             // 2. Fetch Inferiors
-            const { data: infData } = await supabase
+            const { data: infLeader } = await supabase
                 .from('collaborators')
                 .select('id, name, role, photo_url, status, leader_ids, partner_ids')
-                .or(`leader_ids.cs.{"${formData.id}"},partner_ids.cs.{"${formData.id}"}`) // Contains the id 
-                
-            setInferiors(infData || [])
+                .contains('leader_ids', [formData.id])
+
+            const { data: infPartner } = await supabase
+                .from('collaborators')
+                .select('id, name, role, photo_url, status, leader_ids, partner_ids')
+                .contains('partner_ids', [formData.id])
+
+            const merged = [...(infLeader || []), ...(infPartner || [])]
+            const uniqueInf = Array.from(new Map(merged.map(item => [item.id, item])).values())
+            setInferiors(uniqueInf)
 
             // 3. Fetch History Timeline
             // a) Suas próprias mudanças
@@ -124,12 +131,21 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                 .eq('collaborator_id', formData.id)
 
             // b) Mudanças de outros (quando este usuário foi adicionado/removido)
-            const { data: othersHistory } = await supabase
-                .from('collaborator_hierarchy_history')
-                .select('*, collaborators(name)')
-                .or(`new_leader_ids.cs.{"${formData.id}"},old_leader_ids.cs.{"${formData.id}"},new_partner_ids.cs.{"${formData.id}"},old_partner_ids.cs.{"${formData.id}"}`)
+            // Query em paralelo para buscar de forma segura em colunas JSONB
+            const queries = [
+                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('new_leader_ids', [formData.id]),
+                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('old_leader_ids', [formData.id]),
+                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('new_partner_ids', [formData.id]),
+                supabase.from('collaborator_hierarchy_history').select('*, collaborators(name)').contains('old_partner_ids', [formData.id])
+            ]
+            
+            const results = await Promise.all(queries)
+            let othersHistory: any[] = []
+            results.forEach(res => {
+                if (res.data) othersHistory.push(...res.data)
+            })
 
-            let allHistory = [...(ownHistory || []), ...(othersHistory || [])]
+            let allHistory = [...(ownHistory || []), ...othersHistory]
             
             // Remove duplicates and sort descending
             const uniqueHistory = Array.from(new Map(allHistory.map(item => [item.id, item])).values())
@@ -405,8 +421,8 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'org' ? 'bg-indigo-200 text-indigo-700' : 'bg-indigo-50 text-indigo-500 group-hover:bg-indigo-100'}`}>
                         <Network className="h-6 w-6" />
                     </div>
-                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Cadeia</h3>
-                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Hierarquia</p>
+                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Organograma</h3>
+                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Hierarquia Completa</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'org' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-indigo-500" />
                     </div>
