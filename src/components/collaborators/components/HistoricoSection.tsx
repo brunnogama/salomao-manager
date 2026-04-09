@@ -163,7 +163,26 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
             
             // Remove duplicates and sort descending
             const uniqueHistory = Array.from(new Map(allHistory.map(item => [item.id, item])).values())
-            uniqueHistory.sort((a, b) => new Date(b.change_date).getTime() - new Date(a.change_date).getTime())
+                .sort((a, b) => new Date(b.change_date).getTime() - new Date(a.change_date).getTime())
+
+            const historyLeaderIds = new Set<string>();
+            uniqueHistory.forEach(item => {
+                [...(item.old_partner_ids || []), ...(item.old_leader_ids || []), ...(item.new_partner_ids || []), ...(item.new_leader_ids || [])].forEach(id => {
+                    if (id) historyLeaderIds.add(String(id));
+                });
+            });
+
+            if (historyLeaderIds.size > 0) {
+                const { data: historyLeadersData } = await supabase.from('collaborators').select('id, name').in('id', Array.from(historyLeaderIds));
+                const namesMap = new Map();
+                if (historyLeadersData) {
+                    historyLeadersData.forEach((l: any) => namesMap.set(String(l.id), l.name));
+                }
+                const resolvedNamesObj = Object.fromEntries(namesMap);
+                uniqueHistory.forEach(item => {
+                    item._resolvedNamesMap = resolvedNamesObj;
+                });
+            }
 
             setHierarchyHistory(uniqueHistory)
 
@@ -1008,7 +1027,10 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                                                             const p = item.old_partner_ids || [];
                                                                             const l = item.old_leader_ids || [];
                                                                             const all = [...p, ...l].filter(Boolean);
-                                                                            return all.length > 0 ? `Total: ${all.length} Líderes / IDs` : 'Nenhum original.';
+                                                                            if (all.length === 0) return 'Nenhuma exclusão.';
+                                                                            
+                                                                            const names = all.map((id: any) => item._resolvedNamesMap?.[String(id)] || 'Integrante Deletado');
+                                                                            return <ul className="list-disc pl-4 space-y-1 mt-1">{names.map((name, i) => <li key={i}>{name}</li>)}</ul>;
                                                                         })()}
                                                                     </div>
                                                                 </div>
@@ -1019,7 +1041,10 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                                                             const p = item.new_partner_ids || [];
                                                                             const l = item.new_leader_ids || [];
                                                                             const all = [...p, ...l].filter(Boolean);
-                                                                            return all.length > 0 ? `Total: ${all.length} Líderes / IDs` : 'Nenhum novo.';
+                                                                            if (all.length === 0) return 'Nenhuma adição.';
+                                                                            
+                                                                            const names = all.map((id: any) => item._resolvedNamesMap?.[String(id)] || 'Integrante Deletado');
+                                                                            return <ul className="list-disc pl-4 space-y-1 mt-1">{names.map((name, i) => <li key={i}>{name}</li>)}</ul>;
                                                                         })()}
                                                                     </div>
                                                                 </div>
