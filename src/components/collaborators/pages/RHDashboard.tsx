@@ -237,7 +237,7 @@ export function RHDashboard() {
           <button
             onClick={handleExportXLSX}
             title="Exportar Planilha Excel com Dados Brutos"
-            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-[#00b87c] text-white hover:bg-[#00a36e] shrink-0"
+            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#00b87c] hover:bg-gray-50 border border-gray-200 shrink-0"
           >
             <FileDown className="w-5 h-5" />
           </button>
@@ -247,7 +247,7 @@ export function RHDashboard() {
             onClick={() => setShowExportModal(true)}
             disabled={isExportingPDF}
             title="Exportar Dashboard em PDF (Alta Resolução)"
-            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-[#ff4d4f] text-white hover:bg-[#ff3030] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#ff4d4f] hover:bg-gray-50 border border-gray-200 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isExportingPDF ? (
               <Loader2 className="w-5 h-5 animate-spin" />
