@@ -457,24 +457,28 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
     return (
         <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
             {/* BUTTONS GRID */}
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Cargos */}
                 <button
                     type="button"
                     onClick={() => setActiveSection(activeSection === 'roles' ? 'none' : 'roles')}
                     className={`
-                        relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
+                        relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 text-left group
                         ${activeSection === 'roles'
                             ? 'bg-blue-50 border-blue-200 shadow-md transform scale-[1.02]'
                             : 'bg-white border-gray-100 hover:border-blue-200 hover:shadow-lg'
                         }
                     `}
                 >
-                    <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'roles' ? 'bg-blue-200 text-blue-700' : 'bg-blue-50 text-blue-500 group-hover:bg-blue-100'}`}>
-                        <Briefcase className="h-6 w-6" />
+                    <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl shrink-0 transition-colors ${activeSection === 'roles' ? 'bg-blue-200 text-blue-700' : 'bg-blue-50 text-blue-500 group-hover:bg-blue-100'}`}>
+                            <Briefcase className="h-5 w-5 md:h-6 md:w-6" />
+                        </div>
+                        <div className="pr-8">
+                            <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-0.5">Cargos</h3>
+                            <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Mudanças de cargo</p>
+                        </div>
                     </div>
-                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Cargos</h3>
-                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Mudanças de cargo</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'roles' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-blue-500" />
                     </div>
@@ -485,18 +489,22 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     type="button"
                     onClick={() => setActiveSection(activeSection === 'warnings' ? 'none' : 'warnings')}
                     className={`
-                        relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
+                        relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 text-left group
                         ${activeSection === 'warnings'
                             ? 'bg-red-50 border-red-200 shadow-md transform scale-[1.02]'
                             : 'bg-white border-gray-100 hover:border-red-200 hover:shadow-lg'
                         }
                     `}
                 >
-                    <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'warnings' ? 'bg-red-200 text-red-700' : 'bg-red-50 text-red-500 group-hover:bg-red-100'}`}>
-                        <AlertTriangle className="h-6 w-6" />
+                    <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl shrink-0 transition-colors ${activeSection === 'warnings' ? 'bg-red-200 text-red-700' : 'bg-red-50 text-red-500 group-hover:bg-red-100'}`}>
+                            <AlertTriangle className="h-5 w-5 md:h-6 md:w-6" />
+                        </div>
+                        <div className="pr-8">
+                            <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-0.5">Alertas</h3>
+                            <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Registrar infrações</p>
+                        </div>
                     </div>
-                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Alertas</h3>
-                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Registrar infrações</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'warnings' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-red-500" />
                     </div>
@@ -507,18 +515,22 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     type="button"
                     onClick={() => setActiveSection(activeSection === 'recruiting' ? 'none' : 'recruiting')}
                     className={`
-                        relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
+                        relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 text-left group
                         ${activeSection === 'recruiting'
                             ? 'bg-emerald-50 border-emerald-200 shadow-md transform scale-[1.02]'
                             : 'bg-white border-gray-100 hover:border-emerald-200 hover:shadow-lg'
                         }
                     `}
                 >
-                    <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'recruiting' ? 'bg-emerald-200 text-emerald-700' : 'bg-emerald-50 text-emerald-500 group-hover:bg-emerald-100'}`}>
-                        <Users className="h-6 w-6" />
+                    <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl shrink-0 transition-colors ${activeSection === 'recruiting' ? 'bg-emerald-200 text-emerald-700' : 'bg-emerald-50 text-emerald-500 group-hover:bg-emerald-100'}`}>
+                            <Users className="h-5 w-5 md:h-6 md:w-6" />
+                        </div>
+                        <div className="pr-8">
+                            <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-0.5">Seleção</h3>
+                            <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Histórico de entrevistas</p>
+                        </div>
                     </div>
-                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Seleção</h3>
-                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Histórico de entrevistas</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'recruiting' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-emerald-500" />
                     </div>
@@ -529,18 +541,22 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     type="button"
                     onClick={() => setActiveSection(activeSection === 'observations' ? 'none' : 'observations')}
                     className={`
-                        relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
+                        relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 text-left group
                         ${activeSection === 'observations'
                             ? 'bg-amber-50 border-amber-200 shadow-md transform scale-[1.02]'
                             : 'bg-white border-gray-100 hover:border-amber-200 hover:shadow-lg'
                         }
                     `}
                 >
-                    <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'observations' ? 'bg-amber-200 text-amber-700' : 'bg-amber-50 text-amber-500 group-hover:bg-amber-100'}`}>
-                        <FileText className="h-6 w-6" />
+                    <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl shrink-0 transition-colors ${activeSection === 'observations' ? 'bg-amber-200 text-amber-700' : 'bg-amber-50 text-amber-500 group-hover:bg-amber-100'}`}>
+                            <FileText className="h-5 w-5 md:h-6 md:w-6" />
+                        </div>
+                        <div className="pr-8">
+                            <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-0.5">Anotações</h3>
+                            <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Observações gerais</p>
+                        </div>
                     </div>
-                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Anotações</h3>
-                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Observações gerais</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'observations' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-amber-500" />
                     </div>
@@ -551,18 +567,22 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     type="button"
                     onClick={() => setActiveSection(activeSection === 'org' ? 'none' : 'org')}
                     className={`
-                        relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
+                        relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 text-left group
                         ${activeSection === 'org'
                             ? 'bg-indigo-50 border-indigo-200 shadow-md transform scale-[1.02]'
                             : 'bg-white border-gray-100 hover:border-indigo-200 hover:shadow-lg'
                         }
                     `}
                 >
-                    <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'org' ? 'bg-indigo-200 text-indigo-700' : 'bg-indigo-50 text-indigo-500 group-hover:bg-indigo-100'}`}>
-                        <Network className="h-6 w-6" />
+                    <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl shrink-0 transition-colors ${activeSection === 'org' ? 'bg-indigo-200 text-indigo-700' : 'bg-indigo-50 text-indigo-500 group-hover:bg-indigo-100'}`}>
+                            <Network className="h-5 w-5 md:h-6 md:w-6" />
+                        </div>
+                        <div className="pr-8">
+                            <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-0.5">Organograma</h3>
+                            <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Hierarquia Completa</p>
+                        </div>
                     </div>
-                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Organograma</h3>
-                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Hierarquia Completa</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'org' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-indigo-500" />
                     </div>
@@ -573,18 +593,22 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     type="button"
                     onClick={() => setActiveSection(activeSection === 'audits' ? 'none' : 'audits')}
                     className={`
-                        relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
+                        relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 text-left group
                         ${activeSection === 'audits'
                             ? 'bg-emerald-50 border-emerald-200 shadow-md transform scale-[1.02]'
                             : 'bg-white border-gray-100 hover:border-emerald-200 hover:shadow-lg'
                         }
                     `}
                 >
-                    <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'audits' ? 'bg-emerald-200 text-emerald-700' : 'bg-emerald-50 text-emerald-500 group-hover:bg-emerald-100'}`}>
-                        <Activity className="h-6 w-6" />
+                    <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl shrink-0 transition-colors ${activeSection === 'audits' ? 'bg-emerald-200 text-emerald-700' : 'bg-emerald-50 text-emerald-500 group-hover:bg-emerald-100'}`}>
+                            <Activity className="h-5 w-5 md:h-6 md:w-6" />
+                        </div>
+                        <div className="pr-8">
+                            <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-0.5">Alterações</h3>
+                            <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Log de Histórico</p>
+                        </div>
                     </div>
-                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Alterações</h3>
-                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Log de Histórico</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'audits' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-emerald-500" />
                     </div>
