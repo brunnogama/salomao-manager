@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Users, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, Users, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react'
 
 interface LayoutProps {
     title: React.ReactNode
@@ -82,21 +82,34 @@ export const CollaboratorModalLayout = ({
                     {/* Content Header (Title + Close) */}
                     <div className="px-12 py-8 pb-2 flex justify-between items-center shrink-0">
                         <div className="flex items-center gap-4">
-                            {onPrev && (
-                                <button onClick={onPrev} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-[#1e3a8a] border border-transparent hover:border-gray-200" title="Anterior">
-                                    <ChevronLeft className="h-6 w-6" />
-                                </button>
-                            )}
-                            <h2 className="text-3xl font-black text-[#0a192f] tracking-tight">{title}</h2>
-                            {onNext && (
-                                <button onClick={onNext} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-[#1e3a8a] border border-transparent hover:border-gray-200" title="Próximo">
-                                    <ChevronRight className="h-6 w-6" />
-                                </button>
-                            )}
+                            <h2 className="text-3xl font-black text-[#0a192f] tracking-tight truncate max-w-[300px] sm:max-w-[500px] xl:max-w-[700px]">{title}</h2>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-all text-gray-400 hover:text-red-500">
-                            <X className="h-6 w-6" />
-                        </button>
+                        
+                        <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+                            {(onPrev || onNext) && (
+                                <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1 mr-2 border border-gray-100">
+                                    <button 
+                                        onClick={onPrev} 
+                                        disabled={!onPrev}
+                                        className={`p-1.5 rounded-md flex items-center justify-center transition-all ${onPrev ? 'text-gray-600 hover:bg-white hover:shadow-sm' : 'text-gray-300 cursor-not-allowed hidden'}`}
+                                        title="Anterior"
+                                    >
+                                        <ArrowLeft className="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                        onClick={onNext} 
+                                        disabled={!onNext}
+                                        className={`p-1.5 rounded-md flex items-center justify-center transition-all ${onNext ? 'text-gray-600 hover:bg-white hover:shadow-sm' : 'text-gray-300 cursor-not-allowed hidden'}`}
+                                        title="Próximo"
+                                    >
+                                        <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 transition-colors" title="Fechar">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
                     </div>
                     {/* Scrollable Body */}
                     <div ref={scrollRef} className="flex-1 overflow-y-auto px-12 py-6 pb-32 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -154,32 +167,45 @@ export const CollaboratorPageLayout = ({
                             <Users className="h-6 w-6 text-white" />
                         </div>
                         <div className="flex items-center gap-3">
-                            {onPrev && (
-                                <button onClick={onPrev} className="p-1.5 hover:bg-gray-100 rounded-lg transition-all text-gray-400 hover:text-[#1e3a8a]" title="Anterior">
-                                    <ChevronLeft className="h-5 w-5" />
-                                </button>
-                            )}
                             <div>
-                                <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+                                <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none truncate max-w-[300px] sm:max-w-[500px]">
                                     {title}
                                 </h1>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">
                                     {isEditMode ? 'Formulário de Cadastro' : 'Visualização de Perfil'}
                                 </p>
                             </div>
-                            {onNext && (
-                                <button onClick={onNext} className="p-1.5 hover:bg-gray-100 rounded-lg transition-all text-gray-400 hover:text-[#1e3a8a]" title="Próximo">
-                                    <ChevronRight className="h-5 w-5" />
-                                </button>
-                            )}
                         </div>
                     </div>
                 </div>
-                {footer && (
-                    <div className="flex items-center gap-4">
-                        {footer}
-                    </div>
-                )}
+                
+                <div className="flex items-center gap-4">
+                    {(onPrev || onNext) && (
+                        <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1 border border-gray-200">
+                            <button 
+                                onClick={onPrev} 
+                                className="p-1.5 rounded-md flex items-center justify-center transition-all text-gray-600 hover:bg-white hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none"
+                                disabled={!onPrev}
+                                title="Anterior"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                            </button>
+                            <button 
+                                onClick={onNext} 
+                                className="p-1.5 rounded-md flex items-center justify-center transition-all text-gray-600 hover:bg-white hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none"
+                                disabled={!onNext}
+                                title="Próximo"
+                            >
+                                <ArrowRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+                    {footer && (
+                        <div className="flex items-center gap-4 border-l border-gray-200 pl-4 ml-2">
+                            {footer}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* PAGE BODY */}
