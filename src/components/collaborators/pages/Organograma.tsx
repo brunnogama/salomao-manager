@@ -1920,24 +1920,20 @@ export function Organograma() {
                             )}
                         </div>
 
-                        {/* Export Excel Button */}
                         <button
                             onClick={handleExportExcel}
-                            className="flex items-center justify-center h-10 px-3 md:px-4 gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 border border-emerald-600 rounded-xl text-white hover:from-emerald-700 hover:to-emerald-600 hover:border-emerald-700 transition-all shadow-sm shadow-emerald-900/10 shrink-0 font-bold text-xs uppercase tracking-wider"
+                            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#00b87c] hover:bg-gray-50 border border-gray-200 shrink-0"
                             title="Planilha (Excel)"
                         >
                             <Download className="w-4 h-4" />
-                            <span className="hidden md:inline">Planilha</span>
                         </button>
 
-                        {/* PDF Export Button */}
                         <button
                             onClick={() => setIsPdfModalOpen(true)}
-                            className="flex items-center justify-center h-10 px-3 md:px-4 gap-2 bg-gradient-to-r from-red-600 to-red-500 border border-red-600 rounded-xl text-white hover:from-red-700 hover:to-red-600 hover:border-red-700 transition-all shadow-sm shadow-red-900/10 shrink-0 font-bold text-xs uppercase tracking-wider"
+                            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-red-500 hover:bg-gray-50 border border-gray-200 shrink-0"
                             title="Exportar PDF"
                         >
                             <Printer className="w-4 h-4" />
-                            <span className="hidden md:inline">PDF</span>
                         </button>
 
                         </div>

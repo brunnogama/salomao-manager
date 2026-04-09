@@ -1105,7 +1105,7 @@ export function RHVagas() {
           <div className="flex items-center gap-3 border-l border-gray-100 pl-4 ml-2">
             <button
               onClick={() => setActiveTab('ats')}
-              className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all shrink-0 overflow-hidden
+              className={`relative flex items-center justify-center w-10 h-10 rounded-xl transition-all shrink-0 overflow-hidden
                 ${activeTab === 'ats'
                   ? 'bg-gradient-to-r from-blue-700 to-[#112240] text-white shadow-lg shadow-blue-500/40 ring-2 ring-blue-400/60 ring-offset-1'
                   : 'bg-gradient-to-r from-blue-600 to-[#1e3a8a] text-white shadow-lg shadow-blue-500/30 hover:from-blue-700 hover:to-[#112240]'}
@@ -1117,7 +1117,7 @@ export function RHVagas() {
             </button>
             <button
               onClick={handleOpenSelectionModal}
-              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+              className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#1e3a8a] hover:bg-gray-50 border border-gray-200 shrink-0"
               title="Adicionar Novo"
             >
               <Plus className="h-5 w-5" />

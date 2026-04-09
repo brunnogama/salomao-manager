@@ -2260,7 +2260,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     setExportTargetList('search');
                     setShowColumnSelectModal(true);
                   }}
-                  className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+                  className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#00b87c] hover:bg-gray-50 border border-gray-200 shrink-0"
                   title="Exportar Planilha"
                 >
                   <FileDown className="h-5 w-5" />
@@ -2276,7 +2276,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     setActiveFormTab(1)
                     setShowFormModal(true)
                   }}
-                  className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+                  className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#1e3a8a] hover:bg-gray-50 border border-gray-200 shrink-0"
                   title="Novo Integrante"
                 >
                   <Plus className="h-5 w-5" />
@@ -2318,7 +2318,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     setExportTargetList('search');
                     setShowColumnSelectModal(true);
                   }}
-                  className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+                  className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#00b87c] hover:bg-gray-50 border border-gray-200 shrink-0"
                   title="Exportar Planilha"
                 >
                   <FileDown className="h-5 w-5" />

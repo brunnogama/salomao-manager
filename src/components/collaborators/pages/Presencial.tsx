@@ -533,7 +533,7 @@ export function Presencial() {
           <div className="flex items-center gap-2 border-l border-gray-100 pl-3 ml-1">
             <button
               onClick={() => fetchRecords()}
-              className="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-full transition-all"
+              className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-gray-500 hover:bg-gray-50 border border-gray-200 shrink-0"
               title="Atualizar"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -542,7 +542,7 @@ export function Presencial() {
             {viewMode === 'horas' && registrosHoras.length > 0 && (
               <button
                 onClick={handleExportXLSX}
-                className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+                className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#00b87c] hover:bg-gray-50 border border-gray-200 shrink-0"
                 title="Exportar XLSX"
               >
                 <Download className="h-4 w-4" />
@@ -553,14 +553,14 @@ export function Presencial() {
               <>
                 <button
                   onClick={() => handleOpenModal()}
-                  className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+                  className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#1e3a8a] hover:bg-gray-50 border border-gray-200 shrink-0"
                   title="Adicionar Nova Regra"
                 >
                   <Plus className="h-5 w-5" />
                 </button>
                 <button
                   onClick={() => socioInputRef.current?.click()}
-                  className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30"
+                  className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 shrink-0"
                   title="Importar Regras XLSX"
                 >
                   <Upload className="h-4 w-4" />
@@ -569,7 +569,7 @@ export function Presencial() {
             ) : (
               <button
                 onClick={() => presenceInputRef.current?.click()}
-                className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-[#112240] transition-all shadow-lg shadow-blue-500/30"
+                className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 shrink-0"
                 title="Importar Presença XLSX"
               >
                 <Upload className="h-4 w-4" />

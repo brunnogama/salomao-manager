@@ -280,7 +280,7 @@ export function RHComunicacoesInternas() {
           <div className="flex items-center gap-3 border-l border-gray-100 pl-4 ml-1">
             <button
               onClick={handleOpenNew}
-              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+              className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-[#1e3a8a] hover:bg-gray-50 border border-gray-200 shrink-0"
               title="Nova Comunicação"
             >
               <MessageSquarePlus className="h-5 w-5" />

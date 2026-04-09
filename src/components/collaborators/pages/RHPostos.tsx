@@ -551,7 +551,7 @@ export function RHPostos() {
             <button
               onClick={fetchPostos}
               disabled={loading}
-              className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] text-white rounded-full hover:bg-blue-800 transition-all shadow-lg shadow-blue-500/30 shrink-0"
+              className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-gray-500 hover:bg-gray-50 border border-gray-200 shrink-0"
               title="Atualizar Dados"
             >
               <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
@@ -559,7 +559,7 @@ export function RHPostos() {
             {viewMode === 'map' && (
               <button
                 onClick={toggleFullscreen}
-                className="flex items-center justify-center w-10 h-10 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200 transition-all shadow-sm shrink-0 ml-1"
+                className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-gray-500 hover:bg-gray-50 border border-gray-200 shrink-0 ml-1"
                 title="Tela Cheia"
               >
                 <Maximize className="h-5 w-5" />
