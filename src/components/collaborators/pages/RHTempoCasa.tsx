@@ -360,7 +360,7 @@ export function RHTempoCasa() {
   const COLORS = {
     primary: '#ea580c',   // Admin (Dark Orange)
     secondary: '#1e3a8a', // Jurídico (Dark Blue)
-    tertiary: '#f59e0b',
+    tertiary: '#0d9488',  // Terceirizada (Teal)
     text: '#6b7280',
     grid: '#e5e7eb',
     pie: ['#93c5fd', '#60a5fa', '#2563eb', '#1e3a8a'] // Blue gradients for Legal
@@ -569,7 +569,12 @@ export function RHTempoCasa() {
                   {tenureByAreaData.map((entry, index) => {
                     const normalized = normalizeString(entry.name)
                     const isLegal = normalized.includes('juridic') // Match juridico or juridica
-                    return <Cell key={`cell-${index}`} fill={isLegal ? COLORS.secondary : COLORS.primary} />
+                    const isTerceirizada = normalized.includes('terceirizad')
+                    let color = COLORS.primary
+                    if (isLegal) color = COLORS.secondary
+                    else if (isTerceirizada) color = COLORS.tertiary
+                    
+                    return <Cell key={`cell-${index}`} fill={color} />
                   })}
                   <LabelList dataKey="avg" position="right" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
                 </Bar>
