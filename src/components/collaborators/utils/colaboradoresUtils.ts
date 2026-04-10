@@ -52,9 +52,11 @@ export const maskCNPJ = (v: string) => {
 export const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)
 
 export const maskRG = (v: string) => {
-  let val = v.replace(/\D/g, '')
-  val = val.replace(/(\d{8})(\d{1})/, '$1-$2') // Formato comum: 99999999-9
-  return val.slice(0, 10)
+  let val = v.replace(/[^a-zA-Z0-9]/g, '')
+  if (val.length > 8) {
+    val = val.replace(/^([a-zA-Z0-9]{8})([a-zA-Z0-9]+)/, '$1-$2')
+  }
+  return val.toUpperCase().slice(0, 14)
 }
 
 export const maskPhone = (v: string) => {

@@ -21,9 +21,11 @@ const maskCPF = (v: string) => {
 }
 const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)
 const maskRG = (v: string) => {
-    v = v.replace(/\D/g, '')
-    v = v.replace(/(\d{8})(\d{1})/, '$1-$2')
-    return v.slice(0, 10)
+    v = v.replace(/[^a-zA-Z0-9]/g, '')
+    if (v.length > 8) {
+        v = v.replace(/^([a-zA-Z0-9]{8})([a-zA-Z0-9]+)/, '$1-$2')
+    }
+    return v.toUpperCase().slice(0, 14)
 }
 const maskPhone = (v: string) => {
     const raw = v.replace(/\D/g, '')

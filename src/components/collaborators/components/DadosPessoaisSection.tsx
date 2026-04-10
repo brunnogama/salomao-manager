@@ -96,7 +96,7 @@ export function DadosPessoaisSection({
               className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''} ${isChanged('rg') ? highlightClass : ''}`}
               value={formData.rg || ''}
               onChange={e => setFormData({ ...formData, rg: maskRG(e.target.value) })}
-              maxLength={10}
+              maxLength={14}
               placeholder="Digite a Identidade"
               disabled={isViewMode}
               readOnly={isViewMode}
