@@ -159,6 +159,7 @@ export function RHHeadcount() {
   const totalActive = activeData.length
   const totalActiveAdmin = activeData.filter(c => getSegment(c) === 'Administrativo').length
   const totalActiveLegal = activeData.filter(c => getSegment(c) === 'Jurídico').length
+  const totalActiveTerceirizada = activeData.filter(c => getSegment(c) === 'Terceirizada').length
 
   // --- Charts Data ---
 
@@ -167,7 +168,13 @@ export function RHHeadcount() {
     const map = new Map<string, { advogados: number, estagiarios: number }>()
 
     activeData.filter(c => getSegment(c) === 'Jurídico').forEach(c => {
-      const locName = c.locations?.name || 'Não Definido'
+      let locName = c.locations?.name
+      if (!locName && c.local) {
+        const found = masterLocations.find(l => String(l.id) === String(c.local));
+        if (found) locName = found.name;
+      }
+      locName = locName || 'Não Definido'
+
       if (!map.has(locName)) map.set(locName, { advogados: 0, estagiarios: 0 })
 
       const role = normalizeString(c.roles?.name || String(c.role || ''))
@@ -184,28 +191,37 @@ export function RHHeadcount() {
       Estagiários: data.estagiarios,
       Total: data.advogados + data.estagiarios
     })).sort((a, b) => b.Total - a.Total)
-  }, [activeData])
+  }, [activeData, masterLocations])
 
   // 1. Headcount by Local & Area
   const localAreaData = useMemo(() => {
-    const map = new Map<string, { admin: number, legal: number }>()
+    const map = new Map<string, { admin: number, legal: number, terceirizada: number }>()
 
     activeData.forEach(c => {
-      const locName = c.locations?.name || 'Não Definido'
-      if (!map.has(locName)) map.set(locName, { admin: 0, legal: 0 })
+      let locName = c.locations?.name
+      if (!locName && c.local) {
+        const found = masterLocations.find(l => String(l.id) === String(c.local));
+        if (found) locName = found.name;
+      }
+      locName = locName || 'Não Definido'
+
+      if (!map.has(locName)) map.set(locName, { admin: 0, legal: 0, terceirizada: 0 })
       const entry = map.get(locName)!
 
-      if (getSegment(c) === 'Administrativo') entry.admin++
-      else entry.legal++
+      const seg = getSegment(c)
+      if (seg === 'Administrativo') entry.admin++
+      else if (seg === 'Jurídico') entry.legal++
+      else entry.terceirizada++
     })
 
     return Array.from(map.entries()).map(([name, data]) => ({
       name,
       Administrativo: data.admin,
       Jurídico: data.legal,
-      Total: data.admin + data.legal
+      Terceirizada: data.terceirizada,
+      Total: data.admin + data.legal + data.terceirizada
     })).sort((a, b) => b.Total - a.Total)
-  }, [activeData])
+  }, [activeData, masterLocations])
 
   // 2. Gender Distribution (Donut)
   const genderData = useMemo(() => {
@@ -323,10 +339,11 @@ export function RHHeadcount() {
       { label: '55+ anos', min: 55, max: 120 },
     ]
 
-    const dataMap = groups.map(g => ({
+      const dataMap = groups.map(g => ({
       group: g.label,
       Masculino: 0,
       Feminino: 0,
+      Total: 0
     }))
 
     activeData
@@ -344,6 +361,7 @@ export function RHHeadcount() {
         const groupIndex = groups.findIndex(g => age >= g.min && age <= g.max)
         if (groupIndex !== -1) {
           dataMap[groupIndex][gender as 'Masculino' | 'Feminino']++
+          dataMap[groupIndex].Total++
         }
       })
 
@@ -364,6 +382,7 @@ export function RHHeadcount() {
       group: g.label,
       Masculino: 0,
       Feminino: 0,
+      Total: 0
     }))
 
     activeData
@@ -381,6 +400,7 @@ export function RHHeadcount() {
         const groupIndex = groups.findIndex(g => age >= g.min && age <= g.max)
         if (groupIndex !== -1) {
           dataMap[groupIndex][gender as 'Masculino' | 'Feminino']++
+          dataMap[groupIndex].Total++
         }
       })
 
@@ -391,7 +411,7 @@ export function RHHeadcount() {
   const COLORS = {
     primary: '#ea580c',   // Admin (Dark Orange)
     secondary: '#1e3a8a', // Jurídico (Dark Blue)
-    tertiary: '#f59e0b',
+    tertiary: '#10b981',  // Terceirizada (Emerald)
     text: '#6b7280',
     grid: '#e5e7eb',
     pieGender: ['#1e40af', '#db2777', '#9ca3af'],
@@ -480,7 +500,7 @@ export function RHHeadcount() {
       </div>
 
       {/* 2. KPI Cards */}
-      <div id="export-kpis-headcount" className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div id="export-kpis-headcount" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
         {/* Total Active */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
@@ -517,6 +537,18 @@ export function RHHeadcount() {
             <Briefcase className="h-6 w-6 text-[#ea580c]" />
           </div>
         </div>
+
+        {/* Total Terceirizada */}
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute right-0 top-0 h-full w-1 bg-[#10b981]"></div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Terceiros</p>
+            <p className="text-3xl font-black text-[#10b981] mt-1">{totalActiveTerceirizada}</p>
+          </div>
+          <div className="p-3 bg-[#10b981]/10 rounded-xl">
+            <Users className="h-6 w-6 text-[#10b981]" />
+          </div>
+        </div>
       </div>
 
       {/* 3. Charts Row 1: Local */}
@@ -547,8 +579,11 @@ export function RHHeadcount() {
                 <Bar dataKey="Administrativo" stackId="a" fill={COLORS.primary} radius={[0, 0, 4, 4]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Administrativo' } })}>
                   <LabelList dataKey="Administrativo" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
-                <Bar dataKey="Jurídico" stackId="a" fill={COLORS.secondary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
+                <Bar dataKey="Jurídico" stackId="a" fill={COLORS.secondary} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
                   <LabelList dataKey="Jurídico" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
+                </Bar>
+                <Bar dataKey="Terceirizada" stackId="a" fill={COLORS.tertiary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Terceirizada' } })}>
+                  <LabelList dataKey="Terceirizada" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                   <LabelList dataKey="Total" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} />
                 </Bar>
               </BarChart>
@@ -679,7 +714,11 @@ export function RHHeadcount() {
             </div>
             <CopyChartButton targetId="chart-headcount-gender" />
           </div>
-          <div className="flex-1 flex items-center justify-center min-h-[300px]">
+          <div className="flex-1 flex items-center justify-center min-h-[300px] relative">
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+              <span className="text-2xl font-black text-gray-800">{genderData.reduce((acc, curr) => acc + curr.value, 0)}</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase">Total</span>
+            </div>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart margin={{ top: 0, right: 30, left: 30, bottom: 20 }}>
                 <Pie
@@ -813,6 +852,9 @@ export function RHHeadcount() {
                 >
                   <LabelList dataKey="Feminino" position="right" fill={COLORS.pyramid.female} fontSize={10} fontWeight={700} offset={8} />
                 </Bar>
+                <Bar dataKey="Total" fill="transparent" barSize={1} isAnimationActive={false}>
+                  <LabelList dataKey="Total" position="right" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? `Total: ${val}` : ''} offset={5} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -871,6 +913,9 @@ export function RHHeadcount() {
                   onClick={() => navigate('/rh/colaboradores', { state: { segmentFilter: 'Administrativo', genderFilter: 'Feminino' } })}
                 >
                   <LabelList dataKey="Feminino" position="right" fill="#db2777" fontSize={10} fontWeight={700} offset={8} />
+                </Bar>
+                <Bar dataKey="Total" fill="transparent" barSize={1} isAnimationActive={false}>
+                  <LabelList dataKey="Total" position="right" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? `Total: ${val}` : ''} offset={5} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
