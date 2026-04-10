@@ -402,7 +402,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                             <input
                                                 type="text"
                                                 value={item.instituicao === ' ' ? '' : item.instituicao}
-                                                onChange={(e) => updateEducation(item.id, 'instituicao', e.target.value)}
+                                                onChange={(e) => updateEducation(item.id, 'instituicao', toTitleCase(e.target.value))}
                                                 className={`w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-400 focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                 placeholder={`Nome da Escola (${nivel})`}
                                                 disabled={isViewMode}
@@ -469,7 +469,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                             <input
                                                 type="text"
                                                 value={item.curso === ' ' ? '' : item.curso}
-                                                onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
+                                                onChange={(e) => updateEducation(item.id, 'curso', toTitleCase(e.target.value))}
                                                 className={`w-full px-3 py-2.5 bg-blue-50/50 border border-blue-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-blue-300 focus:bg-white focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                 placeholder={['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? "Ex: Formação Geral, Técnico em Informática..." : "Digite o nome do curso..."}
                                                 disabled={isViewMode}

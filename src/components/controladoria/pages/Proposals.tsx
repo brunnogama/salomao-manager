@@ -970,14 +970,64 @@ export function Proposals() {
         proLaboreExtrasClauses
       } = getContractDataFromForm();
 
+      let finalClientId = null;
 
+      if (proposalData.cnpj) {
+        const cleanCnpj = proposalData.cnpj.replace(/\D/g, '');
+        const { data: clientByCnpj } = await supabase.from('clients').select('id, seq_id').eq('cnpj', cleanCnpj).maybeSingle();
+        if (clientByCnpj) finalClientId = clientByCnpj.id;
+      }
 
-      const { data: existingClient } = await supabase.from('clients').select('id').eq('name', proposalData.clientName).maybeSingle();
-      if (existingClient) {
-        newContract.client_id = existingClient.id;
-      } else if (proposalData.cnpj) {
-        const { data: clientByCnpj } = await supabase.from('clients').select('id').eq('cnpj', proposalData.cnpj.replace(/\D/g, '')).maybeSingle();
-        if (clientByCnpj) newContract.client_id = clientByCnpj.id;
+      if (!finalClientId) {
+        const { data: existingClient } = await supabase.from('clients').select('id, seq_id').eq('name', proposalData.clientName).maybeSingle();
+        if (existingClient) finalClientId = existingClient.id;
+      }
+
+      if (!finalClientId) {
+        const clientData = {
+          name: proposalData.clientName,
+          cnpj: proposalData.cnpj ? proposalData.cnpj.replace(/\D/g, '') : null,
+          is_person: proposalData.isPerson,
+          uf: proposalData.contractLocation || 'RJ',
+          partner_id: primaryPartner?.id,
+          partner_name: primaryPartner?.name
+        };
+        const { data: newClient, error: newClientError } = await supabase.from('clients').insert(clientData).select().single();
+        if (newClientError) throw new Error("Erro ao criar cliente: " + newClientError.message);
+        finalClientId = newClient.id;
+
+        if (newClient && newClient.seq_id && !newClient.display_id) {
+            const displayId = `CLI - ${String(newClient.seq_id).padStart(3, '0')}`;
+            await supabase.from('clients').update({ display_id: displayId }).eq('id', newClient.id);
+        }
+      }
+
+      newContract.client_id = finalClientId;
+
+      try {
+          const { data: clientObj } = await supabase.from('clients').select('seq_id').eq('id', finalClientId).single();
+          const { data: existingContracts } = await supabase.from('contracts')
+             .select('client_seq_val')
+             .eq('client_id', finalClientId)
+             .not('client_seq_val', 'is', null)
+             .order('client_seq_val', { ascending: false })
+             .limit(1);
+             
+          let maxVal = 0;
+          if (existingContracts && existingContracts.length > 0) {
+             maxVal = existingContracts[0].client_seq_val || 0;
+          }
+          
+          const clientSeqVal = maxVal + 1;
+          newContract.client_seq_val = clientSeqVal;
+          
+          if (clientObj && clientObj.seq_id) {
+              const cSeqIdFormatted = String(clientObj.seq_id).padStart(3, '0');
+              const countFormatted = String(clientSeqVal).padStart(3, '0');
+              newContract.display_id = `CONT - ${cSeqIdFormatted}-${countFormatted}`;
+          }
+      } catch (e) {
+          console.error("Erro calcular display_id do contrato:", e);
       }
 
       const { data: insertedContract, error: insertError } = await supabase

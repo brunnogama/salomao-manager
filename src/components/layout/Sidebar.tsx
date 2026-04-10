@@ -30,8 +30,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const menuItems = [
     { label: 'Dashboard', path: '/controladoria/dashboard', icon: LayoutDashboard },
-    { label: 'Casos', path: '/controladoria/contratos', icon: FileSignature },
-    { label: 'Propostas', path: '/controladoria/propostas', icon: FileText },
+    { label: 'Casos', path: '/controladoria/contratos', icon: FileText },
+    { label: 'Propostas', path: '/controladoria/propostas', icon: FileSignature },
     { label: 'Compliance', path: '/controladoria/compliance', icon: ShieldCheck },
     { label: 'Sucumbências', path: '/controladoria/sucumbencias', icon: Award },
     { label: 'Volumetria', path: '/controladoria/volumetria', icon: BarChart3 },

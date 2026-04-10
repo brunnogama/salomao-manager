@@ -281,7 +281,7 @@ export function CandidatoEntrevistaSection({
                                     type="text"
                                     className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
                                     value={formData.indicado_por || ''}
-                                    onChange={(e) => setFormData({ ...formData, indicado_por: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, indicado_por: toTitleCase(e.target.value) })}
                                     disabled={isViewMode}
                                 />
                             </div>
@@ -404,7 +404,7 @@ export function CandidatoEntrevistaSection({
                                     type="text"
                                     className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 font-medium"
                                     value={formData.indicado_por || ''}
-                                    onChange={(e) => setFormData({ ...formData, indicado_por: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, indicado_por: toTitleCase(e.target.value) })}
                                     disabled={isViewMode}
                                 />
                             </div>

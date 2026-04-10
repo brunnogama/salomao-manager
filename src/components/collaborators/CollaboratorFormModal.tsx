@@ -157,7 +157,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
               type="text"
               className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a]"
               value={formData.name || ''}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              onChange={e => setFormData({ ...formData, name: toTitleCase(e.target.value) })}
             />
           </div>
 
@@ -210,7 +210,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
               type="text"
               className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a]"
               value={formData.role || ''}
-              onChange={e => setFormData({ ...formData, role: e.target.value })}
+              onChange={e => setFormData({ ...formData, role: toTitleCase(e.target.value) })}
               placeholder="Ex: Advogado Pleno"
             />
           </div>

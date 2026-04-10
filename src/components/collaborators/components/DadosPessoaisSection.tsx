@@ -66,7 +66,7 @@ export function DadosPessoaisSection({
           <input
             className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''} ${isMissing('name') ? errorClass : isChanged('name') ? highlightClass : ''}`}
             value={formData.name || ''}
-            onChange={e => setFormData({ ...formData, name: e.target.value })}
+            onChange={e => setFormData({ ...formData, name: toTitleCase(e.target.value) })}
             disabled={isViewMode}
             readOnly={isViewMode}
           />
@@ -175,7 +175,7 @@ export function DadosPessoaisSection({
           <input
             className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.indicado_por || ''}
-            onChange={e => setFormData({ ...formData, indicado_por: e.target.value })}
+            onChange={e => setFormData({ ...formData, indicado_por: toTitleCase(e.target.value) })}
             placeholder="Nome de quem indicou (opcional)"
             disabled={isViewMode}
             readOnly={isViewMode}
@@ -308,7 +308,7 @@ export function DadosPessoaisSection({
                       value={child.name || ''}
                       onChange={e => {
                         const newChildrenData = [...(formData.children_data || [])];
-                        newChildrenData[index] = { ...newChildrenData[index], name: e.target.value };
+                        newChildrenData[index] = { ...newChildrenData[index], name: toTitleCase(e.target.value) };
                         setFormData({ ...formData, children_data: newChildrenData });
                       }}
                       placeholder={`Nome do ${index + 1}º filho`}
@@ -525,7 +525,7 @@ export function DadosPessoaisSection({
                     value={contato.nome || ''}
                     onChange={e => {
                       const newContacts = [...(formData.emergency_contacts || [])];
-                      newContacts[index] = { ...newContacts[index], nome: e.target.value };
+                      newContacts[index] = { ...newContacts[index], nome: toTitleCase(e.target.value) };
                       setFormData({ ...formData, emergency_contacts: newContacts });
                     }}
                     placeholder="Nome do contato"
