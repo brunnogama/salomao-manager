@@ -577,15 +577,14 @@ export function RHHeadcount() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
                 <Tooltip content={RHChartTooltip} />
                 <Legend />
-                <Bar dataKey="Administrativo" stackId="a" fill={COLORS.primary} radius={[0, 0, 4, 4]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Administrativo' } })}>
-                  <LabelList dataKey="Administrativo" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
+                <Bar dataKey="Administrativo" fill={COLORS.primary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Administrativo' } })}>
+                  <LabelList dataKey="Administrativo" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
-                <Bar dataKey="Jurídico" stackId="a" fill={COLORS.secondary} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
-                  <LabelList dataKey="Jurídico" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
+                <Bar dataKey="Jurídico" fill={COLORS.secondary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
+                  <LabelList dataKey="Jurídico" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
-                <Bar dataKey="Terceirizada" stackId="a" fill={COLORS.tertiary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Terceirizada' } })}>
-                  <LabelList dataKey="Terceirizada" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
-                  <LabelList dataKey="Total" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} />
+                <Bar dataKey="Terceirizada" fill={COLORS.tertiary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Terceirizada' } })}>
+                  <LabelList dataKey="Terceirizada" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -614,12 +613,11 @@ export function RHHeadcount() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
                 <Tooltip content={RHChartTooltip} />
                 <Legend />
-                <Bar dataKey="Advogados" stackId="a" fill={COLORS.secondary} radius={[0, 0, 4, 4]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
-                  <LabelList dataKey="Advogados" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
+                <Bar dataKey="Advogados" fill={COLORS.secondary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
+                  <LabelList dataKey="Advogados" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
-                <Bar dataKey="Estagiários" stackId="a" fill="#3b82f6" radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
-                  <LabelList dataKey="Estagiários" position="center" fill="#fff" fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
-                  <LabelList dataKey="Total" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} />
+                <Bar dataKey="Estagiários" fill="#3b82f6" radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
+                  <LabelList dataKey="Estagiários" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -716,10 +714,6 @@ export function RHHeadcount() {
             <CopyChartButton targetId="chart-headcount-gender" />
           </div>
           <div className="flex-1 flex items-center justify-center min-h-[300px] relative">
-            <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-black text-gray-800">{genderData.reduce((acc, curr) => acc + curr.value, 0)}</span>
-              <span className="text-[10px] font-bold text-gray-400 uppercase">Total</span>
-            </div>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart margin={{ top: 0, right: 30, left: 30, bottom: 20 }}>
                 <Pie
