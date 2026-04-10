@@ -66,7 +66,7 @@ export function EnderecoSection({
           <input
             className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.address || ''}
-            onChange={e => setFormData({ ...formData, address: e.target.value })}
+            onChange={e => setFormData({ ...formData, address: toTitleCase(e.target.value) })}
             disabled={isViewMode}
             readOnly={isViewMode}
           />
@@ -94,7 +94,7 @@ export function EnderecoSection({
           <input
             className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.address_complement || ''}
-            onChange={e => setFormData({ ...formData, address_complement: e.target.value })}
+            onChange={e => setFormData({ ...formData, address_complement: toTitleCase(e.target.value) })}
             disabled={isViewMode}
             readOnly={isViewMode}
           />
@@ -108,7 +108,7 @@ export function EnderecoSection({
           <input
             className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.neighborhood || ''}
-            onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
+            onChange={e => setFormData({ ...formData, neighborhood: toTitleCase(e.target.value) })}
             disabled={isViewMode}
             readOnly={isViewMode}
           />
@@ -122,7 +122,7 @@ export function EnderecoSection({
           <input
             className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.city || ''}
-            onChange={e => setFormData({ ...formData, city: e.target.value })}
+            onChange={e => setFormData({ ...formData, city: toTitleCase(e.target.value) })}
             disabled={isViewMode}
             readOnly={isViewMode}
           />

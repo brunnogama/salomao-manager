@@ -1360,6 +1360,25 @@ export function Colaboradores({ }: ColaboradoresProps) {
         const { error } = await supabase.from('collaborators').update(payload).eq('id', formData.id)
         if (error) throw error
         await logAction('EDITAR', 'RH', `Editou colaborador: ${formData.name}`, 'Integrantes')
+
+        // Limpeza de duplicatas: se vinculou ao candidato, remove o registro fantasma "Pré-Cadastro"
+        if (payload.candidato_id) {
+          try {
+            const { data: duplicates } = await supabase
+              .from('collaborators')
+              .select('id')
+              .eq('candidato_id', payload.candidato_id)
+              .neq('id', formData.id)
+              .in('status', ['Pré-Cadastro', 'pre-register']);
+              
+            if (duplicates && duplicates.length > 0) {
+              const dupIds = duplicates.map(d => d.id);
+              await supabase.from('collaborators').delete().in('id', dupIds);
+            }
+          } catch(e) {
+            console.error('Erro ao limpar duplicatas de pré-cadastro:', e);
+          }
+        }
       } else {
         payload.created_by = user?.id;
         payload.created_by_name = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
