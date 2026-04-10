@@ -2,6 +2,7 @@
 import { MapPin } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
+import { toTitleCase } from '../utils/colaboradoresUtils'
 
 const ESTADOS_BRASIL = [
   { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' },

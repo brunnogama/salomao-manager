@@ -9,6 +9,7 @@ import { useEscKey } from '../../hooks/useEscKey';
 import { ManagedMultiSelect } from '../crm/ManagedMultiSelect';
 import { PartnerManagerModal } from './modals/PartnerManagerModal';
 import { CollaboratorManagerModal } from './modals/CollaboratorManagerModal';
+import { toTitleCase } from './utils/colaboradoresUtils';
 
 interface Props {
   isOpen: boolean;
