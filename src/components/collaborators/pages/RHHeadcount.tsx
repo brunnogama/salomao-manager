@@ -412,7 +412,7 @@ export function RHHeadcount() {
   const COLORS = {
     primary: '#ea580c',   // Admin (Dark Orange)
     secondary: '#1e3a8a', // Jurídico (Dark Blue)
-    tertiary: '#556b2f',  // Terceirizada (Verde Musgo)
+    tertiary: '#0d9488',  // Terceirizada (Teal)
     text: '#6b7280',
     grid: '#e5e7eb',
     pieGender: ['#1e40af', '#db2777', '#9ca3af'],
@@ -541,13 +541,13 @@ export function RHHeadcount() {
 
         {/* Total Terceirizada */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-[#556b2f]"></div>
+          <div className="absolute right-0 top-0 h-full w-1 bg-[#0d9488]"></div>
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Terceiros</p>
-            <p className="text-3xl font-black text-[#556b2f] mt-1">{totalActiveTerceirizada}</p>
+            <p className="text-3xl font-black text-[#0d9488] mt-1">{totalActiveTerceirizada}</p>
           </div>
-          <div className="p-3 bg-[#556b2f]/10 rounded-xl">
-            <Users className="h-6 w-6 text-[#556b2f]" />
+          <div className="p-3 bg-[#0d9488]/10 rounded-xl">
+            <Users className="h-6 w-6 text-[#0d9488]" />
           </div>
         </div>
       </div>
