@@ -97,29 +97,40 @@ export function EvolutionCharts({
     ]
   };
 
+  const sharedDatasetProps = {
+    borderWidth: 2.5,
+    pointRadius: 4,
+    pointHoverRadius: 6,
+    pointBackgroundColor: '#ffffff',
+    pointBorderWidth: 2.5,
+    fill: false,
+    tension: 0.4
+  };
+
   // Preparar dados para Chart.js - Propostas
   const propostasChartData = {
     labels: propostas12Meses.map(item => item.mes),
     datasets: [
       {
-        label: 'Total',
-        data: propostas12Meses.map(item => item.pl + item.fixo + item.exito),
+        label: 'Pró-Labore',
+        data: propostas12Meses.map(item => item.pl),
         borderColor: '#1e3a8a',
-        backgroundColor: (context: any) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 240);
-          gradient.addColorStop(0, 'rgba(30, 58, 138, 0.3)');
-          gradient.addColorStop(1, 'rgba(30, 58, 138, 0)');
-          return gradient;
-        },
-        borderWidth: 3,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        pointBackgroundColor: '#ffffff',
         pointBorderColor: '#1e3a8a',
-        pointBorderWidth: 2.5,
-        fill: true,
-        tension: 0.4
+        ...sharedDatasetProps
+      },
+      {
+        label: 'Fixo Mensal',
+        data: propostas12Meses.map(item => item.fixo),
+        borderColor: '#6366f1',
+        pointBorderColor: '#6366f1',
+        ...sharedDatasetProps
+      },
+      {
+        label: 'Êxito',
+        data: propostas12Meses.map(item => item.exito),
+        borderColor: '#16a34a',
+        pointBorderColor: '#16a34a',
+        ...sharedDatasetProps
       }
     ]
   };
@@ -129,24 +140,25 @@ export function EvolutionCharts({
     labels: financeiro12Meses.map(item => item.mes),
     datasets: [
       {
-        label: 'Total',
-        data: financeiro12Meses.map(item => item.pl + item.fixo + item.exito),
-        borderColor: '#15803d',
-        backgroundColor: (context: any) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 240);
-          gradient.addColorStop(0, 'rgba(21, 128, 61, 0.3)');
-          gradient.addColorStop(1, 'rgba(21, 128, 61, 0)');
-          return gradient;
-        },
-        borderWidth: 3,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        pointBackgroundColor: '#ffffff',
-        pointBorderColor: '#15803d',
-        pointBorderWidth: 2.5,
-        fill: true,
-        tension: 0.4
+        label: 'Pró-Labore',
+        data: financeiro12Meses.map(item => item.pl),
+        borderColor: '#1e3a8a',
+        pointBorderColor: '#1e3a8a',
+        ...sharedDatasetProps
+      },
+      {
+        label: 'Fixo Mensal',
+        data: financeiro12Meses.map(item => item.fixo),
+        borderColor: '#6366f1',
+        pointBorderColor: '#6366f1',
+        ...sharedDatasetProps
+      },
+      {
+        label: 'Êxito',
+        data: financeiro12Meses.map(item => item.exito),
+        borderColor: '#16a34a',
+        pointBorderColor: '#16a34a',
+        ...sharedDatasetProps
       }
     ]
   };
@@ -269,7 +281,11 @@ export function EvolutionCharts({
           weight: 'bold'
         },
         callbacks: {
-          label: (context) => formatMoney(context.parsed.y ?? 0)
+          label: (context) => {
+            const label = context.dataset.label || '';
+            const value = context.parsed.y ?? 0;
+            return `${label}: ${formatMoney(value)}`;
+          }
         }
       },
       datalabels: {
@@ -292,7 +308,7 @@ export function EvolutionCharts({
           left: 6,
           right: 6
         },
-        formatter: (value) => formatCompact(value as number)
+        formatter: (value) => Number(value) > 0 ? formatCompact(value as number) : ''
       }
     },
     scales: {
@@ -460,13 +476,15 @@ export function EvolutionCharts({
                     Evolução em R$
                   </p>
                 </div>
-                <div className='flex flex-col items-end gap-0.5'>
-                  <span className='text-[9px] text-gray-400 font-black uppercase tracking-wider'>
-                    Média PL / Êxito
-                  </span>
-                  <span className='text-[10px] font-bold text-blue-600'>
-                    {formatMoney(mediasPropostas.pl)} / {formatMoney(mediasPropostas.exito)}
-                  </span>
+                <div className='flex flex-col items-end gap-1.5'>
+                  <div className="flex flex-col items-end leading-none">
+                    <span className='text-[8px] text-gray-400 font-black uppercase tracking-wider mb-0.5'>Média PL/Fixo</span>
+                    <span className='text-[10px] font-bold text-indigo-600'>{formatMoney(mediasPropostas.pl)}</span>
+                  </div>
+                  <div className="flex flex-col items-end leading-none">
+                    <span className='text-[8px] text-gray-400 font-black uppercase tracking-wider mb-0.5'>Média Êxito</span>
+                    <span className='text-[10px] font-bold text-green-600'>{formatMoney(mediasPropostas.exito)}</span>
+                  </div>
                 </div>
               </div>
 
@@ -530,13 +548,15 @@ export function EvolutionCharts({
                     Evolução em R$
                   </p>
                 </div>
-                <div className='flex flex-col items-end gap-0.5'>
-                  <span className='text-[9px] text-gray-400 font-black uppercase tracking-wider'>
-                    Média PL / Êxito
-                  </span>
-                  <span className='text-[10px] font-bold text-green-600'>
-                    {formatMoney(mediasFinanceiras.pl)} / {formatMoney(mediasFinanceiras.exito)}
-                  </span>
+                <div className='flex flex-col items-end gap-1.5'>
+                  <div className="flex flex-col items-end leading-none">
+                    <span className='text-[8px] text-gray-400 font-black uppercase tracking-wider mb-0.5'>Média PL/Fixo</span>
+                    <span className='text-[10px] font-bold text-indigo-600'>{formatMoney(mediasFinanceiras.pl)}</span>
+                  </div>
+                  <div className="flex flex-col items-end leading-none">
+                    <span className='text-[8px] text-gray-400 font-black uppercase tracking-wider mb-0.5'>Média Êxito</span>
+                    <span className='text-[10px] font-bold text-green-600'>{formatMoney(mediasFinanceiras.exito)}</span>
+                  </div>
                 </div>
               </div>
 
