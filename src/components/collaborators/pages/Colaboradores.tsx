@@ -125,7 +125,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [filterCargo, setFilterCargo] = useState<string[]>([])
   const [filterArea, setFilterArea] = useState<string[]>([])
   const [filterVinculo, setFilterVinculo] = useState<string[]>([])
-  const [filterStatus, setFilterStatus] = useState<string[]>(['active'])
+  const [filterStatus, setFilterStatus] = useState<string[]>([])
 
   // New Tabs State
   const [activeMainTab, setActiveMainTab] = useState<'Integrantes' | 'Relatórios' | 'Tabelas'>('Integrantes');
@@ -260,29 +260,59 @@ export function Colaboradores({ }: ColaboradoresProps) {
     }
     if (location.state?.cadastrarCandidato) {
       const candidato = location.state.cadastrarCandidato;
-      setFormData({
-        ...candidato,
-        birthday: formatDateToDisplay(candidato.birthday),
-        hire_date: formatDateToDisplay(candidato.hire_date),
-        termination_date: formatDateToDisplay(candidato.termination_date),
-        termino_contrato_estagio: formatDateToDisplay(candidato.termino_contrato_estagio),
-        escolaridade_previsao_conclusao: formatDateToDisplay(candidato.escolaridade_previsao_conclusao),
-        previsao_formatura: formatMonthYearDateToDisplay(candidato.previsao_formatura),
-        bolsa_valor: formatDbMoneyToDisplay(candidato.bolsa_valor),
-        vr_valor: formatDbMoneyToDisplay(candidato.vr_valor),
-        children_data: candidato.children_data?.map((child: any) => ({
-          ...child,
-          birth_date: formatDateToDisplay(child.birth_date)
-        })) || [],
-        education_history: candidato.education_history?.map((edu: any) => ({
-          ...edu,
-          previsao_conclusao: formatDateToDisplay(edu.previsao_conclusao)
-        })) || []
-      });
-      setShowFormModal(true);
-      setActiveMainTab('Integrantes');
-      // Clear the state so it doesn't reopen on refresh
-      window.history.replaceState({}, document.title)
+      
+      const prepareLinkedCandidato = async () => {
+        let existingColab = null;
+        if (candidato.id) {
+          const { data } = await supabase.from('collaborators').select('*').eq('id', candidato.id).single();
+          if (data) existingColab = data;
+        }
+
+        let mergedData = { ...candidato };
+
+        if (existingColab) {
+          const existingContacts = existingColab.emergency_contacts || [];
+          const newContacts = candidato.emergency_contacts || [];
+          const unifiedContacts = [...existingContacts, ...newContacts];
+          const uniqueContacts = Array.from(new Map(unifiedContacts.map((c: any) => [c.name, c])).values());
+
+          mergedData = { ...existingColab };
+          for (const key of Object.keys(candidato)) {
+            if (mergedData[key] === undefined || mergedData[key] === null || mergedData[key] === '') {
+              mergedData[key] = candidato[key];
+            }
+          }
+          mergedData.emergency_contacts = uniqueContacts;
+        }
+
+        mergedData.status = 'active';
+
+        setFormData({
+          ...mergedData,
+          birthday: mergedData.birthday ? formatDateToDisplay(mergedData.birthday) : undefined,
+          hire_date: mergedData.hire_date ? formatDateToDisplay(mergedData.hire_date) : undefined,
+          termination_date: mergedData.termination_date ? formatDateToDisplay(mergedData.termination_date) : undefined,
+          termino_contrato_estagio: mergedData.termino_contrato_estagio ? formatDateToDisplay(mergedData.termino_contrato_estagio) : undefined,
+          escolaridade_previsao_conclusao: mergedData.escolaridade_previsao_conclusao ? formatDateToDisplay(mergedData.escolaridade_previsao_conclusao) : undefined,
+          previsao_formatura: mergedData.previsao_formatura ? formatMonthYearDateToDisplay(mergedData.previsao_formatura) : undefined,
+          bolsa_valor: mergedData.bolsa_valor ? formatDbMoneyToDisplay(mergedData.bolsa_valor) : undefined,
+          vr_valor: mergedData.vr_valor ? formatDbMoneyToDisplay(mergedData.vr_valor) : undefined,
+          children_data: mergedData.children_data?.map((child: any) => ({
+            ...child,
+            birth_date: child.birth_date ? formatDateToDisplay(child.birth_date) : undefined
+          })) || [],
+          education_history: mergedData.education_history?.map((edu: any) => ({
+            ...edu,
+            previsao_conclusao: edu.previsao_conclusao ? formatDateToDisplay(edu.previsao_conclusao) : undefined
+          })) || []
+        });
+        setShowFormModal(true);
+        setActiveMainTab('Integrantes');
+        // Clear the state so it doesn't reopen on refresh
+        window.history.replaceState({}, document.title);
+      };
+
+      prepareLinkedCandidato();
     }
   }, [location.state, roles, partners])
 
@@ -740,7 +770,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setFilterLocal([]);
     setFilterCargo([]);
     setFilterArea([]);
-    setFilterStatus(['active']);
+    setFilterStatus([]);
   };
 
   // Inicializa estado vazio por padrão conforme solicitado
