@@ -818,6 +818,7 @@ export function RHHeadcount() {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
                 <XAxis type="number" hide />
                 <YAxis
+                  yAxisId="left"
                   dataKey="group"
                   type="category"
                   axisLine={false}
@@ -825,9 +826,29 @@ export function RHHeadcount() {
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                   width={90}
                 />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  dataKey="group"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={(props: any) => {
+                    const { x, y, payload } = props;
+                    const groupData = agePyramidData.find((d: any) => d.group === payload.value);
+                    if (!groupData || groupData.Total === 0) return null;
+                    return (
+                      <text x={x} y={y} fill={COLORS.text} fontSize={10} fontWeight={700} textAnchor="start" dominantBaseline="central">
+                        Total: {groupData.Total}
+                      </text>
+                    );
+                  }}
+                  width={60}
+                />
                 <Tooltip content={RHChartTooltip} cursor={{ fill: '#f3f4f6' }} />
                 <Legend iconType="circle" />
                 <Bar
+                  yAxisId="left"
                   dataKey="Masculino"
                   fill={COLORS.pyramid.male}
                   radius={[0, 4, 4, 0]}
@@ -838,6 +859,7 @@ export function RHHeadcount() {
                   <LabelList dataKey="Masculino" position="right" fill={COLORS.pyramid.male} fontSize={10} fontWeight={700} offset={8} />
                 </Bar>
                 <Bar
+                  yAxisId="left"
                   dataKey="Feminino"
                   fill={COLORS.pyramid.female}
                   radius={[0, 4, 4, 0]}
@@ -846,9 +868,6 @@ export function RHHeadcount() {
                   onClick={() => navigate('/rh/colaboradores', { state: { segmentFilter: 'Jurídico', genderFilter: 'Feminino' } })}
                 >
                   <LabelList dataKey="Feminino" position="right" fill={COLORS.pyramid.female} fontSize={10} fontWeight={700} offset={8} />
-                </Bar>
-                <Bar dataKey="Total" fill="transparent" barSize={1} isAnimationActive={false}>
-                  <LabelList dataKey="Total" position="right" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? `Total: ${val}` : ''} offset={5} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -880,6 +899,7 @@ export function RHHeadcount() {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
                 <XAxis type="number" hide />
                 <YAxis
+                  yAxisId="left"
                   dataKey="group"
                   type="category"
                   axisLine={false}
@@ -887,9 +907,29 @@ export function RHHeadcount() {
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                   width={90}
                 />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  dataKey="group"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={(props: any) => {
+                    const { x, y, payload } = props;
+                    const groupData = ageDistributionAdminData.find((d: any) => d.group === payload.value);
+                    if (!groupData || groupData.Total === 0) return null;
+                    return (
+                      <text x={x} y={y} fill={COLORS.text} fontSize={10} fontWeight={700} textAnchor="start" dominantBaseline="central">
+                        Total: {groupData.Total}
+                      </text>
+                    );
+                  }}
+                  width={60}
+                />
                 <Tooltip content={RHChartTooltip} cursor={{ fill: '#f3f4f6' }} />
                 <Legend iconType="circle" />
                 <Bar
+                  yAxisId="left"
                   dataKey="Masculino"
                   fill="#0369a1"
                   radius={[0, 4, 4, 0]}
@@ -900,6 +940,7 @@ export function RHHeadcount() {
                   <LabelList dataKey="Masculino" position="right" fill="#0369a1" fontSize={10} fontWeight={700} offset={8} />
                 </Bar>
                 <Bar
+                  yAxisId="left"
                   dataKey="Feminino"
                   fill="#db2777"
                   radius={[0, 4, 4, 0]}
@@ -908,9 +949,6 @@ export function RHHeadcount() {
                   onClick={() => navigate('/rh/colaboradores', { state: { segmentFilter: 'Administrativo', genderFilter: 'Feminino' } })}
                 >
                   <LabelList dataKey="Feminino" position="right" fill="#db2777" fontSize={10} fontWeight={700} offset={8} />
-                </Bar>
-                <Bar dataKey="Total" fill="transparent" barSize={1} isAnimationActive={false}>
-                  <LabelList dataKey="Total" position="right" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? `Total: ${val}` : ''} offset={5} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
