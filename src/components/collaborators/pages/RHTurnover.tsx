@@ -191,40 +191,76 @@ export function RHTurnover() {
 
   // --- Charts Data ---
 
-  // 1. Evolução do Turnover (Mensal para o ano selecionado)
+  // 1. Evolução do Turnover (Mensal ou Anual para 'todos')
   const evolutionData = useMemo(() => {
-    let year = filterYear === 'todos' ? new Date().getFullYear() : parseInt(filterYear)
-    const monthsIdx = Array.from({ length: 12 }, (_, i) => i)
+    if (filterYear !== 'todos' && filterYear !== 'Anos') {
+      let year = parseInt(filterYear)
+      const monthsIdx = Array.from({ length: 12 }, (_, i) => i)
 
-    return monthsIdx.map(mIdx => {
-      const actives = colaboradores.filter(c => {
-        if (!wasActiveInMonth(c, year, mIdx)) return false
-        if (filterTeam !== 'todos' && String(c.equipe || '') !== filterTeam) return false
-        const leaderValue = c.leader_id ? String(c.leader_id) : (c.partner?.id ? String(c.partner.id) : null)
-        if (filterLeader !== 'todos' && leaderValue !== filterLeader) return false
-        return true
-      }).length
+      return monthsIdx.map(mIdx => {
+        const actives = colaboradores.filter(c => {
+          if (!wasActiveInMonth(c, year, mIdx)) return false
+          if (filterTeam !== 'todos' && String(c.equipe || '') !== filterTeam) return false
+          const leaderValue = c.leader_id ? String(c.leader_id) : (c.partner?.id ? String(c.partner.id) : null)
+          if (filterLeader !== 'todos' && leaderValue !== filterLeader) return false
+          return true
+        }).length
 
-      const terminations = colaboradores.filter(c => {
-        if (!c.termination_date) return false
-        const termDate = new Date(c.termination_date + 'T12:00:00')
-        if (termDate.getFullYear() !== year || termDate.getMonth() !== mIdx) return false
-        if (filterTeam !== 'todos' && String(c.equipe || '') !== filterTeam) return false
-        const leaderValue = c.leader_id ? String(c.leader_id) : (c.partner?.id ? String(c.partner.id) : null)
-        if (filterLeader !== 'todos' && leaderValue !== filterLeader) return false
-        return true
-      }).length
+        const terminations = colaboradores.filter(c => {
+          if (!c.termination_date) return false
+          const termDate = new Date(c.termination_date + 'T12:00:00')
+          if (termDate.getFullYear() !== year || termDate.getMonth() !== mIdx) return false
+          if (filterTeam !== 'todos' && String(c.equipe || '') !== filterTeam) return false
+          const leaderValue = c.leader_id ? String(c.leader_id) : (c.partner?.id ? String(c.partner.id) : null)
+          if (filterLeader !== 'todos' && leaderValue !== filterLeader) return false
+          return true
+        }).length
 
-      const taxa = actives > 0 ? (terminations / actives) * 100 : 0
+        const taxa = actives > 0 ? (terminations / actives) * 100 : 0
 
-      const d = new Date(year, mIdx, 1)
-      return {
-        name: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
-        'Taxa de Turnover': parseFloat(taxa.toFixed(2)),
-        Desligamentos: terminations
-      }
-    }).filter(item => item['Taxa de Turnover'] > 0 || item.Desligamentos > 0)
-  }, [colaboradores, filterYear, filterTeam, filterLeader])
+        const d = new Date(year, mIdx, 1)
+        return {
+          name: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+          'Taxa de Turnover': parseFloat(taxa.toFixed(2)),
+          Desligamentos: terminations
+        }
+      }).filter(item => item['Taxa de Turnover'] > 0 || item.Desligamentos > 0)
+    } else {
+      const yearsList = years.map(y => parseInt(y)).filter(y => y >= 2010).sort((a, b) => a - b)
+      
+      return yearsList.map(y => {
+        let sumActives = 0
+        for (let m = 0; m < 12; m++) {
+          sumActives += colaboradores.filter(c => {
+            if (!wasActiveInMonth(c, y, m)) return false
+            if (filterTeam !== 'todos' && String(c.equipe || '') !== filterTeam) return false
+            const leaderValue = c.leader_id ? String(c.leader_id) : (c.partner?.id ? String(c.partner.id) : null)
+            if (filterLeader !== 'todos' && leaderValue !== filterLeader) return false
+            return true
+          }).length
+        }
+        const avgActives = sumActives / 12
+
+        const terminations = colaboradores.filter(c => {
+          if (!c.termination_date) return false
+          const termDate = new Date(c.termination_date + 'T12:00:00')
+          if (termDate.getFullYear() !== y) return false
+          if (filterTeam !== 'todos' && String(c.equipe || '') !== filterTeam) return false
+          const leaderValue = c.leader_id ? String(c.leader_id) : (c.partner?.id ? String(c.partner.id) : null)
+          if (filterLeader !== 'todos' && leaderValue !== filterLeader) return false
+          return true
+        }).length
+
+        const taxa = avgActives > 0 ? (terminations / avgActives) * 100 : 0
+
+        return {
+          name: y.toString(),
+          'Taxa de Turnover': parseFloat(taxa.toFixed(2)),
+          Desligamentos: terminations
+        }
+      }).filter(item => item['Taxa de Turnover'] > 0 || item.Desligamentos > 0)
+    }
+  }, [colaboradores, filterYear, filterTeam, filterLeader, years])
 
   // 2. Turnover por Tempo de Casa na Saída
   const tenureAtExitData = useMemo(() => {
@@ -423,7 +459,7 @@ export function RHTurnover() {
                 <TrendingUp className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-gray-800 tracking-tight">Evolução do Turnover ({filterYear === 'todos' ? new Date().getFullYear() : filterYear})</h3>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight">Evolução do Turnover {filterYear === 'todos' ? '(Histórico Anual)' : `(${filterYear})`}</h3>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Histórico Mensal de Rotatividade</p>
               </div>
             </div>
