@@ -1075,10 +1075,17 @@ export function Volumetry() {
 
           {/* Lista de Volumetria por Responsável */}
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-              <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
-                <Layers className="w-4 h-4 text-[#1e3a8a]" /> Distribuição por Líder Responsável
-              </h2>
+            <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-[#1e3a8a]" /> Distribuição por Sócio Responsável
+                </h2>
+                <div className="flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100/50 shadow-sm">
+                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                   <span className="text-sm font-black text-emerald-700">{ativosCount.toLocaleString('pt-BR')}</span>
+                   <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Base Ativa Total</span>
+                </div>
+              </div>
             </div>
 
             {loading ? (
