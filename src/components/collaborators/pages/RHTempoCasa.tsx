@@ -282,25 +282,28 @@ export function RHTempoCasa() {
   const { leaderJuridicoSocios, leaderJuridicoLideres } = useMemo(() => {
     const leaderMap = new Map<string, { totalYears: number, count: number, members: Collaborator[], leaderObj: Collaborator }>()
 
-    colaboradores.forEach(c => {
-      if (c.is_team_leader) {
-        leaderMap.set(normalizeString(c.name), { totalYears: 0, count: 0, members: [], leaderObj: c })
-      }
-    })
-
     activeDataAtRefDate.forEach(c => {
       const leaderName = c.leader?.name
       if (!leaderName) return
 
       const normalizedLeaderName = normalizeString(leaderName)
-      if (leaderMap.has(normalizedLeaderName)) {
-        if (c.hire_date) {
-          const years = calculateTenure(c.hire_date, referenceDate)
-          const entry = leaderMap.get(normalizedLeaderName)!
-          entry.totalYears += years
-          entry.count++
-          entry.members.push(c)
-        }
+      
+      if (!leaderMap.has(normalizedLeaderName)) {
+        const fullLeaderObj = colaboradores.find(col => normalizeString(col.name) === normalizedLeaderName)
+        leaderMap.set(normalizedLeaderName, { 
+          totalYears: 0, 
+          count: 0, 
+          members: [], 
+          leaderObj: fullLeaderObj || (c.leader as unknown as Collaborator) 
+        })
+      }
+
+      if (c.hire_date) {
+        const years = calculateTenure(c.hire_date, referenceDate)
+        const entry = leaderMap.get(normalizedLeaderName)!
+        entry.totalYears += years
+        entry.count++
+        entry.members.push(c)
       }
     })
 

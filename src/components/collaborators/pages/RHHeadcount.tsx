@@ -569,7 +569,7 @@ export function RHHeadcount() {
             </div>
             <CopyChartButton targetId="chart-headcount-local-area" />
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-[450px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={localAreaData} margin={{ top: 30, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
@@ -606,7 +606,7 @@ export function RHHeadcount() {
             </div>
             <CopyChartButton targetId="chart-headcount-adv-est" />
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-[450px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={advogadosVsEstagiariosData} margin={{ top: 30, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
@@ -716,7 +716,7 @@ export function RHHeadcount() {
             <CopyChartButton targetId="chart-headcount-gender" />
           </div>
           <div className="flex-1 flex items-center justify-center min-h-[300px] relative">
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+            <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-2xl font-black text-gray-800">{genderData.reduce((acc, curr) => acc + curr.value, 0)}</span>
               <span className="text-[10px] font-bold text-gray-400 uppercase">Total</span>
             </div>
