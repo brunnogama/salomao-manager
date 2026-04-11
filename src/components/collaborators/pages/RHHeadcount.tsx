@@ -159,7 +159,7 @@ export function RHHeadcount() {
   const totalActive = activeData.length
   const totalActiveAdmin = activeData.filter(c => getSegment(c) === 'Administrativo').length
   const totalActiveLegal = activeData.filter(c => getSegment(c) === 'Jurídico').length
-  const totalActiveTerceirizada = activeData.filter(c => getSegment(c) === 'Terceirizada').length
+  const totalActiveTerceirizada = activeData.filter(c => getSegment(c) === 'Terceirizado').length
 
   // --- Charts Data ---
 
@@ -259,16 +259,16 @@ export function RHHeadcount() {
       if (!leaderName) return
 
       const normalizedLeaderName = normalizeString(leaderName)
-      
+
       if (!leaderMap.has(normalizedLeaderName)) {
         const fullLeaderObj = colaboradores.find(col => normalizeString(col.name) === normalizedLeaderName)
-        leaderMap.set(normalizedLeaderName, { 
-          count: 0, 
-          members: [], 
-          leaderObj: fullLeaderObj || (c.leader as unknown as Collaborator) 
+        leaderMap.set(normalizedLeaderName, {
+          count: 0,
+          members: [],
+          leaderObj: fullLeaderObj || (c.leader as unknown as Collaborator)
         })
       }
-      
+
       const entry = leaderMap.get(normalizedLeaderName)!
       entry.count++
       entry.members.push(c)
@@ -340,7 +340,7 @@ export function RHHeadcount() {
       { label: '55+ anos', min: 55, max: 120 },
     ]
 
-      const dataMap = groups.map(g => ({
+    const dataMap = groups.map(g => ({
       group: g.label,
       Masculino: 0,
       Feminino: 0,
@@ -539,7 +539,7 @@ export function RHHeadcount() {
           </div>
         </div>
 
-        {/* Total Terceirizada */}
+        {/* Total Terceirizado */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-[#0d9488]"></div>
           <div>
@@ -583,8 +583,8 @@ export function RHHeadcount() {
                 <Bar dataKey="Jurídico" fill={COLORS.secondary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
                   <LabelList dataKey="Jurídico" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
-                <Bar dataKey="Terceirizada" fill={COLORS.tertiary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Terceirizada' } })}>
-                  <LabelList dataKey="Terceirizada" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
+                <Bar dataKey="Terceirizado" fill={COLORS.tertiary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Terceirizada' } })}>
+                  <LabelList dataKey="Terceirizado" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
