@@ -583,8 +583,8 @@ export function RHHeadcount() {
                 <Bar dataKey="Jurídico" fill={COLORS.secondary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
                   <LabelList dataKey="Jurídico" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
-                <Bar dataKey="Terceirizado" fill={COLORS.tertiary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Terceirizada' } })}>
-                  <LabelList dataKey="Terceirizado" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
+                <Bar dataKey="Terceirizada" fill={COLORS.tertiary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Terceirizada' } })}>
+                  <LabelList dataKey="Terceirizada" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
