@@ -424,7 +424,44 @@ export function RHHeadcount() {
     }
   }
 
+  const totalLocalArea = useMemo(() => localAreaData.reduce((acc, curr) => acc + curr.Total, 0), [localAreaData]);
+  const totalAdvEst = useMemo(() => advogadosVsEstagiariosData.reduce((acc, curr) => acc + curr.Total, 0), [advogadosVsEstagiariosData]);
 
+  const renderTickLocalArea = (props: any) => {
+    const { x, y, payload } = props;
+    const item = localAreaData.find(d => d.name === payload.value);
+    const total = item?.Total || 0;
+    const totalWidth = total.toString().length * 6 + 16;
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={12} textAnchor="middle" fill={COLORS.text} fontSize={10} fontWeight={600}>
+          {payload.value}
+        </text>
+        <rect x={-(totalWidth/2)} y={18} width={totalWidth} height={16} rx={4} fill="#f3f4f6" />
+        <text x={0} y={29} textAnchor="middle" fill="#4b5563" fontSize={10} fontWeight="bold">
+          {total}
+        </text>
+      </g>
+    );
+  };
+
+  const renderTickAdvEst = (props: any) => {
+    const { x, y, payload } = props;
+    const item = advogadosVsEstagiariosData.find(d => d.name === payload.value);
+    const total = item?.Total || 0;
+    const totalWidth = total.toString().length * 6 + 16;
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={12} textAnchor="middle" fill={COLORS.text} fontSize={10} fontWeight={600}>
+          {payload.value}
+        </text>
+        <rect x={-(totalWidth/2)} y={18} width={totalWidth} height={16} rx={4} fill="#eff6ff" />
+        <text x={0} y={29} textAnchor="middle" fill="#1d4ed8" fontSize={10} fontWeight="bold">
+          {total}
+        </text>
+      </g>
+    );
+  };
 
   if (loading) {
     return (
@@ -567,13 +604,19 @@ export function RHHeadcount() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Geolocalização do Time</p>
               </div>
             </div>
-            <CopyChartButton targetId="chart-headcount-local-area" />
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-2">Total</span>
+                <span className="text-base font-black text-gray-800">{totalLocalArea}</span>
+              </div>
+              <CopyChartButton targetId="chart-headcount-local-area" />
+            </div>
           </div>
           <div className="h-[450px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={localAreaData} margin={{ top: 30, right: 30, left: 0, bottom: 5 }}>
+              <BarChart data={localAreaData} margin={{ top: 30, right: 30, left: 0, bottom: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={renderTickLocalArea} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
                 <Tooltip content={RHChartTooltip} />
                 <Legend />
@@ -603,13 +646,19 @@ export function RHHeadcount() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Composição Jurídica</p>
               </div>
             </div>
-            <CopyChartButton targetId="chart-headcount-adv-est" />
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-2">Total</span>
+                <span className="text-base font-black text-gray-800">{totalAdvEst}</span>
+              </div>
+              <CopyChartButton targetId="chart-headcount-adv-est" />
+            </div>
           </div>
           <div className="h-[450px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={advogadosVsEstagiariosData} margin={{ top: 30, right: 30, left: 0, bottom: 5 }}>
+              <BarChart data={advogadosVsEstagiariosData} margin={{ top: 30, right: 30, left: 0, bottom: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={renderTickAdvEst} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
                 <Tooltip content={RHChartTooltip} />
                 <Legend />
