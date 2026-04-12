@@ -616,10 +616,10 @@ export function RHHeadcount() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={localAreaData} margin={{ top: 30, right: 30, left: 0, bottom: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={renderTickLocalArea} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={renderTickLocalArea} height={60} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
                 <Tooltip content={RHChartTooltip} />
-                <Legend />
+                <Legend wrapperStyle={{ paddingTop: '10px' }} />
                 <Bar dataKey="Administrativo" fill={COLORS.primary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Administrativo' } })}>
                   <LabelList dataKey="Administrativo" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
@@ -658,10 +658,10 @@ export function RHHeadcount() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={advogadosVsEstagiariosData} margin={{ top: 30, right: 30, left: 0, bottom: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={renderTickAdvEst} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={renderTickAdvEst} height={60} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
                 <Tooltip content={RHChartTooltip} />
-                <Legend />
+                <Legend wrapperStyle={{ paddingTop: '10px' }} />
                 <Bar dataKey="Advogados" fill={COLORS.secondary} radius={[4, 4, 0, 0]} className="cursor-pointer" onClick={(data) => navigate('/rh/colaboradores', { state: { localFilter: data.name, segmentFilter: 'Jurídico' } })}>
                   <LabelList dataKey="Advogados" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
                 </Bar>
