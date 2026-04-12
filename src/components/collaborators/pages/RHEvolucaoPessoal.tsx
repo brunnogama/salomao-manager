@@ -759,7 +759,7 @@ export function RHEvolucaoPessoal() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                    width={280}
+                    width={130}
                   />
                   <Tooltip
                     cursor={{ fill: '#f3f4f6' }}
@@ -820,7 +820,7 @@ export function RHEvolucaoPessoal() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                    width={280}
+                    width={130}
                   />
                   <Tooltip
                     cursor={{ fill: '#f3f4f6' }}
@@ -884,7 +884,7 @@ export function RHEvolucaoPessoal() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                    width={280}
+                    width={130}
                   />
                   <Tooltip
                     cursor={{ fill: '#f3f4f6' }}
@@ -945,7 +945,7 @@ export function RHEvolucaoPessoal() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                    width={280}
+                    width={130}
                   />
                   <Tooltip
                     cursor={{ fill: '#f3f4f6' }}
@@ -1006,7 +1006,7 @@ export function RHEvolucaoPessoal() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                    width={280}
+                    width={130}
                   />
                   <Tooltip
                     cursor={{ fill: '#f3f4f6' }}
