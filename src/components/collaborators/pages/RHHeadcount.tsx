@@ -463,6 +463,28 @@ export function RHHeadcount() {
     );
   };
 
+  const CustomGenderLegend = (props: any) => {
+    const { payload } = props;
+    return (
+      <div className="flex flex-wrap justify-center gap-2 pt-2 pb-2">
+        {payload.map((entry: any, index: number) => {
+          const value = genderData.find(g => g.name === entry.value)?.value || 0;
+          return (
+            <div key={`item-${index}`} className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
+              <div className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: entry.color }}></div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-1.5">{entry.value === 'Masculino' ? 'Masc' : entry.value === 'Feminino' ? 'Fem' : entry.value}</span>
+              <span className="text-sm font-black text-gray-800">{value}</span>
+            </div>
+          );
+        })}
+        <div className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-1.5">Total</span>
+          <span className="text-sm font-black text-gray-800">{totalActive}</span>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -750,7 +772,7 @@ export function RHHeadcount() {
 
         {/* Gender (Donut) */}
         <div id="chart-headcount-gender" className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-1">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center text-left">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-pink-50 text-pink-600">
                 <PieChartIcon className="w-5 h-5" />
@@ -760,19 +782,7 @@ export function RHHeadcount() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Diversidade</p>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {genderData.map(g => (
-                <div key={g.name} className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-1">{g.name === 'Masculino' ? 'Masc' : g.name === 'Feminino' ? 'Fem' : g.name}</span>
-                  <span className="text-sm font-black text-gray-800">{g.value}</span>
-                </div>
-              ))}
-              <div className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm ml-1">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-1">Total</span>
-                <span className="text-sm font-black text-gray-800">{totalActive}</span>
-              </div>
-              <CopyChartButton targetId="chart-headcount-gender" />
-            </div>
+            <CopyChartButton targetId="chart-headcount-gender" />
           </div>
           <div className="flex-1 flex items-center justify-center min-h-[300px] relative">
             <ResponsiveContainer width="100%" height="100%">
@@ -846,7 +856,7 @@ export function RHHeadcount() {
                     return <Cell key={`cell-${index}`} fill={color} />
                   })}
                 </Pie>
-                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                <Legend content={<CustomGenderLegend />} verticalAlign="bottom" />
                 <Tooltip content={RHChartTooltip} />
               </PieChart>
             </ResponsiveContainer>
