@@ -497,7 +497,6 @@ export function RHTurnover() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} dy={10} />
                 <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} unit="%" />
-                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} />
                 <Tooltip content={RHChartTooltip} cursor={{ fill: '#f3f4f6' }} />
                 <Legend />
                 <Line yAxisId="left" type="monotone" dataKey="Turnover Jurídico" stroke={COLORS.primary} strokeWidth={3} dot={{ r: 4, fill: '#fff', stroke: COLORS.primary, strokeWidth: 2 }}>
@@ -506,7 +505,6 @@ export function RHTurnover() {
                 <Line yAxisId="left" type="monotone" dataKey="Turnover Adm" stroke={COLORS.secondary} strokeWidth={3} dot={{ r: 4, fill: '#fff', stroke: COLORS.secondary, strokeWidth: 2 }}>
                   <LabelList dataKey="Turnover Adm" content={(props) => RHChartDataLabel({ ...props, fill: COLORS.secondary, position: "bottom", percent: true })} />
                 </Line>
-                <Bar yAxisId="right" dataKey="Desligamentos" fill={COLORS.text} radius={[4, 4, 0, 0]} barSize={20} opacity={0.2} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
