@@ -466,20 +466,24 @@ export function RHHeadcount() {
   const CustomGenderLegend = (props: any) => {
     const { payload } = props;
     return (
-      <div className="flex flex-wrap justify-center gap-2 pt-2 pb-2">
-        {payload.map((entry: any, index: number) => {
-          const value = genderData.find(g => g.name === entry.value)?.value || 0;
-          return (
-            <div key={`item-${index}`} className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
-              <div className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: entry.color }}></div>
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-1.5">{entry.value === 'Masculino' ? 'Masc' : entry.value === 'Feminino' ? 'Fem' : entry.value}</span>
-              <span className="text-sm font-black text-gray-800">{value}</span>
-            </div>
-          );
-        })}
-        <div className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-1.5">Total</span>
-          <span className="text-sm font-black text-gray-800">{totalActive}</span>
+      <div className="flex flex-col items-center gap-2 pt-2 pb-2 w-full">
+        <div className="flex justify-center gap-2 w-full">
+          {payload.map((entry: any, index: number) => {
+            const value = genderData.find(g => g.name === entry.value)?.value || 0;
+            return (
+              <div key={`item-${index}`} className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
+                <div className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: entry.color }}></div>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-1.5">{entry.value === 'Masculino' ? 'Masc' : entry.value === 'Feminino' ? 'Fem' : entry.value}</span>
+                <span className="text-sm font-black text-gray-800">{value}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex justify-center w-full">
+          <div className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-1.5">Total</span>
+            <span className="text-sm font-black text-gray-800">{totalActive}</span>
+          </div>
         </div>
       </div>
     );
