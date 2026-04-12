@@ -13,6 +13,8 @@ import {
   UserCheck
 } from 'lucide-react'
 import {
+  ComposedChart,
+  Line,
   AreaChart,
   Area,
   XAxis,
@@ -198,15 +200,15 @@ export function RHTurnover() {
       const monthsIdx = Array.from({ length: 12 }, (_, i) => i)
 
       return monthsIdx.map(mIdx => {
-        const actives = colaboradores.filter(c => {
+        const activesInMonthList = colaboradores.filter(c => {
           if (!wasActiveInMonth(c, year, mIdx)) return false
           if (filterTeam !== 'todos' && String(c.equipe || '') !== filterTeam) return false
           const leaderValue = c.leader_id ? String(c.leader_id) : (c.partner?.id ? String(c.partner.id) : null)
           if (filterLeader !== 'todos' && leaderValue !== filterLeader) return false
           return true
-        }).length
+        })
 
-        const terminations = colaboradores.filter(c => {
+        const terminationsList = colaboradores.filter(c => {
           if (!c.termination_date) return false
           const termDate = new Date(c.termination_date + 'T12:00:00')
           if (termDate.getFullYear() !== year || termDate.getMonth() !== mIdx) return false
@@ -214,34 +216,50 @@ export function RHTurnover() {
           const leaderValue = c.leader_id ? String(c.leader_id) : (c.partner?.id ? String(c.partner.id) : null)
           if (filterLeader !== 'todos' && leaderValue !== filterLeader) return false
           return true
-        }).length
+        })
 
-        const taxa = actives > 0 ? (terminations / actives) * 100 : 0
+        const activesJur = activesInMonthList.filter(c => getSegment(c) === 'Jurídico').length
+        const termsJur = terminationsList.filter(c => getSegment(c) === 'Jurídico').length
+        const taxaJur = activesJur > 0 ? (termsJur / activesJur) * 100 : 0
+
+        const activesAdm = activesInMonthList.filter(c => getSegment(c) === 'Administrativo').length
+        const termsAdm = terminationsList.filter(c => getSegment(c) === 'Administrativo').length
+        const taxaAdm = activesAdm > 0 ? (termsAdm / activesAdm) * 100 : 0
+        
+        const totaisAtivos = activesInMonthList.length
+        const taxaGeral = totaisAtivos > 0 ? (terminationsList.length / totaisAtivos) * 100 : 0
 
         const d = new Date(year, mIdx, 1)
         return {
           name: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
-          'Taxa de Turnover': parseFloat(taxa.toFixed(2)),
-          Desligamentos: terminations
+          'Turnover Jurídico': parseFloat(taxaJur.toFixed(2)),
+          'Turnover Adm': parseFloat(taxaAdm.toFixed(2)),
+          'Taxa de Turnover': parseFloat(taxaGeral.toFixed(2)),
+          Desligamentos: terminationsList.length
         }
       }).filter(item => item['Taxa de Turnover'] > 0 || item.Desligamentos > 0)
     } else {
       const yearsList = years.map(y => parseInt(y)).filter(y => y >= 2010).sort((a, b) => a - b)
       
       return yearsList.map(y => {
-        let sumActives = 0
+        let sumActives = 0; let sumActivesJur = 0; let sumActivesAdm = 0
         for (let m = 0; m < 12; m++) {
-          sumActives += colaboradores.filter(c => {
+          const activesInM = colaboradores.filter(c => {
             if (!wasActiveInMonth(c, y, m)) return false
             if (filterTeam !== 'todos' && String(c.equipe || '') !== filterTeam) return false
             const leaderValue = c.leader_id ? String(c.leader_id) : (c.partner?.id ? String(c.partner.id) : null)
             if (filterLeader !== 'todos' && leaderValue !== filterLeader) return false
             return true
-          }).length
+          })
+          sumActives += activesInM.length
+          sumActivesJur += activesInM.filter(c => getSegment(c) === 'Jurídico').length
+          sumActivesAdm += activesInM.filter(c => getSegment(c) === 'Administrativo').length
         }
         const avgActives = sumActives / 12
+        const avgActivesJur = sumActivesJur / 12
+        const avgActivesAdm = sumActivesAdm / 12
 
-        const terminations = colaboradores.filter(c => {
+        const termsList = colaboradores.filter(c => {
           if (!c.termination_date) return false
           const termDate = new Date(c.termination_date + 'T12:00:00')
           if (termDate.getFullYear() !== y) return false
@@ -249,13 +267,21 @@ export function RHTurnover() {
           const leaderValue = c.leader_id ? String(c.leader_id) : (c.partner?.id ? String(c.partner.id) : null)
           if (filterLeader !== 'todos' && leaderValue !== filterLeader) return false
           return true
-        }).length
+        })
 
-        const taxa = avgActives > 0 ? (terminations / avgActives) * 100 : 0
+        const terminations = termsList.length
+        const termsJur = termsList.filter(c => getSegment(c) === 'Jurídico').length
+        const termsAdm = termsList.filter(c => getSegment(c) === 'Administrativo').length
+
+        const taxaGeral = avgActives > 0 ? (terminations / avgActives) * 100 : 0
+        const taxaJur = avgActivesJur > 0 ? (termsJur / avgActivesJur) * 100 : 0
+        const taxaAdm = avgActivesAdm > 0 ? (termsAdm / avgActivesAdm) * 100 : 0
 
         return {
           name: y.toString(),
-          'Taxa de Turnover': parseFloat(taxa.toFixed(2)),
+          'Turnover Jurídico': parseFloat(taxaJur.toFixed(2)),
+          'Turnover Adm': parseFloat(taxaAdm.toFixed(2)),
+          'Taxa de Turnover': parseFloat(taxaGeral.toFixed(2)),
           Desligamentos: terminations
         }
       }).filter(item => item['Taxa de Turnover'] > 0 || item.Desligamentos > 0)
@@ -467,24 +493,21 @@ export function RHTurnover() {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={evolutionData} margin={{ top: 50, right: 40, left: 10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gradTurnover" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.danger} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={COLORS.danger} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
+              <ComposedChart data={evolutionData} margin={{ top: 50, right: 40, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} dy={10} />
                 <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} unit="%" />
                 <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} />
-                <Tooltip content={RHChartTooltip} />
+                <Tooltip content={RHChartTooltip} cursor={{ fill: '#f3f4f6' }} />
                 <Legend />
-                <Area yAxisId="left" type="monotone" dataKey="Taxa de Turnover" stroke={COLORS.danger} fill="url(#gradTurnover)" strokeWidth={3} dot={{ r: 4, fill: '#fff', stroke: COLORS.danger, strokeWidth: 2 }}>
-                  <LabelList dataKey="Taxa de Turnover" content={(props) => RHChartDataLabel({ ...props, fill: COLORS.danger, position: "top", percent: true })} />
-                </Area>
-                <Bar yAxisId="right" dataKey="Desligamentos" fill={COLORS.primary} radius={[4, 4, 0, 0]} barSize={20} opacity={0.3} />
-              </AreaChart>
+                <Line yAxisId="left" type="monotone" dataKey="Turnover Jurídico" stroke={COLORS.primary} strokeWidth={3} dot={{ r: 4, fill: '#fff', stroke: COLORS.primary, strokeWidth: 2 }}>
+                  <LabelList dataKey="Turnover Jurídico" content={(props) => RHChartDataLabel({ ...props, fill: COLORS.primary, position: "top", percent: true })} />
+                </Line>
+                <Line yAxisId="left" type="monotone" dataKey="Turnover Adm" stroke={COLORS.secondary} strokeWidth={3} dot={{ r: 4, fill: '#fff', stroke: COLORS.secondary, strokeWidth: 2 }}>
+                  <LabelList dataKey="Turnover Adm" content={(props) => RHChartDataLabel({ ...props, fill: COLORS.secondary, position: "bottom", percent: true })} />
+                </Line>
+                <Bar yAxisId="right" dataKey="Desligamentos" fill={COLORS.text} radius={[4, 4, 0, 0]} barSize={20} opacity={0.2} />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
