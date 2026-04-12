@@ -477,6 +477,24 @@ export function RHEvolucaoPessoal() {
     return null
   }
 
+  const renderTickHeadcount = (props: any) => {
+    const { x, y, payload } = props;
+    const item = headcountChartData.find(d => d.name === payload.value);
+    const total = item?.Total || 0;
+    const totalWidth = total.toString().length * 6 + 16;
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={12} textAnchor="middle" fill={COLORS.text} fontSize={10} fontWeight={600}>
+          {payload.value}
+        </text>
+        <rect x={-(totalWidth/2)} y={18} width={totalWidth} height={16} rx={4} fill="#f3f4f6" />
+        <text x={0} y={29} textAnchor="middle" fill="#4b5563" fontSize={10} fontWeight="bold">
+          {total}
+        </text>
+      </g>
+    );
+  };
+
 
   if (loading) {
     return (
@@ -638,8 +656,7 @@ export function RHEvolucaoPessoal() {
                 dataKey="name"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: COLORS.text, fontSize: 11 }}
-                dy={25}
+                tick={renderTickHeadcount}
                 height={60}
               />
               <YAxis
