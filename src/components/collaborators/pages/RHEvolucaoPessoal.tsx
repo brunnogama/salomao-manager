@@ -353,7 +353,8 @@ export function RHEvolucaoPessoal() {
           name: mStart.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
           Administrativo: adm,
           Jurídico: leg,
-          Terceirizada: terc
+          Terceirizada: terc,
+          Total: adm + leg + terc
         }
       })
     } else {
@@ -386,7 +387,8 @@ export function RHEvolucaoPessoal() {
         name: year.toString(),
         Administrativo: yearsMap.get(year)?.admin || 0,
         Jurídico: yearsMap.get(year)?.legal || 0,
-        Terceirizada: yearsMap.get(year)?.terc || 0
+        Terceirizada: yearsMap.get(year)?.terc || 0,
+        Total: (yearsMap.get(year)?.admin || 0) + (yearsMap.get(year)?.legal || 0) + (yearsMap.get(year)?.terc || 0)
       }))
     }
   }, [filteredData, filterYear, filterMonth])
@@ -421,7 +423,8 @@ export function RHEvolucaoPessoal() {
           name: mStart.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
           Administrativo: adm,
           Jurídico: leg,
-          Terceirizada: terc
+          Terceirizada: terc,
+          Total: adm + leg + terc
         }
       })
     } else {
@@ -451,7 +454,8 @@ export function RHEvolucaoPessoal() {
         name: year.toString(),
         Administrativo: yearsMap.get(year)?.admin || 0,
         Jurídico: yearsMap.get(year)?.legal || 0,
-        Terceirizada: yearsMap.get(year)?.terc || 0
+        Terceirizada: yearsMap.get(year)?.terc || 0,
+        Total: (yearsMap.get(year)?.admin || 0) + (yearsMap.get(year)?.legal || 0) + (yearsMap.get(year)?.terc || 0)
       }))
     }
   }, [filteredData, filterYear, filterMonth])
@@ -495,6 +499,47 @@ export function RHEvolucaoPessoal() {
     );
   };
 
+  const renderTickHiring = (props: any) => {
+    const { x, y, payload } = props;
+    const item = yearlyHiringFlow.find(d => d.name === payload.value);
+    const total = item?.Total || 0;
+    const totalWidth = total.toString().length * 6 + 16;
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={12} textAnchor="middle" fill={COLORS.text} fontSize={10} fontWeight={600}>
+          {payload.value}
+        </text>
+        <rect x={-(totalWidth/2)} y={18} width={totalWidth} height={16} rx={4} fill="#fff7ed" />
+        <text x={0} y={29} textAnchor="middle" fill="#ea580c" fontSize={10} fontWeight="bold">
+          {total}
+        </text>
+      </g>
+    );
+  };
+
+  const renderTickTurnover = (props: any) => {
+    const { x, y, payload } = props;
+    const item = yearlyTurnoverFlow.find(d => d.name === payload.value);
+    const total = item?.Total || 0;
+    const totalWidth = total.toString().length * 6 + 16;
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={12} textAnchor="middle" fill={COLORS.text} fontSize={10} fontWeight={600}>
+          {payload.value}
+        </text>
+        <rect x={-(totalWidth/2)} y={18} width={totalWidth} height={16} rx={4} fill="#eff6ff" />
+        <text x={0} y={29} textAnchor="middle" fill="#1e3a8a" fontSize={10} fontWeight="bold">
+          {total}
+        </text>
+      </g>
+    );
+  };
+
+  const totalRoleDistAdmin = useMemo(() => roleDistributionAdmin.reduce((acc, curr) => acc + curr.count, 0), [roleDistributionAdmin]);
+  const totalRoleDistJuridico = useMemo(() => roleDistributionJuridico.reduce((acc, curr) => acc + curr.count, 0), [roleDistributionJuridico]);
+  const totalHiringAdmin = useMemo(() => hiringAdminRanking.reduce((acc, curr) => acc + curr.count, 0), [hiringAdminRanking]);
+  const totalHiringLegal = useMemo(() => hiringLegalRanking.reduce((acc, curr) => acc + curr.count, 0), [hiringLegalRanking]);
+  const totalHiringTerc = useMemo(() => hiringTerceirizadaRanking.reduce((acc, curr) => acc + curr.count, 0), [hiringTerceirizadaRanking]);
 
   if (loading) {
     return (
@@ -694,7 +739,13 @@ export function RHEvolucaoPessoal() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fotografia Atual dos Ativos</p>
               </div>
             </div>
-            <CopyChartButton targetId="chart-evolucao-dist-adm" />
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-2">Total</span>
+                <span className="text-base font-black text-gray-800">{totalRoleDistAdmin}</span>
+              </div>
+              <CopyChartButton targetId="chart-evolucao-dist-adm" />
+            </div>
           </div>
           <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
             <div className="w-full" style={{ height: Math.max(300, roleDistributionAdmin.length * 35) }}>
@@ -749,7 +800,13 @@ export function RHEvolucaoPessoal() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fotografia Atual dos Ativos</p>
               </div>
             </div>
-            <CopyChartButton targetId="chart-evolucao-dist-jur" />
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-2">Total</span>
+                <span className="text-base font-black text-gray-800">{totalRoleDistJuridico}</span>
+              </div>
+              <CopyChartButton targetId="chart-evolucao-dist-jur" />
+            </div>
           </div>
           <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
             <div className="w-full" style={{ height: Math.max(300, roleDistributionJuridico.length * 35) }}>
@@ -807,7 +864,13 @@ export function RHEvolucaoPessoal() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
               </div>
             </div>
-            <CopyChartButton targetId="chart-evolucao-contr-adm" />
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-2">Total</span>
+                <span className="text-base font-black text-gray-800">{totalHiringAdmin}</span>
+              </div>
+              <CopyChartButton targetId="chart-evolucao-contr-adm" />
+            </div>
           </div>
           <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
             <div className="w-full" style={{ height: Math.max(300, hiringAdminRanking.length * 35) }}>
@@ -862,7 +925,13 @@ export function RHEvolucaoPessoal() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
               </div>
             </div>
-            <CopyChartButton targetId="chart-evolucao-contr-jur" />
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-2">Total</span>
+                <span className="text-base font-black text-gray-800">{totalHiringLegal}</span>
+              </div>
+              <CopyChartButton targetId="chart-evolucao-contr-jur" />
+            </div>
           </div>
           <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
             <div className="w-full" style={{ height: Math.max(300, hiringLegalRanking.length * 35) }}>
@@ -917,7 +986,13 @@ export function RHEvolucaoPessoal() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
               </div>
             </div>
-            <CopyChartButton targetId="chart-evolucao-contr-terc" />
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg flex items-center shadow-sm">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mr-2">Total</span>
+                <span className="text-base font-black text-gray-800">{totalHiringTerc}</span>
+              </div>
+              <CopyChartButton targetId="chart-evolucao-contr-terc" />
+            </div>
           </div>
           <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
             <div className="w-full" style={{ height: Math.max(300, hiringTerceirizadaRanking.length * 35) }}>
@@ -976,9 +1051,9 @@ export function RHEvolucaoPessoal() {
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={yearlyHiringFlow} margin={{ top: 50, right: 30, left: 10, bottom: 35 }} barGap={2} barCategoryGap="20%">
+              <BarChart data={yearlyHiringFlow} margin={{ top: 50, right: 30, left: 10, bottom: 45 }} barGap={2} barCategoryGap="20%">
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} dy={10} height={40} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={renderTickHiring} height={60} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6' }} />
                 <Legend wrapperStyle={{ paddingTop: '10px' }} />
@@ -1007,9 +1082,9 @@ export function RHEvolucaoPessoal() {
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={yearlyTurnoverFlow} margin={{ top: 50, right: 30, left: 10, bottom: 35 }} barGap={2} barCategoryGap="20%">
+              <BarChart data={yearlyTurnoverFlow} margin={{ top: 50, right: 30, left: 10, bottom: 45 }} barGap={2} barCategoryGap="20%">
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} dy={10} height={40} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={renderTickTurnover} height={60} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6' }} />
                 <Legend wrapperStyle={{ paddingTop: '10px' }} />
