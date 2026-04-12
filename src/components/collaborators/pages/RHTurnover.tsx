@@ -51,7 +51,7 @@ export function RHTurnover() {
   // --- State for Filters ---
   const currentYear = new Date().getFullYear().toString()
 
-  const [filterYear, setFilterYear] = useState<string>(currentYear)
+  const [filterYear, setFilterYear] = useState<string>('todos')
   const [filterMonth, setFilterMonth] = useState<string>('todos')
   const [filterTeam, setFilterTeam] = useState<string>('todos')
   const [filterLeader, setFilterLeader] = useState<string>('todos')
@@ -376,12 +376,12 @@ export function RHTurnover() {
             placeholder="Líder (Sócio)"
           />
 
-          {(filterTeam !== 'todos' || filterLeader !== 'todos' || filterYear !== currentYear || filterMonth !== 'todos') && (
+          {(filterTeam !== 'todos' || filterLeader !== 'todos' || filterYear !== 'todos' || filterMonth !== 'todos') && (
             <button
               onClick={() => {
                 setFilterTeam('todos');
                 setFilterLeader('todos');
-                setFilterYear(currentYear);
+                setFilterYear('todos');
                 setFilterMonth('todos');
               }}
               className="p-2 sm:p-2.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
